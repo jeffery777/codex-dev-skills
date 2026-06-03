@@ -111,4 +111,3 @@ Public disposition:
 - Compatibility aliases.
 - Standalone pass-B reviewer skills.
 - External scheduler examples.
-- Excluded packs listed in `docs/excluded-packs.md`.

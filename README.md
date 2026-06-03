@@ -1,22 +1,134 @@
 # codex-dev-skills
 
-`codex-dev-skills` is an open, Codex-focused repository of software development skills and workflows for Codex CLI and Codex Desktop.
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Runtime: Codex CLI + Desktop](https://img.shields.io/badge/runtime-Codex%20CLI%20%2B%20Desktop-blue)](#runtime-compatibility)
+[![Repo hygiene](https://img.shields.io/badge/hygiene-validate--repo.sh-informational)](#verification)
 
-This is not a general prompt collection. It is a curated workflow set for planning, implementation, documentation updates, review, review follow-up, delivery gates, and merge readiness.
+`codex-dev-skills` is an OSS maintenance workflow pack for OpenAI Codex CLI and Codex Desktop.
 
-Version 1 is derived only from the private shared review layer plus the `review-workflow-codex` and `review-workflow-codex-desktop` packs. The content has been rewritten for public use with private names, local paths, runtime state, and legacy provider references removed.
+It helps maintainers delegate repeatable software development work to Codex with clear read-before-write behavior, scoped implementation, documentation updates, code review, review follow-up, delivery gates, and merge readiness checks.
 
-## Source Priority
+This is not a general prompt collection. It is a curated set of public, reusable workflow contracts for open source and team repositories.
 
-The shared layer canonical source is `shared/review-workflow-codex/codex` in the private source repository. Pack-local copies of shared skills, shared policies, and shared orchestration templates are treated as synchronized copies, not independent sources.
+## Who It Is For
 
-Source priority for version 1:
+- Open source maintainers who want Codex to help with routine repo maintenance.
+- Teams using Codex CLI or Codex Desktop for implementation, review, and merge readiness.
+- Contributors who need explicit human gates before destructive actions, pushes, releases, or merges.
+- Early adopters who want reusable skills instead of one-off prompts.
 
-1. Shared layer canonical source for shared gates, shared policies, and shared orchestration templates.
-2. Codex CLI/shared/core/general pack content for non-duplicate planning, implementation, docs, review, and delivery workflows.
-3. Codex Desktop-only orchestration skills with the `desktop-` public prefix.
+## Quick Start
 
-The public repository keeps only one renamed shared layer to avoid forks.
+Inspect available install groups:
+
+```bash
+./install.sh list
+```
+
+Install the shared review gates:
+
+```bash
+./install.sh install shared-review-gates
+```
+
+Install CLI-compatible implementation, review, and delivery workflows:
+
+```bash
+./install.sh install codex-review-workflow
+./install.sh install codex-delivery-workflow
+```
+
+Use the installed skills in Codex by name, for example:
+
+```text
+Use implementation-slice to make this focused parser fix and run the targeted tests.
+Use code-review on the current working tree.
+Use merge-readiness-gate for main..HEAD. Do not merge or push.
+```
+
+For Codex Desktop delegated delivery, install the Desktop group only when that workflow is intentional:
+
+```bash
+./install.sh install desktop-delivery-workflow
+```
+
+## How Projects Use These Skills
+
+These skills work best when the target repository keeps durable project context in files that Codex can read before editing: repo-level `AGENTS.md`, project specs, implementation plans, review templates, and policy files.
+
+The workflows are not limited to single task-id execution. When scope is clear, they can advance a bounded milestone slice, such as one MVP capability area, through discovery, planning, implementation, verification, review, documentation sync, and PR readiness.
+
+Global Codex rules add useful baseline safety, while repo-level files define the project-specific source of truth. See `docs/usage-model.md` for the recommended project artifacts, delivery scope, and global-rule layering model.
+
+## Usage Examples
+
+These examples are written as prompts you can give to Codex after installing the relevant skill group.
+
+### Focused Implementation
+
+Use `implementation-slice` when the desired change is clear and should stay small:
+
+```text
+Use implementation-slice to add validation for empty config values.
+Read the existing parser tests first, keep the change scoped, run the smallest relevant test command, and do not commit.
+```
+
+Codex should inspect repo instructions and current git state, edit only the needed files, run focused verification, inspect the diff, and report residual risk.
+
+### Routine Code Review
+
+Use `code-review` when you want read-only feedback on a working tree, branch, or patch:
+
+```text
+Use code-review on the current working tree.
+Prioritize correctness bugs, regressions, missing tests, and contract risks. Stay read-only.
+```
+
+Expected output starts with findings, then questions and re-runnable verification commands.
+
+### Review Closure Loop
+
+Use `review-loop` when Codex should implement, review, fix blockers, and re-review until it reaches a human gate:
+
+```text
+Use review-loop to implement the requested docs validation improvement.
+Run at most two review/fix rounds. Stop before commit, push, release, or any external write.
+```
+
+This is useful for maintainers who want local closure evidence before deciding whether to publish a branch.
+
+### Bounded Milestone Slice
+
+Use `project-delivery` when the objective is larger than a single task but still bounded:
+
+```text
+Use project-delivery to advance the MVP1 import-validation scope to PR readiness.
+Read the repo plan and acceptance criteria first, split the work into safe slices, update docs if behavior changes, run review gates, and stop before commit, push, or release.
+```
+
+This pattern is useful when a maintainer wants Codex to carry a small capability area forward without granting authority to publish or merge.
+
+### Merge Readiness
+
+Use `merge-readiness-gate` after implementation and review evidence exist:
+
+```text
+Use merge-readiness-gate for main..HEAD.
+Check the plan, diff, tests, and review evidence. Report READY, BLOCKED, or NEEDS HUMAN DECISION. Do not merge or push.
+```
+
+The gate is meant to summarize readiness; it does not replace final maintainer approval.
+
+### Codex Desktop Delegated Delivery
+
+Use `desktop-project-delivery` when working in Codex Desktop and delegating a bounded objective:
+
+```text
+Use desktop-project-delivery to prepare this feature for PR readiness.
+Coordinate implementation and review, integrate the output, run verification, and stop for product ambiguity, destructive actions, external writes, or final merge approval.
+```
+
+CLI fallback: use `project-delivery`, task briefs, and the review gates sequentially.
 
 ## Runtime Compatibility
 
@@ -64,6 +176,15 @@ The public repository keeps only one renamed shared layer to avoid forks.
 - `workflows/desktop-delivery-workflow.md`
 
 Shared orchestration templates include task briefs, project specs, implementation plans, closure triage overlays, integration review reports, and orchestrator gate reports.
+
+## Examples
+
+- `examples/basic-implementation.md`
+- `examples/code-review.md`
+- `examples/merge-review.md`
+- `examples/desktop-project-delivery.md`
+
+See `docs/roadmap.md` for the near-term public roadmap and `docs/release-notes-v0.1.0.md` for draft v0.1.0 release notes.
 
 ## Installation
 
@@ -138,6 +259,16 @@ Installer scope:
 - State records only non-sensitive metadata such as repository name, version, action, group, and timestamp.
 - The installer never overwrites `~/.codex/AGENTS.md`.
 
+## Verification
+
+Run the repository hygiene check before proposing a release or PR:
+
+```bash
+./scripts/validate-repo.sh
+```
+
+This validates catalog consistency, required runtime labels, symlink safety, and public hygiene checks for excluded private or legacy terms.
+
 ## Included Scope
 
 This repository includes public software development workflows for:
@@ -160,8 +291,6 @@ This repository intentionally does not include:
 - unverified frontend UI workflow packs
 - knowledge, Obsidian, or vault capture workflows
 - private runtime state, local application state, logs, local databases, machine-specific config, credentials, or private paths
-
-More detail is in `docs/excluded-packs.md`.
 
 ## Contribution Guidelines
 

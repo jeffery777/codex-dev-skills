@@ -64,12 +64,11 @@ check_legacy_private_names() {
   local pattern
   pattern="$(printf '%s|%s|%s|%s' 'u''1_' 'shared''_' 'codex''_merge_' 'dual''-engine')"
   if rg -n "$pattern" . \
-    --glob '!docs/migration-from-private-packs.md' \
     --glob '!scripts/validate-repo.sh' >"$TMP_DIR/legacy-hits.txt"; then
     cat "$TMP_DIR/legacy-hits.txt"
-    fail "legacy private names found outside migration documentation"
+    fail "legacy private names found"
   fi
-  ok "legacy private names are confined to migration documentation"
+  ok "legacy private names absent"
 }
 
 check_catalog_sources() {

@@ -1,0 +1,38 @@
+# Living Roadmap
+
+This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves from real project maintenance needs: add or revise skills when repeated work proves that a workflow, policy, template, or review gate should be reusable.
+
+## v0.1.x: Public Foundation
+
+- Keep the installer, catalog, skills, templates, and README aligned.
+- Improve examples for common maintainer workflows: scoped implementation, code review, docs review, review follow-up, and merge readiness.
+- Add practical troubleshooting notes for install, diff, update, and uninstall flows.
+- Keep validation focused on public hygiene, runtime compatibility labels, and catalog consistency.
+
+## v0.2.x: More Maintainer Workflows
+
+- Add richer examples for multi-step maintenance tasks that stop at a human gate before external writes.
+- Expand documentation around choosing routine versus deep review workflows.
+- Clarify how Desktop orchestration maps back to CLI-compatible fallback steps.
+- Improve release readiness guidance for maintainers preparing tags, release notes, and PRs.
+
+## Maintenance Approach
+
+- Let real project usage reveal which skills need to be added or corrected.
+- Prefer small, reusable workflow improvements over speculative workflow packs.
+- Keep repo documentation aligned with installer groups, skill names, templates, and validation.
+- Keep human gates explicit whenever a workflow approaches publication, release, merge, destructive action, or material risk.
+
+## Backlog
+
+- Example issue triage and review follow-up flows.
+- A compact skill selection guide for new users.
+- More verification examples for language-specific repositories.
+- Optional GitHub workflow guidance that remains plugin-dependent and clearly labeled.
+
+## Non-Goals
+
+- General prompt collection.
+- Private workflow migration guide beyond the public compatibility notes.
+- Runtime-local state capture.
+- Credentials, private paths, local logs, app state, or machine-specific config.
