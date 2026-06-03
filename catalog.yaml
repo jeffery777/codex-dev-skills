@@ -1,0 +1,85 @@
+# codex-dev-skills catalog
+# Codex-only public catalog. Paths are repository-relative source paths.
+
+name: codex-dev-skills
+version: "0.1.0"
+platforms:
+  - codex
+  - codex-desktop
+
+groups:
+  shared-review-gates:
+    description: Shared review gates, closure triage, safety policies, and reusable orchestration templates.
+    runtime: shared
+    depends_on: []
+    skills:
+      - source: skills/closure-triage
+      - source: skills/code-review-gate
+      - source: skills/docs-review-gate
+      - source: skills/merge-readiness-gate
+      - source: skills/review-artifact-cleanup
+    templates:
+      - source: policies/agent-delegation-policy.md
+      - source: policies/delivery-drift-control-policy.md
+      - source: policies/human-gate-policy.md
+      - source: policies/model-selection-policy.md
+      - source: policies/multi-agent-integration-policy.md
+      - source: policies/project-agent-knowledge-policy.md
+      - source: policies/projectspec-alignment-policy.md
+      - source: policies/reusable-workflow-contract.md
+      - source: policies/review-artifact-policy.md
+      - source: policies/runtime-compatibility-policy.md
+      - source: policies/security-review-escalation-policy.md
+      - source: templates/orchestration/agent-task-brief.template.md
+      - source: templates/orchestration/closure-triage-overlay.template.yaml
+      - source: templates/orchestration/implementation-plan.template.md
+      - source: templates/orchestration/integration-review-report.template.md
+      - source: templates/orchestration/orchestrator-gate-report.template.md
+      - source: templates/orchestration/project-spec.template.md
+
+  codex-review-workflow:
+    description: Routine and deep code, docs, and merge review workflows for Codex.
+    runtime: shared
+    depends_on: [shared-review-gates]
+    skills:
+      - source: skills/code-review
+      - source: skills/code-review-deep
+      - source: skills/docs-review
+      - source: skills/merge-review
+      - source: skills/merge-review-deep
+      - source: skills/review-follow-up-plan
+      - source: skills/review-follow-up-implementation
+      - source: skills/docs-review-follow-up
+      - source: skills/review-follow-up-review
+      - source: skills/review-loop
+    templates:
+      - source: templates/review/code-review-report.template.md
+      - source: templates/review/merge-review-report.template.md
+      - source: templates/review/review-follow-up.template.md
+      - source: workflows/review-workflow.md
+      - source: workflows/merge-readiness-workflow.md
+
+  codex-delivery-workflow:
+    description: Planning, bounded implementation, documentation update, and delegated delivery workflows.
+    runtime: shared
+    depends_on: [shared-review-gates]
+    skills:
+      - source: skills/planning
+      - source: skills/project-delivery
+      - source: skills/implementation-slice
+      - source: skills/docs-update
+    templates:
+      - source: workflows/implementation-workflow.md
+
+  desktop-delivery-workflow:
+    description: Codex Desktop-only delegated delivery and main-agent orchestration workflows.
+    runtime: desktop
+    depends_on: [shared-review-gates, codex-delivery-workflow]
+    skills:
+      - source: skills/desktop-project-delivery
+      - source: skills/desktop-project-orchestrator
+      - source: skills/desktop-spec-plan-gate
+      - source: skills/desktop-implementation-gate
+      - source: skills/desktop-pr-merge-gate
+    templates:
+      - source: workflows/desktop-delivery-workflow.md

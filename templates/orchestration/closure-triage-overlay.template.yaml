@@ -1,0 +1,28 @@
+# Closure triage overlay template.
+# Copy into a target repo only when that repo needs durable project-specific closure rules.
+
+project:
+  name: "<project-name>"
+  source_of_truth:
+    - "AGENTS.md"
+    - "docs/ProjectSpec.md"
+    - "docs/plans/"
+
+closure:
+  accepted_baseline: "<commit-or-artifact>"
+  evidence_root: ".work/review/"
+  status_docs:
+    - "docs/status.md"
+
+candidate_packet:
+  objective: "<smallest-safe-next-step>"
+  in_scope:
+    - "<item>"
+  out_of_scope:
+    - "<item>"
+  required_verification:
+    - "<command>"
+  review_gate: "<code-review-gate | docs-review-gate | merge-readiness-gate | repo-specific gate>"
+  human_gate:
+    required: false
+    reason: "<reason-if-required>"
