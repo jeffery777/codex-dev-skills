@@ -19,6 +19,8 @@ This skill is the shared orchestration layer for Codex CLI and Codex Desktop. It
 - If already operating inside `project-delivery`, select the next phase or slice instead of routing back to `project-delivery`.
 - If source-of-truth or task order is unclear, use `planning`, `closure-triage`, or `task-continuation`.
 - If review evidence is needed, route code or mixed changes to `code-review-gate` and docs-only changes to `docs-review-gate`.
+- If review findings need closure, route fixes through the smallest primitive workflow: `implementation-slice` for code or mixed changes, `docs-update` for docs-only changes, then rerun the relevant review gate.
+- Review closure loops default to 2 rounds unless the user or repo policy sets a different maximum.
 - If the next unit should move to another session or worker, prepare a bounded task brief or next-session prompt.
 - Stop when a human gate is required.
 

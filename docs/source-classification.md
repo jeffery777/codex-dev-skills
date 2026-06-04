@@ -44,12 +44,7 @@ Public outputs:
 - docs-review
 - merge-review
 - merge-review-deep
-- review-follow-up-plan
-- review-follow-up-implementation
-- docs-review-follow-up
-- review-follow-up-review
-- review-loop
-- review workflow examples and report templates
+- orchestrated review closure workflow examples and report templates
 
 ## KEEP_DESKTOP_ONLY
 

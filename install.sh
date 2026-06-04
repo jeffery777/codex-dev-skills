@@ -186,7 +186,7 @@ group_skills() {
     shared-review-gates)
       printf '%s\n' closure-triage task-continuation code-review-gate docs-review-gate merge-readiness-gate review-artifact-cleanup ;;
     codex-review-workflow)
-      printf '%s\n' code-review code-review-deep docs-review merge-review merge-review-deep review-follow-up-plan review-follow-up-implementation docs-review-follow-up review-follow-up-review review-loop ;;
+      printf '%s\n' code-review code-review-deep docs-review merge-review merge-review-deep ;;
     codex-delivery-workflow)
       printf '%s\n' planning project-delivery project-orchestrator implementation-slice docs-update ;;
     desktop-delivery-workflow)
