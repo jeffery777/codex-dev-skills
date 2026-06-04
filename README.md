@@ -6,7 +6,7 @@
 
 `codex-dev-skills` is an OSS maintenance workflow pack for OpenAI Codex CLI and Codex Desktop.
 
-It helps maintainers delegate repeatable software development work to Codex with clear read-before-write behavior, scoped implementation, documentation updates, code review, review follow-up, delivery gates, and merge readiness checks.
+It helps maintainers delegate repeatable software development work to Codex with clear read-before-write behavior, scoped implementation, documentation updates, code review, orchestrated review closure, delivery gates, and merge readiness checks.
 
 This is not a general prompt collection. It is a curated set of public, reusable workflow contracts for open source and team repositories.
 
@@ -86,6 +86,8 @@ Use the smallest entry point that matches the request:
 
 If `project-orchestrator` receives a single clear implementation task, it should route to `implementation-slice` semantics and avoid unnecessary project-level planning.
 
+For automated review closure, let `project-orchestrator` or `project-delivery` compose the primitive shared workflows dynamically. A user or repo policy may set the maximum number of review/fix rounds; the default is 2.
+
 ### Routine Code Review
 
 Use `code-review` when you want read-only feedback on a working tree, branch, or patch:
@@ -97,16 +99,16 @@ Prioritize correctness bugs, regressions, missing tests, and contract risks. Sta
 
 Expected output starts with findings, then questions and re-runnable verification commands.
 
-### Review Closure Loop
+### Orchestrated Review Closure
 
-Use `review-loop` when Codex should implement, review, fix blockers, and re-review until it reaches a human gate:
+Use `project-orchestrator` when Codex should implement, review, fix blockers, and re-review until it reaches a human gate:
 
 ```text
-Use review-loop to implement the requested docs validation improvement.
+Use project-orchestrator to implement the requested docs validation improvement.
 Run at most two review/fix rounds. Stop before commit, push, release, or any external write.
 ```
 
-This is useful for maintainers who want local closure evidence before deciding whether to publish a branch.
+The orchestrator uses the smallest shared primitives that fit the current state: `implementation-slice`, `docs-update`, `code-review-gate`, `docs-review-gate`, and merge-readiness workflows when applicable. This keeps the same closure model usable in Codex CLI and Codex Desktop.
 
 ### Bounded Milestone Slice
 
@@ -175,11 +177,6 @@ CLI fallback: use `project-delivery`, `project-orchestrator`, task briefs, and t
 | `docs-review` | shared | Read-only review for docs-only or docs-dominant changes. |
 | `merge-review` | shared | Routine merge readiness review for base-to-head changes. |
 | `merge-review-deep` | shared | Deep merge readiness gate for high-risk or release-sensitive changes. |
-| `review-follow-up-plan` | shared | Build a read-only plan from review findings and verification gaps. |
-| `review-follow-up-implementation` | shared | Apply scoped code or mixed-diff fixes from review findings. |
-| `docs-review-follow-up` | shared | Apply scoped documentation fixes from docs review findings. |
-| `review-follow-up-review` | shared | Verify whether prior review findings were closed. |
-| `review-loop` | shared | Run implementation, review, follow-up, and re-review until blockers close or a human gate is reached. |
 | `code-review-gate` | shared | Formal code review gate before commit, PR, or merge readiness. |
 | `docs-review-gate` | shared | Formal documentation review gate before commit, PR, or merge readiness. |
 | `merge-readiness-gate` | shared | Formal branch readiness gate after implementation and review evidence exist. |
@@ -299,7 +296,7 @@ This repository includes public software development workflows for:
 - planning and implementation
 - docs updates and docs review
 - code review and deep code review
-- review follow-up and review gates
+- orchestrated review closure and review gates
 - merge readiness gates
 - delegated delivery
 - Codex Desktop orchestration

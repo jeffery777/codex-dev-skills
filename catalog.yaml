@@ -52,11 +52,6 @@ groups:
       - source: skills/docs-review
       - source: skills/merge-review
       - source: skills/merge-review-deep
-      - source: skills/review-follow-up-plan
-      - source: skills/review-follow-up-implementation
-      - source: skills/docs-review-follow-up
-      - source: skills/review-follow-up-review
-      - source: skills/review-loop
     templates:
       - source: templates/review/code-review-report.template.md
       - source: templates/review/merge-review-report.template.md

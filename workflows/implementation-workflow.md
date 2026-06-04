@@ -14,3 +14,5 @@ Use this workflow for a bounded software change.
 8. Report changed files, evidence, skipped checks, and residual risk.
 
 Stop before external writes, destructive actions, broad refactors, or product-semantic decisions that are not already clear.
+
+For review closure loops, use `project-orchestrator` or `project-delivery` to repeat these primitive shared steps within the configured round limit. Do not require a dedicated closure skill.

@@ -11,7 +11,7 @@ Useful project-level artifacts include:
 - Implementation plans that split work into small slices with source of truth, ownership, affected files, review gates, rollback or recovery notes, and open questions.
 - Task manifests and continuation reports that record completed, blocked, ready, and unsafe tasks for bounded multi-step work.
 - Next-session prompts and current task summaries that preserve verified handoff context while requiring the next agent to re-read repository files.
-- Review report templates for code review, docs review, review follow-up, and merge readiness.
+- Review report templates for code review, docs review, review finding disposition, and merge readiness.
 - Policy files for runtime compatibility, destructive actions, delegation, review artifacts, release gates, and merge gates.
 
 The included templates under `templates/orchestration/` and `templates/review/` are starting points for these artifacts.
@@ -24,7 +24,7 @@ Good fits:
 
 - A focused implementation slice with clear expected behavior.
 - Task routing when the user wants Codex to choose whether to plan, implement, review, continue, hand off, or stop.
-- A review and follow-up loop for a small patch.
+- An orchestrated review closure loop for a small patch.
 - One bounded milestone capability, such as an MVP import-validation scope.
 - Continuing a larger bounded task by selecting the next safe unit of work and preparing a prompt for a later session or worker.
 - A docs sync after verified behavior changes.

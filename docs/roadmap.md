@@ -5,7 +5,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 ## v0.1.x: Public Foundation
 
 - Keep the installer, catalog, skills, templates, and README aligned.
-- Improve examples for common maintainer workflows: scoped implementation, code review, docs review, review follow-up, and merge readiness.
+- Improve examples for common maintainer workflows: scoped implementation, code review, docs review, orchestrated review closure, and merge readiness.
 - Add practical troubleshooting notes for install, diff, update, and uninstall flows.
 - Keep validation focused on public hygiene, runtime compatibility labels, and catalog consistency.
 
@@ -26,7 +26,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Example issue triage and review follow-up flows.
+- Example issue triage and orchestrated review closure flows.
 - A compact skill selection guide for new users.
 - More verification examples for language-specific repositories.
 - Desktop-only task delegation that uses a prepared next-session prompt to create a new Codex thread when the runtime supports it.
