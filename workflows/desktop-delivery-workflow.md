@@ -13,4 +13,4 @@ Use this workflow in Codex Desktop when the user delegates a bounded project obj
 7. Main agent prepares PR or merge readiness evidence.
 8. Main agent stops for human approval before external writes or final merge/deploy actions.
 
-CLI fallback: use `project-delivery` with generated task briefs and sequential review gates.
+CLI fallback: use `project-delivery` and `project-orchestrator` with generated task briefs and sequential review gates.

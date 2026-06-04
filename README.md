@@ -75,6 +75,17 @@ Read the existing parser tests first, keep the change scoped, run the smallest r
 
 Codex should inspect repo instructions and current git state, edit only the needed files, run focused verification, inspect the diff, and report residual risk.
 
+### Choosing An Entry Point
+
+Use the smallest entry point that matches the request:
+
+- `implementation-slice` for one clear coding task.
+- `planning` when the next action or DoD needs to be defined before editing.
+- `project-orchestrator` when Codex should classify the task, choose the next safe action, or decide whether to continue, hand off, review, or stop.
+- `project-delivery` when the objective is larger than one task but still bounded.
+
+If `project-orchestrator` receives a single clear implementation task, it should route to `implementation-slice` semantics and avoid unnecessary project-level planning.
+
 ### Routine Code Review
 
 Use `code-review` when you want read-only feedback on a working tree, branch, or patch:
@@ -108,6 +119,17 @@ Read the repo plan and acceptance criteria first, split the work into safe slice
 
 This pattern is useful when a maintainer wants Codex to carry a small capability area forward without granting authority to publish or merge.
 
+### Task Continuation
+
+Use `task-continuation` when a larger bounded task needs the next safe unit of work and a prompt that can be handed to another session or worker:
+
+```text
+Use task-continuation to choose the next smallest safe task from the repo plan and status files.
+Prepare a next-session prompt if continuation should move to another session, but do not claim that a shared skill can open the session itself.
+```
+
+The skill prepares continuation artifacts from durable repository context. Actually opening a new Codex conversation is runtime-specific and requires Desktop delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator.
+
 ### Merge Readiness
 
 Use `merge-readiness-gate` after implementation and review evidence exist:
@@ -128,7 +150,7 @@ Use desktop-project-delivery to prepare this feature for PR readiness.
 Coordinate implementation and review, integrate the output, run verification, and stop for product ambiguity, destructive actions, external writes, or final merge approval.
 ```
 
-CLI fallback: use `project-delivery`, task briefs, and the review gates sequentially.
+CLI fallback: use `project-delivery`, `project-orchestrator`, task briefs, and the review gates sequentially.
 
 ## Runtime Compatibility
 
@@ -145,6 +167,7 @@ CLI fallback: use `project-delivery`, task briefs, and the review gates sequenti
 | --- | --- | --- |
 | `planning` | shared | Produce scoped implementation plans with assumptions, risks, DoD, and verification. |
 | `project-delivery` | shared | Carry a bounded delivery objective through discovery, plan, implementation, review, docs sync, and PR readiness or the next human gate. |
+| `project-orchestrator` | shared | Route bounded work across planning, implementation, review, continuation, handoff, or human gates. |
 | `implementation-slice` | shared | Implement a bounded change after read-only inspection, then verify and inspect the diff. |
 | `docs-update` | shared | Update user or project docs from code, specs, and verified behavior. |
 | `code-review` | shared | Routine read-only review for code or mixed diffs. |
@@ -162,8 +185,8 @@ CLI fallback: use `project-delivery`, task briefs, and the review gates sequenti
 | `merge-readiness-gate` | shared | Formal branch readiness gate after implementation and review evidence exist. |
 | `review-artifact-cleanup` | shared | Dry-run first cleanup workflow for review artifacts. |
 | `closure-triage` | shared | Select the next smallest safe packet from repo policy, project overlays, and current state. |
+| `task-continuation` | shared | Select the next safe task and prepare a next-session prompt or worker brief from durable project context. |
 | `desktop-project-delivery` | desktop | Codex Desktop delivery entrypoint for delegated project work. |
-| `desktop-project-orchestrator` | desktop | Main-agent orchestration building block for Desktop projects. |
 | `desktop-spec-plan-gate` | desktop | Desktop gate for spec, plan, and DoD drafts. |
 | `desktop-implementation-gate` | desktop | Desktop integration gate for worker outputs and review-before-commit. |
 | `desktop-pr-merge-gate` | desktop | Desktop PR and merge readiness gate that summarizes evidence without publishing or merging. |
@@ -175,7 +198,7 @@ CLI fallback: use `project-delivery`, task briefs, and the review gates sequenti
 - `workflows/merge-readiness-workflow.md`
 - `workflows/desktop-delivery-workflow.md`
 
-Shared orchestration templates include task briefs, project specs, implementation plans, closure triage overlays, integration review reports, and orchestrator gate reports.
+Shared orchestration templates include task briefs, task manifests, next-session prompts, current task summaries, project specs, implementation plans, closure triage overlays, task continuation reports, integration review reports, and orchestrator gate reports.
 
 ## Examples
 

@@ -14,6 +14,7 @@ groups:
     depends_on: []
     skills:
       - source: skills/closure-triage
+      - source: skills/task-continuation
       - source: skills/code-review-gate
       - source: skills/docs-review-gate
       - source: skills/merge-readiness-gate
@@ -32,10 +33,14 @@ groups:
       - source: policies/security-review-escalation-policy.md
       - source: templates/orchestration/agent-task-brief.template.md
       - source: templates/orchestration/closure-triage-overlay.template.yaml
+      - source: templates/orchestration/current-task-summary.template.md
       - source: templates/orchestration/implementation-plan.template.md
       - source: templates/orchestration/integration-review-report.template.md
+      - source: templates/orchestration/next-session-prompt.template.md
       - source: templates/orchestration/orchestrator-gate-report.template.md
       - source: templates/orchestration/project-spec.template.md
+      - source: templates/orchestration/task-continuation-report.template.md
+      - source: templates/orchestration/task-manifest.template.yaml
 
   codex-review-workflow:
     description: Routine and deep code, docs, and merge review workflows for Codex.
@@ -66,6 +71,7 @@ groups:
     skills:
       - source: skills/planning
       - source: skills/project-delivery
+      - source: skills/project-orchestrator
       - source: skills/implementation-slice
       - source: skills/docs-update
     templates:
@@ -77,7 +83,6 @@ groups:
     depends_on: [shared-review-gates, codex-delivery-workflow]
     skills:
       - source: skills/desktop-project-delivery
-      - source: skills/desktop-project-orchestrator
       - source: skills/desktop-spec-plan-gate
       - source: skills/desktop-implementation-gate
       - source: skills/desktop-pr-merge-gate

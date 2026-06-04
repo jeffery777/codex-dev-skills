@@ -7,9 +7,9 @@ Use:
 - `planning`
 - `implementation-slice`
 - `project-delivery`
+- `project-orchestrator`
 - `code-review-gate`
 - `merge-readiness-gate`
-- `desktop-project-orchestrator`
 
 Avoid:
 

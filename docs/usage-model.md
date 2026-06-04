@@ -9,6 +9,8 @@ Useful project-level artifacts include:
 - `AGENTS.md` for repo-specific operating rules, verification commands, review expectations, and human gates.
 - Project specs that state objective, users, scope, out-of-scope work, requirements, Definition of Done, risks, human gates, and verification strategy.
 - Implementation plans that split work into small slices with source of truth, ownership, affected files, review gates, rollback or recovery notes, and open questions.
+- Task manifests and continuation reports that record completed, blocked, ready, and unsafe tasks for bounded multi-step work.
+- Next-session prompts and current task summaries that preserve verified handoff context while requiring the next agent to re-read repository files.
 - Review report templates for code review, docs review, review follow-up, and merge readiness.
 - Policy files for runtime compatibility, destructive actions, delegation, review artifacts, release gates, and merge gates.
 
@@ -21,8 +23,10 @@ The workflows can handle more than a single task id when the objective is still 
 Good fits:
 
 - A focused implementation slice with clear expected behavior.
+- Task routing when the user wants Codex to choose whether to plan, implement, review, continue, hand off, or stop.
 - A review and follow-up loop for a small patch.
 - One bounded milestone capability, such as an MVP import-validation scope.
+- Continuing a larger bounded task by selecting the next safe unit of work and preparing a prompt for a later session or worker.
 - A docs sync after verified behavior changes.
 - A merge-readiness check after implementation, verification, and review evidence exist.
 
@@ -43,6 +47,10 @@ The workflows can carry local work to PR readiness, but they intentionally stop 
 - external writes
 - commit, push, release, deploy, or merge
 - material security, privacy, data, migration, payment, or permission risk
+
+Shared workflows can prepare prompts and worker briefs for future work, but actually opening a new Codex conversation is runtime-specific. Use Codex Desktop delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator only when that runtime is available and intentionally selected.
+
+For small or single-task work, prefer the smallest direct skill such as `implementation-slice`, `planning`, or `code-review`. `project-orchestrator` may still be used as a router, but it should downgrade a clear single task to the matching focused workflow instead of forcing a project-level delivery loop.
 
 Review gates provide evidence. They do not replace maintainer approval.
 

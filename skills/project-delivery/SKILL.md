@@ -10,10 +10,12 @@ Runtime compatibility: shared
 
 Use this skill when the user delegates an end-to-end project goal and expects the agent to act as delivery owner until the next real human gate.
 
+For a single clear implementation task, prefer `implementation-slice`. Use `project-delivery` when the objective is larger than one slice but still bounded.
+
 ## Workflow
 
 1. Bootstrap from repo instructions, current git state, plans, specs, docs, status files, and review artifacts.
-2. Confirm the objective is bounded enough to proceed.
+2. Apply `project-orchestrator` routing rules to classify the objective, select the next phase, and decide whether to proceed, hand off, or stop.
 3. Produce or update a plan when the source of truth is incomplete.
 4. Implement in small slices using `implementation-slice` semantics.
 5. Run relevant verification and inspect the diff.

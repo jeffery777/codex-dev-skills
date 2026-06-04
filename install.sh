@@ -184,13 +184,13 @@ group_deps() {
 group_skills() {
   case "$1" in
     shared-review-gates)
-      printf '%s\n' closure-triage code-review-gate docs-review-gate merge-readiness-gate review-artifact-cleanup ;;
+      printf '%s\n' closure-triage task-continuation code-review-gate docs-review-gate merge-readiness-gate review-artifact-cleanup ;;
     codex-review-workflow)
       printf '%s\n' code-review code-review-deep docs-review merge-review merge-review-deep review-follow-up-plan review-follow-up-implementation docs-review-follow-up review-follow-up-review review-loop ;;
     codex-delivery-workflow)
-      printf '%s\n' planning project-delivery implementation-slice docs-update ;;
+      printf '%s\n' planning project-delivery project-orchestrator implementation-slice docs-update ;;
     desktop-delivery-workflow)
-      printf '%s\n' desktop-project-delivery desktop-project-orchestrator desktop-spec-plan-gate desktop-implementation-gate desktop-pr-merge-gate ;;
+      printf '%s\n' desktop-project-delivery desktop-spec-plan-gate desktop-implementation-gate desktop-pr-merge-gate ;;
   esac
 }
 
@@ -211,10 +211,14 @@ group_templates() {
         policies/security-review-escalation-policy.md \
         templates/orchestration/agent-task-brief.template.md \
         templates/orchestration/closure-triage-overlay.template.yaml \
+        templates/orchestration/current-task-summary.template.md \
         templates/orchestration/implementation-plan.template.md \
         templates/orchestration/integration-review-report.template.md \
+        templates/orchestration/next-session-prompt.template.md \
         templates/orchestration/orchestrator-gate-report.template.md \
-        templates/orchestration/project-spec.template.md ;;
+        templates/orchestration/project-spec.template.md \
+        templates/orchestration/task-continuation-report.template.md \
+        templates/orchestration/task-manifest.template.yaml ;;
     codex-review-workflow)
       printf '%s\n' \
         templates/review/code-review-report.template.md \

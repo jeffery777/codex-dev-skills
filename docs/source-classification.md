@@ -36,6 +36,7 @@ Public outputs:
 
 - planning
 - project-delivery
+- project-orchestrator
 - implementation-slice
 - docs-update
 - code-review
@@ -54,12 +55,11 @@ Public outputs:
 
 Source: `packs/review-workflow-codex-desktop/codex/skills/desktop_*`
 
-- Desktop project delivery, Desktop main-agent orchestration, Desktop spec/plan gate, Desktop implementation gate, and Desktop PR/merge gate concepts.
+- Desktop project delivery, Desktop spec/plan gate, Desktop implementation gate, and Desktop PR/merge gate concepts.
 
 Public outputs:
 
 - desktop-project-delivery
-- desktop-project-orchestrator
 - desktop-spec-plan-gate
 - desktop-implementation-gate
 - desktop-pr-merge-gate

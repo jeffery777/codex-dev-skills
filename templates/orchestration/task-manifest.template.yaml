@@ -1,0 +1,37 @@
+# Task manifest template.
+# Copy into a target repo only when a bounded project needs durable task continuation.
+
+project:
+  name: "<project-name>"
+  source_of_truth:
+    - "AGENTS.md"
+    - "docs/ProjectSpec.md"
+    - "docs/plans/"
+
+tasks:
+  - id: "<task-id>"
+    title: "<task-title>"
+    status: "<pending | ready | in_progress | blocked | done | unsafe>"
+    priority: "<high | medium | low>"
+    dependencies:
+      - "<task-id>"
+    risk: "<low | medium | high>"
+    mode_hint: "<continue-current-session | new-session-prompt | delegated-worker-brief | stop-for-human-gate>"
+    objective: "<bounded-objective>"
+    in_scope:
+      - "<item>"
+    out_of_scope:
+      - "<item>"
+    files_to_inspect:
+      - "<path>"
+    files_expected_to_change:
+      - "<path>"
+    dod:
+      - "<done-criterion>"
+    verification:
+      - "<command>"
+    stop_conditions:
+      - "<condition>"
+    human_gate:
+      required: false
+      reason: "<reason-if-required>"
