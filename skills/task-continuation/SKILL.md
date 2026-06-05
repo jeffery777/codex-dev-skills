@@ -41,7 +41,7 @@ Stop instead of preparing executable continuation when there is source-of-truth 
 - Next-session prompt or worker brief, if safe
 - Current task summary, if useful
 - Required source-of-truth files for the next agent to read
-- Verification and review gate
+- Verification, review primitive, and formal gate requirements for the current stage
 - Human gate, if any
 
 ## Templates
