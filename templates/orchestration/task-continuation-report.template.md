@@ -36,7 +36,12 @@
 
 - Verification:
   - `<command>`
-- Review gate: `<code-review-gate | docs-review-gate | merge-readiness-gate | repo-specific gate>`
+- Review primitive:
+  - `<code-review | docs-review | code-review-deep | none>`
+- Formal gate:
+  - `<code-review-gate | docs-review-gate | none>`
+- Formal gate trigger:
+  - `<commit readiness | PR readiness | merge readiness | explicit repo-policy blocking decision | none>`
 - Human gate:
   - Required: `<true | false>`
   - Reason: `<reason-if-required>`
