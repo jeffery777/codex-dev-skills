@@ -330,7 +330,7 @@ This repository includes public software development workflows for:
 - planning and implementation
 - docs updates and docs review
 - code review and deep code review
-- orchestrated review closure and review gates
+- orchestrated review closure and formal review gates
 - merge readiness gates
 - delegated delivery
 - Codex Desktop orchestration
