@@ -20,7 +20,6 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Desktop-only task delegation that uses a prepared next-session prompt to create a new Codex thread when the runtime supports it.
 - Optional GitHub workflow guidance that remains plugin-dependent and clearly labeled.
 
 ## Non-Goals
