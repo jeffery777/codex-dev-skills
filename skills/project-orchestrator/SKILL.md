@@ -18,8 +18,9 @@ This skill is the shared orchestration layer for Codex CLI and Codex Desktop. It
 - If the user delegates a larger bounded delivery objective, select `project-delivery` as the outer workflow.
 - If already operating inside `project-delivery`, select the next phase or slice instead of routing back to `project-delivery`.
 - If source-of-truth or task order is unclear, use `planning`, `closure-triage`, or `task-continuation`.
-- If review evidence is needed, route code or mixed changes to `code-review-gate` and docs-only changes to `docs-review-gate`.
-- If review findings need closure, route fixes through the smallest primitive workflow: `implementation-slice` for code or mixed changes, `docs-update` for docs-only changes, then rerun the relevant review gate.
+- If ordinary review evidence is needed, route code or mixed changes to `code-review`, high-risk code or mixed changes to `code-review-deep`, and docs-only or docs-dominant changes to `docs-review`.
+- If a formal blocking decision is required for commit readiness, PR readiness, merge readiness, or repo policy, route through `code-review-gate` or `docs-review-gate`.
+- If review findings need closure, route fixes through the smallest primitive workflow: `implementation-slice` for code or mixed changes, `docs-update` for docs-only changes, then rerun the relevant review primitive or formal gate for the current stage.
 - Review closure loops default to 2 rounds unless the user or repo policy sets a different maximum.
 - If the next unit should move to another session or worker, prepare a bounded task brief or next-session prompt.
 - Stop when a human gate is required.
@@ -31,7 +32,7 @@ This skill is the shared orchestration layer for Codex CLI and Codex Desktop. It
 3. Select the smallest safe next action and the appropriate skill or workflow.
 4. Choose execution mode: current session, sequential CLI handoff, Desktop worker delegation, or stop for human decision.
 5. Integrate or inspect results before advancing.
-6. Run relevant verification and review gates.
+6. Run relevant verification and the review primitive or formal gate that matches the current stage.
 7. Prepare continuation or readiness evidence when useful.
 
 ## Output
@@ -40,6 +41,6 @@ This skill is the shared orchestration layer for Codex CLI and Codex Desktop. It
 - Selected next action
 - Execution mode
 - Skill or workflow routed to
-- Verification and review gate
+- Verification and review or gate result
 - Handoff or continuation prompt, if useful
 - Human gate, if any
