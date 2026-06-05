@@ -6,7 +6,6 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 - Keep the installer, catalog, skills, templates, and README aligned.
 - Improve examples for common maintainer workflows: scoped implementation, code review, docs review, orchestrated review closure, and merge readiness.
-- Add practical troubleshooting notes for install, diff, update, and uninstall flows.
 - Keep validation focused on public hygiene, runtime compatibility labels, and catalog consistency.
 
 ## v0.2.x: More Maintainer Workflows
