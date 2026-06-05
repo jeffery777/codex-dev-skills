@@ -34,6 +34,35 @@ Use formal gates only when the workflow needs a blocking readiness decision:
 
 Formal gates are evidence and decision layers. They do not replace routine review primitives for every review pass.
 
+## Routine Versus Deep Review
+
+Use routine review when the likely failure modes are local to the changed files and can be evaluated from the ordinary diff, nearby tests, and repo instructions.
+
+Use deep review when the change has material blast radius, hidden failure modes, or evidence that needs to be challenged instead of accepted at face value.
+
+| Review need | Routine choice | Deep choice |
+| --- | --- | --- |
+| Working-tree or patch review | `code-review` | `code-review-deep` |
+| Base-to-head merge quality review | `merge-review` | `merge-review-deep` |
+| Docs-only or docs-dominant review | `docs-review` | Usually stay with `docs-review`; escalate only if the docs encode high-risk operational, security, migration, release, or compliance guidance. |
+
+Routine review is usually enough for:
+
+- small parser, UI, docs, or configuration fixes with narrow ownership;
+- changes covered by focused tests or clear manual verification;
+- non-release docs updates that do not change public contracts or operational instructions;
+- follow-up fixes where prior findings are local and directly verifiable.
+
+Deep review is appropriate when the diff touches or depends on:
+
+- credentials, permissions, identity, tenant boundaries, sensitive data, payments, or billing;
+- migrations, persistent data, rollback paths, deployment, infrastructure, or release readiness;
+- dependency supply chain, packaging, file upload, parsing, external APIs, cryptography, or randomness;
+- cross-module contracts, concurrency, idempotency, observability, or failure handling;
+- stale review artifacts, summarized evidence, or prior blocker closure that needs source-level re-checking.
+
+When unsure, start with routine review and escalate only the risky surface. For example, a docs-only README link fix should use `docs-review`; a release guide that changes rollback instructions may still need deeper scrutiny because the operational consequence is larger than the text diff.
+
 ## Focused Work Or Delivery Work
 
 Use focused skills when the next action is already clear:
