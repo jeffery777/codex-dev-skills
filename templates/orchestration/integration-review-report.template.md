@@ -12,7 +12,14 @@
 
 ## Verification
 
-## Review Gate
+## Review Evidence
+
+- Review primitives run:
+  - `<code-review | docs-review | code-review-deep | none>`
+- Formal gates run:
+  - `<code-review-gate | docs-review-gate | none>`
+- Formal gate purpose:
+  - `<commit readiness | PR readiness | merge readiness | explicit repo-policy blocking decision | none>`
 
 ## Residual Risk
 
