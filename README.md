@@ -128,7 +128,7 @@ Use project-orchestrator to implement the requested docs validation improvement.
 Run at most two review/fix rounds. Stop before commit, push, release, or any external write.
 ```
 
-The orchestrator uses the smallest shared primitives and gate adapters that fit the current state: `implementation-slice`, `docs-update`, `code-review`, `docs-review`, `code-review-gate`, `docs-review-gate`, and merge-readiness workflows when applicable. This keeps the same closure model usable in Codex CLI and Codex Desktop.
+The orchestrator uses the smallest shared primitives that fit the current state: `implementation-slice`, `docs-update`, `code-review`, `code-review-deep`, `docs-review`, and merge-readiness workflows when applicable. It uses `code-review-gate` or `docs-review-gate` only for formal commit readiness, PR readiness, merge readiness, or repo-policy blocking decisions. This keeps the same closure model usable in Codex CLI and Codex Desktop.
 
 ### Bounded Milestone Slice
 
@@ -136,7 +136,7 @@ Use `project-delivery` when the objective is larger than a single task but still
 
 ```text
 Use project-delivery to advance the MVP1 import-validation scope to PR readiness.
-Read the repo plan and acceptance criteria first, split the work into safe slices, update docs if behavior changes, run review gates, and stop before commit, push, or release.
+Read the repo plan and acceptance criteria first, split the work into safe slices, update docs if behavior changes, run review primitives and required formal gates, and stop before commit, push, or release.
 ```
 
 This pattern is useful when a maintainer wants Codex to carry a small capability area forward without granting authority to publish or merge.
@@ -186,7 +186,7 @@ Use desktop-project-delivery to prepare this feature for PR readiness.
 Coordinate implementation and review, integrate the output, run verification, and stop for product ambiguity, destructive actions, external writes, or final merge approval.
 ```
 
-CLI fallback: use `project-delivery`, `project-orchestrator`, task briefs, and the review gates sequentially.
+CLI fallback: use `project-delivery`, `project-orchestrator`, task briefs, review primitives, and formal gates only at commit readiness, PR readiness, merge readiness, or explicit repo-policy gates.
 
 ## Runtime Compatibility
 
@@ -219,7 +219,7 @@ CLI fallback: use `project-delivery`, `project-orchestrator`, task briefs, and t
 | `task-continuation` | shared | Select the next safe task and prepare a next-session prompt or worker brief from durable project context. |
 | `desktop-project-delivery` | desktop | Codex Desktop delivery entrypoint for delegated project work. |
 | `desktop-spec-plan-gate` | desktop | Desktop gate for spec, plan, and DoD drafts. |
-| `desktop-implementation-gate` | desktop | Desktop integration gate for worker outputs and review-before-commit. |
+| `desktop-implementation-gate` | desktop | Desktop formal integration gate for worker outputs before commit readiness. |
 | `desktop-pr-merge-gate` | desktop | Desktop PR and merge readiness gate that summarizes evidence without publishing or merging. |
 
 ## Workflows

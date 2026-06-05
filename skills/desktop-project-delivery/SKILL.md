@@ -12,15 +12,16 @@ Use this skill in Codex Desktop when the user delegates a bounded delivery objec
 
 ## CLI Fallback
 
-Use `project-delivery` and `project-orchestrator` with generated task briefs and separate implementation/review passes.
+Use `project-delivery` and `project-orchestrator` with generated task briefs and separate implementation/review passes. Use `code-review`, `code-review-deep`, or `docs-review` for ordinary integrated output review evidence; use formal gate adapters only for commit readiness, PR readiness, merge readiness, or explicit repo-policy blocking decisions.
 
 ## Workflow
 
 1. Main agent bootstraps from durable repo artifacts and git state.
 2. Main agent uses `project-orchestrator` to define scope, ownership, phase plan, verification, and human gates.
 3. Workers receive bounded task briefs and must not commit, publish, merge, or perform destructive actions.
-4. Main agent integrates worker output, checks ownership, runs verification, and routes review gates.
-5. Main agent reports readiness or stops for human decision.
+4. Main agent integrates worker output, checks ownership, runs verification, and collects review evidence through `code-review`, `code-review-deep` for high-risk code or mixed changes, or `docs-review`.
+5. Main agent runs `desktop-implementation-gate` only for formal Desktop integration before commit readiness, and runs `code-review-gate` or `docs-review-gate` only for formal commit readiness, PR readiness, merge readiness, or repo-policy blocking decisions.
+6. Main agent reports readiness or stops for human decision.
 
 ## Output
 
@@ -28,5 +29,6 @@ Use `project-delivery` and `project-orchestrator` with generated task briefs and
 - Worker ownership summary
 - Integrated changes
 - Verification evidence
-- Review gate results
+- Review evidence
+- Formal gate results, when a readiness or repo-policy gate was run
 - Next human gate
