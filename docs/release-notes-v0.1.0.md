@@ -5,7 +5,7 @@ Release date: 2026-06-03
 ## Highlights
 
 - Initial public release of Codex-focused software development skills and workflows.
-- Shared workflows for planning, scoped implementation, documentation updates, code review, docs review, orchestrated review closure, review gates, and merge readiness.
+- Shared workflows for planning, scoped implementation, documentation updates, code review, docs review, orchestrated review closure, formal review gates, and merge readiness.
 - Codex Desktop delivery and orchestration workflows with Desktop-only behavior clearly labeled.
 - Public installer groups for shared review gates, CLI-compatible review workflows, CLI-compatible delivery workflows, and Desktop delivery workflows.
 - Repository hygiene validation through `./scripts/validate-repo.sh`.

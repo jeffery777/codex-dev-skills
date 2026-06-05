@@ -30,7 +30,7 @@ The README skill table must include the same value.
 
 ## Fallbacks
 
-Desktop-only workflows should provide a CLI fallback such as generated task briefs, separate CLI sessions, or manual review gates.
+Desktop-only workflows should provide a CLI fallback such as generated task briefs, separate CLI sessions, or manual review steps with `code-review`, `docs-review`, or high-risk `code-review-deep`. Use formal `code-review-gate` or `docs-review-gate` only for commit readiness, PR readiness, merge readiness, or an explicit repo-policy blocking decision.
 
 CLI-only workflows should provide a Desktop fallback such as running the same read-plan-implement-verify sequence in a Desktop thread, with Desktop-only actions clearly omitted.
 

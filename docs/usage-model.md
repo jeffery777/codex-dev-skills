@@ -8,7 +8,7 @@ Useful project-level artifacts include:
 
 - `AGENTS.md` for repo-specific operating rules, verification commands, review expectations, and human gates.
 - Project specs that state objective, users, scope, out-of-scope work, requirements, Definition of Done, risks, human gates, and verification strategy.
-- Implementation plans that split work into small slices with source of truth, ownership, affected files, review gates, rollback or recovery notes, and open questions.
+- Implementation plans that split work into small slices with source of truth, ownership, affected files, review primitives, formal gate triggers, rollback or recovery notes, and open questions.
 - Task manifests and continuation reports that record completed, blocked, ready, and unsafe tasks for bounded multi-step work.
 - Next-session prompts and current task summaries that preserve verified handoff context while requiring the next agent to re-read repository files.
 - Review report templates for code review, docs review, review finding disposition, and merge readiness.
@@ -52,7 +52,7 @@ Shared workflows can prepare prompts and worker briefs for future work, but actu
 
 For small or single-task work, prefer the smallest direct skill such as `implementation-slice`, `planning`, or `code-review`. `project-orchestrator` may still be used as a router, but it should downgrade a clear single task to the matching focused workflow instead of forcing a project-level delivery loop.
 
-Review gates provide evidence. They do not replace maintainer approval.
+Review primitives such as `code-review`, `docs-review`, and high-risk `code-review-deep` provide ordinary review evidence. Formal `code-review-gate` and `docs-review-gate` runs are reserved for commit readiness, PR readiness, merge readiness, or explicit repo-policy blocking decisions, and they do not replace maintainer approval.
 
 ## Global Rules And Repo Rules
 

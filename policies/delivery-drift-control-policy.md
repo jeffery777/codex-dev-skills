@@ -9,7 +9,7 @@ Re-read durable project artifacts:
 - at the start of each phase
 - after context compaction or resume
 - after branch, base, or review scope changes
-- before review gates
+- before switching from ordinary review primitives to formal review gates
 - before commit, PR readiness, merge readiness, or external writes
 
 ## Durable Sources
