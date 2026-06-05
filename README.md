@@ -189,7 +189,7 @@ Use desktop-project-delivery to prepare this feature for PR readiness.
 Coordinate implementation and review, integrate the output, run verification, and stop for product ambiguity, destructive actions, external writes, or final merge approval.
 ```
 
-CLI fallback: use `project-delivery`, `project-orchestrator`, task briefs, review primitives, and formal gates only at commit readiness, PR readiness, merge readiness, or explicit repo-policy gates.
+CLI fallback: use `project-delivery`, `project-orchestrator`, task briefs or next-session prompts, sequential review primitives, and formal gates only at commit readiness, PR readiness, merge readiness, or explicit repo-policy gates. See [docs/runtime-compatibility.md](docs/runtime-compatibility.md) for the Desktop-to-CLI fallback mapping.
 
 ## Runtime Compatibility
 

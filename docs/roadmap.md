@@ -9,7 +9,6 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## v0.2.x: More Maintainer Workflows
 
-- Clarify how Desktop orchestration maps back to CLI-compatible fallback steps.
 - Improve task continuation examples for selecting the next safe task and preparing runtime-specific session or worker handoff prompts.
 - Improve release readiness guidance for maintainers preparing tags, release notes, and PRs.
 
