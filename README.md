@@ -255,6 +255,8 @@ Use the Codex-only installer:
 
 `./install.sh install --all` installs every group, including Desktop-only workflows. Use it only when you want the Desktop group installed too.
 
+For practical installer troubleshooting across install, diff, update, and uninstall flows, see [docs/troubleshooting.md](docs/troubleshooting.md).
+
 Install only shared review gates:
 
 ```bash
