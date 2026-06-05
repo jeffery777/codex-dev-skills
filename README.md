@@ -239,6 +239,7 @@ Shared orchestration templates include task briefs, task manifests, next-session
 - [Code review](examples/code-review.md)
 - [Docs review](examples/docs-review.md)
 - [Orchestrated review closure](examples/orchestrated-review-closure.md)
+- [Multi-step maintenance](examples/multi-step-maintenance.md)
 - [Merge review and readiness](examples/merge-review.md)
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
