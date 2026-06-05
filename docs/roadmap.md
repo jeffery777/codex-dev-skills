@@ -9,7 +9,6 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## v0.2.x: More Maintainer Workflows
 
-- Add richer examples for multi-step maintenance tasks that stop at a human gate before external writes.
 - Expand documentation around choosing routine versus deep review workflows.
 - Clarify how Desktop orchestration maps back to CLI-compatible fallback steps.
 - Improve task continuation examples for selecting the next safe task and preparing runtime-specific session or worker handoff prompts.
@@ -24,7 +23,6 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Example issue triage and orchestrated review closure flows.
 - More verification examples for language-specific repositories.
 - Desktop-only task delegation that uses a prepared next-session prompt to create a new Codex thread when the runtime supports it.
 - Optional GitHub workflow guidance that remains plugin-dependent and clearly labeled.
