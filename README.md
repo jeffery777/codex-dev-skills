@@ -25,18 +25,19 @@ Inspect available install groups:
 ./install.sh list
 ```
 
-Install the shared review gates:
-
-```bash
-./install.sh install shared-review-gates
-```
-
-Install CLI-compatible implementation, review, and delivery workflows:
+Install CLI-compatible review workflows to get the normal `code-review` entry point:
 
 ```bash
 ./install.sh install codex-review-workflow
+```
+
+Install CLI-compatible implementation and delivery workflows when you want Codex to plan, implement, and route formal gates:
+
+```bash
 ./install.sh install codex-delivery-workflow
 ```
+
+`codex-review-workflow` and `codex-delivery-workflow` install their shared review gate dependencies automatically. Install `shared-review-gates` directly only when you want the formal gate adapters and orchestration templates without the review primitives.
 
 Use the installed skills in Codex by name, for example:
 
@@ -81,6 +82,7 @@ Use the smallest entry point that matches the request:
 
 - `implementation-slice` for one clear coding task.
 - `planning` when the next action or DoD needs to be defined before editing.
+- `code-review` for ordinary read-only review of code or mixed diffs.
 - `project-orchestrator` when Codex should classify the task, choose the next safe action, or decide whether to continue, hand off, review, or stop.
 - `project-delivery` when the objective is larger than one task but still bounded.
 
@@ -90,7 +92,7 @@ For automated review closure, let `project-orchestrator` or `project-delivery` c
 
 ### Routine Code Review
 
-Use `code-review` when you want read-only feedback on a working tree, branch, or patch:
+Use `code-review` when you want read-only feedback on a working tree, branch, or patch. This is the normal user-facing entry point for code review:
 
 ```text
 Use code-review on the current working tree.
@@ -98,6 +100,9 @@ Prioritize correctness bugs, regressions, missing tests, and contract risks. Sta
 ```
 
 Expected output starts with findings, then questions and re-runnable verification commands.
+
+Use `code-review-gate` only when a workflow needs a formal gate before commit readiness, PR readiness, or merge readiness.
+The gate is a thin adapter: it routes routine diffs to `code-review`, escalates high-risk diffs to `code-review-deep`, records evidence, and blocks on unresolved MUST-FIX findings.
 
 ### Orchestrated Review Closure
 
@@ -108,7 +113,7 @@ Use project-orchestrator to implement the requested docs validation improvement.
 Run at most two review/fix rounds. Stop before commit, push, release, or any external write.
 ```
 
-The orchestrator uses the smallest shared primitives that fit the current state: `implementation-slice`, `docs-update`, `code-review-gate`, `docs-review-gate`, and merge-readiness workflows when applicable. This keeps the same closure model usable in Codex CLI and Codex Desktop.
+The orchestrator uses the smallest shared primitives and gate adapters that fit the current state: `implementation-slice`, `docs-update`, `code-review`, `docs-review`, `code-review-gate`, `docs-review-gate`, and merge-readiness workflows when applicable. This keeps the same closure model usable in Codex CLI and Codex Desktop.
 
 ### Bounded Milestone Slice
 
@@ -172,12 +177,12 @@ CLI fallback: use `project-delivery`, `project-orchestrator`, task briefs, and t
 | `project-orchestrator` | shared | Route bounded work across planning, implementation, review, continuation, handoff, or human gates. |
 | `implementation-slice` | shared | Implement a bounded change after read-only inspection, then verify and inspect the diff. |
 | `docs-update` | shared | Update user or project docs from code, specs, and verified behavior. |
-| `code-review` | shared | Routine read-only review for code or mixed diffs. |
+| `code-review` | shared | Normal user-facing entry point for routine read-only review of code or mixed diffs. |
 | `code-review-deep` | shared | Higher-scrutiny review for security, packaging, data, migration, or cross-module risk. |
 | `docs-review` | shared | Read-only review for docs-only or docs-dominant changes. |
 | `merge-review` | shared | Routine merge readiness review for base-to-head changes. |
 | `merge-review-deep` | shared | Deep merge readiness gate for high-risk or release-sensitive changes. |
-| `code-review-gate` | shared | Formal code review gate before commit, PR, or merge readiness. |
+| `code-review-gate` | shared | Thin formal gate adapter that routes to `code-review` or `code-review-deep` before commit, PR, or merge readiness. |
 | `docs-review-gate` | shared | Formal documentation review gate before commit, PR, or merge readiness. |
 | `merge-readiness-gate` | shared | Formal branch readiness gate after implementation and review evidence exist. |
 | `review-artifact-cleanup` | shared | Dry-run first cleanup workflow for review artifacts. |

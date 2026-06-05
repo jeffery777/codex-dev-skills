@@ -8,7 +8,9 @@ Runtime compatibility: shared
 
 ## Purpose
 
-Use this skill when code or mixed changes need a formal review gate.
+Use this skill when code or mixed changes need a formal review gate before commit readiness, PR readiness, or merge readiness.
+
+For ordinary user-requested code review, use `code-review`. This skill is a thin gate adapter: it routes to the appropriate review primitive, records evidence according to repo policy, and decides whether unresolved MUST-FIX findings block the gate.
 
 ## Workflow
 
