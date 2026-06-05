@@ -1,0 +1,104 @@
+# Release Readiness
+
+Use this guide when maintainers prepare tags, release notes, and PR readiness for this workflow pack or for a target repository using these skills.
+
+This guide describes readiness checks only. It does not authorize publishing, tagging, pushing, merging, or posting platform comments.
+
+## When To Use
+
+Use release readiness guidance when a bounded change is close to publication and the maintainer needs Codex to organize evidence before a human gate:
+
+- a release notes draft needs to match the current repository state;
+- a tag or version candidate needs local verification before creation;
+- a PR should be checked for docs, installer, catalog, and workflow alignment;
+- a branch needs merge or release readiness evidence summarized for maintainers.
+
+## Read First
+
+Before preparing release readiness evidence, read the durable source of truth:
+
+- `AGENTS.md`
+- `README.md`
+- `docs/roadmap.md`
+- `docs/release-notes-v0.1.0.md` or the current release notes draft
+- `catalog.yaml`
+- `install.sh`
+- relevant `skills/`, `templates/`, `workflows/`, and `policies/` files for the changed scope
+
+Also inspect git state:
+
+```bash
+git status --short --branch
+git log --oneline -10
+```
+
+## Readiness Checklist
+
+Check these items before asking a maintainer to approve external writes:
+
+- Scope is clear: changed files match the release or PR objective.
+- Roadmap is current: completed public roadmap items are removed or updated without unrelated rewriting.
+- Release notes are current: highlights, included groups, safety notes, and verification commands match the repository.
+- Installer state is aligned: `catalog.yaml`, `install.sh`, skills, templates, workflows, and README install groups agree.
+- Runtime compatibility is labeled: shared, CLI, Desktop, and plugin-dependent behavior is not blurred.
+- Human gates are explicit: commit, push, tag, publish, merge, release, deploy, and platform comments require exact approval.
+- Review evidence exists: ordinary review primitives or formal gates were run at the stage that needs them.
+- Verification is re-runnable: commands and skipped checks are listed with enough context for another maintainer.
+
+## Suggested Verification
+
+Run the repository hygiene check:
+
+```bash
+./scripts/validate-repo.sh
+```
+
+For docs-only release readiness work, also run:
+
+```bash
+git diff --check
+```
+
+For release-sensitive branch readiness, use the review primitive that matches risk:
+
+```text
+Use merge-review for main..HEAD.
+Use merge-review-deep for release-sensitive main..HEAD.
+Use merge-readiness-gate only when a formal readiness decision is required before PR handoff, merge readiness, or final human approval.
+```
+
+## Release Notes Review
+
+When updating release notes, verify each claim against repository files:
+
+- skill group names match `catalog.yaml` and installer behavior;
+- highlighted workflows exist under `skills/`, `workflows/`, `templates/`, or `policies/`;
+- safety claims match `AGENTS.md`, `docs/usage-model.md`, and `policies/human-gate-policy.md`;
+- verification commands are current and runnable from the repository root;
+- no private paths, credentials, local runtime state, logs, caches, or machine-specific config are included.
+
+## Tag And Publish Gate
+
+Codex may prepare tag or release readiness evidence, but it should stop before creating tags or publishing releases unless the maintainer explicitly authorizes the exact action.
+
+Before tag or release publication, report:
+
+- target branch and HEAD SHA;
+- proposed tag or release name;
+- release notes path and summary;
+- verification commands run and results;
+- review or gate evidence used;
+- skipped checks and residual risk;
+- whether the action is reversible or requires manual recovery.
+
+## PR Readiness Summary
+
+A release or PR readiness handoff should include:
+
+- changed files and why they are in scope;
+- roadmap or release note updates;
+- validation and review evidence;
+- unresolved questions or skipped checks;
+- human gate required for commit, push, PR creation, merge, tag, or release publication.
+
+Stop and ask before any external write if the target, permissions, release version, tag name, source of truth, or verification evidence is unclear.
