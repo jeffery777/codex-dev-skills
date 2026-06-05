@@ -1,6 +1,6 @@
 # Living Roadmap
 
-This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves from real project maintenance needs: add or revise skills when repeated work proves that a workflow, policy, template, or review gate should be reusable.
+This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves from real project maintenance needs: add or revise skills when repeated work proves that a workflow, policy, template, review primitive, or formal gate adapter should be reusable.
 
 ## v0.1.x: Public Foundation
 
