@@ -1,5 +1,5 @@
 ---
-description: Deep merge readiness gate for high-risk, release-sensitive, or policy-required changes.
+description: Higher-scrutiny merge review for high-risk, release-sensitive, or policy-required changes.
 ---
 
 # merge-review-deep
@@ -8,7 +8,9 @@ Runtime compatibility: shared
 
 ## Purpose
 
-Use this skill for final or high-risk merge readiness where routine review is insufficient.
+Use this skill for high-risk, release-sensitive, or policy-required merge review where routine `merge-review` is insufficient.
+
+This is a deeper review primitive, not the formal branch readiness gate. Use `merge-readiness-gate` when a workflow must summarize evidence into a branch readiness decision before PR handoff, merge readiness, or final human approval.
 
 ## Additional Focus
 

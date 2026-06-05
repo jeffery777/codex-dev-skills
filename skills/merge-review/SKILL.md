@@ -1,5 +1,5 @@
 ---
-description: Routine merge readiness review for base-to-head changes.
+description: Normal user-facing entry point for base-to-head merge quality and DoD review.
 ---
 
 # merge-review
@@ -8,7 +8,9 @@ Runtime compatibility: shared
 
 ## Purpose
 
-Use this skill to decide whether a branch appears ready for PR or merge review from a quality and DoD perspective.
+Use this skill for ordinary base-to-head merge quality and DoD review.
+
+This is the normal user-facing merge review entry point. It reports readiness evidence and residual risk, but it is not a formal branch readiness gate and does not authorize merge.
 
 ## Workflow
 
