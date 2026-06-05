@@ -81,6 +81,8 @@ Codex should inspect repo instructions and current git state, edit only the need
 
 ### Choosing An Entry Point
 
+For a compact first-time decision guide, see [docs/skill-selection-guide.md](docs/skill-selection-guide.md).
+
 Use the smallest entry point that matches the request:
 
 - `implementation-slice` for one clear coding task.
