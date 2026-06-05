@@ -28,7 +28,7 @@ Good fits:
 - One bounded milestone capability, such as an MVP import-validation scope.
 - Continuing a larger bounded task by selecting the next safe unit of work and preparing a prompt for a later session or worker.
 - A docs sync after verified behavior changes.
-- A merge-readiness check after implementation, verification, and review evidence exist.
+- A normal merge review or formal branch readiness gate after implementation, verification, and review evidence exist.
 
 Poor fits without more human direction:
 
