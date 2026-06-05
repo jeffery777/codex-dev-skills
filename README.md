@@ -332,6 +332,8 @@ Run the repository hygiene check before proposing a release or PR:
 
 This validates catalog consistency, required runtime labels, symlink safety, and public hygiene checks for excluded private or legacy terms.
 
+For tag, release notes, and PR readiness checks, see [docs/release-readiness.md](docs/release-readiness.md).
+
 ## Included Scope
 
 This repository includes public software development workflows for:

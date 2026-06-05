@@ -9,7 +9,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## v0.2.x: More Maintainer Workflows
 
-- Improve release readiness guidance for maintainers preparing tags, release notes, and PRs.
+- No active roadmap items.
 
 ## Maintenance Approach
 
