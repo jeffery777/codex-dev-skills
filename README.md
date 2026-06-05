@@ -235,10 +235,12 @@ Shared orchestration templates include task briefs, task manifests, next-session
 
 ## Examples
 
-- `examples/basic-implementation.md`
-- `examples/code-review.md`
-- `examples/merge-review.md`
-- `examples/desktop-project-delivery.md`
+- [Basic implementation](examples/basic-implementation.md)
+- [Code review](examples/code-review.md)
+- [Docs review](examples/docs-review.md)
+- [Orchestrated review closure](examples/orchestrated-review-closure.md)
+- [Merge review and readiness](examples/merge-review.md)
+- [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap and `docs/release-notes-v0.1.0.md` for draft v0.1.0 release notes.
 

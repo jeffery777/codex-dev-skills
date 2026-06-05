@@ -5,7 +5,6 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 ## v0.1.x: Public Foundation
 
 - Keep the installer, catalog, skills, templates, and README aligned.
-- Improve examples for common maintainer workflows: scoped implementation, code review, docs review, orchestrated review closure, and merge readiness.
 - Keep validation focused on public hygiene, runtime compatibility labels, and catalog consistency.
 
 ## v0.2.x: More Maintainer Workflows

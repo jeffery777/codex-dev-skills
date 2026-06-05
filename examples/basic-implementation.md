@@ -3,7 +3,8 @@
 Use `implementation-slice` when the user asks for a focused change:
 
 ```text
-Use implementation-slice to add input validation for this parser. Keep the change scoped and run the parser tests.
+Use implementation-slice to add input validation for this parser.
+Keep the change scoped, run the parser tests, inspect the diff, and do not commit or push.
 ```
 
 Expected flow:
@@ -13,3 +14,4 @@ Expected flow:
 3. Implement the smallest change.
 4. Run targeted tests.
 5. Inspect diff and report evidence.
+6. Stop before commit, push, release, merge, or any external write unless the user explicitly authorizes it.
