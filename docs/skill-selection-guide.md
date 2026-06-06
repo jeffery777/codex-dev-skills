@@ -85,7 +85,7 @@ Choose `desktop-thread-delegation` only when the active runtime is Codex Desktop
 
 The CLI fallback is a paste-ready prompt, task brief, continuation prompt, or sequential execution path. Do not state or imply that Codex CLI can open, fork, continue, or message Desktop threads unless a documented or configured thread capability is actually available.
 
-This guidance is limited to accepted public repository policy, runtime compatibility guidance, maintained examples, and the non-state-changing Desktop runtime wrapper V1 planner and capability metadata normalization helpers. The implemented surface is limited to those helpers; Desktop runtime integration, runtime-call adapters, daemons, MCP servers, app-server clients, and state-changing Desktop thread-tool paths remain outside the implemented scope and require separate review and human approval.
+This guidance is limited to accepted public repository policy, runtime compatibility guidance, maintained examples, and the non-state-changing Desktop runtime wrapper V1 planner, capability metadata normalization helper, and contract comparison helper. The implemented surface is limited to those helpers; Desktop runtime integration, runtime-call adapters, daemons, MCP servers, app-server clients, and state-changing Desktop thread-tool paths remain outside the implemented scope and require separate review and human approval.
 
 Before relying on any runtime thread tool or documented API, record contract evidence consistent with [Runtime Compatibility](runtime-compatibility.md) and [Desktop Runtime Adapter V2 Boundary](runtime-adapter-v2.md):
 
@@ -98,6 +98,8 @@ Before relying on any runtime thread tool or documented API, record contract evi
 - workflow, wrapper, or adapter mapping to the underlying contract, including mappings where the underlying version is unavailable.
 
 For read-only capability discovery, use only caller-supplied documented metadata such as an active tool list excerpt, connector metadata, official documentation, or runtime-reported schema. Discovery evidence should normalize action name, read-only or state-changing classification, required request fields, minimum response fields, capability source, contract version or `version unavailable`, `last_verified`, and helper version. The V1 planner can consume that normalized output as `capability_evidence`; if the target capability is missing, unavailable, mismatched, unclear, or points at forbidden Desktop runtime sources, it must return fallback or stopped evidence instead of guessing.
+
+Before relying on a runtime, connector, schema, or documentation change, use the V1 contract comparison helper to compare old wrapper contract evidence with newer normalized capability evidence. The helper returns `compatible` only when the tool/API name, classification, required request fields, and minimum response fields still match; it returns `fallback` for missing or unavailable capability and `stopped` for changed or unsafe evidence. This re-check is evidence only and does not authorize or call Desktop thread tools, including state-changing `create_thread`, `fork_thread`, or `send_message_to_thread` paths.
 
 After a runtime, connector, schema, or documentation change, re-compare the old and new contract before using the thread action. Pay particular attention to required parameters, response shape, error shape, permission or authentication changes, and renamed, removed, or newly state-changing operations.
 

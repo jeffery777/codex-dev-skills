@@ -207,6 +207,47 @@ The planner may consume that normalized discovery output as caller-supplied `cap
 
 If the target action is missing from `capability_evidence`, the planner returns a CLI-compatible fallback. If the classification is mismatched, the request or response shape is unclear, or the evidence points at forbidden Desktop runtime sources, the planner stops.
 
+## Minimal Contract Comparison Evidence
+
+Before relying on a runtime, connector, schema, or documentation change, compare the old wrapper contract evidence with the newer normalized capability evidence. This example is evidence only; it does not authorize or call a Desktop thread tool.
+
+```json
+{
+  "requested_action": "compare-runtime-contract-evidence",
+  "target_action": "read-thread",
+  "old_contract": {
+    "action": "read-thread",
+    "tool_or_api": "read_thread",
+    "classification": "read-only",
+    "required_request_fields": ["thread_id"],
+    "minimum_response_fields": ["status", "thread_id"],
+    "capability_source": "active tool list",
+    "contract_version": "version unavailable",
+    "last_verified": "YYYY-MM-DD"
+  },
+  "new_capability_evidence": {
+    "status": "available",
+    "capabilities": [
+      {
+        "action": "read-thread",
+        "tool_or_api": "read_thread",
+        "classification": "read-only",
+        "required_request_fields": ["thread_id"],
+        "optional_request_fields": ["include_metadata"],
+        "minimum_response_fields": ["status", "thread_id"],
+        "error_response_fields": ["message"],
+        "capability_source": "runtime-reported schema",
+        "contract_version": "version unavailable",
+        "last_verified": "YYYY-MM-DD",
+        "discovery_helper_version": "0.1.0"
+      }
+    ]
+  }
+}
+```
+
+The comparison should return `compatible` only when the tool/API name, classification, required request fields, and minimum response fields still match. It should return `fallback` when the capability is missing or unavailable, and `stopped` when required request fields, minimum response fields, classification, tool/API name, or source evidence changed or points at forbidden private runtime sources. State-changing actions such as `create-thread` may be compared as contract evidence, but the comparison does not call or authorize `create_thread`.
+
 ## Scenario 3: Stop Instead Of Adapting
 
 Stop before calling a thread tool, fallback, wrapper, API, or script when any of these conditions apply:
