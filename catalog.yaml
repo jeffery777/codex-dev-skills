@@ -78,6 +78,7 @@ groups:
     depends_on: [shared-review-gates, codex-delivery-workflow]
     skills:
       - source: skills/desktop-project-delivery
+      - source: skills/desktop-thread-delegation
       - source: skills/desktop-spec-plan-gate
       - source: skills/desktop-implementation-gate
       - source: skills/desktop-pr-merge-gate

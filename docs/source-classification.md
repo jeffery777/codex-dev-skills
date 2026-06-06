@@ -7,6 +7,7 @@ This file summarizes the read-only classification of the allowed source material
 1. `shared/review-workflow-codex/codex` is the canonical shared layer source.
 2. `packs/review-workflow-codex/codex` provides CLI/shared/core/general workflow concepts, excluding duplicate shared-layer files.
 3. `packs/review-workflow-codex-desktop/codex/skills/desktop_*` provides Desktop-only orchestration concepts.
+4. Repo-native extensions may be added when later maintenance work defines new public Codex workflows from accepted repository policy and examples.
 
 The shared-layer verification script reported that the shared layer is in sync. Therefore pack-local shared files are duplicate synchronized copies and are not treated as independent public sources.
 
@@ -58,6 +59,14 @@ Public outputs:
 - desktop-spec-plan-gate
 - desktop-implementation-gate
 - desktop-pr-merge-gate
+
+## KEEP_REPO_NATIVE_EXTENSION
+
+Source: accepted public repository policy, runtime compatibility guidance, and maintained examples.
+
+Public outputs:
+
+- desktop-thread-delegation
 
 ## DUPLICATE_SHARED_COPY
 
