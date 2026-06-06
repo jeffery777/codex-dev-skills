@@ -75,6 +75,23 @@ def _failure_class_from_steps(steps: list[dict[str, Any]]) -> str | None:
     return None
 
 
+def _normalize_target_actions(value: Any) -> tuple[list[str] | None, str | None]:
+    if not isinstance(value, list) or not value:
+        return None, "target_actions must be a non-empty list."
+
+    actions: list[str] = []
+    for index, action in enumerate(value):
+        if not isinstance(action, str) or not action.strip():
+            return None, f"target_actions[{index}] must be a non-empty string."
+        normalized_action = action.strip()
+        if normalized_action not in SUPPORTED_TARGET_ACTIONS:
+            return None, f"Unsupported target_action(s): {normalized_action}"
+        if normalized_action in actions:
+            return None, f"Duplicate target_action: {normalized_action}"
+        actions.append(normalized_action)
+    return actions, None
+
+
 def _selected_capability(evidence: dict[str, Any], target_action: str) -> dict[str, Any] | None:
     capabilities = evidence.get("capabilities")
     if not isinstance(capabilities, list):
@@ -191,6 +208,39 @@ def _read_preflight_request(
     }
 
 
+def _recommended_next_step(status: str) -> str:
+    if status == "ready":
+        return (
+            "Treat ready as evidence only; require separate approval before any "
+            "Desktop runtime call or external write."
+        )
+    if status == "fallback":
+        return "Use the paste-ready fallback path or provide the missing compatible evidence."
+    return "Resolve the stopped reason before using an adapter, runtime tool, or fallback."
+
+
+def _basic_summary(
+    status: str,
+    failure_class: str | None,
+    primary_reason: str | None,
+    target_results: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    target_results = target_results or []
+    counts = {"ready": 0, "fallback": 0, "stopped": 0, "unavailable": 0}
+    for result in target_results:
+        result_status = result.get("status")
+        if result_status in counts:
+            counts[result_status] += 1
+    return {
+        "status": status,
+        "failure_class": failure_class,
+        "primary_reason": primary_reason,
+        "readiness_counts": counts,
+        "target_results": target_results,
+        "recommended_next_step": _recommended_next_step(status),
+    }
+
+
 def _stopped(reason: str, failure_class: str = "validation_error") -> dict[str, Any]:
     return {
         "status": "stopped",
@@ -198,6 +248,7 @@ def _stopped(reason: str, failure_class: str = "validation_error") -> dict[str, 
         "pipeline_helper_version": PIPELINE_HELPER_VERSION,
         "runtime_calls_performed": False,
         "failure_class": failure_class,
+        "summary": _basic_summary("stopped", failure_class, reason),
         "steps": [],
         "result": {
             "stop_reason": reason,
@@ -214,12 +265,10 @@ def build_evidence_pipeline(request: dict[str, Any]) -> dict[str, Any]:
     if request.get("requested_action") != REQUESTED_ACTION:
         return _stopped(f"Unsupported requested_action: {request.get('requested_action')}")
 
-    target_actions = request.get("target_actions")
-    if not isinstance(target_actions, list) or not target_actions:
-        return _stopped("target_actions must be a non-empty list.")
-    unsupported = [action for action in target_actions if action not in SUPPORTED_TARGET_ACTIONS]
-    if unsupported:
-        return _stopped("Unsupported target_action(s): " + ", ".join(unsupported))
+    target_actions, target_error = _normalize_target_actions(request.get("target_actions"))
+    if target_error is not None:
+        return _stopped(target_error)
+    assert target_actions is not None
 
     metadata_request = request.get("metadata_request")
     if not isinstance(metadata_request, dict):
@@ -311,6 +360,7 @@ def build_evidence_pipeline(request: dict[str, Any]) -> dict[str, Any]:
 
 def _response(request: dict[str, Any], steps: list[dict[str, Any]]) -> dict[str, Any]:
     status = _status_from_steps(steps)
+    failure_class = _failure_class_from_steps(steps)
     selected_capabilities = {}
     discovery_output = steps[0]["output"] if steps else {}
     if isinstance(discovery_output, dict):
@@ -318,24 +368,13 @@ def _response(request: dict[str, Any], steps: list[dict[str, Any]]) -> dict[str,
             selected = _selected_capability(discovery_output, target_action)
             selected_capabilities[target_action] = selected
 
-    stop_reasons = []
+    stop_reasons = _step_reasons(steps)
     residual_risk = [
         "Pipeline used caller-supplied documented metadata only.",
         "No Desktop thread tool was called and no Desktop private runtime state was read.",
         "Ready preflight results are evidence only and do not authorize runtime calls or external writes.",
     ]
-    for step in steps:
-        output = step.get("output")
-        if isinstance(output, dict):
-            reason = _get(output, "result.stop_reason")
-            if reason:
-                stop_reasons.append(
-                    {
-                        "step": step.get("name"),
-                        "target_action": step.get("target_action"),
-                        "reason": reason,
-                    }
-                )
+    summary = _pipeline_summary(request, steps, status, failure_class, stop_reasons)
 
     return {
         "status": status,
@@ -343,7 +382,8 @@ def _response(request: dict[str, Any], steps: list[dict[str, Any]]) -> dict[str,
         "pipeline_helper_version": PIPELINE_HELPER_VERSION,
         "runtime_calls_performed": False,
         "target_actions": request.get("target_actions"),
-        "failure_class": _failure_class_from_steps(steps),
+        "failure_class": failure_class,
+        "summary": summary,
         "selected_capabilities": selected_capabilities,
         "steps": steps,
         "result": {
@@ -351,6 +391,101 @@ def _response(request: dict[str, Any], steps: list[dict[str, Any]]) -> dict[str,
             "residual_risk": residual_risk,
         },
     }
+
+
+def _step_reasons(steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    reasons = []
+    for step in steps:
+        output = step.get("output")
+        if not isinstance(output, dict):
+            continue
+        reason = _get(output, "result.stop_reason")
+        if reason:
+            reasons.append(
+                {
+                    "step": step.get("name"),
+                    "target_action": step.get("target_action"),
+                    "reason": reason,
+                }
+            )
+    return reasons
+
+
+def _find_step(
+    steps: list[dict[str, Any]],
+    name: str,
+    target_action: str | None = None,
+) -> dict[str, Any] | None:
+    for step in steps:
+        if step.get("name") != name:
+            continue
+        if target_action is not None and step.get("target_action") != target_action:
+            continue
+        return step
+    return None
+
+
+def _target_summary(steps: list[dict[str, Any]], target_action: str) -> dict[str, Any]:
+    comparison = _find_step(steps, "contract-comparison", target_action)
+    preflight = _find_step(steps, "runtime-call-preflight", target_action)
+    target_status = None if preflight is None else preflight.get("status")
+    if target_status is None and comparison is not None:
+        target_status = comparison.get("status")
+
+    target_failure_class = None
+    for step in (preflight, comparison):
+        if step is not None and step.get("failure_class"):
+            target_failure_class = step.get("failure_class")
+            break
+
+    reason = None
+    for step in (preflight, comparison):
+        if step is None:
+            continue
+        output = step.get("output")
+        if isinstance(output, dict):
+            reason = _get(output, "result.stop_reason")
+            if reason:
+                break
+
+    return {
+        "target_action": target_action,
+        "status": target_status,
+        "failure_class": target_failure_class,
+        "reason": reason,
+        "comparison_status": None if comparison is None else comparison.get("status"),
+        "preflight_status": None if preflight is None else preflight.get("status"),
+    }
+
+
+def _pipeline_summary(
+    request: dict[str, Any],
+    steps: list[dict[str, Any]],
+    status: str,
+    failure_class: str | None,
+    stop_reasons: list[dict[str, Any]],
+) -> dict[str, Any]:
+    target_actions = request.get("target_actions")
+    target_results = []
+    if isinstance(target_actions, list):
+        target_results = [
+            _target_summary(steps, target_action)
+            for target_action in target_actions
+            if isinstance(target_action, str)
+        ]
+
+    discovery = _find_step(steps, "capability-discovery")
+    primary_reason = None
+    if stop_reasons:
+        primary_reason = stop_reasons[0]["reason"]
+    elif status == "ready":
+        primary_reason = "All requested target preflights returned ready evidence."
+    elif status == "fallback":
+        primary_reason = "One or more requested target actions returned fallback evidence."
+
+    summary = _basic_summary(status, failure_class, primary_reason, target_results)
+    summary["discovery_status"] = None if discovery is None else discovery.get("status")
+    return summary
 
 
 def example_request() -> dict[str, Any]:
@@ -460,20 +595,46 @@ def _load_request(path: str | None) -> dict[str, Any]:
     return json.load(sys.stdin)
 
 
+def _with_target_actions(request: Any, target_actions: list[str] | None) -> Any:
+    if target_actions is None or not isinstance(request, dict):
+        return request
+    filtered = copy.deepcopy(request)
+    filtered["target_actions"] = target_actions
+    return filtered
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--request", help="Path to a JSON request. Reads stdin when omitted.")
     parser.add_argument("--pretty", action="store_true", help="Pretty-print JSON output.")
     parser.add_argument("--example", action="store_true", help="Print an example request and exit.")
+    parser.add_argument(
+        "--target-action",
+        action="append",
+        choices=sorted(SUPPORTED_TARGET_ACTIONS),
+        help=(
+            "Run or print the pipeline for one target action. Repeat to include "
+            "multiple actions. Defaults to target_actions from the request."
+        ),
+    )
     args = parser.parse_args(argv)
+    target_actions, target_error = (
+        _normalize_target_actions(args.target_action)
+        if args.target_action is not None
+        else (None, None)
+    )
+    if target_error is not None:
+        parser.error(target_error)
 
     indent = 2 if args.pretty or args.example else None
     if args.example:
-        print(json.dumps(example_request(), indent=indent, sort_keys=True))
+        example = _with_target_actions(example_request(), target_actions)
+        print(json.dumps(example, indent=indent, sort_keys=True))
         return 0
 
     try:
         request = _load_request(args.request)
+        request = _with_target_actions(request, target_actions)
         response = build_evidence_pipeline(request)
     except (OSError, json.JSONDecodeError) as exc:
         response = _stopped(f"Could not load request JSON: {exc}")

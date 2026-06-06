@@ -388,7 +388,15 @@ python3 scripts/desktop_runtime_evidence_pipeline.py --example --pretty
 ```
 
 ```bash
+python3 scripts/desktop_runtime_evidence_pipeline.py --example --target-action read-thread --pretty
+```
+
+```bash
 python3 scripts/desktop_runtime_evidence_pipeline.py --pretty < desktop-runtime-evidence-pipeline.json
+```
+
+```bash
+python3 scripts/desktop_runtime_evidence_pipeline.py --target-action create-thread --pretty < desktop-runtime-evidence-pipeline.json
 ```
 
 The pipeline input keeps the same boundaries as the individual helpers:
@@ -441,7 +449,7 @@ The pipeline input keeps the same boundaries as the individual helpers:
 }
 ```
 
-The pipeline output is an aggregate `ready`, `fallback`, or `stopped` evidence record with `runtime_calls_performed: false`. A `ready` result means the requested preflight evidence is internally consistent only; it does not call or authorize `create_thread`, `read_thread`, commit, push, PR creation, merge, or other external writes.
+The pipeline output is an aggregate `ready`, `fallback`, or `stopped` evidence record with `runtime_calls_performed: false`. The top-level `summary` includes readiness counts, per-target comparison/preflight status, the primary reason, and the recommended next step so review gates and maintainers can scan the result before opening the detailed `steps`. A `ready` result means the requested preflight evidence is internally consistent only; it does not call or authorize `create_thread`, `read_thread`, commit, push, PR creation, merge, or other external writes.
 
 ## Scenario 3: Stop Instead Of Adapting
 

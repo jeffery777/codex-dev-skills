@@ -16,7 +16,7 @@ The create-thread preflight slice is also complete as a non-state-changing readi
 
 The read-thread preflight slice is also complete as a non-state-changing readiness helper. It consumes target repo and thread-id evidence, read-request purpose evidence, normalized `read-thread` capability evidence, and compatible contract comparison evidence, then returns `ready`, `fallback`, or `stopped`. `ready` only means evidence is ready for a future separately approved read-only `read_thread` runtime call; it does not mean the helper called `read_thread`, read a Desktop thread, or authorized commit, push, PR creation, merge, or any other external write. The helper keeps runtime-call authorization out of scope and stops if a caller tries to treat preflight as runtime-call authorization.
 
-The evidence pipeline slice is also complete as a non-state-changing CLI example. It chains caller-supplied capability metadata through discovery, old/new contract comparison, and create/read preflight helpers, then emits one aggregate evidence record. It is meant to make the planner -> discovery -> compare -> preflight order easy to run and inspect. It does not gather metadata itself, call Desktop thread tools, read Desktop private runtime state, or authorize runtime calls or external writes.
+The evidence pipeline slice is also complete as a non-state-changing CLI example. It chains caller-supplied capability metadata through discovery, old/new contract comparison, and create/read preflight helpers, then emits one aggregate evidence record. It supports running a single target action when maintainers want narrower evidence, and its top-level `summary` makes ready/fallback/stopped reasons easier for review gates and maintainers to scan. It is meant to make the planner -> discovery -> compare -> preflight order easy to run and inspect. It does not gather metadata itself, call Desktop thread tools, read Desktop private runtime state, or authorize runtime calls or external writes.
 
 State-changing thread calls can be considered only after the first slice proves the request and evidence contract, and after a separate human decision approves adding a runtime-call path for one documented action.
 
@@ -518,8 +518,20 @@ Usage examples:
 python3 scripts/desktop_runtime_evidence_pipeline.py --example --pretty
 ```
 
+Print a single target action fixture:
+
+```bash
+python3 scripts/desktop_runtime_evidence_pipeline.py --example --target-action read-thread --pretty
+```
+
 ```bash
 python3 scripts/desktop_runtime_evidence_pipeline.py --pretty < desktop-runtime-evidence-pipeline.json
+```
+
+Run only one target action from a prepared fixture:
+
+```bash
+python3 scripts/desktop_runtime_evidence_pipeline.py --target-action create-thread --pretty < desktop-runtime-evidence-pipeline.json
 ```
 
 The stdin request must be JSON and should use this minimal shape:
@@ -561,7 +573,7 @@ authorization:
   external_write_authorized: false
 ```
 
-The pipeline helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not collect metadata, inspect Desktop private runtime state, infer runtime availability, authorize runtime calls, authorize external writes, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service. A `ready` aggregate result means every requested preflight returned evidence readiness only; it is not approval to perform a runtime call or external write.
+The pipeline output includes a top-level `summary` with `readiness_counts`, per-target comparison/preflight status, the primary reason, and the recommended next step. The detailed `steps` array remains the evidence ledger for reviewers who need the helper-by-helper output. The pipeline helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not collect metadata, inspect Desktop private runtime state, infer runtime availability, authorize runtime calls, authorize external writes, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service. A `ready` aggregate result means every requested preflight returned evidence readiness only; it is not approval to perform a runtime call or external write.
 
 Focused tests live in `tests/test_desktop_runtime_evidence_pipeline.py` and can be rerun with:
 
@@ -595,7 +607,7 @@ For the completed first implementation slices:
 - contract comparison tests proving compatible evidence returns `compatible`, missing or unavailable capability returns `fallback`, changed request shape, response shape, classification, or tool/API name returns `stopped`, forbidden private source hints stop, and state-changing evidence is compared without authorizing runtime calls;
 - create-thread preflight tests proving compatible evidence plus exact authorization returns `ready`, unavailable capability or comparison evidence returns `fallback`, thread action authorization false returns `fallback`, incompatible or unclear comparison evidence returns `stopped`, read-only create-thread classification stops, external-write authorization stops, missing repo/remote/branch/expected-head evidence stops, forbidden source hints stop, and no `create_thread` call is made;
 - read-thread preflight tests proving the discovery-to-comparison-to-preflight evidence chain returns `ready`, unavailable capability or comparison evidence returns `fallback`, incompatible comparison evidence returns `stopped`, state-changing read-thread classification stops, preflight-scoped runtime-call authorization stops, external-write authorization stops, missing thread-id or expected-fields evidence stops, forbidden source hints stop, and no `read_thread` call is made;
-- evidence pipeline tests proving discovery-to-comparison-to-create/read-preflight order returns aggregate `ready`, missing old contract evidence returns aggregate `fallback`, changed request shape returns aggregate `stopped`, read-thread runtime-call authorization remains out of scope, request inputs are not mutated, and no runtime call is made;
+- evidence pipeline tests proving discovery-to-comparison-to-create/read-preflight order returns aggregate `ready`, missing old contract evidence returns aggregate `fallback`, changed request shape returns aggregate `stopped`, single target action filtering works, summary fields make target reasons scannable, read-thread runtime-call authorization remains out of scope, request inputs are not mutated, and no runtime call is made;
 - docs review for public claims and runtime compatibility;
 - code review gate only if the implementation slice is used for commit or PR readiness.
 
