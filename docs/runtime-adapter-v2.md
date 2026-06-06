@@ -6,6 +6,8 @@ The current `desktop-thread-delegation` skill remains the user-facing workflow. 
 
 For practical prompt and stop-condition examples, see [Runtime Adapter Boundary Example](../examples/runtime-adapter-boundary.md).
 
+For the current docs-only feasibility decision and proposed first implementation slice, see [Desktop Runtime Wrapper V1 Feasibility And Implementation Plan](desktop-runtime-wrapper-v1-plan.md).
+
 ## Goals
 
 A second-version adapter may expose a narrow, documented control surface for Desktop thread delegation:

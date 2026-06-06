@@ -35,6 +35,7 @@ Desktop-only workflows should provide a CLI fallback such as a prompt, task brie
 CLI-only workflows should provide a Desktop fallback such as running the same read-plan-implement-verify sequence in a Desktop thread, with Desktop-only actions clearly omitted.
 
 For the pre-implementation boundary of a possible Desktop thread wrapper or runtime adapter, see [Desktop Runtime Adapter V2 Boundary](runtime-adapter-v2.md).
+For the docs-only feasibility decision and first implementation-slice proposal, see [Desktop Runtime Wrapper V1 Feasibility And Implementation Plan](desktop-runtime-wrapper-v1-plan.md).
 
 ## Desktop To CLI Fallback Mapping
 
