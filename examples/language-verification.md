@@ -12,7 +12,7 @@ The commands below are examples, not universal requirements. Always read the tar
 4. Prefer focused tests before broad suites when the change is narrow.
 5. Escalate to broader verification when the diff changes shared contracts, packaging, generated files, migrations, or release-sensitive behavior.
 6. Report commands run, skipped checks, missing dependencies, and residual risk.
-7. Stop before commit, push, release, deploy, merge, or external writes unless the user explicitly authorizes that step.
+7. Stop before commit, push, PR creation, release, deploy, merge, platform comments, review submissions, or external writes unless the user explicitly authorizes that step.
 
 ## Python
 

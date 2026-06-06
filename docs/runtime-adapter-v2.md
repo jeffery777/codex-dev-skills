@@ -88,10 +88,10 @@ Before a state-changing thread action, the caller must verify and record:
 - prepared prompt summary and intended recipient thread;
 - in-scope and out-of-scope files or categories;
 - explicit user authorization for the thread action;
-- external write boundary, including commit, push, PR creation, PR comments, review submission, merge, deploy, destructive actions, and platform-side mutation;
+- external write boundary, including commit, push, PR creation, PR comments, review submissions, merge, deploy, destructive actions, and platform-side mutation;
 - audit evidence showing which tool or documented API was used and the result returned.
 
-Opening, forking, or messaging a thread is a Desktop runtime action. It is not permission to edit unrelated files, publish changes, post platform comments, merge, deploy, or resolve review threads.
+Opening, forking, or messaging a thread is a Desktop runtime action. It is not permission to edit unrelated files, commit, push, create PRs, publish changes, post platform comments, submit reviews, merge, deploy, or resolve review threads.
 
 ## CLI Fallback
 

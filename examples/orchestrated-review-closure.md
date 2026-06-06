@@ -5,7 +5,7 @@ Use `project-orchestrator` when Codex should compose implementation, review, blo
 ```text
 Use project-orchestrator to improve the maintainer docs for this workflow.
 Run at most two review/fix rounds. Use docs-review for ordinary docs review evidence, and use docs-review-gate only if the workflow reaches formal commit readiness, PR readiness, merge readiness, or a repo-policy blocking decision.
-Stop before commit, push, merge, release, or any external write unless I explicitly authorize it.
+Stop before commit, push, PR creation, merge, release, platform comments, review submissions, or any external write unless I explicitly authorize it.
 ```
 
 Expected flow:

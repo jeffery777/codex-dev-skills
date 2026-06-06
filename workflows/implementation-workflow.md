@@ -13,6 +13,6 @@ Use this workflow for a bounded software change.
 7. Route to `code-review` or `docs-review` for ordinary review evidence; escalate code or mixed changes to `code-review-deep` when risk is high. Use `code-review-gate` or `docs-review-gate` only for commit readiness, PR readiness, merge readiness, or an explicit repo-policy blocking decision.
 8. Report changed files, evidence, skipped checks, and residual risk.
 
-Stop before external writes, destructive actions, broad refactors, or product-semantic decisions that are not already clear.
+Stop before external writes such as commit, push, PR creation, merge, deploy, platform comments, or review submissions; destructive actions; broad refactors; or product-semantic decisions that are not already clear.
 
 For review closure loops, use `project-orchestrator` or `project-delivery` to repeat these primitive shared steps within the configured round limit. Do not require a dedicated closure skill.

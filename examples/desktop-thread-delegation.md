@@ -12,7 +12,7 @@ Decide whether the task should continue in this thread or move to a separate Cod
 If the current thread is suitable and repo policy or my authorization allows it, continue here.
 If a separate thread is better, prepare the prompt and ask before opening the new thread.
 Before any Desktop thread tool call, record the runtime tool/API contract name, exposed version or `version unavailable` plus capability source, minimal request/response compatibility summary, `last_verified`, and workflow, wrapper, or adapter mapping to the underlying contract.
-Do not commit, push, open a PR, merge, post comments, or perform other external writes unless I explicitly authorize the exact action.
+Do not commit, push, create PRs, merge, deploy, post platform comments, submit reviews, or perform other external writes unless I explicitly authorize the exact action.
 ```
 
 ## Main Thread Flow
@@ -59,7 +59,7 @@ Out of scope:
 - Installer catalog changes.
 - New skills or workflow behavior.
 - Desktop runtime internals, local databases, logs, sessions, auth files, caches, app state, unpublished endpoints, UI scraping, daemons, background services, or private runtime state.
-- Commits, pushes, PRs, merges, platform comments, or `.work/` artifacts.
+- Commits, pushes, PRs, merges, deploys, platform comments, review submissions, or `.work/` artifacts.
 
 Verification:
 - `./scripts/validate-repo.sh`

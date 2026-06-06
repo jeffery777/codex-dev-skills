@@ -15,7 +15,7 @@
 ## Do Not
 
 - Do not commit.
-- Do not publish, merge, deploy, or perform destructive actions.
+- Do not push, create PRs, publish, merge, deploy, post platform comments, submit reviews, or perform destructive actions.
 - Do not edit outside assigned scope.
 
 ## Output Required

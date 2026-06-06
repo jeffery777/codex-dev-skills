@@ -31,7 +31,7 @@ Use `task-continuation` and `project-orchestrator` to select the next safe task 
    - `new-thread-prompt` when the task is bounded but would benefit from a separate thread, fresh context, separate worktree, or independent focus.
    - `desktop-thread-create` when `new-thread-prompt` is appropriate, the Desktop runtime exposes a thread creation or fork tool, and the maintainer has explicitly authorized opening the thread.
    - `stop-for-human-gate` when the next action involves product ambiguity, scope expansion, destructive action, external write, security/privacy/data/deployment risk, or unclear source of truth.
-5. If `continue-current-thread` is selected, do the task only within the permissions already granted by repo policy and the user. Stop before commit, push, PR, merge, platform comments, destructive actions, or other external writes unless explicitly authorized.
+5. If `continue-current-thread` is selected, do the task only within the permissions already granted by repo policy and the user. Stop before commit, push, PR creation, merge, deploy, platform comments, review submissions, destructive actions, or other external writes unless explicitly authorized.
 6. If a new thread is appropriate, prepare a prompt before creating anything. The prompt must require the new thread to re-read source-of-truth files before editing.
 7. Before preparing to call a Desktop thread tool, record the contract/version tracking evidence required by [Desktop Runtime Adapter V2 Boundary](../../docs/runtime-adapter-v2.md):
    - runtime thread tool or API contract name, such as `create_thread`, `fork_thread`, `send_message_to_thread`, or the documented equivalent;
