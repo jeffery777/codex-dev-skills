@@ -20,7 +20,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Optional GitHub workflow guidance that remains plugin-dependent and clearly labeled.
+- No active backlog items.
 
 ## Non-Goals
 
