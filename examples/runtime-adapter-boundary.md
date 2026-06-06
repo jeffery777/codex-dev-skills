@@ -379,6 +379,70 @@ Before a future read-only `read_thread` runtime call, a non-state-changing prefl
 
 The preflight result may be `ready`, `fallback`, or `stopped`. `ready` means only that evidence is complete for a future separately approved read-only runtime call. Use `fallback` for missing or unavailable capability/comparison evidence; use `stopped` for incompatible or unclear contract evidence, classification mismatch, missing repo/remote/branch/thread-id evidence, missing expected fields, forbidden private source hints, attempts to treat preflight as runtime-call authorization, or external-write requests.
 
+## End-To-End Evidence Pipeline Fixture
+
+When maintainers want one reusable evidence fixture instead of running each helper separately, use the pipeline helper. It runs discovery, contract comparison, and create/read preflight in order from caller-supplied JSON only.
+
+```bash
+python3 scripts/desktop_runtime_evidence_pipeline.py --example --pretty
+```
+
+```bash
+python3 scripts/desktop_runtime_evidence_pipeline.py --pretty < desktop-runtime-evidence-pipeline.json
+```
+
+The pipeline input keeps the same boundaries as the individual helpers:
+
+```json
+{
+  "requested_action": "build-desktop-runtime-wrapper-v1-evidence-pipeline",
+  "target_actions": ["create-thread", "read-thread"],
+  "metadata_request": {
+    "requested_action": "normalize-runtime-capability-metadata",
+    "metadata_source": {
+      "source": "runtime-reported schema",
+      "contract_version": "version unavailable",
+      "last_verified": "YYYY-MM-DD",
+      "available": true
+    },
+    "capabilities": ["caller-supplied documented capability metadata"]
+  },
+  "old_contracts": {
+    "create-thread": "old create-thread wrapper contract evidence",
+    "read-thread": "old read-thread wrapper contract evidence"
+  },
+  "target": {
+    "repo": "owner/name",
+    "remote": "origin URL",
+    "branch": "branch-name",
+    "expected_head": "commit SHA expected by the caller",
+    "thread_id": "thread identifier supplied by the caller"
+  },
+  "prompt": {
+    "summary": "Prepare a bounded Desktop thread handoff.",
+    "body": "Read repo files first, do the scoped task, run verification, and report evidence."
+  },
+  "read_request": {
+    "summary": "Read only documented thread result fields after separate approval.",
+    "expected_fields": ["status", "thread_id"]
+  },
+  "boundaries": {
+    "in_scope": ["durable repo files or task scope"],
+    "out_of_scope": [".work/", "Desktop private runtime state"],
+    "external_writes_blocked": true
+  },
+  "authorization": {
+    "thread_action_authorized": {
+      "create-thread": true,
+      "read-thread": false
+    },
+    "external_write_authorized": false
+  }
+}
+```
+
+The pipeline output is an aggregate `ready`, `fallback`, or `stopped` evidence record with `runtime_calls_performed: false`. A `ready` result means the requested preflight evidence is internally consistent only; it does not call or authorize `create_thread`, `read_thread`, commit, push, PR creation, merge, or other external writes.
+
 ## Scenario 3: Stop Instead Of Adapting
 
 Stop before calling a thread tool, fallback, wrapper, API, or script when any of these conditions apply:

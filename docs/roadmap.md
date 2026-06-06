@@ -21,7 +21,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Desktop runtime wrapper V1 later slices: at most one explicitly approved runtime thread-tool call path after the non-state-changing planner, capability evidence, contract comparison, create-thread preflight, and read-thread preflight paths remain stable. Later work must continue to avoid Desktop private runtime state, daemons, app-server clients, sidecars, background services, new skills, catalog entries, and installer entries unless separately approved.
+- Desktop runtime wrapper V1 later slices: at most one explicitly approved runtime thread-tool call path after the non-state-changing planner, capability evidence, contract comparison, create-thread preflight, read-thread preflight, and evidence pipeline paths remain stable. Later work must continue to avoid Desktop private runtime state, daemons, app-server clients, sidecars, background services, new skills, catalog entries, and installer entries unless separately approved.
 
 ## Non-Goals
 
