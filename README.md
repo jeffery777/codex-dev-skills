@@ -265,7 +265,7 @@ Shared orchestration templates include task briefs, task manifests, next-session
 - [Merge review and readiness](examples/merge-review.md)
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
-See `docs/roadmap.md` for the near-term public roadmap and `docs/release-notes-v0.1.0.md` for draft v0.1.0 release notes.
+See `docs/roadmap.md` for the near-term public roadmap and `docs/release-notes-v0.1.0.md` for the published v0.1.0 release notes.
 
 ## Installation
 
