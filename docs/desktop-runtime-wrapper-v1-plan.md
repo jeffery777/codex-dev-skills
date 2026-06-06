@@ -1,6 +1,6 @@
 # Desktop Runtime Wrapper V1 Feasibility And Implementation Plan
 
-This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as bounded helpers: a request planner and fallback generator, a capability metadata normalization helper, a contract comparison helper, a create-thread runtime-call preflight helper, a read-thread runtime-call preflight helper, an end-to-end evidence pipeline example, a session compatibility status validator, a first-use session compatibility handshake helper, a session-scoped compatibility cache helper, a create-thread authorization/evidence boundary gate, a create-thread executor boundary proposal helper, a create-thread executor shell implementation-surface helper, a single documented create-thread callable executor helper, and a single documented create-thread callable wiring-boundary helper. The executor helper can execute only a caller-injected documented callable adapter after call-site validation; the CLI default remains non-live and falls back when no runner is injected. The wiring-boundary helper can convert one caller-supplied documented `create_thread` descriptor or explicit non-live adapter wiring contract into the executor helper's injected adapter contract shape; it does not invoke Desktop runtime. These helpers do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, skill, live Desktop runtime executor, or broad runtime-call path.
+This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as bounded helpers: a request planner and fallback generator, a capability metadata normalization helper, a contract comparison helper, a create-thread runtime-call preflight helper, a read-thread runtime-call preflight helper, an end-to-end evidence pipeline example, a session compatibility status validator, a first-use session compatibility handshake helper, a session-scoped compatibility cache helper, a create-thread authorization/evidence boundary gate, a create-thread executor boundary proposal helper, a create-thread executor shell implementation-surface helper, a single documented create-thread callable executor helper, a single documented create-thread callable wiring-boundary helper, and a single documented create-thread callable wiring evidence bundle / executor-request assembly helper. The executor helper can execute only a caller-injected documented callable adapter after call-site validation; the CLI default remains non-live and falls back when no runner is injected. The wiring-boundary helper can convert one caller-supplied documented `create_thread` descriptor or explicit non-live adapter wiring contract into the executor helper's injected adapter contract shape; it does not invoke Desktop runtime. The bundle helper accepts ready callable wiring evidence plus caller-supplied target, prompt, authorization, and executor-shell evidence to assemble a complete non-live executor request preview / handoff bundle for the executor helper; it does not execute an injected runner or call Desktop runtime. These helpers do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, skill, live Desktop runtime executor, or broad runtime-call path.
 
 ## Decision
 
@@ -34,6 +34,8 @@ The single documented create-thread callable executor helper is also complete as
 
 The single documented create-thread callable wiring-boundary helper is also complete as a non-live wiring helper. It accepts ready executor helper evidence plus a caller-supplied documented `create_thread` callable descriptor or explicit non-live adapter wiring contract, verifies the exact target action, tool/API, repo, remote, branch, expected head, prepared prompt summary/body, exact human-approved callable wiring marker, `runtime_call_performed: false` before wiring, `desktop_private_runtime_state_read: false`, blocked external writes, absent or false destructive approval, single documented descriptor source, and the executor call-site requirements that still must be satisfied by the executor helper. It returns `ready` only when that descriptor can be converted into the previous executor helper's injected adapter contract shape. It does not discover, obtain, import, or invoke a Desktop runtime callable. CLI/default use without a descriptor returns `fallback`; tests use explicit non-live adapter wiring. `fallback` or `stopped` blocks later runtime paths. Prior shell, proposal, gate, cache, preflight, or executor evidence cannot replace actual executor call-site target validation, permission/auth handling, response validation, returned thread id validation, or returned status validation.
 
+The single documented create-thread callable wiring evidence bundle / executor-request assembly helper is also complete as a non-live handoff helper. It accepts ready callable wiring evidence plus caller-supplied target, prompt, authorization, and executor-shell evidence, verifies the exact `create-thread` action and `create_thread` tool/API, repo, remote, branch, expected head, prepared prompt summary/body, exact human-approved bundle marker, `runtime_call_performed: false` before bundling, `desktop_private_runtime_state_read: false`, blocked external writes, absent or false destructive approval, ready wiring evidence, ready shell evidence, and the executor call-site requirements that still must be satisfied by the executor helper. It returns `ready` only when those inputs can be assembled into a complete non-live executor request preview / handoff bundle with `live_desktop_runtime: false`. It does not discover, obtain, import, or invoke a Desktop runtime callable, and it does not execute an injected runner. CLI/default use without wiring evidence returns `fallback`; tests only produce the non-live executor request preview and verify that the executor helper still falls back when no runner is supplied. `fallback` or `stopped` blocks later runtime paths. Shell, proposal, gate, cache, preflight, executor, and wiring evidence cannot replace actual executor call-site target validation, permission/auth handling, response validation, returned thread id validation, or returned status validation.
+
 State-changing Desktop runtime thread calls can be considered only after the bounded helpers remain stable and after a separate human decision approves connecting at most one documented `create_thread` tool path.
 
 ## Objective
@@ -57,6 +59,7 @@ Wrapper V1 should make the existing `desktop-thread-delegation` boundary easier 
 - validate a caller-supplied create-thread executor shell implementation surface before any separate true documented `create_thread` callable is wired;
 - execute one caller-injected documented create-thread callable adapter under the executor helper contract while keeping CLI default non-live;
 - convert one caller-supplied documented `create_thread` callable descriptor or explicit non-live adapter wiring contract into the executor helper's injected adapter contract shape while keeping CLI/default/tests non-live;
+- assemble ready callable wiring evidence into one non-live executor request preview / handoff bundle for the executor helper while keeping CLI/default/tests non-live and without executing an injected runner;
 - preserve the main-thread responsibility for integration, verification, review evidence, commit readiness, PR readiness, merge readiness, and human approval.
 
 ## Non-Goals
@@ -156,6 +159,10 @@ This executor helper does not discover or obtain a Desktop runtime callable. The
 For the completed single documented create-thread callable wiring-boundary helper, callers must provide ready executor evidence plus a new wiring envelope with a caller-supplied documented `create_thread` descriptor or explicit non-live adapter wiring contract. The helper verifies exact `target_action: "create-thread"`, `tool_or_api: "create_thread"`, repo, remote, branch, expected head, prepared prompt summary/body, ready previous executor evidence, `authorized_runtime_action: "create-thread"`, a callable-wiring human approval marker, `external_write_authorized: false`, absent or false destructive-action approval, `runtime_call_performed: false` before wiring, `desktop_private_runtime_state_read: false`, allowed caller-supplied documented descriptor source, no runtime lookup, no direct runtime call shape, no live Desktop runtime flag, and only the `create_thread` path.
 
 This wiring helper does not discover, obtain, import, or invoke a Desktop runtime callable. The CLI default has no descriptor and therefore returns `fallback`. When a caller supplies a documented descriptor or explicit non-live wiring contract, the helper converts it into the executor helper's injected adapter contract shape with `live_desktop_runtime: false`. A `ready` result means callable wiring readiness only; it does not mean a live Desktop runtime `create_thread` call was performed or authorized. Prior proposal, gate, cache, preflight, shell, or executor evidence cannot replace actual executor call-site target validation, permission/auth handling, response validation, returned thread id validation, or returned status validation. True Desktop runtime `create_thread` callable injection or use remains separate future work and still requires human approval and a runtime-provided documented callable.
+
+For the completed single documented create-thread callable wiring evidence bundle / executor-request assembly helper, callers must provide ready callable wiring evidence plus a new bundle envelope with caller-supplied target, prompt, authorization, call-site requirement plan, and ready executor-shell evidence. The helper verifies exact `target_action: "create-thread"`, `tool_or_api: "create_thread"`, repo, remote, branch, expected head, prepared prompt summary/body, ready callable wiring evidence, ready shell evidence, `authorized_runtime_action: "create-thread"`, a bundle-only human approval marker, the executor implementation marker expected by the executor helper, `external_write_authorized: false`, absent or false destructive-action approval, `runtime_call_performed: false` before bundling, `desktop_private_runtime_state_read: false`, no runner, no callable object, no direct runtime call shape, no live Desktop runtime flag, and only the `create_thread` path.
+
+This bundle helper does not discover, obtain, import, or invoke a Desktop runtime callable, and it does not execute an injected runner. The CLI default has no wiring evidence and therefore returns `fallback`. When a caller supplies ready wiring evidence, the helper assembles the executor helper request shape as an executor request preview with `live_desktop_runtime: false`. Tests verify the preview and verify that the executor helper still returns fallback without a runner. A `ready` result means executor request preview readiness only; it does not mean a live Desktop runtime `create_thread` call was performed or authorized. Shell, proposal, gate, cache, preflight, executor, and wiring evidence cannot replace actual executor call-site target validation, permission/auth handling, response validation, returned thread id validation, or returned status validation. True Desktop runtime `create_thread` callable injection or use remains separate future work, still requires human approval and a runtime-provided documented callable, and may connect at most one documented `create_thread` path.
 
 For the completed session compatibility status validation slice, callers supply the status explicitly. The helper validates that the supplied status matches the expected wrapper/package/repo identity, helper version, target action, tool/API name, and schema hash or normalized contract evidence. It returns `ready` only when the compatible status can be referenced by a later preflight. It returns `fallback` when the supplied comparison result is `fallback`, and `stopped` when the supplied comparison result is `stopped` or when status evidence is missing, mismatched, unclear, sourced from forbidden Desktop runtime hints, or attempts to include authorization or target/permission/response validation substitutes.
 
@@ -948,6 +955,89 @@ Focused tests live in `tests/test_desktop_runtime_create_thread_callable_wiring.
 python3 -B -m unittest discover -s tests
 ```
 
+## Create-Thread Callable Bundle / Executor-Request Assembly Artifact
+
+The create-thread callable wiring evidence bundle / executor-request assembly helper is `scripts/desktop_runtime_create_thread_callable_bundle.py`.
+It accepts a prepared JSON envelope containing ready callable wiring evidence, ready executor-shell evidence, target evidence, prompt evidence, a bundle-only human approval marker, the executor implementation marker expected by the executor helper, safety boundaries, and explicit executor call-site requirement evidence.
+
+Usage examples:
+
+```bash
+python3 scripts/desktop_runtime_create_thread_callable_bundle.py --example --pretty
+```
+
+```bash
+python3 scripts/desktop_runtime_create_thread_callable_bundle.py --pretty < create-thread-callable-bundle.json
+```
+
+The CLI default is non-live. The second command validates the envelope but returns `fallback` when no ready callable wiring evidence is present. The helper must not locate, import, discover, obtain, or invoke a Desktop runtime callable, and it must not execute an injected runner.
+
+The stdin request must be JSON and should use this minimal shape:
+
+```yaml
+requested_action: "assemble-create-thread-callable-executor-request-preview"
+target_action: "create-thread"
+tool_or_api: "create_thread"
+target:
+  repo: "owner/name"
+  remote: "origin URL"
+  branch: "branch-name"
+  expected_head: "commit SHA expected by the caller"
+prompt:
+  summary: "short prepared prompt summary"
+  body: "prepared prompt body"
+boundaries:
+  external_writes_blocked: true
+  runtime_call_performed: false
+  desktop_private_runtime_state_read: false
+authorization:
+  authorized_runtime_action: "create-thread"
+  human_bundle_marker: "human-approved-create-thread-callable-executor-request-bundle"
+  human_bundle_scope: "single-documented-create-thread-callable-bundle-non-live-by-default"
+  human_implementation_marker: "human-approved-create-thread-documented-callable-executor-implementation"
+  human_implementation_scope: "single-documented-callable-adapter-non-live-by-default"
+  external_write_authorized: false
+  destructive_action_approved: false
+call_site_validation_plan:
+  target_identity_rechecked_by_executor: true
+  authorization_intent_rechecked_by_executor: true
+  permission_auth_failure_classified_by_executor: true
+  runtime_response_shape_validated_by_executor: true
+  returned_thread_id_validated_by_executor: true
+  returned_status_validated_by_executor: true
+  target_validation:
+    satisfied_by_prior_evidence: false
+  permission_failure_handling:
+    satisfied_by_prior_evidence: false
+  response_validation:
+    satisfied_by_prior_evidence: false
+executor_shell_evidence: "ready output from desktop_runtime_create_thread_executor_shell.py"
+callable_wiring_evidence: "ready output from desktop_runtime_create_thread_callable_wiring.py"
+```
+
+The helper output includes:
+
+- status: `ready`, `fallback`, or `stopped`;
+- target repo, remote, branch, and expected head evidence;
+- prompt summary/body presence evidence;
+- callable-bundle human approval marker evidence;
+- executor call-site requirements that must still be enforced by the executor helper;
+- a complete `executor_request_preview` for `scripts/desktop_runtime_create_thread_executor.py`;
+- a `handoff_bundle` labeling this as a single documented create-thread callable executor-request preview;
+- `runtime_call_performed: false`, `desktop_runtime_call_performed: false`, `private_runtime_state_read: false`, `external_write_performed: false`, `live_desktop_runtime: false`, and `injected_runner_executed: false`.
+
+The helper returns `ready` only when ready callable wiring evidence and ready executor-shell evidence match the caller-supplied target and prompt and can be assembled into the executor helper's request shape with `live_desktop_runtime: false`. It returns `fallback` when the exact callable bundle marker or wiring evidence is missing. It returns `stopped` when ready wiring or shell evidence is malformed, fallback, or stopped; the exact target action or tool/API name is wrong; repo/remote/branch/expected-head evidence is incomplete; prompt summary/body is missing; external writes are authorized; destructive-action approval is present; a runtime call has already been performed before bundling; Desktop private runtime state was read; the generated preview would contain a runner, callable object, direct runtime call shape, live Desktop runtime flag, or any path other than `create_thread`; or prior evidence is treated as satisfying executor call-site target validation, permission/auth handling, or response validation.
+
+`ready` is executor request preview readiness only. It does not mean a live Desktop runtime `create_thread` call was performed or authorized. Tests only produce the non-live executor request preview and verify that the executor helper still returns fallback when no runner is supplied. True Desktop runtime `create_thread` callable injection or use still requires separate human approval and a runtime-provided documented callable. Any later live wiring slice must connect at most one documented `create_thread` tool path and must continue to re-check target identity, authorization intent, permission/auth failure result, runtime response shape, returned thread id, and returned status at the actual call site.
+
+The helper does not call `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, execute an injected runner, authorize external writes, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, background service, or live Desktop runtime executor.
+
+Focused tests live in `tests/test_desktop_runtime_create_thread_callable_bundle.py` and can be rerun with:
+
+```bash
+python3 -B -m unittest discover -s tests
+```
+
 ## Read-Thread Preflight Implementation Artifact
 
 The read-thread runtime-call preflight helper is `scripts/desktop_runtime_read_thread_preflight.py`.
@@ -1321,16 +1411,16 @@ python3 -B -m unittest discover -s tests
 
 Later slices require separate review and human approval:
 
-- a single state-changing live Desktop runtime `create-thread` call path using one documented runtime-provided callable, after the injected executor and callable wiring-boundary helpers remain stable.
+- a single state-changing live Desktop runtime `create-thread` call path using one documented runtime-provided callable, after the injected executor, callable wiring-boundary, and callable bundle / executor-request assembly helpers remain stable.
 
-Each later slice must keep private runtime state prohibited. Runtime-call slices may rely on a compatible session status, same-session cache evidence, preflight evidence, authorization gate evidence, executor boundary proposal evidence, executor shell evidence, injected executor helper evidence, or callable wiring evidence for their documented purpose only, but must still re-check authorization intent, target identity, permission/auth failure result, runtime response shape, returned thread id, and returned status at the point of use.
+Each later slice must keep private runtime state prohibited. Runtime-call slices may rely on a compatible session status, same-session cache evidence, preflight evidence, authorization gate evidence, executor boundary proposal evidence, executor shell evidence, injected executor helper evidence, callable wiring evidence, or callable bundle evidence for their documented purpose only, but must still re-check authorization intent, target identity, permission/auth failure result, runtime response shape, returned thread id, and returned status at the point of use.
 
 ## Next-Session Handoff
 
 Recommended next Desktop runtime wrapper V1 slice:
 
 1. If maintainers approve true wiring, connect at most one documented runtime-provided `create_thread` callable path through the existing injected executor helper.
-2. Keep cache/status/preflight/gate/proposal/shell/injected-executor/wiring evidence scoped to evidence only; exact runtime action authorization, external-write authorization, destructive-action approval, target repo/branch/expected-head validation, auth/permission failure handling, and runtime response validation must still happen at the point of use.
+2. Keep cache/status/preflight/gate/proposal/shell/injected-executor/wiring/bundle evidence scoped to evidence only; exact runtime action authorization, external-write authorization, destructive-action approval, target repo/branch/expected-head validation, auth/permission failure handling, and runtime response validation must still happen at the point of use.
 3. Do not introduce a daemon, MCP server, app-server client, sidecar, background service, Desktop private runtime state reader, skill, catalog item, or installer entry.
 
 Definition of done for that slice:
@@ -1367,6 +1457,7 @@ For the completed first implementation slices:
 - create-thread executor shell tests proving a complete implementation-surface envelope returns `ready`, missing executor boundary proposal evidence stops, fallback/stopped proposal evidence blocks, wrong action/tool stops, missing repo/remote/branch/expected-head or prompt evidence stops, external-write or destructive-action approval stops, runtime-call-performed or private-runtime-state-read evidence stops, prior proposal/gate/cache/preflight evidence cannot replace call-site target validation/permission handling/response validation, missing executor-shell implementation marker returns `fallback`, callable descriptors cannot authorize execution or contain direct runtime-call shapes, private runtime-looking paths and source hints are rejected, no Desktop thread tool call shapes are introduced, and no daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
 - create-thread documented callable executor tests proving a complete non-live injected callable envelope returns `ready`, missing/fallback/stopped shell evidence blocks, wrong action/tool stops, missing repo/remote/branch/expected-head or prompt evidence stops, external-write or destructive-action approval stops, runtime-call-performed or private-runtime-state-read evidence before execution stops, prior proposal/gate/cache/preflight/shell evidence cannot replace call-site target validation/permission handling/response validation, missing executor implementation marker returns `fallback`, auth/permission failures are classified and returned, malformed adapter response stops, missing returned thread id stops, invalid returned status stops, successful injected adapter execution is clearly labeled as injected adapter execution rather than Desktop runtime execution, private runtime-looking paths and source hints are rejected, no additional Desktop thread tool call shapes are introduced, and no daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
 - create-thread callable wiring-boundary tests proving a complete caller-supplied documented descriptor returns `ready`, CLI/default without a descriptor returns `fallback`, missing/fallback/stopped previous executor evidence blocks, wrong action/tool stops, missing repo/remote/branch/expected-head or prompt evidence stops, external-write or destructive-action approval stops, runtime-call-performed or private-runtime-state-read evidence before wiring stops, prior evidence cannot replace executor call-site target validation/permission handling/response validation, missing callable wiring marker returns `fallback`, malformed descriptors stop, non-`create_thread` descriptors stop, private runtime-looking paths and source hints are rejected, successful non-live wiring is clearly labeled as callable wiring readiness rather than Desktop runtime execution, tests do not invoke live Desktop runtime, no additional Desktop thread tool call shapes are introduced, and no daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
+- create-thread callable bundle / executor-request assembly tests proving a complete ready wiring evidence envelope returns `ready` and produces a non-live executor request preview, CLI/default without wiring evidence returns `fallback`, missing/fallback/stopped wiring evidence blocks, wrong action/tool stops, missing repo/remote/branch/expected-head or prompt evidence stops, external-write or destructive-action approval stops, runtime-call-performed or private-runtime-state-read evidence before bundling stops, prior evidence cannot replace executor call-site target validation/permission handling/response validation, missing callable bundle marker returns `fallback`, malformed wiring evidence stops, generated previews cannot contain a runner, callable object, or direct runtime call shape, non-`create_thread` descriptors stop, private runtime-looking paths and source hints are rejected, successful bundles are clearly labeled as executor request preview readiness rather than Desktop runtime execution, tests do not invoke live Desktop runtime or execute an injected runner, no additional Desktop thread tool call shapes are introduced, and no daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
 - docs review for public claims and runtime compatibility;
 - code review gate only if the implementation slice is used for commit or PR readiness.
 
