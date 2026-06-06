@@ -10,11 +10,11 @@ Runtime compatibility: desktop
 
 Use this skill in Codex Desktop when a larger bounded objective needs Codex to choose the next safe task, decide whether it belongs in the current thread or a new thread, and prepare a durable handoff without crossing human gates.
 
-This first version uses runtime-provided thread tools only when they are already available. It does not implement a standalone wrapper around the Codex app server, CLI `fork`, local runtime databases, or unpublished Desktop internals.
+This first version uses runtime-provided thread tools only when they are already available. Desktop thread actions are runtime actions, not CLI guarantees. This skill is accepted public repository policy and workflow guidance only; it does not implement a runtime adapter, standalone wrapper, daemon, MCP server, app-server client, CLI `fork`, or Desktop runtime integration.
 
 ## CLI Fallback
 
-Use `task-continuation` and `project-orchestrator` to select the next safe task and prepare a next-session prompt. In Codex CLI, execute the task sequentially in the current session or give the prepared prompt to the maintainer for a separate session. Do not claim that CLI can open a Codex Desktop thread unless a documented or configured thread tool is actually available.
+Use `task-continuation` and `project-orchestrator` to select the next safe task and prepare a prompt, task brief, or continuation prompt. In Codex CLI, execute the task through a sequential execution path in the current session or give the prepared prompt to the maintainer for a separate session. Do not claim that CLI can open, fork, continue, or message a Codex Desktop thread unless a documented or configured thread capability is actually available.
 
 ## Workflow
 
@@ -57,12 +57,12 @@ Before any allowed tool use, record the runtime API/tool contract evidence liste
 
 Disallowed first-version tool use:
 
-- editing Codex Desktop local databases, runtime state, logs, caches, sessions, or auth files;
-- scraping unpublished Desktop UI state as a substitute for a thread tool;
-- starting app-server daemons, remote-control daemons, or wrapper services;
+- editing Codex Desktop local databases, logs, sessions, auth files, caches, app state, or other private runtime state;
+- using unpublished endpoints, scraping unpublished Desktop UI state, or reverse-engineered Desktop internals as a substitute for a thread tool;
+- starting app-server daemons, remote-control daemons, wrapper daemons, sidecars, or background services;
 - using experimental app-server thread endpoints directly.
 
-Those disallowed paths belong to a separate runtime-adapter implementation and must be labeled experimental.
+Those disallowed paths are outside the accepted public repository policy, runtime compatibility guidance, and maintained examples. They must not be treated as a roadmap item, accepted implementation, or fallback path for this skill.
 
 ## Prompt Requirements
 
@@ -73,7 +73,7 @@ A new-thread prompt should include:
 - exact task scope;
 - in-scope and out-of-scope files or categories;
 - expected branch or worktree behavior;
-- runtime thread tool or API contract evidence to record before any thread action, including contract name, exposed version or `version unavailable` plus capability source, minimal request/response compatibility summary, `last_verified`, and wrapper-to-underlying-contract mapping;
+- runtime thread tool or API contract evidence to record before any thread action, including contract name, exposed version or `version unavailable` plus capability source, minimal request/response compatibility summary, `last_verified`, and workflow, wrapper, or adapter mapping to the underlying contract;
 - verification commands;
 - review primitive or formal gate expectations;
 - stop conditions;

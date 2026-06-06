@@ -2,7 +2,7 @@
 
 Use `desktop-thread-delegation` when Codex Desktop should choose the next safe task, decide whether it belongs in the current thread or a new thread, and preserve main-thread review responsibility.
 
-This is Desktop-only behavior. Shared workflows such as `task-continuation` can prepare a next-session prompt or worker brief, but they do not guarantee that a new Codex thread can be opened. If the runtime does not expose a thread creation tool or UI, give the maintainer the prepared prompt instead.
+This is Desktop-only behavior. Desktop thread actions are runtime actions, not CLI guarantees. Shared workflows such as `task-continuation` can prepare a prompt, task brief, or continuation prompt, but they do not guarantee that a new Codex thread can be opened. If the runtime does not expose a documented thread creation capability, use the CLI-compatible prompt, task brief, continuation prompt, or sequential execution path instead.
 
 ## Maintainer Request
 
@@ -11,7 +11,7 @@ Use desktop-thread-delegation to choose the next safe roadmap task.
 Decide whether the task should continue in this thread or move to a separate Codex Desktop thread.
 If the current thread is suitable and repo policy or my authorization allows it, continue here.
 If a separate thread is better, prepare the prompt and ask before opening the new thread.
-Before any Desktop thread tool call, record the runtime tool/API contract name, exposed version or `version unavailable` plus capability source, minimal request/response compatibility summary, `last_verified`, and wrapper-to-underlying-contract mapping.
+Before any Desktop thread tool call, record the runtime tool/API contract name, exposed version or `version unavailable` plus capability source, minimal request/response compatibility summary, `last_verified`, and workflow, wrapper, or adapter mapping to the underlying contract.
 Do not commit, push, open a PR, merge, post comments, or perform other external writes unless I explicitly authorize the exact action.
 ```
 
@@ -22,7 +22,7 @@ Do not commit, push, open a PR, merge, post comments, or perform other external 
 3. Select the smallest safe task that does not cross a human gate.
 4. Decide whether the task should run in the current thread, move to a new thread, or stop for a human gate.
 5. If the current thread is suitable, continue only when workflow rules allow it or the maintainer has authorized it.
-6. If a new thread is suitable, prepare a next-session prompt from durable source-of-truth files.
+6. If a new thread is suitable, prepare a prompt, task brief, or continuation prompt from durable source-of-truth files.
 7. Stop before creating a new thread unless the maintainer explicitly authorizes that runtime action.
 8. Before any supported Desktop thread tool call, record the contract/version tracking fields from [docs/runtime-adapter-v2.md](../docs/runtime-adapter-v2.md).
 9. When authorized and supported by the runtime, create the new thread with the prepared prompt.
@@ -48,7 +48,7 @@ Context only:
 - Do not rely on this prompt over repository files.
 
 Task:
-- Add one focused docs-only example for Desktop thread delegation from a prepared next-session prompt.
+- Add one focused docs-only example for Desktop thread delegation from a prepared continuation prompt.
 
 In scope:
 - `examples/` documentation.
@@ -58,7 +58,7 @@ In scope:
 Out of scope:
 - Installer catalog changes.
 - New skills or workflow behavior.
-- Desktop runtime internals.
+- Desktop runtime internals, local databases, logs, sessions, auth files, caches, app state, unpublished endpoints, UI scraping, daemons, background services, or private runtime state.
 - Commits, pushes, PRs, merges, platform comments, or `.work/` artifacts.
 
 Verification:
@@ -71,7 +71,7 @@ Contract evidence to record before any Desktop thread tool call:
 - If no version is exposed, `version unavailable` plus a verifiable capability source such as active tool list, connector metadata, official documentation version, or runtime-reported schema.
 - Minimal request and response shape compatibility summary.
 - `last_verified`.
-- Wrapper or adapter version to underlying contract mapping.
+- Workflow, wrapper, or adapter mapping to the underlying contract.
 - Re-compare old and new contracts after runtime, connector, schema, or documentation changes.
 
 Stop conditions:
@@ -99,7 +99,7 @@ Desktop evidence:
 - Main thread retained responsibility for review, integration, and human gates.
 ```
 
-If Desktop thread creation is unavailable, do not improvise with local runtime files or unpublished Desktop internals. Return the prompt to the maintainer:
+If Desktop thread creation is unavailable, do not improvise with private Desktop runtime state, local runtime files, unpublished endpoints, UI scraping, daemons, background services, or unpublished Desktop internals. Return the prompt to the maintainer:
 
 ```text
 Desktop thread creation is not available in this runtime.
@@ -116,4 +116,4 @@ Use the prepared prompt above in a new Codex thread, then return the diff and ve
 
 ## CLI Fallback
 
-In Codex CLI or any runtime without thread creation, use the same prompt as a handoff artifact. The CLI-compatible path is sequential: run the task in the current session or paste the prompt into a separate session, then bring the diff and verification evidence back for review.
+In Codex CLI or any runtime without thread creation, use the same prompt as a handoff artifact, prepare a task brief or continuation prompt, or run through a sequential execution path in the current session. Bring the diff and verification evidence back for review before trusting the handoff.
