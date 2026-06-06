@@ -1,14 +1,14 @@
 # Release Readiness
 
-Use this guide when maintainers prepare tags, release notes, and PR readiness for this workflow pack or for a target repository using these skills.
+Use this guide when maintainers prepare release or PR readiness evidence for this workflow pack or for a target repository using these skills.
 
 This guide describes readiness checks only. It does not authorize publishing, tagging, pushing, merging, or posting platform comments.
 
 ## When To Use
 
-Use release readiness guidance when a bounded change is close to publication and the maintainer needs Codex to organize evidence before a human gate:
+Use release readiness guidance when a bounded change is close to publication and the maintainer needs Codex to organize checks and handoff evidence before a human gate:
 
-- a release notes draft needs to match the current repository state;
+- a release notes draft or current release notes file needs to match the intended release scope;
 - a tag or version candidate needs local verification before creation;
 - a PR should be checked for docs, installer, catalog, and workflow alignment;
 - a branch needs merge or release readiness evidence summarized for maintainers.
@@ -20,7 +20,7 @@ Before preparing release readiness evidence, read the durable source of truth:
 - `AGENTS.md`
 - `README.md`
 - `docs/roadmap.md`
-- `docs/release-notes-v0.1.0.md` or the current release notes draft
+- `docs/release-notes-v0.1.0.md` as historical release context, or the current release notes draft for an unreleased version
 - `catalog.yaml`
 - `install.sh`
 - relevant `skills/`, `templates/`, `workflows/`, and `policies/` files for the changed scope
@@ -38,7 +38,7 @@ Check these items before asking a maintainer to approve external writes:
 
 - Scope is clear: changed files match the release or PR objective.
 - Roadmap is current: completed public roadmap items are removed or updated without unrelated rewriting.
-- Release notes are current: highlights, included groups, safety notes, and verification commands match the repository.
+- Release notes match their role: historical release notes remain a point-in-time record, while current release notes drafts match the intended release scope.
 - Installer state is aligned: `catalog.yaml`, `install.sh`, skills, templates, workflows, and README install groups agree.
 - Runtime compatibility is labeled: shared, CLI, Desktop, and plugin-dependent behavior is not blurred.
 - Human gates are explicit: commit, push, tag, publish, merge, release, deploy, and platform comments require exact approval.
@@ -76,6 +76,8 @@ When updating release notes, verify each claim against repository files:
 - safety claims match `AGENTS.md`, `docs/usage-model.md`, and `policies/human-gate-policy.md`;
 - verification commands are current and runnable from the repository root;
 - no private paths, credentials, local runtime state, logs, caches, or machine-specific config are included.
+
+Do not backfill post-release maintenance changes into historical release notes such as `docs/release-notes-v0.1.0.md` unless the file is explicitly converted to cumulative or current release notes.
 
 ## Tag And Publish Gate
 

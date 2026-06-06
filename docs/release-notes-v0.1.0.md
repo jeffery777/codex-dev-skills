@@ -2,6 +2,8 @@
 
 Release date: 2026-06-03
 
+These release notes are the historical record for v0.1.0. Post-v0.1.0 maintenance changes belong in a future release notes draft or another explicitly current/cumulative changelog.
+
 ## Highlights
 
 - Initial public release of Codex-focused software development skills and workflows.
