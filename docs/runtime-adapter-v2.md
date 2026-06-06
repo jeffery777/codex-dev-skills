@@ -28,6 +28,41 @@ A future adapter may use only these sources:
 
 If a source is not documented, not configured, or not visible as an installed capability, it is unavailable.
 
+## Contract Version Tracking
+
+Before a future adapter or wrapper calls a runtime thread tool or documented API, it must keep a small compatibility record for the exact underlying contract it depends on. This record is documentation and audit evidence; it is not permission to implement a wrapper, daemon, MCP server, app-server client, or Desktop runtime integration.
+
+For each supported runtime action, record:
+
+- runtime thread tool or API contract name, such as `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or the documented equivalent;
+- underlying API or tool contract version when the runtime exposes one;
+- `version unavailable` when the runtime does not expose a version, plus the verifiable capability source used instead, such as the active tool list, connector metadata, official documentation version, or runtime-reported schema;
+- minimal request shape required by the adapter, including required parameters, optional parameters used, and target identity fields;
+- minimal response shape the adapter relies on, such as created thread identifier, target thread identifier, action status, error shape, lifecycle state, or fallback signal;
+- `last_verified` date for the contract evidence;
+- wrapper version or adapter version that was verified against that underlying API or tool contract;
+- mapping between wrapper version and underlying API or tool contract version, including entries where the underlying version is unavailable.
+
+When the underlying API, tool contract, connector metadata, official documentation, or runtime-reported schema changes, the wrapper contract must be re-compared against the old and new contract before use. The comparison should identify required-parameter changes, response-shape changes, error-shape changes, permission or authentication changes, and renamed, removed, or newly state-changing operations.
+
+Example compatibility record:
+
+```yaml
+wrapper_version: "0.2.0"
+runtime_contracts:
+  - action: "create-thread"
+    tool_or_api: "create_thread"
+    underlying_contract_version: "version unavailable"
+    capability_source: "active tool list captured by the current runtime"
+    request_shape_minimum:
+      required: ["prompt"]
+      optional_used: ["title", "repository", "branch"]
+    response_shape_minimum:
+      required: ["thread_id or pending_worktree_id", "status"]
+      errors: ["message"]
+    last_verified: "YYYY-MM-DD"
+```
+
 ## Prohibited Sources
 
 A future adapter must not use:
@@ -73,6 +108,8 @@ The fallback must state that no Desktop thread was opened. It must not claim tha
 Stop before calling an adapter, tool, API, or fallback when:
 
 - the API contract, required parameters, or expected result shape is unclear;
+- the underlying API or tool contract version is unknown and there is no verifiable capability source to record;
+- a runtime, connector, schema, or documentation change has not been compared against the wrapper compatibility record;
 - authentication, permission, target identity, branch, or worktree state is unclear;
 - the action would touch private local runtime state such as Desktop databases, logs, sessions, auth files, caches, or app state;
 - the only available path depends on unpublished app-server endpoints, UI scraping, or a remote-control daemon;
@@ -88,6 +125,10 @@ A future adapter should return structured evidence that the main thread can revi
 
 - requested action;
 - tool, plugin, connector, or documented API used;
+- runtime thread tool or API contract name and underlying contract version, or `version unavailable` with the verifiable capability source;
+- wrapper version to underlying API or tool contract mapping used for the call;
+- minimal request and response shape relied on by the caller;
+- `last_verified` date for the recorded contract evidence;
 - target thread or created thread identifier when exposed;
 - prompt or message summary;
 - repository, branch, and expected head evidence used by the caller;
