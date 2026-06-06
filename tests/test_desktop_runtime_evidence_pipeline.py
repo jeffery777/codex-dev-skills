@@ -1,7 +1,11 @@
 import copy
 import importlib.util
+import io
+import json
 import pathlib
+import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -44,6 +48,9 @@ class DesktopRuntimeEvidencePipelineTests(unittest.TestCase):
         self.assertIsNone(response["failure_class"])
         self.assertFalse(response["runtime_calls_performed"])
         self.assertEqual(len(response["steps"]), 5)
+        self.assertEqual(response["summary"]["status"], "ready")
+        self.assertEqual(response["summary"]["readiness_counts"]["ready"], 2)
+        self.assertIn("evidence only", response["summary"]["recommended_next_step"])
 
         discovery = step_outputs(response, "capability-discovery")[0]
         self.assertEqual(discovery["status"], "available")
@@ -68,6 +75,11 @@ class DesktopRuntimeEvidencePipelineTests(unittest.TestCase):
 
         self.assertEqual(response["status"], "fallback")
         self.assertEqual(response["failure_class"], "missing_old_contract")
+        self.assertEqual(response["summary"]["readiness_counts"]["fallback"], 1)
+        self.assertEqual(
+            response["summary"]["target_results"][0]["reason"],
+            "Contract comparison helper returned fallback.",
+        )
         create_preflight = step_outputs(response, "runtime-call-preflight", "create-thread")[0]
         self.assertEqual(create_preflight["status"], "fallback")
         self.assertEqual(create_preflight["failure_class"], "comparison_unavailable")
@@ -84,6 +96,8 @@ class DesktopRuntimeEvidencePipelineTests(unittest.TestCase):
 
         self.assertEqual(response["status"], "stopped")
         self.assertEqual(response["failure_class"], "request_shape_changed")
+        self.assertEqual(response["summary"]["readiness_counts"]["stopped"], 1)
+        self.assertEqual(response["summary"]["target_results"][0]["status"], "stopped")
         create_comparison = step_outputs(response, "contract-comparison", "create-thread")[0]
         create_preflight = step_outputs(response, "runtime-call-preflight", "create-thread")[0]
         self.assertEqual(create_comparison["status"], "stopped")
@@ -117,6 +131,70 @@ class DesktopRuntimeEvidencePipelineTests(unittest.TestCase):
         pipeline.build_evidence_pipeline(request)
 
         self.assertEqual(request, original)
+
+    def test_single_target_action_runs_only_selected_preflight(self):
+        request = valid_request(target_actions=["read-thread"])
+
+        response = pipeline.build_evidence_pipeline(request)
+
+        self.assertEqual(response["status"], "ready")
+        self.assertEqual(len(response["steps"]), 3)
+        self.assertEqual(response["summary"]["readiness_counts"]["ready"], 1)
+        self.assertEqual(response["summary"]["target_results"][0]["target_action"], "read-thread")
+        self.assertEqual(step_outputs(response, "runtime-call-preflight", "create-thread"), [])
+        read_preflight = step_outputs(response, "runtime-call-preflight", "read-thread")[0]
+        self.assertEqual(read_preflight["status"], "ready")
+
+    def test_invalid_target_action_entry_stops_with_clear_validation_error(self):
+        response = pipeline.build_evidence_pipeline(valid_request(target_actions=[{"action": "read-thread"}]))
+
+        self.assertEqual(response["status"], "stopped")
+        self.assertEqual(response["failure_class"], "validation_error")
+        self.assertEqual(response["summary"]["primary_reason"], "target_actions[0] must be a non-empty string.")
+        self.assertEqual(response["steps"], [])
+
+    def test_cli_target_action_override_filters_request(self):
+        request = valid_request()
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".json") as handle:
+            json.dump(request, handle)
+            handle.flush()
+            output = io.StringIO()
+            with redirect_stdout(output):
+                rc = pipeline.main(["--request", handle.name, "--target-action", "read-thread"])
+
+        response = json.loads(output.getvalue())
+        self.assertEqual(rc, 0)
+        self.assertEqual(response["target_actions"], ["read-thread"])
+        self.assertEqual(len(response["steps"]), 3)
+        self.assertEqual(response["summary"]["target_results"][0]["target_action"], "read-thread")
+
+    def test_cli_example_target_action_override_filters_example(self):
+        output = io.StringIO()
+        with redirect_stdout(output):
+            rc = pipeline.main(["--example", "--target-action", "create-thread"])
+
+        request = json.loads(output.getvalue())
+        self.assertEqual(rc, 0)
+        self.assertEqual(request["target_actions"], ["create-thread"])
+
+    def test_cli_duplicate_target_action_override_exits_before_example_output(self):
+        output = io.StringIO()
+        errors = io.StringIO()
+        with self.assertRaises(SystemExit) as raised:
+            with redirect_stdout(output), redirect_stderr(errors):
+                pipeline.main(
+                    [
+                        "--example",
+                        "--target-action",
+                        "read-thread",
+                        "--target-action",
+                        "read-thread",
+                    ]
+                )
+
+        self.assertEqual(raised.exception.code, 2)
+        self.assertEqual(output.getvalue(), "")
+        self.assertIn("Duplicate target_action: read-thread", errors.getvalue())
 
 
 if __name__ == "__main__":
