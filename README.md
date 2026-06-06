@@ -258,6 +258,7 @@ Shared orchestration templates include task briefs, task manifests, next-session
 - [Multi-step maintenance](examples/multi-step-maintenance.md)
 - [Task continuation](examples/task-continuation.md)
 - [Desktop thread delegation](examples/desktop-thread-delegation.md)
+- [Runtime adapter boundary](examples/runtime-adapter-boundary.md)
 - [Language verification](examples/language-verification.md)
 - [GitHub workflow guidance](examples/github-workflow-guidance.md)
 - [Merge review and readiness](examples/merge-review.md)

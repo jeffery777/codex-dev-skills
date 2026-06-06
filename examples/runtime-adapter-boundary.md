@@ -1,0 +1,132 @@
+# Runtime Adapter Boundary Example
+
+Use this example when a Codex Desktop workflow wants to delegate thread actions through a supported runtime tool while preserving the boundary from [Desktop Runtime Adapter V2 Boundary](../docs/runtime-adapter-v2.md).
+
+This is a documentation example only. It does not implement a wrapper, runtime adapter, daemon, MCP server, app-server client, or Desktop integration.
+
+## Maintainer Request
+
+```text
+Use desktop-thread-delegation for this bounded task.
+If this runtime exposes documented thread tools, verify repo identity, branch state, expected head, and my explicit authorization before creating, forking, or messaging a thread.
+If thread tools are unavailable, give me a paste-ready prompt or continue sequentially in this session when safe.
+Stop if the only path depends on private Desktop runtime state, unpublished endpoints, UI scraping, daemons, unclear API contracts, unclear auth or permissions, destructive actions, or external writes I did not explicitly authorize.
+```
+
+## Scenario 1: Supported Thread Tools
+
+When the active runtime exposes tools such as `create_thread`, `fork_thread`, or `send_message_to_thread`, treat them as state-changing Desktop runtime actions. Verify and record the boundary before calling the tool.
+
+Preflight checklist:
+
+1. Confirm repository identity with ordinary git inspection:
+   - working directory
+   - `git remote -v`
+   - current branch and upstream
+   - `git status --short --branch`
+2. Confirm the expected branch or expected head SHA when the thread action depends on local git state.
+3. Summarize the prepared prompt, intended thread action, and recipient thread if one exists.
+4. State in-scope and out-of-scope files or categories.
+5. Ask for explicit human authorization for the exact thread action.
+6. Keep commit, push, PR creation, PR comments, review submission, merge, deploy, destructive actions, and other platform-side mutation behind separate explicit authorization.
+
+Example evidence before calling a supported tool:
+
+```text
+Thread action preflight:
+- Repo: jeffery777/codex-dev-skills from origin remote.
+- Branch: codex/example-task, upstream origin/codex/example-task.
+- Expected head: 1234567890abcdef1234567890abcdef12345678.
+- Dirty state: docs-only changes in examples/example.md; untracked .work/ is out of scope.
+- Action: create a new Desktop thread from the prepared prompt below.
+- Human authorization: maintainer explicitly authorized creating this thread only.
+- External writes still blocked: commit, push, PR, platform comments, merge, deploy, destructive actions.
+```
+
+Example prepared prompt:
+
+```text
+Continue this bounded Codex Desktop task in a new thread.
+
+Read first:
+- AGENTS.md
+- README.md
+- docs/runtime-adapter-v2.md
+- examples/runtime-adapter-boundary.md
+
+Task:
+- Draft one docs-only example for the runtime adapter boundary.
+
+In scope:
+- examples/ documentation.
+- README or relevant docs links needed for discoverability.
+
+Out of scope:
+- Wrapper or runtime adapter implementation.
+- Daemons, MCP servers, app-server clients, Desktop runtime internals, UI scraping, or private local runtime files.
+- Commits, pushes, PRs, comments, merges, deploys, destructive actions, or .work/ artifacts.
+
+Verification:
+- ./scripts/validate-repo.sh
+- git diff --check
+
+Stop conditions:
+- Stop if source-of-truth files conflict.
+- Stop if the change stops being docs-only.
+- Stop before external writes or destructive actions.
+- Stop if the runtime tool contract, auth, permissions, repo identity, branch, worktree, or expected head is unclear.
+```
+
+After the tool returns, record only the documented result shape exposed by the runtime, such as created thread identifier, target thread, action result, prompt summary, and unresolved risk. Do not inspect Desktop databases, logs, sessions, auth files, caches, app state, or other private local runtime files to fill missing evidence.
+
+## Scenario 2: No Thread Tool Available
+
+When no documented thread capability is present in the active tool list, say that no Desktop thread was opened and choose the lowest-risk fallback.
+
+Paste-ready prompt fallback:
+
+```text
+Desktop thread creation is not available in this runtime.
+Paste the prompt below into a new Codex Desktop thread, then return the diff and verification notes here for integration review.
+
+[prepared prompt from the preflight]
+```
+
+Sequential CLI-compatible fallback:
+
+```text
+No documented thread tool is available, so I will continue sequentially in this session.
+I will use repository files and ordinary shell/git inspection only.
+I will not claim that a Desktop thread was opened.
+I will stop before commits, pushes, PRs, comments, merges, deploys, destructive actions, or runtime-specific mutation unless explicitly authorized.
+```
+
+The fallback may prepare a task brief, continuation prompt, or handoff artifact from durable repository files when that helps another session continue safely. It must not emulate Desktop thread control with private runtime files, unpublished endpoints, UI scraping, or a background service.
+
+## Scenario 3: Stop Instead Of Adapting
+
+Stop before calling a thread tool, fallback, wrapper, API, or script when any of these conditions apply:
+
+- API contract, required parameters, expected result shape, authentication, or permissions are unclear.
+- Target repo, remote, branch, worktree, expected head, or recipient thread is unclear.
+- The only available source is private local runtime state such as Desktop databases, logs, sessions, auth files, caches, app state, or local runtime directories.
+- The only path depends on unpublished app-server endpoints, reverse-engineered Desktop internals, UI scraping, a remote-control daemon, wrapper daemon, sidecar, or background service.
+- The action would perform a destructive operation or external write without explicit authorization for the exact target.
+- Source-of-truth files conflict and the conflict cannot be resolved cheaply.
+
+Stop response shape:
+
+```text
+Stopped before Desktop thread action.
+
+Reason:
+- The runtime does not expose a documented thread tool, and the only suggested path depends on private Desktop runtime state.
+
+Lowest-risk next option:
+- Use the paste-ready prompt below in a new Codex thread, or authorize sequential execution in this session.
+
+Paste-ready prompt:
+- [include prompt that relies only on repository files and ordinary git inspection]
+```
+
+The main thread remains responsible for re-reading the returned diff, running verification, reviewing the evidence, and enforcing commit, PR, merge, and external-write gates.
