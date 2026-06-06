@@ -11,6 +11,7 @@ Use desktop-thread-delegation to choose the next safe roadmap task.
 Decide whether the task should continue in this thread or move to a separate Codex Desktop thread.
 If the current thread is suitable and repo policy or my authorization allows it, continue here.
 If a separate thread is better, prepare the prompt and ask before opening the new thread.
+Before any Desktop thread tool call, record the runtime tool/API contract name, exposed version or `version unavailable` plus capability source, minimal request/response compatibility summary, `last_verified`, and wrapper-to-underlying-contract mapping.
 Do not commit, push, open a PR, merge, post comments, or perform other external writes unless I explicitly authorize the exact action.
 ```
 
@@ -23,8 +24,9 @@ Do not commit, push, open a PR, merge, post comments, or perform other external 
 5. If the current thread is suitable, continue only when workflow rules allow it or the maintainer has authorized it.
 6. If a new thread is suitable, prepare a next-session prompt from durable source-of-truth files.
 7. Stop before creating a new thread unless the maintainer explicitly authorizes that runtime action.
-8. When authorized and supported by the runtime, create the new thread with the prepared prompt.
-9. Keep the main thread responsible for integrating the result, reviewing the diff, and enforcing human gates before any external write.
+8. Before any supported Desktop thread tool call, record the contract/version tracking fields from [docs/runtime-adapter-v2.md](../docs/runtime-adapter-v2.md).
+9. When authorized and supported by the runtime, create the new thread with the prepared prompt.
+10. Keep the main thread responsible for integrating the result, reviewing the diff, and enforcing human gates before any external write.
 
 ## Prepared Prompt Shape
 
@@ -35,6 +37,7 @@ Read first:
 - AGENTS.md
 - docs/roadmap.md
 - README.md
+- docs/runtime-adapter-v2.md
 - examples/task-continuation.md
 - docs/runtime-compatibility.md
 
@@ -62,11 +65,21 @@ Verification:
 - `./scripts/validate-repo.sh`
 - `git diff --check`
 
+Contract evidence to record before any Desktop thread tool call:
+- Runtime thread tool or API contract name, such as `create_thread`, `fork_thread`, `send_message_to_thread`, or the documented equivalent.
+- Underlying API or tool contract version when exposed.
+- If no version is exposed, `version unavailable` plus a verifiable capability source such as active tool list, connector metadata, official documentation version, or runtime-reported schema.
+- Minimal request and response shape compatibility summary.
+- `last_verified`.
+- Wrapper or adapter version to underlying contract mapping.
+- Re-compare old and new contracts after runtime, connector, schema, or documentation changes.
+
 Stop conditions:
 - Stop if repository files conflict with this prompt.
 - Stop if the change stops being docs-only.
 - Stop before any external write or destructive action.
 - Stop if the runtime cannot safely represent Desktop-only behavior with a CLI fallback.
+- Stop if the runtime contract, exposed version or capability source, request shape, response shape, permissions, authentication, or wrapper mapping is unclear.
 ```
 
 ## Runtime Action
@@ -77,6 +90,12 @@ When Desktop supports thread creation, the main thread should use the runtime-pr
 Desktop evidence:
 - Created a new Codex Desktop thread from the prepared prompt.
 - New thread was instructed to re-read source-of-truth files before editing.
+- Runtime contract: create_thread.
+- Underlying contract version: version unavailable.
+- Capability source: active tool list in the current runtime.
+- Request/response compatibility: prompt is required; title, repository, and branch are used when exposed; response must expose a created thread identifier or pending worktree identifier, action status, and error message shape.
+- Wrapper/API mapping: no wrapper or adapter implementation; desktop-thread-delegation workflow at current repo revision -> create_thread version unavailable.
+- Last verified: YYYY-MM-DD.
 - Main thread retained responsibility for review, integration, and human gates.
 ```
 
