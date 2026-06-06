@@ -1,6 +1,6 @@
 # Desktop Runtime Wrapper V1 Feasibility And Implementation Plan
 
-This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as non-state-changing helpers: a request planner and fallback generator, a capability metadata normalization helper, a contract comparison helper, and a create-thread runtime-call preflight helper. They do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, skill, or state-changing runtime-call path.
+This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as non-state-changing helpers: a request planner and fallback generator, a capability metadata normalization helper, a contract comparison helper, a create-thread runtime-call preflight helper, and a read-thread runtime-call preflight helper. They do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, skill, or runtime-call path.
 
 ## Decision
 
@@ -13,6 +13,8 @@ The read-only capability discovery slice is also complete as a non-state-changin
 The contract comparison slice is also complete as a non-state-changing compatibility re-check helper. It compares old wrapper contract evidence against newer normalized capability evidence before a runtime, connector, schema, or documentation change is trusted. It returns `compatible` when the tool/API name, action classification, required request fields, and minimum response fields still match; `fallback` when the capability is unavailable or missing; and `stopped` when the comparison detects changed request shape, response shape, classification, tool/API name, missing evidence, or forbidden Desktop runtime source hints. State-changing actions such as `create-thread` may be compared as evidence only; comparison does not authorize or call the runtime tool.
 
 The create-thread preflight slice is also complete as a non-state-changing readiness helper. It consumes target repo evidence, prepared prompt evidence, normalized `create-thread` capability evidence, and compatible contract comparison evidence, then returns `ready`, `fallback`, or `stopped`. `ready` only means evidence is ready for a future separately approved `create_thread` runtime call; it does not mean the helper called `create_thread`, opened a thread, or authorized commit, push, PR creation, merge, or any other external write. The helper returns `fallback` when capability or comparison evidence is unavailable or exact thread-action authorization is false, and `stopped` when contract evidence is incompatible or unclear, the action classification is not `state-changing`, repo/remote/branch/expected-head evidence is incomplete, private source hints appear, or external-write boundaries are not blocked.
+
+The read-thread preflight slice is also complete as a non-state-changing readiness helper. It consumes target repo and thread-id evidence, read-request purpose evidence, normalized `read-thread` capability evidence, and compatible contract comparison evidence, then returns `ready`, `fallback`, or `stopped`. `ready` only means evidence is ready for a future separately approved read-only `read_thread` runtime call; it does not mean the helper called `read_thread`, read a Desktop thread, or authorized commit, push, PR creation, merge, or any other external write. The helper keeps runtime-call authorization out of scope and stops if a caller tries to treat preflight as runtime-call authorization.
 
 State-changing thread calls can be considered only after the first slice proves the request and evidence contract, and after a separate human decision approves adding a runtime-call path for one documented action.
 
@@ -27,6 +29,7 @@ Wrapper V1 should make the existing `desktop-thread-delegation` boundary easier 
 - normalize caller-supplied documented capability metadata and allow the planner to use that normalized evidence without calling runtime tools;
 - compare old wrapper contract evidence with newer normalized capability evidence before relying on a runtime/schema change;
 - preflight create-thread readiness evidence before any future separately approved runtime-call path;
+- preflight read-thread readiness evidence before any future separately approved read-only runtime-call path;
 - preserve the main-thread responsibility for integration, verification, review evidence, commit readiness, PR readiness, merge readiness, and human approval.
 
 ## Non-Goals
@@ -418,12 +421,89 @@ Focused tests live in `tests/test_desktop_runtime_create_thread_preflight.py` an
 python3 -B -m unittest discover -s tests
 ```
 
+## Read-Thread Preflight Implementation Artifact
+
+The read-thread runtime-call preflight helper is `scripts/desktop_runtime_read_thread_preflight.py`.
+It accepts a prepared JSON request containing target repo and thread-id evidence, read-request purpose evidence, normalized `read-thread` capability evidence, compatible contract comparison output, and safety boundaries.
+
+Usage examples:
+
+```bash
+python3 scripts/desktop_runtime_read_thread_preflight.py --example --pretty
+```
+
+```bash
+python3 scripts/desktop_runtime_read_thread_preflight.py --pretty < read-thread-preflight.json
+```
+
+The stdin request must be JSON and should use this minimal shape:
+
+```yaml
+requested_action: "preflight-read-thread-runtime-call"
+target_action: "read-thread"
+target:
+  repo: "owner/name"
+  remote: "origin URL"
+  branch: "branch-name"
+  thread_id: "thread identifier supplied by the caller"
+read_request:
+  summary: "short reason for checking read-only evidence readiness"
+  expected_fields: ["status", "thread_id"]
+capability_evidence:
+  status: "available"
+  capabilities:
+    - action: "read-thread"
+      tool_or_api: "read_thread"
+      classification: "read-only"
+      required_request_fields: ["thread_id"]
+      minimum_response_fields: ["status", "thread_id"]
+      capability_source: "active tool list"
+      contract_version: "version unavailable"
+      last_verified: "YYYY-MM-DD"
+contract_comparison:
+  status: "compatible"
+  target_action: "read-thread"
+  contract_comparison:
+    compared_fields: ["action", "tool_or_api", "classification", "required_request_fields", "minimum_response_fields"]
+    old_contract: "old read-thread contract evidence"
+    new_capability: "new normalized read-thread capability evidence"
+boundaries:
+  in_scope: ["durable repo files or task scope"]
+  out_of_scope: [".work/", "Desktop private runtime state"]
+  external_writes_blocked: true
+authorization:
+  thread_action_authorized: false
+  external_write_authorized: false
+```
+
+The helper output includes:
+
+- status: `ready`, `fallback`, or `stopped`;
+- target repo, remote, branch, and thread-id evidence;
+- read-request summary and expected fields;
+- contract comparison status and compared fields;
+- selected `read-thread` capability classification, request shape, response shape, source, version, and `last_verified`;
+- authorization evidence showing that runtime-call authorization remains separate from evidence readiness;
+- `runtime_call_performed: false`;
+- a readiness note stating that `ready` is evidence only for a future separately approved read-only runtime call.
+
+The helper returns `fallback` when normalized read-thread capability evidence or compatible contract comparison evidence is unavailable. It returns a paste-ready prompt and states that no Desktop thread was opened, created, forked, messaged, or read.
+
+The helper returns `stopped` when contract comparison stopped or is not compatible, request or response evidence is unclear, read-thread classification is not `read-only`, repo/remote/branch/thread-id evidence is incomplete, `read_request.expected_fields` is missing, forbidden private source hints appear, runtime-call authorization is treated as part of preflight, or external writes are requested or no longer blocked.
+
+The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, authorize runtime calls, authorize external writes, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
+
+Focused tests live in `tests/test_desktop_runtime_read_thread_preflight.py` and can be rerun with:
+
+```bash
+python3 -B -m unittest discover -s tests
+```
+
 ## Later Slice Candidates
 
 Later slices require separate review and human approval:
 
 - a single state-changing `create-thread` call path using an already exposed runtime tool;
-- `read-thread` metadata verification when the runtime exposes a documented read-only tool;
 - additional `fork-thread` or `send-message` paths only after the single-action path is stable.
 
 Each later slice must re-check the underlying contract evidence and keep private runtime state prohibited.
@@ -444,6 +524,7 @@ For the completed first implementation slices:
 - capability discovery tests proving caller-supplied metadata is normalized, unavailable metadata is reported as unavailable, ambiguous classification stops, and forbidden source hints stop;
 - contract comparison tests proving compatible evidence returns `compatible`, missing or unavailable capability returns `fallback`, changed request shape, response shape, classification, or tool/API name returns `stopped`, forbidden private source hints stop, and state-changing evidence is compared without authorizing runtime calls;
 - create-thread preflight tests proving compatible evidence plus exact authorization returns `ready`, unavailable capability or comparison evidence returns `fallback`, thread action authorization false returns `fallback`, incompatible or unclear comparison evidence returns `stopped`, read-only create-thread classification stops, external-write authorization stops, missing repo/remote/branch/expected-head evidence stops, forbidden source hints stop, and no `create_thread` call is made;
+- read-thread preflight tests proving the discovery-to-comparison-to-preflight evidence chain returns `ready`, unavailable capability or comparison evidence returns `fallback`, incompatible comparison evidence returns `stopped`, state-changing read-thread classification stops, preflight-scoped runtime-call authorization stops, external-write authorization stops, missing thread-id or expected-fields evidence stops, forbidden source hints stop, and no `read_thread` call is made;
 - docs review for public claims and runtime compatibility;
 - code review gate only if the implementation slice is used for commit or PR readiness.
 

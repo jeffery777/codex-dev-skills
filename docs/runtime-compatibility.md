@@ -35,7 +35,7 @@ Desktop-only workflows should provide a CLI fallback such as a prompt, task brie
 CLI-only workflows should provide a Desktop fallback such as running the same read-plan-implement-verify sequence in a Desktop thread, with Desktop-only actions clearly omitted.
 
 For the policy boundary of a possible future Desktop runtime-call adapter, see [Desktop Runtime Adapter V2 Boundary](runtime-adapter-v2.md).
-For the completed non-state-changing Desktop runtime wrapper V1 planner and capability metadata normalization helpers, see [Desktop Runtime Wrapper V1 Feasibility And Implementation Plan](desktop-runtime-wrapper-v1-plan.md).
+For the completed non-state-changing Desktop runtime wrapper V1 planner, capability metadata normalization, contract comparison, create-thread preflight, and read-thread preflight helpers, see [Desktop Runtime Wrapper V1 Feasibility And Implementation Plan](desktop-runtime-wrapper-v1-plan.md).
 
 ## Desktop To CLI Fallback Mapping
 
@@ -80,5 +80,7 @@ When evidence comes from caller-supplied documented capability metadata instead 
 Before relying on a runtime, connector, schema, or documentation change, compare the old wrapper contract evidence with the newer normalized capability evidence. The Desktop runtime wrapper V1 contract comparison helper can perform that re-check from caller-supplied evidence only: unchanged tool/API name, classification, required request fields, and minimum response fields return `compatible`; missing or unavailable capability returns `fallback`; changed contract fields, unclear evidence, or forbidden private runtime hints return `stopped`. This comparison is evidence only and does not authorize or call state-changing tools such as `create_thread`, `fork_thread`, or `send_message_to_thread`.
 
 Before a future `create_thread` runtime call, the V1 create-thread preflight helper can check readiness evidence from caller-supplied fields only. It requires repo, remote, branch, expected head, prepared prompt summary/body, normalized `create-thread` capability evidence classified as `state-changing`, compatible contract comparison output, exact `create-thread` authorization, `external_write_authorized: false`, and `external_writes_blocked: true`. Its `ready` status means evidence is ready for a future separately approved runtime call only; the helper does not call `create_thread`, does not read Desktop private runtime state, and does not authorize commit, push, PR creation, merge, or other external writes.
+
+Before a future read-only `read_thread` runtime call, the V1 read-thread preflight helper can check readiness evidence from caller-supplied fields only. It requires repo, remote, branch, thread id, read-request summary and expected fields, normalized `read-thread` capability evidence classified as `read-only`, compatible contract comparison output, `external_write_authorized: false`, and `external_writes_blocked: true`. Its `ready` status means evidence is ready for a future separately approved read-only runtime call only; the helper does not call `read_thread`, does not read Desktop private runtime state, does not treat preflight as runtime-call authorization, and does not authorize commit, push, PR creation, merge, or other external writes.
 
 When evidence is incomplete, mark the claim as unverified.

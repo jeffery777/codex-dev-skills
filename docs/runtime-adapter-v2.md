@@ -51,6 +51,8 @@ When the underlying API, tool contract, connector metadata, official documentati
 
 Before a future state-changing `create_thread` call, a non-state-changing preflight helper may check whether the required evidence is complete. Such a helper may return `ready`, `fallback`, or `stopped`; `ready` means only that repo, prompt, capability, compatible comparison, exact thread-action authorization, and external-write boundary evidence are ready for a future separately approved runtime call. It must not call `create_thread`, open a thread, read Desktop private runtime state, or authorize commit, push, PR creation, merge, or other external writes.
 
+Before a future read-only `read_thread` call, a non-state-changing preflight helper may check whether the required evidence is complete. Such a helper may return `ready`, `fallback`, or `stopped`; `ready` means only that repo, thread id, read-request purpose, read-only capability, compatible comparison, and external-write boundary evidence are ready for a future separately approved read-only runtime call. It must not call `read_thread`, read a Desktop thread, treat preflight as runtime-call authorization, read Desktop private runtime state, or authorize commit, push, PR creation, merge, or other external writes.
+
 Example compatibility record:
 
 ```yaml
