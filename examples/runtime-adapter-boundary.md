@@ -2,15 +2,15 @@
 
 Use this example when a Codex Desktop workflow wants to delegate thread actions through a supported runtime tool while preserving the boundary from [Desktop Runtime Adapter V2 Boundary](../docs/runtime-adapter-v2.md).
 
-This is a documentation example only. It does not implement a wrapper, runtime adapter, daemon, MCP server, app-server client, or Desktop integration.
+This is a documentation example only. It belongs to accepted public repository policy, runtime compatibility guidance, and maintained examples. It does not implement a wrapper, runtime adapter, daemon, MCP server, app-server client, Desktop runtime integration, or roadmap commitment.
 
 ## Maintainer Request
 
 ```text
 Use desktop-thread-delegation for this bounded task.
 If this runtime exposes documented thread tools, verify repo identity, branch state, expected head, and my explicit authorization before creating, forking, or messaging a thread.
-If thread tools are unavailable, give me a paste-ready prompt or continue sequentially in this session when safe.
-Stop if the only path depends on private Desktop runtime state, unpublished endpoints, UI scraping, daemons, unclear API contracts, unclear auth or permissions, destructive actions, or external writes I did not explicitly authorize.
+If thread tools are unavailable, give me a paste-ready prompt, task brief, continuation prompt, or continue through a sequential execution path when safe.
+Stop if the only path depends on private Desktop runtime state, unpublished endpoints, UI scraping, daemons, background services, unclear API contracts, unclear auth or permissions, destructive actions, or external writes I did not explicitly authorize.
 ```
 
 ## Scenario 1: Supported Thread Tools
@@ -75,7 +75,7 @@ In scope:
 
 Out of scope:
 - Wrapper or runtime adapter implementation.
-- Daemons, MCP servers, app-server clients, Desktop runtime internals, UI scraping, or private local runtime files.
+- Daemons, MCP servers, app-server clients, Desktop runtime internals, UI scraping, unpublished endpoints, background services, or private Desktop runtime state.
 - Commits, pushes, PRs, comments, merges, deploys, destructive actions, or .work/ artifacts.
 
 Verification:
@@ -87,7 +87,7 @@ Contract evidence to record before any thread action:
 - Underlying contract version, or "version unavailable" plus capability source.
 - Minimal request and response shape.
 - Last verified date.
-- Wrapper version to underlying contract mapping.
+- Workflow, wrapper, or adapter mapping to the underlying contract.
 - Re-compare old and new contracts after any runtime, connector, schema, or documentation change.
 
 Stop conditions:
@@ -97,7 +97,7 @@ Stop conditions:
 - Stop if the runtime tool contract, auth, permissions, repo identity, branch, worktree, or expected head is unclear.
 ```
 
-After the tool returns, record only the documented result shape exposed by the runtime, such as created thread identifier, target thread, action result, prompt summary, contract version evidence, request/response compatibility summary, and unresolved risk. Do not inspect Desktop databases, logs, sessions, auth files, caches, app state, or other private local runtime files to fill missing evidence.
+After the tool returns, record only the documented result shape exposed by the runtime, such as created thread identifier, target thread, action result, prompt summary, contract version evidence, request/response compatibility summary, and unresolved risk. Do not inspect Desktop databases, logs, sessions, auth files, caches, app state, or other private Desktop runtime files to fill missing evidence.
 
 ## Scenario 2: No Thread Tool Available
 
@@ -121,7 +121,7 @@ I will not claim that a Desktop thread was opened.
 I will stop before commits, pushes, PRs, comments, merges, deploys, destructive actions, or runtime-specific mutation unless explicitly authorized.
 ```
 
-The fallback may prepare a task brief, continuation prompt, or handoff artifact from durable repository files when that helps another session continue safely. It must not emulate Desktop thread control with private runtime files, unpublished endpoints, UI scraping, or a background service.
+The fallback may prepare a prompt, task brief, continuation prompt, or sequential execution path from durable repository files when that helps another session continue safely. It must not emulate Desktop thread control with private Desktop runtime state, unpublished endpoints, UI scraping, daemons, or background services.
 
 ## Scenario 3: Stop Instead Of Adapting
 
@@ -131,7 +131,7 @@ Stop before calling a thread tool, fallback, wrapper, API, or script when any of
 - Underlying API or tool contract version is unavailable and there is no verifiable capability source to record.
 - Runtime, connector, schema, or documentation changes have not been compared against the wrapper compatibility record.
 - Target repo, remote, branch, worktree, expected head, or recipient thread is unclear.
-- The only available source is private local runtime state such as Desktop databases, logs, sessions, auth files, caches, app state, or local runtime directories.
+- The only available source is private Desktop runtime state such as local databases, logs, sessions, auth files, caches, app state, local runtime directories, or private runtime files.
 - The only path depends on unpublished app-server endpoints, reverse-engineered Desktop internals, UI scraping, a remote-control daemon, wrapper daemon, sidecar, or background service.
 - The action would perform a destructive operation or external write without explicit authorization for the exact target.
 - Source-of-truth files conflict and the conflict cannot be resolved cheaply.

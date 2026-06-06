@@ -1,8 +1,8 @@
 # Desktop Runtime Adapter V2 Boundary
 
-This document defines the boundary for a possible second-version Desktop thread delegation wrapper or runtime adapter. It is a specification and safety contract only. It does not introduce an implementation, daemon, MCP server, app-server client, or Desktop runtime integration.
+This document defines the boundary for a possible second-version Desktop thread delegation wrapper or runtime adapter. It is accepted public repository policy, runtime compatibility guidance, and a maintained example boundary only. It does not introduce an implementation, roadmap commitment, daemon, MCP server, app-server client, or Desktop runtime integration.
 
-The current `desktop-thread-delegation` skill remains the user-facing workflow. A future adapter may only make already-supported thread actions easier to call; it must not expand authority, bypass human gates, or read private local runtime state.
+The current `desktop-thread-delegation` skill remains the user-facing workflow. A future adapter may only make already-supported thread actions easier to call; it must not expand authority, bypass human gates, or read private Desktop runtime state.
 
 For practical prompt and stop-condition examples, see [Runtime Adapter Boundary Example](../examples/runtime-adapter-boundary.md).
 
@@ -15,7 +15,7 @@ A second-version adapter may expose a narrow, documented control surface for Des
 - send a prepared message to a selected thread;
 - read thread metadata needed to verify delegation state, such as thread identifier, title, branch or worktree label when exposed, created time, and current lifecycle state.
 
-All metadata reads are read-only and must be limited to what the configured runtime, connector, or plugin intentionally exposes. The adapter should not infer state from private files, logs, UI scraping, or unpublished services.
+All metadata reads are read-only and must be limited to what the configured runtime, connector, or plugin intentionally exposes. The adapter should not infer state from private Desktop runtime state, including local databases, logs, sessions, auth files, caches, app state, unpublished endpoints, UI scraping, daemons, background services, or unpublished services.
 
 ## Allowed Sources
 
@@ -68,7 +68,7 @@ runtime_contracts:
 A future adapter must not use:
 
 - Codex Desktop local SQLite databases;
-- Desktop logs, sessions, auth files, caches, app state, or other private local runtime files;
+- Desktop logs, sessions, auth files, caches, app state, or other private Desktop runtime files;
 - unpublished app-server endpoints or reverse-engineered Desktop internals;
 - UI scraping as a substitute for a supported tool or documented API;
 - a remote-control daemon, wrapper daemon, background service, or sidecar process that controls Desktop outside the active runtime contract;
@@ -98,8 +98,8 @@ Opening, forking, or messaging a thread is a Desktop runtime action. It is not p
 When a supported Desktop thread action is unavailable, the adapter must fall back to one of these CLI-compatible outcomes:
 
 - generate a paste-ready prompt that the maintainer can use in a new Codex thread;
-- run the work sequentially in the current session when the user has authorized current-thread execution and repo policy allows it;
-- prepare a task brief, continuation prompt, or handoff artifact from durable repository files.
+- prepare a task brief or continuation prompt from durable repository files;
+- run the work through a sequential execution path in the current session when the user has authorized current-thread execution and repo policy allows it.
 
 The fallback must state that no Desktop thread was opened. It must not claim that Codex CLI can spawn Desktop threads unless a documented or configured thread capability is actually available.
 
@@ -111,8 +111,8 @@ Stop before calling an adapter, tool, API, or fallback when:
 - the underlying API or tool contract version is unknown and there is no verifiable capability source to record;
 - a runtime, connector, schema, or documentation change has not been compared against the wrapper compatibility record;
 - authentication, permission, target identity, branch, or worktree state is unclear;
-- the action would touch private local runtime state such as Desktop databases, logs, sessions, auth files, caches, or app state;
-- the only available path depends on unpublished app-server endpoints, UI scraping, or a remote-control daemon;
+- the action would touch private Desktop runtime state such as local databases, logs, sessions, auth files, caches, app state, local runtime directories, or private runtime files;
+- the only available path depends on unpublished app-server endpoints, reverse-engineered Desktop internals, UI scraping, a remote-control daemon, wrapper daemon, sidecar, or background service;
 - the action would perform a destructive operation or external write without explicit authorization for that exact target;
 - expected head, branch, worktree, or remote checks fail;
 - source-of-truth files conflict and the conflict cannot be cheaply resolved.
@@ -126,7 +126,7 @@ A future adapter should return structured evidence that the main thread can revi
 - requested action;
 - tool, plugin, connector, or documented API used;
 - runtime thread tool or API contract name and underlying contract version, or `version unavailable` with the verifiable capability source;
-- wrapper version to underlying API or tool contract mapping used for the call;
+- workflow, wrapper, or adapter mapping to the underlying API or tool contract used for the call;
 - minimal request and response shape relied on by the caller;
 - `last_verified` date for the recorded contract evidence;
 - target thread or created thread identifier when exposed;

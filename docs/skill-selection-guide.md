@@ -16,8 +16,8 @@ This compact guide helps new users choose the smallest skill or gate that matche
 | A branch needs a formal readiness decision before PR handoff, merge readiness, or final approval. | `merge-readiness-gate` | Formal branch readiness gate that summarizes evidence, blockers, residual risk, and the human approval boundary. |
 | Codex should classify the next safe action or run a bounded review/fix closure loop. | `project-orchestrator` | Routes between planning, implementation, docs update, review primitives, formal gates, continuation, or human decision. |
 | Codex should carry a bounded objective through discovery, implementation, verification, review, docs sync, and PR readiness. | `project-delivery` | Delivery workflow for multi-step but bounded objectives that still stop at the next human gate. |
-| Codex Desktop should coordinate delegated project work across Desktop threads or workers. | `desktop-project-delivery` | Desktop-only delivery entry point; CLI fallback is `project-delivery` plus explicit task briefs or continuation prompts. |
-| Codex Desktop should choose the next safe task and decide whether to continue here or hand off to a new thread. | `desktop-thread-delegation` | Desktop-only continuation adapter that can use runtime thread tools when authorized, while falling back to a paste-ready prompt. |
+| Codex Desktop should coordinate delegated project work across Desktop threads or workers. | `desktop-project-delivery` | Desktop-only delivery entry point; CLI fallback is `project-delivery` plus explicit prompts, task briefs, continuation prompts, or sequential execution. |
+| Codex Desktop should choose the next safe task and decide whether to continue here or hand off to a new thread. | `desktop-thread-delegation` | Desktop-only workflow guidance that can use runtime thread tools when authorized, while falling back to a prompt, task brief, continuation prompt, or sequential execution path. |
 
 ## Review Primitive Or Formal Gate
 
@@ -85,6 +85,8 @@ Choose `desktop-thread-delegation` only when the active runtime is Codex Desktop
 
 The CLI fallback is a paste-ready prompt, task brief, continuation prompt, or sequential execution path. Do not state or imply that Codex CLI can open, fork, continue, or message Desktop threads unless a documented or configured thread capability is actually available.
 
+This guidance is limited to accepted public repository policy, runtime compatibility guidance, and maintained examples. It does not claim that a Desktop runtime adapter, wrapper, daemon, MCP server, app-server client, or Desktop runtime integration has been implemented or accepted as a roadmap item.
+
 Before relying on any runtime thread tool or documented API, record contract evidence consistent with [Runtime Compatibility](runtime-compatibility.md) and [Desktop Runtime Adapter V2 Boundary](runtime-adapter-v2.md):
 
 - runtime thread tool or API contract name, such as `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or the documented equivalent;
@@ -93,7 +95,7 @@ Before relying on any runtime thread tool or documented API, record contract evi
 - minimal request shape used by the workflow, including required parameters, optional parameters used, and target identity fields;
 - minimal response shape relied on by the workflow, such as created thread identifier, target thread identifier, action status, error shape, lifecycle state, or fallback signal;
 - `last_verified` date for the contract evidence;
-- wrapper, workflow, or adapter mapping to the underlying contract, including mappings where the underlying version is unavailable.
+- workflow, wrapper, or adapter mapping to the underlying contract, including mappings where the underlying version is unavailable.
 
 After a runtime, connector, schema, or documentation change, re-compare the old and new contract before using the thread action. Pay particular attention to required parameters, response shape, error shape, permission or authentication changes, and renamed, removed, or newly state-changing operations.
 
