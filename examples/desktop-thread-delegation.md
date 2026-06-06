@@ -1,14 +1,16 @@
 # Desktop Thread Delegation Example
 
-Use this example when Codex Desktop can continue a bounded task in a new thread and the maintainer has explicitly authorized that runtime action.
+Use `desktop-thread-delegation` when Codex Desktop should choose the next safe task, decide whether it belongs in the current thread or a new thread, and preserve main-thread review responsibility.
 
 This is Desktop-only behavior. Shared workflows such as `task-continuation` can prepare a next-session prompt or worker brief, but they do not guarantee that a new Codex thread can be opened. If the runtime does not expose a thread creation tool or UI, give the maintainer the prepared prompt instead.
 
 ## Maintainer Request
 
 ```text
-Use task-continuation to choose the next safe roadmap task.
-If the task is suitable for a separate Codex Desktop thread, prepare the prompt and ask before opening the new thread.
+Use desktop-thread-delegation to choose the next safe roadmap task.
+Decide whether the task should continue in this thread or move to a separate Codex Desktop thread.
+If the current thread is suitable and repo policy or my authorization allows it, continue here.
+If a separate thread is better, prepare the prompt and ask before opening the new thread.
 Do not commit, push, open a PR, merge, post comments, or perform other external writes unless I explicitly authorize the exact action.
 ```
 
@@ -17,10 +19,12 @@ Do not commit, push, open a PR, merge, post comments, or perform other external 
 1. Read repo policy, roadmap or plan docs, relevant templates, review evidence, and current git state.
 2. Treat chat summaries as context only; verify them against repository files.
 3. Select the smallest safe task that does not cross a human gate.
-4. Prepare a next-session prompt from durable source-of-truth files.
-5. Stop before creating a new thread unless the maintainer explicitly authorizes that runtime action.
-6. When authorized and supported by the runtime, create the new thread with the prepared prompt.
-7. Keep the main thread responsible for integrating the result, reviewing the diff, and enforcing human gates before any external write.
+4. Decide whether the task should run in the current thread, move to a new thread, or stop for a human gate.
+5. If the current thread is suitable, continue only when workflow rules allow it or the maintainer has authorized it.
+6. If a new thread is suitable, prepare a next-session prompt from durable source-of-truth files.
+7. Stop before creating a new thread unless the maintainer explicitly authorizes that runtime action.
+8. When authorized and supported by the runtime, create the new thread with the prepared prompt.
+9. Keep the main thread responsible for integrating the result, reviewing the diff, and enforcing human gates before any external write.
 
 ## Prepared Prompt Shape
 
@@ -36,6 +40,7 @@ Read first:
 
 Context only:
 - The main thread selected this task from the current roadmap.
+- The main thread decided this task is better suited to a separate thread than the current thread.
 - Re-check git state and source-of-truth files before editing.
 - Do not rely on this prompt over repository files.
 

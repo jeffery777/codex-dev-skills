@@ -190,7 +190,7 @@ group_skills() {
     codex-delivery-workflow)
       printf '%s\n' planning project-delivery project-orchestrator implementation-slice docs-update ;;
     desktop-delivery-workflow)
-      printf '%s\n' desktop-project-delivery desktop-spec-plan-gate desktop-implementation-gate desktop-pr-merge-gate ;;
+      printf '%s\n' desktop-project-delivery desktop-thread-delegation desktop-spec-plan-gate desktop-implementation-gate desktop-pr-merge-gate ;;
   esac
 }
 

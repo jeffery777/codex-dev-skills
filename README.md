@@ -191,6 +191,18 @@ Coordinate implementation and review, integrate the output, run verification, an
 
 CLI fallback: use `project-delivery`, `project-orchestrator`, task briefs or next-session prompts, sequential review primitives, and formal gates only at commit readiness, PR readiness, merge readiness, or explicit repo-policy gates. See [docs/runtime-compatibility.md](docs/runtime-compatibility.md) for the Desktop-to-CLI fallback mapping.
 
+Use `desktop-thread-delegation` when Codex Desktop should choose the next safe task and decide whether to continue in the current thread or hand off to a new thread:
+
+```text
+Use desktop-thread-delegation to choose the next safe task from the current repo state.
+If the task is suitable for this thread and workflow rules allow it, continue here.
+If the task is better for a new Desktop thread, prepare the handoff prompt and ask before opening it.
+If thread creation is unavailable, return the prompt for me to paste manually.
+Keep review, commit, PR, merge, platform comments, and other external writes behind explicit authorization.
+```
+
+The main thread remains responsible for integrating returned work, checking the diff, running verification, and enforcing review or merge gates.
+
 ## Runtime Compatibility
 
 | Label | Meaning |
@@ -221,6 +233,7 @@ CLI fallback: use `project-delivery`, `project-orchestrator`, task briefs or nex
 | `closure-triage` | shared | Select the next smallest safe packet from repo policy, project overlays, and current state. |
 | `task-continuation` | shared | Select the next safe task and prepare a next-session prompt or worker brief from durable project context. |
 | `desktop-project-delivery` | desktop | Codex Desktop delivery entrypoint for delegated project work. |
+| `desktop-thread-delegation` | desktop | Choose the next safe task, continue in the current thread when appropriate, or hand off to a new Desktop thread when authorized and supported. |
 | `desktop-spec-plan-gate` | desktop | Desktop gate for spec, plan, and DoD drafts. |
 | `desktop-implementation-gate` | desktop | Desktop formal integration gate for worker outputs before commit readiness. |
 | `desktop-pr-merge-gate` | desktop | Desktop PR and merge readiness gate that summarizes evidence without publishing or merging. |
