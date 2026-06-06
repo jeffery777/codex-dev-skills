@@ -3,3 +3,6 @@
 # Python transient files
 __pycache__/
 *.py[cod]
+
+# Local review and workflow artifacts
+.work/
