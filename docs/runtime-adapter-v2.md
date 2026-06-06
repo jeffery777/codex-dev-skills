@@ -4,6 +4,8 @@ This document defines the boundary for a possible second-version Desktop thread 
 
 The current `desktop-thread-delegation` skill remains the user-facing workflow. A future adapter may only make already-supported thread actions easier to call; it must not expand authority, bypass human gates, or read private local runtime state.
 
+For practical prompt and stop-condition examples, see [Runtime Adapter Boundary Example](../examples/runtime-adapter-boundary.md).
+
 ## Goals
 
 A second-version adapter may expose a narrow, documented control surface for Desktop thread delegation:
