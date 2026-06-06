@@ -25,10 +25,15 @@ Preflight checklist:
    - current branch and upstream
    - `git status --short --branch`
 2. Confirm the expected branch or expected head SHA when the thread action depends on local git state.
-3. Summarize the prepared prompt, intended thread action, and recipient thread if one exists.
-4. State in-scope and out-of-scope files or categories.
-5. Ask for explicit human authorization for the exact thread action.
-6. Keep commit, push, PR creation, PR comments, review submission, merge, deploy, destructive actions, and other platform-side mutation behind separate explicit authorization.
+3. Record the runtime thread tool or API contract name, such as `create_thread`, `fork_thread`, `send_message_to_thread`, or the documented equivalent.
+4. Record the underlying API or tool contract version when exposed.
+5. If no version is exposed, record `version unavailable` and the verifiable capability source, such as active tool list, connector metadata, official documentation version, or runtime-reported schema.
+6. Record the minimal request shape and response shape the caller relies on.
+7. Record `last_verified` date and the wrapper version to underlying API or tool contract mapping.
+8. Summarize the prepared prompt, intended thread action, and recipient thread if one exists.
+9. State in-scope and out-of-scope files or categories.
+10. Ask for explicit human authorization for the exact thread action.
+11. Keep commit, push, PR creation, PR comments, review submission, merge, deploy, destructive actions, and other platform-side mutation behind separate explicit authorization.
 
 Example evidence before calling a supported tool:
 
@@ -39,6 +44,13 @@ Thread action preflight:
 - Expected head: 1234567890abcdef1234567890abcdef12345678.
 - Dirty state: docs-only changes in examples/example.md; untracked .work/ is out of scope.
 - Action: create a new Desktop thread from the prepared prompt below.
+- Runtime contract: create_thread.
+- Underlying contract version: version unavailable.
+- Capability source: active tool list in the current runtime.
+- Wrapper/API mapping: wrapper 0.2.0 -> create_thread version unavailable.
+- Request shape minimum: prompt required; title, repository, and branch used when exposed.
+- Response shape minimum: created thread identifier or pending worktree identifier, action status, and error message shape.
+- Last verified: YYYY-MM-DD.
 - Human authorization: maintainer explicitly authorized creating this thread only.
 - External writes still blocked: commit, push, PR, platform comments, merge, deploy, destructive actions.
 ```
@@ -70,6 +82,14 @@ Verification:
 - ./scripts/validate-repo.sh
 - git diff --check
 
+Contract evidence to record before any thread action:
+- Runtime tool/API contract name.
+- Underlying contract version, or "version unavailable" plus capability source.
+- Minimal request and response shape.
+- Last verified date.
+- Wrapper version to underlying contract mapping.
+- Re-compare old and new contracts after any runtime, connector, schema, or documentation change.
+
 Stop conditions:
 - Stop if source-of-truth files conflict.
 - Stop if the change stops being docs-only.
@@ -77,7 +97,7 @@ Stop conditions:
 - Stop if the runtime tool contract, auth, permissions, repo identity, branch, worktree, or expected head is unclear.
 ```
 
-After the tool returns, record only the documented result shape exposed by the runtime, such as created thread identifier, target thread, action result, prompt summary, and unresolved risk. Do not inspect Desktop databases, logs, sessions, auth files, caches, app state, or other private local runtime files to fill missing evidence.
+After the tool returns, record only the documented result shape exposed by the runtime, such as created thread identifier, target thread, action result, prompt summary, contract version evidence, request/response compatibility summary, and unresolved risk. Do not inspect Desktop databases, logs, sessions, auth files, caches, app state, or other private local runtime files to fill missing evidence.
 
 ## Scenario 2: No Thread Tool Available
 
@@ -108,6 +128,8 @@ The fallback may prepare a task brief, continuation prompt, or handoff artifact 
 Stop before calling a thread tool, fallback, wrapper, API, or script when any of these conditions apply:
 
 - API contract, required parameters, expected result shape, authentication, or permissions are unclear.
+- Underlying API or tool contract version is unavailable and there is no verifiable capability source to record.
+- Runtime, connector, schema, or documentation changes have not been compared against the wrapper compatibility record.
 - Target repo, remote, branch, worktree, expected head, or recipient thread is unclear.
 - The only available source is private local runtime state such as Desktop databases, logs, sessions, auth files, caches, app state, or local runtime directories.
 - The only path depends on unpublished app-server endpoints, reverse-engineered Desktop internals, UI scraping, a remote-control daemon, wrapper daemon, sidecar, or background service.
