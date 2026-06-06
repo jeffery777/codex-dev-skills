@@ -79,6 +79,7 @@ Boundary:
 
 - Desktop thread actions are runtime actions, not CLI guarantees.
 - The CLI-compatible fallback is a prompt, task brief, continuation prompt, or sequential execution path.
+- Fallback wording must not imply that Codex CLI can open, fork, continue, message, or control Desktop threads unless a documented or configured thread capability is actually available.
 - Repo-native runtime evidence must use public repository files, ordinary git or shell inspection, documented runtime tools, installed connector metadata, or maintained examples.
 - It must not depend on private Desktop runtime state such as local databases, logs, sessions, auth files, caches, app state, unpublished endpoints, UI scraping, daemons, background services, local runtime directories, or private runtime files.
 - Runtime thread tool/API contract evidence must record contract name, version or `version unavailable` plus capability source, minimal request/response shape, `last_verified`, and workflow, wrapper, or adapter mapping to the underlying contract.

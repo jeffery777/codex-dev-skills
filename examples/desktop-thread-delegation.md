@@ -2,7 +2,7 @@
 
 Use `desktop-thread-delegation` when Codex Desktop should choose the next safe task, decide whether it belongs in the current thread or a new thread, and preserve main-thread review responsibility.
 
-This is Desktop-only behavior. Desktop thread actions are runtime actions, not CLI guarantees. Shared workflows such as `task-continuation` can prepare a prompt, task brief, or continuation prompt, but they do not guarantee that a new Codex thread can be opened. If the runtime does not expose a documented thread creation capability, use the CLI-compatible prompt, task brief, continuation prompt, or sequential execution path instead.
+This is Desktop-only behavior. Desktop thread actions are runtime actions, not CLI guarantees. Shared workflows such as `task-continuation` can prepare a prompt, task brief, or continuation prompt, but they do not guarantee that a new Codex Desktop thread can be opened. If the runtime does not expose a documented thread creation capability, use the CLI-compatible prompt, task brief, continuation prompt, or sequential execution path instead.
 
 ## Maintainer Request
 
@@ -103,7 +103,7 @@ If Desktop thread creation is unavailable, do not improvise with private Desktop
 
 ```text
 Desktop thread creation is not available in this runtime.
-Use the prepared prompt above in a new Codex thread, then return the diff and verification notes here for integration review.
+Use the prepared prompt above in a separate Codex session or in a Codex Desktop thread when Desktop is intentionally selected, then return the diff and verification notes here for integration review.
 ```
 
 ## Handoff Rules

@@ -12,7 +12,7 @@ Use this skill in Codex Desktop when the user delegates a bounded delivery objec
 
 ## CLI Fallback
 
-Use `project-delivery` and `project-orchestrator` with generated task briefs and separate implementation/review passes. Use `code-review`, `code-review-deep`, or `docs-review` for ordinary integrated output review evidence; use formal gate adapters only for commit readiness, PR readiness, merge readiness, or explicit repo-policy blocking decisions.
+Use `project-delivery` and `project-orchestrator` with prompts, task briefs, continuation prompts, or a sequential execution path. Use separate implementation and review passes in the current CLI session or in maintainer-run sessions. Use `code-review`, `code-review-deep`, or `docs-review` for ordinary integrated output review evidence; use formal gate adapters only for commit readiness, PR readiness, merge readiness, or explicit repo-policy blocking decisions.
 
 ## Workflow
 
