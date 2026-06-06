@@ -10,7 +10,7 @@ Runtime compatibility: shared
 
 Use this skill for ordinary base-to-head merge quality and DoD review.
 
-This is the normal user-facing merge review entry point. It reports readiness evidence and residual risk, but it is not a formal branch readiness gate and does not authorize merge.
+This is the normal user-facing merge review entry point. It reports review evidence and residual risk, but it is not a formal branch readiness gate and does not authorize commit, push, merge, deploy, platform comments, review submissions, or other external writes.
 
 ## Workflow
 

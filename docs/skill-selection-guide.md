@@ -12,8 +12,8 @@ This compact guide helps new users choose the smallest skill or gate that matche
 | You need ordinary read-only feedback on docs-only or docs-dominant changes. | `docs-review` | Routine documentation review primitive for accuracy, stale names, links, unsupported claims, and structure. |
 | The code or mixed diff is security-sensitive, release-sensitive, packaging-related, migration-related, or cross-module. | `code-review-deep` | Higher-scrutiny review primitive for material risk. |
 | A workflow needs a formal blocking decision before commit readiness, PR readiness, merge readiness, or an explicit repo-policy gate. | `code-review-gate` or `docs-review-gate` | Formal gate adapters route to the right review primitive, record evidence, and block on unresolved MUST-FIX findings. |
-| A branch needs base-to-head merge quality review. | `merge-review` | Routine merge review primitive for scope, DoD alignment, test evidence, docs sync, and unresolved findings. |
-| A branch needs a formal readiness decision before PR handoff, merge readiness, or final approval. | `merge-readiness-gate` | Formal branch readiness gate that summarizes evidence, blockers, residual risk, and the human approval boundary. |
+| A branch needs base-to-head merge quality review. | `merge-review` | Routine merge review primitive for scope, DoD alignment, test evidence, docs sync, and unresolved findings. It produces review evidence, not merge authorization. |
+| A branch needs a formal readiness decision before PR handoff, merge readiness, or final approval. | `merge-readiness-gate` | Formal branch readiness evidence-and-decision layer that summarizes evidence, blockers, residual risk, and the human approval boundary. |
 | Codex should classify the next safe action or run a bounded review/fix closure loop. | `project-orchestrator` | Routes between planning, implementation, docs update, review primitives, formal gates, continuation, or human decision. |
 | Codex should carry a bounded objective through discovery, implementation, verification, review, docs sync, and PR readiness. | `project-delivery` | Delivery workflow for multi-step but bounded objectives that still stop at the next human gate. |
 | Codex Desktop should coordinate delegated project work across Desktop threads or workers. | `desktop-project-delivery` | Desktop-only delivery entry point; CLI fallback is `project-delivery` plus explicit prompts, task briefs, continuation prompts, or sequential execution. |
@@ -33,7 +33,7 @@ Use formal gates only when the workflow needs a blocking readiness decision:
 - `docs-review-gate` for docs-only or docs-dominant commit readiness, PR readiness, merge readiness, or explicit repo-policy gates.
 - `merge-readiness-gate` for branch readiness before PR handoff, merge readiness, or final human approval.
 
-Formal gates are evidence and decision layers. They do not replace routine review primitives for every review pass.
+Formal gates are evidence and decision layers. They do not replace routine review primitives for every review pass, and their evidence does not authorize commit, push, merge, deploy, platform comments, review submissions, or other external writes.
 
 ## Routine Versus Deep Review
 
@@ -105,7 +105,7 @@ Use `merge-review` when you want read-only base-to-head review of merge quality 
 
 Use `merge-review-deep` when the branch is high-risk, release-sensitive, or policy-required.
 
-Use `merge-readiness-gate` when the workflow needs a formal readiness state before PR handoff, merge readiness, or final approval. The gate can report readiness, blockers, residual risk, and the next human decision; it does not authorize merge by itself.
+Use `merge-readiness-gate` when the workflow needs a formal readiness state before PR handoff, merge readiness, or final approval. The gate can report readiness, blockers, residual risk, and the next human decision; it does not authorize commit, push, merge, deploy, platform comments, review submissions, or other external writes by itself. Before any authorized merge or platform-side mutation, confirm the head SHA has not changed and no blockers remain.
 
 ## Rule Of Thumb
 

@@ -21,4 +21,4 @@ Codex Desktop may use main-agent orchestration and worker delegation, but Deskto
 
 ## Review And Merge
 
-Review primitives such as `code-review`, `docs-review`, and high-risk `code-review-deep` provide ordinary quality evidence. Formal `code-review-gate` and `docs-review-gate` runs provide blocking readiness evidence only when commit readiness, PR readiness, merge readiness, or explicit repo policy requires that decision. Neither review evidence nor formal gate evidence by itself authorizes commit, push, merge, deploy, or platform publication.
+Review primitives such as `code-review`, `docs-review`, and high-risk `code-review-deep` provide ordinary quality evidence. Formal `code-review-gate` and `docs-review-gate` runs provide blocking readiness evidence only when commit readiness, PR readiness, merge readiness, or explicit repo policy requires that decision. Neither review evidence nor formal gate evidence by itself authorizes commit, push, merge, deploy, platform comments, review submissions, or platform publication.
