@@ -85,7 +85,7 @@ Choose `desktop-thread-delegation` only when the active runtime is Codex Desktop
 
 The CLI fallback is a paste-ready prompt, task brief, continuation prompt, or sequential execution path. Do not state or imply that Codex CLI can open, fork, continue, or message Desktop threads unless a documented or configured thread capability is actually available.
 
-This guidance is limited to accepted public repository policy, runtime compatibility guidance, and maintained examples. It does not claim that a Desktop runtime adapter, wrapper, daemon, MCP server, app-server client, or Desktop runtime integration has been implemented or accepted as a roadmap item.
+This guidance is limited to accepted public repository policy, runtime compatibility guidance, maintained examples, and the non-state-changing Desktop runtime wrapper V1 planner helper. The implemented surface is limited to that planner helper; Desktop runtime integration, runtime-call adapters, daemons, MCP servers, app-server clients, and state-changing Desktop thread-tool paths remain outside the implemented scope and require separate review and human approval.
 
 Before relying on any runtime thread tool or documented API, record contract evidence consistent with [Runtime Compatibility](runtime-compatibility.md) and [Desktop Runtime Adapter V2 Boundary](runtime-adapter-v2.md):
 
