@@ -146,14 +146,14 @@ This pattern is useful when a maintainer wants Codex to carry a small capability
 
 ### Task Continuation
 
-Use `task-continuation` when a larger bounded task needs the next safe unit of work and a prompt that can be handed to another session or worker:
+Use `task-continuation` when a larger bounded task needs the next safe unit of work and a prompt, task brief, continuation prompt, or sequential execution path:
 
 ```text
 Use task-continuation to choose the next smallest safe task from the repo plan and status files.
-Prepare a next-session prompt if continuation should move to another session, but do not claim that a shared skill can open the session itself.
+Prepare a continuation prompt or task brief if continuation should move to another session or worker, but do not claim that a shared skill can open the session itself.
 ```
 
-The skill prepares continuation artifacts from durable repository context. Actually opening a new Codex conversation is runtime-specific and requires Desktop delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator.
+The skill prepares continuation artifacts from durable repository context. Actually opening a new Codex conversation is runtime-specific and requires Desktop worker delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator.
 
 ### Merge Readiness
 
@@ -189,7 +189,7 @@ Use desktop-project-delivery to prepare this feature for PR readiness.
 Coordinate implementation and review, integrate the output, run verification, and stop for product ambiguity, destructive actions, external writes, or final merge approval.
 ```
 
-CLI fallback: use `project-delivery`, `project-orchestrator`, task briefs or next-session prompts, sequential review primitives, and formal gates only at commit readiness, PR readiness, merge readiness, or explicit repo-policy gates. See [docs/runtime-compatibility.md](docs/runtime-compatibility.md) for the Desktop-to-CLI fallback mapping.
+CLI fallback: use `project-delivery`, `project-orchestrator`, prompts, task briefs, continuation prompts, or a sequential execution path; run review primitives after the fallback produces changed files or evidence; and use formal gates only at commit readiness, PR readiness, merge readiness, or explicit repo-policy gates. See [docs/runtime-compatibility.md](docs/runtime-compatibility.md) for the Desktop-to-CLI fallback mapping.
 
 Use `desktop-thread-delegation` when Codex Desktop should choose the next safe task and decide whether to continue in the current thread or hand off to a new thread:
 
@@ -234,7 +234,7 @@ When `desktop-thread-delegation` prepares to use a Desktop thread tool such as `
 | `merge-readiness-gate` | shared | Thin formal branch readiness gate before PR handoff, merge readiness, or final human approval. |
 | `review-artifact-cleanup` | shared | Dry-run first cleanup workflow for review artifacts. |
 | `closure-triage` | shared | Select the next smallest safe packet from repo policy, project overlays, and current state. |
-| `task-continuation` | shared | Select the next safe task and prepare a next-session prompt or worker brief from durable project context. |
+| `task-continuation` | shared | Select the next safe task and prepare a continuation prompt or task brief from durable project context. |
 | `desktop-project-delivery` | desktop | Codex Desktop delivery entrypoint for delegated project work. |
 | `desktop-thread-delegation` | desktop | Choose the next safe task, continue in the current thread when appropriate, or hand off to a new Desktop thread when authorized and supported. |
 | `desktop-spec-plan-gate` | desktop | Desktop gate for spec, plan, and DoD drafts. |
@@ -248,7 +248,7 @@ When `desktop-thread-delegation` prepares to use a Desktop thread tool such as `
 - `workflows/merge-readiness-workflow.md`
 - `workflows/desktop-delivery-workflow.md`
 
-Shared orchestration templates include task briefs, task manifests, next-session prompts, current task summaries, project specs, implementation plans, closure triage overlays, task continuation reports, integration review reports, and orchestrator gate reports.
+Shared orchestration templates include task briefs, task manifests, next-session prompt templates, current task summaries, project specs, implementation plans, closure triage overlays, task continuation reports, integration review reports, and orchestrator gate reports.
 
 ## Examples
 

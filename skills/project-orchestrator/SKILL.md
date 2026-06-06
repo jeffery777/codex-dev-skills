@@ -10,7 +10,7 @@ Runtime compatibility: shared
 
 Use this skill when Codex needs to decide how to advance a bounded project or task: handle it as a single implementation slice, plan first, delegate or hand off, run review, prepare continuation, or stop for a human gate.
 
-This skill is the shared orchestration layer for Codex CLI and Codex Desktop. It may use Desktop worker delegation only when the runtime supports it. In Codex CLI, it must execute sequentially in the current session or prepare durable handoff artifacts such as task briefs or next-session prompts.
+This skill is the shared orchestration layer for Codex CLI and Codex Desktop. It may use Desktop worker delegation only when the runtime supports it. In Codex CLI, it must use the current session, prompts, task briefs, continuation prompts, or another explicit sequential execution path.
 
 ## Routing Rules
 
@@ -22,7 +22,7 @@ This skill is the shared orchestration layer for Codex CLI and Codex Desktop. It
 - If a formal blocking decision is required for commit readiness, PR readiness, merge readiness, or repo policy, route through `code-review-gate` or `docs-review-gate`.
 - If review findings need closure, route fixes through the smallest primitive workflow: `implementation-slice` for code or mixed changes, `docs-update` for docs-only changes, then rerun the relevant review primitive or formal gate for the current stage.
 - Review closure loops default to 2 rounds unless the user or repo policy sets a different maximum.
-- If the next unit should move to another session or worker, prepare a bounded task brief or next-session prompt.
+- If the next unit should move to another session or worker, prepare a bounded continuation prompt or task brief.
 - Stop when a human gate is required.
 
 ## Workflow
@@ -30,7 +30,7 @@ This skill is the shared orchestration layer for Codex CLI and Codex Desktop. It
 1. Discover source-of-truth files and current state.
 2. Classify the request as a single task, bounded delivery objective, review, follow-up, continuation, or unsafe/ambiguous work.
 3. Select the smallest safe next action and the appropriate skill or workflow.
-4. Choose execution mode: current session, sequential CLI handoff, Desktop worker delegation, or stop for human decision.
+4. Choose execution mode: current session, CLI sequential execution path, Desktop worker delegation, or stop for human decision.
 5. Integrate or inspect results before advancing.
 6. Run relevant verification and the review primitive or formal gate that matches the current stage.
 7. Prepare continuation or readiness evidence when useful.

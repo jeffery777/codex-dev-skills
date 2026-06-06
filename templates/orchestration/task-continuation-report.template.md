@@ -22,7 +22,7 @@
 
 - Task: `<task-id>`
 - Objective: `<bounded-objective>`
-- Execution mode: `<continue-current-session | new-session-prompt | delegated-worker-brief | stop-for-human-gate>`
+- Execution mode: `<continue-current-session | new-session-prompt | delegated-worker-brief | stop-for-human-gate>`; describe CLI fallback in prose as a prompt, task brief, continuation prompt, or sequential execution path.
 - Reason: `<why-this-is-the-smallest-safe-next-task>`
 
 ## Required Context For Next Agent
