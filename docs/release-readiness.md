@@ -59,6 +59,14 @@ For docs-only release readiness work, also run:
 git diff --check
 ```
 
+When the changed scope includes Python helpers or tests, record the active Python runtime before running Python checks:
+
+```bash
+python3 --version
+```
+
+This repository pins Python 3.12.9 with `.python-version`.
+
 For release-sensitive branch readiness, use the review primitive that matches risk:
 
 ```text
