@@ -47,7 +47,7 @@ Use code-review on the current working tree.
 Use docs-review for the docs-only changes in this branch.
 Use merge-review for main..HEAD.
 Use merge-review-deep for the release-sensitive main..HEAD diff.
-Use merge-readiness-gate before PR handoff for main..HEAD. Do not merge or push.
+Use merge-readiness-gate before PR handoff for main..HEAD. Treat the result as gate evidence only; do not commit, push, merge, deploy, post platform comments, submit reviews, or perform other external writes unless explicitly authorized.
 ```
 
 For Codex Desktop delegated delivery, install the Desktop group only when that workflow is intentional:
@@ -164,6 +164,8 @@ Use merge-review for main..HEAD.
 Check scope alignment, tests, docs, unresolved review findings, and residual risk. Stay read-only.
 ```
 
+The result is review evidence. It does not grant authority to commit, push, merge, deploy, post platform comments, submit reviews, or perform other external writes.
+
 Use `merge-review-deep` when the diff is high-risk, release-sensitive, or policy-required:
 
 ```text
@@ -171,14 +173,16 @@ Use merge-review-deep for main..HEAD.
 Re-check closure evidence, rollback path, security/privacy, migration safety, and hidden regression risk. Stay read-only.
 ```
 
+The deep result is still review evidence, not merge authorization.
+
 Use `merge-readiness-gate` only when a workflow needs a formal branch readiness gate before PR handoff, merge readiness, or final human approval:
 
 ```text
 Use merge-readiness-gate for main..HEAD.
-Check the plan, diff, tests, and review evidence. Report READY, BLOCKED, or NEEDS HUMAN DECISION. Do not merge or push.
+Check the plan, diff, tests, and review evidence. Report READY, BLOCKED, or NEEDS HUMAN DECISION. Do not commit, push, merge, deploy, post platform comments, submit reviews, or perform other external writes unless explicitly authorized.
 ```
 
-The gate is a thin adapter and evidence-and-decision layer: it summarizes verification, review evidence, blocking decisions, residual risk, and the human approval boundary. It is not another merge review primitive and does not automatically authorize merge.
+The gate is a thin adapter and evidence-and-decision layer: it summarizes verification, review evidence, blocking decisions, residual risk, and the human approval boundary. It is not another merge review primitive and does not automatically authorize commit, push, merge, deploy, platform comments, review submissions, or other external writes. Before any authorized merge or platform-side mutation, confirm the head SHA has not changed and no blockers remain.
 
 ### Codex Desktop Delegated Delivery
 
@@ -227,11 +231,11 @@ When `desktop-thread-delegation` prepares to use a Desktop thread tool such as `
 | `code-review` | shared | Normal user-facing entry point for routine read-only review of code or mixed diffs. |
 | `code-review-deep` | shared | Higher-scrutiny review for security, packaging, data, migration, or cross-module risk. |
 | `docs-review` | shared | Normal user-facing entry point for read-only review of docs-only or docs-dominant changes. |
-| `merge-review` | shared | Normal user-facing entry point for base-to-head merge quality and DoD review. |
-| `merge-review-deep` | shared | Higher-scrutiny merge review for high-risk, release-sensitive, or policy-required changes. |
+| `merge-review` | shared | Normal user-facing entry point for base-to-head merge quality and DoD review evidence. |
+| `merge-review-deep` | shared | Higher-scrutiny merge review evidence for high-risk, release-sensitive, or policy-required changes. |
 | `code-review-gate` | shared | Thin formal gate adapter that routes to `code-review` or `code-review-deep` before commit, PR, or merge readiness. |
 | `docs-review-gate` | shared | Thin formal gate adapter around `docs-review` before commit, PR, or merge readiness. |
-| `merge-readiness-gate` | shared | Thin formal branch readiness gate before PR handoff, merge readiness, or final human approval. |
+| `merge-readiness-gate` | shared | Thin formal branch readiness evidence-and-decision layer before PR handoff, merge readiness, or final human approval. |
 | `review-artifact-cleanup` | shared | Dry-run first cleanup workflow for review artifacts. |
 | `closure-triage` | shared | Select the next smallest safe packet from repo policy, project overlays, and current state. |
 | `task-continuation` | shared | Select the next safe task and prepare a continuation prompt or task brief from durable project context. |

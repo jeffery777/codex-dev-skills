@@ -10,7 +10,7 @@ Runtime compatibility: plugin-dependent. This guidance requires an installed Git
 Use GitHub workflow guidance for this PR readiness task.
 Read local git state first, then inspect the GitHub PR through the installed GitHub plugin or connector.
 Summarize blockers, checks, review comments, and the smallest safe next action.
-Do not post comments, request reviewers, rerun checks, label issues, merge, close issues, or perform any other platform write unless I explicitly authorize the exact action.
+Do not post comments, submit reviews, request reviewers, rerun checks, label issues, merge, close issues, or perform any other platform write unless I explicitly authorize the exact action.
 ```
 
 ## Read-Only Flow
@@ -35,12 +35,15 @@ Read-only operations may include:
 Stop before any GitHub write unless the maintainer has authorized the exact action. Platform writes include:
 
 - posting issue, PR, or review comments;
+- submitting a pull request review;
 - requesting or removing reviewers;
 - adding, removing, or replacing labels;
 - resolving review threads;
 - rerunning workflow jobs;
 - closing or reopening issues;
 - merging, closing, or retargeting pull requests.
+
+Review evidence, gate evidence, or a readiness summary does not by itself authorize local commits, pushes, deploys, platform comments, review submissions, merges, or other external writes.
 
 Before an authorized write, restate:
 
