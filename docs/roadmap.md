@@ -9,7 +9,8 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## v0.2.x: More Maintainer Workflows
 
-- Evaluate whether a Desktop runtime wrapper V1 can move from docs-only planning to implementation. Current source of truth: `docs/desktop-runtime-wrapper-v1-plan.md`. The first implementation slice remains blocked until maintainers explicitly approve moving from planning to code.
+- Desktop runtime wrapper V1 has completed its first implementation slice as a non-state-changing request planner and CLI-compatible fallback generator. Current source of truth: `docs/desktop-runtime-wrapper-v1-plan.md`.
+- Keep any later Desktop runtime wrapper slices behind separate review and human approval, especially before adding runtime thread-tool invocation or any state-changing path.
 
 ## Maintenance Approach
 
@@ -20,7 +21,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Desktop runtime wrapper V1 first implementation slice: a non-state-changing request planner and CLI-compatible fallback generator, with no Desktop thread-tool invocation, no private runtime state, no daemon, no app-server client, no new skill, and no catalog or installer entry.
+- Desktop runtime wrapper V1 later slices: read-only documented capability discovery, then at most one explicitly approved runtime thread-tool call path. Later work must continue to avoid Desktop private runtime state, daemons, app-server clients, sidecars, background services, new skills, catalog entries, and installer entries unless separately approved.
 
 ## Non-Goals
 
