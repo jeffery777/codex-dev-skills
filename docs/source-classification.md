@@ -64,14 +64,14 @@ Public outputs:
 
 Source: accepted public repository policy, runtime compatibility guidance, and maintained examples.
 
-This bucket covers repo-native documentation that extends the public workflow set after the original source classification. It is limited to accepted public repository policy, runtime compatibility guidance, and maintained examples. It does not claim that a Desktop runtime adapter, wrapper, daemon, MCP server, app-server client, or Desktop runtime integration has been implemented.
+This bucket covers repo-native documentation that extends the public workflow set after the original source classification. It is limited to accepted public repository policy, runtime compatibility guidance, maintained examples, and the non-state-changing Desktop runtime wrapper V1 planner helper. The implemented surface is limited to that planner helper; Desktop runtime integration, runtime-call adapters, daemons, MCP servers, app-server clients, and state-changing Desktop thread-tool paths remain outside the implemented scope.
 
 Public outputs:
 
 - desktop-thread-delegation
 - runtime compatibility guidance in `docs/runtime-compatibility.md`
 - Desktop runtime adapter v2 boundary guidance in `docs/runtime-adapter-v2.md`
-- Desktop runtime wrapper v1 feasibility and implementation plan in `docs/desktop-runtime-wrapper-v1-plan.md`
+- Desktop runtime wrapper v1 planner helper and implementation plan in `docs/desktop-runtime-wrapper-v1-plan.md`
 - runtime adapter boundary example in `examples/runtime-adapter-boundary.md`
 - Desktop thread delegation example in `examples/desktop-thread-delegation.md`
 - skill selection guidance for Desktop thread delegation and runtime contract evidence in `docs/skill-selection-guide.md`
