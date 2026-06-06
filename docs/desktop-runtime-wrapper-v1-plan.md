@@ -1,6 +1,6 @@
 # Desktop Runtime Wrapper V1 Feasibility And Implementation Plan
 
-This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as non-state-changing helpers: a request planner and fallback generator, plus a capability metadata normalization helper. They do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, or skill.
+This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as non-state-changing helpers: a request planner and fallback generator, a capability metadata normalization helper, and a contract comparison helper. They do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, or skill.
 
 ## Decision
 
@@ -9,6 +9,8 @@ Implementation is conditionally feasible for a V1 Desktop runtime wrapper, but o
 The first implementation slice is complete as a non-state-changing request planner and fallback generator. It validates a prepared thread-action request, records the minimum contract evidence needed for a future runtime call, can consume normalized capability evidence supplied by the discovery helper, and produces either structured dry-run evidence or a CLI-compatible paste-ready fallback. It does not create, fork, continue, message, or read a Desktop thread.
 
 The read-only capability discovery slice is also complete as a non-state-changing metadata normalizer. It accepts only caller-supplied documented metadata, such as an active tool list excerpt, connector metadata, official documentation, or runtime-reported schema that has already been gathered and supplied to the helper. It records action names, read-only or state-changing classification, required request fields, minimum response fields, capability source, contract version or `version unavailable`, `last_verified`, and helper version. The planner can accept this normalized output as `capability_evidence`, select the requested target action, and stop or fall back when the evidence is unavailable, missing, mismatched, unclear, or sourced from forbidden Desktop runtime hints. It does not gather metadata itself, inspect Desktop private runtime state, or call any Desktop thread tool.
+
+The contract comparison slice is also complete as a non-state-changing compatibility re-check helper. It compares old wrapper contract evidence against newer normalized capability evidence before a runtime, connector, schema, or documentation change is trusted. It returns `compatible` when the tool/API name, action classification, required request fields, and minimum response fields still match; `fallback` when the capability is unavailable or missing; and `stopped` when the comparison detects changed request shape, response shape, classification, tool/API name, missing evidence, or forbidden Desktop runtime source hints. State-changing actions such as `create-thread` may be compared as evidence only; comparison does not authorize or call the runtime tool.
 
 State-changing thread calls can be considered only after the first slice proves the request and evidence contract, and after a separate human decision approves adding a runtime-call path for one documented action.
 
@@ -21,6 +23,7 @@ Wrapper V1 should make the existing `desktop-thread-delegation` boundary easier 
 - record compatibility evidence for the runtime thread tool or documented API the wrapper would rely on;
 - return a dry-run result, stop result, or CLI-compatible fallback when the runtime capability is unavailable or unsafe;
 - normalize caller-supplied documented capability metadata and allow the planner to use that normalized evidence without calling runtime tools;
+- compare old wrapper contract evidence with newer normalized capability evidence before relying on a runtime/schema change;
 - preserve the main-thread responsibility for integration, verification, review evidence, commit readiness, PR readiness, merge readiness, and human approval.
 
 ## Non-Goals
@@ -70,6 +73,8 @@ If the runtime does not expose a version, `version unavailable` is acceptable on
 For read-only capability discovery, the helper may normalize only metadata supplied by the caller. If the supplied metadata does not identify the action, tool or API name, read-only or state-changing classification, required request fields, minimum response fields, source, contract version or `version unavailable`, and `last_verified`, the helper must return `stopped` or `unavailable`. It must not infer missing fields from Desktop private runtime state, broad filesystem scans, logs, UI state, unpublished endpoints, or background services.
 
 For planner integration, callers may pass the discovery helper output as `capability_evidence`. The planner may use only normalized fields from that object. It must return fallback when the target capability is unavailable or missing, and it must stop when the normalized capability classification, tool/API name, request shape, response shape, source, contract version, `last_verified`, or forbidden-source boundary is unclear.
+
+For contract comparison, callers may pass old wrapper contract evidence and newer normalized discovery output. The comparison helper may use only documented fields supplied by the caller. It must return fallback when the target capability is missing or unavailable, and it must stop when the required request fields, minimum response fields, classification, tool/API name, source, contract version, `last_verified`, or forbidden-source boundary is unclear or changed.
 
 ## Minimum Schema
 
@@ -274,6 +279,63 @@ Focused tests live in `tests/test_desktop_runtime_capability_discovery.py` and c
 python3 -B -m unittest discover -s tests
 ```
 
+## Contract Comparison Implementation Artifact
+
+The compatibility re-check helper is `scripts/desktop_runtime_contract_compare.py`.
+It accepts a prepared JSON request containing old wrapper contract evidence and newer normalized capability evidence, then compares only the documented fields the wrapper relies on.
+
+Usage examples:
+
+```bash
+python3 scripts/desktop_runtime_contract_compare.py --example --pretty
+```
+
+```bash
+python3 scripts/desktop_runtime_contract_compare.py --pretty < contract-comparison.json
+```
+
+The stdin request must be JSON and should use this minimal shape:
+
+```yaml
+requested_action: "compare-runtime-contract-evidence"
+target_action: "read-thread"
+old_contract:
+  action: "read-thread"
+  tool_or_api: "read_thread"
+  classification: "read-only"
+  required_request_fields: ["thread_id"]
+  minimum_response_fields: ["status", "thread_id"]
+  capability_source: "active tool list"
+  contract_version: "version unavailable"
+  last_verified: "YYYY-MM-DD"
+new_capability_evidence:
+  status: "available"
+  capabilities:
+    - action: "read-thread"
+      tool_or_api: "read_thread"
+      classification: "read-only"
+      required_request_fields: ["thread_id"]
+      minimum_response_fields: ["status", "thread_id"]
+      capability_source: "runtime-reported schema"
+      contract_version: "version unavailable"
+      last_verified: "YYYY-MM-DD"
+```
+
+The helper output includes:
+
+- status: `compatible`, `fallback`, or `stopped`;
+- compared action, tool/API name, classification, required request fields, and minimum response fields;
+- old and new contract evidence summaries;
+- stop reason and residual risk when evidence is missing, changed, unavailable, or unsafe.
+
+The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, authorize state-changing thread actions, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
+
+Focused tests live in `tests/test_desktop_runtime_contract_compare.py` and can be rerun with:
+
+```bash
+python3 -B -m unittest discover -s tests
+```
+
 ## Later Slice Candidates
 
 Later slices require separate review and human approval:
@@ -298,6 +360,7 @@ For the completed first implementation slices:
 - fallback tests proving no Desktop thread action is claimed when capability is unavailable;
 - stop-condition tests for missing contract evidence, unclear repo identity, external-write requests, and forbidden source hints;
 - capability discovery tests proving caller-supplied metadata is normalized, unavailable metadata is reported as unavailable, ambiguous classification stops, and forbidden source hints stop;
+- contract comparison tests proving compatible evidence returns `compatible`, missing or unavailable capability returns `fallback`, changed request shape, response shape, classification, or tool/API name returns `stopped`, forbidden private source hints stop, and state-changing evidence is compared without authorizing runtime calls;
 - docs review for public claims and runtime compatibility;
 - code review gate only if the implementation slice is used for commit or PR readiness.
 
