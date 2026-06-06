@@ -6,9 +6,9 @@ This document answers whether the repository can move from the accepted Desktop 
 
 Implementation is conditionally feasible for a V1 Desktop runtime wrapper, but only as a narrow convenience layer over runtime thread tools or documented APIs that are already exposed by the active runtime.
 
-The first implementation slice is complete as a non-state-changing request planner and fallback generator. It validates a prepared thread-action request, records the minimum contract evidence needed for a future runtime call, and produces either structured dry-run evidence or a CLI-compatible paste-ready fallback. It does not create, fork, continue, message, or read a Desktop thread.
+The first implementation slice is complete as a non-state-changing request planner and fallback generator. It validates a prepared thread-action request, records the minimum contract evidence needed for a future runtime call, can consume normalized capability evidence supplied by the discovery helper, and produces either structured dry-run evidence or a CLI-compatible paste-ready fallback. It does not create, fork, continue, message, or read a Desktop thread.
 
-The read-only capability discovery slice is also complete as a non-state-changing metadata normalizer. It accepts only caller-supplied documented metadata, such as an active tool list excerpt, connector metadata, official documentation, or runtime-reported schema that has already been gathered and supplied to the helper. It records action names, read-only or state-changing classification, required request fields, minimum response fields, capability source, contract version or `version unavailable`, `last_verified`, and helper version. It does not gather metadata itself, inspect Desktop private runtime state, or call any Desktop thread tool.
+The read-only capability discovery slice is also complete as a non-state-changing metadata normalizer. It accepts only caller-supplied documented metadata, such as an active tool list excerpt, connector metadata, official documentation, or runtime-reported schema that has already been gathered and supplied to the helper. It records action names, read-only or state-changing classification, required request fields, minimum response fields, capability source, contract version or `version unavailable`, `last_verified`, and helper version. The planner can accept this normalized output as `capability_evidence`, select the requested target action, and stop or fall back when the evidence is unavailable, missing, mismatched, unclear, or sourced from forbidden Desktop runtime hints. It does not gather metadata itself, inspect Desktop private runtime state, or call any Desktop thread tool.
 
 State-changing thread calls can be considered only after the first slice proves the request and evidence contract, and after a separate human decision approves adding a runtime-call path for one documented action.
 
@@ -20,7 +20,7 @@ Wrapper V1 should make the existing `desktop-thread-delegation` boundary easier 
 - verify that the request identifies the repository, branch or expected head when relevant, intended action, prompt summary, and external-write boundary;
 - record compatibility evidence for the runtime thread tool or documented API the wrapper would rely on;
 - return a dry-run result, stop result, or CLI-compatible fallback when the runtime capability is unavailable or unsafe;
-- normalize caller-supplied documented capability metadata before a future planner or adapter relies on it;
+- normalize caller-supplied documented capability metadata and allow the planner to use that normalized evidence without calling runtime tools;
 - preserve the main-thread responsibility for integration, verification, review evidence, commit readiness, PR readiness, merge readiness, and human approval.
 
 ## Non-Goals
@@ -69,6 +69,8 @@ If the runtime does not expose a version, `version unavailable` is acceptable on
 
 For read-only capability discovery, the helper may normalize only metadata supplied by the caller. If the supplied metadata does not identify the action, tool or API name, read-only or state-changing classification, required request fields, minimum response fields, source, contract version or `version unavailable`, and `last_verified`, the helper must return `stopped` or `unavailable`. It must not infer missing fields from Desktop private runtime state, broad filesystem scans, logs, UI state, unpublished endpoints, or background services.
 
+For planner integration, callers may pass the discovery helper output as `capability_evidence`. The planner may use only normalized fields from that object. It must return fallback when the target capability is unavailable or missing, and it must stop when the normalized capability classification, tool/API name, request shape, response shape, source, contract version, `last_verified`, or forbidden-source boundary is unclear.
+
 ## Minimum Schema
 
 The first implementation slice should use a minimal request schema like this:
@@ -82,6 +84,7 @@ runtime_contract:
   capability_source: "active tool list | connector metadata | official documentation | runtime-reported schema"
   last_verified: "YYYY-MM-DD"
   wrapper_version: "0.1.0"
+capability_evidence: "optional normalized output from desktop_runtime_capability_discovery.py"
 target:
   repo: "owner/name"
   remote: "origin URL"
@@ -112,9 +115,10 @@ runtime_contract:
   capability_source: "active tool list"
   last_verified: "YYYY-MM-DD"
   wrapper_mapping: "wrapper 0.1.0 -> create_thread version unavailable"
+  normalized_capability: "optional selected capability when capability_evidence was supplied"
 request_shape_relied_on:
   required: ["prompt.body", "target.repo", "runtime_contract.tool_or_api"]
-  optional_used: ["target.branch", "target.expected_head", "target.thread_id"]
+  optional_used: ["target.branch", "target.expected_head", "target.thread_id", "capability_evidence"]
 response_shape_relied_on:
   required: ["status"]
   fallback_fields: ["paste_ready_prompt", "stop_reason"]
@@ -185,6 +189,8 @@ python3 scripts/desktop_runtime_wrapper_planner.py --pretty < prepared-request.j
 
 The stdin request must be JSON and should follow the minimum schema above. Use `--example` to print a complete example request when preparing or updating a caller fixture.
 
+Callers may also pass normalized discovery output under `capability_evidence`. In that path, the planner selects the capability matching `target_action`, copies the tool/API name, capability source, contract version, and `last_verified` into runtime contract evidence, and records the selected normalized capability in dry-run output. The planner returns fallback when the target action is missing or unavailable, and stopped when classification, request shape, response shape, or source evidence is unclear.
+
 The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not read Desktop private runtime state, unpublished endpoints, UI state, daemons, sidecars, background services, app-server clients, catalog entries, installer entries, or skill metadata as runtime state. It does not add a daemon, MCP server, app-server client, sidecar, background service, new skill, catalog item, or installer entry.
 
 The CLI-compatible fallback prompt must state that no Desktop thread was opened, forked, continued, messaged, or read. It must rely only on durable request fields supplied to the planner and preserve the external-write gate.
@@ -206,6 +212,8 @@ Completed read-only discovery slice:
 5. Keeps runtime thread-tool invocation and Desktop metadata gathering out of the slice.
 
 This slice is useful before any future runtime-call adapter because it makes the capability evidence explicit without treating discovery as authority to call the capability.
+
+The normalized discovery output is also the current planner input path for capability evidence. This path remains non-state-changing: it proves that planner decisions can be based on caller-supplied documented metadata without calling `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or documented equivalents.
 
 ## Capability Discovery Implementation Artifact
 

@@ -10,6 +10,7 @@ messages, or reads a Desktop thread.
 from __future__ import annotations
 
 import argparse
+import copy
 import datetime as _dt
 import json
 import sys
@@ -30,6 +31,13 @@ STATE_CHANGING_TARGET_ACTIONS = {
     "create-thread",
     "fork-thread",
     "send-message",
+}
+
+EXPECTED_CLASSIFICATION_BY_ACTION = {
+    "create-thread": "state-changing",
+    "fork-thread": "state-changing",
+    "send-message": "state-changing",
+    "read-thread": "read-only",
 }
 
 CAPABILITY_SOURCES = {
@@ -174,6 +182,10 @@ def _contains_private_runtime_request(texts: list[str]) -> list[str]:
     return hits
 
 
+def _private_runtime_descriptions(hits: list[str]) -> list[str]:
+    return sorted({PRIVATE_RUNTIME_HINTS[hit] for hit in hits})
+
+
 def _valid_iso_date(value: Any) -> bool:
     if not isinstance(value, str):
         return False
@@ -182,6 +194,17 @@ def _valid_iso_date(value: Any) -> bool:
     except ValueError:
         return False
     return parsed.isoformat() == value
+
+
+def _string_list(value: Any) -> list[str] | None:
+    if not isinstance(value, list) or not value:
+        return None
+    strings: list[str] = []
+    for item in value:
+        if not isinstance(item, str) or not item.strip():
+            return None
+        strings.append(item.strip())
+    return strings
 
 
 def _required_paths(target_action: str | None) -> list[str]:
@@ -248,11 +271,20 @@ def _base_response(request: dict[str, Any], status: str) -> dict[str, Any]:
     required = _required_paths(target_action)
     optional_used = [
         path
-        for path in ["target.expected_head", "target.thread_id", "runtime_contract.available"]
+        for path in [
+            "target.expected_head",
+            "target.thread_id",
+            "runtime_contract.available",
+            "capability_evidence",
+        ]
         if not _is_missing(_get(request, path))
     ]
+    response_required = ["status"]
+    selected_capability = _get(request, "runtime_contract.normalized_capability")
+    if isinstance(selected_capability, dict):
+        response_required = selected_capability.get("minimum_response_fields") or response_required
 
-    return {
+    response = {
         "status": status,
         "requested_action": _get(request, "action") or REQUESTED_ACTION,
         "target_action": target_action,
@@ -268,7 +300,7 @@ def _base_response(request: dict[str, Any], status: str) -> dict[str, Any]:
             "optional_used": optional_used,
         },
         "response_shape_relied_on": {
-            "required": ["status"],
+            "required": response_required,
             "fallback_fields": ["paste_ready_prompt", "stop_reason"],
         },
         "result": {
@@ -277,6 +309,9 @@ def _base_response(request: dict[str, Any], status: str) -> dict[str, Any]:
             "residual_risk": [],
         },
     }
+    if isinstance(selected_capability, dict):
+        response["runtime_contract"]["normalized_capability"] = selected_capability
+    return response
 
 
 def _stopped(
@@ -306,6 +341,182 @@ def _fallback(
     return response
 
 
+def _pre_capability_safety_stop(request: dict[str, Any]) -> dict[str, Any] | None:
+    external_writes_blocked = _as_bool(_get(request, "boundaries.external_writes_blocked"))
+    external_write_authorized = _as_bool(_get(request, "authorization.external_write_authorized"))
+    if external_writes_blocked is not None and external_writes_blocked is not True:
+        return _stopped(
+            request,
+            "external_write_request",
+            "boundaries.external_writes_blocked must be true for this first slice.",
+        )
+    if external_write_authorized is not None and external_write_authorized is not False:
+        return _stopped(
+            request,
+            "external_write_request",
+            "authorization.external_write_authorized must be false for this first slice.",
+        )
+
+    in_scope_text = _iter_strings(_get(request, "boundaries.in_scope"))
+    external_hits = _contains_any(in_scope_text, EXTERNAL_WRITE_TERMS)
+    if external_hits:
+        return _stopped(
+            request,
+            "external_write_request",
+            "External-write term(s) found in boundaries.in_scope: " + ", ".join(external_hits),
+        )
+
+    prompt_text = []
+    prompt_text.extend(_iter_strings(_get(request, "prompt.summary")))
+    prompt_text.extend(_iter_strings(_get(request, "prompt.body")))
+    private_hits = _contains_any(in_scope_text, PRIVATE_RUNTIME_HINTS)
+    private_hits.extend(_contains_private_runtime_request(prompt_text))
+    if private_hits:
+        return _stopped(
+            request,
+            "forbidden_private_runtime_state",
+            "Forbidden Desktop runtime source hint(s): "
+            + ", ".join(_private_runtime_descriptions(private_hits)),
+        )
+    return None
+
+
+def _capability_evidence_resolution(request: dict[str, Any]) -> tuple[str, dict[str, Any] | None]:
+    evidence = _get(request, "capability_evidence")
+    if _is_missing(evidence):
+        return "unchanged", None
+    if not isinstance(evidence, dict):
+        return "stopped", _stopped(
+            request,
+            "missing_contract_evidence",
+            "capability_evidence must be a normalized discovery evidence object.",
+        )
+    if _get(request, "target_action") not in SUPPORTED_TARGET_ACTIONS:
+        return "unchanged", None
+
+    private_hits = _contains_any(_iter_strings(evidence), PRIVATE_RUNTIME_HINTS)
+    if private_hits:
+        return "stopped", _stopped(
+            request,
+            "forbidden_private_runtime_state",
+            "Forbidden Desktop runtime source hint(s): "
+            + ", ".join(_private_runtime_descriptions(private_hits)),
+        )
+
+    status = evidence.get("status")
+    if status == "unavailable":
+        return "fallback", _fallback(
+            request,
+            "missing_capability",
+            "Normalized capability evidence reports no available capabilities.",
+            ["Use the planner fallback path or provide documented metadata from an allowed source."],
+        )
+    if status == "stopped":
+        reason = _get(evidence, "result.stop_reason") or "Normalized capability evidence stopped."
+        return "stopped", _stopped(
+            request,
+            evidence.get("failure_class") or "missing_contract_evidence",
+            "Normalized capability evidence is stopped: " + str(reason),
+        )
+    if status != "available":
+        return "stopped", _stopped(
+            request,
+            "missing_contract_evidence",
+            "capability_evidence.status must be available, unavailable, or stopped.",
+        )
+
+    target_action = _get(request, "target_action")
+    capabilities = evidence.get("capabilities")
+    if not isinstance(capabilities, list) or not capabilities:
+        return "fallback", _fallback(
+            request,
+            "missing_capability",
+            "Normalized capability evidence contains no capabilities.",
+            ["Planner did not find caller-supplied evidence for the requested target action."],
+        )
+
+    matching = [
+        capability
+        for capability in capabilities
+        if isinstance(capability, dict) and capability.get("action") == target_action
+    ]
+    if not matching:
+        return "fallback", _fallback(
+            request,
+            "missing_capability",
+            f"Normalized capability evidence does not include {target_action}.",
+            ["Planner generated a fallback prompt instead of guessing runtime capability state."],
+        )
+
+    capability = matching[0]
+    expected_tool = SUPPORTED_TARGET_ACTIONS.get(str(target_action))
+    expected_classification = EXPECTED_CLASSIFICATION_BY_ACTION.get(str(target_action))
+    if capability.get("tool_or_api") != expected_tool:
+        return "stopped", _stopped(
+            request,
+            "missing_contract_evidence",
+            f"capability_evidence tool_or_api must be {expected_tool} for {target_action}.",
+        )
+    if capability.get("classification") != expected_classification:
+        return "stopped", _stopped(
+            request,
+            "classification_mismatch",
+            (
+                f"capability_evidence classification must be {expected_classification} "
+                f"for {target_action}."
+            ),
+        )
+
+    required_request_fields = _string_list(capability.get("required_request_fields"))
+    minimum_response_fields = _string_list(capability.get("minimum_response_fields"))
+    if required_request_fields is None or minimum_response_fields is None:
+        return "stopped", _stopped(
+            request,
+            "missing_contract_evidence",
+            "capability_evidence request or response shape is unclear.",
+        )
+
+    capability_source = capability.get("capability_source")
+    if capability_source not in CAPABILITY_SOURCES:
+        return "stopped", _stopped(
+            request,
+            "missing_contract_evidence",
+            "capability_evidence capability_source is not a recognized verifiable source.",
+        )
+
+    contract_version = capability.get("contract_version")
+    last_verified = capability.get("last_verified")
+    if _is_missing(contract_version) or not _valid_iso_date(last_verified):
+        return "stopped", _stopped(
+            request,
+            "missing_contract_evidence",
+            "capability_evidence requires contract_version and YYYY-MM-DD last_verified.",
+        )
+
+    enriched_request = copy.deepcopy(request)
+    runtime_contract = enriched_request.setdefault("runtime_contract", {})
+    runtime_contract["tool_or_api"] = capability["tool_or_api"]
+    runtime_contract["underlying_contract_version"] = contract_version
+    runtime_contract["capability_source"] = capability_source
+    runtime_contract["last_verified"] = last_verified
+    runtime_contract.setdefault("wrapper_version", WRAPPER_VERSION)
+    runtime_contract["available"] = True
+    runtime_contract["normalized_capability"] = {
+        "action": capability["action"],
+        "classification": capability["classification"],
+        "required_request_fields": required_request_fields,
+        "optional_request_fields": capability.get("optional_request_fields") or [],
+        "minimum_response_fields": minimum_response_fields,
+        "error_response_fields": capability.get("error_response_fields") or [],
+        "capability_source": capability_source,
+        "contract_version": contract_version,
+        "last_verified": last_verified,
+        "discovery_helper_version": capability.get("discovery_helper_version"),
+        "discovery_mapping": capability.get("discovery_mapping"),
+    }
+    return "enriched", enriched_request
+
+
 def plan_request(request: dict[str, Any]) -> dict[str, Any]:
     """Classify a prepared Desktop thread-action request.
 
@@ -315,6 +526,16 @@ def plan_request(request: dict[str, Any]) -> dict[str, Any]:
 
     if not isinstance(request, dict):
         return _stopped({}, "validation_error", "Request must be a JSON object.")
+
+    safety_stop = _pre_capability_safety_stop(request)
+    if safety_stop is not None:
+        return safety_stop
+
+    resolution, resolved = _capability_evidence_resolution(request)
+    if resolution in {"fallback", "stopped"}:
+        return resolved or _stopped(request, "missing_contract_evidence", "Invalid capability evidence.")
+    if resolution == "enriched":
+        request = resolved or request
 
     target_action = _get(request, "target_action")
     missing = [path for path in _required_paths(target_action) if _is_missing(_get(request, path))]
@@ -402,7 +623,7 @@ def plan_request(request: dict[str, Any]) -> dict[str, Any]:
     private_hits = _contains_any(in_scope_text, PRIVATE_RUNTIME_HINTS)
     private_hits.extend(_contains_private_runtime_request(prompt_text))
     if private_hits:
-        descriptions = sorted({PRIVATE_RUNTIME_HINTS[hit] for hit in private_hits})
+        descriptions = _private_runtime_descriptions(private_hits)
         return _stopped(
             request,
             "forbidden_private_runtime_state",
@@ -430,6 +651,7 @@ def plan_request(request: dict[str, Any]) -> dict[str, Any]:
     response["failure_class"] = None
     response["result"]["residual_risk"] = [
         "This first slice does not call a Desktop thread tool.",
+        "Normalized capability evidence is caller-supplied metadata only.",
         "Compatibility evidence still needs re-checking before any future runtime action.",
     ]
     return response

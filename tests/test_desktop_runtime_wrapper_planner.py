@@ -10,6 +10,14 @@ SPEC = importlib.util.spec_from_file_location("desktop_runtime_wrapper_planner",
 planner = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(planner)
 
+DISCOVERY_SCRIPT = ROOT / "scripts" / "desktop_runtime_capability_discovery.py"
+DISCOVERY_SPEC = importlib.util.spec_from_file_location(
+    "desktop_runtime_capability_discovery_for_planner_tests",
+    DISCOVERY_SCRIPT,
+)
+discovery = importlib.util.module_from_spec(DISCOVERY_SPEC)
+DISCOVERY_SPEC.loader.exec_module(discovery)
+
 
 def valid_request(**overrides):
     request = {
@@ -41,6 +49,81 @@ def valid_request(**overrides):
             "external_write_authorized": False,
         },
     }
+    for path, value in overrides.items():
+        current = request
+        parts = path.split("__")
+        for part in parts[:-1]:
+            current = current[part]
+        current[parts[-1]] = value
+    return request
+
+
+def valid_discovery_request(action="read-thread", classification="read-only", **overrides):
+    today = dt.date.today().isoformat()
+    tool_by_action = {
+        "create-thread": "create_thread",
+        "fork-thread": "fork_thread",
+        "send-message": "send_message_to_thread",
+        "read-thread": "read_thread",
+    }
+    required_by_action = {
+        "create-thread": ["prompt"],
+        "fork-thread": ["thread_id", "prompt"],
+        "send-message": ["thread_id", "message"],
+        "read-thread": ["thread_id"],
+    }
+    response_by_action = {
+        "create-thread": ["status", "thread_id"],
+        "fork-thread": ["status", "thread_id"],
+        "send-message": ["status", "thread_id"],
+        "read-thread": ["status", "thread_id"],
+    }
+    request = {
+        "requested_action": "normalize-runtime-capability-metadata",
+        "metadata_source": {
+            "source": "active tool list",
+            "contract_version": "version unavailable",
+            "last_verified": today,
+            "available": True,
+        },
+        "capabilities": [
+            {
+                "action": action,
+                "tool_or_api": tool_by_action[action],
+                "classification": classification,
+                "request": {
+                    "required": required_by_action[action],
+                    "optional": [],
+                },
+                "response": {
+                    "required": response_by_action[action],
+                    "errors": ["message"],
+                },
+                "source": "active tool list",
+                "contract_version": "version unavailable",
+                "last_verified": today,
+            }
+        ],
+    }
+    for path, value in overrides.items():
+        current = request
+        parts = path.split("__")
+        for part in parts[:-1]:
+            current = current[int(part)] if isinstance(current, list) else current[part]
+        if isinstance(current, list):
+            current[int(parts[-1])] = value
+        else:
+            current[parts[-1]] = value
+    return request
+
+
+def request_with_capability_evidence(target_action="read-thread", evidence=None, **overrides):
+    request = valid_request(target_action=target_action)
+    request.pop("runtime_contract")
+    request["authorization"]["thread_action_authorized"] = False
+    if target_action in {"fork-thread", "send-message", "read-thread"}:
+        request["target"]["thread_id"] = "thread-123"
+    request["capability_evidence"] = evidence
     for path, value in overrides.items():
         current = request
         parts = path.split("__")
@@ -112,6 +195,20 @@ class PlannerTests(unittest.TestCase):
         self.assertEqual(response["status"], "stopped")
         self.assertEqual(response["failure_class"], "external_write_request")
 
+    def test_external_write_request_stops_before_capability_evidence_fallback(self):
+        evidence = {"status": "unavailable", "capabilities": []}
+
+        response = planner.plan_request(
+            request_with_capability_evidence(
+                "send-message",
+                evidence,
+                authorization__external_write_authorized=True,
+            )
+        )
+
+        self.assertEqual(response["status"], "stopped")
+        self.assertEqual(response["failure_class"], "external_write_request")
+
     def test_forbidden_private_runtime_state_hint_stops(self):
         response = planner.plan_request(
             valid_request(prompt__body="Read the Desktop SQLite database before planning.")
@@ -143,6 +240,136 @@ class PlannerTests(unittest.TestCase):
             "No Desktop thread was opened/forked/continued/messaged/read",
             response["result"]["paste_ready_prompt"],
         )
+
+    def test_discovery_output_can_feed_planner(self):
+        evidence = discovery.normalize_capability_metadata(
+            valid_discovery_request("read-thread", "read-only")
+        )
+
+        response = planner.plan_request(
+            request_with_capability_evidence("read-thread", evidence)
+        )
+
+        self.assertEqual(response["status"], "dry-run")
+        self.assertEqual(response["runtime_contract"]["tool_or_api"], "read_thread")
+        self.assertEqual(
+            response["runtime_contract"]["normalized_capability"]["classification"],
+            "read-only",
+        )
+        self.assertIn("thread_id", response["response_shape_relied_on"]["required"])
+
+    def test_missing_capability_evidence_falls_back(self):
+        evidence = discovery.normalize_capability_metadata(
+            valid_discovery_request("read-thread", "read-only")
+        )
+
+        response = planner.plan_request(
+            request_with_capability_evidence("send-message", evidence)
+        )
+
+        self.assertEqual(response["status"], "fallback")
+        self.assertEqual(response["failure_class"], "missing_capability")
+        self.assertIn("does not include send-message", response["result"]["stop_reason"])
+
+    def test_capability_classification_mismatch_stops(self):
+        evidence = {
+            "status": "available",
+            "capabilities": [
+                {
+                    "action": "create-thread",
+                    "tool_or_api": "create_thread",
+                    "classification": "read-only",
+                    "required_request_fields": ["prompt"],
+                    "optional_request_fields": [],
+                    "minimum_response_fields": ["status", "thread_id"],
+                    "error_response_fields": ["message"],
+                    "capability_source": "active tool list",
+                    "contract_version": "version unavailable",
+                    "last_verified": dt.date.today().isoformat(),
+                }
+            ],
+        }
+
+        response = planner.plan_request(
+            request_with_capability_evidence("create-thread", evidence)
+        )
+
+        self.assertEqual(response["status"], "stopped")
+        self.assertEqual(response["failure_class"], "classification_mismatch")
+
+    def test_capability_shape_unclear_stops(self):
+        evidence = discovery.normalize_capability_metadata(
+            valid_discovery_request("read-thread", "read-only")
+        )
+        evidence["capabilities"][0]["minimum_response_fields"] = []
+
+        response = planner.plan_request(
+            request_with_capability_evidence("read-thread", evidence)
+        )
+
+        self.assertEqual(response["status"], "stopped")
+        self.assertEqual(response["failure_class"], "missing_contract_evidence")
+        self.assertIn("shape is unclear", response["result"]["stop_reason"])
+
+    def test_state_changing_capability_without_authorization_falls_back(self):
+        evidence = discovery.normalize_capability_metadata(
+            valid_discovery_request("create-thread", "state-changing")
+        )
+
+        response = planner.plan_request(
+            request_with_capability_evidence("create-thread", evidence)
+        )
+
+        self.assertEqual(response["status"], "fallback")
+        self.assertEqual(response["failure_class"], "state_changing_thread_action_not_authorized")
+        self.assertIn(
+            "No Desktop thread was opened/forked/continued/messaged/read",
+            response["result"]["paste_ready_prompt"],
+        )
+
+    def test_forbidden_private_source_hint_in_capability_evidence_stops(self):
+        evidence = discovery.normalize_capability_metadata(
+            valid_discovery_request("read-thread", "read-only")
+        )
+        evidence["capabilities"][0]["notes"] = "Derived from Desktop logs."
+
+        response = planner.plan_request(
+            request_with_capability_evidence("read-thread", evidence)
+        )
+
+        self.assertEqual(response["status"], "stopped")
+        self.assertEqual(response["failure_class"], "forbidden_private_runtime_state")
+
+    def test_forbidden_private_runtime_hint_stops_before_capability_evidence_fallback(self):
+        evidence = {"status": "unavailable", "capabilities": []}
+
+        response = planner.plan_request(
+            request_with_capability_evidence(
+                "read-thread",
+                evidence,
+                prompt__body="Read the Desktop SQLite database before planning.",
+            )
+        )
+
+        self.assertEqual(response["status"], "stopped")
+        self.assertEqual(response["failure_class"], "forbidden_private_runtime_state")
+
+    def test_read_thread_capability_evidence_dry_run_does_not_call_thread_tool(self):
+        evidence = discovery.normalize_capability_metadata(
+            valid_discovery_request("read-thread", "read-only")
+        )
+
+        response = planner.plan_request(
+            request_with_capability_evidence("read-thread", evidence)
+        )
+
+        self.assertEqual(response["status"], "dry-run")
+        self.assertIn(
+            "This first slice does not call a Desktop thread tool.",
+            response["result"]["residual_risk"],
+        )
+        self.assertEqual(response["target_action"], "read-thread")
+        self.assertEqual(response["runtime_contract"]["tool_or_api"], "read_thread")
 
 
 if __name__ == "__main__":

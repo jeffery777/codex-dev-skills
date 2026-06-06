@@ -9,7 +9,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## v0.2.x: More Maintainer Workflows
 
-- Desktop runtime wrapper V1 has completed its first implementation slices as non-state-changing helpers: a request planner and CLI-compatible fallback generator, plus caller-supplied documented capability metadata normalization. Current source of truth: `docs/desktop-runtime-wrapper-v1-plan.md`.
+- Desktop runtime wrapper V1 has completed its current non-state-changing helper path: caller-supplied documented capability metadata normalization can feed the request planner as `capability_evidence`, and the planner still emits only dry-run, fallback, or stopped evidence. Current source of truth: `docs/desktop-runtime-wrapper-v1-plan.md`.
 - Keep any later Desktop runtime wrapper slices behind separate review and human approval, especially before adding runtime thread-tool invocation or any state-changing path.
 
 ## Maintenance Approach
@@ -21,7 +21,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Desktop runtime wrapper V1 later slices: at most one explicitly approved runtime thread-tool call path after the non-state-changing planner and capability metadata normalization helpers remain stable. Later work must continue to avoid Desktop private runtime state, daemons, app-server clients, sidecars, background services, new skills, catalog entries, and installer entries unless separately approved.
+- Desktop runtime wrapper V1 later slices: at most one explicitly approved runtime thread-tool call path after the non-state-changing planner plus capability evidence input path remains stable. Later work must continue to avoid Desktop private runtime state, daemons, app-server clients, sidecars, background services, new skills, catalog entries, and installer entries unless separately approved.
 
 ## Non-Goals
 
