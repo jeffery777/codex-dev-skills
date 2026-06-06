@@ -159,6 +159,54 @@ A non-state-changing helper may normalize metadata the caller already supplied, 
 
 If the caller cannot supply the action classification, required request fields, minimum response fields, source, contract version or `version unavailable`, and `last_verified`, the helper should return `stopped` or `unavailable` rather than filling gaps from private runtime state.
 
+The planner may consume that normalized discovery output as caller-supplied `capability_evidence`. This still does not open, fork, message, continue, or read a Desktop thread:
+
+```json
+{
+  "action": "plan-thread-action",
+  "target_action": "read-thread",
+  "capability_evidence": {
+    "status": "available",
+    "capabilities": [
+      {
+        "action": "read-thread",
+        "tool_or_api": "read_thread",
+        "classification": "read-only",
+        "required_request_fields": ["thread_id"],
+        "optional_request_fields": ["include_metadata"],
+        "minimum_response_fields": ["status", "thread_id"],
+        "error_response_fields": ["message"],
+        "capability_source": "runtime-reported schema",
+        "contract_version": "version unavailable",
+        "last_verified": "YYYY-MM-DD",
+        "discovery_helper_version": "0.1.0"
+      }
+    ]
+  },
+  "target": {
+    "repo": "owner/name",
+    "remote": "origin URL",
+    "branch": "branch-name",
+    "thread_id": "thread identifier supplied by caller"
+  },
+  "prompt": {
+    "summary": "Read documented thread metadata.",
+    "body": "Prepare read-only evidence only; do not call Desktop private runtime state."
+  },
+  "boundaries": {
+    "in_scope": ["docs/runtime-adapter-v2.md"],
+    "out_of_scope": [".work/", "Desktop private runtime state"],
+    "external_writes_blocked": true
+  },
+  "authorization": {
+    "thread_action_authorized": false,
+    "external_write_authorized": false
+  }
+}
+```
+
+If the target action is missing from `capability_evidence`, the planner returns a CLI-compatible fallback. If the classification is mismatched, the request or response shape is unclear, or the evidence points at forbidden Desktop runtime sources, the planner stops.
+
 ## Scenario 3: Stop Instead Of Adapting
 
 Stop before calling a thread tool, fallback, wrapper, API, or script when any of these conditions apply:

@@ -71,7 +71,7 @@ Public outputs:
 - desktop-thread-delegation
 - runtime compatibility guidance in `docs/runtime-compatibility.md`
 - Desktop runtime adapter v2 boundary guidance in `docs/runtime-adapter-v2.md`
-- Desktop runtime wrapper v1 planner helper, capability metadata normalization helper, and implementation plan in `docs/desktop-runtime-wrapper-v1-plan.md`
+- Desktop runtime wrapper v1 planner helper, capability metadata normalization helper, planner `capability_evidence` input path, and implementation plan in `docs/desktop-runtime-wrapper-v1-plan.md`
 - runtime adapter boundary example in `examples/runtime-adapter-boundary.md`
 - Desktop thread delegation example in `examples/desktop-thread-delegation.md`
 - skill selection guidance for Desktop thread delegation and runtime contract evidence in `docs/skill-selection-guide.md`
@@ -81,7 +81,7 @@ Boundary:
 - Desktop thread actions are runtime actions, not CLI guarantees.
 - The CLI-compatible fallback is a prompt, task brief, continuation prompt, or sequential execution path.
 - Fallback wording must not imply that Codex CLI can open, fork, continue, message, or control Desktop threads unless a documented or configured thread capability is actually available.
-- Repo-native runtime evidence must use public repository files, ordinary git or shell inspection, documented runtime tools, caller-supplied documented metadata, installed connector metadata, or maintained examples.
+- Repo-native runtime evidence must use public repository files, ordinary git or shell inspection, documented runtime tools, caller-supplied documented metadata, installed connector metadata, normalized capability evidence, or maintained examples.
 - It must not depend on private Desktop runtime state such as local databases, logs, sessions, auth files, caches, app state, unpublished endpoints, UI scraping, daemons, background services, local runtime directories, or private runtime files.
 - Runtime thread tool/API contract evidence must record contract name, version or `version unavailable` plus capability source, minimal request/response shape, `last_verified`, and workflow, wrapper, or adapter mapping to the underlying contract.
 
