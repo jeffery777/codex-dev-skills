@@ -64,9 +64,23 @@ Public outputs:
 
 Source: accepted public repository policy, runtime compatibility guidance, and maintained examples.
 
+This bucket covers repo-native documentation that extends the public workflow set after the original source classification. It is limited to accepted public repository policy, runtime compatibility guidance, and maintained examples. It does not claim that a Desktop runtime adapter, wrapper, daemon, MCP server, app-server client, or Desktop runtime integration has been implemented.
+
 Public outputs:
 
 - desktop-thread-delegation
+- runtime compatibility guidance in `docs/runtime-compatibility.md`
+- Desktop runtime adapter v2 boundary guidance in `docs/runtime-adapter-v2.md`
+- runtime adapter boundary example in `examples/runtime-adapter-boundary.md`
+- Desktop thread delegation example in `examples/desktop-thread-delegation.md`
+- skill selection guidance for Desktop thread delegation and runtime contract evidence in `docs/skill-selection-guide.md`
+
+Boundary:
+
+- Desktop thread actions are runtime actions, not CLI guarantees.
+- The CLI-compatible fallback is a prompt, task brief, continuation prompt, or sequential execution path.
+- Repo-native runtime evidence must use public repository files, ordinary git or shell inspection, documented runtime tools, installed connector metadata, or maintained examples.
+- It must not depend on private Desktop runtime state such as local databases, logs, sessions, auth files, caches, app state, unpublished endpoints, UI scraping, daemons, or background services.
 
 ## DUPLICATE_SHARED_COPY
 
