@@ -18,7 +18,9 @@ The read-thread preflight slice is also complete as a non-state-changing readine
 
 The evidence pipeline slice is also complete as a non-state-changing CLI example. It chains caller-supplied capability metadata through discovery, old/new contract comparison, and create/read preflight helpers, then emits one aggregate evidence record. It supports running a single target action when maintainers want narrower evidence, and its top-level `summary` makes ready/fallback/stopped reasons easier for review gates and maintainers to scan. It is meant to make the planner -> discovery -> compare -> preflight order easy to run and inspect. It does not gather metadata itself, call Desktop thread tools, read Desktop private runtime state, or authorize runtime calls or external writes.
 
-State-changing thread calls can be considered only after the first slice proves the request and evidence contract, and after a separate human decision approves adding a runtime-call path for one documented action.
+The next candidate slice before any runtime-call path is a session capability handshake and compatibility cache model. A future wrapper should avoid re-checking the underlying runtime schema before every API or runtime tool call. Instead, the first wrapper use in each Codex CLI or Codex Desktop process/session should perform one documented capability handshake, compare the current runtime contract with the wrapper's recorded contract, and store a session-scoped compatibility status. Later wrapper use in the same process/session should read that compatibility status rather than spending another runtime/tool/schema lookup. A compatible status can permit action-specific preflight to proceed; fallback or stopped status must cause later use to fallback or stop. This cache is not durable across Codex CLI/Desktop restarts and must not replace action authorization, target validation, permission handling, or response validation.
+
+State-changing thread calls can be considered only after the completed evidence-only helpers remain stable, after the session capability handshake and compatibility cache slice is designed and reviewed, and after a separate human decision approves adding a runtime-call path for one documented action.
 
 ## Objective
 
@@ -84,6 +86,30 @@ For read-only capability discovery, the helper may normalize only metadata suppl
 For planner integration, callers may pass the discovery helper output as `capability_evidence`. The planner may use only normalized fields from that object. It must return fallback when the target capability is unavailable or missing, and it must stop when the normalized capability classification, tool/API name, request shape, response shape, source, contract version, `last_verified`, or forbidden-source boundary is unclear.
 
 For contract comparison, callers may pass old wrapper contract evidence and newer normalized discovery output. The comparison helper may use only documented fields supplied by the caller. It must return fallback when the target capability is missing or unavailable, and it must stop when the required request fields, minimum response fields, classification, tool/API name, source, contract version, `last_verified`, or forbidden-source boundary is unclear or changed.
+
+For a future session capability handshake, callers may perform this comparison once per Codex CLI/Desktop process/session and record a session-scoped compatibility status. The status should be valid only for the current process/session or runtime lifecycle marker. If the runtime exposes no lifecycle marker, the status must explicitly say it is current-process/current-session scoped. Restarting Codex CLI/Desktop invalidates the status and requires a new handshake before the wrapper trusts the runtime contract again.
+
+The compatibility cache should record at least:
+
+- wrapper, skill package, or repository commit version;
+- helper version;
+- target action, such as `read-thread` or `create-thread`;
+- tool/API name, such as `read_thread` or `create_thread`;
+- runtime-reported version, or `version unavailable` when no version is exposed;
+- capability source;
+- schema/contract hash or equivalent normalized contract evidence;
+- comparison result: `compatible`, `fallback`, or `stopped`;
+- `last_verified`;
+- session identity or runtime lifecycle marker, or an explicit current-process/current-session scoped marker when no runtime marker is available.
+
+The compatibility status must not cache or replace:
+
+- exact runtime action authorization;
+- external-write authorization;
+- destructive-action approval;
+- target repo, branch, thread id, or expected-head validation;
+- auth or permission failure results;
+- actual runtime tool-call response validation.
 
 ## Minimum Schema
 
@@ -585,10 +611,32 @@ python3 -B -m unittest discover -s tests
 
 Later slices require separate review and human approval:
 
+- a non-state-changing session compatibility status schema;
+- a first-use handshake planner/helper that accepts caller-supplied documented metadata, compares it with recorded wrapper contract evidence, and emits session-scoped compatibility status without reading Desktop private runtime state;
+- a compatibility cache read/write helper, initially designed around repo-safe session-scoped artifacts or explicit caller-supplied status rather than a daemon, sidecar, app-server client, Desktop private state, or background service;
+- docs that distinguish contract compatibility, action authorization, and preflight readiness;
 - a single state-changing `create-thread` call path using an already exposed runtime tool;
 - additional `fork-thread` or `send-message` paths only after the single-action path is stable.
 
-Each later slice must re-check the underlying contract evidence and keep private runtime state prohibited.
+The session capability handshake and compatibility cache slice should be prioritized before any true runtime-call path. Each later slice must keep private runtime state prohibited. Runtime-call slices may rely on a compatible session status for contract compatibility only, but must still re-check authorization, target evidence, and actual runtime responses at the point of use.
+
+## Next-Session Handoff
+
+Recommended next Desktop runtime wrapper V1 slice:
+
+1. Add a non-state-changing session compatibility status schema.
+2. Add a first-use handshake planner/helper that accepts caller-supplied documented metadata only, compares it with recorded wrapper contract evidence, and returns `compatible`, `fallback`, or `stopped` session status.
+3. Add a compatibility cache read/write helper using a repo-safe session-scoped artifact or explicit caller-supplied status model. Do not introduce a daemon, MCP server, app-server client, sidecar, background service, Desktop private runtime state reader, skill, catalog item, or installer entry.
+4. Update docs to state that contract compatibility may be session-cached, while exact runtime action authorization, external-write authorization, destructive-action approval, target repo/branch/thread-id/expected-head validation, auth/permission failures, and runtime response validation cannot be replaced by cache.
+5. Add tests proving first use creates compatible status, same-session use reuses compatible status, wrapper/helper version changes invalidate status, schema hash or normalized contract evidence changes invalidate or stop status, fallback/stopped status blocks runtime paths, and no Desktop private runtime state is read.
+
+Definition of done for that slice:
+
+- It remains non-state-changing and evidence-only.
+- It does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or documented equivalents.
+- It does not read Desktop private runtime state.
+- It does not add a skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
+- It documents that Codex CLI/Desktop restart invalidates session compatibility status.
 
 ## Verification Strategy
 
@@ -608,6 +656,7 @@ For the completed first implementation slices:
 - create-thread preflight tests proving compatible evidence plus exact authorization returns `ready`, unavailable capability or comparison evidence returns `fallback`, thread action authorization false returns `fallback`, incompatible or unclear comparison evidence returns `stopped`, read-only create-thread classification stops, external-write authorization stops, missing repo/remote/branch/expected-head evidence stops, forbidden source hints stop, and no `create_thread` call is made;
 - read-thread preflight tests proving the discovery-to-comparison-to-preflight evidence chain returns `ready`, unavailable capability or comparison evidence returns `fallback`, incompatible comparison evidence returns `stopped`, state-changing read-thread classification stops, preflight-scoped runtime-call authorization stops, external-write authorization stops, missing thread-id or expected-fields evidence stops, forbidden source hints stop, and no `read_thread` call is made;
 - evidence pipeline tests proving discovery-to-comparison-to-create/read-preflight order returns aggregate `ready`, missing old contract evidence returns aggregate `fallback`, changed request shape returns aggregate `stopped`, single target action filtering works, summary fields make target reasons scannable, read-thread runtime-call authorization remains out of scope, request inputs are not mutated, and no runtime call is made;
+- future session compatibility cache tests proving first-use status creation, same-session status reuse, wrapper/helper version invalidation, schema hash or normalized contract evidence invalidation, fallback/stopped status blocking, and no Desktop private runtime state access;
 - docs review for public claims and runtime compatibility;
 - code review gate only if the implementation slice is used for commit or PR readiness.
 
@@ -619,6 +668,7 @@ Stop before implementing later wrapper code when:
 - the runtime capability source cannot be recorded without private Desktop runtime state;
 - a later slice would need a daemon, MCP server, app-server client, background service, new skill, catalog entry, or installer entry;
 - the proposed code would call state-changing thread tools without separate explicit approval;
+- the proposed code would treat cached compatibility as runtime action authorization, external-write authorization, destructive-action approval, target validation, auth/permission success, or runtime response validation;
 - tests would require Desktop private runtime files or unpublished Desktop internals;
 - external-write or destructive-action boundaries are ambiguous;
 - maintainers have not approved the specific later implementation slice.

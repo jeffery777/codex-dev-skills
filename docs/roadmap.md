@@ -9,7 +9,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## v0.2.x: More Maintainer Workflows
 
-- Desktop runtime wrapper V1 has completed its current non-state-changing helper path: caller-supplied documented capability metadata normalization can feed the request planner as `capability_evidence`, contract comparison can re-check old wrapper evidence against newer normalized capability evidence before runtime/schema changes are trusted, the planner still emits only dry-run, fallback, or stopped evidence, and the create-thread and read-thread preflight helpers can check readiness evidence before future separately approved runtime calls. Current source of truth: `docs/desktop-runtime-wrapper-v1-plan.md`.
+- Desktop runtime wrapper V1 has completed its current non-state-changing helper path: caller-supplied documented capability metadata normalization can feed the request planner as `capability_evidence`, contract comparison can re-check old wrapper evidence against newer normalized capability evidence before runtime/schema changes are trusted, the planner still emits only dry-run, fallback, or stopped evidence, and the create-thread and read-thread preflight helpers can check readiness evidence before future separately approved runtime calls. The next planned slice before any runtime-call path is a session capability handshake and compatibility cache model: first wrapper use in a Codex CLI/Desktop process/session records compatible/fallback/stopped contract status, and later same-session use reads that status instead of re-querying runtime schema. Current source of truth: `docs/desktop-runtime-wrapper-v1-plan.md`.
 - Keep any later Desktop runtime wrapper slices behind separate review and human approval, especially before adding runtime thread-tool invocation or any state-changing path.
 
 ## Maintenance Approach
@@ -21,7 +21,8 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Desktop runtime wrapper V1 later slices: at most one explicitly approved runtime thread-tool call path after the non-state-changing planner, capability evidence, contract comparison, create-thread preflight, read-thread preflight, and evidence pipeline paths remain stable. Later work must continue to avoid Desktop private runtime state, daemons, app-server clients, sidecars, background services, new skills, catalog entries, and installer entries unless separately approved.
+- Desktop runtime wrapper V1 next slice: design and implement a non-state-changing session compatibility status schema, first-use handshake helper, and session-scoped compatibility cache read/write helper before any true runtime-call path. The cache may record contract compatibility only; it must not replace exact runtime action authorization, external-write authorization, destructive-action approval, target repo/branch/thread-id/expected-head validation, auth/permission failure handling, or runtime response validation.
+- Desktop runtime wrapper V1 later runtime-call slices: at most one explicitly approved runtime thread-tool call path after the non-state-changing planner, capability evidence, contract comparison, create-thread preflight, read-thread preflight, evidence pipeline, and session compatibility cache paths remain stable. Later work must continue to avoid Desktop private runtime state, daemons, app-server clients, sidecars, background services, new skills, catalog entries, and installer entries unless separately approved.
 
 ## Non-Goals
 
