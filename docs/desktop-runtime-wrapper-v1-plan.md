@@ -1,12 +1,12 @@
 # Desktop Runtime Wrapper V1 Feasibility And Implementation Plan
 
-This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward a first implementation slice. It is a docs-only feasibility and implementation plan. It does not implement a wrapper, adapter, daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, or skill.
+This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward a first implementation slice. The first slice now exists as a non-state-changing planner helper. It does not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, or skill.
 
 ## Decision
 
 Implementation is conditionally feasible for a V1 Desktop runtime wrapper, but only as a narrow convenience layer over runtime thread tools or documented APIs that are already exposed by the active runtime.
 
-The first implementation slice should be a non-state-changing request planner and fallback generator. It should validate a prepared thread-action request, record the minimum contract evidence needed for a future runtime call, and produce either structured dry-run evidence or a CLI-compatible paste-ready fallback. It should not create, fork, continue, message, or read a Desktop thread in the first slice.
+The first implementation slice is complete as a non-state-changing request planner and fallback generator. It validates a prepared thread-action request, records the minimum contract evidence needed for a future runtime call, and produces either structured dry-run evidence or a CLI-compatible paste-ready fallback. It does not create, fork, continue, message, or read a Desktop thread.
 
 State-changing thread calls can be considered only after the first slice proves the request and evidence contract, and after a separate human decision approves adding a runtime-call path for one documented action.
 
@@ -151,13 +151,13 @@ Authorization for a Desktop thread action is separate from authorization for ext
 
 ## First Implementation Slice
 
-Recommended first slice for a future code PR:
+Completed first slice:
 
-1. Add a small request planner that accepts the minimum schema above from a prepared caller.
-2. Validate required fields and classify the outcome as `dry-run`, `fallback`, or `stopped`.
-3. Emit structured evidence and a paste-ready fallback prompt when the runtime capability is missing or state-changing use is not authorized.
-4. Add docs and focused tests for the planner using only repository fixtures.
-5. Keep runtime thread-tool invocation out of the slice.
+1. Added a small request planner that accepts the minimum schema above from a prepared caller.
+2. Validates required fields and classifies the outcome as `dry-run`, `fallback`, or `stopped`.
+3. Emits structured evidence and a paste-ready fallback prompt when the runtime capability is missing or state-changing use is not authorized.
+4. Includes focused tests for the planner using only repository fixtures.
+5. Keeps runtime thread-tool invocation out of the slice.
 
 This slice is intentionally useful even without Desktop runtime access: it proves the evidence contract, fallback behavior, and stop conditions before any wrapper path can affect Desktop state.
 
@@ -167,7 +167,19 @@ The initial non-state-changing helper is `scripts/desktop_runtime_wrapper_planne
 It accepts a prepared JSON request that follows the minimum schema above, validates required fields and contract evidence, classifies the result as `dry-run`, `fallback`, or `stopped`, and emits structured JSON evidence.
 Callers may set optional `runtime_contract.available: false` when a documented runtime capability is known to be unavailable; the planner then emits a CLI-compatible fallback instead of treating private runtime state as a substitute.
 
-The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not read Desktop private runtime state, unpublished endpoints, UI state, daemons, sidecars, background services, app-server clients, catalog entries, installer entries, or skill metadata as runtime state.
+Usage examples:
+
+```bash
+python3 scripts/desktop_runtime_wrapper_planner.py --example --pretty
+```
+
+```bash
+python3 scripts/desktop_runtime_wrapper_planner.py --pretty < prepared-request.json
+```
+
+The stdin request must be JSON and should follow the minimum schema above. Use `--example` to print a complete example request when preparing or updating a caller fixture.
+
+The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not read Desktop private runtime state, unpublished endpoints, UI state, daemons, sidecars, background services, app-server clients, catalog entries, installer entries, or skill metadata as runtime state. It does not add a daemon, MCP server, app-server client, sidecar, background service, new skill, catalog item, or installer entry.
 
 The CLI-compatible fallback prompt must state that no Desktop thread was opened, forked, continued, messaged, or read. It must rely only on durable request fields supplied to the planner and preserve the external-write gate.
 
@@ -190,13 +202,13 @@ Each later slice must re-check the underlying contract evidence and keep private
 
 ## Verification Strategy
 
-For this docs-only plan:
+For this plan and post-merge documentation alignment:
 
 - `./scripts/validate-repo.sh`
 - `git diff --check`
 - formal docs review
 
-For a future first implementation slice:
+For the completed first implementation slice:
 
 - schema validation tests for required and optional fields;
 - fallback tests proving no Desktop thread action is claimed when capability is unavailable;
@@ -204,14 +216,14 @@ For a future first implementation slice:
 - docs review for public claims and runtime compatibility;
 - code review gate only if the implementation slice is used for commit or PR readiness.
 
-## Stop Conditions Before Implementation
+## Stop Conditions Before Later Implementation Slices
 
-Stop before implementing wrapper code when:
+Stop before implementing later wrapper code when:
 
 - the implementation location, public API shape, or packaging target is unclear;
 - the runtime capability source cannot be recorded without private Desktop runtime state;
-- the first slice would need a daemon, MCP server, app-server client, background service, new skill, catalog entry, or installer entry;
-- the proposed code would call state-changing thread tools in the first slice;
+- a later slice would need a daemon, MCP server, app-server client, background service, new skill, catalog entry, or installer entry;
+- the proposed code would call state-changing thread tools without separate explicit approval;
 - tests would require Desktop private runtime files or unpublished Desktop internals;
 - external-write or destructive-action boundaries are ambiguous;
-- maintainers have not approved moving from this docs-only plan to implementation.
+- maintainers have not approved the specific later implementation slice.
