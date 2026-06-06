@@ -40,6 +40,8 @@ For the pre-implementation boundary of a possible Desktop thread wrapper or runt
 
 Desktop orchestration can coordinate multiple workers, but the reusable workflow contract should still describe what a CLI-compatible fallback can do with ordinary repository files and commands.
 
+Desktop thread actions are runtime actions, not CLI guarantees. When a Desktop workflow creates, forks, continues, or messages a thread through a runtime-provided tool or documented API, the CLI-compatible fallback is still a prompt, task brief, sequential execution path, or manual handoff. The fallback must not claim that Codex CLI can open or control Desktop threads unless a documented or configured thread capability is actually available.
+
 | Desktop orchestration step | CLI-compatible fallback |
 | --- | --- |
 | Main agent defines scope, source of truth, ownership, verification, and human gates. | Use `project-delivery` or `project-orchestrator` in the current session to read repo policy, inspect git state, and write a bounded plan or task brief. |
@@ -59,5 +61,17 @@ Evidence should state where it came from:
 
 - CLI evidence: command, working directory, exit status, and relevant output summary.
 - Desktop evidence: thread action, worker output, artifact path, screenshot path, or manually verified UI state.
+
+When Desktop evidence comes from a runtime thread tool or documented API, include contract compatibility evidence before relying on the action result:
+
+- runtime thread tool or API contract name, such as `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or the documented equivalent;
+- underlying API or tool contract version when the runtime exposes one;
+- `version unavailable` when no version is exposed, plus a verifiable capability source such as the active tool list, connector metadata, official documentation version, or runtime-reported schema;
+- minimal request shape the workflow used, including required parameters, optional parameters used, and target identity fields;
+- minimal response shape the workflow relies on, such as created thread identifier, target thread identifier, action status, error shape, lifecycle state, or fallback signal;
+- `last_verified` date for the contract evidence;
+- wrapper or adapter version to underlying contract mapping, including mappings where the underlying version is unavailable.
+
+The compatibility record should make clear which wrapper or workflow version was checked against which underlying tool or API contract. After a runtime, connector, schema, or documentation change, re-compare the old and new contract before use, with particular attention to required parameters, response shape, error shape, permission or authentication changes, and renamed, removed, or newly state-changing operations.
 
 When evidence is incomplete, mark the claim as unverified.
