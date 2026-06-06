@@ -71,6 +71,7 @@ Public outputs:
 - desktop-thread-delegation
 - runtime compatibility guidance in `docs/runtime-compatibility.md`
 - Desktop runtime adapter v2 boundary guidance in `docs/runtime-adapter-v2.md`
+- Desktop runtime wrapper v1 feasibility and implementation plan in `docs/desktop-runtime-wrapper-v1-plan.md`
 - runtime adapter boundary example in `examples/runtime-adapter-boundary.md`
 - Desktop thread delegation example in `examples/desktop-thread-delegation.md`
 - skill selection guidance for Desktop thread delegation and runtime contract evidence in `docs/skill-selection-guide.md`
