@@ -204,6 +204,7 @@ Keep review, commit, PR, merge, platform comments, and other external writes beh
 The main thread remains responsible for integrating returned work, checking the diff, running verification, and enforcing review or merge gates.
 
 For the pre-implementation boundary of a possible second-version wrapper or runtime adapter, see [docs/runtime-adapter-v2.md](docs/runtime-adapter-v2.md). That document defines allowed sources, prohibited Desktop runtime state, safety gates, runtime API/tool contract version tracking, CLI fallback behavior, and stop conditions without adding an adapter implementation.
+When `desktop-thread-delegation` prepares to use a Desktop thread tool such as `create_thread`, `fork_thread`, or `send_message_to_thread`, it must record the same contract/version tracking fields before the runtime action.
 
 ## Runtime Compatibility
 
