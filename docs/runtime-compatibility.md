@@ -34,6 +34,8 @@ Desktop-only workflows should provide a CLI fallback such as generated task brie
 
 CLI-only workflows should provide a Desktop fallback such as running the same read-plan-implement-verify sequence in a Desktop thread, with Desktop-only actions clearly omitted.
 
+For the pre-implementation boundary of a possible Desktop thread wrapper or runtime adapter, see [Desktop Runtime Adapter V2 Boundary](runtime-adapter-v2.md).
+
 ## Desktop To CLI Fallback Mapping
 
 Desktop orchestration can coordinate multiple workers, but the reusable workflow contract should still describe what a CLI-compatible fallback can do with ordinary repository files and commands.
