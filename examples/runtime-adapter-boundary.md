@@ -107,7 +107,7 @@ Paste-ready prompt fallback:
 
 ```text
 Desktop thread creation is not available in this runtime.
-Paste the prompt below into a new Codex Desktop thread, then return the diff and verification notes here for integration review.
+Use the prompt below in a separate Codex session or in a Codex Desktop thread when Desktop is intentionally selected, then return the diff and verification notes here for integration review.
 
 [prepared prompt from the preflight]
 ```
@@ -145,7 +145,7 @@ Reason:
 - The runtime does not expose a documented thread tool, and the only suggested path depends on private Desktop runtime state.
 
 Lowest-risk next option:
-- Use the paste-ready prompt below in a new Codex thread, or authorize sequential execution in this session.
+- Use the paste-ready prompt below in a separate Codex session or an intentionally selected Codex Desktop thread, or authorize sequential execution in this session.
 
 Paste-ready prompt:
 - [include prompt that relies only on repository files and ordinary git inspection]

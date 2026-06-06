@@ -97,7 +97,7 @@ Opening, forking, or messaging a thread is a Desktop runtime action. It is not p
 
 When a supported Desktop thread action is unavailable, the adapter must fall back to one of these CLI-compatible outcomes:
 
-- generate a paste-ready prompt that the maintainer can use in a new Codex thread;
+- generate a paste-ready prompt that the maintainer can use in a separate Codex session or, when Desktop is intentionally selected, a new Codex Desktop thread;
 - prepare a task brief or continuation prompt from durable repository files;
 - run the work through a sequential execution path in the current session when the user has authorized current-thread execution and repo policy allows it.
 
