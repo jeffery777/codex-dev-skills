@@ -356,6 +356,13 @@ Run the repository hygiene check before proposing a release or PR:
 ```
 
 This validates catalog consistency, required runtime labels, symlink safety, and public hygiene checks for excluded private or legacy terms.
+The repository pins Python with `.python-version`; when Python helpers or tests are in scope, confirm the active runtime first:
+
+```bash
+python3 --version
+```
+
+The expected pinned version is Python 3.12.9.
 
 For tag, release notes, and PR readiness checks, see [docs/release-readiness.md](docs/release-readiness.md).
 

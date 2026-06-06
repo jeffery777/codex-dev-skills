@@ -186,7 +186,7 @@ The CLI-compatible fallback prompt must state that no Desktop thread was opened,
 Focused tests live in `tests/test_desktop_runtime_wrapper_planner.py` and can be rerun with:
 
 ```bash
-python3 -m unittest discover -s tests
+python3 -B -m unittest discover -s tests
 ```
 
 ## Later Slice Candidates

@@ -22,7 +22,14 @@ Read first:
 - `setup.cfg`
 - `tox.ini`
 - `noxfile.py`
+- runtime pin files such as `.python-version`
 - `.github/workflows/`
+
+If the repository defines a Python runtime pin, confirm the active version before running Python checks:
+
+```bash
+python3 --version
+```
 
 Focused examples:
 
