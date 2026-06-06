@@ -1,1 +1,5 @@
 !AGENTS.md
+
+# Python transient files
+__pycache__/
+*.py[cod]

@@ -248,6 +248,72 @@ Before relying on a runtime, connector, schema, or documentation change, compare
 
 The comparison should return `compatible` only when the tool/API name, classification, required request fields, and minimum response fields still match. It should return `fallback` when the capability is missing or unavailable, and `stopped` when required request fields, minimum response fields, classification, tool/API name, or source evidence changed or points at forbidden private runtime sources. State-changing actions such as `create-thread` may be compared as contract evidence, but the comparison does not call or authorize `create_thread`.
 
+## Minimal Create-Thread Preflight Evidence
+
+Before a future `create_thread` runtime call, a non-state-changing preflight helper can check whether the evidence is ready. This is not a runtime-call path. It does not open a thread, call `create_thread`, read Desktop private runtime state, or authorize commit, push, PR creation, merge, or other external writes.
+
+```json
+{
+  "requested_action": "preflight-create-thread-runtime-call",
+  "target_action": "create-thread",
+  "target": {
+    "repo": "owner/name",
+    "remote": "origin URL",
+    "branch": "branch-name",
+    "expected_head": "commit SHA expected by the caller"
+  },
+  "prompt": {
+    "summary": "Prepare a bounded Desktop thread prompt.",
+    "body": "Read repo files first, do the scoped task, run tests, and report evidence."
+  },
+  "capability_evidence": {
+    "status": "available",
+    "capabilities": [
+      {
+        "action": "create-thread",
+        "tool_or_api": "create_thread",
+        "classification": "state-changing",
+        "required_request_fields": ["prompt"],
+        "optional_request_fields": ["title", "repository", "branch"],
+        "minimum_response_fields": ["status", "thread_id"],
+        "error_response_fields": ["message"],
+        "capability_source": "active tool list",
+        "contract_version": "version unavailable",
+        "last_verified": "YYYY-MM-DD",
+        "discovery_helper_version": "0.1.0"
+      }
+    ]
+  },
+  "contract_comparison": {
+    "status": "compatible",
+    "target_action": "create-thread",
+    "contract_comparison": {
+      "compared_fields": [
+        "action",
+        "tool_or_api",
+        "classification",
+        "required_request_fields",
+        "minimum_response_fields"
+      ],
+      "old_contract": "old create-thread contract evidence",
+      "new_capability": "new normalized create-thread capability evidence"
+    }
+  },
+  "boundaries": {
+    "in_scope": ["durable repo files or task scope"],
+    "out_of_scope": [".work/", "Desktop private runtime state"],
+    "external_writes_blocked": true
+  },
+  "authorization": {
+    "thread_action_authorized": true,
+    "authorized_thread_action": "create-thread",
+    "external_write_authorized": false
+  }
+}
+```
+
+The preflight result may be `ready`, `fallback`, or `stopped`. `ready` means only that evidence is complete for a future separately approved runtime call. Use `fallback` for missing or unavailable capability/comparison evidence or missing exact thread-action authorization; use `stopped` for incompatible or unclear contract evidence, classification mismatch, missing repo/remote/branch/expected-head evidence, forbidden private source hints, or external-write requests.
+
 ## Scenario 3: Stop Instead Of Adapting
 
 Stop before calling a thread tool, fallback, wrapper, API, or script when any of these conditions apply:

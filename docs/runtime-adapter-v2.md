@@ -49,6 +49,8 @@ For each supported runtime action, record:
 
 When the underlying API, tool contract, connector metadata, official documentation, or runtime-reported schema changes, the wrapper contract must be re-compared against the old and new contract before use. The comparison should identify required-parameter changes, response-shape changes, error-shape changes, permission or authentication changes, and renamed, removed, or newly state-changing operations.
 
+Before a future state-changing `create_thread` call, a non-state-changing preflight helper may check whether the required evidence is complete. Such a helper may return `ready`, `fallback`, or `stopped`; `ready` means only that repo, prompt, capability, compatible comparison, exact thread-action authorization, and external-write boundary evidence are ready for a future separately approved runtime call. It must not call `create_thread`, open a thread, read Desktop private runtime state, or authorize commit, push, PR creation, merge, or other external writes.
+
 Example compatibility record:
 
 ```yaml

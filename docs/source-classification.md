@@ -64,14 +64,14 @@ Public outputs:
 
 Source: accepted public repository policy, runtime compatibility guidance, and maintained examples.
 
-This bucket covers repo-native documentation that extends the public workflow set after the original source classification. It is limited to accepted public repository policy, runtime compatibility guidance, maintained examples, and the non-state-changing Desktop runtime wrapper V1 planner, capability metadata normalization helper, and contract comparison helper. The implemented surface is limited to those helpers; Desktop runtime integration, runtime-call adapters, daemons, MCP servers, app-server clients, and state-changing Desktop thread-tool paths remain outside the implemented scope.
+This bucket covers repo-native documentation that extends the public workflow set after the original source classification. It is limited to accepted public repository policy, runtime compatibility guidance, maintained examples, and the non-state-changing Desktop runtime wrapper V1 planner, capability metadata normalization helper, contract comparison helper, and create-thread preflight helper. The implemented surface is limited to those helpers; Desktop runtime integration, runtime-call adapters, daemons, MCP servers, app-server clients, and state-changing Desktop thread-tool paths remain outside the implemented scope.
 
 Public outputs:
 
 - desktop-thread-delegation
 - runtime compatibility guidance in `docs/runtime-compatibility.md`
 - Desktop runtime adapter v2 boundary guidance in `docs/runtime-adapter-v2.md`
-- Desktop runtime wrapper v1 planner helper, capability metadata normalization helper, contract comparison helper, planner `capability_evidence` input path, and implementation plan in `docs/desktop-runtime-wrapper-v1-plan.md`
+- Desktop runtime wrapper v1 planner helper, capability metadata normalization helper, contract comparison helper, create-thread preflight helper, planner `capability_evidence` input path, and implementation plan in `docs/desktop-runtime-wrapper-v1-plan.md`
 - runtime adapter boundary example in `examples/runtime-adapter-boundary.md`
 - Desktop thread delegation example in `examples/desktop-thread-delegation.md`
 - skill selection guidance for Desktop thread delegation and runtime contract evidence in `docs/skill-selection-guide.md`
@@ -85,6 +85,7 @@ Boundary:
 - It must not depend on private Desktop runtime state such as local databases, logs, sessions, auth files, caches, app state, unpublished endpoints, UI scraping, daemons, background services, local runtime directories, or private runtime files.
 - Runtime thread tool/API contract evidence must record contract name, version or `version unavailable` plus capability source, minimal request/response shape, `last_verified`, and workflow, wrapper, or adapter mapping to the underlying contract.
 - Runtime/schema change re-checks may compare old wrapper contract evidence with newer normalized capability evidence, but comparison is evidence only and does not authorize Desktop thread-tool calls.
+- Create-thread preflight may report `ready` only when repo, prompt, capability, compatible comparison, exact thread-action authorization, and blocked external-write evidence are complete. `ready` is evidence only for a future separately approved runtime call and does not call `create_thread` or authorize external writes.
 
 ## DUPLICATE_SHARED_COPY
 

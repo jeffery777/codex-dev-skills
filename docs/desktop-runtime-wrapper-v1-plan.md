@@ -1,6 +1,6 @@
 # Desktop Runtime Wrapper V1 Feasibility And Implementation Plan
 
-This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as non-state-changing helpers: a request planner and fallback generator, a capability metadata normalization helper, and a contract comparison helper. They do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, or skill.
+This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as non-state-changing helpers: a request planner and fallback generator, a capability metadata normalization helper, a contract comparison helper, and a create-thread runtime-call preflight helper. They do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, skill, or state-changing runtime-call path.
 
 ## Decision
 
@@ -11,6 +11,8 @@ The first implementation slice is complete as a non-state-changing request plann
 The read-only capability discovery slice is also complete as a non-state-changing metadata normalizer. It accepts only caller-supplied documented metadata, such as an active tool list excerpt, connector metadata, official documentation, or runtime-reported schema that has already been gathered and supplied to the helper. It records action names, read-only or state-changing classification, required request fields, minimum response fields, capability source, contract version or `version unavailable`, `last_verified`, and helper version. The planner can accept this normalized output as `capability_evidence`, select the requested target action, and stop or fall back when the evidence is unavailable, missing, mismatched, unclear, or sourced from forbidden Desktop runtime hints. It does not gather metadata itself, inspect Desktop private runtime state, or call any Desktop thread tool.
 
 The contract comparison slice is also complete as a non-state-changing compatibility re-check helper. It compares old wrapper contract evidence against newer normalized capability evidence before a runtime, connector, schema, or documentation change is trusted. It returns `compatible` when the tool/API name, action classification, required request fields, and minimum response fields still match; `fallback` when the capability is unavailable or missing; and `stopped` when the comparison detects changed request shape, response shape, classification, tool/API name, missing evidence, or forbidden Desktop runtime source hints. State-changing actions such as `create-thread` may be compared as evidence only; comparison does not authorize or call the runtime tool.
+
+The create-thread preflight slice is also complete as a non-state-changing readiness helper. It consumes target repo evidence, prepared prompt evidence, normalized `create-thread` capability evidence, and compatible contract comparison evidence, then returns `ready`, `fallback`, or `stopped`. `ready` only means evidence is ready for a future separately approved `create_thread` runtime call; it does not mean the helper called `create_thread`, opened a thread, or authorized commit, push, PR creation, merge, or any other external write. The helper returns `fallback` when capability or comparison evidence is unavailable or exact thread-action authorization is false, and `stopped` when contract evidence is incompatible or unclear, the action classification is not `state-changing`, repo/remote/branch/expected-head evidence is incomplete, private source hints appear, or external-write boundaries are not blocked.
 
 State-changing thread calls can be considered only after the first slice proves the request and evidence contract, and after a separate human decision approves adding a runtime-call path for one documented action.
 
@@ -24,6 +26,7 @@ Wrapper V1 should make the existing `desktop-thread-delegation` boundary easier 
 - return a dry-run result, stop result, or CLI-compatible fallback when the runtime capability is unavailable or unsafe;
 - normalize caller-supplied documented capability metadata and allow the planner to use that normalized evidence without calling runtime tools;
 - compare old wrapper contract evidence with newer normalized capability evidence before relying on a runtime/schema change;
+- preflight create-thread readiness evidence before any future separately approved runtime-call path;
 - preserve the main-thread responsibility for integration, verification, review evidence, commit readiness, PR readiness, merge readiness, and human approval.
 
 ## Non-Goals
@@ -336,6 +339,85 @@ Focused tests live in `tests/test_desktop_runtime_contract_compare.py` and can b
 python3 -B -m unittest discover -s tests
 ```
 
+## Create-Thread Preflight Implementation Artifact
+
+The create-thread runtime-call preflight helper is `scripts/desktop_runtime_create_thread_preflight.py`.
+It accepts a prepared JSON request containing target repo evidence, a prepared prompt, normalized `create-thread` capability evidence, compatible contract comparison output, safety boundaries, and exact thread-action authorization.
+
+Usage examples:
+
+```bash
+python3 scripts/desktop_runtime_create_thread_preflight.py --example --pretty
+```
+
+```bash
+python3 scripts/desktop_runtime_create_thread_preflight.py --pretty < create-thread-preflight.json
+```
+
+The stdin request must be JSON and should use this minimal shape:
+
+```yaml
+requested_action: "preflight-create-thread-runtime-call"
+target_action: "create-thread"
+target:
+  repo: "owner/name"
+  remote: "origin URL"
+  branch: "branch-name"
+  expected_head: "commit SHA expected by the caller"
+prompt:
+  summary: "short prepared prompt summary"
+  body: "prepared prompt body"
+capability_evidence:
+  status: "available"
+  capabilities:
+    - action: "create-thread"
+      tool_or_api: "create_thread"
+      classification: "state-changing"
+      required_request_fields: ["prompt"]
+      minimum_response_fields: ["status", "thread_id"]
+      capability_source: "active tool list"
+      contract_version: "version unavailable"
+      last_verified: "YYYY-MM-DD"
+contract_comparison:
+  status: "compatible"
+  target_action: "create-thread"
+  contract_comparison:
+    compared_fields: ["action", "tool_or_api", "classification", "required_request_fields", "minimum_response_fields"]
+    old_contract: "old create-thread contract evidence"
+    new_capability: "new normalized create-thread capability evidence"
+boundaries:
+  in_scope: ["durable repo files or task scope"]
+  out_of_scope: [".work/", "Desktop private runtime state"]
+  external_writes_blocked: true
+authorization:
+  thread_action_authorized: true
+  authorized_thread_action: "create-thread"
+  external_write_authorized: false
+```
+
+The helper output includes:
+
+- status: `ready`, `fallback`, or `stopped`;
+- target repo, remote, branch, and expected head evidence;
+- prompt summary/body presence evidence;
+- contract comparison status and compared fields;
+- selected `create-thread` capability classification, request shape, response shape, source, version, and `last_verified`;
+- authorization evidence for the exact thread action and external-write boundary;
+- `runtime_call_performed: false`;
+- a readiness note stating that `ready` is evidence only for a future separately approved runtime call.
+
+The helper returns `fallback` when normalized create-thread capability evidence or compatible contract comparison evidence is unavailable, or when exact thread-action authorization is false. It returns a paste-ready prompt and states that no Desktop thread was opened, created, forked, messaged, or read.
+
+The helper returns `stopped` when contract comparison stopped or is not compatible, request or response evidence is unclear, create-thread classification is not `state-changing`, repo/remote/branch/expected-head evidence is incomplete, forbidden private source hints appear, or external writes are requested or no longer blocked.
+
+The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, authorize external writes, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
+
+Focused tests live in `tests/test_desktop_runtime_create_thread_preflight.py` and can be rerun with:
+
+```bash
+python3 -B -m unittest discover -s tests
+```
+
 ## Later Slice Candidates
 
 Later slices require separate review and human approval:
@@ -361,6 +443,7 @@ For the completed first implementation slices:
 - stop-condition tests for missing contract evidence, unclear repo identity, external-write requests, and forbidden source hints;
 - capability discovery tests proving caller-supplied metadata is normalized, unavailable metadata is reported as unavailable, ambiguous classification stops, and forbidden source hints stop;
 - contract comparison tests proving compatible evidence returns `compatible`, missing or unavailable capability returns `fallback`, changed request shape, response shape, classification, or tool/API name returns `stopped`, forbidden private source hints stop, and state-changing evidence is compared without authorizing runtime calls;
+- create-thread preflight tests proving compatible evidence plus exact authorization returns `ready`, unavailable capability or comparison evidence returns `fallback`, thread action authorization false returns `fallback`, incompatible or unclear comparison evidence returns `stopped`, read-only create-thread classification stops, external-write authorization stops, missing repo/remote/branch/expected-head evidence stops, forbidden source hints stop, and no `create_thread` call is made;
 - docs review for public claims and runtime compatibility;
 - code review gate only if the implementation slice is used for commit or PR readiness.
 
