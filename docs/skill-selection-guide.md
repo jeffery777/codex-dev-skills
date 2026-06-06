@@ -79,6 +79,24 @@ Use orchestration or delivery skills when Codex must decide or coordinate multip
 - `desktop-project-delivery` only when the Desktop runtime is intentionally part of the workflow.
 - `desktop-thread-delegation` when the Desktop runtime may open a new thread, but the main thread must still choose the next safe task and retain review or merge gates.
 
+## Desktop Thread Delegation
+
+Choose `desktop-thread-delegation` only when the active runtime is Codex Desktop and the workflow may continue in the current thread, prepare a handoff prompt, or use a supported Desktop thread action. Desktop thread delegation is Desktop-only runtime behavior, not a Codex CLI guarantee.
+
+The CLI fallback is a paste-ready prompt, task brief, continuation prompt, or sequential execution path. Do not state or imply that Codex CLI can open, fork, continue, or message Desktop threads unless a documented or configured thread capability is actually available.
+
+Before relying on any runtime thread tool or documented API, record contract evidence consistent with [Runtime Compatibility](runtime-compatibility.md) and [Desktop Runtime Adapter V2 Boundary](runtime-adapter-v2.md):
+
+- runtime thread tool or API contract name, such as `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or the documented equivalent;
+- underlying tool or API contract version when exposed;
+- `version unavailable` when no version is exposed, plus a verifiable capability source such as the active tool list, connector metadata, official documentation version, or runtime-reported schema;
+- minimal request shape used by the workflow, including required parameters, optional parameters used, and target identity fields;
+- minimal response shape relied on by the workflow, such as created thread identifier, target thread identifier, action status, error shape, lifecycle state, or fallback signal;
+- `last_verified` date for the contract evidence;
+- wrapper, workflow, or adapter mapping to the underlying contract, including mappings where the underlying version is unavailable.
+
+After a runtime, connector, schema, or documentation change, re-compare the old and new contract before using the thread action. Pay particular attention to required parameters, response shape, error shape, permission or authentication changes, and renamed, removed, or newly state-changing operations.
+
 ## Merge Readiness
 
 Use `merge-review` when you want read-only base-to-head review of merge quality and DoD alignment.
