@@ -17,7 +17,7 @@ A second-version adapter may expose a narrow, documented control surface for Des
 - send a prepared message to a selected thread;
 - read thread metadata needed to verify delegation state, such as thread identifier, title, branch or worktree label when exposed, created time, and current lifecycle state.
 
-All metadata reads are read-only and must be limited to what the configured runtime, connector, or plugin intentionally exposes. The adapter should not infer state from private Desktop runtime state, including local databases, logs, sessions, auth files, caches, app state, unpublished endpoints, UI scraping, daemons, background services, or unpublished services.
+All metadata reads are read-only and must be limited to what the configured runtime, connector, plugin, official documentation, or caller-supplied documented runtime metadata intentionally exposes. The adapter should not infer state from private Desktop runtime state, including local databases, logs, sessions, auth files, caches, app state, unpublished endpoints, UI scraping, daemons, background services, or unpublished services.
 
 ## Allowed Sources
 
@@ -26,9 +26,11 @@ A future adapter may use only these sources:
 - documented and configured APIs that are intentionally exposed for thread operations;
 - runtime-provided MCP or thread tools such as `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or equivalent named tools when they are present in the active tool list;
 - explicitly installed plugins or connectors that expose thread operations through a documented interface;
+- caller-supplied documented metadata, such as an active tool list excerpt, connector metadata, or runtime-reported schema that has already been gathered and supplied to the wrapper;
 - ordinary repository files and git commands for repo state, branch checks, prompts, and evidence.
 
 If a source is not documented, not configured, or not visible as an installed capability, it is unavailable.
+Caller-supplied metadata is evidence to normalize, not permission to call the capability. If action classification, required request fields, response fields, version evidence, capability source, or `last_verified` is missing, the wrapper must stop or report the capability unavailable instead of guessing.
 
 ## Contract Version Tracking
 
@@ -109,7 +111,7 @@ The fallback must state that no Desktop thread was opened. It must not claim tha
 
 Stop before calling an adapter, tool, API, or fallback when:
 
-- the API contract, required parameters, or expected result shape is unclear;
+- the API contract, action classification, required parameters, or expected result shape is unclear;
 - the underlying API or tool contract version is unknown and there is no verifiable capability source to record;
 - a runtime, connector, schema, or documentation change has not been compared against the wrapper compatibility record;
 - authentication, permission, target identity, branch, or worktree state is unclear;

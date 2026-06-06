@@ -1,12 +1,14 @@
 # Desktop Runtime Wrapper V1 Feasibility And Implementation Plan
 
-This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward a first implementation slice. The first slice now exists as a non-state-changing planner helper. It does not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, or skill.
+This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as non-state-changing helpers: a request planner and fallback generator, plus a capability metadata normalization helper. They do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, or skill.
 
 ## Decision
 
 Implementation is conditionally feasible for a V1 Desktop runtime wrapper, but only as a narrow convenience layer over runtime thread tools or documented APIs that are already exposed by the active runtime.
 
 The first implementation slice is complete as a non-state-changing request planner and fallback generator. It validates a prepared thread-action request, records the minimum contract evidence needed for a future runtime call, and produces either structured dry-run evidence or a CLI-compatible paste-ready fallback. It does not create, fork, continue, message, or read a Desktop thread.
+
+The read-only capability discovery slice is also complete as a non-state-changing metadata normalizer. It accepts only caller-supplied documented metadata, such as an active tool list excerpt, connector metadata, official documentation, or runtime-reported schema that has already been gathered and supplied to the helper. It records action names, read-only or state-changing classification, required request fields, minimum response fields, capability source, contract version or `version unavailable`, `last_verified`, and helper version. It does not gather metadata itself, inspect Desktop private runtime state, or call any Desktop thread tool.
 
 State-changing thread calls can be considered only after the first slice proves the request and evidence contract, and after a separate human decision approves adding a runtime-call path for one documented action.
 
@@ -18,6 +20,7 @@ Wrapper V1 should make the existing `desktop-thread-delegation` boundary easier 
 - verify that the request identifies the repository, branch or expected head when relevant, intended action, prompt summary, and external-write boundary;
 - record compatibility evidence for the runtime thread tool or documented API the wrapper would rely on;
 - return a dry-run result, stop result, or CLI-compatible fallback when the runtime capability is unavailable or unsafe;
+- normalize caller-supplied documented capability metadata before a future planner or adapter relies on it;
 - preserve the main-thread responsibility for integration, verification, review evidence, commit readiness, PR readiness, merge readiness, and human approval.
 
 ## Non-Goals
@@ -39,6 +42,7 @@ Allowed sources for V1 planning and implementation:
 - runtime-provided thread tools that are visible in the active tool list, such as `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or documented equivalents;
 - explicitly installed plugins or connectors that expose thread actions through documented metadata or schemas;
 - official or runtime-reported schema evidence when the runtime provides it;
+- caller-supplied documented metadata that has already been gathered outside the helper, such as an active tool list excerpt, connector metadata, official documentation, or runtime-reported schema;
 - ordinary shell and git inspection for repo identity, branch, upstream, dirty state, expected head, and changed-file evidence.
 
 Forbidden sources remain forbidden even when technically accessible:
@@ -62,6 +66,8 @@ V1 may rely on a runtime thread tool or documented API only when all of these ar
 - the compatibility evidence includes `last_verified` and either a contract version or `version unavailable` plus a verifiable capability source.
 
 If the runtime does not expose a version, `version unavailable` is acceptable only when the capability source is recorded. An unknown version without a verifiable capability source blocks implementation and use.
+
+For read-only capability discovery, the helper may normalize only metadata supplied by the caller. If the supplied metadata does not identify the action, tool or API name, read-only or state-changing classification, required request fields, minimum response fields, source, contract version or `version unavailable`, and `last_verified`, the helper must return `stopped` or `unavailable`. It must not infer missing fields from Desktop private runtime state, broad filesystem scans, logs, UI state, unpublished endpoints, or background services.
 
 ## Minimum Schema
 
@@ -189,11 +195,81 @@ Focused tests live in `tests/test_desktop_runtime_wrapper_planner.py` and can be
 python3 -B -m unittest discover -s tests
 ```
 
+## Read-Only Capability Discovery Slice
+
+Completed read-only discovery slice:
+
+1. Added a small metadata normalizer that accepts only caller-supplied documented runtime metadata.
+2. Validates the source, action name, read-only or state-changing classification, required request fields, minimum response fields, contract version or `version unavailable`, `last_verified`, and helper version evidence.
+3. Emits structured evidence with status `available`, `unavailable`, or `stopped`.
+4. Stops instead of guessing when metadata is ambiguous or points at forbidden Desktop runtime sources.
+5. Keeps runtime thread-tool invocation and Desktop metadata gathering out of the slice.
+
+This slice is useful before any future runtime-call adapter because it makes the capability evidence explicit without treating discovery as authority to call the capability.
+
+## Capability Discovery Implementation Artifact
+
+The read-only metadata helper is `scripts/desktop_runtime_capability_discovery.py`.
+It accepts a prepared JSON request containing caller-supplied documented metadata, normalizes each capability, and emits structured JSON evidence.
+
+Usage examples:
+
+```bash
+python3 scripts/desktop_runtime_capability_discovery.py --example --pretty
+```
+
+```bash
+python3 scripts/desktop_runtime_capability_discovery.py --pretty < capability-metadata.json
+```
+
+The stdin request must be JSON and should use this minimal shape:
+
+```yaml
+requested_action: "normalize-runtime-capability-metadata"
+metadata_source:
+  source: "active tool list | connector metadata | official documentation | runtime-reported schema | installed plugin metadata | documented API"
+  contract_version: "version unavailable"
+  last_verified: "YYYY-MM-DD"
+  available: true
+capabilities:
+  - action: "read-thread"
+    tool_or_api: "read_thread"
+    classification: "read-only | state-changing"
+    request:
+      required: ["thread_id"]
+      optional: ["include_metadata"]
+    response:
+      required: ["status", "thread_id"]
+      errors: ["message"]
+    source: "runtime-reported schema"
+    contract_version: "version unavailable"
+    last_verified: "YYYY-MM-DD"
+```
+
+The helper output includes:
+
+- status: `available`, `unavailable`, or `stopped`;
+- action name and tool/API name;
+- read-only or state-changing classification;
+- required and optional request fields;
+- minimum response fields and error fields;
+- capability source;
+- contract version or `version unavailable`;
+- `last_verified`;
+- discovery helper version and mapping to the underlying contract.
+
+The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not collect active tool lists itself, scan the filesystem, read Desktop private runtime state, use unpublished endpoints, inspect UI state, run daemons, use sidecars, start background services, or add a public skill, catalog item, installer entry, or workflow alias.
+
+Focused tests live in `tests/test_desktop_runtime_capability_discovery.py` and can be rerun with:
+
+```bash
+python3 -B -m unittest discover -s tests
+```
+
 ## Later Slice Candidates
 
 Later slices require separate review and human approval:
 
-- read-only capability discovery from documented runtime metadata when available;
 - a single state-changing `create-thread` call path using an already exposed runtime tool;
 - `read-thread` metadata verification when the runtime exposes a documented read-only tool;
 - additional `fork-thread` or `send-message` paths only after the single-action path is stable.
@@ -208,11 +284,12 @@ For this plan and post-merge documentation alignment:
 - `git diff --check`
 - formal docs review
 
-For the completed first implementation slice:
+For the completed first implementation slices:
 
 - schema validation tests for required and optional fields;
 - fallback tests proving no Desktop thread action is claimed when capability is unavailable;
 - stop-condition tests for missing contract evidence, unclear repo identity, external-write requests, and forbidden source hints;
+- capability discovery tests proving caller-supplied metadata is normalized, unavailable metadata is reported as unavailable, ambiguous classification stops, and forbidden source hints stop;
 - docs review for public claims and runtime compatibility;
 - code review gate only if the implementation slice is used for commit or PR readiness.
 

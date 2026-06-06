@@ -123,6 +123,42 @@ I will stop before commits, pushes, PR creation, platform comments, review submi
 
 The fallback may prepare a prompt, task brief, continuation prompt, or sequential execution path from durable repository files when that helps another session continue safely. It must not emulate Desktop thread control with private Desktop runtime state, unpublished endpoints, UI scraping, daemons, or background services.
 
+## Minimal Caller-Supplied Capability Metadata
+
+A non-state-changing helper may normalize metadata the caller already supplied, but it must not gather that metadata by scanning Desktop files or calling thread tools. This example is evidence only; it does not open, fork, message, continue, or read a Desktop thread.
+
+```json
+{
+  "requested_action": "normalize-runtime-capability-metadata",
+  "metadata_source": {
+    "source": "runtime-reported schema",
+    "contract_version": "version unavailable",
+    "last_verified": "YYYY-MM-DD",
+    "available": true
+  },
+  "capabilities": [
+    {
+      "action": "read-thread",
+      "tool_or_api": "read_thread",
+      "classification": "read-only",
+      "request": {
+        "required": ["thread_id"],
+        "optional": ["include_metadata"]
+      },
+      "response": {
+        "required": ["status", "thread_id"],
+        "errors": ["message"]
+      },
+      "source": "runtime-reported schema",
+      "contract_version": "version unavailable",
+      "last_verified": "YYYY-MM-DD"
+    }
+  ]
+}
+```
+
+If the caller cannot supply the action classification, required request fields, minimum response fields, source, contract version or `version unavailable`, and `last_verified`, the helper should return `stopped` or `unavailable` rather than filling gaps from private runtime state.
+
 ## Scenario 3: Stop Instead Of Adapting
 
 Stop before calling a thread tool, fallback, wrapper, API, or script when any of these conditions apply:

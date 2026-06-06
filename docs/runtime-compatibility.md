@@ -35,7 +35,7 @@ Desktop-only workflows should provide a CLI fallback such as a prompt, task brie
 CLI-only workflows should provide a Desktop fallback such as running the same read-plan-implement-verify sequence in a Desktop thread, with Desktop-only actions clearly omitted.
 
 For the policy boundary of a possible future Desktop runtime-call adapter, see [Desktop Runtime Adapter V2 Boundary](runtime-adapter-v2.md).
-For the completed non-state-changing Desktop runtime wrapper V1 planner helper and first-slice boundary, see [Desktop Runtime Wrapper V1 Feasibility And Implementation Plan](desktop-runtime-wrapper-v1-plan.md).
+For the completed non-state-changing Desktop runtime wrapper V1 planner and capability metadata normalization helpers, see [Desktop Runtime Wrapper V1 Feasibility And Implementation Plan](desktop-runtime-wrapper-v1-plan.md).
 
 ## Desktop To CLI Fallback Mapping
 
@@ -74,5 +74,7 @@ When Desktop evidence comes from a runtime thread tool or documented API, includ
 - workflow, wrapper, or adapter mapping to the underlying contract, including mappings where the underlying version is unavailable.
 
 The compatibility record should make clear which workflow, wrapper, or adapter version was checked against which underlying tool or API contract. After a runtime, connector, schema, or documentation change, re-compare the old and new contract before use, with particular attention to required parameters, response shape, error shape, permission or authentication changes, and renamed, removed, or newly state-changing operations.
+
+When evidence comes from caller-supplied documented capability metadata instead of a runtime call, label it as normalized metadata only. It can record action name, read-only or state-changing classification, required request fields, minimum response fields, capability source, contract version or `version unavailable`, `last_verified`, and helper version. It must not imply that a Desktop thread tool was called or that Codex CLI can operate Desktop threads.
 
 When evidence is incomplete, mark the claim as unverified.
