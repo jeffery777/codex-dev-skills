@@ -314,6 +314,71 @@ Before a future `create_thread` runtime call, a non-state-changing preflight hel
 
 The preflight result may be `ready`, `fallback`, or `stopped`. `ready` means only that evidence is complete for a future separately approved runtime call. Use `fallback` for missing or unavailable capability/comparison evidence or missing exact thread-action authorization; use `stopped` for incompatible or unclear contract evidence, classification mismatch, missing repo/remote/branch/expected-head evidence, forbidden private source hints, or external-write requests.
 
+## Minimal Read-Thread Preflight Evidence
+
+Before a future read-only `read_thread` runtime call, a non-state-changing preflight helper can check whether the evidence is ready. This is not a runtime-call path. It does not read a thread, call `read_thread`, read Desktop private runtime state, treat preflight as runtime-call authorization, or authorize commit, push, PR creation, merge, or other external writes.
+
+```json
+{
+  "requested_action": "preflight-read-thread-runtime-call",
+  "target_action": "read-thread",
+  "target": {
+    "repo": "owner/name",
+    "remote": "origin URL",
+    "branch": "branch-name",
+    "thread_id": "thread identifier supplied by the caller"
+  },
+  "read_request": {
+    "summary": "Check read-only thread evidence readiness.",
+    "expected_fields": ["status", "thread_id"]
+  },
+  "capability_evidence": {
+    "status": "available",
+    "capabilities": [
+      {
+        "action": "read-thread",
+        "tool_or_api": "read_thread",
+        "classification": "read-only",
+        "required_request_fields": ["thread_id"],
+        "optional_request_fields": ["include_metadata"],
+        "minimum_response_fields": ["status", "thread_id"],
+        "error_response_fields": ["message"],
+        "capability_source": "active tool list",
+        "contract_version": "version unavailable",
+        "last_verified": "YYYY-MM-DD",
+        "discovery_helper_version": "0.1.0"
+      }
+    ]
+  },
+  "contract_comparison": {
+    "status": "compatible",
+    "target_action": "read-thread",
+    "contract_comparison": {
+      "compared_fields": [
+        "action",
+        "tool_or_api",
+        "classification",
+        "required_request_fields",
+        "minimum_response_fields"
+      ],
+      "old_contract": "old read-thread contract evidence",
+      "new_capability": "new normalized read-thread capability evidence"
+    }
+  },
+  "boundaries": {
+    "in_scope": ["durable repo files or task scope"],
+    "out_of_scope": [".work/", "Desktop private runtime state"],
+    "external_writes_blocked": true
+  },
+  "authorization": {
+    "thread_action_authorized": false,
+    "external_write_authorized": false
+  }
+}
+```
+
+The preflight result may be `ready`, `fallback`, or `stopped`. `ready` means only that evidence is complete for a future separately approved read-only runtime call. Use `fallback` for missing or unavailable capability/comparison evidence; use `stopped` for incompatible or unclear contract evidence, classification mismatch, missing repo/remote/branch/thread-id evidence, missing expected fields, forbidden private source hints, attempts to treat preflight as runtime-call authorization, or external-write requests.
+
 ## Scenario 3: Stop Instead Of Adapting
 
 Stop before calling a thread tool, fallback, wrapper, API, or script when any of these conditions apply:
