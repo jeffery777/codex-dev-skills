@@ -33,7 +33,7 @@ Preflight checklist:
 8. Summarize the prepared prompt, intended thread action, and recipient thread if one exists.
 9. State in-scope and out-of-scope files or categories.
 10. Ask for explicit human authorization for the exact thread action.
-11. Keep commit, push, PR creation, PR comments, review submission, merge, deploy, destructive actions, and other platform-side mutation behind separate explicit authorization.
+11. Keep commit, push, PR creation, PR comments, review submissions, merge, deploy, destructive actions, and other platform-side mutation behind separate explicit authorization.
 
 Example evidence before calling a supported tool:
 
@@ -52,7 +52,7 @@ Thread action preflight:
 - Response shape minimum: created thread identifier or pending worktree identifier, action status, and error message shape.
 - Last verified: YYYY-MM-DD.
 - Human authorization: maintainer explicitly authorized creating this thread only.
-- External writes still blocked: commit, push, PR, platform comments, merge, deploy, destructive actions.
+- External writes still blocked: commit, push, PR creation, platform comments, review submissions, merge, deploy, destructive actions.
 ```
 
 Example prepared prompt:
@@ -76,7 +76,7 @@ In scope:
 Out of scope:
 - Wrapper or runtime adapter implementation.
 - Daemons, MCP servers, app-server clients, Desktop runtime internals, UI scraping, unpublished endpoints, background services, or private Desktop runtime state.
-- Commits, pushes, PRs, comments, merges, deploys, destructive actions, or .work/ artifacts.
+- Commits, pushes, PR creation, platform comments, review submissions, merges, deploys, destructive actions, or .work/ artifacts.
 
 Verification:
 - ./scripts/validate-repo.sh
@@ -118,7 +118,7 @@ Sequential CLI-compatible fallback:
 No documented thread tool is available, so I will continue sequentially in this session.
 I will use repository files and ordinary shell/git inspection only.
 I will not claim that a Desktop thread was opened.
-I will stop before commits, pushes, PRs, comments, merges, deploys, destructive actions, or runtime-specific mutation unless explicitly authorized.
+I will stop before commits, pushes, PR creation, platform comments, review submissions, merges, deploys, destructive actions, or runtime-specific mutation unless explicitly authorized.
 ```
 
 The fallback may prepare a prompt, task brief, continuation prompt, or sequential execution path from durable repository files when that helps another session continue safely. It must not emulate Desktop thread control with private Desktop runtime state, unpublished endpoints, UI scraping, daemons, or background services.

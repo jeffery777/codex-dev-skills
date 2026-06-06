@@ -2,7 +2,7 @@
 
 Use this guide when maintainers prepare release or PR readiness evidence for this workflow pack or for a target repository using these skills.
 
-This guide describes readiness checks only. It does not authorize publishing, tagging, pushing, merging, or posting platform comments.
+This guide describes readiness checks only. It does not authorize commit, push, PR creation, publication, tag creation, merge, deploy, platform comments, or review submissions.
 
 ## When To Use
 
@@ -41,7 +41,7 @@ Check these items before asking a maintainer to approve external writes:
 - Release notes match their role: historical release notes remain a point-in-time record, while current release notes drafts match the intended release scope.
 - Installer state is aligned: `catalog.yaml`, `install.sh`, skills, templates, workflows, and README install groups agree.
 - Runtime compatibility is labeled: shared, CLI, Desktop, and plugin-dependent behavior is not blurred.
-- Human gates are explicit: commit, push, tag, publish, merge, release, deploy, and platform comments require exact approval.
+- Human gates are explicit: commit, push, PR creation, tag, publish, merge, release, deploy, platform comments, and review submissions require exact approval.
 - Review evidence exists: ordinary review primitives or formal gates were run at the stage that needs them.
 - Verification is re-runnable: commands and skipped checks are listed with enough context for another maintainer.
 
@@ -101,6 +101,6 @@ A release or PR readiness handoff should include:
 - roadmap or release note updates;
 - validation and review evidence;
 - unresolved questions or skipped checks;
-- human gate required for commit, push, PR creation, merge, tag, or release publication.
+- human gate required for commit, push, PR creation, merge, tag, release publication, platform comments, or review submissions.
 
 Stop and ask before any external write if the target, permissions, release version, tag name, source of truth, or verification evidence is unclear.

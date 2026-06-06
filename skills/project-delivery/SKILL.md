@@ -23,7 +23,7 @@ For a single clear implementation task, prefer `implementation-slice`. Use `proj
 7. Use `code-review-gate` or `docs-review-gate` only when commit readiness, PR readiness, merge readiness, or repo policy requires a formal blocking decision.
 8. If reviews or gates produce actionable blockers, close them by returning to the smallest primitive workflow and rerunning the relevant review primitive or formal gate within the configured round limit.
 9. Sync docs or status files when that is part of the repo policy.
-10. Prepare PR readiness evidence, but do not push, publish, merge, deploy, or perform destructive actions without the required human gate.
+10. Prepare PR readiness evidence, but do not commit, push, create PRs, publish, merge, deploy, post platform comments, submit reviews, or perform destructive actions without the required human gate.
 
 ## Stop Conditions
 

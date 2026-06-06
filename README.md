@@ -128,7 +128,7 @@ Use `project-orchestrator` when Codex should implement, review, fix blockers, an
 
 ```text
 Use project-orchestrator to implement the requested docs validation improvement.
-Run at most two review/fix rounds. Stop before commit, push, release, or any external write.
+Run at most two review/fix rounds. Stop before commit, push, PR creation, release, platform comments, review submissions, or any external write.
 ```
 
 The orchestrator uses the smallest shared primitives that fit the current state: `implementation-slice`, `docs-update`, `code-review`, `code-review-deep`, `docs-review`, and merge-readiness workflows when applicable. It uses `code-review-gate` or `docs-review-gate` only for formal commit readiness, PR readiness, merge readiness, or repo-policy blocking decisions. This keeps the same closure model usable in Codex CLI and Codex Desktop.
@@ -139,7 +139,7 @@ Use `project-delivery` when the objective is larger than a single task but still
 
 ```text
 Use project-delivery to advance the MVP1 import-validation scope to PR readiness.
-Read the repo plan and acceptance criteria first, split the work into safe slices, update docs if behavior changes, run review primitives and required formal gates, and stop before commit, push, or release.
+Read the repo plan and acceptance criteria first, split the work into safe slices, update docs if behavior changes, run review primitives and required formal gates, and stop before commit, push, PR creation, release, platform comments, or review submissions.
 ```
 
 This pattern is useful when a maintainer wants Codex to carry a small capability area forward without granting authority to publish or merge.

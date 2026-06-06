@@ -6,7 +6,7 @@ Use this policy when a workflow delegates work to another agent, session, or wor
 
 - Delegate only bounded tasks with clear scope, expected files, DoD, and verification.
 - The delegating agent remains responsible for integration, review, and human gates.
-- Workers must not commit, push, publish, merge, deploy, or perform destructive actions.
+- Workers must not commit, push, create PRs, publish, merge, deploy, post platform comments, submit reviews, or perform destructive actions.
 - Workers must report changed files, commands run, skipped checks, risks, and open questions.
 - Worker summaries are evidence, not source of truth. Re-check important claims against repository files.
 

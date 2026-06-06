@@ -20,7 +20,7 @@ Use `merge-readiness-gate` and platform-specific tools only when explicitly auth
 2. Gather verification, review, docs, and implementation evidence.
 3. Run `merge-readiness-gate`.
 4. Prepare a readiness summary.
-5. Stop before publishing, pushing, merging, deploying, or resolving platform threads unless the exact action is explicitly authorized.
+5. Stop before committing, pushing, creating PRs, publishing, merging, deploying, posting platform comments, submitting reviews, or resolving platform threads unless the exact action is explicitly authorized.
 
 ## Output
 

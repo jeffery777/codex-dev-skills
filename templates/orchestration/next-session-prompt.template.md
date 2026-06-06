@@ -54,7 +54,7 @@ Stop and report before editing or continuing if you encounter source-of-truth co
 ## Rules
 
 - Do not commit.
-- Do not push, publish, merge, deploy, or perform destructive actions.
+- Do not push, create PRs, publish, merge, deploy, post platform comments, submit reviews, or perform destructive actions.
 - Do not edit outside assigned scope.
 - Treat summaries and chat history as context only.
 - Report changed files, verification run, skipped checks, risks, and open questions.

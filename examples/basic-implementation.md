@@ -14,4 +14,4 @@ Expected flow:
 3. Implement the smallest change.
 4. Run targeted tests.
 5. Inspect diff and report evidence.
-6. Stop before commit, push, release, merge, or any external write unless the user explicitly authorizes it.
+6. Stop before commit, push, PR creation, release, merge, platform comments, review submissions, or any external write unless the user explicitly authorizes it.

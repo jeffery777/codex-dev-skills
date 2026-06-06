@@ -29,4 +29,4 @@ Use `code-review-gate` or `docs-review-gate` only when a workflow needs a formal
 
 Default max rounds: 2, unless the user or repo policy sets a different maximum.
 
-Stop before commit, push, merge, deploy, destructive action, external publication, unclear findings, scope expansion, or material security, data, migration, or public-contract risk.
+Stop before commit, push, PR creation, merge, deploy, platform comments, review submissions, destructive action, external publication, unclear findings, scope expansion, or material security, data, migration, or public-contract risk.

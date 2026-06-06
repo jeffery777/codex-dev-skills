@@ -71,7 +71,7 @@ Expected output:
 - Open questions or stop conditions encountered.
 
 Rules:
-- Do not commit, push, open a PR, merge, or edit files outside the assigned docs example.
+- Do not commit, push, create PRs, merge, post platform comments, submit reviews, or edit files outside the assigned docs example.
 - Treat this brief as context only; repository files are the source of truth.
 ```
 

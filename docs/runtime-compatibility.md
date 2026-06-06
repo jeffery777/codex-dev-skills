@@ -51,7 +51,7 @@ Desktop thread actions are runtime actions, not CLI guarantees. When a Desktop w
 | Main agent reviews integrated output. | Run `code-review`, `code-review-deep`, or `docs-review` as the ordinary review primitive for the changed surface. |
 | Main agent runs a formal Desktop integration gate. | Use `code-review-gate` or `docs-review-gate` only when the stage is commit readiness, PR readiness, merge readiness, or an explicit repo-policy blocking decision. |
 | Main agent prepares PR or merge readiness. | Run `merge-review` or `merge-review-deep` for base-to-head evidence, then use `merge-readiness-gate` only when a formal readiness decision is needed. |
-| Main agent publishes, pushes, merges, deploys, or resolves platform threads. | Stop unless the user explicitly authorized the exact external write or destructive action. |
+| Main agent commits, pushes, creates PRs, publishes, merges, deploys, posts platform comments, submits reviews, or resolves platform threads. | Stop unless the user explicitly authorized the exact external write or destructive action. |
 
 The fallback does not claim that Codex CLI can spawn Desktop workers. It preserves the same safety model by replacing parallel worker delegation with durable prompts, task briefs, continuation prompts, sequential execution, explicit review evidence, and the same human gates.
 

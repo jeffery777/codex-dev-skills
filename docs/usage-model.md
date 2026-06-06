@@ -35,7 +35,7 @@ Poor fits without more human direction:
 - Open-ended product discovery.
 - Broad rewrites without an agreed plan.
 - Work that changes public contracts, data, auth, payment, deployment, or infrastructure risk without explicit gates.
-- Any task that expects Codex to push, release, deploy, merge, or perform destructive actions without exact approval.
+- Any task that expects Codex to commit, push, create PRs, release, deploy, merge, post platform comments, submit reviews, or perform destructive actions without exact approval.
 
 ## Human Gates
 
@@ -45,7 +45,7 @@ The workflows can carry local work to PR readiness, but they intentionally stop 
 - scope expansion
 - destructive actions
 - external writes
-- commit, push, release, deploy, or merge
+- commit, push, PR creation, release, deploy, merge, platform comments, or review submissions
 - material security, privacy, data, migration, payment, or permission risk
 
 Shared workflows can prepare prompts, task briefs, continuation prompts, or sequential execution paths for future work, but actually opening a new Codex conversation is runtime-specific. Use Codex Desktop worker delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator only when that runtime is available and intentionally selected.
