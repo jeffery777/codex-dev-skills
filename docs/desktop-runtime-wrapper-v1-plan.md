@@ -161,6 +161,22 @@ Recommended first slice for a future code PR:
 
 This slice is intentionally useful even without Desktop runtime access: it proves the evidence contract, fallback behavior, and stop conditions before any wrapper path can affect Desktop state.
 
+## First Slice Implementation Artifact
+
+The initial non-state-changing helper is `scripts/desktop_runtime_wrapper_planner.py`.
+It accepts a prepared JSON request that follows the minimum schema above, validates required fields and contract evidence, classifies the result as `dry-run`, `fallback`, or `stopped`, and emits structured JSON evidence.
+Callers may set optional `runtime_contract.available: false` when a documented runtime capability is known to be unavailable; the planner then emits a CLI-compatible fallback instead of treating private runtime state as a substitute.
+
+The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not read Desktop private runtime state, unpublished endpoints, UI state, daemons, sidecars, background services, app-server clients, catalog entries, installer entries, or skill metadata as runtime state.
+
+The CLI-compatible fallback prompt must state that no Desktop thread was opened, forked, continued, messaged, or read. It must rely only on durable request fields supplied to the planner and preserve the external-write gate.
+
+Focused tests live in `tests/test_desktop_runtime_wrapper_planner.py` and can be rerun with:
+
+```bash
+python3 -m unittest discover -s tests
+```
+
 ## Later Slice Candidates
 
 Later slices require separate review and human approval:
