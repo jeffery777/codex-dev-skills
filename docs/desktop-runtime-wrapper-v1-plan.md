@@ -1,6 +1,6 @@
 # Desktop Runtime Wrapper V1 Feasibility And Implementation Plan
 
-This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as non-state-changing helpers: a request planner and fallback generator, a capability metadata normalization helper, a contract comparison helper, a create-thread runtime-call preflight helper, a read-thread runtime-call preflight helper, an end-to-end evidence pipeline example, a session compatibility status validator, and a first-use session compatibility handshake helper. They do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, skill, compatibility cache read/write path, or runtime-call path.
+This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as non-state-changing helpers: a request planner and fallback generator, a capability metadata normalization helper, a contract comparison helper, a create-thread runtime-call preflight helper, a read-thread runtime-call preflight helper, an end-to-end evidence pipeline example, a session compatibility status validator, a first-use session compatibility handshake helper, and a session-scoped compatibility cache helper. They do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, skill, or runtime-call path.
 
 ## Decision
 
@@ -22,9 +22,9 @@ The session compatibility status slice is also complete as a non-state-changing 
 
 The first-use session compatibility handshake slice is also complete as a non-state-changing status construction helper. It accepts caller-supplied documented capability metadata, old wrapper contract evidence, expected wrapper/helper identity, and an explicit caller-supplied session marker. It runs capability normalization, contract comparison, session status construction, and status validation in order, then returns `ready`, `fallback`, or `stopped`. `ready` only means the produced and validated session compatibility status can be referenced by a later preflight; it does not authorize runtime calls or external writes. `fallback` and `stopped` block later runtime-call paths. This helper does not read or write a compatibility cache, call Desktop thread tools, read Desktop private runtime state, validate target identity, validate permissions, validate runtime responses, or authorize runtime calls or external writes.
 
-The next candidate slice before any runtime-call path is a compatibility cache read/write model. A future wrapper should avoid re-checking the underlying runtime schema before every API or runtime tool call. Instead, the first wrapper use in each Codex CLI or Codex Desktop process/session can use the completed handshake helper to compare the current runtime contract with the wrapper's recorded contract and construct a session-scoped compatibility status. Later wrapper use in the same process/session may eventually read an approved session-scoped cache status rather than spending another runtime/tool/schema lookup. A compatible status can permit action-specific preflight to proceed; fallback or stopped status must cause later use to fallback or stop. This cache is not durable across Codex CLI/Desktop restarts and must not replace action authorization, target validation, permission handling, or response validation.
+The session-scoped compatibility cache slice is also complete as a non-state-changing cache evidence helper. It accepts only caller-explicit cache file paths and caller-supplied cache envelopes that contain validated session compatibility status, wrapper/package/repo identity, cache helper version, status helper version, target action, tool/API name, runtime-reported version or `version unavailable`, capability source, schema hash or normalized contract evidence, comparison result, `last_verified`, session identity, cache scope, lifecycle marker, and `created_at` plus `expires_at` or an explicit same-session-only marker. It returns `ready`, `fallback`, or `stopped`. `ready` only means same-session cache evidence can be referenced by later preflight for contract compatibility evidence; it does not authorize runtime calls or external writes. `fallback` and `stopped` block later runtime-call paths. This helper rejects Desktop private runtime-looking cache paths or source hints, does not call Desktop thread tools, does not read Desktop private runtime state, does not validate target identity, validate permissions, validate runtime responses, or authorize runtime calls or external writes, and does not add a daemon, MCP server, app-server client, sidecar, background service, skill, catalog item, or installer entry.
 
-State-changing thread calls can be considered only after the completed evidence-only helpers remain stable, after the compatibility cache slice is designed and reviewed, and after a separate human decision approves adding a runtime-call path for one documented action.
+State-changing thread calls can be considered only after the completed evidence-only helpers remain stable and after a separate human decision approves adding a runtime-call path for one documented action.
 
 ## Objective
 
@@ -41,6 +41,7 @@ Wrapper V1 should make the existing `desktop-thread-delegation` boundary easier 
 - provide an end-to-end CLI evidence example that links discovery, comparison, and preflight results without calling runtime tools;
 - validate caller-supplied session compatibility status before any later preflight references it;
 - build and validate first-use session compatibility status from caller-supplied documented metadata and an explicit session marker;
+- read or write caller-explicit same-session compatibility cache envelopes for contract compatibility evidence only;
 - preserve the main-thread responsibility for integration, verification, review evidence, commit readiness, PR readiness, merge readiness, and human approval.
 
 ## Non-Goals
@@ -95,10 +96,11 @@ For contract comparison, callers may pass old wrapper contract evidence and newe
 
 For first-use session capability handshake evidence, callers may perform this comparison once per Codex CLI/Desktop process/session and construct a session-scoped compatibility status. The status should be valid only for the current process/session or runtime lifecycle marker. If the runtime exposes no lifecycle marker, the status must explicitly say it is current-process/current-session scoped. Restarting Codex CLI/Desktop invalidates the status and requires a new handshake before the wrapper trusts the runtime contract again.
 
-The compatibility cache should record at least:
+The session-scoped compatibility cache helper records:
 
 - wrapper, skill package, or repository commit version;
-- helper version;
+- cache helper version;
+- status helper version;
 - target action, such as `read-thread` or `create-thread`;
 - tool/API name, such as `read_thread` or `create_thread`;
 - runtime-reported version, or `version unavailable` when no version is exposed;
@@ -106,9 +108,11 @@ The compatibility cache should record at least:
 - schema/contract hash or equivalent normalized contract evidence;
 - comparison result: `compatible`, `fallback`, or `stopped`;
 - `last_verified`;
-- session identity or runtime lifecycle marker, or an explicit current-process/current-session scoped marker when no runtime marker is available.
+- session identity or runtime lifecycle marker, or an explicit current-process/current-session scoped marker when no runtime marker is available;
+- cache scope and lifecycle marker;
+- cache `created_at` plus `expires_at` or an explicit same-session-only marker.
 
-The compatibility status must not cache or replace:
+The compatibility status and cache evidence must not cache or replace:
 
 - exact runtime action authorization;
 - external-write authorization;
@@ -124,6 +128,10 @@ This validation slice is not the first-use handshake, not a cache read path, not
 For the completed first-use session compatibility handshake slice, callers supply documented capability metadata, old wrapper contract evidence, expected wrapper/helper identity, and an explicit session identity marker. The helper normalizes the supplied metadata, compares it with the old wrapper contract, constructs a session compatibility status object, and validates that status with the session compatibility status validator. It returns `ready` only when the produced status is validated and can be referenced by later preflight. It returns `fallback` when comparison or status validation falls back, and `stopped` when discovery, comparison, status construction, status validation, wrapper/helper identity, schema hash or normalized contract evidence, session marker, private runtime source hints, or authorization-substitute fields are unsafe or unclear.
 
 This first-use handshake slice is not a compatibility cache read path, not a compatibility cache write path, and not a runtime-call path. If the runtime does not provide a lifecycle marker, the caller must explicitly supply a current-process/current-session scoped marker. The helper does not infer runtime lifecycle from Desktop private runtime state.
+
+For the completed session-scoped compatibility cache slice, callers supply an explicit cache file path and an explicit cache envelope for writes, or an explicit cache file path plus expected identity/schema/session evidence for reads. The helper validates the envelope against the expected wrapper/package/repo identity, cache helper version, status helper version, target action, tool/API name, schema hash or normalized contract evidence, session marker, and same-session lifecycle marker. It returns `ready` only when a compatible cache envelope can be referenced by later preflight for same-session contract compatibility evidence. It returns `fallback` when the cached comparison result is `fallback`, and `stopped` when the cached comparison result is `stopped` or when evidence is missing, mismatched, expired, stale, sourced from forbidden Desktop runtime hints, points at Desktop private runtime-looking paths, or attempts to include authorization or target/permission/response validation substitutes.
+
+This session-scoped cache slice is not a first-use handshake, not a runtime-call path, and not an authorization layer. Codex CLI/Desktop restart, session marker mismatch, stale or expired cache, wrapper/helper/status helper version mismatch, and schema hash or normalized contract evidence mismatch invalidate or stop cache reuse. The helper does not infer runtime lifecycle from Desktop private runtime state, and it rejects Desktop private runtime-looking cache paths rather than reading them.
 
 ## Minimum Schema
 
@@ -759,32 +767,104 @@ Focused tests live in `tests/test_desktop_runtime_session_compatibility_handshak
 python3 -B -m unittest discover -s tests
 ```
 
+## Session-Scoped Compatibility Cache Artifact
+
+The session-scoped compatibility cache helper is `scripts/desktop_runtime_session_compatibility_cache.py`.
+It accepts prepared JSON requests to write or read a caller-explicit cache file. The cache envelope stores contract compatibility evidence only and is scoped to the current process/session.
+
+Usage examples:
+
+```bash
+python3 scripts/desktop_runtime_session_compatibility_cache.py --example --pretty
+```
+
+```bash
+python3 scripts/desktop_runtime_session_compatibility_cache.py --pretty < session-compatibility-cache.json
+```
+
+The write request should use this minimal shape:
+
+```yaml
+requested_action: "write-session-compatibility-cache"
+cache_file: "/absolute/caller/supplied/cache-file.json"
+expected:
+  wrapper_version: "0.1.0" # or skill_package_version / repo_commit
+  cache_helper_version: "0.1.0"
+  status_helper_version: "0.1.0"
+  target_action: "read-thread"
+  tool_or_api: "read_thread"
+  schema_hash: "sha256:..." # or normalized_contract_evidence
+current_session_identity:
+  marker_type: "runtime-lifecycle | session-id | current-process | current-session"
+  marker: "runtime lifecycle marker, session id, or explicit current-session scoped marker"
+cache_envelope:
+  wrapper_version: "0.1.0" # or matching skill_package_version / repo_commit
+  cache_helper_version: "0.1.0"
+  status_helper_version: "0.1.0"
+  target_action: "read-thread"
+  tool_or_api: "read_thread"
+  runtime_reported_version: "version unavailable"
+  capability_source: "active tool list | connector metadata | documented API | installed plugin metadata | official documentation | runtime-reported schema"
+  schema_hash: "sha256:..." # or normalized_contract_evidence
+  comparison_result: "compatible | fallback | stopped"
+  last_verified: "YYYY-MM-DD"
+  session_identity:
+    marker_type: "runtime-lifecycle | session-id | current-process | current-session"
+    marker: "runtime lifecycle marker, session id, or explicit current-session scoped marker"
+  cache_scope: "same-session"
+  cache_lifecycle_marker: "same-session-only"
+  same_session_only: true
+  created_at: "YYYY-MM-DDTHH:MM:SSZ"
+  expires_at: "optional YYYY-MM-DDTHH:MM:SSZ"
+  compatibility_status: "validated session compatibility status object"
+```
+
+The read request omits `cache_envelope` and supplies `requested_action: "read-session-compatibility-cache"`, the same `cache_file`, the expected identity/schema fields, and the current session identity marker.
+
+The helper output includes:
+
+- status: `ready`, `fallback`, or `stopped`;
+- selected wrapper/package/repo identity, cache helper version, status helper version, target action, tool/API name, runtime-reported version, source, schema hash, comparison result, `last_verified`, session marker, cache scope, lifecycle marker, and created/expiry summary;
+- `runtime_call_performed: false`;
+- `private_runtime_state_read: false`;
+- `cache_read_performed` or `cache_write_performed` only for the explicit cache file operation;
+- `later_runtime_path_blocked: true` for `fallback` or `stopped`;
+- a readiness note stating that `ready` means same-session cache evidence can be referenced by a later preflight only.
+
+The helper returns `ready` only when the cache envelope is compatible, matches expected identity and schema evidence, uses a same-session cache scope, and matches the current session marker. It returns `fallback` for cached `fallback` comparison evidence. It returns `stopped` for cached `stopped` comparison evidence, wrapper/helper/status helper mismatch, schema hash or normalized contract evidence mismatch, missing or mismatched session marker, stale or expired cache, forbidden private runtime source hints, Desktop private runtime-looking cache paths, or attempts to store authorization, target validation, permission validation, or response validation in cache evidence.
+
+The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, perform a first-use handshake, authorize runtime calls, authorize external writes, validate targets or permissions, validate runtime responses, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
+
+Focused tests live in `tests/test_desktop_runtime_session_compatibility_cache.py` and can be rerun with:
+
+```bash
+python3 -B -m unittest discover -s tests
+```
+
 ## Later Slice Candidates
 
 Later slices require separate review and human approval:
 
-- a compatibility cache read/write helper, initially designed around repo-safe session-scoped artifacts or explicit caller-supplied status rather than a daemon, sidecar, app-server client, Desktop private state, or background service;
-- docs that distinguish contract compatibility, action authorization, and preflight readiness;
 - a single state-changing `create-thread` call path using an already exposed runtime tool;
 - additional `fork-thread` or `send-message` paths only after the single-action path is stable.
 
-The compatibility cache slice should be prioritized before any true runtime-call path. Each later slice must keep private runtime state prohibited. Runtime-call slices may rely on a compatible session status for contract compatibility only, but must still re-check authorization, target evidence, and actual runtime responses at the point of use.
+Each later slice must keep private runtime state prohibited. Runtime-call slices may rely on a compatible session status or same-session cache evidence for contract compatibility only, but must still re-check authorization, target evidence, and actual runtime responses at the point of use.
 
 ## Next-Session Handoff
 
 Recommended next Desktop runtime wrapper V1 slice:
 
-1. Add a compatibility cache read/write helper using a repo-safe session-scoped artifact or explicit caller-supplied status model. Do not introduce a daemon, MCP server, app-server client, sidecar, background service, Desktop private runtime state reader, skill, catalog item, or installer entry.
-2. Update docs to state that contract compatibility may be session-cached, while exact runtime action authorization, external-write authorization, destructive-action approval, target repo/branch/thread-id/expected-head validation, auth/permission failures, and runtime response validation cannot be replaced by cache.
-3. Add tests proving approved cache read/write behavior, same-session status reuse, wrapper/helper version invalidation, schema hash or normalized contract evidence invalidation, fallback/stopped status blocking, no Desktop private runtime state access, and no runtime thread tool calls.
+1. Prepare a separately approved runtime-call path proposal for one documented action, most likely `create-thread`.
+2. Keep cache evidence scoped to contract compatibility only; exact runtime action authorization, external-write authorization, destructive-action approval, target repo/branch/thread-id/expected-head validation, auth/permission failures, and runtime response validation must still happen at the point of use.
+3. Do not introduce a daemon, MCP server, app-server client, sidecar, background service, Desktop private runtime state reader, skill, catalog item, or installer entry.
 
 Definition of done for that slice:
 
-- It remains non-state-changing and evidence-only.
-- It does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or documented equivalents.
+- It has separate human approval for the exact runtime action before implementation.
+- It calls at most one documented runtime thread tool path.
 - It does not read Desktop private runtime state.
 - It does not add a skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
-- It documents that Codex CLI/Desktop restart invalidates session compatibility status.
+- It documents and tests that cache evidence is not authorization and that Codex CLI/Desktop restart invalidates session compatibility status.
 
 ## Verification Strategy
 
@@ -806,7 +886,7 @@ For the completed first implementation slices:
 - evidence pipeline tests proving discovery-to-comparison-to-create/read-preflight order returns aggregate `ready`, missing old contract evidence returns aggregate `fallback`, changed request shape returns aggregate `stopped`, single target action filtering works, summary fields make target reasons scannable, read-thread runtime-call authorization remains out of scope, request inputs are not mutated, and no runtime call is made;
 - session compatibility status tests proving compatible status returns `ready`, fallback/stopped status blocks later runtime paths, wrapper/helper version mismatch stops, schema hash or normalized contract evidence mismatch stops, missing session marker stops or requires an explicit current-process/current-session scoped marker, status cannot replace action authorization/external-write authorization/target validation/permission handling/response validation, and no Desktop private runtime state is read;
 - first-use session compatibility handshake tests proving compatible metadata creates a validated `ready` session status, fallback/stopped comparison blocks later runtime paths, wrapper/helper version mismatch stops, schema hash or normalized contract evidence mismatch stops, missing session marker stops, explicit current-session scoped marker is accepted, status cannot replace action authorization/external-write authorization/target validation/permission handling/response validation, no cache read/write occurs, no Desktop private runtime state is read, and no Desktop thread tool symbols are introduced;
-- future session compatibility cache tests proving same-session status reuse through an approved cache model, wrapper/helper version invalidation, schema hash or normalized contract evidence invalidation, fallback/stopped status blocking, and no Desktop private runtime state access;
+- session-scoped compatibility cache tests proving same-session status reuse through an explicit cache envelope, fallback/stopped cached status blocking, wrapper/cache helper/status helper version invalidation, schema hash or normalized contract evidence invalidation, missing or mismatched session marker stops, explicit current-session scoped markers are accepted only for same-session cache envelopes, stale or expired cache stops, cache evidence cannot replace authorization/target/permission/response validation, Desktop private runtime-looking paths and source hints are rejected, no Desktop private runtime state is read, and no Desktop thread tool symbols, daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
 - docs review for public claims and runtime compatibility;
 - code review gate only if the implementation slice is used for commit or PR readiness.
 
