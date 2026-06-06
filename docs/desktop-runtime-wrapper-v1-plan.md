@@ -1,6 +1,6 @@
 # Desktop Runtime Wrapper V1 Feasibility And Implementation Plan
 
-This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as non-state-changing helpers: a request planner and fallback generator, a capability metadata normalization helper, a contract comparison helper, a create-thread runtime-call preflight helper, a read-thread runtime-call preflight helper, an end-to-end evidence pipeline example, a session compatibility status validator, a first-use session compatibility handshake helper, a session-scoped compatibility cache helper, and a create-thread authorization/evidence boundary gate. They do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, skill, or runtime-call path.
+This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as non-state-changing helpers: a request planner and fallback generator, a capability metadata normalization helper, a contract comparison helper, a create-thread runtime-call preflight helper, a read-thread runtime-call preflight helper, an end-to-end evidence pipeline example, a session compatibility status validator, a first-use session compatibility handshake helper, a session-scoped compatibility cache helper, a create-thread authorization/evidence boundary gate, and a create-thread executor boundary proposal helper. They do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, skill, runtime-call executor, or runtime-call path.
 
 ## Decision
 
@@ -26,6 +26,8 @@ The session-scoped compatibility cache slice is also complete as a non-state-cha
 
 The create-thread authorization/evidence boundary gate is also complete as a non-state-changing pre-runtime-call helper. It accepts only caller-supplied evidence for one future `create_thread` implementation slice and checks the exact target action, tool/API name, repo, remote, branch, expected head, prepared prompt summary/body, compatible create-thread preflight evidence, same-session compatibility status evidence, same-session cache evidence, exact caller intent for `authorized_runtime_action: "create-thread"`, a human approval marker for the next implementation boundary, external-write and destructive-action blocks, target validation evidence, permission/auth failure handling placeholders, runtime response validation placeholders, `runtime_call_performed: false`, and `desktop_private_runtime_state_read: false`. It returns `ready`, `fallback`, or `stopped`. `ready` only means the authorization/evidence envelope is sufficient for a human to consider approving a separate single `create_thread` runtime-call implementation; it does not authorize or perform a runtime call. `fallback` and `stopped` block later runtime-call paths. Cache, status, and preflight evidence cannot replace exact action authorization, target validation, permission/auth failure handling, or runtime response validation. This helper does not call Desktop thread tools, does not read Desktop private runtime state, and does not add a daemon, MCP server, app-server client, sidecar, background service, skill, catalog item, installer entry, or runtime-call executor.
 
+The create-thread executor boundary proposal helper is also complete as a non-state-changing runtime-call implementation boundary helper. It accepts ready caller-supplied authorization gate evidence, verifies the exact `create-thread` action and `create_thread` tool/API, repo, remote, branch, expected head, prepared prompt summary/body, exact human-approved proposal boundary marker, `runtime_call_performed: false`, `desktop_private_runtime_state_read: false`, blocked external writes, absent or false destructive approval, and a single-tool executor contract. It requires the future executor contract to re-check target identity, authorization intent, permission/auth failure result, runtime response shape, returned thread id, and returned status at the call site. It returns `ready`, `fallback`, or `stopped`. `ready` only means the runtime-call implementation proposal/boundary is sufficient for a human to consider approving a later true executor wiring slice; it does not authorize or perform a runtime call. `fallback` and `stopped` block later runtime-call paths. Authorization gate, cache, status, and preflight evidence cannot replace actual call-site target validation, permission/auth failure handling, or runtime response validation. This helper does not call Desktop thread tools, does not read Desktop private runtime state, and does not add a daemon, MCP server, app-server client, sidecar, background service, skill, catalog item, installer entry, or runtime-call executor.
+
 State-changing thread calls can be considered only after the completed evidence-only helpers remain stable and after a separate human decision approves adding a runtime-call path for one documented action.
 
 ## Objective
@@ -45,6 +47,7 @@ Wrapper V1 should make the existing `desktop-thread-delegation` boundary easier 
 - build and validate first-use session compatibility status from caller-supplied documented metadata and an explicit session marker;
 - read or write caller-explicit same-session compatibility cache envelopes for contract compatibility evidence only;
 - validate a caller-supplied create-thread authorization/evidence envelope before any separate runtime-call implementation is considered;
+- validate a caller-supplied create-thread executor boundary proposal before any separate true runtime-call executor wiring is considered;
 - preserve the main-thread responsibility for integration, verification, review evidence, commit readiness, PR readiness, merge readiness, and human approval.
 
 ## Non-Goals
@@ -127,6 +130,10 @@ The compatibility status and cache evidence must not cache or replace:
 For the completed create-thread authorization/evidence gate, callers must provide a separate envelope after create-thread preflight, session compatibility status, and same-session cache evidence are already available. The gate verifies exact `target_action: "create-thread"`, `tool_or_api: "create_thread"`, repo, remote, branch, expected head, prepared prompt summary/body, compatible preflight evidence, same-session status/cache evidence, `authorized_runtime_action: "create-thread"`, a human approval marker scoped to the next implementation boundary only, `external_write_authorized: false`, absent or false destructive-action approval, explicit target validation, permission/auth failure handling requirements, runtime response validation requirements, `runtime_call_performed: false`, and `desktop_private_runtime_state_read: false`.
 
 This gate is not a runtime-call executor and not runtime-call authorization for the helper itself. Its `ready` status means only that the envelope is complete enough for a human to consider approving a separate single `create_thread` implementation slice. `fallback` or `stopped` must block the later runtime path. Cache, status, and preflight evidence are contract/readiness evidence only and cannot satisfy action authorization, target validation, permission/auth failure handling, or runtime response validation.
+
+For the completed create-thread executor boundary proposal helper, callers must provide ready authorization gate evidence plus a new proposal envelope for one possible future executor. The helper verifies exact `target_action: "create-thread"`, `tool_or_api: "create_thread"`, repo, remote, branch, expected head, prepared prompt summary/body, ready authorization gate evidence, `authorized_runtime_action: "create-thread"`, a proposal-only human approval marker, `external_write_authorized: false`, absent or false destructive-action approval, `runtime_call_performed: false`, `desktop_private_runtime_state_read: false`, a single documented tool path of `create_thread`, and executor contract requirements for call-site target validation, permission/auth failure handling, runtime response validation, and separate human approval before executor use.
+
+This proposal helper is not a runtime-call executor and not runtime-call authorization. Its `ready` status means only that the proposed executor boundary is complete enough for a human to consider approving a later true `create_thread` wiring slice. `fallback` or `stopped` must block the later runtime path. Authorization gate, cache, status, and preflight evidence are evidence only and cannot satisfy actual call-site target validation, permission/auth failure handling, or runtime response validation.
 
 For the completed session compatibility status validation slice, callers supply the status explicitly. The helper validates that the supplied status matches the expected wrapper/package/repo identity, helper version, target action, tool/API name, and schema hash or normalized contract evidence. It returns `ready` only when the compatible status can be referenced by a later preflight. It returns `fallback` when the supplied comparison result is `fallback`, and `stopped` when the supplied comparison result is `stopped` or when status evidence is missing, mismatched, unclear, sourced from forbidden Desktop runtime hints, or attempts to include authorization or target/permission/response validation substitutes.
 
@@ -563,6 +570,95 @@ Focused tests live in `tests/test_desktop_runtime_create_thread_authorization_ga
 python3 -B -m unittest discover -s tests
 ```
 
+## Create-Thread Executor Boundary Proposal Artifact
+
+The create-thread executor boundary proposal helper is `scripts/desktop_runtime_create_thread_executor_boundary.py`.
+It accepts a prepared JSON envelope containing ready authorization gate evidence, target evidence, prompt evidence, proposal-only human approval evidence, safety boundaries, and a single-tool executor contract proposal.
+
+Usage examples:
+
+```bash
+python3 scripts/desktop_runtime_create_thread_executor_boundary.py --example --pretty
+```
+
+```bash
+python3 scripts/desktop_runtime_create_thread_executor_boundary.py --pretty < create-thread-executor-boundary.json
+```
+
+The stdin request must be JSON and should use this minimal shape:
+
+```yaml
+requested_action: "propose-create-thread-runtime-call-executor-boundary"
+target_action: "create-thread"
+tool_or_api: "create_thread"
+target:
+  repo: "owner/name"
+  remote: "origin URL"
+  branch: "branch-name"
+  expected_head: "commit SHA expected by the caller"
+prompt:
+  summary: "short prepared prompt summary"
+  body: "prepared prompt body"
+boundaries:
+  external_writes_blocked: true
+  runtime_call_performed: false
+  desktop_private_runtime_state_read: false
+authorization:
+  authorized_runtime_action: "create-thread"
+  human_approval_marker: "human-approved-create-thread-runtime-call-executor-boundary-proposal-only"
+  human_approval_scope: "proposal-helper-only-no-runtime-call"
+  external_write_authorized: false
+  destructive_action_approved: false
+executor_contract:
+  single_tool_path: "create_thread"
+  call_site_rechecks:
+    - "target_identity"
+    - "authorization_intent"
+    - "permission_auth_failure_result"
+    - "runtime_response_shape"
+    - "returned_thread_id"
+    - "returned_status"
+  target_validation:
+    required_at_call_site: true
+    satisfied_by_prior_evidence: false
+  permission_failure_handling:
+    required_at_call_site: true
+    satisfied_by_prior_evidence: false
+    requirements: ["stop on auth failure", "stop on permission failure"]
+  response_validation:
+    required_at_call_site: true
+    satisfied_by_prior_evidence: false
+    minimum_response_fields: ["status", "thread_id"]
+  human_approval_boundary:
+    required_before_executor_use: true
+    scope: "proposal-helper-only-no-runtime-call"
+  external_writes_blocked: true
+authorization_gate_evidence: "ready output from desktop_runtime_create_thread_authorization_gate.py"
+```
+
+The helper output includes:
+
+- status: `ready`, `fallback`, or `stopped`;
+- target repo, remote, branch, and expected head evidence;
+- prompt summary/body presence evidence;
+- proposal-only human approval marker evidence;
+- required future executor re-checks for target identity, authorization intent, permission/auth failure result, runtime response shape, returned thread id, and returned status;
+- executor contract evidence for a single documented `create_thread` tool path;
+- `runtime_call_performed: false`, `private_runtime_state_read: false`, and `external_write_performed: false`;
+- a readiness note stating that `ready` only means a human can consider separately approving one future true executor wiring slice.
+
+The helper returns `fallback` when the exact proposal-only human approval marker is missing. It returns `stopped` when ready authorization gate evidence is missing, fallback, or stopped; the exact target action or tool/API name is wrong; repo/remote/branch/expected-head evidence is incomplete; prompt summary/body is missing; external writes are authorized; destructive-action approval is present; a runtime call has already been performed; Desktop private runtime state was read; required call-site rechecks are missing; prior gate/cache/status/preflight evidence is treated as satisfying call-site target validation, permission/auth failure handling, or runtime response validation; forbidden Desktop private runtime-looking source hints appear; or the contract claims more than one documented `create_thread` tool path.
+
+`ready` is not permission to call `create_thread`. It is not runtime-call execution authorization for the helper. It only means the executor boundary proposal is complete enough for a human to consider approving a separate true executor in future work. The true `create_thread` call path remains future work and needs separate human approval. If that future work is approved, it should connect at most one documented `create_thread` tool path and must re-check target identity, authorization intent, permission/auth failure result, runtime response shape, returned thread id, and returned status at the actual call site.
+
+The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, authorize external writes, validate a real runtime response, handle real auth failures, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, background service, or runtime-call executor.
+
+Focused tests live in `tests/test_desktop_runtime_create_thread_executor_boundary.py` and can be rerun with:
+
+```bash
+python3 -B -m unittest discover -s tests
+```
+
 ## Read-Thread Preflight Implementation Artifact
 
 The read-thread runtime-call preflight helper is `scripts/desktop_runtime_read_thread_preflight.py`.
@@ -936,17 +1032,17 @@ python3 -B -m unittest discover -s tests
 
 Later slices require separate review and human approval:
 
-- a single state-changing `create-thread` call path using an already exposed runtime tool;
+- a single state-changing `create-thread` call path using one documented runtime tool path, after the executor boundary proposal remains stable;
 - additional `fork-thread` or `send-message` paths only after the single-action path is stable.
 
-Each later slice must keep private runtime state prohibited. Runtime-call slices may rely on a compatible session status or same-session cache evidence for contract compatibility only, but must still re-check authorization, target evidence, and actual runtime responses at the point of use.
+Each later slice must keep private runtime state prohibited. Runtime-call slices may rely on a compatible session status, same-session cache evidence, preflight evidence, authorization gate evidence, or executor boundary proposal evidence for their documented purpose only, but must still re-check authorization intent, target identity, permission/auth failure result, runtime response shape, returned thread id, and returned status at the point of use.
 
 ## Next-Session Handoff
 
 Recommended next Desktop runtime wrapper V1 slice:
 
-1. Prepare a separately approved runtime-call path proposal for one documented action, most likely `create-thread`.
-2. Keep cache evidence scoped to contract compatibility only; exact runtime action authorization, external-write authorization, destructive-action approval, target repo/branch/thread-id/expected-head validation, auth/permission failures, and runtime response validation must still happen at the point of use.
+1. If maintainers approve true wiring, implement at most one documented `create_thread` runtime-call executor path.
+2. Keep cache/status/preflight/gate/proposal evidence scoped to evidence only; exact runtime action authorization, external-write authorization, destructive-action approval, target repo/branch/expected-head validation, auth/permission failure handling, and runtime response validation must still happen at the point of use.
 3. Do not introduce a daemon, MCP server, app-server client, sidecar, background service, Desktop private runtime state reader, skill, catalog item, or installer entry.
 
 Definition of done for that slice:
@@ -955,7 +1051,7 @@ Definition of done for that slice:
 - It calls at most one documented runtime thread tool path.
 - It does not read Desktop private runtime state.
 - It does not add a skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
-- It documents and tests that cache evidence is not authorization and that Codex CLI/Desktop restart invalidates session compatibility status.
+- It documents and tests that prior evidence is not call-site target validation, permission/auth handling, or runtime response validation, and that Codex CLI/Desktop restart invalidates session compatibility status.
 
 ## Verification Strategy
 
@@ -979,6 +1075,7 @@ For the completed first implementation slices:
 - first-use session compatibility handshake tests proving compatible metadata creates a validated `ready` session status, fallback/stopped comparison blocks later runtime paths, wrapper/helper version mismatch stops, schema hash or normalized contract evidence mismatch stops, missing session marker stops, explicit current-session scoped marker is accepted, status cannot replace action authorization/external-write authorization/target validation/permission handling/response validation, no cache read/write occurs, no Desktop private runtime state is read, and no Desktop thread tool symbols are introduced;
 - session-scoped compatibility cache tests proving same-session status reuse through an explicit cache envelope, fallback/stopped cached status blocking, wrapper/cache helper/status helper version invalidation, schema hash or normalized contract evidence invalidation, missing or mismatched session marker stops, explicit current-session scoped markers are accepted only for same-session cache envelopes, stale or expired cache stops, cache evidence cannot replace authorization/target/permission/response validation, Desktop private runtime-looking paths and source hints are rejected, no Desktop private runtime state is read, and no Desktop thread tool symbols, daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
 - create-thread authorization gate tests proving a complete caller-supplied envelope returns `ready`, missing exact action/tool or target evidence stops, fallback/stopped preflight/status/cache evidence blocks, stale or session-mismatched cache evidence blocks, external-write or destructive-action approval stops, cache/preflight/status evidence cannot replace authorization/target/permission/response validation, missing human approval marker returns `fallback`, private runtime-looking source hints stop, no Desktop private runtime state is read, and no Desktop thread tool call functions, daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
+- create-thread executor boundary proposal tests proving a complete proposal envelope returns `ready`, missing authorization gate evidence stops, fallback/stopped authorization gate evidence blocks, wrong action/tool stops, missing repo/remote/branch/expected-head or prompt evidence stops, external-write or destructive-action approval stops, runtime-call-performed or private-runtime-state-read evidence stops, prior evidence cannot replace call-site target validation/permission handling/response validation, missing proposal-only human approval marker returns `fallback`, private runtime-looking paths and source hints are rejected, no Desktop thread tool call shapes are introduced, and no daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
 - docs review for public claims and runtime compatibility;
 - code review gate only if the implementation slice is used for commit or PR readiness.
 
