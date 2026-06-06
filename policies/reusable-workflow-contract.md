@@ -15,7 +15,7 @@ This contract defines the shared shape for Codex CLI and Codex Desktop developme
 
 ## Runtime Differences
 
-Codex CLI may execute phases sequentially in one session or through handoff artifacts.
+Codex CLI may execute phases sequentially in one session or through prompts, task briefs, continuation prompts, or another explicit sequential execution path.
 
 Codex Desktop may use main-agent orchestration and worker delegation, but Desktop runtime behavior does not replace durable repository artifacts or human gate policy.
 

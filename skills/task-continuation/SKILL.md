@@ -1,5 +1,5 @@
 ---
-description: Select the next safe task from durable project context, prepare a bounded next-session prompt or worker brief, and stop at human gates when continuation is unsafe.
+description: Select the next safe task from durable project context, prepare a bounded continuation prompt or task brief, and stop at human gates when continuation is unsafe.
 ---
 
 # task-continuation
@@ -8,7 +8,7 @@ Runtime compatibility: shared
 
 ## Purpose
 
-Use this skill when a larger bounded project is underway and Codex needs to continue safely by choosing the next task, preparing a prompt for another session or worker, and preserving enough verified handoff context without treating chat memory as source of truth.
+Use this skill when a larger bounded project is underway and Codex needs to continue safely by choosing the next task, preparing a continuation prompt or task brief for another session, worker, or sequential execution path, and preserving enough verified handoff context without treating chat memory as source of truth.
 
 This shared skill prepares continuation artifacts. It does not guarantee opening a new Codex conversation. Automatic session creation is runtime-specific and requires Codex Desktop worker delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator.
 
@@ -23,7 +23,7 @@ This shared skill prepares continuation artifacts. It does not guarantee opening
    - `new-session-prompt`
    - `delegated-worker-brief`
    - `stop-for-human-gate`
-6. Prepare a next-session prompt or worker brief when continuation is safe.
+6. Prepare a continuation prompt or task brief when continuation is safe.
 7. Require the next session or worker to re-read source-of-truth files before editing.
 8. Stop for a human decision when continuation would cross a gate.
 
@@ -38,7 +38,7 @@ Stop instead of preparing executable continuation when there is source-of-truth 
 - Candidate tasks by status
 - Recommended next task
 - Recommended execution mode
-- Next-session prompt or worker brief, if safe
+- Continuation prompt or task brief, if safe
 - Current task summary, if useful
 - Required source-of-truth files for the next agent to read
 - Verification, review primitive, and formal gate requirements for the current stage

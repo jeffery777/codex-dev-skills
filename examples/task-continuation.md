@@ -1,11 +1,11 @@
 # Task Continuation Example
 
-Use `task-continuation` when a bounded project needs Codex to choose the next safe task from durable repository context and prepare a prompt or worker brief for continuation:
+Use `task-continuation` when a bounded project needs Codex to choose the next safe task from durable repository context and prepare a continuation prompt or task brief:
 
 ```text
 Use task-continuation to continue this bounded docs milestone.
 Read repo policy, the current roadmap, task manifest or plan, review evidence, and git state first.
-Choose the smallest safe next task, recommend an execution mode, and prepare either a CLI next-session prompt or a Desktop worker brief if continuation is safe.
+Choose the smallest safe next task, recommend an execution mode, and prepare a prompt, task brief, continuation prompt, or sequential execution path if continuation is safe.
 Stop instead of preparing executable continuation if the next step would require scope expansion, external writes, destructive actions, product decisions, or unclear source of truth.
 ```
 
@@ -22,7 +22,7 @@ Expected triage flow:
    - `stop-for-human-gate` when the next step needs a maintainer decision.
 6. Include required source-of-truth files, in-scope and out-of-scope work, expected files, DoD, verification, review primitive, formal gate trigger, and stop conditions.
 
-CLI next-session prompt example:
+CLI continuation prompt example using `new-session-prompt` mode:
 
 ```text
 Use task-continuation for this bounded continuation task.
@@ -54,7 +54,7 @@ Stop conditions:
 - Stop if repo files conflict with this prompt, if the diff stops being docs-only, or before any external write.
 ```
 
-Desktop worker brief example:
+Desktop task brief example using `delegated-worker-brief` mode:
 
 ```text
 Worker task: draft the task-continuation example only.
@@ -75,4 +75,4 @@ Rules:
 - Treat this brief as context only; repository files are the source of truth.
 ```
 
-Use the templates under `templates/orchestration/` when a target repository needs durable artifacts. Do not create those artifacts by default for every continuation task; prepare them only when they help another session or worker continue safely.
+Use the templates under `templates/orchestration/` when a target repository needs durable artifacts. Do not create those artifacts by default for every continuation task; prepare prompts, task briefs, or continuation prompts only when they help another session, worker, or sequential execution path continue safely.

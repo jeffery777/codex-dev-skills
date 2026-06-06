@@ -10,6 +10,6 @@ Use code-review-gate or docs-review-gate only for formal commit readiness, PR re
 Stop for product ambiguity, external writes, destructive actions, or final merge approval.
 ```
 
-CLI fallback: use `project-delivery` and `project-orchestrator`, generate task briefs or next-session prompts, run packets sequentially, re-read handoff evidence before trusting it, and run formal gates only at commit readiness, PR readiness, merge readiness, or explicit repo-policy gates.
+CLI fallback: use `project-delivery` and `project-orchestrator`, prepare prompts, task briefs, continuation prompts, or a sequential execution path, re-read handoff evidence before trusting it, and run formal gates only at commit readiness, PR readiness, merge readiness, or explicit repo-policy gates.
 
 See [runtime compatibility](../docs/runtime-compatibility.md) for the Desktop-to-CLI fallback mapping.

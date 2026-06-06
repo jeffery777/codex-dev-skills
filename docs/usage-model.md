@@ -26,7 +26,7 @@ Good fits:
 - Task routing when the user wants Codex to choose whether to plan, implement, review, continue, hand off, or stop.
 - An orchestrated review closure loop for a small patch.
 - One bounded milestone capability, such as an MVP import-validation scope.
-- Continuing a larger bounded task by selecting the next safe unit of work and preparing a prompt for a later session or worker.
+- Continuing a larger bounded task by selecting the next safe unit of work and preparing a prompt, task brief, continuation prompt, or sequential execution path.
 - A docs sync after verified behavior changes.
 - A normal merge review or formal branch readiness gate after implementation, verification, and review evidence exist.
 
@@ -48,7 +48,7 @@ The workflows can carry local work to PR readiness, but they intentionally stop 
 - commit, push, release, deploy, or merge
 - material security, privacy, data, migration, payment, or permission risk
 
-Shared workflows can prepare prompts and worker briefs for future work, but actually opening a new Codex conversation is runtime-specific. Use Codex Desktop delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator only when that runtime is available and intentionally selected.
+Shared workflows can prepare prompts, task briefs, continuation prompts, or sequential execution paths for future work, but actually opening a new Codex conversation is runtime-specific. Use Codex Desktop worker delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator only when that runtime is available and intentionally selected.
 
 For small or single-task work, prefer the smallest direct skill such as `implementation-slice`, `planning`, or `code-review`. `project-orchestrator` may still be used as a router, but it should downgrade a clear single task to the matching focused workflow instead of forcing a project-level delivery loop.
 
