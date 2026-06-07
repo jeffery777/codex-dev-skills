@@ -6,7 +6,11 @@
 
 `codex-dev-skills` is an OSS maintenance workflow pack for OpenAI Codex CLI and Codex Desktop.
 
-It helps maintainers delegate repeatable software development work to Codex with clear read-before-write behavior, scoped implementation, documentation updates, code review, orchestrated review closure, delivery gates, and merge readiness checks.
+It helps maintainers move beyond one-off prompts. Instead of manually re-briefing every task, deciding when to open a fresh conversation, and stitching review or merge gates together by hand, teams can combine reusable skills, formal gates, and Codex Desktop thread-delegation boundaries to run bounded implementation, review, handoff, and release-readiness workflows more consistently.
+
+The current roadmap milestone includes a completed Desktop runtime wrapper V1 bounded helper path for thread-delegation-oriented workflows. The helpers cover caller-supplied capability evidence normalization, compatibility checks, planner/preflight/gate evidence, non-live executor request assembly, and a tightly scoped live `create_thread` smoke boundary that requires exact human approval. In practice, this bridges Codex's task-level strengths with the maintainer work needed to manage context, delegation, review closure, and merge readiness across multiple bounded conversations.
+
+The wrapper path does not turn Codex into an unattended release bot. It keeps human approval, target validation, review evidence, Desktop runtime boundaries, platform writes, and release gates explicit.
 
 This is not a general prompt collection. It is a curated set of public, reusable workflow contracts for open source and team repositories.
 
@@ -63,6 +67,12 @@ These skills work best when the target repository keeps durable project context 
 The workflows are not limited to single task-id execution. When scope is clear, they can advance a bounded milestone slice, such as one MVP capability area, through discovery, planning, implementation, verification, review, documentation sync, and PR readiness.
 
 Global Codex rules add useful baseline safety, while repo-level files define the project-specific source of truth. See `docs/usage-model.md` for the recommended project artifacts, delivery scope, and global-rule layering model.
+
+For adoption examples that pair well with this repository:
+
+- [examples/global-codex-profile.md](examples/global-codex-profile.md) shows a reusable user-level baseline for `~/.codex/AGENTS.md`.
+- [examples/project-agents-overlay.md](examples/project-agents-overlay.md) shows how a repository can layer project-specific rules without weakening global safeguards.
+- [examples/project-workflow-overlay.md](examples/project-workflow-overlay.md) shows a compact project workflow overlay for delegated delivery, review closure, PR readiness, and release/tag gates.
 
 ## Usage Examples
 
