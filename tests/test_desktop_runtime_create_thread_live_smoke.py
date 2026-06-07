@@ -292,7 +292,13 @@ class CreateThreadLiveSmokeTests(unittest.TestCase):
     def test_missing_returned_thread_id_and_pending_worktree_id_stops(self):
         response = live_smoke.run_create_thread_live_smoke(
             valid_request(),
-            create_thread_callable=successful_callable(response={"status": "created"}),
+            create_thread_callable=successful_callable(
+                response={
+                    "status": "created",
+                    "private_runtime_state_read": False,
+                    "external_write_performed": False,
+                }
+            ),
         )
 
         self.assertEqual(response["status"], "stopped")
@@ -304,12 +310,60 @@ class CreateThreadLiveSmokeTests(unittest.TestCase):
         response = live_smoke.run_create_thread_live_smoke(
             valid_request(),
             create_thread_callable=successful_callable(
-                response={"thread_id": "thread_123", "status": "finished"}
+                response={
+                    "thread_id": "thread_123",
+                    "status": "finished",
+                    "private_runtime_state_read": False,
+                    "external_write_performed": False,
+                }
             ),
         )
 
         self.assertEqual(response["status"], "stopped")
         self.assertEqual(response["failure_class"], "returned_status_invalid")
+
+    def test_runtime_response_must_explicitly_report_no_private_state_or_external_write(self):
+        cases = (
+            (
+                {"thread_id": "thread_123", "status": "created"},
+                "forbidden_private_runtime_state",
+            ),
+            (
+                {
+                    "thread_id": "thread_123",
+                    "status": "created",
+                    "private_runtime_state_read": "false",
+                    "external_write_performed": False,
+                },
+                "forbidden_private_runtime_state",
+            ),
+            (
+                {
+                    "thread_id": "thread_123",
+                    "status": "created",
+                    "private_runtime_state_read": False,
+                },
+                "external_write_request",
+            ),
+            (
+                {
+                    "thread_id": "thread_123",
+                    "status": "created",
+                    "private_runtime_state_read": False,
+                    "external_write_performed": "false",
+                },
+                "external_write_request",
+            ),
+        )
+        for runtime_response, failure_class in cases:
+            with self.subTest(runtime_response=runtime_response):
+                response = live_smoke.run_create_thread_live_smoke(
+                    valid_request(),
+                    create_thread_callable=successful_callable(response=runtime_response),
+                )
+
+                self.assertEqual(response["status"], "stopped")
+                self.assertEqual(response["failure_class"], failure_class)
 
     def test_successful_injected_live_smoke_response_returns_ready_and_audit_not_completed(self):
         calls = []
@@ -336,7 +390,12 @@ class CreateThreadLiveSmokeTests(unittest.TestCase):
         response = live_smoke.run_create_thread_live_smoke(
             valid_request(),
             create_thread_callable=successful_callable(
-                response={"pendingWorktreeId": "pending_123", "status": "queued"}
+                response={
+                    "pendingWorktreeId": "pending_123",
+                    "status": "queued",
+                    "private_runtime_state_read": False,
+                    "external_write_performed": False,
+                }
             ),
         )
 
@@ -353,6 +412,8 @@ class CreateThreadLiveSmokeTests(unittest.TestCase):
                     "thread_id": "thread_123",
                     "pendingWorktreeId": "pending_123",
                     "status": "created",
+                    "private_runtime_state_read": False,
+                    "external_write_performed": False,
                 }
             ),
         )
