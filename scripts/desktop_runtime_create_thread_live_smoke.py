@@ -623,17 +623,17 @@ def _validate_runtime_response(request: dict[str, Any], runtime_response: Any) -
             str(runtime_response.get("message") or runtime_response.get("status")),
         )
 
-    if _as_bool(runtime_response.get("private_runtime_state_read")) is True:
+    if _as_bool(runtime_response.get("private_runtime_state_read")) is not False:
         return _stopped(
             request,
             "forbidden_private_runtime_state",
-            "create_thread response must not report private_runtime_state_read: true.",
+            "create_thread response must report private_runtime_state_read: false.",
         )
-    if _as_bool(runtime_response.get("external_write_performed")) is True:
+    if _as_bool(runtime_response.get("external_write_performed")) is not False:
         return _stopped(
             request,
             "external_write_request",
-            "create_thread response must not report external_write_performed: true.",
+            "create_thread response must report external_write_performed: false.",
         )
 
     returned_status = runtime_response.get("status")
