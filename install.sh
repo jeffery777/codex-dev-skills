@@ -188,7 +188,7 @@ group_skills() {
     codex-review-workflow)
       printf '%s\n' code-review code-review-deep docs-review merge-review merge-review-deep ;;
     codex-delivery-workflow)
-      printf '%s\n' planning project-delivery project-orchestrator implementation-slice docs-update ;;
+      printf '%s\n' planning milestone-continuation project-delivery project-orchestrator implementation-slice docs-update ;;
     desktop-delivery-workflow)
       printf '%s\n' desktop-project-delivery desktop-thread-delegation desktop-spec-plan-gate desktop-implementation-gate desktop-pr-merge-gate ;;
   esac

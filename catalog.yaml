@@ -65,6 +65,7 @@ groups:
     depends_on: [shared-review-gates]
     skills:
       - source: skills/planning
+      - source: skills/milestone-continuation
       - source: skills/project-delivery
       - source: skills/project-orchestrator
       - source: skills/implementation-slice
