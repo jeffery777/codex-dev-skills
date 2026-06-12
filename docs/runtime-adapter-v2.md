@@ -32,6 +32,20 @@ A future adapter may use only these sources:
 If a source is not documented, not configured, or not visible as an installed capability, it is unavailable.
 Caller-supplied metadata is evidence to normalize, not permission to call the capability. If action classification, required request fields, response fields, version evidence, capability source, or `last_verified` is missing, the wrapper must stop or report the capability unavailable instead of guessing.
 
+## Contract Family Boundary
+
+Facts last verified on 2026-06-12:
+
+- Desktop app tools are app-level tools exposed by Codex Desktop. Current thread-tool evidence includes `create_thread`, `read_thread`, `send_message_to_thread`, and `fork_thread`.
+- Desktop `create_thread` requires `prompt` and `target`; `target` is a `project` or `projectless` union, with project targets carrying `projectId` plus a local or worktree `environment`. `model` and `thinking` are optional.
+- Desktop `read_thread` requires `threadId` and supports optional `turnLimit`, `cursor`, `includeOutputs`, and `maxOutputCharsPerItem`.
+- Desktop `send_message_to_thread` requires `threadId` and `prompt`; `model` and `thinking` are optional.
+- Desktop `fork_thread` accepts optional `threadId` and optional `environment`.
+- `codex app-server` is a separate JSON-RPC interface, with methods such as `thread/start`, `thread/read`, `thread/fork`, and `turn/start`. Its initialization, transport/auth handling, request fields, and response envelopes are not interchangeable with Desktop app tools.
+- The Codex SDK wraps app-server. It is not evidence that this repository already implements a CLI `create_thread` path.
+
+This V2 boundary remains documentation only. It does not introduce an app-server client, SDK wrapper, daemon, sidecar, MCP server, broad runtime adapter, UI scraping path, Desktop private runtime-state access, or a CLI/default live thread call.
+
 ## Contract Version Tracking
 
 Before a future adapter or wrapper calls a runtime thread tool or documented API, it must keep a small compatibility record for the exact underlying contract it depends on. This record is documentation and audit evidence; it is not permission to implement a wrapper, daemon, MCP server, app-server client, or Desktop runtime integration.
@@ -63,12 +77,13 @@ runtime_contracts:
     underlying_contract_version: "version unavailable"
     capability_source: "active tool list captured by the current runtime"
     request_shape_minimum:
-      required: ["prompt"]
-      optional_used: ["title", "repository", "branch"]
+      required: ["prompt", "target"]
+      target: "project or projectless; project targets include projectId and local/worktree environment"
+      optional_used: ["model", "thinking"]
     response_shape_minimum:
-      required: ["thread_id or pending_worktree_id", "status"]
+      required: ["threadId or thread_id or pendingWorktreeId", "status"]
       errors: ["message"]
-    last_verified: "YYYY-MM-DD"
+    last_verified: "2026-06-12"
 ```
 
 ## Prohibited Sources

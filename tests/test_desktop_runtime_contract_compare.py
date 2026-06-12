@@ -26,17 +26,23 @@ def old_contract(action="read-thread", **overrides):
         "read-thread": "read-only",
     }
     required_by_action = {
-        "create-thread": ["prompt"],
-        "fork-thread": ["thread_id", "prompt"],
-        "send-message": ["thread_id", "message"],
-        "read-thread": ["thread_id"],
+        "create-thread": ["prompt", "target"],
+        "fork-thread": [],
+        "send-message": ["threadId", "prompt"],
+        "read-thread": ["threadId"],
+    }
+    response_by_action = {
+        "create-thread": ["status", "threadId or thread_id or pendingWorktreeId"],
+        "fork-thread": ["status", "threadId"],
+        "send-message": ["status", "threadId"],
+        "read-thread": ["status", "threadId"],
     }
     contract = {
         "action": action,
         "tool_or_api": tool_by_action[action],
         "classification": classification_by_action[action],
         "required_request_fields": required_by_action[action],
-        "minimum_response_fields": ["status", "thread_id"],
+        "minimum_response_fields": response_by_action[action],
         "capability_source": "active tool list",
         "contract_version": "version unavailable",
         "last_verified": today,
@@ -113,7 +119,7 @@ class ContractCompareTests(unittest.TestCase):
         response = contract_compare.compare_contract_evidence(
             compare_request(
                 new_evidence=evidence(
-                    capability("read-thread", required_request_fields=["thread_id", "include_metadata"])
+                    capability("read-thread", required_request_fields=["threadId", "includeOutputs"])
                 )
             )
         )
@@ -125,7 +131,7 @@ class ContractCompareTests(unittest.TestCase):
         response = contract_compare.compare_contract_evidence(
             compare_request(
                 new_evidence=evidence(
-                    capability("read-thread", minimum_response_fields=["status", "thread_id", "title"])
+                    capability("read-thread", minimum_response_fields=["status", "threadId", "title"])
                 )
             )
         )
@@ -171,6 +177,15 @@ class ContractCompareTests(unittest.TestCase):
         self.assertIn(
             "State-changing capabilities remain evidence only",
             response["result"]["residual_risk"][2],
+        )
+
+    def test_fork_thread_optional_request_fields_can_compare_without_required_fields(self):
+        response = contract_compare.compare_contract_evidence(compare_request("fork-thread"))
+
+        self.assertEqual(response["status"], "compatible")
+        self.assertEqual(
+            response["contract_comparison"]["old_contract"]["required_request_fields"],
+            [],
         )
 
 

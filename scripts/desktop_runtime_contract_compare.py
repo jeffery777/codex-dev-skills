@@ -114,8 +114,8 @@ def _valid_iso_date(value: Any) -> bool:
     return parsed.isoformat() == value
 
 
-def _string_list(value: Any) -> list[str] | None:
-    if not isinstance(value, list) or not value:
+def _string_list(value: Any, *, allow_empty: bool = False) -> list[str] | None:
+    if not isinstance(value, list) or (not value and not allow_empty):
         return None
     strings: list[str] = []
     for item in value:
@@ -210,13 +210,15 @@ def _validate_contract_record(
     record: dict[str, Any],
     label: str,
 ) -> dict[str, Any] | None:
-    required_request_fields = _string_list(record.get("required_request_fields"))
+    required_request_fields = _string_list(
+        record.get("required_request_fields"), allow_empty=True
+    )
     minimum_response_fields = _string_list(record.get("minimum_response_fields"))
     if required_request_fields is None:
         return _stopped(
             request,
             "missing_contract_evidence",
-            f"{label}.required_request_fields must be a non-empty string list.",
+            f"{label}.required_request_fields must be a string list.",
             record,
         )
     if minimum_response_fields is None:
@@ -300,7 +302,14 @@ def compare_contract_evidence(request: dict[str, Any]) -> dict[str, Any]:
             f"Unsupported requested_action: {request.get('requested_action')}",
         )
 
-    missing = [path for path in _required_old_contract_paths() if _is_missing(_get(request, path))]
+    missing = []
+    for path in _required_old_contract_paths():
+        value = _get(request, path)
+        if path == "old_contract.required_request_fields":
+            if not isinstance(value, list):
+                missing.append(path)
+        elif _is_missing(value):
+            missing.append(path)
     if missing:
         return _stopped(
             request,
@@ -408,8 +417,8 @@ def example_request() -> dict[str, Any]:
             "action": "read-thread",
             "tool_or_api": "read_thread",
             "classification": "read-only",
-            "required_request_fields": ["thread_id"],
-            "minimum_response_fields": ["status", "thread_id"],
+            "required_request_fields": ["threadId"],
+            "minimum_response_fields": ["status", "threadId"],
             "capability_source": "active tool list",
             "contract_version": "version unavailable",
             "last_verified": today,
@@ -422,9 +431,14 @@ def example_request() -> dict[str, Any]:
                     "action": "read-thread",
                     "tool_or_api": "read_thread",
                     "classification": "read-only",
-                    "required_request_fields": ["thread_id"],
-                    "optional_request_fields": ["include_metadata"],
-                    "minimum_response_fields": ["status", "thread_id"],
+                    "required_request_fields": ["threadId"],
+                    "optional_request_fields": [
+                        "turnLimit",
+                        "cursor",
+                        "includeOutputs",
+                        "maxOutputCharsPerItem",
+                    ],
+                    "minimum_response_fields": ["status", "threadId"],
                     "error_response_fields": ["message"],
                     "capability_source": "runtime-reported schema",
                     "contract_version": "version unavailable",

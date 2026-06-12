@@ -36,7 +36,7 @@ The single documented create-thread callable wiring-boundary helper is also comp
 
 The single documented create-thread callable wiring evidence bundle / executor-request assembly helper is also complete as a non-live handoff helper. It accepts ready callable wiring evidence plus caller-supplied target, prompt, authorization, and executor-shell evidence, verifies the exact `create-thread` action and `create_thread` tool/API, repo, remote, branch, expected head, prepared prompt summary/body, exact human-approved bundle marker, `runtime_call_performed: false` before bundling, `desktop_private_runtime_state_read: false`, blocked external writes, absent or false destructive approval, ready wiring evidence, ready shell evidence, and the executor call-site requirements that still must be satisfied by the executor helper. It returns `ready` only when those inputs can be assembled into a complete non-live executor request preview / handoff bundle with `live_desktop_runtime: false`. It does not discover, obtain, import, or invoke a Desktop runtime callable, and it does not execute an injected runner. CLI/default use without wiring evidence returns `fallback`; tests only produce the non-live executor request preview and verify that the executor helper still falls back when no runner is supplied. `fallback` or `stopped` blocks later runtime paths. Shell, proposal, gate, cache, preflight, executor, and wiring evidence cannot replace actual executor call-site target validation, permission/auth handling, response validation, returned thread id validation, or returned status validation.
 
-The single documented create-thread live smoke helper is also complete as the only V1 live path. It accepts exact human approval, caller-supplied target evidence, a fixed read-only audit smoke prompt, blocked external-write/destructive boundaries, call-site validation flags, and a caller-injected runtime-provided documented `create_thread` callable descriptor. With no injected callable, CLI/default/tests return `fallback` and do not call Desktop runtime. With an injected callable, the helper rechecks target identity and authorization intent at the actual call site, classifies permission/auth failures, validates response shape, validates a returned `thread_id` or `pendingWorktreeId`, validates returned status, and labels `ready` only as single live smoke completion. The smoke verifies new Desktop thread creation or queued creation plus prompt delivery; it does not require the audit task to complete and does not authorize comments, review submissions, file edits, commits, pushes, PRs, merges, labels, status changes, remediation, or other external writes.
+The single documented create-thread live smoke helper is also complete as the only V1 live path. It accepts exact human approval, caller-supplied target evidence, a fixed read-only audit smoke prompt, blocked external-write/destructive boundaries, call-site validation flags, and a caller-injected runtime-provided documented `create_thread` callable descriptor. With no injected callable, CLI/default/tests return `fallback` and do not call Desktop runtime. With an injected callable, the helper rechecks target identity and authorization intent at the actual call site, classifies permission/auth failures, validates response shape, validates a returned `threadId`, `thread_id`, or `pendingWorktreeId`, validates returned status when the runtime reports one, and labels `ready` only as single live smoke completion. The smoke verifies new Desktop thread creation or queued creation plus prompt delivery; it does not require the audit task to complete and does not authorize comments, review submissions, file edits, commits, pushes, PRs, merges, labels, status changes, remediation, or other external writes.
 
 Any later Desktop runtime thread call path, remediation flow, platform write, or broader runtime integration remains separate future work requiring new human approval.
 
@@ -87,6 +87,20 @@ Allowed sources for V1 planning and implementation:
 - official or runtime-reported schema evidence when the runtime provides it;
 - caller-supplied documented metadata that has already been gathered outside the helper, such as an active tool list excerpt, connector metadata, official documentation, or runtime-reported schema;
 - ordinary shell and git inspection for repo identity, branch, upstream, dirty state, expected head, and changed-file evidence.
+
+## Current Desktop Contract Evidence
+
+Facts last verified on 2026-06-12:
+
+- Desktop app tools are app-level tools exposed by Codex Desktop. Current relevant tools are `create_thread`, `read_thread`, `send_message_to_thread`, and `fork_thread`.
+- `create_thread` is state-changing and requires `prompt` plus `target`. `target` is a `project` or `projectless` union; project targets carry `projectId` and an `environment` such as local or worktree. Optional request fields include `model` and `thinking`.
+- `read_thread` is read-only and requires `threadId`. Optional request fields include `turnLimit`, `cursor`, `includeOutputs`, and `maxOutputCharsPerItem`.
+- `send_message_to_thread` is state-changing and requires `threadId` plus `prompt`. Optional request fields include `model` and `thinking`.
+- `fork_thread` is state-changing and accepts optional `threadId` and optional `environment`; no prompt delivery should be inferred from fork metadata.
+- `codex app-server` is a separate JSON-RPC contract family with methods such as `thread/start`, `thread/read`, `thread/fork`, and `turn/start`. App-server requires initialization and returns app-server response envelopes, such as `thread` objects for `thread/start` / `thread/fork`, rather than the Desktop app-tool response shape used by the V1 live smoke helper.
+- The Codex SDK wraps app-server. It is not evidence that this repository already implements a CLI `create_thread` runtime path.
+
+V1 helper envelopes may still use repository-internal evidence names such as `target.thread_id` for a caller-supplied thread identifier. Those envelope fields are not Desktop app-tool request fields. Any future true runtime call must map internal evidence to the active Desktop tool or app-server contract at the call site and revalidate the contract before use.
 
 Forbidden sources remain forbidden even when technically accessible:
 
@@ -352,10 +366,10 @@ capabilities:
     tool_or_api: "read_thread"
     classification: "read-only | state-changing"
     request:
-      required: ["thread_id"]
-      optional: ["include_metadata"]
+      required: ["threadId"]
+      optional: ["turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"]
     response:
-      required: ["status", "thread_id"]
+      required: ["status", "threadId"]
       errors: ["message"]
     source: "runtime-reported schema"
     contract_version: "version unavailable"
@@ -406,8 +420,8 @@ old_contract:
   action: "read-thread"
   tool_or_api: "read_thread"
   classification: "read-only"
-  required_request_fields: ["thread_id"]
-  minimum_response_fields: ["status", "thread_id"]
+  required_request_fields: ["threadId"]
+  minimum_response_fields: ["status", "threadId"]
   capability_source: "active tool list"
   contract_version: "version unavailable"
   last_verified: "YYYY-MM-DD"
@@ -417,8 +431,8 @@ new_capability_evidence:
     - action: "read-thread"
       tool_or_api: "read_thread"
       classification: "read-only"
-      required_request_fields: ["thread_id"]
-      minimum_response_fields: ["status", "thread_id"]
+      required_request_fields: ["threadId"]
+      minimum_response_fields: ["status", "threadId"]
       capability_source: "runtime-reported schema"
       contract_version: "version unavailable"
       last_verified: "YYYY-MM-DD"
@@ -473,8 +487,8 @@ capability_evidence:
     - action: "create-thread"
       tool_or_api: "create_thread"
       classification: "state-changing"
-      required_request_fields: ["prompt"]
-      minimum_response_fields: ["status", "thread_id"]
+      required_request_fields: ["prompt", "target"]
+      minimum_response_fields: ["status", "threadId or thread_id or pendingWorktreeId"]
       capability_source: "active tool list"
       contract_version: "version unavailable"
       last_verified: "YYYY-MM-DD"
@@ -570,7 +584,7 @@ permission_failure_handling:
 runtime_response_validation:
   requirements_declared: true
   satisfied_by_preflight_or_cache: false
-  minimum_response_fields: ["status", "thread_id"]
+  minimum_response_fields: ["status", "threadId or thread_id or pendingWorktreeId"]
 current_session_identity:
   marker_type: "current-session"
   marker: "current-session scoped"
@@ -660,7 +674,7 @@ executor_contract:
   response_validation:
     required_at_call_site: true
     satisfied_by_prior_evidence: false
-    minimum_response_fields: ["status", "thread_id"]
+    minimum_response_fields: ["status", "threadId or thread_id or pendingWorktreeId"]
   human_approval_boundary:
     required_before_executor_use: true
     scope: "proposal-helper-only-no-runtime-call"
@@ -1075,8 +1089,8 @@ capability_evidence:
     - action: "read-thread"
       tool_or_api: "read_thread"
       classification: "read-only"
-      required_request_fields: ["thread_id"]
-      minimum_response_fields: ["status", "thread_id"]
+      required_request_fields: ["threadId"]
+      minimum_response_fields: ["status", "threadId"]
       capability_source: "active tool list"
       contract_version: "version unavailable"
       last_verified: "YYYY-MM-DD"
@@ -1295,8 +1309,8 @@ old_contract:
   action: "read-thread"
   tool_or_api: "read_thread"
   classification: "read-only"
-  required_request_fields: ["thread_id"]
-  minimum_response_fields: ["status", "thread_id"]
+  required_request_fields: ["threadId"]
+  minimum_response_fields: ["status", "threadId"]
   capability_source: "runtime-reported schema"
   contract_version: "version unavailable"
   last_verified: "YYYY-MM-DD"
@@ -1434,7 +1448,7 @@ Definition of done for that slice:
 - It verifies thread creation or queued creation plus prompt delivery only.
 - It reports the audit task as not completed / not required.
 - It does not read Desktop private runtime state.
-- It requires the runtime response to explicitly report `private_runtime_state_read: false` and `external_write_performed: false`.
+- It accepts raw Desktop responses that omit `private_runtime_state_read` and `external_write_performed`, while still rejecting those fields if they are present and not boolean `false`.
 - It does not add a skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
 - It documents and tests that prior evidence is not call-site target validation, permission/auth handling, or runtime response validation.
 
@@ -1465,7 +1479,7 @@ For the completed first implementation slices:
 - create-thread documented callable executor tests proving a complete non-live injected callable envelope returns `ready`, missing/fallback/stopped shell evidence blocks, wrong action/tool stops, missing repo/remote/branch/expected-head or prompt evidence stops, external-write or destructive-action approval stops, runtime-call-performed or private-runtime-state-read evidence before execution stops, prior proposal/gate/cache/preflight/shell evidence cannot replace call-site target validation/permission handling/response validation, missing executor implementation marker returns `fallback`, auth/permission failures are classified and returned, malformed adapter response stops, missing returned thread id stops, invalid returned status stops, successful injected adapter execution is clearly labeled as injected adapter execution rather than Desktop runtime execution, private runtime-looking paths and source hints are rejected, no additional Desktop thread tool call shapes are introduced, and no daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
 - create-thread callable wiring-boundary tests proving a complete caller-supplied documented descriptor returns `ready`, CLI/default without a descriptor returns `fallback`, missing/fallback/stopped previous executor evidence blocks, wrong action/tool stops, missing repo/remote/branch/expected-head or prompt evidence stops, external-write or destructive-action approval stops, runtime-call-performed or private-runtime-state-read evidence before wiring stops, prior evidence cannot replace executor call-site target validation/permission handling/response validation, missing callable wiring marker returns `fallback`, malformed descriptors stop, non-`create_thread` descriptors stop, private runtime-looking paths and source hints are rejected, successful non-live wiring is clearly labeled as callable wiring readiness rather than Desktop runtime execution, tests do not invoke live Desktop runtime, no additional Desktop thread tool call shapes are introduced, and no daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
 - create-thread callable bundle / executor-request assembly tests proving a complete ready wiring evidence envelope returns `ready` and produces a non-live executor request preview, CLI/default without wiring evidence returns `fallback`, missing/fallback/stopped wiring evidence blocks, wrong action/tool stops, missing repo/remote/branch/expected-head or prompt evidence stops, external-write or destructive-action approval stops, runtime-call-performed or private-runtime-state-read evidence before bundling stops, prior evidence cannot replace executor call-site target validation/permission handling/response validation, missing callable bundle marker returns `fallback`, malformed wiring evidence stops, generated previews cannot contain a runner, callable object, or direct runtime call shape, non-`create_thread` descriptors stop, private runtime-looking paths and source hints are rejected, successful bundles are clearly labeled as executor request preview readiness rather than Desktop runtime execution, tests do not invoke live Desktop runtime or execute an injected runner, no additional Desktop thread tool call shapes are introduced, and no daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
-- create-thread live smoke tests proving CLI/default without a live callable returns `fallback`, missing exact human approval returns `fallback`, wrong action/tool and unsupported `fork_thread` / `send_message_to_thread` / `read_thread` descriptors stop, missing repo/remote/branch/expected-head or smoke prompt evidence stops, external-write or destructive-action approval stops, runtime-call-performed or private-runtime-state-read evidence before smoke stops, prior evidence cannot replace call-site target validation/permission handling/response validation, permission/auth failures from the injected callable are classified and returned, malformed runtime responses stop, missing or non-boolean private-runtime-state/external-write response flags stop, missing returned thread id and `pendingWorktreeId` stops, invalid returned status stops, successful injected live smoke responses return `ready` while labeling the audit task as not completed / not required, generated smoke prompts include read-only audit boundaries and forbid comments/reviews/file edits/commit/push/PR/merge/label/status mutation and platform writes, tests do not invoke live Desktop runtime by default, no additional Desktop thread tool call shapes are introduced, and no daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
+- create-thread live smoke tests proving CLI/default without a live callable returns `fallback`, missing exact human approval returns `fallback`, wrong action/tool and unsupported `fork_thread` / `send_message_to_thread` / `read_thread` descriptors stop, missing repo/remote/branch/expected-head or smoke prompt evidence stops, external-write or destructive-action approval stops, runtime-call-performed or private-runtime-state-read evidence before smoke stops, prior evidence cannot replace call-site target validation/permission handling/response validation, permission/auth failures from the injected callable are classified and returned, malformed runtime responses stop, explicit non-boolean/true private-runtime-state or external-write response flags stop, missing returned `threadId`, `thread_id`, and `pendingWorktreeId` stops, invalid returned status stops when status is present, successful injected live smoke responses for raw `threadId`, legacy `thread_id`, and `pendingWorktreeId` return `ready` while labeling the audit task as not completed / not required, generated smoke prompts include read-only audit boundaries and forbid comments/reviews/file edits/commit/push/PR/merge/label/status mutation and platform writes, tests do not invoke live Desktop runtime by default, no additional Desktop thread tool call shapes are introduced, and no daemon, MCP server, app-server client, sidecar, or background service claims are introduced;
 - docs review for public claims and runtime compatibility;
 - code review gate only if the implementation slice is used for commit or PR readiness.
 

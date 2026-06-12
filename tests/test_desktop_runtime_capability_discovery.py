@@ -27,11 +27,11 @@ def valid_request(**overrides):
                 "tool_or_api": "read_thread",
                 "classification": "read-only",
                 "request": {
-                    "required": ["thread_id"],
-                    "optional": ["include_metadata"],
+                    "required": ["threadId"],
+                    "optional": ["turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
                 },
                 "response": {
-                    "required": ["status", "thread_id"],
+                    "required": ["status", "threadId"],
                     "errors": ["message"],
                 },
                 "source": "active tool list",
@@ -59,7 +59,7 @@ class CapabilityDiscoveryTests(unittest.TestCase):
         self.assertEqual(response["status"], "available")
         self.assertIsNone(response["failure_class"])
         self.assertEqual(response["capabilities"][0]["classification"], "read-only")
-        self.assertEqual(response["capabilities"][0]["required_request_fields"], ["thread_id"])
+        self.assertEqual(response["capabilities"][0]["required_request_fields"], ["threadId"])
         self.assertIn("did not call", response["result"]["residual_risk"][1])
 
     def test_valid_state_changing_metadata_is_normalized_without_calling(self):
@@ -68,14 +68,34 @@ class CapabilityDiscoveryTests(unittest.TestCase):
         capability["action"] = "create-thread"
         capability["tool_or_api"] = "create_thread"
         capability["classification"] = "state-changing"
-        capability["request"]["required"] = ["prompt"]
-        capability["response"]["required"] = ["status", "thread_id"]
+        capability["request"]["required"] = ["prompt", "target"]
+        capability["request"]["optional"] = ["model", "thinking"]
+        capability["response"]["required"] = ["status", "threadId or thread_id or pendingWorktreeId"]
 
         response = discovery.normalize_capability_metadata(request)
 
         self.assertEqual(response["status"], "available")
         self.assertEqual(response["capabilities"][0]["classification"], "state-changing")
         self.assertEqual(response["capabilities"][0]["tool_or_api"], "create_thread")
+
+    def test_fork_thread_optional_only_metadata_is_normalized_without_calling(self):
+        request = valid_request()
+        capability = request["capabilities"][0]
+        capability["action"] = "fork-thread"
+        capability["tool_or_api"] = "fork_thread"
+        capability["classification"] = "state-changing"
+        capability["request"]["required"] = []
+        capability["request"]["optional"] = ["threadId", "environment"]
+        capability["response"]["required"] = ["status", "threadId"]
+
+        response = discovery.normalize_capability_metadata(request)
+
+        self.assertEqual(response["status"], "available")
+        self.assertEqual(response["capabilities"][0]["required_request_fields"], [])
+        self.assertEqual(
+            response["capabilities"][0]["optional_request_fields"],
+            ["threadId", "environment"],
+        )
 
     def test_metadata_reported_unavailable_returns_unavailable(self):
         response = discovery.normalize_capability_metadata(
