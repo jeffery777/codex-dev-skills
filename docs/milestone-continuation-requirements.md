@@ -14,6 +14,8 @@
 
 - 讓使用者可以指定一個 bounded milestone，例如 `MVP1`。
 - 讓 agent 每次被喚醒時，能從 repo 內 durable artifacts 重新判斷目前 milestone 與 task 狀態。
+- 讓 agent 能區分權威狀態、快取狀態，以及其他 thread 正在執行中的 in-flight 狀態。
+- 若 task 被交給其他 thread 或 worker，避免因為該 worker 尚未寫回 durable artifacts 而重複派工或誤判 stalled。
 - 若目前 task 未完成，繼續推進目前 task。
 - 若目前 task 已完成，標記或確認完成狀態，並選出下一個最小 ready task。
 - 若 milestone 已達成，停止並回報完成證據。
@@ -27,6 +29,7 @@
 - 不自行實作排程器、daemon、background service、MCP server、Desktop runtime adapter、app-server client，或任何未公開 Desktop runtime 整合。
 - 不讀取或修改 Codex Desktop 私有 runtime state，例如 local databases、logs、sessions、auth files、caches 或 app state。
 - 不自動 commit、push、建立 PR、merge、deploy、發布、送出 review、留言到平台，或執行 destructive action，除非使用者針對該精確動作另行授權。
+- 不把 cache、聊天摘要、worker 自述進度，或 runtime thread summary 當成唯一 source of truth。
 
 ## 排程與提示詞行為
 
@@ -59,18 +62,90 @@
 
 若目標 repo 尚未具備足夠 source-of-truth artifacts，此能力應先產生或要求建立必要規格，而不是直接開始自動推進。
 
+## Durable State, Cache, And In-Flight State
+
+Milestone continuation 必須區分三種狀態來源：
+
+- **Durable source of truth**：milestone spec、task manifest、status docs、review evidence、git state、PR 狀態。這些資料是完成判斷與任務選擇的權威來源。
+- **Working cache**：file hashes、HEAD SHA、上次檢查時間、current task、worker thread ids、上次 verification 摘要、已知 blockers。cache 只能用來加速定位與決定本輪要讀哪些檔案，不可取代 source of truth。
+- **In-flight runtime state**：其他 Codex thread 或 worker 正在執行中的狀態。這補足 worker 尚未寫回 durable artifacts 時的觀察缺口，但不可取代 task manifest、git diff、review evidence 或 verification。
+
+每次 wakeup 可先讀 cache，但必須檢查 cache 是否仍對應目前 branch、HEAD、task manifest hash、milestone spec hash 與 current task summary hash。若 cache 過期、缺欄位、與 source of truth 衝突，或無法判斷 worker 狀態，必須丟棄 cache 或降級為完整 bootstrap。
+
+Cache 的建議最小欄位：
+
+```yaml
+cache_version: 1
+milestone: MVP1
+repo:
+  branch: main
+  head_sha: abc123
+watched_files:
+  AGENTS.md: sha256:...
+  docs/milestones/MVP1.md: sha256:...
+  docs/tasks/MVP1.yaml: sha256:...
+  docs/status/current-task-summary.md: sha256:...
+current_task:
+  id: MVP1-T003
+  status: in_progress
+  last_checked_at: ...
+worker_threads:
+  - task_id: MVP1-T003
+    thread_id: ...
+    status: running
+blockers: []
+next_candidates:
+  - MVP1-T004
+```
+
+## Task Claim, Lease, And Worker Observation
+
+若目前 task 被交給其他 thread 或 worker，主 orchestrator 必須在派工前或派工時寫入或準備寫入 durable claim / lease。沒有 claim / lease 時，不應把「worker thread 已存在」視為安全狀態。
+
+建議 task manifest 或 status artifact 至少能表示：
+
+```yaml
+task_id: MVP1-T003
+status: in_progress
+owner:
+  type: codex_thread
+  thread_id: ...
+  started_at: ...
+  lease_expires_at: ...
+last_known_state: dispatched
+last_observed_at: ...
+```
+
+Lease 規則：
+
+- `ready` task 在交給 worker 前必須被 claim，避免重複派工。
+- `in_progress` task 若 lease 尚未過期，主 orchestrator 不應重派同一 task。
+- `in_progress` task 若 lease 過期，必須先觀察 worker thread 或檢查 durable artifacts，再決定是等待、延長 lease、標記 blocked/stale，或停下請人決策。
+- worker 完成時必須提供 durable handoff，例如 branch、diff、commit、PR、status report、verification evidence，或 task-continuation report。
+
+若 runtime 支援 `read_thread` 或等價 thread inspection，主 orchestrator 可用它補足 in-flight 狀態，例如判斷 worker 是 running、blocked、done、failed 或 stale。`read_thread` 的結果是 observation evidence，不是完成證據；完成仍需以 task DoD、diff、verification、review evidence 與 durable handoff 判斷。
+
+若 runtime 不支援 `read_thread`，MVP 必須限制為以下其中之一：
+
+- single-worker / current-thread sequential execution；
+- worker 必須先寫 durable claim，並在重要階段寫 worker heartbeat artifact；
+- 主 orchestrator 在 lease 過期或狀態不明時停下請人決策，而不是自動重派。
+
 ## 每輪執行流程
 
-1. 重新讀取 repo instructions、milestone spec、task manifest、status docs、review evidence、templates、policies 與 git state。
-2. 確認目標 milestone 是否仍有效，且未被 source-of-truth conflict 阻斷。
-3. 分類 task 狀態：`done`、`in_progress`、`ready`、`blocked`、`unsafe`、`unknown`。
-4. 用 task 的 DoD 與 verification commands 判斷目前 task 是否完成。
-5. 若目前 task 未完成，選擇最小安全行動繼續目前 task。
-6. 若目前 task 已完成，更新或準備更新 task 狀態，並選出下一個最小 ready task。
-7. 若下一步適合目前 thread，依照 `project-orchestrator` 與 `project-delivery` 繼續。
-8. 若下一步適合交接給新 session 或 worker，使用 `task-continuation` 準備 bounded prompt 或 task brief。
-9. 若在 Codex Desktop 中需要開新 thread，使用 `desktop-thread-delegation` 的規則，並在明確授權後才呼叫 runtime thread tool。
-10. 執行後跑最小相關驗證，檢查 diff，並回報目前 milestone、task、verification、remaining risk 與下一步。
+1. 重新讀取或驗證 cache 對應的 repo instructions、milestone spec、task manifest、status docs、review evidence、templates、policies 與 git state。
+2. 若 cache 缺失、過期或與 source of truth 衝突，執行完整 bootstrap。
+3. 確認目標 milestone 是否仍有效，且未被 source-of-truth conflict 阻斷。
+4. 分類 task 狀態：`done`、`in_progress`、`ready`、`blocked`、`unsafe`、`unknown`、`stale`。
+5. 若目前 task 有 owner / worker thread，先檢查 claim、lease、last observed state；runtime 支援時使用 `read_thread` 補足 in-flight observation。
+6. 用 task 的 DoD、verification commands、durable handoff 與 review evidence 判斷目前 task 是否完成。
+7. 若目前 task 未完成且 lease 有效，選擇最小安全行動繼續或觀察目前 task，不重複派工。
+8. 若目前 task 未完成但 lease 過期或 worker 狀態不明，停下請人決策，或在明確規則允許時標記 stale 並準備最低風險 recovery。
+9. 若目前 task 已完成，更新或準備更新 task 狀態，釋放 owner/lease，並選出下一個最小 ready task。
+10. 若下一步適合目前 thread，依照 `project-orchestrator` 與 `project-delivery` 繼續。
+11. 若下一步適合交接給新 session 或 worker，使用 `task-continuation` 準備 bounded prompt 或 task brief，並先建立或準備建立 durable claim/lease。
+12. 若在 Codex Desktop 中需要開新 thread、讀取 thread，或傳訊給 thread，使用 `desktop-thread-delegation` 與 runtime thread tool 的規則，並在明確授權後才呼叫。
+13. 執行後跑最小相關驗證，檢查 diff，更新或準備更新 durable state/cache，並回報目前 milestone、task、verification、remaining risk 與下一步。
 
 ## Task Selection Rules
 
@@ -79,6 +154,8 @@
 - 不因為排程自動化而放寬 human gate。
 - 不把「測試通過」單獨視為 task 完成；仍需符合 DoD、scope、review 或 docs sync 需求。
 - 若多個 task 都 ready，選擇 blast radius 最小且驗證最清楚的 task。
+- 不選擇已被有效 lease claim 的 task，除非 lease 已明確釋放、完成、失效且經過 recovery 判斷。
+- 不因 worker thread 尚未寫回 artifacts 就假設 task 未開始；必須檢查 claim/lease 或 runtime observation。
 
 ## Human Gates
 
@@ -92,6 +169,7 @@
 - 涉及 material security、privacy、data、migration、payment、permission 或 deployment risk
 - 驗證不足以支撐高風險變更
 - Desktop thread tool contract、permission、target identity、branch、worktree 或 response shape 不清楚
+- worker thread 狀態不明、lease 過期且缺少足夠 recovery evidence
 - 只有 unpublished Desktop internals、private runtime state、UI scraping、daemon 或 sidecar path 可用
 
 ## 與現有技能的關係
@@ -127,11 +205,13 @@ Desktop-only behavior:
 
 - 使用 heartbeat 或 automation 週期性喚醒 thread。
 - 在 runtime tool 存在且使用者授權後，建立、fork、讀取或傳訊給 Desktop thread。
+- 使用 `read_thread` 或等價 thread inspection 補足 worker in-flight state，但仍以 durable artifacts 判斷完成與整合 readiness。
 
 CLI fallback:
 
 - 不宣稱 CLI 可以自行開 Desktop thread。
 - 產生 paste-ready prompt、task brief、continuation prompt，或在目前 CLI session 內走 sequential execution path。
+- 若無 thread inspection 能力，要求 task claim/lease 與 worker heartbeat artifacts，或限制為 current-session sequential execution。
 
 ## Suggested Invocation Prompt
 
@@ -139,10 +219,15 @@ CLI fallback:
 Use milestone-continuation for MVP1.
 
 Every time this thread wakes up, read the repository instructions, milestone spec,
-task manifest, status docs, review evidence, and current git state.
+task manifest, status docs, review evidence, cache metadata, active task leases,
+and current git state.
 
 Check whether the current task is complete using its DoD and verification commands.
-If it is incomplete, continue the current task using the smallest safe action.
+If it is assigned to a worker thread, inspect its claim/lease and use read_thread
+when available to observe in-flight state before deciding whether to wait, recover,
+or stop for human decision.
+If it is incomplete and safe to continue, continue the current task using the
+smallest safe action.
 If it is complete, update or prepare the task state update and choose the next
 smallest ready task.
 
@@ -171,5 +256,8 @@ The scheduling instruction configures the runtime wakeup cadence; the skill defi
 - The feature composes with existing continuation, delivery, orchestration, and Desktop thread delegation skills.
 - The feature preserves existing human gates and Desktop runtime boundaries.
 - The feature does not depend on chat memory as source of truth.
+- The feature explicitly handles in-flight worker state with claim/lease rules.
+- The feature explains when `read_thread` is required for cross-thread supervision and when a durable-artifact-only fallback is acceptable.
+- The feature defines cache as an optimization with invalidation rules, not as source of truth.
 - The feature supports user-specified cadence, such as 5 minutes or 10 minutes, without hardcoding a cadence in the skill.
 - The feature has a clear CLI fallback and does not claim Desktop-only behavior is available in CLI.
