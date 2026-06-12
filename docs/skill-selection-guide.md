@@ -16,6 +16,7 @@ This compact guide helps new users choose the smallest skill or gate that matche
 | A branch needs a formal readiness decision before PR handoff, merge readiness, or final approval. | `merge-readiness-gate` | Formal branch readiness evidence-and-decision layer that summarizes evidence, blockers, residual risk, and the human approval boundary. |
 | Codex should classify the next safe action or run a bounded review/fix closure loop. | `project-orchestrator` | Routes between planning, implementation, docs update, review primitives, formal gates, continuation, or human decision. |
 | Codex should carry a bounded objective through discovery, implementation, verification, review, docs sync, and PR readiness. | `project-delivery` | Delivery workflow for multi-step but bounded objectives that still stop at the next human gate. |
+| A bounded milestone should be checked and advanced across repeated invocations until complete or blocked. | `milestone-continuation` | Upper-layer loop that checks task completion, selects the next ready task, and routes through existing workflows without owning runtime scheduling. |
 | Codex Desktop should coordinate delegated project work across Desktop threads or workers. | `desktop-project-delivery` | Desktop-only delivery entry point; CLI fallback is `project-delivery` plus explicit prompts, task briefs, continuation prompts, or sequential execution. |
 | Codex Desktop should choose the next safe task and decide whether to continue here or hand off to a new thread. | `desktop-thread-delegation` | Desktop-only workflow guidance that can use runtime thread tools when authorized, while falling back to a prompt, task brief, continuation prompt, or sequential execution path. |
 
@@ -76,8 +77,11 @@ Use orchestration or delivery skills when Codex must decide or coordinate multip
 
 - `project-orchestrator` to choose the next safe action, route work, or run a bounded review closure loop.
 - `project-delivery` to advance a bounded objective through implementation, verification, review, docs sync, and PR readiness.
+- `milestone-continuation` to keep a bounded milestone moving across repeated invocations by checking the current task, selecting the next ready task, and stopping at human gates.
 - `desktop-project-delivery` only when the Desktop runtime is intentionally part of the workflow.
 - `desktop-thread-delegation` when the Desktop runtime may open a new thread, but the main thread must still choose the next safe task and retain review or merge gates.
+
+Use `milestone-continuation` instead of `project-delivery` when the distinctive need is repeated milestone progress from durable task state. Use `project-delivery` directly when the user delegates one bounded objective in a single current run. Use `task-continuation` when the immediate goal is only to choose the next safe task or prepare a handoff prompt.
 
 ## Desktop Thread Delegation
 

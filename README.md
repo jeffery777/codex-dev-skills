@@ -49,6 +49,7 @@ Use the installed skills in Codex by name, for example:
 Use implementation-slice to make this focused parser fix and run the targeted tests.
 Use code-review on the current working tree.
 Use docs-review for the docs-only changes in this branch.
+Use milestone-continuation for MVP1.
 Use merge-review for main..HEAD.
 Use merge-review-deep for the release-sensitive main..HEAD diff.
 Use merge-readiness-gate before PR handoff for main..HEAD. Treat the result as gate evidence only; do not commit, push, merge, deploy, post platform comments, submit reviews, or perform other external writes unless explicitly authorized.
@@ -101,6 +102,7 @@ Use the smallest entry point that matches the request:
 - `code-review` for ordinary read-only review of code or mixed diffs.
 - `project-orchestrator` when Codex should classify the task, choose the next safe action, or decide whether to continue, hand off, review, or stop.
 - `project-delivery` when the objective is larger than one task but still bounded.
+- `milestone-continuation` when a bounded milestone should be checked and advanced across repeated invocations until complete or blocked by a human gate.
 
 If `project-orchestrator` receives a single clear implementation task, it should route to `implementation-slice` semantics and avoid unnecessary project-level planning.
 
@@ -153,6 +155,18 @@ Read the repo plan and acceptance criteria first, split the work into safe slice
 ```
 
 This pattern is useful when a maintainer wants Codex to carry a small capability area forward without granting authority to publish or merge.
+
+Use `milestone-continuation` when a bounded milestone should keep advancing across repeated invocations:
+
+```text
+Use milestone-continuation for MVP1.
+Every time this thread wakes up, read the milestone spec, task manifest, status docs, review evidence, and current git state.
+If the current task is incomplete, continue it with the smallest safe action.
+If it is complete, choose the next smallest ready task.
+Continue until MVP1 is complete or a human gate is reached.
+```
+
+The skill defines what to do after each invocation. Runtime cadence, such as a Codex Desktop heartbeat every 5 or 10 minutes, is configured by the active runtime and is not hardcoded in the skill.
 
 ### Task Continuation
 
@@ -239,6 +253,7 @@ The `read_thread` preflight helper checks read-only evidence readiness without t
 | Skill | Runtime | Purpose |
 | --- | --- | --- |
 | `planning` | shared | Produce scoped implementation plans with assumptions, risks, DoD, and verification. |
+| `milestone-continuation` | shared | Continue a bounded milestone across repeated invocations by checking task completion, choosing the next ready task, and stopping at human gates. |
 | `project-delivery` | shared | Carry a bounded delivery objective through discovery, plan, implementation, review, docs sync, and PR readiness or the next human gate. |
 | `project-orchestrator` | shared | Route bounded work across planning, implementation, review, continuation, handoff, or human gates. |
 | `implementation-slice` | shared | Implement a bounded change after read-only inspection, then verify and inspect the diff. |
@@ -276,6 +291,7 @@ Shared orchestration templates include task briefs, task manifests, next-session
 - [Docs review](examples/docs-review.md)
 - [Orchestrated review closure](examples/orchestrated-review-closure.md)
 - [Multi-step maintenance](examples/multi-step-maintenance.md)
+- [Milestone continuation](examples/milestone-continuation.md)
 - [Task continuation](examples/task-continuation.md)
 - [Desktop thread delegation](examples/desktop-thread-delegation.md)
 - [Runtime adapter boundary](examples/runtime-adapter-boundary.md)
