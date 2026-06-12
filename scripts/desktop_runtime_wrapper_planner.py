@@ -196,8 +196,8 @@ def _valid_iso_date(value: Any) -> bool:
     return parsed.isoformat() == value
 
 
-def _string_list(value: Any) -> list[str] | None:
-    if not isinstance(value, list) or not value:
+def _string_list(value: Any, *, allow_empty: bool = False) -> list[str] | None:
+    if not isinstance(value, list) or (not value and not allow_empty):
         return None
     strings: list[str] = []
     for item in value:
@@ -467,7 +467,9 @@ def _capability_evidence_resolution(request: dict[str, Any]) -> tuple[str, dict[
             ),
         )
 
-    required_request_fields = _string_list(capability.get("required_request_fields"))
+    required_request_fields = _string_list(
+        capability.get("required_request_fields"), allow_empty=True
+    )
     minimum_response_fields = _string_list(capability.get("minimum_response_fields"))
     if required_request_fields is None or minimum_response_fields is None:
         return "stopped", _stopped(

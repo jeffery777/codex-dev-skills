@@ -393,21 +393,27 @@ def _validate_capability_record(
             "read-thread request or response evidence is unclear.",
             capability,
         )
-    if "thread_id" not in required_request_fields:
+    if "threadId" not in required_request_fields and "thread_id" not in required_request_fields:
         return _stopped(
             request,
             "request_shape_changed",
-            "read-thread required request fields must include thread_id.",
+            "read-thread required request fields must include threadId or thread_id.",
             capability,
         )
-    for required_response_field in ("status", "thread_id"):
-        if required_response_field not in minimum_response_fields:
-            return _stopped(
-                request,
-                "response_shape_changed",
-                f"read-thread minimum response fields must include {required_response_field}.",
-                capability,
-            )
+    if "status" not in minimum_response_fields:
+        return _stopped(
+            request,
+            "response_shape_changed",
+            "read-thread minimum response fields must include status.",
+            capability,
+        )
+    if "threadId" not in minimum_response_fields and "thread_id" not in minimum_response_fields:
+        return _stopped(
+            request,
+            "response_shape_changed",
+            "read-thread minimum response fields must include threadId or thread_id.",
+            capability,
+        )
     if capability.get("capability_source") not in CAPABILITY_SOURCES:
         return _stopped(
             request,
@@ -686,9 +692,14 @@ def example_request() -> dict[str, Any]:
         "action": TARGET_ACTION,
         "tool_or_api": TOOL_OR_API,
         "classification": EXPECTED_CLASSIFICATION,
-        "required_request_fields": ["thread_id"],
-        "optional_request_fields": ["include_metadata"],
-        "minimum_response_fields": ["status", "thread_id"],
+        "required_request_fields": ["threadId"],
+        "optional_request_fields": [
+            "turnLimit",
+            "cursor",
+            "includeOutputs",
+            "maxOutputCharsPerItem",
+        ],
+        "minimum_response_fields": ["status", "threadId"],
         "error_response_fields": ["message"],
         "capability_source": "active tool list",
         "contract_version": "version unavailable",
@@ -706,7 +717,7 @@ def example_request() -> dict[str, Any]:
         },
         "read_request": {
             "summary": "Check read-only thread evidence readiness.",
-            "expected_fields": ["status", "thread_id"],
+            "expected_fields": ["status", "threadId"],
         },
         "capability_evidence": {
             "status": "available",

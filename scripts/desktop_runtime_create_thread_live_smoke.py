@@ -7,8 +7,8 @@ actual call-site validation. The CLI default remains non-live and returns
 ``fallback`` because the CLI cannot receive a live Desktop callable.
 
 ``ready`` means only that one live create-thread smoke call completed and the
-runtime returned a validated thread creation status. It does not mean the
-created thread completed the audit task and it does not authorize comments,
+runtime returned a validated thread id or queued worktree id. It does not mean
+the created thread completed the audit task and it does not authorize comments,
 reviews, file edits, commits, pushes, PRs, merges, labels, status changes, or
 other platform writes.
 """
@@ -623,21 +623,25 @@ def _validate_runtime_response(request: dict[str, Any], runtime_response: Any) -
             str(runtime_response.get("message") or runtime_response.get("status")),
         )
 
-    if _as_bool(runtime_response.get("private_runtime_state_read")) is not False:
+    private_runtime_state_read = runtime_response.get("private_runtime_state_read", False)
+    if _as_bool(private_runtime_state_read) is not False:
         return _stopped(
             request,
             "forbidden_private_runtime_state",
-            "create_thread response must report private_runtime_state_read: false.",
+            "create_thread response must omit private_runtime_state_read or report false.",
         )
-    if _as_bool(runtime_response.get("external_write_performed")) is not False:
+    external_write_performed = runtime_response.get("external_write_performed", False)
+    if _as_bool(external_write_performed) is not False:
         return _stopped(
             request,
             "external_write_request",
-            "create_thread response must report external_write_performed: false.",
+            "create_thread response must omit external_write_performed or report false.",
         )
 
     returned_status = runtime_response.get("status")
-    thread_id = runtime_response.get("thread_id")
+    thread_id = runtime_response.get("threadId")
+    if thread_id is None:
+        thread_id = runtime_response.get("thread_id")
     pending_worktree_id = runtime_response.get("pendingWorktreeId")
     if pending_worktree_id is None:
         pending_worktree_id = runtime_response.get("pending_worktree_id")
@@ -650,20 +654,25 @@ def _validate_runtime_response(request: dict[str, Any], runtime_response: Any) -
         return _stopped(
             request,
             "returned_thread_or_pending_worktree_id_invalid",
-            "create_thread response must include thread_id or pendingWorktreeId.",
+            "create_thread response must include threadId, thread_id, or pendingWorktreeId.",
         )
-    if has_thread_id and returned_status not in THREAD_ID_STATUSES:
+    if has_thread_id and returned_status is not None and returned_status not in THREAD_ID_STATUSES:
         return _stopped(
             request,
             "returned_status_invalid",
             "thread_id responses must return status one of: "
             + ", ".join(sorted(THREAD_ID_STATUSES)),
         )
-    if not has_thread_id and has_pending_worktree_id and returned_status not in PENDING_WORKTREE_STATUSES:
+    if (
+        not has_thread_id
+        and has_pending_worktree_id
+        and returned_status is not None
+        and returned_status not in PENDING_WORKTREE_STATUSES
+    ):
         return _stopped(
             request,
             "returned_status_invalid",
-            "pendingWorktreeId responses must return status queued.",
+            "pendingWorktreeId responses must omit status or return queued.",
         )
 
     response = _base_response(request, "ready")

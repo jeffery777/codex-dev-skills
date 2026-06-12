@@ -34,9 +34,9 @@ def read_thread_capability(**overrides):
         "action": "read-thread",
         "tool_or_api": "read_thread",
         "classification": "read-only",
-        "required_request_fields": ["thread_id"],
-        "optional_request_fields": ["include_metadata"],
-        "minimum_response_fields": ["status", "thread_id"],
+        "required_request_fields": ["threadId"],
+        "optional_request_fields": ["turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
+        "minimum_response_fields": ["status", "threadId"],
         "error_response_fields": ["message"],
         "capability_source": "active tool list",
         "contract_version": "version unavailable",
@@ -109,11 +109,11 @@ def discovery_request(**overrides):
                 "tool_or_api": "read_thread",
                 "classification": "read-only",
                 "request": {
-                    "required": ["thread_id"],
-                    "optional": ["include_metadata"],
+                    "required": ["threadId"],
+                    "optional": ["turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
                 },
                 "response": {
-                    "required": ["status", "thread_id"],
+                    "required": ["status", "threadId"],
                     "errors": ["message"],
                 },
                 "source": "active tool list",
@@ -156,7 +156,7 @@ def valid_request(**overrides):
         },
         "read_request": {
             "summary": "Check read-only thread evidence readiness.",
-            "expected_fields": ["status", "thread_id"],
+            "expected_fields": ["status", "threadId"],
         },
         "capability_evidence": capability_evidence(capability),
         "contract_comparison": contract_comparison(capability),
@@ -268,6 +268,24 @@ class ReadThreadPreflightTests(unittest.TestCase):
         self.assertEqual(response["status"], "stopped")
         self.assertEqual(response["failure_class"], "validation_error")
         self.assertIn("target.thread_id", response["result"]["stop_reason"])
+
+    def test_legacy_thread_id_contract_evidence_still_returns_ready(self):
+        capability = read_thread_capability(
+            required_request_fields=["thread_id"],
+            optional_request_fields=["include_metadata"],
+            minimum_response_fields=["status", "thread_id"],
+        )
+
+        response = preflight.preflight_read_thread(
+            valid_request(
+                capability_evidence=capability_evidence(capability),
+                contract_comparison=contract_comparison(capability),
+                read_request__expected_fields=["status", "thread_id"],
+            )
+        )
+
+        self.assertEqual(response["status"], "ready")
+        self.assertIsNone(response["failure_class"])
 
     def test_missing_expected_fields_stops(self):
         response = preflight.preflight_read_thread(valid_request(read_request__expected_fields=[]))

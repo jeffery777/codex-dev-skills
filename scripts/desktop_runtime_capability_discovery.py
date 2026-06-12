@@ -117,8 +117,8 @@ def _valid_iso_date(value: Any) -> bool:
     return parsed.isoformat() == value
 
 
-def _string_list(value: Any) -> list[str] | None:
-    if not isinstance(value, list) or not value:
+def _string_list(value: Any, *, allow_empty: bool = False) -> list[str] | None:
+    if not isinstance(value, list) or (not value and not allow_empty):
         return None
     strings: list[str] = []
     for item in value:
@@ -244,7 +244,11 @@ def normalize_capability_metadata(request: dict[str, Any]) -> dict[str, Any]:
         missing_capability = []
         for path in _required_capability_paths(index):
             local_path = path.split(".", 1)[1]
-            if _is_missing(_get(capability, local_path)):
+            value = _get(capability, local_path)
+            if local_path == "request.required":
+                if not isinstance(value, list):
+                    missing_capability.append(path)
+            elif _is_missing(value):
                 missing_capability.append(path)
         if missing_capability:
             return _stopped("Missing required field(s): " + ", ".join(missing_capability))
@@ -277,11 +281,13 @@ def normalize_capability_metadata(request: dict[str, Any]) -> dict[str, Any]:
                 "missing_contract_evidence",
             )
 
-        required_request_fields = _string_list(_get(capability, "request.required"))
+        required_request_fields = _string_list(
+            _get(capability, "request.required"), allow_empty=True
+        )
         minimum_response_fields = _string_list(_get(capability, "response.required"))
         if required_request_fields is None:
             return _stopped(
-                f"capabilities[{index}].request.required must be a non-empty string list.",
+                f"capabilities[{index}].request.required must be a string list.",
                 "missing_contract_evidence",
             )
         if minimum_response_fields is None:
@@ -352,11 +358,11 @@ def example_request() -> dict[str, Any]:
                 "tool_or_api": "read_thread",
                 "classification": "read-only",
                 "request": {
-                    "required": ["thread_id"],
-                    "optional": ["include_metadata"],
+                    "required": ["threadId"],
+                    "optional": ["turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
                 },
                 "response": {
-                    "required": ["status", "thread_id"],
+                    "required": ["status", "threadId"],
                     "errors": ["message"],
                 },
                 "source": "runtime-reported schema",

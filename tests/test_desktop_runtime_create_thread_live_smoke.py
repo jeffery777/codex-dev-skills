@@ -322,12 +322,22 @@ class CreateThreadLiveSmokeTests(unittest.TestCase):
         self.assertEqual(response["status"], "stopped")
         self.assertEqual(response["failure_class"], "returned_status_invalid")
 
-    def test_runtime_response_must_explicitly_report_no_private_state_or_external_write(self):
-        cases = (
-            (
-                {"thread_id": "thread_123", "status": "created"},
-                "forbidden_private_runtime_state",
+    def test_raw_desktop_thread_id_response_without_status_or_wrapper_flags_returns_ready(self):
+        response = live_smoke.run_create_thread_live_smoke(
+            valid_request(),
+            create_thread_callable=successful_callable(
+                response={"threadId": "thread_raw_desktop_123"}
             ),
+        )
+
+        self.assertEqual(response["status"], "ready")
+        self.assertIsNone(response["failure_class"])
+        self.assertEqual(response["result"]["returned_thread_id"], "thread_raw_desktop_123")
+        self.assertIsNone(response["result"]["returned_status"])
+        self.assertTrue(response["result"]["prompt_delivered"])
+
+    def test_runtime_response_rejects_explicit_private_state_or_external_write_flags(self):
+        cases = (
             (
                 {
                     "thread_id": "thread_123",
@@ -342,6 +352,7 @@ class CreateThreadLiveSmokeTests(unittest.TestCase):
                     "thread_id": "thread_123",
                     "status": "created",
                     "private_runtime_state_read": False,
+                    "external_write_performed": True,
                 },
                 "external_write_request",
             ),
@@ -349,7 +360,6 @@ class CreateThreadLiveSmokeTests(unittest.TestCase):
                 {
                     "thread_id": "thread_123",
                     "status": "created",
-                    "private_runtime_state_read": False,
                     "external_write_performed": "false",
                 },
                 "external_write_request",
@@ -365,7 +375,32 @@ class CreateThreadLiveSmokeTests(unittest.TestCase):
                 self.assertEqual(response["status"], "stopped")
                 self.assertEqual(response["failure_class"], failure_class)
 
-    def test_successful_injected_live_smoke_response_returns_ready_and_audit_not_completed(self):
+    def test_successful_thread_id_response_returns_ready_and_audit_not_completed(self):
+        response = live_smoke.run_create_thread_live_smoke(
+            valid_request(),
+            create_thread_callable=successful_callable(
+                response={
+                    "threadId": "thread_camel_123",
+                    "status": "created",
+                    "private_runtime_state_read": False,
+                    "external_write_performed": False,
+                }
+            ),
+        )
+
+        self.assertEqual(response["status"], "ready")
+        self.assertIsNone(response["failure_class"])
+        self.assertTrue(response["runtime_call_performed"])
+        self.assertTrue(response["desktop_runtime_call_performed"])
+        self.assertFalse(response["private_runtime_state_read"])
+        self.assertFalse(response["external_write_performed"])
+        self.assertTrue(response["result"]["prompt_delivered"])
+        self.assertFalse(response["result"]["audit_task_completed"])
+        self.assertFalse(response["result"]["audit_task_completion_required"])
+        self.assertEqual(response["result"]["returned_thread_id"], "thread_camel_123")
+        self.assertEqual(response["result"]["returned_status"], "created")
+
+    def test_successful_thread_id_legacy_response_still_returns_ready(self):
         calls = []
         response = live_smoke.run_create_thread_live_smoke(
             valid_request(),

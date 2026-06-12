@@ -67,16 +67,22 @@ def valid_discovery_request(action="read-thread", classification="read-only", **
         "read-thread": "read_thread",
     }
     required_by_action = {
-        "create-thread": ["prompt"],
-        "fork-thread": ["thread_id", "prompt"],
-        "send-message": ["thread_id", "message"],
-        "read-thread": ["thread_id"],
+        "create-thread": ["prompt", "target"],
+        "fork-thread": [],
+        "send-message": ["threadId", "prompt"],
+        "read-thread": ["threadId"],
+    }
+    optional_by_action = {
+        "create-thread": ["model", "thinking"],
+        "fork-thread": ["threadId", "environment"],
+        "send-message": ["model", "thinking"],
+        "read-thread": ["turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
     }
     response_by_action = {
-        "create-thread": ["status", "thread_id"],
-        "fork-thread": ["status", "thread_id"],
-        "send-message": ["status", "thread_id"],
-        "read-thread": ["status", "thread_id"],
+        "create-thread": ["status", "threadId or thread_id or pendingWorktreeId"],
+        "fork-thread": ["status", "threadId"],
+        "send-message": ["status", "threadId"],
+        "read-thread": ["status", "threadId"],
     }
     request = {
         "requested_action": "normalize-runtime-capability-metadata",
@@ -93,7 +99,7 @@ def valid_discovery_request(action="read-thread", classification="read-only", **
                 "classification": classification,
                 "request": {
                     "required": required_by_action[action],
-                    "optional": [],
+                    "optional": optional_by_action[action],
                 },
                 "response": {
                     "required": response_by_action[action],
@@ -256,7 +262,7 @@ class PlannerTests(unittest.TestCase):
             response["runtime_contract"]["normalized_capability"]["classification"],
             "read-only",
         )
-        self.assertIn("thread_id", response["response_shape_relied_on"]["required"])
+        self.assertIn("threadId", response["response_shape_relied_on"]["required"])
 
     def test_missing_capability_evidence_falls_back(self):
         evidence = discovery.normalize_capability_metadata(
@@ -279,9 +285,12 @@ class PlannerTests(unittest.TestCase):
                     "action": "create-thread",
                     "tool_or_api": "create_thread",
                     "classification": "read-only",
-                    "required_request_fields": ["prompt"],
+                    "required_request_fields": ["prompt", "target"],
                     "optional_request_fields": [],
-                    "minimum_response_fields": ["status", "thread_id"],
+                    "minimum_response_fields": [
+                        "status",
+                        "threadId or thread_id or pendingWorktreeId",
+                    ],
                     "error_response_fields": ["message"],
                     "capability_source": "active tool list",
                     "contract_version": "version unavailable",
@@ -326,6 +335,23 @@ class PlannerTests(unittest.TestCase):
             "No Desktop thread was opened/forked/continued/messaged/read",
             response["result"]["paste_ready_prompt"],
         )
+
+    def test_fork_thread_optional_only_capability_without_authorization_falls_back(self):
+        evidence = discovery.normalize_capability_metadata(
+            valid_discovery_request("fork-thread", "state-changing")
+        )
+
+        response = planner.plan_request(
+            request_with_capability_evidence("fork-thread", evidence)
+        )
+
+        self.assertEqual(evidence["status"], "available")
+        self.assertEqual(
+            evidence["capabilities"][0]["required_request_fields"],
+            [],
+        )
+        self.assertEqual(response["status"], "fallback")
+        self.assertEqual(response["failure_class"], "state_changing_thread_action_not_authorized")
 
     def test_forbidden_private_source_hint_in_capability_evidence_stops(self):
         evidence = discovery.normalize_capability_metadata(
