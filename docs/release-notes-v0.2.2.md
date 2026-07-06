@@ -1,6 +1,6 @@
 # Release Notes: v0.2.2
 
-Release date: pending
+Release date: 2026-07-06
 
 These release notes summarize the v0.2.2 patch release candidate. This release refreshes the skill pack for current Codex CLI and Codex Desktop skill discovery, metadata, installer, and documentation behavior while preserving existing installer defaults.
 
