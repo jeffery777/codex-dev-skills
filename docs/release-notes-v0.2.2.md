@@ -9,6 +9,7 @@ These release notes summarize the v0.2.2 patch release candidate. This release r
 - Added explicit `name` front matter to every checked-in `skills/*/SKILL.md`.
 - Extended repository validation so missing skill metadata, mismatched skill directory/name values, and installer target drift fail repository hygiene.
 - Preserved the existing `~/.codex/skills` installer target by default, with explicit opt-in support for `CODEX_DEV_SKILLS_TARGET=agents` to install user skills under `~/.agents/skills`.
+- Updated the installer state version to `0.2.2` and added repository validation to keep it aligned with the current release notes version.
 - Documented plugin packaging as a deliberate follow-up instead of adding a second distribution path in this patch release.
 - Updated documentation language for current Codex instruction layering and runtime configuration boundaries.
 
@@ -47,6 +48,8 @@ That mode installs skills under:
 ```
 
 The installer intentionally does not auto-migrate or dual-write skill targets. Use only one skills target per Codex profile for this pack, because duplicate skill names in both locations, or later through a plugin package, can appear as duplicate skills in selectors.
+
+Installer state records now use version `0.2.2` for this release candidate. Repository validation checks that `install.sh VERSION` matches the current release notes version referenced from the README.
 
 ## Plugin Packaging Decision
 

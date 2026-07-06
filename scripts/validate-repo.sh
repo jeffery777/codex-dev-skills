@@ -135,6 +135,18 @@ check_installer_target_modes() {
   ok "installer target modes are documented and fail closed"
 }
 
+check_installer_version() {
+  local current_release_version installer_version
+  current_release_version="$(sed -n 's/.*current v\([0-9][0-9.]*\) release notes.*/\1/p' README.md | head -n 1)"
+  installer_version="$(sed -n 's/^VERSION="\([^"]*\)"/\1/p' install.sh | head -n 1)"
+  [[ -n "$current_release_version" ]] || fail "README must reference current release notes"
+  [[ -n "$installer_version" ]] || fail "install.sh must declare VERSION"
+  if [[ "$installer_version" != "$current_release_version" ]]; then
+    fail "install.sh VERSION ($installer_version) must match current release notes version ($current_release_version)"
+  fi
+  ok "installer version matches current release notes"
+}
+
 frontmatter_value() {
   local key="$1" file="$2"
   sed -n "2,/^---\$/s/^$key:[[:space:]]*//p" "$file" | head -n 1
@@ -174,6 +186,7 @@ main() {
   check_catalog_sources
   check_installer_catalog_consistency
   check_installer_target_modes
+  check_installer_version
   check_skill_metadata
 }
 
