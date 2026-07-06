@@ -1,4 +1,5 @@
 ---
+name: merge-review-deep
 description: Higher-scrutiny merge review for high-risk, release-sensitive, or policy-required changes.
 ---
 

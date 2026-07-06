@@ -55,9 +55,9 @@ For small or single-task work, prefer the smallest direct skill such as `impleme
 
 Review primitives such as `code-review`, `docs-review`, and high-risk `code-review-deep` provide ordinary review evidence. Formal `code-review-gate` and `docs-review-gate` runs are reserved for commit readiness, PR readiness, merge readiness, or explicit repo-policy blocking decisions, and they do not replace maintainer approval.
 
-## Global Rules And Repo Rules
+## Global Guidance, Repo Instructions, And Rules
 
-Global Codex rules are useful for cross-repository baseline behavior:
+Global Codex guidance is useful for cross-repository baseline behavior:
 
 - read before write
 - inspect git state before mutation
@@ -67,7 +67,7 @@ Global Codex rules are useful for cross-repository baseline behavior:
 - verify after edits
 - require explicit approval before destructive or external actions
 
-Repo-level files should define project-specific source of truth:
+Repo-level instruction files should define project-specific source of truth:
 
 - branch and release conventions
 - accepted verification commands
@@ -76,8 +76,12 @@ Repo-level files should define project-specific source of truth:
 - project-specific policies, templates, and gates
 - platform-specific publishing or merge rules
 
+Use `AGENTS.md` for durable instruction layering, and `AGENTS.override.md` only when a temporary override should take precedence without deleting the base file. Use Codex `.rules` files for command permission exceptions, not as a substitute for workflow policy or human gates.
+
+Runtime configuration remains outside these skills. Permission profiles, `codex exec` sandbox choices such as the default read-only automation posture, web search mode, MCP server setup, and project instruction discovery limits such as `project_doc_max_bytes` should be configured in Codex runtime settings or documented project setup. Skills may remind users to verify those settings, but they should not imply that installing this pack changes them.
+
 In practice:
 
-1. Global rules define baseline safety and collaboration habits.
+1. Global guidance defines baseline safety and collaboration habits.
 2. Repo-level `AGENTS.md`, specs, plans, policies, and templates define project-specific source of truth.
 3. These skills execute against that durable context and stop at the next human gate when needed.

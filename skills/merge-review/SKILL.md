@@ -1,4 +1,5 @@
 ---
+name: merge-review
 description: Normal user-facing entry point for base-to-head merge quality and DoD review.
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: desktop-thread-delegation
 description: Codex Desktop thread delegation workflow for choosing the next safe task, continuing in the current thread when appropriate, or handing off through a new thread when authorized and supported.
 ---
 

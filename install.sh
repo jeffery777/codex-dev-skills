@@ -6,11 +6,23 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/codex-dev-skills"
 STATE_FILE="$STATE_DIR/installed.jsonl"
-DEFAULT_CODEX_SKILLS_DIR="$HOME/.codex/skills"
+DEFAULT_CODEX_LEGACY_SKILLS_DIR="$HOME/.codex/skills"
+DEFAULT_CODEX_AGENTS_SKILLS_DIR="$HOME/.agents/skills"
 DEFAULT_CODEX_TEMPLATES_DIR="$HOME/.codex/templates"
-CODEX_SKILLS_DIR="${CODEX_SKILLS_DIR:-$DEFAULT_CODEX_SKILLS_DIR}"
+CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-legacy}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 VERSION="0.1.0"
+
+case "$CODEX_DEV_SKILLS_TARGET" in
+  legacy) DEFAULT_CODEX_SKILLS_DIR="$DEFAULT_CODEX_LEGACY_SKILLS_DIR" ;;
+  agents) DEFAULT_CODEX_SKILLS_DIR="$DEFAULT_CODEX_AGENTS_SKILLS_DIR" ;;
+  *)
+    printf '[ERROR] CODEX_DEV_SKILLS_TARGET must be '\''legacy'\'' or '\''agents'\'': %s\n' "$CODEX_DEV_SKILLS_TARGET" >&2
+    exit 1
+    ;;
+esac
+
+CODEX_SKILLS_DIR="${CODEX_SKILLS_DIR:-$DEFAULT_CODEX_SKILLS_DIR}"
 
 usage() {
   cat <<'USAGE'
@@ -34,11 +46,13 @@ Groups:
   desktop-delivery-workflow
 
 Targets:
-  Codex skills:    ~/.codex/skills/<skill>/
+  Codex skills:    ~/.codex/skills/<skill>/ by default
+                   ~/.agents/skills/<skill>/ when CODEX_DEV_SKILLS_TARGET=agents
   Codex templates: ~/.codex/templates/...
 
 This installer never overwrites ~/.codex/AGENTS.md.
 Custom CODEX_SKILLS_DIR / CODEX_TEMPLATES_DIR values require CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES.
+The default target remains legacy to avoid changing existing installations.
 USAGE
 }
 
@@ -98,17 +112,18 @@ canonicalize_root() {
 }
 
 reject_custom_root() {
-  local abs="$1" label="$2" expected_base home_abs home_parent home_codex
+  local abs="$1" label="$2" expected_base home_abs home_parent home_codex home_agents
   home_abs="$(absolute_path "$HOME")"
   home_parent="$(dirname "$home_abs")"
   home_codex="$home_abs/.codex"
+  home_agents="$home_abs/.agents"
   case "$label" in
     CODEX_SKILLS_DIR) expected_base="skills" ;;
     CODEX_TEMPLATES_DIR) expected_base="templates" ;;
     *) expected_base="" ;;
   esac
   case "$abs" in
-    /|"$home_abs"|"$home_parent"|"$home_codex")
+    /|"$home_abs"|"$home_parent"|"$home_codex"|"$home_agents")
       die "$label custom root is too broad: $abs"
       ;;
   esac

@@ -1,4 +1,5 @@
 ---
+name: project-delivery
 description: Carry a bounded software delivery objective through discovery, planning, implementation, verification, review, docs sync, and PR readiness or the next human gate.
 ---
 

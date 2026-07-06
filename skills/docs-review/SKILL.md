@@ -1,4 +1,5 @@
 ---
+name: docs-review
 description: Read-only review for docs-only or docs-dominant changes.
 ---
 

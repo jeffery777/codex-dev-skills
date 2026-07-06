@@ -17,9 +17,12 @@ If no state has been recorded yet, that does not prove nothing is installed; it 
 
 Installer writes normally target:
 
-- `~/.codex/skills/<skill>/`
+- `~/.codex/skills/<skill>/` by default, preserving legacy installs
+- `~/.agents/skills/<skill>/` when `CODEX_DEV_SKILLS_TARGET=agents` is set explicitly
 - `~/.codex/templates/...`
 - `~/.local/state/codex-dev-skills` unless `XDG_STATE_HOME` changes it
+
+Use one skills target per Codex profile for this pack. Installing the same skill names into both `~/.codex/skills` and `~/.agents/skills` can make duplicate skills appear.
 
 Custom `CODEX_SKILLS_DIR` or `CODEX_TEMPLATES_DIR` values require `CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES`.
 
@@ -43,6 +46,7 @@ Install one group at a time when you want the smallest write:
 Use it only when that broader scope is intentional.
 
 If install fails with an unknown group error, re-run `./install.sh list` and choose one of the listed group names.
+If a current Codex setup expects user skills under `~/.agents/skills`, re-run the intended command with `CODEX_DEV_SKILLS_TARGET=agents` instead of changing broad custom paths.
 If install fails because custom target paths are rejected, remove the custom target override or set `CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES` only after confirming the target is narrow and intentional.
 
 Risk: install is an external write. It copies skills and templates into the configured Codex target directories and records installer state.
