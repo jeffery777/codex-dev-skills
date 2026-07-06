@@ -1,4 +1,5 @@
 ---
+name: desktop-project-delivery
 description: Codex Desktop delegated project delivery entrypoint for bounded objectives.
 ---
 

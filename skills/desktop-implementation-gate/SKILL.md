@@ -1,4 +1,5 @@
 ---
+name: desktop-implementation-gate
 description: Codex Desktop formal integration gate for worker outputs before commit readiness.
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: closure-triage
 description: Select the next smallest safe packet from repo policy, project overlays, current state, and verification evidence.
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: project-orchestrator
 description: Shared project orchestration layer that routes bounded work across planning, implementation, review, continuation, handoff, or human gates.
 ---
 

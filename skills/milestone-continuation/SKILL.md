@@ -1,4 +1,5 @@
 ---
+name: milestone-continuation
 description: Continue a bounded milestone across repeated invocations by checking task completion, selecting the next ready task, routing through existing workflows, and stopping at human gates.
 ---
 

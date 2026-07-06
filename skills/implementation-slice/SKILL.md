@@ -1,4 +1,5 @@
 ---
+name: implementation-slice
 description: Implement a bounded software change after read-only inspection, then verify and inspect the diff.
 ---
 

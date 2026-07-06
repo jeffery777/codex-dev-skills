@@ -1,4 +1,5 @@
 ---
+name: code-review-gate
 description: Formal code review gate before commit, PR readiness, or merge readiness.
 ---
 

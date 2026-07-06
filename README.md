@@ -67,7 +67,7 @@ These skills work best when the target repository keeps durable project context 
 
 The workflows are not limited to single task-id execution. When scope is clear, they can advance a bounded milestone slice, such as one MVP capability area, through discovery, planning, implementation, verification, review, documentation sync, and PR readiness.
 
-Global Codex rules add useful baseline safety, while repo-level files define the project-specific source of truth. See `docs/usage-model.md` for the recommended project artifacts, delivery scope, and global-rule layering model.
+Global Codex guidance adds useful baseline safety, while repo-level files define the project-specific source of truth. See `docs/usage-model.md` for the recommended project artifacts, delivery scope, and instruction layering model.
 
 For adoption examples that pair well with this repository:
 
@@ -300,7 +300,7 @@ Shared orchestration templates include task briefs, task manifests, next-session
 - [Merge review and readiness](examples/merge-review.md)
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
-See `docs/roadmap.md` for the near-term public roadmap, `docs/release-notes-v0.2.1.md` for the current v0.2.1 release notes, and `docs/release-notes-v0.1.0.md` for the historical v0.1.0 release notes.
+See `docs/roadmap.md` for the near-term public roadmap, `docs/release-notes-v0.2.2.md` for the current v0.2.2 release notes, and `docs/release-notes-v0.1.0.md` for the historical v0.1.0 release notes.
 
 ## Installation
 
@@ -369,13 +369,18 @@ Uninstall is destructive because it removes installed Codex skills and templates
 
 Installer scope:
 
-- Codex skills are installed to `~/.codex/skills/<skill>/`.
+- Codex skills are installed to `~/.codex/skills/<skill>/` by default to preserve existing installations.
+- To opt in to the current Codex user-skill discovery location, run installer commands with `CODEX_DEV_SKILLS_TARGET=agents`; this installs skills to `~/.agents/skills/<skill>/`.
 - Codex templates are installed to `~/.codex/templates/...`.
 - Custom `CODEX_SKILLS_DIR` or `CODEX_TEMPLATES_DIR` overrides require `CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES`.
 - The installer refuses symlink target roots and symlink target paths before install, update, diff, or uninstall.
 - Installer state is stored under `~/.local/state/codex-dev-skills` unless `XDG_STATE_HOME` changes it.
 - State records only non-sensitive metadata such as repository name, version, action, group, and timestamp.
 - The installer never overwrites `~/.codex/AGENTS.md`.
+
+Use only one skill installation target for this pack in a given Codex profile. Installing the same skill names into both `~/.codex/skills` and `~/.agents/skills`, or later through a plugin package, can make duplicate skills appear in selectors.
+
+Plugin packaging is intentionally not added by the local installer. If this pack later ships a `.codex-plugin/plugin.json` and repo marketplace entry, treat that as a separate distribution path and avoid installing the same skill names through both the plugin and the filesystem installer.
 
 ## Verification
 
@@ -385,7 +390,7 @@ Run the repository hygiene check before proposing a release or PR:
 ./scripts/validate-repo.sh
 ```
 
-This validates catalog consistency, required runtime labels, symlink safety, and public hygiene checks for excluded private or legacy terms.
+This validates catalog consistency, required skill metadata, required runtime labels, symlink safety, and public hygiene checks for excluded private or legacy terms.
 The repository pins Python with `.python-version`; when Python helpers or tests are in scope, confirm the active runtime first:
 
 ```bash

@@ -1,4 +1,5 @@
 ---
+name: planning
 description: Create a scoped software development plan with assumptions, risks, DoD, and verification strategy.
 ---
 

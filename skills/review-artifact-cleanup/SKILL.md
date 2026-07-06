@@ -1,4 +1,5 @@
 ---
+name: review-artifact-cleanup
 description: Dry-run first cleanup workflow for review artifacts.
 ---
 

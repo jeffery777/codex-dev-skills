@@ -1,4 +1,5 @@
 ---
+name: desktop-pr-merge-gate
 description: Codex Desktop PR and merge readiness gate that summarizes evidence without publishing or merging.
 ---
 

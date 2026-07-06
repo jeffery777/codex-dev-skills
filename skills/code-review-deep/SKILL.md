@@ -1,4 +1,5 @@
 ---
+name: code-review-deep
 description: Deep read-only code review for high-risk changes involving security, data, packaging, migrations, external integrations, or cross-module contracts.
 ---
 

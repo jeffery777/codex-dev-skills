@@ -1,4 +1,5 @@
 ---
+name: docs-update
 description: Update project documentation from verified code, specs, plans, or behavior.
 ---
 

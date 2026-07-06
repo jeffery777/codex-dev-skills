@@ -1,4 +1,5 @@
 ---
+name: desktop-spec-plan-gate
 description: Codex Desktop gate for spec, plan, and DoD drafts before implementation delegation.
 ---
 

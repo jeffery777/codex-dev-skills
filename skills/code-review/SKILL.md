@@ -1,4 +1,5 @@
 ---
+name: code-review
 description: Routine read-only review for code or mixed diffs, focused on bugs, regressions, risk, and missing tests.
 ---
 

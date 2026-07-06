@@ -1,4 +1,5 @@
 ---
+name: docs-review-gate
 description: Thin formal documentation review gate adapter around docs-review before commit, PR readiness, or merge readiness.
 ---
 

@@ -23,6 +23,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 ## Backlog
 
 - Desktop runtime wrapper V1 follow-up slices: any remediation prompted by the live smoke audit, any additional Desktop thread tool path, any platform write, or any broader runtime integration requires separate human approval. Later work must continue to avoid Desktop private runtime state, daemons, app-server clients, sidecars, background services, new skills, catalog entries, and installer entries unless separately approved.
+- Plugin packaging follow-up: if maintainers want Codex plugin distribution, add a minimal `.codex-plugin/plugin.json` and repo marketplace entry in a separate slice. Keep it distinct from the filesystem installer and document duplicate-skill risks for users who install the same pack through both paths.
 
 ## Non-Goals
 

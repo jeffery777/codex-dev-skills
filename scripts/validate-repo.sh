@@ -111,16 +111,71 @@ check_installer_catalog_consistency() {
   ok "catalog and installer manifest match"
 }
 
-check_skill_runtime_labels() {
-  local skill missing=0
+check_installer_target_modes() {
+  local legacy_manifest agents_manifest
+  legacy_manifest="$TMP_DIR/installer-legacy-manifest.txt"
+  agents_manifest="$TMP_DIR/installer-agents-manifest.txt"
+
+  ./install.sh help > "$TMP_DIR/install-help.txt"
+  rg -F -q 'CODEX_DEV_SKILLS_TARGET=agents' "$TMP_DIR/install-help.txt" \
+    || fail "installer help must document CODEX_DEV_SKILLS_TARGET=agents"
+  rg -F -q '~/.codex/skills/<skill>/' "$TMP_DIR/install-help.txt" \
+    || fail "installer help must document the legacy skills target"
+  rg -F -q '~/.agents/skills/<skill>/' "$TMP_DIR/install-help.txt" \
+    || fail "installer help must document the agents skills target"
+
+  ./install.sh manifest | sort -u > "$legacy_manifest"
+  CODEX_DEV_SKILLS_TARGET=agents ./install.sh manifest | sort -u > "$agents_manifest"
+  if ! diff -u "$legacy_manifest" "$agents_manifest"; then
+    fail "installer manifests must not differ by target mode"
+  fi
+  if CODEX_DEV_SKILLS_TARGET=invalid ./install.sh help >"$TMP_DIR/install-invalid.out" 2>"$TMP_DIR/install-invalid.err"; then
+    fail "invalid CODEX_DEV_SKILLS_TARGET must fail closed"
+  fi
+  ok "installer target modes are documented and fail closed"
+}
+
+check_installer_version() {
+  local current_release_version installer_version
+  current_release_version="$(sed -n 's/.*current v\([0-9][0-9.]*\) release notes.*/\1/p' README.md | head -n 1)"
+  installer_version="$(sed -n 's/^VERSION="\([^"]*\)"/\1/p' install.sh | head -n 1)"
+  [[ -n "$current_release_version" ]] || fail "README must reference current release notes"
+  [[ -n "$installer_version" ]] || fail "install.sh must declare VERSION"
+  if [[ "$installer_version" != "$current_release_version" ]]; then
+    fail "install.sh VERSION ($installer_version) must match current release notes version ($current_release_version)"
+  fi
+  ok "installer version matches current release notes"
+}
+
+frontmatter_value() {
+  local key="$1" file="$2"
+  sed -n "2,/^---\$/s/^$key:[[:space:]]*//p" "$file" | head -n 1
+}
+
+check_skill_metadata() {
+  local skill expected name description missing=0
   while IFS= read -r skill; do
+    expected="$(basename "$(dirname "$skill")")"
+    name="$(frontmatter_value name "$skill")"
+    description="$(frontmatter_value description "$skill")"
+    if [[ -z "$name" ]]; then
+      printf '[FAIL] missing skill front matter name: %s\n' "$skill" >&2
+      missing=1
+    elif [[ "$name" != "$expected" ]]; then
+      printf '[FAIL] skill name mismatch: %s declares %s, expected %s\n' "$skill" "$name" "$expected" >&2
+      missing=1
+    fi
+    if [[ -z "$description" ]]; then
+      printf '[FAIL] missing skill front matter description: %s\n' "$skill" >&2
+      missing=1
+    fi
     if ! rg -q '^Runtime compatibility:[[:space:]]*(shared|cli|desktop|plugin-dependent)$' "$skill"; then
       printf '[FAIL] missing runtime compatibility: %s\n' "$skill" >&2
       missing=1
     fi
   done < <(find skills -name SKILL.md -print | sort)
   [[ "$missing" -eq 0 ]] || exit 1
-  ok "all skills declare runtime compatibility"
+  ok "all skills declare required metadata"
 }
 
 main() {
@@ -130,7 +185,9 @@ main() {
   check_legacy_private_names
   check_catalog_sources
   check_installer_catalog_consistency
-  check_skill_runtime_labels
+  check_installer_target_modes
+  check_installer_version
+  check_skill_metadata
 }
 
 main "$@"

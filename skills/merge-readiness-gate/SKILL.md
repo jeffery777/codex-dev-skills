@@ -1,4 +1,5 @@
 ---
+name: merge-readiness-gate
 description: Thin formal branch readiness gate after implementation, verification, and review evidence exist.
 ---
 
