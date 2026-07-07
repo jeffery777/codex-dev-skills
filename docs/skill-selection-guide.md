@@ -14,6 +14,7 @@ This compact guide helps new users choose the smallest skill or gate that matche
 | A workflow needs a formal blocking decision before commit readiness, PR readiness, merge readiness, or an explicit repo-policy gate. | `code-review-gate` or `docs-review-gate` | Formal gate adapters route to the right review primitive, record evidence, and block on unresolved MUST-FIX findings. |
 | A branch needs base-to-head merge quality review. | `merge-review` | Routine merge review primitive for scope, DoD alignment, test evidence, docs sync, and unresolved findings. It produces review evidence, not merge authorization. |
 | A branch needs a formal readiness decision before PR handoff, merge readiness, or final approval. | `merge-readiness-gate` | Formal branch readiness evidence-and-decision layer that summarizes evidence, blockers, residual risk, and the human approval boundary. |
+| Codex should keep a clear bounded objective moving through repeated plan, implementation, verification, review, continuation, handoff, or gate decisions. | `loop-engineering` | Explicit loop entrypoint that repeatedly bootstraps from durable source of truth, routes to existing phase skills, verifies evidence, and stops at human gates. |
 | Codex should classify the next safe action or run a bounded review/fix closure loop. | `project-orchestrator` | Routes between planning, implementation, docs update, review primitives, formal gates, continuation, or human decision. |
 | Codex should carry a bounded objective through discovery, implementation, verification, review, docs sync, and PR readiness. | `project-delivery` | Delivery workflow for multi-step but bounded objectives that still stop at the next human gate. |
 | A bounded milestone should be checked and advanced across repeated invocations until complete or blocked. | `milestone-continuation` | Upper-layer loop that checks task completion, selects the next ready task, and routes through existing workflows without owning runtime scheduling. |
@@ -75,13 +76,16 @@ Use focused skills when the next action is already clear:
 
 Use orchestration or delivery skills when Codex must decide or coordinate multiple steps:
 
+- `loop-engineering` to own the repeated bootstrap, classify, route, act, verify, review, continue, handoff, stop, or complete cycle for a clear bounded objective.
 - `project-orchestrator` to choose the next safe action, route work, or run a bounded review closure loop.
 - `project-delivery` to advance a bounded objective through implementation, verification, review, docs sync, and PR readiness.
 - `milestone-continuation` to keep a bounded milestone moving across repeated invocations by checking the current task, selecting the next ready task, and stopping at human gates.
 - `desktop-project-delivery` only when the Desktop runtime is intentionally part of the workflow.
 - `desktop-thread-delegation` when the Desktop runtime may open a new thread, but the main thread must still choose the next safe task and retain review or merge gates.
 
-Use `milestone-continuation` instead of `project-delivery` when the distinctive need is repeated milestone progress from durable task state. Use `project-delivery` directly when the user delegates one bounded objective in a single current run. Use `task-continuation` when the immediate goal is only to choose the next safe task or prepare a handoff prompt.
+Use `loop-engineering` when the user wants the agent to own the whole repeated decision loop and dynamically choose among existing workflows as state changes. Use `project-delivery` directly when the request is one bounded delivery effort and does not need a named loop entrypoint. Use `milestone-continuation` instead of `project-delivery` when the distinctive need is repeated milestone progress from durable task state. Use `task-continuation` when the immediate goal is only to choose the next safe task or prepare a handoff prompt.
+
+`loop-engineering` must remain a thin entrypoint. It does not replace implementation, documentation, review, formal gate, continuation, milestone, or Desktop delegation skills. It should classify, route, report, and stop rather than invent a second execution engine.
 
 ## Desktop Thread Delegation
 

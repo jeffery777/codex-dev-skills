@@ -10,6 +10,7 @@ Useful project-level artifacts include:
 - Project specs that state objective, users, scope, out-of-scope work, requirements, Definition of Done, risks, human gates, and verification strategy.
 - Implementation plans that split work into small slices with source of truth, ownership, affected files, review primitives, formal gate triggers, rollback or recovery notes, and open questions.
 - Task manifests and continuation reports that record completed, blocked, ready, and unsafe tasks for bounded multi-step work.
+- Loop specs and iteration reports that record a bounded objective, source-of-truth files, current route, verification evidence, review or gate evidence, and the next loop decision.
 - Next-session prompts and current task summaries that preserve verified handoff context while requiring the next agent to re-read repository files.
 - Review report templates for code review, docs review, review finding disposition, and merge readiness.
 - Policy files for runtime compatibility, destructive actions, delegation, review artifacts, release gates, and merge gates.
@@ -24,6 +25,7 @@ Good fits:
 
 - A focused implementation slice with clear expected behavior.
 - Task routing when the user wants Codex to choose whether to plan, implement, review, continue, hand off, or stop.
+- Loop engineering for a clear bounded objective where Codex should repeatedly bootstrap from durable context, route to existing phase skills, verify evidence, review or gate when appropriate, and continue until completion or a human gate.
 - An orchestrated review closure loop for a small patch.
 - One bounded milestone capability, such as an MVP import-validation scope.
 - Repeatedly advancing a bounded milestone from durable task state until the milestone is complete or a human gate is reached.
@@ -50,6 +52,8 @@ The workflows can carry local work to PR readiness, but they intentionally stop 
 - material security, privacy, data, migration, payment, or permission risk
 
 Shared workflows can prepare prompts, task briefs, continuation prompts, or sequential execution paths for future work, but actually opening a new Codex conversation is runtime-specific. Use Codex Desktop worker delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator only when that runtime is available and intentionally selected. Repeated wakeups for `milestone-continuation` are also runtime-specific; the skill defines per-invocation behavior, while heartbeat or automation controls cadence when available.
+
+`loop-engineering` is a shared entrypoint for repeated decision-making, routing, verification, review, and stopping behavior. It can prepare Desktop handoff prompts or route to Desktop-specific skills when the runtime and authorization are available, but it does not itself provide scheduling, worker creation, thread control, platform writes, or merge authority.
 
 For small or single-task work, prefer the smallest direct skill such as `implementation-slice`, `planning`, or `code-review`. `project-orchestrator` may still be used as a router, but it should downgrade a clear single task to the matching focused workflow instead of forcing a project-level delivery loop.
 

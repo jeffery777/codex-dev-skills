@@ -35,7 +35,7 @@ Install CLI-compatible review workflows to get the normal `code-review` and `doc
 ./install.sh install codex-review-workflow
 ```
 
-Install CLI-compatible implementation and delivery workflows when you want Codex to plan, implement, and route formal gates:
+Install CLI-compatible loop, implementation, and delivery workflows when you want Codex to keep a bounded objective moving through planning, implementation, verification, review, documentation sync, continuation, and formal gates:
 
 ```bash
 ./install.sh install codex-delivery-workflow
@@ -46,6 +46,7 @@ Install CLI-compatible implementation and delivery workflows when you want Codex
 Use the installed skills in Codex by name, for example:
 
 ```text
+Use loop-engineering for issue #123 and keep the bounded objective moving until PR readiness or the next human gate.
 Use implementation-slice to make this focused parser fix and run the targeted tests.
 Use code-review on the current working tree.
 Use docs-review for the docs-only changes in this branch.
@@ -100,9 +101,12 @@ Use the smallest entry point that matches the request:
 - `implementation-slice` for one clear coding task.
 - `planning` when the next action or DoD needs to be defined before editing.
 - `code-review` for ordinary read-only review of code or mixed diffs.
+- `loop-engineering` when Codex should own the repeated bootstrap, route, act, verify, review, continue, handoff, or stop cycle for a clear bounded objective.
 - `project-orchestrator` when Codex should classify the task, choose the next safe action, or decide whether to continue, hand off, review, or stop.
 - `project-delivery` when the objective is larger than one task but still bounded.
 - `milestone-continuation` when a bounded milestone should be checked and advanced across repeated invocations until complete or blocked by a human gate.
+
+`loop-engineering` is a thin entrypoint over the existing phase skills. It should classify the current state, route to the smallest suitable workflow, verify evidence, and stop at human gates. It does not replace focused implementation, review primitives, formal gates, milestone continuation, task continuation, or Desktop-only delegation.
 
 If `project-orchestrator` receives a single clear implementation task, it should route to `implementation-slice` semantics and avoid unnecessary project-level planning.
 
@@ -144,6 +148,19 @@ Run at most two review/fix rounds. Stop before commit, push, PR creation, releas
 ```
 
 The orchestrator uses the smallest shared primitives that fit the current state: `implementation-slice`, `docs-update`, `code-review`, `code-review-deep`, `docs-review`, and merge-readiness workflows when applicable. It uses `code-review-gate` or `docs-review-gate` only for formal commit readiness, PR readiness, merge readiness, or repo-policy blocking decisions. This keeps the same closure model usable in Codex CLI and Codex Desktop.
+
+### Loop Engineering
+
+Use `loop-engineering` when the objective is clear and Codex should keep selecting the next safe workflow until the objective is complete or a human gate is reached:
+
+```text
+Use loop-engineering for issue #123.
+Read the issue, repo instructions, implementation plan, task manifest, review evidence, and current git state before editing.
+Continue through planning, implementation, verification, review, docs sync, continuation, and PR readiness while the objective and DoD remain clear.
+Stop before destructive actions, external writes, commit, push, PR creation, merge, release, deploy, platform comments, review submissions, material risk, or unclear source of truth unless I explicitly authorize the exact action.
+```
+
+The loop entrypoint repeatedly bootstraps from durable repository files, classifies the current state, routes to existing phase skills, verifies evidence, and decides whether to continue, prepare a handoff, stop, or complete. See [docs/loop-engineering.md](docs/loop-engineering.md) and [workflows/loop-engineering-workflow.md](workflows/loop-engineering-workflow.md).
 
 ### Bounded Milestone Slice
 
@@ -252,6 +269,7 @@ The `read_thread` preflight helper checks read-only evidence readiness without t
 
 | Skill | Runtime | Purpose |
 | --- | --- | --- |
+| `loop-engineering` | shared | Explicit loop entrypoint for clear bounded objectives; routes through planning, implementation, verification, review, continuation, handoff, and gates until complete or stopped. |
 | `planning` | shared | Produce scoped implementation plans with assumptions, risks, DoD, and verification. |
 | `milestone-continuation` | shared | Continue a bounded milestone across repeated invocations by checking task completion, choosing the next ready task, and stopping at human gates. |
 | `project-delivery` | shared | Carry a bounded delivery objective through discovery, plan, implementation, review, docs sync, and PR readiness or the next human gate. |
@@ -277,18 +295,20 @@ The `read_thread` preflight helper checks read-only evidence readiness without t
 
 ## Workflows
 
+- `workflows/loop-engineering-workflow.md`
 - `workflows/implementation-workflow.md`
 - `workflows/review-workflow.md`
 - `workflows/merge-readiness-workflow.md`
 - `workflows/desktop-delivery-workflow.md`
 
-Shared orchestration templates include task briefs, task manifests, next-session prompt templates, current task summaries, project specs, implementation plans, closure triage overlays, task continuation reports, integration review reports, and orchestrator gate reports.
+Shared orchestration templates include loop engineering specs, loop iteration reports, loop handoff prompts, task claim/lease templates, task briefs, task manifests, next-session prompt templates, current task summaries, project specs, implementation plans, closure triage overlays, task continuation reports, integration review reports, and orchestrator gate reports.
 
 ## Examples
 
 - [Basic implementation](examples/basic-implementation.md)
 - [Code review](examples/code-review.md)
 - [Docs review](examples/docs-review.md)
+- [Loop engineering](examples/loop-engineering.md)
 - [Orchestrated review closure](examples/orchestrated-review-closure.md)
 - [Multi-step maintenance](examples/multi-step-maintenance.md)
 - [Milestone continuation](examples/milestone-continuation.md)
@@ -329,7 +349,7 @@ Install CLI-compatible review workflows:
 ./install.sh install codex-review-workflow
 ```
 
-Install CLI-compatible delivery workflows:
+Install CLI-compatible loop and delivery workflows:
 
 ```bash
 ./install.sh install codex-delivery-workflow
@@ -406,6 +426,7 @@ For tag, release notes, and PR readiness checks, see [docs/release-readiness.md]
 This repository includes public software development workflows for:
 
 - planning and implementation
+- loop engineering for bounded objectives
 - docs updates and docs review
 - code review and deep code review
 - orchestrated review closure and formal review gates

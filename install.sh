@@ -180,7 +180,7 @@ group_description() {
   case "$1" in
     shared-review-gates) echo "Shared review gates, closure triage, safety policies, and orchestration templates." ;;
     codex-review-workflow) echo "Routine and deep code, docs, and merge review workflows." ;;
-    codex-delivery-workflow) echo "Planning, bounded implementation, docs update, and delegated delivery workflows." ;;
+    codex-delivery-workflow) echo "Loop engineering, planning, bounded implementation, docs update, and delegated delivery workflows." ;;
     desktop-delivery-workflow) echo "Codex Desktop-only delegated delivery and orchestration workflows." ;;
     codex-dev-skills) echo "Alias for all groups." ;;
   esac
@@ -203,7 +203,7 @@ group_skills() {
     codex-review-workflow)
       printf '%s\n' code-review code-review-deep docs-review merge-review merge-review-deep ;;
     codex-delivery-workflow)
-      printf '%s\n' planning milestone-continuation project-delivery project-orchestrator implementation-slice docs-update ;;
+      printf '%s\n' loop-engineering planning milestone-continuation project-delivery project-orchestrator implementation-slice docs-update ;;
     desktop-delivery-workflow)
       printf '%s\n' desktop-project-delivery desktop-thread-delegation desktop-spec-plan-gate desktop-implementation-gate desktop-pr-merge-gate ;;
   esac
@@ -242,7 +242,13 @@ group_templates() {
         workflows/review-workflow.md \
         workflows/merge-readiness-workflow.md ;;
     codex-delivery-workflow)
-      printf '%s\n' workflows/implementation-workflow.md ;;
+      printf '%s\n' \
+        templates/orchestration/loop-engineering-spec.template.md \
+        templates/orchestration/loop-handoff-prompt.template.md \
+        templates/orchestration/loop-iteration-report.template.md \
+        templates/orchestration/task-claim-lease.template.yaml \
+        workflows/implementation-workflow.md \
+        workflows/loop-engineering-workflow.md ;;
     desktop-delivery-workflow)
       printf '%s\n' workflows/desktop-delivery-workflow.md ;;
   esac

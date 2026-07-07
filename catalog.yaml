@@ -60,10 +60,11 @@ groups:
       - source: workflows/merge-readiness-workflow.md
 
   codex-delivery-workflow:
-    description: Planning, bounded implementation, documentation update, and delegated delivery workflows.
+    description: Loop engineering, planning, bounded implementation, documentation update, and delegated delivery workflows.
     runtime: shared
     depends_on: [shared-review-gates]
     skills:
+      - source: skills/loop-engineering
       - source: skills/planning
       - source: skills/milestone-continuation
       - source: skills/project-delivery
@@ -71,7 +72,12 @@ groups:
       - source: skills/implementation-slice
       - source: skills/docs-update
     templates:
+      - source: templates/orchestration/loop-engineering-spec.template.md
+      - source: templates/orchestration/loop-handoff-prompt.template.md
+      - source: templates/orchestration/loop-iteration-report.template.md
+      - source: templates/orchestration/task-claim-lease.template.yaml
       - source: workflows/implementation-workflow.md
+      - source: workflows/loop-engineering-workflow.md
 
   desktop-delivery-workflow:
     description: Codex Desktop-only delegated delivery and main-agent orchestration workflows.
