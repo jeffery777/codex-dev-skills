@@ -359,7 +359,7 @@ def example_request() -> dict[str, Any]:
                 "classification": "read-only",
                 "request": {
                     "required": ["threadId"],
-                    "optional": ["turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
+                    "optional": ["hostId", "turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
                 },
                 "response": {
                     "required": ["status", "threadId"],

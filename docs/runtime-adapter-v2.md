@@ -34,12 +34,13 @@ Caller-supplied metadata is evidence to normalize, not permission to call the ca
 
 ## Contract Family Boundary
 
-Facts last verified on 2026-06-12:
+Facts last verified on 2026-07-07:
 
 - Desktop app tools are app-level tools exposed by Codex Desktop. Current thread-tool evidence includes `create_thread`, `read_thread`, `send_message_to_thread`, and `fork_thread`.
-- Desktop `create_thread` requires `prompt` and `target`; `target` is a `project` or `projectless` union, with project targets carrying `projectId` plus a local or worktree `environment`. `model` and `thinking` are optional.
-- Desktop `read_thread` requires `threadId` and supports optional `turnLimit`, `cursor`, `includeOutputs`, and `maxOutputCharsPerItem`.
-- Desktop `send_message_to_thread` requires `threadId` and `prompt`; `model` and `thinking` are optional.
+- Desktop also exposes `list_projects`; project-scoped `create_thread` callers should use a returned `projectId` rather than infer project identity from private Desktop runtime state.
+- Desktop `create_thread` requires `prompt` and `target`; `target` is a `project` or `projectless` union, with project targets carrying a `projectId` plus a local or worktree `environment`. Worktree targets may include `startingState` only for an explicitly requested existing git state; otherwise the worktree starts from the project's default branch. `model` and `thinking` are optional and should generally be omitted unless explicitly requested and supported.
+- Desktop `read_thread` requires `threadId` and supports optional `hostId`, `turnLimit`, `cursor`, `includeOutputs`, and `maxOutputCharsPerItem`.
+- Desktop `send_message_to_thread` requires `threadId` and `prompt`; `hostId`, `model`, and `thinking` are optional.
 - Desktop `fork_thread` accepts optional `threadId` and optional `environment`.
 - `codex app-server` is a separate JSON-RPC interface, with methods such as `thread/start`, `thread/read`, `thread/fork`, and `turn/start`. Its initialization, transport/auth handling, request fields, and response envelopes are not interchangeable with Desktop app tools.
 - The Codex SDK wraps app-server. It is not evidence that this repository already implements a CLI `create_thread` path.
@@ -78,12 +79,13 @@ runtime_contracts:
     capability_source: "active tool list captured by the current runtime"
     request_shape_minimum:
       required: ["prompt", "target"]
-      target: "project or projectless; project targets include projectId and local/worktree environment"
+      target: "project or projectless; project targets include projectId from list_projects and local/worktree environment"
+      worktree: "startingState is optional only for explicitly requested existing git state"
       optional_used: ["model", "thinking"]
     response_shape_minimum:
       required: ["threadId or thread_id or pendingWorktreeId", "status"]
       errors: ["message"]
-    last_verified: "2026-06-12"
+    last_verified: "2026-07-07"
 ```
 
 ## Prohibited Sources

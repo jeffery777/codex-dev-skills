@@ -39,12 +39,13 @@ For the completed Desktop runtime wrapper V1 planner, capability metadata normal
 
 ## Current Contract Families
 
-Facts last verified on 2026-06-12:
+Facts last verified on 2026-07-07:
 
 - Desktop app tools are the active app-level tools exposed to Codex Desktop, such as `create_thread`, `read_thread`, `send_message_to_thread`, and `fork_thread`. They are not the same contract family as `codex app-server` JSON-RPC.
-- `create_thread` requires `prompt` and `target`. `target` is either `project` or `projectless`; project targets include `projectId` and an `environment` such as local or worktree. `model` and `thinking` are optional.
-- `read_thread` requires `threadId` and supports optional `turnLimit`, `cursor`, `includeOutputs`, and `maxOutputCharsPerItem`.
-- `send_message_to_thread` requires `threadId` and `prompt`; `model` and `thinking` are optional.
+- `list_projects` lists local and remote projects available for background thread creation. A project-scoped `create_thread` call should first use a returned `projectId` instead of inferring a Desktop project from local runtime state.
+- `create_thread` requires `prompt` and `target`. `target` is either `project` or `projectless`; project targets include a `projectId` returned by `list_projects` and an `environment` such as local or worktree. Worktree targets may include `startingState` only for an explicitly requested existing git state; otherwise the worktree starts from the project's default branch. `model` and `thinking` are optional and should generally be omitted unless the user explicitly requests overrides supported by the destination host.
+- `read_thread` requires `threadId` and supports optional `hostId`, `turnLimit`, `cursor`, `includeOutputs`, and `maxOutputCharsPerItem`.
+- `send_message_to_thread` requires `threadId` and `prompt`; `hostId`, `model`, and `thinking` are optional.
 - `fork_thread` accepts optional `threadId` and optional `environment`.
 - `codex app-server` is a JSON-RPC API with methods such as `thread/start`, `thread/read`, `thread/fork`, and `turn/start`. It requires app-server initialization, and its `thread/start` / `thread/fork` responses return a `thread` object rather than the Desktop app-tool response shape used by the V1 live smoke helper.
 - The Codex SDK wraps the app-server API. It should not be treated as evidence that this repository already has a CLI `create_thread` runtime path.

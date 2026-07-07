@@ -433,6 +433,7 @@ def example_request() -> dict[str, Any]:
                     "classification": "read-only",
                     "required_request_fields": ["threadId"],
                     "optional_request_fields": [
+                        "hostId",
                         "turnLimit",
                         "cursor",
                         "includeOutputs",

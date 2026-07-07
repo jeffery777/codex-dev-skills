@@ -98,6 +98,59 @@ class ContractCompareTests(unittest.TestCase):
         self.assertEqual(response["contract_comparison"]["new_capability"]["tool_or_api"], "read_thread")
         self.assertIn("did not call", response["result"]["residual_risk"][1])
 
+    def test_new_optional_fields_do_not_change_minimum_contract(self):
+        response = contract_compare.compare_contract_evidence(
+            compare_request(
+                "read-thread",
+                new_evidence=evidence(
+                    capability(
+                        "read-thread",
+                        optional_request_fields=[
+                            "hostId",
+                            "turnLimit",
+                            "cursor",
+                            "includeOutputs",
+                            "maxOutputCharsPerItem",
+                        ],
+                    )
+                ),
+            )
+        )
+
+        self.assertEqual(response["status"], "compatible")
+
+        response = contract_compare.compare_contract_evidence(
+            compare_request(
+                "create-thread",
+                new_evidence=evidence(
+                    capability(
+                        "create-thread",
+                        optional_request_fields=[
+                            "model",
+                            "thinking",
+                            "target.environment.startingState",
+                        ],
+                    )
+                ),
+            )
+        )
+
+        self.assertEqual(response["status"], "compatible")
+
+        response = contract_compare.compare_contract_evidence(
+            compare_request(
+                "send-message",
+                new_evidence=evidence(
+                    capability(
+                        "send-message",
+                        optional_request_fields=["hostId", "model", "thinking"],
+                    )
+                ),
+            )
+        )
+
+        self.assertEqual(response["status"], "compatible")
+
     def test_missing_capability_returns_fallback(self):
         response = contract_compare.compare_contract_evidence(
             compare_request("send-message", new_evidence=evidence(capability("read-thread")))

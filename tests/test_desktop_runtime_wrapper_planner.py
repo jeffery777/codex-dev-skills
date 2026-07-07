@@ -73,10 +73,10 @@ def valid_discovery_request(action="read-thread", classification="read-only", **
         "read-thread": ["threadId"],
     }
     optional_by_action = {
-        "create-thread": ["model", "thinking"],
+        "create-thread": ["model", "thinking", "target.environment.startingState"],
         "fork-thread": ["threadId", "environment"],
-        "send-message": ["model", "thinking"],
-        "read-thread": ["turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
+        "send-message": ["hostId", "model", "thinking"],
+        "read-thread": ["hostId", "turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
     }
     response_by_action = {
         "create-thread": ["status", "threadId or thread_id or pendingWorktreeId"],
