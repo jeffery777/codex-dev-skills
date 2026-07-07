@@ -1,0 +1,29 @@
+# Task claim / lease template.
+# Copy into a target repo only when loop engineering or milestone continuation
+# delegates tasks across sessions, workers, or repeated invocations.
+
+task_id: "<task-id>"
+status: "<claimed | in_progress | done | blocked | stale | released>"
+owner:
+  type: "<current_session | codex_thread | worker | maintainer>"
+  id: "<thread-id-or-worker-id-or-name>"
+  assigned_by: "<main-orchestrator>"
+claim:
+  claimed_at: "<iso-8601>"
+  lease_expires_at: "<iso-8601>"
+  last_observed_at: "<iso-8601>"
+  last_known_state: "<claimed | running | waiting | blocked | done | failed | unknown>"
+source_of_truth:
+  loop_spec: "<path>"
+  task_manifest: "<path>"
+  status_report: "<path>"
+handoff:
+  branch: "<branch-or-empty>"
+  commit: "<sha-or-empty>"
+  pull_request: "<url-or-empty>"
+  diff_summary: "<summary-or-empty>"
+  verification:
+    - "<command-or-empty>"
+recovery:
+  stale_after: "<iso-8601>"
+  recovery_rule: "<observe-worker | inspect-durable-artifacts | ask-human | release-claim>"

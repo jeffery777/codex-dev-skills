@@ -1,0 +1,60 @@
+# Loop Engineering Workflow
+
+Use this workflow when a maintainer wants Codex to keep a bounded objective moving through repeated plan, implementation, verification, review, continuation, and gate decisions.
+
+The user-facing skill is `loop-engineering`. It is an entrypoint and router, not a new execution engine. The loop works by repeatedly choosing the smallest existing workflow that can advance the current state.
+
+## Loop Cycle
+
+1. **Bootstrap**
+   - Read repo instructions, policies, specs, plans, task manifests, loop specs, status docs, review evidence, verification commands, templates, and git state.
+   - Treat chat summaries and handoff prompts as context only.
+2. **Classify**
+   - Decide whether the next state is a single task, bounded delivery objective, review closure loop, milestone continuation, handoff, Desktop delegation, human gate, or completion audit.
+3. **Route**
+   - Use the smallest existing skill that fits the classified state.
+4. **Act**
+   - Implement, update docs, review, prepare handoff, or stop according to the routed workflow.
+5. **Verify**
+   - Run the smallest relevant verification, inspect the diff, and check evidence against the objective and DoD.
+6. **Review Or Gate**
+   - Use review primitives for ordinary feedback.
+   - Use formal gates only for commit readiness, PR readiness, merge readiness, or explicit repo-policy blocking decisions.
+7. **Decide Next**
+   - Continue the loop, prepare a handoff, stop for human decision, or mark the objective complete only when evidence proves completion.
+
+## Route Map
+
+| Situation | Use |
+| --- | --- |
+| One clear coding task | `implementation-slice` |
+| Documentation sync | `docs-update` |
+| Task classification or bounded review closure | `project-orchestrator` |
+| Bounded objective to PR readiness | `project-delivery` |
+| Repeated milestone progress across invocations | `milestone-continuation` |
+| Next-task selection or handoff artifact | `task-continuation` |
+| Routine code or docs feedback | `code-review`, `docs-review`, or `code-review-deep` |
+| Formal readiness decision | `code-review-gate`, `docs-review-gate`, or `merge-readiness-gate` |
+| Desktop worker/thread handoff | `desktop-project-delivery` or `desktop-thread-delegation` |
+
+## State Model
+
+A loop iteration should distinguish:
+
+- **Durable source of truth**: repo instructions, specs, task manifests, loop specs, status docs, review evidence, git state, and PR state.
+- **Working context**: chat summaries, current thread notes, task briefs, and previous assistant summaries.
+- **In-flight state**: worker or thread status, claims, leases, and heartbeat artifacts.
+
+Durable source of truth controls completion and next-task selection. Working context can help locate files but cannot prove completion. In-flight state can guide whether to wait, inspect, recover, or stop, but it cannot replace DoD, verification, review evidence, and durable handoff.
+
+## Desktop And CLI Boundary
+
+Shared workflow behavior can run in Codex CLI or Codex Desktop using repository files, shell commands, git inspection, and durable artifacts.
+
+Desktop-only behavior includes heartbeat wakeups, worker delegation, thread creation, forking, messaging, and thread inspection. Use those only through documented runtime capabilities and exact authorization.
+
+CLI fallback is a current-session sequential path, paste-ready prompt, task brief, or continuation prompt. The fallback must preserve the same source-of-truth, verification, review, and human-gate rules.
+
+## Stop Conditions
+
+Stop before proceeding when the next action would cross product ambiguity, source-of-truth conflict, scope expansion, destructive action, external write, commit, push, PR creation, release, deploy, merge, platform comment, review submission, material risk, unsupported Desktop runtime behavior, or insufficient verification for a high-risk change.
