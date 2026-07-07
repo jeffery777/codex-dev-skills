@@ -676,7 +676,7 @@ def example_request() -> dict[str, Any]:
         "tool_or_api": TOOL_OR_API,
         "classification": EXPECTED_CLASSIFICATION,
         "required_request_fields": ["prompt", "target"],
-        "optional_request_fields": ["model", "thinking"],
+        "optional_request_fields": ["model", "thinking", "target.environment.startingState"],
         "minimum_response_fields": ["status", "threadId or thread_id or pendingWorktreeId"],
         "error_response_fields": ["message"],
         "capability_source": "active tool list",

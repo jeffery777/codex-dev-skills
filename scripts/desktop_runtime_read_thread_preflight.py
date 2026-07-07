@@ -694,6 +694,7 @@ def example_request() -> dict[str, Any]:
         "classification": EXPECTED_CLASSIFICATION,
         "required_request_fields": ["threadId"],
         "optional_request_fields": [
+            "hostId",
             "turnLimit",
             "cursor",
             "includeOutputs",

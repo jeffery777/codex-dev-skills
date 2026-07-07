@@ -35,7 +35,7 @@ def read_thread_capability(**overrides):
         "tool_or_api": "read_thread",
         "classification": "read-only",
         "required_request_fields": ["threadId"],
-        "optional_request_fields": ["turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
+        "optional_request_fields": ["hostId", "turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
         "minimum_response_fields": ["status", "threadId"],
         "error_response_fields": ["message"],
         "capability_source": "active tool list",
@@ -110,7 +110,7 @@ def discovery_request(**overrides):
                 "classification": "read-only",
                 "request": {
                     "required": ["threadId"],
-                    "optional": ["turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
+                    "optional": ["hostId", "turnLimit", "cursor", "includeOutputs", "maxOutputCharsPerItem"],
                 },
                 "response": {
                     "required": ["status", "threadId"],
