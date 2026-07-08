@@ -162,6 +162,18 @@ Stop before destructive actions, external writes, commit, push, PR creation, mer
 
 The loop entrypoint repeatedly bootstraps from durable repository files, classifies the current state, routes to existing phase skills, verifies evidence, and decides whether to continue, prepare a handoff, stop, or complete. See [docs/loop-engineering.md](docs/loop-engineering.md) and [workflows/loop-engineering-workflow.md](workflows/loop-engineering-workflow.md).
 
+When a loop needs durable memory across repeated invocations, workers, worktrees,
+or handoffs, add a repo-owned loop ledger:
+
+```text
+Use loop-engineering for issue #123.
+If the repo does not already have loop state, create docs/loops/issue-123/ from the loop spec, loop-state-ledger, task manifest, current-task-summary, iteration-report, and task-claim/lease templates.
+Treat the repo-owned loop ledger as the source of truth for task status, source revision, claim/lease state, verification evidence, review evidence, blockers, and next-loop decision.
+External memory may be used only as cache or coordination unless this repo explicitly defines a stronger reviewed authority model.
+```
+
+See [docs/loop-state-ledger.md](docs/loop-state-ledger.md) for the repo-owned loop state contract.
+
 ### Bounded Milestone Slice
 
 Use `project-delivery` when the objective is larger than a single task but still bounded:
@@ -301,7 +313,7 @@ The `read_thread` preflight helper checks read-only evidence readiness without t
 - `workflows/merge-readiness-workflow.md`
 - `workflows/desktop-delivery-workflow.md`
 
-Shared orchestration templates include loop engineering specs, loop iteration reports, loop handoff prompts, task claim/lease templates, task briefs, task manifests, next-session prompt templates, current task summaries, project specs, implementation plans, closure triage overlays, task continuation reports, integration review reports, and orchestrator gate reports.
+Shared orchestration templates include loop engineering specs, repo-owned loop state ledgers, loop iteration reports, loop handoff prompts, task claim/lease templates, task briefs, task manifests, next-session prompt templates, current task summaries, project specs, implementation plans, closure triage overlays, task continuation reports, integration review reports, and orchestrator gate reports.
 
 ## Examples
 
@@ -411,6 +423,7 @@ Run the repository hygiene check before proposing a release or PR:
 ```
 
 This validates catalog consistency, required skill metadata, required runtime labels, symlink safety, and public hygiene checks for excluded private or legacy terms.
+It also checks that repo-owned loop ledger templates contain the required source revision, status, claim/lease, verification, review, human gate, and external-memory authority marker fields.
 The repository pins Python with `.python-version`; when Python helpers or tests are in scope, confirm the active runtime first:
 
 ```bash

@@ -1,0 +1,97 @@
+# Loop state ledger template.
+# Copy into a target repo when loop-engineering needs repo-owned durable memory
+# beyond a task manifest.
+
+ledger:
+  schema_version: 1
+  objective_id: "<objective-id>"
+  objective: "<bounded-objective>"
+  loop_spec: "<path-to-loop-spec>"
+  task_manifest: "<path-to-task-manifest>"
+  current_task_summary: "<path-to-current-task-summary>"
+  iteration_reports:
+    - "<path-to-latest-iteration-report>"
+  source_revision:
+    branch: "<branch>"
+    head_sha: "<git-sha>"
+    ledger_sha256: "<sha256-or-empty>"
+    task_manifest_sha256: "<sha256-or-empty>"
+    updated_at: "<iso-8601>"
+
+status_model:
+  task_allowed:
+    - planned
+    - ready
+    - claimed
+    - in_progress
+    - blocked
+    - reviewing
+    - done
+    - accepted
+    - unsafe
+  done_means: "Task DoD and verification evidence are satisfied."
+  accepted_means: "Required maintainer, review, merge, release, or formal gate acceptance exists."
+  claim_lifecycle_allowed:
+    - claimed
+    - in_progress
+    - done
+    - blocked
+    - stale
+    - released
+
+current_loop:
+  classification: "<single-clear-task | bounded-delivery-objective | review-closure-loop | milestone-continuation-loop | handoff-or-continuation | desktop-delegation | human-gate | complete>"
+  execution_mode: "<current-session | sequential-execution | prompt-only | delegated-worker-brief | desktop-runtime-action | stop-for-human-gate>"
+  selected_task_id: "<task-id-or-none>"
+  next_decision: "<continue | handoff-prepared | blocked-by-human-gate | complete>"
+  decision_reason: "<evidence-based-reason>"
+
+tasks:
+  - id: "<task-id>"
+    manifest_task_id: "<task-id-in-task-manifest-or-same>"
+    status: "<planned | ready | claimed | in_progress | blocked | reviewing | done | accepted | unsafe>"
+    priority: "<high | medium | low>"
+    dependencies:
+      - "<task-id>"
+    owner:
+      type: "<none | current_session | codex_thread | worker | maintainer>"
+      id: "<thread-id-worker-id-or-empty>"
+    claim:
+      lease_id: "<lease-id-or-empty>"
+      claimed_at: "<iso-8601-or-empty>"
+      lease_expires_at: "<iso-8601-or-empty>"
+      last_observed_at: "<iso-8601-or-empty>"
+      last_known_state: "<none | claimed | running | waiting | blocked | done | failed | unknown>"
+    evidence:
+      verification:
+        status: "<not_run | passed | failed | skipped>"
+        commands:
+          - command: "<command>"
+            result: "<passed | failed | skipped>"
+            artifact: "<path-url-or-summary>"
+      review:
+        status: "<not_required | required | passed | blocked>"
+        artifacts:
+          - "<path-url-or-summary>"
+      handoff:
+        branch: "<branch-or-empty>"
+        commit: "<sha-or-empty>"
+        pull_request: "<url-or-empty>"
+        summary: "<summary-or-empty>"
+    blocker:
+      reason: "<reason-or-empty>"
+      required_human_decision: "<decision-or-empty>"
+    residual_risk:
+      - "<risk-or-none>"
+
+human_gates:
+  - gate: "<gate-name>"
+    required: false
+    reason: "<reason-if-required>"
+    status: "<not_required | pending | satisfied | blocked>"
+
+external_memory:
+  mode: "<none | cache-only | coordination>"
+  adapter: "<none-or-name>"
+  authority: "repo-ledger"
+  notes: "External memory is optional and cannot replace repo-owned ledger evidence by default."

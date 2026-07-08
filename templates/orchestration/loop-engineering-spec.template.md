@@ -15,6 +15,20 @@ Copy this template into a target repository only when a bounded objective needs 
 - Status or continuation report: `<path>`
 - Review evidence: `<path>`
 
+## Repo-Owned Loop Ledger
+
+- Ledger root: `<docs/loops/objective-id>`
+- Task manifest: `<docs/loops/objective-id/task-manifest.yaml>`
+- Current task summary: `<docs/loops/objective-id/current-task-summary.md>`
+- Iteration reports: `<docs/loops/objective-id/iteration-*.md>`
+- Claim / lease files: `<docs/loops/objective-id/claims/*.yaml>`
+- Source revision: `<branch>@<head-sha>`
+
+The repo-owned ledger is the source of truth for task selection, claim state,
+completion evidence, and next-loop decisions. External memory, runtime
+summaries, worker reports, and chat summaries are context only unless this
+repository explicitly defines a stronger reviewed authority contract.
+
 ## Scope
 
 ### In Scope
@@ -36,6 +50,30 @@ Copy this template into a target repository only when a bounded objective needs 
 ## Tasks
 
 Use the task manifest as the task source of truth. Each task should include owner, claim, lease, DoD, verification, review, and human-gate fields when delegation or repeated invocation is expected.
+
+Allowed task statuses:
+
+- `planned`
+- `ready`
+- `claimed`
+- `in_progress`
+- `blocked`
+- `reviewing`
+- `done`
+- `accepted`
+- `unsafe`
+
+`done` requires verification evidence and any required review or gate evidence.
+`accepted` requires maintainer, merge, release, or formal gate acceptance
+evidence.
+
+## Claim And Lease Policy
+
+- Ready tasks must be claimed before worker or thread delegation.
+- Claimed or in-progress tasks with unexpired leases must not be reassigned.
+- Expired leases require durable artifact inspection before recovery.
+- Worker self-reports are context only; completion requires ledger, diff,
+  verification, review, or platform evidence.
 
 ## Definition Of Done
 

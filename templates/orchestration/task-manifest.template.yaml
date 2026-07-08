@@ -1,5 +1,7 @@
 # Task manifest template.
 # Copy into a target repo only when a bounded project needs durable task continuation.
+# For richer repo-owned loop state, pair this with
+# templates/orchestration/loop-state-ledger.template.yaml.
 
 project:
   name: "<project-name>"

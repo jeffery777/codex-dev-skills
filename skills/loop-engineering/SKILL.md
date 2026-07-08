@@ -19,7 +19,7 @@ Each loop iteration must:
 
 1. Re-bootstrap from durable repository source of truth:
    - repo instructions and policies;
-   - project specs, loop specs, plans, task manifests, status docs, and reports;
+   - project specs, loop specs, plans, task manifests, repo-owned loop ledgers, status docs, and reports;
    - review evidence, verification commands, templates, and current git state.
 2. Treat chat summaries, prior handoffs, runtime summaries, and worker self-reports as context only.
 3. Classify the request and current state:
@@ -35,6 +35,27 @@ Each loop iteration must:
 5. Execute or prepare exactly that workflow, then verify and inspect evidence before deciding the next loop state.
 6. Record or report what changed, what was verified, what remains uncertain, and which next action is selected.
 7. Continue only while the objective, source of truth, permissions, risk, and verification are clear.
+
+## Repo-Owned Loop Ledger
+
+When a target repository needs durable loop memory, use a repo-owned ledger
+artifact such as `docs/loops/<objective-id>/loop-state-ledger.yaml`. The ledger
+is the baseline source of truth for task claim state, lease state, iteration
+evidence, and next-loop decisions.
+
+Use the ledger to:
+
+- locate the active objective and selected task;
+- avoid duplicate worker or thread assignment through claim and lease fields;
+- record source revision, verification evidence, review evidence, blocker
+  reasons, handoff artifacts, and residual risk;
+- decide whether the next result is `continue`, `handoff-prepared`,
+  `blocked-by-human-gate`, or `complete`.
+
+Do not treat external memory, worker self-reports, Desktop thread summaries,
+runtime cache, or chat summaries as completion evidence unless current
+repository artifacts, git state, verification, review evidence, or accepted
+platform state confirm them.
 
 ## Routing
 
@@ -100,6 +121,7 @@ Use these templates when a target repository needs durable loop artifacts:
 - `templates/orchestration/loop-engineering-spec.template.md`
 - `templates/orchestration/loop-iteration-report.template.md`
 - `templates/orchestration/loop-handoff-prompt.template.md`
+- `templates/orchestration/loop-state-ledger.template.yaml`
 - `templates/orchestration/task-claim-lease.template.yaml`
 
 Reuse existing project, task, and review templates whenever they are sufficient instead of creating loop-specific duplicates.

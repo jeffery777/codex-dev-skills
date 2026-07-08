@@ -75,6 +75,7 @@ groups:
       - source: templates/orchestration/loop-engineering-spec.template.md
       - source: templates/orchestration/loop-handoff-prompt.template.md
       - source: templates/orchestration/loop-iteration-report.template.md
+      - source: templates/orchestration/loop-state-ledger.template.yaml
       - source: templates/orchestration/task-claim-lease.template.yaml
       - source: workflows/implementation-workflow.md
       - source: workflows/loop-engineering-workflow.md

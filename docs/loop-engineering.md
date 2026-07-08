@@ -14,6 +14,7 @@ It adds a shared loop vocabulary:
 - classify the current state;
 - route to existing focused skills;
 - verify and review evidence;
+- update or prepare repo-owned loop ledger state when a target repository uses one;
 - decide whether to continue, hand off, stop, or complete.
 
 It does not add a scheduler, daemon, Desktop runtime adapter, platform writer, release bot, or replacement for existing phase skills.
@@ -40,11 +41,29 @@ A loop should have enough durable context to re-bootstrap without trusting chat 
 - repo instructions such as `AGENTS.md`;
 - a loop spec, project spec, issue, or implementation plan;
 - task manifest or current task summary when multiple tasks exist;
+- repo-owned loop ledger when repeated invocation, worker claims, or durable
+  next-step decisions are needed;
 - review evidence or gate reports when relevant;
 - verification commands and expected artifacts;
 - current git branch, status, upstream, and diff.
 
 If those files do not exist, the first loop iteration should create or propose them instead of pretending the objective is already executable.
+
+## Repo-Owned Loop Ledger
+
+The repo-owned loop ledger is the baseline memory layer for loop engineering.
+It records active objective state, task status, source revision, claim and lease
+state, verification evidence, review evidence, blockers, handoff artifacts, and
+the next loop decision in repository files.
+
+Use `templates/orchestration/loop-state-ledger.template.yaml` when a project
+needs this durable state. Pair it with the existing loop spec, task manifest,
+current task summary, iteration report, and task claim/lease templates.
+
+External memory is optional and should be treated as cache or coordination by
+default. It can help locate objectives or recent iterations, but completion and
+acceptance still require repo-owned ledger evidence unless a repository
+explicitly defines a stronger reviewed authority model.
 
 ## Runtime Compatibility
 

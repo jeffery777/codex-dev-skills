@@ -70,7 +70,7 @@ Public outputs:
 
 - desktop-thread-delegation
 - loop-engineering
-- loop engineering workflow, example, source-of-truth guidance, iteration report, handoff prompt, and task claim/lease templates
+- loop engineering workflow, example, source-of-truth guidance, repo-owned loop state ledger guidance, iteration report, handoff prompt, loop state ledger, and task claim/lease templates
 - runtime compatibility guidance in `docs/runtime-compatibility.md`
 - Desktop runtime adapter v2 boundary guidance in `docs/runtime-adapter-v2.md`
 - Desktop runtime wrapper v1 planner helper, capability metadata normalization helper, contract comparison helper, create-thread preflight helper, read-thread preflight helper, evidence pipeline helper, session compatibility status validator, first-use handshake helper, session-scoped compatibility cache helper, create-thread authorization/evidence gate helper, create-thread executor boundary proposal helper, create-thread executor shell helper, single documented create-thread callable executor helper, create-thread callable wiring-boundary helper, create-thread callable bundle / executor-request assembly helper, planner `capability_evidence` input path, and implementation plan in `docs/desktop-runtime-wrapper-v1-plan.md`

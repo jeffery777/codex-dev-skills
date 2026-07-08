@@ -36,6 +36,18 @@ Continue until MVP1 is complete or a human gate is reached.
 
 The cadence is runtime behavior. In Codex Desktop, a heartbeat or automation may wake the thread. In Codex CLI, use a manual invocation, continuation prompt, task brief, or sequential execution path.
 
+## Repo-Owned Loop Ledger
+
+```text
+Use loop-engineering for issue #123.
+
+Create or update docs/loops/issue-123/ using the loop-state-ledger, loop spec, task manifest, current task summary, iteration report, and task claim/lease templates.
+Use the repo-owned loop ledger as the source of truth for current task, source revision, claim/lease state, verification evidence, review evidence, blockers, residual risk, and the next loop decision.
+Do not treat external memory, worker reports, chat summaries, or Desktop thread summaries as completion evidence unless repo files, git state, verification, review evidence, or accepted platform state confirm them.
+```
+
+The ledger baseline works in Codex CLI and Codex Desktop because it is ordinary repository state. Desktop automation, worktrees, threads, and sub-agents may use the ledger, but they do not replace it.
+
 ## Desktop Handoff Boundary
 
 ```text
