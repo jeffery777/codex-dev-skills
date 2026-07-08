@@ -7,7 +7,7 @@ The user-facing skill is `loop-engineering`. It is an entrypoint and router, not
 ## Loop Cycle
 
 1. **Bootstrap**
-   - Read repo instructions, policies, specs, plans, task manifests, loop specs, status docs, review evidence, verification commands, templates, and git state.
+   - Read repo instructions, policies, specs, plans, task manifests, repo-owned loop ledgers, loop specs, status docs, review evidence, verification commands, templates, and git state.
    - Treat chat summaries and handoff prompts as context only.
 2. **Classify**
    - Decide whether the next state is a single task, bounded delivery objective, review closure loop, milestone continuation, handoff, Desktop delegation, human gate, or completion audit.
@@ -42,10 +42,20 @@ The user-facing skill is `loop-engineering`. It is an entrypoint and router, not
 A loop iteration should distinguish:
 
 - **Durable source of truth**: repo instructions, specs, task manifests, loop specs, status docs, review evidence, git state, and PR state.
+- **Repo-owned loop ledger**: durable repository memory for the active objective, source revision, task status, claim and lease state, iteration evidence, next decision, and human gates.
 - **Working context**: chat summaries, current thread notes, task briefs, and previous assistant summaries.
 - **In-flight state**: worker or thread status, claims, leases, and heartbeat artifacts.
 
-Durable source of truth controls completion and next-task selection. Working context can help locate files but cannot prove completion. In-flight state can guide whether to wait, inspect, recover, or stop, but it cannot replace DoD, verification, review evidence, and durable handoff.
+Durable source of truth and the repo-owned loop ledger control completion and
+next-task selection. Working context can help locate files but cannot prove
+completion. In-flight state can guide whether to wait, inspect, recover, or
+stop, but it cannot replace DoD, verification, review evidence, source revision,
+and durable handoff.
+
+When a ledger exists, each iteration should read it before selecting work and
+write or prepare a ledger update after verification. If ledger state conflicts
+with git state, task manifests, review evidence, or platform state, re-bootstrap
+and stop at a human gate when the conflict cannot be resolved cheaply.
 
 ## Desktop And CLI Boundary
 

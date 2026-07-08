@@ -178,6 +178,10 @@ check_skill_metadata() {
   ok "all skills declare required metadata"
 }
 
+check_loop_ledger() {
+  python3 scripts/validate-loop-ledger.py
+}
+
 main() {
   require_rg
   check_no_provider_terms
@@ -188,6 +192,7 @@ main() {
   check_installer_target_modes
   check_installer_version
   check_skill_metadata
+  check_loop_ledger
 }
 
 main "$@"

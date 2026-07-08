@@ -246,6 +246,7 @@ group_templates() {
         templates/orchestration/loop-engineering-spec.template.md \
         templates/orchestration/loop-handoff-prompt.template.md \
         templates/orchestration/loop-iteration-report.template.md \
+        templates/orchestration/loop-state-ledger.template.yaml \
         templates/orchestration/task-claim-lease.template.yaml \
         workflows/implementation-workflow.md \
         workflows/loop-engineering-workflow.md ;;

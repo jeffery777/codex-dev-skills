@@ -10,7 +10,7 @@ Useful project-level artifacts include:
 - Project specs that state objective, users, scope, out-of-scope work, requirements, Definition of Done, risks, human gates, and verification strategy.
 - Implementation plans that split work into small slices with source of truth, ownership, affected files, review primitives, formal gate triggers, rollback or recovery notes, and open questions.
 - Task manifests and continuation reports that record completed, blocked, ready, and unsafe tasks for bounded multi-step work.
-- Loop specs and iteration reports that record a bounded objective, source-of-truth files, current route, verification evidence, review or gate evidence, and the next loop decision.
+- Loop specs, repo-owned loop state ledgers, and iteration reports that record a bounded objective, source-of-truth files, current route, source revision, task status, claim/lease state, verification evidence, review or gate evidence, blockers, residual risk, and the next loop decision.
 - Next-session prompts and current task summaries that preserve verified handoff context while requiring the next agent to re-read repository files.
 - Review report templates for code review, docs review, review finding disposition, and merge readiness.
 - Policy files for runtime compatibility, destructive actions, delegation, review artifacts, release gates, and merge gates.
@@ -54,6 +54,13 @@ The workflows can carry local work to PR readiness, but they intentionally stop 
 Shared workflows can prepare prompts, task briefs, continuation prompts, or sequential execution paths for future work, but actually opening a new Codex conversation is runtime-specific. Use Codex Desktop worker delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator only when that runtime is available and intentionally selected. Repeated wakeups for `milestone-continuation` are also runtime-specific; the skill defines per-invocation behavior, while heartbeat or automation controls cadence when available.
 
 `loop-engineering` is a shared entrypoint for repeated decision-making, routing, verification, review, and stopping behavior. It can prepare Desktop handoff prompts or route to Desktop-specific skills when the runtime and authorization are available, but it does not itself provide scheduling, worker creation, thread control, platform writes, or merge authority.
+
+For objectives that must survive repeated invocations, workers, worktrees, or
+handoffs, keep repo-owned loop state in files such as
+`docs/loops/<objective-id>/loop-state-ledger.yaml`. External memory can be added
+later as cache or coordination, but the baseline completion and next-task
+decision should remain reconstructable from repository files, git state,
+verification evidence, and review evidence.
 
 For small or single-task work, prefer the smallest direct skill such as `implementation-slice`, `planning`, or `code-review`. `project-orchestrator` may still be used as a router, but it should downgrade a clear single task to the matching focused workflow instead of forcing a project-level delivery loop.
 
