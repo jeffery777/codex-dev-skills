@@ -45,7 +45,7 @@ Release prep should verify:
 bash -n install.sh
 bash -n scripts/validate-repo.sh
 python3 scripts/validate-loop-ledger.py
-PYTHONPYCACHEPREFIX=/private/tmp/codex-dev-skills-pycache python3 -m unittest tests/test_validate_loop_ledger.py
+PYTHONPYCACHEPREFIX=/tmp/codex-dev-skills-pycache python3 -m unittest tests/test_validate_loop_ledger.py
 ./install.sh manifest
 CODEX_DEV_SKILLS_TARGET=agents ./install.sh manifest
 ./scripts/validate-repo.sh
