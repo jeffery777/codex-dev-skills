@@ -6,11 +6,16 @@
 
 `codex-dev-skills` is an OSS maintenance workflow pack for OpenAI Codex CLI and Codex Desktop.
 
-It helps maintainers move beyond one-off prompts. Instead of manually re-briefing every task, deciding when to open a fresh conversation, and stitching review or merge gates together by hand, teams can combine reusable skills, formal gates, and Codex Desktop thread-delegation boundaries to run bounded implementation, review, handoff, and release-readiness workflows more consistently.
+It helps maintainers move beyond one-off prompts. Teams can combine reusable
+skills, an executable loop contract, native goals, shared subagents, formal
+gates, and thin runtime adapters to run bounded implementation, review,
+handoff, and release-readiness workflows consistently.
 
-The current roadmap milestone includes a completed Desktop runtime wrapper V1 bounded helper path for thread-delegation-oriented workflows. The helpers cover caller-supplied capability evidence normalization, compatibility checks, planner/preflight/gate evidence, non-live executor request assembly, and a tightly scoped live `create_thread` smoke boundary that requires exact human approval. In practice, this bridges Codex's task-level strengths with the maintainer work needed to manage context, delegation, review closure, and merge readiness across multiple bounded conversations.
-
-The wrapper path does not turn Codex into an unattended release bot. It keeps human approval, target validation, review evidence, Desktop runtime boundaries, platform writes, and release gates explicit.
+The current development milestone is Loop Engineering V1: one production
+routing and transition core, structured ledger validation, deterministic
+workflow evals, native goal and shared subagent semantics, and Desktop-specific
+task/thread/scheduling adapters. The older Desktop wrapper helper chain remains
+legacy compatibility evidence and is not the active native runtime path.
 
 This is not a general prompt collection. It is a curated set of public, reusable workflow contracts for open source and team repositories.
 
@@ -106,7 +111,7 @@ Use the smallest entry point that matches the request:
 - `project-delivery` when the objective is larger than one task but still bounded.
 - `milestone-continuation` when a bounded milestone should be checked and advanced across repeated invocations until complete or blocked by a human gate.
 
-`loop-engineering` is a thin entrypoint over the existing phase skills. It should classify the current state, route to the smallest suitable workflow, verify evidence, and stop at human gates. It does not replace focused implementation, review primitives, formal gates, milestone continuation, task continuation, or Desktop-only delegation.
+`loop-engineering` is a thin entrypoint over the existing phase skills. It should classify the current state, route to the smallest suitable workflow, verify evidence, and stop at human gates. It does not replace focused implementation, review primitives, formal gates, milestone continuation, task continuation, shared subagents, or Desktop user-owned task/thread/worktree controls.
 
 If `project-orchestrator` receives a single clear implementation task, it should route to `implementation-slice` semantics and avoid unnecessary project-level planning.
 
@@ -160,7 +165,20 @@ Continue through planning, implementation, verification, review, docs sync, cont
 Stop before destructive actions, external writes, commit, push, PR creation, merge, release, deploy, platform comments, review submissions, material risk, or unclear source of truth unless I explicitly authorize the exact action.
 ```
 
-The loop entrypoint repeatedly bootstraps from durable repository files, classifies the current state, routes to existing phase skills, verifies evidence, and decides whether to continue, prepare a handoff, stop, or complete. See [docs/loop-engineering.md](docs/loop-engineering.md) and [workflows/loop-engineering-workflow.md](workflows/loop-engineering-workflow.md).
+The loop entrypoint repeatedly bootstraps from durable repository files,
+executes the production route and transition contract, verifies evidence, and
+decides whether to continue, prepare a handoff, stop, or complete. When the user
+explicitly requests a native goal, Goal mode controls progress without widening
+permissions or replacing repository completion evidence. Independent bounded
+packets may use shared subagents in current Desktop, CLI, and IDE runtimes. See
+[docs/loop-engineering.md](docs/loop-engineering.md),
+[workflows/loop-engineering-workflow.md](workflows/loop-engineering-workflow.md),
+and [native runtime capabilities](docs/native-runtime-capabilities.md).
+
+The active skill invokes `loopctl.py decide` with a structured decision input
+and an explicit trusted `--protected-history-sha256 <verified-digest-or-none>`;
+the prose route table explains the result but does not replace the executable
+routing function.
 
 When a loop needs durable memory across repeated invocations, workers, worktrees,
 or handoffs, add a repo-owned loop ledger:
@@ -168,7 +186,9 @@ or handoffs, add a repo-owned loop ledger:
 ```text
 Use loop-engineering for issue #123.
 If the repo does not already have loop state, create docs/loops/issue-123/ from the loop spec, loop-state-ledger, task manifest, current-task-summary, iteration-report, and task-claim/lease templates.
-Treat the repo-owned loop ledger as the source of truth for task status, source revision, claim/lease state, verification evidence, review evidence, blockers, and next-loop decision.
+Treat stable task definitions, validated events, the materialized ledger,
+fenced claims, and verification/review evidence according to their documented
+authority boundaries.
 External memory may be used only as cache or coordination unless this repo explicitly defines a stronger reviewed authority model.
 ```
 
@@ -206,7 +226,10 @@ Use task-continuation to choose the next smallest safe task from the repo plan a
 Prepare a continuation prompt or task brief if continuation should move to another session or worker, but do not claim that a shared skill can open the session itself.
 ```
 
-The skill prepares continuation artifacts from durable repository context. Actually opening a new Codex conversation is runtime-specific and requires Desktop worker delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator.
+The skill prepares continuation artifacts from durable repository context.
+Shared subagents can handle bounded packets when available; opening a separate
+user-owned Desktop task or thread remains a runtime-specific control-plane
+action.
 
 ### Merge Readiness
 
@@ -239,7 +262,9 @@ The gate is a thin adapter and evidence-and-decision layer: it summarizes verifi
 
 ### Codex Desktop Delegated Delivery
 
-Use `desktop-project-delivery` when working in Codex Desktop and delegating a bounded objective:
+Use `desktop-project-delivery` when shared project delivery also needs Desktop
+task, thread, worktree, or scheduling controls. Ordinary subagent delegation is
+shared and does not require this Desktop adapter:
 
 ```text
 Use desktop-project-delivery to prepare this feature for PR readiness.
@@ -248,25 +273,26 @@ Coordinate implementation and review, integrate the output, run verification, an
 
 CLI fallback: use `project-delivery`, `project-orchestrator`, prompts, task briefs, continuation prompts, or a sequential execution path; run review primitives after the fallback produces changed files or evidence; and use formal gates only at commit readiness, PR readiness, merge readiness, or explicit repo-policy gates. See [docs/runtime-compatibility.md](docs/runtime-compatibility.md) for the Desktop-to-CLI fallback mapping.
 
-Use `desktop-thread-delegation` when Codex Desktop should choose the next safe task and decide whether to continue in the current thread or hand off to a new thread:
+Use `desktop-thread-delegation` only after shared orchestration has selected a
+bounded handoff and the user explicitly wants a separate Desktop task or
+thread:
 
 ```text
-Use desktop-thread-delegation to choose the next safe task from the current repo state.
-If the task is suitable for this thread and workflow rules allow it, continue here.
-If the task is better for a new Desktop thread, prepare the handoff prompt and ask before opening it.
+Use desktop-thread-delegation for the bounded task already selected by shared orchestration.
+Choose only whether that selected task continues here or moves to a new Desktop task/thread/worktree.
+If a new Desktop task is appropriate, prepare the handoff prompt and ask before opening it.
 If thread creation is unavailable, return the prompt for me to paste manually.
 Keep review, commit, PR, merge, platform comments, and other external writes behind explicit authorization.
 ```
 
 The main thread remains responsible for integrating returned work, checking the diff, running verification, and enforcing review or merge gates.
 
-For the boundary of a possible future runtime-call adapter, see [docs/runtime-adapter-v2.md](docs/runtime-adapter-v2.md). That document defines allowed sources, prohibited Desktop runtime state, safety gates, runtime API/tool contract version tracking, CLI fallback behavior, and stop conditions without adding a runtime-call adapter or Desktop runtime integration.
-When `desktop-thread-delegation` prepares to use a Desktop thread tool such as `create_thread`, `fork_thread`, or `send_message_to_thread`, it must record the same contract/version tracking fields before the runtime action.
-For the current Desktop runtime wrapper V1 helpers and CLI usage examples, see [docs/desktop-runtime-wrapper-v1-plan.md](docs/desktop-runtime-wrapper-v1-plan.md). The capability discovery helper normalizes caller-supplied documented metadata only, the contract comparison helper re-checks old wrapper contract evidence against newer normalized capability evidence before runtime/schema changes are trusted, and the planner can accept normalized output as `capability_evidence` to produce dry-run, fallback, or stopped evidence. The `create_thread` preflight helper checks whether create-thread readiness evidence is complete before a future separately approved runtime call, and the create-thread authorization/evidence gate checks the final caller-supplied envelope before a human considers approving one separate implementation slice. The create-thread executor boundary proposal helper accepts ready authorization gate evidence and defines the single documented `create_thread` call-site contract a future executor would have to satisfy. The create-thread executor shell helper accepts ready boundary proposal evidence and validates the final implementation surface only, including a non-executed callable descriptor or injected-adapter placeholder, target re-check, authorization-intent re-check, permission/auth failure handling, response validation, returned thread id/status validation, and the separate human approval boundary. The create-thread documented callable executor helper accepts ready shell evidence, rechecks the call-site target and authorization intent, and can execute only a caller-injected documented callable adapter; the CLI default remains non-live and returns fallback when no runner is injected. The create-thread callable wiring-boundary helper accepts ready executor evidence plus a caller-supplied documented `create_thread` descriptor or explicit non-live adapter wiring contract and converts it into the executor helper's injected adapter contract shape without invoking Desktop runtime. The create-thread callable wiring evidence bundle / executor-request assembly helper accepts ready wiring evidence plus caller-supplied target, prompt, authorization, and executor-shell evidence to produce a complete non-live executor request preview / handoff bundle; CLI/default and tests do not execute an injected runner or call Desktop runtime.
-
-The V1 live boundary is limited to `scripts/desktop_runtime_create_thread_live_smoke.py`: a single documented `create_thread` live smoke helper that can call one runtime-provided documented callable only when the caller injects that callable and provides exact human approval. It rechecks target identity, authorization intent, repo, remote, branch, expected head, read-only smoke prompt, permission/auth handling, and response shape at the actual call site, accepting raw Desktop responses such as `threadId` and rejecting `private_runtime_state_read` or `external_write_performed` only when those fields are present and not boolean `false`. `ready` means only that the smoke call created or queued a new Desktop thread and delivered the read-only audit prompt; it does not mean the audit completed. CLI/default/tests remain non-live and return `fallback` without an injected callable. The smoke prompt is read-only and forbids comments, reviews, file edits, commits, pushes, PRs, merges, label/status changes, and other platform writes. Any remediation after the audit requires separate human approval.
-
-The `read_thread` preflight helper checks read-only evidence readiness without treating preflight as runtime-call authorization. The evidence pipeline helper chains discovery, comparison, and create/read preflight into one CLI evidence example for maintainers who want to follow planner -> discovery -> compare -> preflight order; it can run a single `--target-action` and includes a top-level summary for ready/fallback/stopped scanability. The session compatibility status validator checks explicit caller-supplied status for wrapper/helper identity, contract evidence, comparison result, and session marker before later preflight reference. The first-use handshake helper constructs that status from caller-supplied documented metadata, old wrapper contract evidence, expected wrapper/helper identity, and an explicit session marker, then validates it. The session-scoped compatibility cache helper reads or writes caller-explicit cache envelopes for same-session contract compatibility evidence only. `ready` means evidence, proposal, executor-shell surface readiness, injected adapter contract completion, callable wiring readiness, executor request preview readiness, or single live smoke completion only; it does not mean the CLI default called Desktop runtime, that `read_thread` was called, that the smoke audit task finished, that session status, handshake evidence, cache evidence, preflight evidence, authorization-gate evidence, executor-boundary proposal evidence, executor-shell evidence, injected executor evidence, callable wiring evidence, callable bundle evidence, or prior smoke evidence authorized another live runtime call, or that commit, push, PR creation, merge, platform comments, reviews, labels, status changes, or other external writes are authorized. Shell, proposal, gate, cache, preflight, executor, wiring, bundle, and prior smoke evidence cannot replace actual call-site target validation, permission/auth handling, response validation, returned thread id or `pendingWorktreeId` validation, or returned status validation. These helpers do not read Desktop private runtime state, add a daemon, MCP server, app-server client, sidecar, background service, skill, catalog item, or installer entry.
+The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
+Use only a callable exposed by the current runtime, validate its target and
+response at the call site, and preserve the same CLI fallback. The
+`desktop_runtime_*` scripts and [historical V1 plan](docs/desktop-runtime-wrapper-v1-plan.md)
+remain regression and migration evidence only; active Loop Engineering skills
+must not import, execute, or recommend them.
 
 ## Runtime Compatibility
 
@@ -274,7 +300,7 @@ The `read_thread` preflight helper checks read-only evidence readiness without t
 | --- | --- |
 | `shared` | Works in Codex CLI and Codex Desktop with ordinary repository files and shell/git inspection. |
 | `cli` | Designed primarily for Codex CLI. Desktop may use the same steps manually or through an equivalent thread. |
-| `desktop` | Requires Codex Desktop behavior such as main-agent orchestration or worker delegation. |
+| `desktop` | Requires Desktop user-owned task, thread, worktree, UI, or scheduling control. |
 | `plugin-dependent` | Requires an installed plugin, connector, or platform tool. The skill must name the dependency. |
 
 ## Skills
@@ -299,8 +325,8 @@ The `read_thread` preflight helper checks read-only evidence readiness without t
 | `review-artifact-cleanup` | shared | Dry-run first cleanup workflow for review artifacts. |
 | `closure-triage` | shared | Select the next smallest safe packet from repo policy, project overlays, and current state. |
 | `task-continuation` | shared | Select the next safe task and prepare a continuation prompt or task brief from durable project context. |
-| `desktop-project-delivery` | desktop | Codex Desktop delivery entrypoint for delegated project work. |
-| `desktop-thread-delegation` | desktop | Choose the next safe task, continue in the current thread when appropriate, or hand off to a new Desktop thread when authorized and supported. |
+| `desktop-project-delivery` | desktop | Thin Desktop UX adapter over shared project delivery. |
+| `desktop-thread-delegation` | desktop | Control a user-authorized Desktop task/thread/worktree handoff selected by shared orchestration. |
 | `desktop-spec-plan-gate` | desktop | Desktop gate for spec, plan, and DoD drafts. |
 | `desktop-implementation-gate` | desktop | Desktop formal integration gate for worker outputs before commit readiness. |
 | `desktop-pr-merge-gate` | desktop | Desktop PR and merge readiness gate that summarizes evidence without publishing or merging. |
@@ -367,6 +393,19 @@ Install CLI-compatible loop and delivery workflows:
 ./install.sh install codex-delivery-workflow
 ```
 
+The installed Loop Engineering YAML CLI has one explicit Python dependency.
+Install it into the Python environment that will run `loopctl.py`:
+
+```bash
+python3 -m pip install -r ~/.codex/skills/loop-engineering/requirements.txt
+```
+
+When `CODEX_DEV_SKILLS_TARGET=agents` is used, replace `~/.codex/skills` with
+`~/.agents/skills`. The installer reports this prerequisite but does not
+silently modify the user's Python environment. `loopctl.py --help` remains
+available before the dependency is installed; YAML commands fail closed with
+the same installation instruction.
+
 Install Codex Desktop delivery workflows:
 
 ```bash
@@ -419,18 +458,19 @@ Plugin packaging is intentionally not added by the local installer. If this pack
 Run the repository hygiene check before proposing a release or PR:
 
 ```bash
-./scripts/validate-repo.sh
-```
-
-This validates catalog consistency, required skill metadata, required runtime labels, symlink safety, and public hygiene checks for excluded private or legacy terms.
-It also checks that repo-owned loop ledger templates contain the required source revision, status, claim/lease, verification, review, human gate, and external-memory authority marker fields.
-The repository pins Python with `.python-version`; when Python helpers or tests are in scope, confirm the active runtime first:
-
-```bash
 python3 --version
+python3 -m pip install -r requirements.txt
+./scripts/validate-repo.sh
+python3 scripts/eval-loop-engineering.py
+python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
-The expected pinned version is Python 3.12.9.
+This validates catalog/release consistency, required skill metadata, runtime
+labels, symlink safety, structured loop YAML, event/transition behavior,
+workflow eval thresholds, and public hygiene checks. PyYAML is the only Python
+runtime dependency and is required by the structured ledger commands.
+The repository pins Python 3.12.9 with `.python-version`; confirm the active
+runtime before installing dependencies.
 
 For tag, release notes, and PR readiness checks, see [docs/release-readiness.md](docs/release-readiness.md).
 

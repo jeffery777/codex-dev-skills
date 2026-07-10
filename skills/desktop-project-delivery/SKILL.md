@@ -1,6 +1,6 @@
 ---
 name: desktop-project-delivery
-description: Codex Desktop delegated project delivery entrypoint for bounded objectives.
+description: Thin Codex Desktop UX adapter over the shared project delivery workflow for bounded objectives.
 ---
 
 # desktop-project-delivery
@@ -9,20 +9,41 @@ Runtime compatibility: desktop
 
 ## Purpose
 
-Use this skill in Codex Desktop when the user delegates a bounded delivery objective and expects main-agent ownership through planning, worker delegation, integration, review, docs sync, and PR readiness or the next human gate.
+Use this skill in Codex Desktop when the user delegates a bounded delivery
+objective and wants Desktop task, thread, worktree, or scheduling controls in
+addition to the shared `project-delivery` workflow.
+
+This is a thin UX adapter. `project-delivery`, `project-orchestrator`, the shared
+subagent delegation policy, and the repository's completion evidence remain
+authoritative. Ordinary subagent delegation is not Desktop-only.
 
 ## CLI Fallback
 
-Use `project-delivery` and `project-orchestrator` with prompts, task briefs, continuation prompts, or a sequential execution path. Use separate implementation and review passes in the current CLI session or in maintainer-run sessions. Use `code-review`, `code-review-deep`, or `docs-review` for ordinary integrated output review evidence; use formal gate adapters only for commit readiness, PR readiness, merge readiness, or explicit repo-policy blocking decisions.
+Use `project-delivery` and `project-orchestrator` directly. Delegate independent
+bounded packets through shared subagents when available, or use prompts, task
+briefs, continuation prompts, and a sequential execution path. Use ordinary
+review primitives for integrated output and formal gates only at their intended
+readiness stages.
 
 ## Workflow
 
-1. Main agent bootstraps from durable repo artifacts and git state.
-2. Main agent uses `project-orchestrator` to define scope, ownership, phase plan, verification, and human gates.
-3. Workers receive bounded task briefs and must not commit, publish, merge, or perform destructive actions.
-4. Main agent integrates worker output, checks ownership, runs verification, and collects review evidence through `code-review`, `code-review-deep` for high-risk code or mixed changes, or `docs-review`.
-5. Main agent runs `desktop-implementation-gate` only for formal Desktop integration before commit readiness, and runs `code-review-gate` or `docs-review-gate` only for formal commit readiness, PR readiness, merge readiness, or repo-policy blocking decisions.
-6. Main agent reports readiness or stops for human decision.
+1. Run the shared `project-delivery` and `project-orchestrator` contract to
+   bootstrap, select work, define ownership, verify, review, and decide gates.
+2. Use shared subagents for independent bounded work when useful. Keep writes
+   disjoint or isolated and keep the main agent responsible for integration.
+3. Invoke `desktop-thread-delegation` only when the user explicitly wants a
+   separate user-owned Desktop task, thread, or worktree.
+4. Use Desktop scheduling only as a wakeup control plane; it does not change
+   task selection, permissions, or completion criteria.
+5. Run `desktop-implementation-gate` only for formal Desktop integration before
+   commit readiness, and run shared formal gates only at their intended stages.
+6. Report readiness or stop for human decision.
+
+The repository's `docs/native-runtime-capabilities.md` is canonical; filesystem
+installation also places it at
+`~/.codex/templates/docs/native-runtime-capabilities.md`.
+Legacy `desktop_runtime_*` helpers are compatibility evidence only and are not
+an active dependency of this skill.
 
 ## Output
 

@@ -181,7 +181,7 @@ group_description() {
     shared-review-gates) echo "Shared review gates, closure triage, safety policies, and orchestration templates." ;;
     codex-review-workflow) echo "Routine and deep code, docs, and merge review workflows." ;;
     codex-delivery-workflow) echo "Loop engineering, planning, bounded implementation, docs update, and delegated delivery workflows." ;;
-    desktop-delivery-workflow) echo "Codex Desktop-only delegated delivery and orchestration workflows." ;;
+    desktop-delivery-workflow) echo "Thin Codex Desktop task, thread, worktree, scheduling, and integration adapters." ;;
     codex-dev-skills) echo "Alias for all groups." ;;
   esac
 }
@@ -243,7 +243,10 @@ group_templates() {
         workflows/merge-readiness-workflow.md ;;
     codex-delivery-workflow)
       printf '%s\n' \
+        docs/native-runtime-capabilities.md \
         templates/orchestration/loop-engineering-spec.template.md \
+        templates/orchestration/loop-decision-input.template.yaml \
+        templates/orchestration/loop-event.template.yaml \
         templates/orchestration/loop-handoff-prompt.template.md \
         templates/orchestration/loop-iteration-report.template.md \
         templates/orchestration/loop-state-ledger.template.yaml \
@@ -292,6 +295,12 @@ record_state() {
     "$VERSION" "$action" "$group" "$ts" >> "$STATE_FILE"
 }
 
+remove_transient_skill_files() {
+  local root="$1"
+  find "$root" -type f \( -name '*.pyc' -o -name '.DS_Store' \) -delete
+  find "$root" -depth -type d -name '__pycache__' -empty -delete
+}
+
 install_skill() {
   local skill="$1" src dst
   src="$ROOT_DIR/skills/$skill"
@@ -299,6 +308,7 @@ install_skill() {
   [[ -d "$src" ]] || die "Missing skill source: skills/$skill"
   mkdir -p "$dst"
   cp -R "$src"/. "$dst"/
+  remove_transient_skill_files "$dst"
   ok "skill $skill"
 }
 
@@ -311,6 +321,13 @@ install_template() {
   mkdir -p "$(dirname "$dst")"
   cp "$src" "$dst"
   ok "template $target_rel"
+}
+
+report_loop_cli_dependency() {
+  if ! python3 -c 'import yaml' >/dev/null 2>&1; then
+    warn "Loop Engineering YAML commands require PyYAML in the selected Python environment."
+    info "Install explicitly: python3 -m pip install -r $CODEX_SKILLS_DIR/loop-engineering/requirements.txt"
+  fi
 }
 
 sync_file() {
@@ -343,10 +360,11 @@ sync_dir() {
   if [[ ! -e "$dst" ]]; then
     mkdir -p "$dst"
     cp -R "$src"/. "$dst"/
+    remove_transient_skill_files "$dst"
     ok "new $label"
     return 0
   fi
-  if diff -rq "$src" "$dst" >/dev/null 2>&1; then
+  if diff -rq -x '__pycache__' -x '*.pyc' -x '.DS_Store' "$src" "$dst" >/dev/null 2>&1; then
     ok "up-to-date $label"
     return 0
   fi
@@ -358,11 +376,12 @@ sync_dir() {
     rm -rf "$dst"
     mkdir -p "$dst"
     cp -R "$src"/. "$dst"/
+    remove_transient_skill_files "$dst"
     ok "updated $label (backup: $backup)"
     return 0
   fi
   warn "modified $label; use update --force to overwrite after reviewing diff"
-  diff -rq "$src" "$dst" || true
+  diff -rq -x '__pycache__' -x '*.pyc' -x '.DS_Store' "$src" "$dst" || true
   return 1
 }
 
@@ -393,6 +412,7 @@ install_group() {
   for item in $(group_templates "$group"); do
     install_template "$item"
   done
+  [[ "$group" != "codex-delivery-workflow" ]] || report_loop_cli_dependency
   record_state "install" "$group"
 }
 
@@ -406,6 +426,7 @@ update_group() {
   for item in $(group_templates "$group"); do
     update_template "$item" "$force" || return 1
   done
+  [[ "$group" != "codex-delivery-workflow" ]] || report_loop_cli_dependency
   record_state "update" "$group"
 }
 
@@ -417,7 +438,7 @@ diff_skill() {
     warn "missing installed skill: $skill"
     return 1
   fi
-  diff -rq "$src" "$dst" || return 1
+  diff -rq -x '__pycache__' -x '*.pyc' -x '.DS_Store' "$src" "$dst" || return 1
 }
 
 diff_template() {

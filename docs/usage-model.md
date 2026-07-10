@@ -9,7 +9,9 @@ Useful project-level artifacts include:
 - `AGENTS.md` for repo-specific operating rules, verification commands, review expectations, and human gates.
 - Project specs that state objective, users, scope, out-of-scope work, requirements, Definition of Done, risks, human gates, and verification strategy.
 - Implementation plans that split work into small slices with source of truth, ownership, affected files, review primitives, formal gate triggers, rollback or recovery notes, and open questions.
-- Task manifests and continuation reports that record completed, blocked, ready, and unsafe tasks for bounded multi-step work.
+- Task manifests and continuation reports that use canonical task states for
+  bounded multi-step work. Safety concerns are `blocked` with blocker kind
+  `safety`, not a separate lifecycle state.
 - Loop specs, repo-owned loop state ledgers, and iteration reports that record a bounded objective, source-of-truth files, current route, source revision, task status, claim/lease state, verification evidence, review or gate evidence, blockers, residual risk, and the next loop decision.
 - Next-session prompts and current task summaries that preserve verified handoff context while requiring the next agent to re-read repository files.
 - Review report templates for code review, docs review, review finding disposition, and merge readiness.
@@ -51,16 +53,27 @@ The workflows can carry local work to PR readiness, but they intentionally stop 
 - commit, push, PR creation, release, deploy, merge, platform comments, or review submissions
 - material security, privacy, data, migration, payment, or permission risk
 
-Shared workflows can prepare prompts, task briefs, continuation prompts, or sequential execution paths for future work, but actually opening a new Codex conversation is runtime-specific. Use Codex Desktop worker delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator only when that runtime is available and intentionally selected. Repeated wakeups for `milestone-continuation` are also runtime-specific; the skill defines per-invocation behavior, while heartbeat or automation controls cadence when available.
+Shared workflows may use native Goal mode when explicitly requested and may
+delegate bounded packets through shared subagents in supported Desktop, CLI,
+and IDE runtimes. Goal and subagent state are coordination evidence, not
+completion authority. Opening a separate user-owned Desktop task/thread and
+managing scheduled work remain runtime-specific control-plane actions. CLI can
+prepare and test scheduled prompts but does not provide the Scheduled
+management interface.
 
-`loop-engineering` is a shared entrypoint for repeated decision-making, routing, verification, review, and stopping behavior. It can prepare Desktop handoff prompts or route to Desktop-specific skills when the runtime and authorization are available, but it does not itself provide scheduling, worker creation, thread control, platform writes, or merge authority.
+`loop-engineering` is a shared entrypoint for repeated decision-making, routing,
+verification, review, and stopping behavior. It can prepare Desktop handoff
+prompts or route to Desktop-specific skills when the runtime and authorization
+are available, but it does not itself provide scheduling, user-owned Desktop
+task/thread control, platform writes, or merge authority.
 
-For objectives that must survive repeated invocations, workers, worktrees, or
-handoffs, keep repo-owned loop state in files such as
-`docs/loops/<objective-id>/loop-state-ledger.yaml`. External memory can be added
-later as cache or coordination, but the baseline completion and next-task
-decision should remain reconstructable from repository files, git state,
-verification evidence, and review evidence.
+For objectives that must survive repeated invocations, subagents, worktrees, or
+handoffs, keep stable definitions in a loop spec/task manifest, operational
+transitions in validated events, and the reconstructable current view in
+`docs/loops/<objective-id>/loop-state-ledger.yaml`. Use fenced claims only when
+the coordination store can provide atomic acquisition; separate worktrees are
+not a shared lock. Completion remains reconstructable from repository files,
+git state, verification evidence, review evidence, and accepted platform state.
 
 For small or single-task work, prefer the smallest direct skill such as `implementation-slice`, `planning`, or `code-review`. `project-orchestrator` may still be used as a router, but it should downgrade a clear single task to the matching focused workflow instead of forcing a project-level delivery loop.
 

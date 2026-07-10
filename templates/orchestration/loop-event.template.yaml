@@ -1,0 +1,67 @@
+# Append-only Loop Engineering V1 ledger-schema-v2 event.
+# Replace placeholders, choose one supported event type, then calculate
+# event_hash over canonical JSON of every field except event_hash itself.
+
+sequence: 1
+event_id: "<unique-event-id>"
+occurred_at: "<iso-8601>"
+actor: "<actor-id>"
+type: "<migration_snapshot | task_transition | claim_acquired | claim_released | claim_expired | claim_revoked | gate_updated | objective_completed>"
+task_id: "<task-id-or-empty>"
+idempotency_key: "<stable-request-key>"
+expected_state_revision: 0
+previous_event_hash: ""
+payload: {}
+event_hash: "<canonical-event-sha256>"
+
+# occurred_at values must be non-decreasing. objective_completed is terminal;
+# a later event is rejected unless it is an idempotent replay of an existing request.
+
+# task_transition payload:
+#   target_status: "<canonical-task-status>"
+#   fencing_token: {generation: 1, nonce: "<nonce>"}  # required whenever an active claim exists
+#   evidence: {}
+#     review:
+#       status: "<not_required | required | passed | blocked>"
+#       mode: "<none | code-review | code-review-deep | docs-review | formal-gate>"
+#       artifacts: ["<concrete-review-receipt>"]
+#   blocker: {}  # required when target_status is blocked
+#   authorization:  # required for accepted, and for done with passed review
+#     action: "<task_acceptance | task_completion>"
+#     principal: {type: "user", id: "<approver-id>"}  # acceptance must match actor; completion may be delegated
+#     objective_id: "<same-as-ledger-objective-id>"
+#     artifact: "<concrete-acceptance-artifact>"
+#     source_revision_sha256: "<immutable-source-identity-sha256>"
+#     protected_payload_sha256: "<canonical-payload-excluding-authorization-sha256>"
+#     task_id: "<same-task-id>"
+#
+# claim_acquired payload:
+#   claim: <copy the complete active claim record>
+#
+# claim_released / claim_expired / claim_revoked payload:
+#   fencing_token: {generation: 1, nonce: "<current-nonce>"}
+#   blocker: {kind: "safety", reason: "<reason>", artifact: "<evidence>"}  # required for expired/revoked
+#   authorization:  # required for claim_revoked; expiry instead requires the lease deadline
+#     action: "claim_revocation"
+#     principal: {type: "user", id: "<same-as-event-actor>"}
+#     objective_id: "<same-as-ledger-objective-id>"
+#     artifact: "<same-as-blocker-artifact>"
+#     source_revision_sha256: "<immutable-source-identity-sha256>"
+#     protected_payload_sha256: "<canonical-payload-excluding-authorization-sha256>"
+#     task_id: "<same-task-id>"
+#
+# gate_updated status satisfied/not_required and objective_completed also
+# require a bound authorization with action gate_satisfaction or
+# objective_completion and a concrete matching evidence artifact. Preview the
+# event first, verify the external receipt, then supply the returned exact
+# action and authorization receipt digest through --authorize-action and
+# --authorization-receipt-sha256 as out-of-band loopctl write flags.
+# If the existing ledger has protected events, also pass the exact audit-reported
+# digest through --protected-history-sha256 before any write.
+# The preview JSON field is authorization_receipt_sha256.
+# Repository event data and semantic replay cannot self-authorize the write.
+#
+# migration_snapshot is generated only by `loopctl.py migrate-v1`. It must be
+# sequence 1 and embeds the complete validated V1 source plus its canonical hash.
+# Its hash is bound by immutable source_revision.migration_source_sha256, not by
+# the rolling previous_ledger_sha256 field.

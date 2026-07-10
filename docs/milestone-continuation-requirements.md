@@ -136,7 +136,9 @@ Lease 規則：
 1. 重新讀取或驗證 cache 對應的 repo instructions、milestone spec、task manifest、status docs、review evidence、templates、policies 與 git state。
 2. 若 cache 缺失、過期或與 source of truth 衝突，執行完整 bootstrap。
 3. 確認目標 milestone 是否仍有效，且未被 source-of-truth conflict 阻斷。
-4. 分類 task 狀態：`done`、`in_progress`、`ready`、`blocked`、`unsafe`、`unknown`、`stale`。
+4. 以 canonical lifecycle 分類 task；安全疑慮記為 `blocked` 並使用
+   blocker kind `safety`。`unknown` 與 `stale` 僅是檢查／恢復分類，不是
+   persisted task status。
 5. 若目前 task 有 owner / worker thread，先檢查 claim、lease、last observed state；runtime 支援時使用 `read_thread` 補足 in-flight observation。
 6. 用 task 的 DoD、verification commands、durable handoff 與 review evidence 判斷目前 task 是否完成。
 7. 若目前 task 未完成且 lease 有效，選擇最小安全行動繼續或觀察目前 task，不重複派工。

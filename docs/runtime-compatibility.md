@@ -4,19 +4,26 @@ This repository uses four compatibility labels.
 
 ## `shared`
 
-Works in Codex CLI and Codex Desktop using repository files, ordinary shell commands, git inspection, and durable artifacts. Shared workflows must not require Desktop-only orchestration.
+Works in Codex CLI, Codex Desktop, and supported IDE surfaces through repository
+files, ordinary shell commands, git inspection, native Goal mode, and bounded
+subagent delegation when those capabilities are available.
 
 ## `cli`
 
-Designed primarily for Codex CLI. A Desktop user may still follow the workflow manually, but the skill should document the fallback.
+Designed primarily for Codex CLI. A Desktop user may still follow the workflow
+manually, but the skill must document the fallback.
 
 ## `desktop`
 
-Requires Codex Desktop behavior such as main-agent orchestration, worker delegation, or Desktop-specific handoff. Desktop workflows must not be presented as guaranteed CLI workflows.
+Requires Codex Desktop user-owned task, thread, worktree, UI, or scheduling
+control. Shared main-agent reasoning and subagent delegation are not, by
+themselves, Desktop-only behavior.
 
 ## `plugin-dependent`
 
-Requires an installed plugin, connector, or platform-specific tool. The dependency must be named, and the workflow must define what happens when the dependency is unavailable.
+Requires an installed plugin, connector, or platform-specific tool. The
+dependency must be named, and the workflow must define what happens when it is
+unavailable.
 
 ## Metadata
 
@@ -26,104 +33,69 @@ Every skill should include a runtime line near the top:
 Runtime compatibility: shared
 ```
 
-The README skill table must include the same value.
+The README skill table must use the same value.
 
-## Fallbacks
+## Native Capability Boundary
 
-Desktop-only workflows should provide a CLI fallback such as a prompt, task brief, continuation prompt, or sequential execution path. Review steps such as `code-review`, `docs-review`, or high-risk `code-review-deep` may still be used after the fallback produces changed files or evidence. Use formal `code-review-gate` or `docs-review-gate` only for commit readiness, PR readiness, merge readiness, or an explicit repo-policy blocking decision.
+The canonical mapping is [Native Runtime Capability Contract](native-runtime-capabilities.md):
 
-CLI-only workflows should provide a Desktop fallback such as running the same read-plan-implement-verify sequence in a Desktop thread, with Desktop-only actions clearly omitted.
+- Goal mode is shared but may be created only when explicitly requested.
+- Bounded subagents are shared; ownership must be disjoint and the main agent
+  must verify and integrate their output.
+- Desktop user-owned task/thread/worktree actions and Desktop scheduling are
+  thin runtime adapters over shared workflow semantics.
+- Hooks are optional guardrails, not complete enforcement.
+- Goal, subagent, scheduler, hook, and thread state are coordination evidence;
+  they do not prove repository completion.
 
-For the policy boundary of a possible future Desktop runtime-call adapter, see [Desktop Runtime Adapter V2 Boundary](runtime-adapter-v2.md).
-For the completed Desktop runtime wrapper V1 planner, capability metadata normalization, contract comparison, create-thread preflight, read-thread preflight, evidence pipeline, session compatibility status validation, first-use handshake, session-scoped compatibility cache, create-thread authorization/evidence gate, create-thread executor boundary proposal, create-thread executor shell, single documented create-thread callable executor, create-thread callable wiring-boundary, create-thread callable bundle / executor-request assembly, and create-thread live smoke helpers, see [Desktop Runtime Wrapper V1 Feasibility And Implementation Plan](desktop-runtime-wrapper-v1-plan.md). The executor, wiring, and bundle helpers are still non-live by default: CLI use falls back without an injected runner, caller-supplied descriptor, or ready wiring evidence, and `ready` means only that a caller-injected documented callable adapter contract completed with `desktop_runtime_call_performed: false`, that a documented descriptor was converted into callable wiring readiness, or that ready wiring evidence was assembled into a non-live executor request preview. The live smoke helper is the only V1 helper that may call a runtime-provided documented `create_thread` callable, and only when that callable is injected with exact human approval; CLI/default/tests remain non-live.
+When a capability is unavailable, preserve the same objective, authority,
+verification, review, and human-gate rules through the current session,
+sequential execution, a task brief, or a paste-ready continuation prompt.
 
-## Current Contract Families
+## Desktop Thread And Task Actions
 
-Facts last verified on 2026-07-07:
+Use only the documented callable exposed by the active runtime. Before an
+action, verify:
 
-- Desktop app tools are the active app-level tools exposed to Codex Desktop, such as `create_thread`, `read_thread`, `send_message_to_thread`, and `fork_thread`. They are not the same contract family as `codex app-server` JSON-RPC.
-- `list_projects` lists local and remote projects available for background thread creation. A project-scoped `create_thread` call should first use a returned `projectId` instead of inferring a Desktop project from local runtime state.
-- `create_thread` requires `prompt` and `target`. `target` is either `project` or `projectless`; project targets include a `projectId` returned by `list_projects` and an `environment` such as local or worktree. Worktree targets may include `startingState` only for an explicitly requested existing git state; otherwise the worktree starts from the project's default branch. `model` and `thinking` are optional and should generally be omitted unless the user explicitly requests overrides supported by the destination host.
-- `read_thread` requires `threadId` and supports optional `hostId`, `turnLimit`, `cursor`, `includeOutputs`, and `maxOutputCharsPerItem`.
-- `send_message_to_thread` requires `threadId` and `prompt`; `hostId`, `model`, and `thinking` are optional.
-- `fork_thread` accepts optional `threadId` and optional `environment`.
-- `codex app-server` is a JSON-RPC API with methods such as `thread/start`, `thread/read`, `thread/fork`, and `turn/start`. It requires app-server initialization, and its `thread/start` / `thread/fork` responses return a `thread` object rather than the Desktop app-tool response shape used by the V1 live smoke helper.
-- The Codex SDK wraps the app-server API. It should not be treated as evidence that this repository already has a CLI `create_thread` runtime path.
+- exact action and target identity;
+- request and response fields used by the call;
+- whether the action is read-only or state-changing;
+- runtime/tool contract version, or `version unavailable` plus the capability
+  source and `last_verified` date;
+- permission and authentication failure handling;
+- the user authorization required for that exact action.
 
-The V1 live smoke helper only validates one caller-injected Desktop `create_thread` callable after exact human approval. Its response validation accepts `threadId`, `thread_id`, or `pendingWorktreeId`; when `status`, `private_runtime_state_read`, or `external_write_performed` are present, their values are still validated. This is compatibility hardening only; it does not add a default CLI live call, app-server client, daemon, sidecar, MCP server, broad adapter, UI scraping path, or private Desktop runtime-state access.
+For example, current Desktop task creation returns a `threadId` for immediate
+creation or a queued `clientThreadId`. Treat those as different lifecycle
+signals and validate the actual response before relying on it. Do not infer a
+callable from private Desktop state, UI scraping, local databases, logs,
+sessions, or caches.
 
-## Desktop To CLI Fallback Mapping
-
-Desktop orchestration can coordinate multiple workers, but the reusable workflow contract should still describe what a CLI-compatible fallback can do with ordinary repository files and commands.
-
-Desktop thread actions are runtime actions, not CLI guarantees. When a Desktop workflow creates, forks, continues, or messages a thread through a runtime-provided tool or documented API, the CLI-compatible fallback is still a prompt, task brief, continuation prompt, or sequential execution path. The fallback must not claim that Codex CLI can open, fork, continue, message, or control Desktop threads unless a documented or configured thread capability is actually available.
-
-| Desktop orchestration step | CLI-compatible fallback |
-| --- | --- |
-| Main agent defines scope, source of truth, ownership, verification, and human gates. | Use `project-delivery` or `project-orchestrator` in the current session to read repo policy, inspect git state, and write a bounded plan or task brief. |
-| Main agent delegates bounded work to Desktop workers. | Execute the packets sequentially in the current CLI session, or prepare durable prompts, task briefs, or continuation prompts for separate CLI sessions. |
-| Workers return changes or evidence to the main agent. | Re-read the changed files, task brief, verification output, and git diff before trusting the handoff. Treat chat summaries as context, not source of truth. |
-| Main agent integrates worker output. | Apply or keep only scoped file changes, inspect ownership boundaries, and reject unrelated edits before validation. |
-| Main agent reviews integrated output. | Run `code-review`, `code-review-deep`, or `docs-review` as the ordinary review primitive for the changed surface. |
-| Main agent runs a formal Desktop integration gate. | Use `code-review-gate` or `docs-review-gate` only when the stage is commit readiness, PR readiness, merge readiness, or an explicit repo-policy blocking decision. |
-| Main agent prepares PR or merge readiness. | Run `merge-review` or `merge-review-deep` for base-to-head evidence, then use `merge-readiness-gate` only when a formal readiness decision is needed. |
-| Main agent commits, pushes, creates PRs, publishes, merges, deploys, posts platform comments, submits reviews, or resolves platform threads. | Stop unless the user explicitly authorized the exact external write or destructive action. |
-
-The fallback does not claim that Codex CLI can spawn Desktop workers. It preserves the same safety model by replacing parallel worker delegation with durable prompts, task briefs, continuation prompts, sequential execution, explicit review evidence, and the same human gates.
+Creating, forking, messaging, archiving, pinning, or otherwise mutating a
+user-owned Desktop task requires the authority specified by the active runtime
+and repository policy. A CLI fallback may prepare the same prompt or task brief
+but must not claim to control Desktop tasks.
 
 ## Evidence
 
-Evidence should state where it came from:
+Runtime evidence should record the command or callable, target, relevant input
+shape, result or error classification, source runtime, and verification date.
+Repository completion still requires current files, git state, verification,
+review, and accepted platform state where applicable.
 
-- CLI evidence: command, working directory, exit status, and relevant output summary.
-- Desktop evidence: thread action, worker output, artifact path, screenshot path, or manually verified UI state.
+## Historical Wrapper Evidence
 
-When Desktop evidence comes from a runtime thread tool or documented API, include contract compatibility evidence before relying on the action result:
+The `desktop_runtime_*` scripts and
+[Desktop runtime wrapper V1 plan](desktop-runtime-wrapper-v1-plan.md) are
+retained for regression and migration analysis only. They are not the active
+Loop Engineering path and active skills must not import, execute, or recommend
+them. If a future maintainer studies them, their recorded `thread_id` or
+`pendingWorktreeId` response shapes must not override the active callable
+schema.
 
-- runtime thread tool or API contract name, such as `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or the documented equivalent;
-- underlying API or tool contract version when the runtime exposes one;
-- `version unavailable` when no version is exposed, plus a verifiable capability source such as the active tool list, connector metadata, official documentation version, or runtime-reported schema;
-- minimal request shape the workflow used, including required parameters, optional parameters used, and target identity fields;
-- minimal response shape the workflow relies on, such as created thread identifier, target thread identifier, action status, error shape, lifecycle state, or fallback signal;
-- `last_verified` date for the contract evidence;
-- workflow, wrapper, or adapter mapping to the underlying contract, including mappings where the underlying version is unavailable.
+## Safety Boundary
 
-The compatibility record should make clear which workflow, wrapper, or adapter version was checked against which underlying tool or API contract. After a runtime, connector, schema, or documentation change, re-compare the old and new contract before use, with particular attention to required parameters, response shape, error shape, permission or authentication changes, and renamed, removed, or newly state-changing operations.
-
-When evidence comes from caller-supplied documented capability metadata instead of a runtime call, label it as normalized metadata only. It can record action name, read-only or state-changing classification, required request fields, minimum response fields, capability source, contract version or `version unavailable`, `last_verified`, and helper version. The Desktop runtime wrapper V1 planner may accept that normalized evidence as `capability_evidence` and use it only to decide dry-run, fallback, or stopped output. It must not imply that a Desktop thread tool was called or that Codex CLI can operate Desktop threads.
-
-Before relying on a runtime, connector, schema, or documentation change, compare the old wrapper contract evidence with the newer normalized capability evidence. The Desktop runtime wrapper V1 contract comparison helper can perform that re-check from caller-supplied evidence only: unchanged tool/API name, classification, required request fields, and minimum response fields return `compatible`; missing or unavailable capability returns `fallback`; changed contract fields, unclear evidence, or forbidden private runtime hints return `stopped`. This comparison is evidence only and does not authorize or call state-changing tools such as `create_thread`, `fork_thread`, or `send_message_to_thread`.
-
-For future runtime-call paths, Desktop runtime wrapper V1 should use a session capability handshake and compatibility cache instead of re-checking runtime schema before every call. The first wrapper use in each Codex CLI/Desktop process/session may compare caller-supplied documented capability metadata with the wrapper's recorded contract and construct a session-scoped compatibility status. The V1 session-scoped compatibility cache helper may read or write a caller-explicit cache envelope for same-session contract compatibility evidence only. Restarting Codex CLI/Desktop invalidates the status and requires another handshake.
-
-Compatibility status or cache evidence should include the wrapper or skill package version, helper version, status helper version when applicable, target action, tool/API name, runtime-reported version or `version unavailable`, capability source, schema/contract hash or equivalent normalized contract evidence, comparison result, `last_verified`, session identity or an explicit current-process/current-session scoped marker, cache scope, lifecycle marker, and `created_at` plus `expires_at` or an explicit same-session-only marker. It must not cache or replace exact runtime action authorization, external-write authorization, destructive-action approval, target repo/branch/thread-id/expected-head validation, auth or permission failure results, or actual runtime response validation.
-
-When evidence comes from an explicit caller-supplied session compatibility status, validate that status before any later preflight references it. The V1 session compatibility status validator checks the wrapper/package/repo identity, helper version, target action, tool/API name, runtime-reported version or `version unavailable`, capability source, schema hash or normalized contract evidence, comparison result, `last_verified`, and session identity or explicit current-process/current-session marker. Its `ready` status means only that the status can be referenced by a later preflight for contract compatibility evidence. `fallback` or `stopped` must block later runtime-call paths.
-
-Session compatibility status validation is not a first-use handshake, not a compatibility cache write path, not a compatibility cache read path, and not a runtime-call path. It does not authorize runtime actions or external writes, validate targets or permissions, validate runtime responses, read Desktop private runtime state, or call Desktop thread tools.
-
-When evidence comes from the first-use session compatibility handshake helper, treat it as status construction and validation evidence only. The helper may normalize caller-supplied documented metadata, compare it with old wrapper contract evidence, construct a session compatibility status, and validate that status with the status validator. Its `ready` status means only that the constructed session status can be referenced by later preflight. It is not a compatibility cache read path, not a compatibility cache write path, not a runtime-call path, and not authorization for runtime actions or external writes.
-
-When evidence comes from the session-scoped compatibility cache helper, treat it as same-session contract compatibility evidence only. The helper reads or writes only an explicit caller-supplied cache file path and rejects Desktop private runtime-looking paths or source hints. Its `ready` status means only that same-session cache evidence may be referenced by later preflight; it does not authorize a runtime call, external write, target validation, permission handling, or runtime response validation. `fallback`, `stopped`, session marker mismatch, stale or expired cache, wrapper/helper/status helper version mismatch, and schema hash or normalized contract evidence mismatch must block later runtime-call paths.
-
-Before a future `create_thread` runtime call, the V1 create-thread preflight helper can check readiness evidence from caller-supplied fields only. It requires repo, remote, branch, expected head, prepared prompt summary/body, normalized `create-thread` capability evidence classified as `state-changing`, compatible contract comparison output, exact `create-thread` authorization, `external_write_authorized: false`, and `external_writes_blocked: true`. Its `ready` status means evidence is ready for a future separately approved runtime call only; the helper does not call `create_thread`, does not read Desktop private runtime state, and does not authorize commit, push, PR creation, merge, or other external writes.
-
-Before a future `create_thread` runtime-call implementation is added or used, the V1 create-thread authorization/evidence gate can check the final caller-supplied envelope. It requires exact `target_action: "create-thread"` and `tool_or_api: "create_thread"`, repo, remote, branch, expected head, prepared prompt summary/body, ready create-thread preflight evidence, ready same-session compatibility status evidence, ready same-session cache evidence, `authorized_runtime_action: "create-thread"`, a human approval marker scoped to next-step implementation only, explicit target validation, declared permission/auth failure handling requirements, declared runtime response validation requirements, `external_write_authorized: false`, absent or false destructive-action approval, `runtime_call_performed: false`, and `desktop_private_runtime_state_read: false`. Its `ready` status means only that a human can consider separately approving one future implementation slice. It does not authorize or perform the runtime call. Cache, status, and preflight evidence cannot replace action authorization, target validation, permission/auth failure handling, or response validation. `fallback` or `stopped` must block the later runtime path.
-
-Before a future true `create_thread` runtime-call executor is wired, the V1 create-thread executor boundary proposal helper can check the proposed call-site contract from caller-supplied evidence only. It requires ready authorization gate evidence, exact create-thread action/tool evidence, repo/remote/branch/expected-head target evidence, prepared prompt summary/body, a proposal-only human approval marker, blocked external writes, absent or false destructive-action approval, `runtime_call_performed: false`, `desktop_private_runtime_state_read: false`, a single documented `create_thread` tool path, and required executor re-checks for target identity, authorization intent, permission/auth failure result, runtime response shape, returned thread id, and returned status. Its `ready` status means only that a human can consider separately approving a future true executor wiring slice. It does not authorize or perform the runtime call. Authorization gate, cache, status, and preflight evidence cannot replace actual call-site target validation, permission/auth failure handling, or response validation. `fallback` or `stopped` must block the later runtime path.
-
-Before a future true documented `create_thread` callable is wired, the V1 create-thread executor shell helper can check the final implementation surface from caller-supplied evidence only. It requires ready executor boundary proposal evidence, exact create-thread action/tool evidence, repo/remote/branch/expected-head target evidence, prepared prompt summary/body, an executor-shell-only human approval marker, blocked external writes, absent or false destructive-action approval, `runtime_call_performed: false`, `desktop_private_runtime_state_read: false`, `surface_only: true`, `runtime_call_authorized: false`, a non-executed callable descriptor or injected-adapter placeholder for `create_thread`, and call-site contract evidence for target identity, authorization intent, permission/auth failure classification, runtime response shape, returned thread id, and returned status. Its `ready` status means only that a human can consider separately approving one future documented `create_thread` wiring slice. It does not authorize or perform the runtime call. Proposal, authorization gate, cache, status, and preflight evidence cannot replace actual call-site target validation, permission/auth failure handling, or response validation. `fallback` or `stopped` must block the later runtime path.
-
-For the current single documented create-thread callable executor helper, callers must provide ready executor shell evidence plus an explicit Python-injected adapter. The helper rechecks target identity and authorization intent in the helper itself, rejects prior evidence as a substitute for call-site validation, classifies auth/permission failures, validates response shape, returned thread id, and returned status, and requires the injected adapter to report `desktop_runtime_call_performed: false`, no private runtime state read, and no external write. With no injected runner, CLI use returns `fallback`. A `ready` result is injected adapter execution evidence only and does not prove live Desktop runtime `create_thread` execution. The live smoke helper is the only V1 path that may call one runtime-provided documented `create_thread` callable, and only after exact human approval plus call-site validation.
-
-For the current single documented create-thread callable wiring-boundary helper, callers must provide ready executor helper evidence plus a caller-supplied documented `create_thread` callable descriptor or explicit non-live adapter wiring contract. The helper verifies the exact action/tool, repo/remote/branch/expected-head target evidence, prompt summary/body, exact human wiring marker, `runtime_call_performed: false` before wiring, no Desktop private runtime state read, blocked external writes, absent or false destructive approval, allowed descriptor source, and the single `create_thread` path only. It returns `ready` only when the descriptor can be converted into the executor helper's injected adapter contract shape. It does not discover, obtain, import, or invoke a Desktop runtime callable; CLI/default use without a descriptor returns `fallback`, tests use explicit non-live wiring, and prior shell/proposal/gate/cache/preflight/executor evidence cannot replace executor call-site target validation, permission/auth handling, response validation, returned thread id validation, or returned status validation. `fallback` or `stopped` must block the later runtime path.
-
-For the current single documented create-thread callable bundle / executor-request assembly helper, callers must provide ready callable wiring evidence plus caller-supplied target, prompt, authorization, call-site requirement plan, and ready executor-shell evidence. The helper verifies the exact action/tool, repo/remote/branch/expected-head target evidence, prompt summary/body, exact human bundle marker, the executor implementation marker expected by the executor helper, `runtime_call_performed: false` before bundling, no Desktop private runtime state read, blocked external writes, absent or false destructive approval, ready wiring evidence, ready shell evidence, no runner, no callable object, no direct runtime call shape, no live Desktop runtime flag, and the single `create_thread` path only. It returns `ready` only when the inputs can be assembled into a non-live executor request preview with `live_desktop_runtime: false`. It does not discover, obtain, import, or invoke a Desktop runtime callable; it does not execute an injected runner; CLI/default use without ready wiring evidence returns `fallback`; tests only produce the non-live preview and verify that the executor helper still falls back without a runner. Prior shell/proposal/gate/cache/preflight/executor/wiring evidence cannot replace executor call-site target validation, permission/auth handling, response validation, returned thread id validation, or returned status validation. `fallback` or `stopped` must block the later runtime path.
-
-For the current single documented create-thread live smoke helper, callers must provide a runtime-provided documented `create_thread` callable by injection plus exact human approval for one read-only audit smoke. CLI/default/tests remain non-live and return `fallback` when no callable is injected. The helper rechecks exact action/tool evidence, repo/remote/branch/expected-head target evidence, smoke prompt summary/body, human live-smoke marker, blocked external-write/destructive boundaries, `runtime_call_performed: false` before the smoke, no Desktop private runtime state read, live callable descriptor evidence, target identity at the call site, authorization intent at the call site, permission/auth failure classification, runtime response shape, returned `threadId`, `thread_id`, or `pendingWorktreeId`, and returned status when the runtime reports one. `ready` means only that one live `create_thread` smoke call returned a validated thread creation or queued signal and the prompt was delivered; it does not mean the read-only audit task completed. The smoke prompt must ask only for an audit of merged PRs missing formal merge review evidence, candidate PRs, evidence, gap type, and suggested remediation; it must forbid comments, review submissions, file edits, commits, pushes, PR creation, merges, label/status changes, and other platform writes. Future remediation requires separate human approval. Prior proposal/gate/cache/preflight/shell/executor/wiring/bundle evidence cannot replace actual call-site target validation, permission/auth handling, response validation, returned id validation, or returned status validation.
-
-Before a future read-only `read_thread` runtime call, the V1 read-thread preflight helper can check readiness evidence from caller-supplied fields only. It requires repo, remote, branch, thread id, read-request summary and expected fields, normalized `read-thread` capability evidence classified as `read-only`, compatible contract comparison output, `external_write_authorized: false`, and `external_writes_blocked: true`. Its `ready` status means evidence is ready for a future separately approved read-only runtime call only; the helper does not call `read_thread`, does not read Desktop private runtime state, does not treat preflight as runtime-call authorization, and does not authorize commit, push, PR creation, merge, or other external writes.
-
-When maintainers want to inspect the full V1 evidence order, the evidence pipeline helper can chain caller-supplied metadata through discovery, contract comparison, and create/read preflight in one CLI output. Its aggregate `ready`, `fallback`, or `stopped` status is evidence only. It does not collect metadata, call `create_thread` or `read_thread`, read Desktop private runtime state, treat preflight as runtime-call authorization, or authorize commit, push, PR creation, merge, or other external writes.
-
-When evidence is incomplete, mark the claim as unverified.
+No compatibility label authorizes commit, push, PR creation, merge, deploy,
+platform comments, review submission, destructive action, or another external
+write. Those actions remain behind exact user authority and the applicable
+human gate.

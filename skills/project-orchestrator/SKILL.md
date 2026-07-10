@@ -11,7 +11,11 @@ Runtime compatibility: shared
 
 Use this skill when Codex needs to decide how to advance a bounded project or task: handle it as a single implementation slice, plan first, delegate or hand off, run review, prepare continuation, or stop for a human gate.
 
-This skill is the shared orchestration layer for Codex CLI and Codex Desktop. It may use Desktop worker delegation only when the runtime supports it. In Codex CLI, it must use the current session, prompts, task briefs, continuation prompts, or another explicit sequential execution path.
+This skill is the shared orchestration layer for Codex CLI and Codex Desktop.
+It may use bounded shared subagents when the runtime supports them and ownership
+is disjoint. Desktop user-owned task/thread/worktree actions remain a separate
+runtime adapter. When a capability is unavailable, use the current session,
+prompts, task briefs, continuation prompts, or a sequential execution path.
 
 ## Routing Rules
 
@@ -29,9 +33,9 @@ This skill is the shared orchestration layer for Codex CLI and Codex Desktop. It
 ## Workflow
 
 1. Discover source-of-truth files and current state.
-2. Classify the request as a single task, bounded delivery objective, review, follow-up, continuation, or unsafe/ambiguous work.
+2. Classify the request as a single task, bounded delivery objective, review, follow-up, continuation, or safety-blocked/ambiguous work.
 3. Select the smallest safe next action and the appropriate skill or workflow.
-4. Choose execution mode: current session, CLI sequential execution path, Desktop worker delegation, or stop for human decision.
+4. Choose execution mode: current session, shared subagents, sequential fallback, Desktop control-plane handoff, or stop for human decision.
 5. Integrate or inspect results before advancing.
 6. Run relevant verification and the review primitive or formal gate that matches the current stage.
 7. Prepare continuation or readiness evidence when useful.

@@ -23,16 +23,18 @@
 
 ## Classification
 
-- Current loop state: `<single-clear-task | bounded-delivery-objective | review-closure-loop | milestone-continuation-loop | handoff-or-continuation | desktop-delegation | human-gate | complete>`
+- Current loop state: `<single-clear-task | bounded-delivery-objective | review-closure-loop | milestone-continuation-loop | handoff-or-continuation | shared-subagent-delegation | desktop-delegation | human-gate | complete>`
 - Selected route: `<skill-or-workflow>`
-- Execution mode: `<current-session | sequential-execution | prompt-only | delegated-worker-brief | desktop-runtime-action | stop-for-human-gate>`
+- Execution mode: `<current-session | shared-subagents | sequential-fallback | desktop-scheduled | desktop-thread | stop-for-human-gate>`
 
 ## Task Ledger Update
 
 - Task id: `<task-id-or-none>`
-- Previous status: `<planned | ready | claimed | in_progress | blocked | reviewing | done | accepted | unsafe | none>`
-- New status: `<planned | ready | claimed | in_progress | blocked | reviewing | done | accepted | unsafe | none>`
-- Claim / lease: `<created | extended | released | unchanged | not-applicable>`
+- Previous status: `<planned | ready | in_progress | blocked | reviewing | done | accepted | cancelled | none>`
+- New status: `<planned | ready | in_progress | blocked | reviewing | done | accepted | cancelled | none>`
+- Claim / lease: `<acquired | renewed | released | revoked | unchanged | not-applicable>`
+- State revision / event: `<sequence>@<event-hash>`
+- Claim fencing token: `<generation>:<nonce-or-not-applicable>`
 - Blocked reason: `<reason-or-empty>`
 - Evidence artifact written:
   - `<path-or-none>`

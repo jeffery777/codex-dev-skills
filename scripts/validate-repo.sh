@@ -50,11 +50,15 @@ check_sensitive_private_terms() {
   fi
   ok "private paths and local user identifiers absent"
 
-  local review_pattern
+  local review_pattern review_count
   review_pattern="$(printf '%s|%s|%s|%s|%s|%s' tok'en' sec'ret' au'th' SQL'ite' sess'ion' ca'che')"
   if rg -i "$review_pattern" . >"$TMP_DIR/sensitive-review.txt"; then
-    printf '[INFO] sensitive-term review hits; inspect for policy-only usage:\n'
-    cat "$TMP_DIR/sensitive-review.txt"
+    review_count="$(wc -l <"$TMP_DIR/sensitive-review.txt" | tr -d ' ')"
+    printf '[INFO] sensitive-term review produced %s policy/source hit(s); showing first 20:\n' "$review_count"
+    sed -n '1,20p' "$TMP_DIR/sensitive-review.txt"
+    if [[ "$review_count" -gt 20 ]]; then
+      printf '[INFO] sensitive-term review output truncated; run a targeted rg search when full inspection is needed.\n'
+    fi
   else
     ok "sensitive-term review produced no hits"
   fi
@@ -136,15 +140,20 @@ check_installer_target_modes() {
 }
 
 check_installer_version() {
-  local current_release_version installer_version
+  local current_release_version installer_version catalog_version
   current_release_version="$(sed -n 's/.*current v\([0-9][0-9.]*\) release notes.*/\1/p' README.md | head -n 1)"
   installer_version="$(sed -n 's/^VERSION="\([^"]*\)"/\1/p' install.sh | head -n 1)"
+  catalog_version="$(sed -n 's/^version:[[:space:]]*"\([^"]*\)"/\1/p' catalog.yaml | head -n 1)"
   [[ -n "$current_release_version" ]] || fail "README must reference current release notes"
   [[ -n "$installer_version" ]] || fail "install.sh must declare VERSION"
+  [[ -n "$catalog_version" ]] || fail "catalog.yaml must declare version"
   if [[ "$installer_version" != "$current_release_version" ]]; then
     fail "install.sh VERSION ($installer_version) must match current release notes version ($current_release_version)"
   fi
-  ok "installer version matches current release notes"
+  if [[ "$catalog_version" != "$current_release_version" ]]; then
+    fail "catalog.yaml version ($catalog_version) must match current release notes version ($current_release_version)"
+  fi
+  ok "catalog, installer, and current release versions match"
 }
 
 frontmatter_value() {
@@ -182,6 +191,16 @@ check_loop_ledger() {
   python3 scripts/validate-loop-ledger.py
 }
 
+check_loop_eval() {
+  python3 scripts/eval-loop-engineering.py >"$TMP_DIR/loop-eval.json"
+  ok "loop engineering workflow eval thresholds pass"
+}
+
+check_loop_contract() {
+  python3 -m unittest tests.test_loop_engineering_core tests.test_loopctl >/dev/null
+  ok "loop engineering event, transition, migration, and CLI contracts pass"
+}
+
 main() {
   require_rg
   check_no_provider_terms
@@ -193,6 +212,8 @@ main() {
   check_installer_version
   check_skill_metadata
   check_loop_ledger
+  check_loop_contract
+  check_loop_eval
 }
 
 main "$@"

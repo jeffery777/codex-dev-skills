@@ -2,7 +2,7 @@
 # Codex-only public catalog. Paths are repository-relative source paths.
 
 name: codex-dev-skills
-version: "0.1.0"
+version: "0.4.0"
 platforms:
   - codex
   - codex-desktop
@@ -72,7 +72,10 @@ groups:
       - source: skills/implementation-slice
       - source: skills/docs-update
     templates:
+      - source: docs/native-runtime-capabilities.md
       - source: templates/orchestration/loop-engineering-spec.template.md
+      - source: templates/orchestration/loop-decision-input.template.yaml
+      - source: templates/orchestration/loop-event.template.yaml
       - source: templates/orchestration/loop-handoff-prompt.template.md
       - source: templates/orchestration/loop-iteration-report.template.md
       - source: templates/orchestration/loop-state-ledger.template.yaml
@@ -81,7 +84,7 @@ groups:
       - source: workflows/loop-engineering-workflow.md
 
   desktop-delivery-workflow:
-    description: Codex Desktop-only delegated delivery and main-agent orchestration workflows.
+    description: Thin Codex Desktop task, thread, worktree, scheduling, and integration adapters over shared delivery workflows.
     runtime: desktop
     depends_on: [shared-review-gates, codex-delivery-workflow]
     skills:

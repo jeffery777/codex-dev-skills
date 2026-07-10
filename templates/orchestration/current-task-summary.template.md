@@ -9,8 +9,9 @@
 - Loop spec: `<path>`
 - Task manifest: `<path>`
 - Current task id: `<task-id>`
-- Manifest Revision: `<branch>@<head-sha>`
-- Claim / Lease: `<none | owner-id lease-expires-at>`
+- Manifest Revision: `<branch>@<head-sha> manifest=<sha256>`
+- State Revision: `<sequence>@<event-hash>`
+- Claim / Lease: `<none | owner-id generation:nonce lease-expires-at>`
 
 ## Verified Facts
 

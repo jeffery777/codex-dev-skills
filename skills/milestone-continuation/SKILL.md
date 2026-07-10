@@ -17,7 +17,11 @@ Scheduling is outside this skill. A prompt may request a cadence such as every 5
 
 ## CLI Fallback
 
-In Codex CLI or any runtime without scheduler or thread-creation capability, run the milestone loop in the current session when safe, or prepare a paste-ready prompt, task brief, continuation prompt, or sequential execution path. Do not claim that CLI can open, fork, continue, or message a Codex Desktop thread unless a documented or configured thread capability is actually available.
+Codex CLI does not provide the Scheduled management interface. Run the
+milestone loop in the current session, use shared subagents for independent
+bounded packets when supported, or prepare a paste-ready prompt, task brief,
+continuation prompt, or sequential execution path. Do not claim that CLI holds
+Desktop app task/thread tools.
 
 ## Workflow
 
@@ -29,13 +33,19 @@ In Codex CLI or any runtime without scheduler or thread-creation capability, run
    - implementation plans, review evidence, relevant templates, and current git state.
 2. Treat chat summaries, prior handoffs, and wakeup prompts as context only. Repository files remain the source of truth.
 3. Confirm the target milestone is still valid and not blocked by source-of-truth conflict.
-4. Classify milestone and task state:
-   - `complete`
+4. Classify loop lifecycle separately from canonical task lifecycle. Loop
+   lifecycle may be `active`, `blocked`, `complete`, or `cancelled`. Task state:
+   - `planned`
    - `in_progress`
    - `ready`
    - `blocked`
-   - `unsafe`
+   - `reviewing`
+   - `done`
+   - `accepted`
+   - `cancelled`
    - `unknown`
+   Safety concerns are `blocked` with blocker kind `safety`; `unknown` is an
+   inspection classification rather than a persisted task status.
 5. Check the current task against its DoD, verification commands, scope, docs sync requirements, and review evidence. Do not treat passing tests alone as proof of completion.
 6. If the current task is incomplete, choose the smallest safe action that continues that task.
 7. If the current task is complete, update or prepare the task-state update, then select the smallest ready task that advances the milestone without scope expansion.
@@ -45,7 +55,8 @@ In Codex CLI or any runtime without scheduler or thread-creation capability, run
    - use `project-orchestrator` when the next action needs routing;
    - use `project-delivery` when the milestone needs delivery ownership through implementation, verification, review, and docs sync;
    - use `task-continuation` when another session, worker, or sequential path needs a bounded prompt or task brief;
-   - use `desktop-thread-delegation` only when Codex Desktop handoff is needed, supported, and explicitly authorized.
+   - use shared subagents for independent bounded packets with disjoint ownership;
+   - use `desktop-thread-delegation` only when a separate user-owned Desktop task/thread handoff is needed, supported, and explicitly authorized.
 9. Run the smallest relevant verification for the action taken, inspect the diff when files changed, and report residual risk.
 10. Stop when the milestone is complete or a human gate is reached.
 

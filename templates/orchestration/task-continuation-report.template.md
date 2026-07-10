@@ -16,13 +16,13 @@
 
 | Task | Status | Risk | Notes |
 | --- | --- | --- | --- |
-| `<task-id>` | `<ready | blocked | done | unsafe | unknown>` | `<low | medium | high>` | `<notes>` |
+| `<task-id>` | `<planned | ready | in_progress | blocked | reviewing | done | accepted | cancelled | unknown>` | `<low | medium | high>` | `<include blocker kind such as safety when applicable>` |
 
 ## Recommended Next Task
 
 - Task: `<task-id>`
 - Objective: `<bounded-objective>`
-- Execution mode: `<continue-current-session | new-session-prompt | delegated-worker-brief | stop-for-human-gate>`; describe CLI fallback in prose as a prompt, task brief, continuation prompt, or sequential execution path.
+- Execution mode: `<continue-current-session | shared-subagent | new-session-prompt | desktop-task-handoff | stop-for-human-gate>`; describe CLI fallback in prose as a prompt, task brief, continuation prompt, or sequential execution path.
 - Reason: `<why-this-is-the-smallest-safe-next-task>`
 
 ## Required Context For Next Agent
