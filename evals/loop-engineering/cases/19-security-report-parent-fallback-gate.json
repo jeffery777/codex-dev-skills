@@ -1,0 +1,32 @@
+{
+  "id": "security-report-parent-fallback-gate",
+  "input": {
+    "request": {"kind": "continuation", "risk": "high"},
+    "objective": {"clear": true, "complete": false},
+    "state": {
+      "source_conflict": false,
+      "verification": "not_run",
+      "review": "required",
+      "human_gate": "not_required",
+      "task_status": "reviewing",
+      "goal_status": "active",
+      "security_scan": {
+        "status": "running",
+        "phase": "reporting",
+        "worker_failure_kind": "safety_refused",
+        "reporting_retry_count": 2
+      }
+    },
+    "runtime": {"surface": "desktop", "capabilities": {"subagents": true}},
+    "work": {}
+  },
+  "expect": {
+    "classification": "human-gate",
+    "route": "human-gate",
+    "execution_mode": "stop-for-human-gate",
+    "next_decision": "blocked-by-human-gate",
+    "complete": false,
+    "violations": ["security-report-parent-fallback-not-authorized"],
+    "notices": ["security-scan-remains-running"]
+  }
+}

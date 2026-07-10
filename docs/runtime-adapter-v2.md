@@ -6,7 +6,9 @@ The current `desktop-thread-delegation` skill remains the user-facing workflow. 
 
 For practical prompt and stop-condition examples, see [Runtime Adapter Boundary Example](../examples/runtime-adapter-boundary.md).
 
-For the completed V1 non-state-changing planner helper and the remaining later-slice boundaries, see [Desktop Runtime Wrapper V1 Feasibility And Implementation Plan](desktop-runtime-wrapper-v1-plan.md).
+For historical V1 planner-helper decisions and the boundary evidence that led
+to this maintained V2 policy, see [Desktop Runtime Wrapper V1 Feasibility And
+Implementation Plan](desktop-runtime-wrapper-v1-plan.md).
 
 ## Goals
 
@@ -83,9 +85,9 @@ runtime_contracts:
       worktree: "startingState is optional only for explicitly requested existing git state"
       optional_used: ["model", "thinking"]
     response_shape_minimum:
-      required: ["threadId or thread_id or pendingWorktreeId", "status"]
-      errors: ["message"]
-    last_verified: "2026-07-07"
+      required: ["threadId for immediate creation or clientThreadId for queued creation"]
+      errors: ["runtime-provided error shape"]
+    last_verified: "2026-07-10"
 ```
 
 ## Prohibited Sources

@@ -42,18 +42,25 @@ The cadence is runtime behavior. In Codex Desktop, a heartbeat or automation may
 Use loop-engineering for issue #123.
 
 Create or update docs/loops/issue-123/ using the loop-state-ledger, loop spec, task manifest, current task summary, iteration report, and task claim/lease templates.
-Use the repo-owned loop ledger as the source of truth for current task, source revision, claim/lease state, verification evidence, review evidence, blockers, residual risk, and the next loop decision.
+Use the loop spec and manifest for stable definitions, validated events for
+operational transitions, and the repo-owned ledger as their reconstructable
+current view. Use git, verification, review, and accepted platform state for
+completion evidence.
 Do not treat external memory, worker reports, chat summaries, or Desktop thread summaries as completion evidence unless repo files, git state, verification, review evidence, or accepted platform state confirm them.
 ```
 
-The ledger baseline works in Codex CLI and Codex Desktop because it is ordinary repository state. Desktop automation, worktrees, threads, and sub-agents may use the ledger, but they do not replace it.
+The ledger baseline works in Codex CLI and Codex Desktop because it is ordinary
+repository state. Shared subagents and Desktop automation/task/thread/worktree
+adapters may use it, but runtime state does not replace repository authority.
 
 ## Desktop Handoff Boundary
 
 ```text
 Use loop-engineering for this bounded objective.
 
-If a task is better suited for a separate Desktop worker, first prepare a task brief and claim/lease proposal.
+If a task is independent and bounded, use a shared subagent with disjoint
+ownership. If I explicitly want a separate user-owned Desktop task/thread,
+first prepare a task brief and claim/lease proposal.
 Only open, fork, read, or message a Desktop thread if the runtime exposes the documented capability, the target and response shape are clear, and I explicitly authorize that exact action.
 If Desktop thread tools are unavailable, return a paste-ready handoff prompt instead.
 ```

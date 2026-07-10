@@ -12,7 +12,8 @@ The user-facing skill is `loop-engineering`. It is an entrypoint and router, not
 2. **Classify**
    - Decide whether the next state is a single task, bounded delivery objective, review closure loop, milestone continuation, handoff, Desktop delegation, human gate, or completion audit.
 3. **Route**
-   - Use the smallest existing skill that fits the classified state.
+   - Use the production loop decision contract to select the smallest existing
+     skill that fits the classified state.
 4. **Act**
    - Implement, update docs, review, prepare handoff, or stop according to the routed workflow.
 5. **Verify**
@@ -35,22 +36,42 @@ The user-facing skill is `loop-engineering`. It is an entrypoint and router, not
 | Next-task selection or handoff artifact | `task-continuation` |
 | Routine code or docs feedback | `code-review`, `docs-review`, or `code-review-deep` |
 | Formal readiness decision | `code-review-gate`, `docs-review-gate`, or `merge-readiness-gate` |
-| Desktop worker/thread handoff | `desktop-project-delivery` or `desktop-thread-delegation` |
+| Shared bounded subagent packets | `project-orchestrator` or `project-delivery` |
+| Desktop user-owned task/thread/worktree handoff | `desktop-project-delivery` or `desktop-thread-delegation` |
 
 ## State Model
 
 A loop iteration should distinguish:
 
 - **Durable source of truth**: repo instructions, specs, task manifests, loop specs, status docs, review evidence, git state, and PR state.
-- **Repo-owned loop ledger**: durable repository memory for the active objective, source revision, task status, claim and lease state, iteration evidence, next decision, and human gates.
+- **Repo-owned loop ledger**: validated append-only events plus a reconstructable view of task status, claim and lease state, iteration evidence, next decision, and human gates.
 - **Working context**: chat summaries, current thread notes, task briefs, and previous assistant summaries.
 - **In-flight state**: worker or thread status, claims, leases, and heartbeat artifacts.
 
-Durable source of truth and the repo-owned loop ledger control completion and
-next-task selection. Working context can help locate files but cannot prove
-completion. In-flight state can guide whether to wait, inspect, recover, or
-stop, but it cannot replace DoD, verification, review evidence, source revision,
-and durable handoff.
+The loop spec and task manifest control stable definitions; validated events
+control internally consistent operational transitions. Event replay does not
+authenticate actor identity or external approval. Git, verification, review, and accepted
+platform state control completion. Working context can help locate files but
+cannot prove completion. In-flight state can guide whether to wait, inspect,
+recover, or stop, but it cannot replace those authorities.
+
+Protected acceptance, gate, revocation, and completion writes require exact
+current-session action and receipt-digest authorization after external evidence
+verification. Never infer live authority from the repo ledger or decision YAML.
+Before routing from historical protected state or advancing its ledger,
+revalidate its external receipts and pass the exact protected-history digest;
+semantic replay alone is not origin authentication.
+
+## Security Scan Continuation
+
+When the selected workflow is a Codex Security scan, treat scan-native status,
+Goal status, and worker status as separate projections. A running scan remains
+resumable when Goal is blocked or a report worker returns `safety_refused`.
+Use a replacement worker or current session for the first refusal. After
+repeated refusals, preserve the scan and stop for explicit parent-report
+fallback authorization; only then continue reporting in the parent. Do not call
+a terminal scan-failure operation for worker refusal, partial artifacts, Goal
+projection conflict, or turn boundaries.
 
 When a ledger exists, each iteration should read it before selecting work and
 write or prepare a ledger update after verification. If ledger state conflicts
@@ -61,9 +82,19 @@ and stop at a human gate when the conflict cannot be resolved cheaply.
 
 Shared workflow behavior can run in Codex CLI or Codex Desktop using repository files, shell commands, git inspection, and durable artifacts.
 
-Desktop-only behavior includes heartbeat wakeups, worker delegation, thread creation, forking, messaging, and thread inspection. Use those only through documented runtime capabilities and exact authorization.
+Native goal and bounded subagent behavior are shared across supported Codex
+clients. Creating a goal must be explicit, and neither goal nor subagent state
+proves repository completion.
 
-CLI fallback is a current-session sequential path, paste-ready prompt, task brief, or continuation prompt. The fallback must preserve the same source-of-truth, verification, review, and human-gate rules.
+Desktop-only behavior includes Desktop task/thread/worktree UI actions and
+Desktop-managed scheduling. CLI does not provide the Scheduled management
+interface. Use runtime actions only through documented capabilities and the
+authorization required by the action.
+
+When goal, subagent, scheduler, or thread capabilities are unavailable, the
+fallback is a current-session sequential path, paste-ready prompt, task brief,
+or continuation prompt. The fallback must preserve the same source-of-truth,
+verification, review, and human-gate rules.
 
 ## Stop Conditions
 

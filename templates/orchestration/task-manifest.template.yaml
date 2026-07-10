@@ -1,41 +1,48 @@
-# Task manifest template.
-# Copy into a target repo only when a bounded project needs durable task continuation.
-# For richer repo-owned loop state, pair this with
-# templates/orchestration/loop-state-ledger.template.yaml.
+# Stable task definitions for Loop Engineering V1 ledger schema v2.
+# Mutable task status belongs to validated loop events/materialized state.
 
 project:
+  schema_version: 2
   name: "<project-name>"
+  objective_id: "<objective-id>"
   source_of_truth:
     - "AGENTS.md"
-    - "docs/ProjectSpec.md"
-    - "docs/plans/"
+    - "<loop-spec-path>"
+  contract_revision:
+    previous_manifest_sha256: "<sha256-or-empty>"
+    updated_at: "<iso-8601>"
 
 tasks:
   - id: "<task-id>"
     title: "<task-title>"
-    status: "<pending | ready | in_progress | blocked | done | unsafe>"
+    # A blocked task must start planned and acquire its blocker through a
+    # canonical planned -> blocked event so the reason is replayable.
+    initial_status: "<planned | ready | cancelled>"
     priority: "<high | medium | low>"
     dependencies:
       - "<task-id>"
     risk: "<low | medium | high>"
-    # Preserve the enum values below. Describe CLI fallback in prose as a prompt,
-    # task brief, continuation prompt, or sequential execution path.
-    mode_hint: "<continue-current-session | new-session-prompt | delegated-worker-brief | stop-for-human-gate>"
+    kind: "<implementation | docs | review | delivery | continuation>"
     objective: "<bounded-objective>"
-    in_scope:
-      - "<item>"
-    out_of_scope:
-      - "<item>"
-    files_to_inspect:
-      - "<path>"
-    files_expected_to_change:
-      - "<path>"
+    scope:
+      in:
+        - "<item>"
+      out:
+        - "<item>"
+    ownership:
+      expected_paths:
+        - "<path>"
+      parallel_write_safe: false
     dod:
       - "<done-criterion>"
     verification:
       - "<command>"
+    review:
+      required: false
+      mode: "<none | code-review | code-review-deep | docs-review | formal-gate>"
     stop_conditions:
       - "<condition>"
     human_gate:
       required: false
+      gate: "<gate-name-if-required>"
       reason: "<reason-if-required>"

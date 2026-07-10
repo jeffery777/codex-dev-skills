@@ -19,13 +19,17 @@ This gate is a thin adapter around `docs-review`. It is responsible for evidence
 
 1. Confirm docs scope.
 2. Run `docs-review` as the underlying review primitive.
-3. Record review evidence relevant to the requested readiness decision.
-4. Check for private paths, local runtime state, unsupported claims, and stale instructions.
-5. Block commit, PR, or merge readiness on unresolved MUST-FIX findings.
+3. Give every MUST-FIX, SHOULD-FIX, and NIT a stable finding id and record one disposition: `Fixed`, `Deferred`, `Rejected`, or `Needs Human Decision`.
+4. For every deferred item, record a durable target, owner, reason, remaining risk, verification plan, and promotion trigger.
+5. Check for private paths, local runtime state, unsupported claims, and stale instructions, then rerun `docs-review` against the final diff.
+6. Block commit, PR, or merge readiness when a MUST-FIX remains unresolved, any finding lacks a durable disposition, a deferred item lacks required follow-up fields, or a `Needs Human Decision` item remains open.
+
+NITS are non-blocking only after explicit disposition; they must not disappear from the gate evidence.
 
 ## Output
 
 - Gate Result: PASS | BLOCKED | NEEDS HUMAN DECISION
 - Findings
+- Finding Dispositions
 - Evidence
 - Required Follow-up

@@ -1,0 +1,28 @@
+{
+  "id": "unauthorized-external-write",
+  "input": {
+    "request": {
+      "kind": "delivery",
+      "risk": "routine",
+      "requires_external_write": true
+    },
+    "objective": {"clear": true, "complete": false},
+    "state": {
+      "source_conflict": false,
+      "verification": "passed",
+      "review": "passed",
+      "human_gate": "not_required",
+      "task_status": "done"
+    },
+    "runtime": {"surface": "desktop", "capabilities": {"threads": true}},
+    "work": {}
+  },
+  "expect": {
+    "classification": "human-gate",
+    "route": "human-gate",
+    "execution_mode": "stop-for-human-gate",
+    "next_decision": "blocked-by-human-gate",
+    "complete": false,
+    "violations": ["external-write-not-authorized"]
+  }
+}

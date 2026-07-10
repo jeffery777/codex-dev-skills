@@ -1,0 +1,44 @@
+id: "<decision-id>"
+input:
+  request:
+    kind: "<implementation | docs | review | delivery | continuation>"
+    risk: "<routine | high>"
+    requires_external_write: false
+    scheduled: false
+    desktop_thread: false
+    goal_required: false
+  objective:
+    clear: true
+    complete: false
+  state:
+    source_conflict: false
+    verification: "<not_run | passed | failed | skipped>"
+    review: "<not_required | required | passed | blocked>"
+    human_gate: "<not_required | pending | satisfied | blocked>"
+    task_status: "<canonical-task-status>"
+    protected_history_sha256: "<none-or-audit-reported-digest>"
+    goal_status: "<inactive | active | blocked | complete>"
+    security_scan:
+      status: "<not_started | running | complete | failed | cancelled>"
+      phase: "<none | preflight | threat_model | discovery | validation | attack_path | reporting>"
+      worker_failure_kind: "<none | safety_refused | transient | unrecoverable>"
+      reporting_retry_count: 0
+  runtime:
+    surface: "<cli | desktop | ide>"
+    capabilities:
+      goal: false
+      subagents: false
+      scheduler: false
+      threads: false
+  work:
+    parallelizable: false
+    ownership_disjoint: true
+expect: {}
+
+# Trusted authority is intentionally absent. Supply current-session authority
+# only through loopctl flags such as --external-write-authorized or
+# --parent-security-report-fallback-authorized after exact user authorization.
+# Every decide call must pass an independently verified value through
+# --protected-history-sha256. Use the exact audit-reported digest, or the literal
+# `none` only after the trusted caller verifies that no protected history exists;
+# never infer either value as trusted from this file.

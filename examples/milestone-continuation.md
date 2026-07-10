@@ -52,7 +52,8 @@ The skill still controls only what happens after the thread wakes up. It does no
 
 1. Re-read durable source-of-truth files and current git state.
 2. Treat chat and handoff summaries as context only.
-3. Classify tasks as complete, in progress, ready, blocked, unsafe, or unknown.
+3. Classify tasks with canonical lifecycle states. Record safety concerns as
+   blocked with blocker kind `safety`; use unknown only as an inspection result.
 4. Check the current task against DoD and verification commands.
 5. Continue the current task, select the next ready task, or stop at a human gate.
 6. Route work through `project-delivery`, `project-orchestrator`, `task-continuation`, `implementation-slice`, `docs-update`, or `desktop-thread-delegation` as appropriate.

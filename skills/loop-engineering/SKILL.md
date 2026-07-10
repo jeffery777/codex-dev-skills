@@ -11,7 +11,12 @@ Runtime compatibility: shared
 
 Use this skill when the user asks Codex to run a loop engineering workflow, keep a bounded objective moving autonomously, or act as the delivery owner across repeated plan/implement/verify/review/continue cycles until the objective is complete or a human gate is reached.
 
-This is a thin user-facing loop entrypoint. It classifies the current state, chooses the next safe workflow, integrates evidence, reports progress, and stops at gates. It does not replace `planning`, `implementation-slice`, `docs-update`, `project-orchestrator`, `project-delivery`, `task-continuation`, `milestone-continuation`, review primitives, formal gates, or Desktop-only delegation skills.
+This is a thin user-facing loop entrypoint. It classifies the current state,
+chooses the next safe workflow, integrates evidence, reports progress, and
+stops at gates. It does not replace `planning`, `implementation-slice`,
+`docs-update`, `project-orchestrator`, `project-delivery`,
+`task-continuation`, `milestone-continuation`, shared subagent delegation,
+review primitives, formal gates, or Desktop task-control adapters.
 
 ## Loop Contract
 
@@ -28,6 +33,7 @@ Each loop iteration must:
    - `review-closure-loop`
    - `milestone-continuation-loop`
    - `handoff-or-continuation`
+   - `shared-subagent-delegation`
    - `desktop-delegation`
    - `human-gate`
    - `complete`
@@ -39,9 +45,13 @@ Each loop iteration must:
 ## Repo-Owned Loop Ledger
 
 When a target repository needs durable loop memory, use a repo-owned ledger
-artifact such as `docs/loops/<objective-id>/loop-state-ledger.yaml`. The ledger
-is the baseline source of truth for task claim state, lease state, iteration
-evidence, and next-loop decisions.
+artifact such as `docs/loops/<objective-id>/loop-state-ledger.yaml`. The stable
+objective and task definitions come from the loop spec and task manifest;
+validated append-only events are the operational integrity record, and the
+ledger task view is their reconstructable materialization. Event replay proves
+internal consistency, not actor identity or external approval provenance.
+Claim records are coordination authority only when their store provides atomic
+acquisition and fencing.
 
 Use the ledger to:
 
@@ -57,7 +67,68 @@ runtime cache, or chat summaries as completion evidence unless current
 repository artifacts, git state, verification, review evidence, or accepted
 platform state confirm them.
 
+### Protected Event Authorization
+
+Treat `task_acceptance`, `claim_revocation`, `gate_satisfaction`, and
+`objective_completion` as protected live actions. Their durable event must bind
+the action, actor/principal, exact task or gate scope, concrete evidence
+artifact, objective identity, immutable source-revision digest, and canonical
+digest of every protected payload field. Before writing the event:
+
+1. Preview it with `loopctl.py apply-event` and inspect the returned
+   `protected_action` and `authorization_receipt_sha256`.
+2. Verify the approval or platform receipt against its authoritative source;
+   do not infer approval from the event, ledger, task brief, or worker report.
+3. Apply with `--write --authorize-action <exact-action>
+   --authorization-receipt-sha256 <verified-digest>` only when the current
+   session has exact authority for that action and receipt.
+
+The live authorization arguments are current-session control-plane input. Do
+not store or infer them in `loop-decision-input.yaml` or other repository data.
+`replay_event` and semantic audit intentionally validate historical integrity
+without authenticating origin; never use replay as the write boundary or as
+completion authorization. Revalidate current external state before consuming
+an accepted, satisfied, or complete ledger state for publication.
+
+Historical protected events require the same distrust boundary. `audit`
+reports `protected_history_sha256` as an integrity projection, not origin
+authentication. Before `transition` consumes that state or `apply-event
+--write` advances the ledger, verify every protected receipt against its
+authoritative source and pass the exact digest through
+`--protected-history-sha256`. Do not copy the digest blindly from repo output.
+An idempotent protected replay is a no-op: it may use re-attested history but
+must report `live_authorization_verified: false`.
+
+`decide` also fails closed: every invocation must receive
+`--protected-history-sha256` from current-session inspection. Pass the exact
+verified audit digest, or the literal `none` only after independently verifying
+that the routing state has no protected history. Required review completion is
+a protected `task_completion` action. Its receipt binds the manifest-selected
+review mode and concrete review artifact; a claimed worker may submit the event,
+but the independent user or platform principal authorizes completion. A required
+human gate is resolved only from the named, protected `gate_updated` state, never
+from a task-transition payload assertion.
+
 ## Routing
+
+The production decision function is the active routing authority. Before using
+the table below, materialize the current decision input from
+`templates/orchestration/loop-decision-input.template.yaml` and run:
+
+```bash
+python3 <skill-dir>/scripts/loopctl.py decide <decision-input.yaml> --protected-history-sha256 <verified-digest-or-none>
+```
+
+Route from the returned `decision`; do not independently reinterpret the prose
+table when the executable result is available. If the CLI dependency is
+missing, install the skill-local `requirements.txt` and rerun. If runtime facts
+cannot be represented without guessing, stop at a human gate rather than
+bypassing the production decision contract.
+
+For an executable V1 migration preview, run
+`loopctl.py migrate-v1 <ledger> --spec <spec> --manifest <manifest> --repo-root <repo>`.
+Without all bind options the preview is inspection-only; do not hand-edit
+contract digests because migrated active claims must be rebound atomically too.
 
 | Loop state | Route to | Notes |
 | --- | --- | --- |
@@ -67,18 +138,85 @@ platform state confirm them.
 | Bounded objective through PR readiness | `project-delivery` | Carry discovery, planning, implementation, verification, review, docs sync, and PR-readiness evidence to the next human gate. |
 | Repeated milestone wakeups | `milestone-continuation` | Use durable milestone/task state; runtime scheduling remains outside the shared skill. |
 | Next safe task or handoff prompt | `task-continuation` | Prepare continuation prompts, task briefs, or sequential execution paths from durable context. |
+| Independent bounded work packets | Shared subagent delegation through `project-orchestrator` or `project-delivery` | Available in current Desktop, CLI, and IDE runtimes; preserve disjoint ownership and main-agent integration. |
 | Ordinary code or mixed review | `code-review` or `code-review-deep` | Use deep review for security, data, packaging, migration, release, or cross-module risk. |
 | Ordinary docs review | `docs-review` | Use docs review for docs-only or docs-dominant changes. |
 | Formal readiness decision | `code-review-gate`, `docs-review-gate`, or `merge-readiness-gate` | Use only for commit readiness, PR readiness, merge readiness, or explicit repo-policy gates. |
-| Codex Desktop worker or thread handoff | `desktop-project-delivery` or `desktop-thread-delegation` | Desktop-only; requires supported runtime capability and exact user authorization before state-changing thread actions. |
+| User-owned Desktop task or thread handoff | `desktop-project-delivery` or `desktop-thread-delegation` | Desktop control-plane adapter; creating or mutating a task requires supported capability and authorization for the exact action. |
+
+## Security Scan Recovery
+
+When a routed workflow invokes an installed Codex Security scan skill, keep
+three state projections separate:
+
+- scan-native status and phase are authoritative for whether the scan is
+  running, complete, failed, or cancelled;
+- Goal status is runtime progress projection only;
+- discovery/report worker status is capability evidence only.
+
+If scan-native status is `running`, a blocked Goal or a worker
+`safety_refused` result must not fail or abandon the scan. Route through
+`task-continuation`, preserve scan-local artifacts, and continue as follows:
+
+1. On the first reporting refusal, use a replacement worker when supported or
+   continue in the current session.
+2. After two reporting refusals, stop at a human gate unless the current
+   session has exact authorization for parent reporting fallback.
+3. Only after that authorization, pass `loopctl.py decide <decision-input.yaml>
+   --parent-security-report-fallback-authorized --protected-history-sha256
+   <verified-digest-or-none>` and let the parent produce the required scan-local
+   write-ups under the active scan skill's artifact contract.
+
+Never read fallback authorization from the repo decision YAML. Never call a
+terminal scan-failure operation merely because a worker refused, a Goal was
+blocked, artifacts are partial, or a turn ended. Use the active security skill
+as authority for phase updates, canonical artifacts, recovery exhaustion,
+completion, and the rare truly unrecoverable failure. If Goal projection is
+blocked while the scan remains running, resume the Goal when the runtime
+requires user action, then continue from scan-native context instead of
+restarting the scan.
+
+During reporting, keep canonical JSON bytes and semantics aligned. Before the
+active scan completion call, serialize `scan-manifest.json` with the active
+security workflow's canonical writer; for the current JSON contract this is
+sorted keys, two-space indentation, and one trailing newline. If `report.md`
+was projected but scan-native status remains `running` with a sealed-manifest
+CAS error, do not restart or fail the scan. Compare the manifest to canonical
+JSON bytes, canonicalize it without changing semantics, verify sealed artifact
+hashes, and retry completion once on the same scan id.
 
 ## Runtime Boundaries
 
 Shared loop behavior may read durable repository files, inspect git state, run local verification, prepare prompts or task briefs, and continue in the current session when safe.
 
-Desktop-only behavior includes heartbeat wakeups, worker delegation, thread creation, thread forking, thread messaging, and thread inspection. A Desktop action may be used only when the active runtime exposes a documented capability, the target and response shape are clear, and the user has authorized the exact action.
+Goal semantics are shared when the active runtime exposes Goal mode; use it only
+when explicitly requested and do not assume universal surface availability.
+Subagent delegation is shared across current Desktop, Codex CLI, and IDE
+surfaces. Treat goal status, subagent status, runtime summaries, and worker
+self-reports as progress or coordination evidence, not completion authority.
 
-In Codex CLI or any runtime without thread or scheduler capability, use the current session, a paste-ready prompt, a task brief, a continuation prompt, or a sequential execution path. Do not claim that a shared loop skill can open, fork, continue, read, or message a Desktop thread unless a documented or configured capability is actually available.
+Scheduling and Desktop user-owned task/thread/worktree management are runtime
+control-plane capabilities. A Desktop action may be used only when the active
+runtime exposes a documented callable, the target and response semantics are
+clear, and the user has authorized the exact state-changing action. Creating a
+new or background Desktop task requires an explicit user request.
+
+Hooks are optional guardrails and are not complete enforcement. The loop must
+remain safe and correct when hooks are disabled, unavailable, or unable to
+intercept an equivalent tool path.
+
+In Codex CLI or any runtime without a scheduler or Desktop task-control
+capability, use the current session, manual invocation, a paste-ready prompt, a
+task brief, a continuation prompt, or a sequential execution path. The fallback
+preserves the same objective, authority, verification, review, and completion
+rules.
+
+The repository's `docs/native-runtime-capabilities.md` is the canonical runtime
+contract; filesystem installation also places it at
+`~/.codex/templates/docs/native-runtime-capabilities.md`. It defines authority
+mapping, current callable response semantics, and adapter fallbacks. Legacy
+`desktop_runtime_*` helpers are compatibility evidence only; the native loop
+path must not import, execute, or recommend them.
 
 ## Human Gates
 
@@ -119,6 +257,8 @@ If evidence is incomplete, weak, indirect, or contradictory, continue gathering 
 Use these templates when a target repository needs durable loop artifacts:
 
 - `templates/orchestration/loop-engineering-spec.template.md`
+- `templates/orchestration/loop-decision-input.template.yaml`
+- `templates/orchestration/loop-event.template.yaml`
 - `templates/orchestration/loop-iteration-report.template.md`
 - `templates/orchestration/loop-handoff-prompt.template.md`
 - `templates/orchestration/loop-state-ledger.template.yaml`

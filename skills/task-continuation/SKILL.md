@@ -11,18 +11,23 @@ Runtime compatibility: shared
 
 Use this skill when a larger bounded project is underway and Codex needs to continue safely by choosing the next task, preparing a continuation prompt or task brief for another session, worker, or sequential execution path, and preserving enough verified handoff context without treating chat memory as source of truth.
 
-This shared skill prepares continuation artifacts. It does not guarantee opening a new Codex conversation. Automatic session creation is runtime-specific and requires Codex Desktop worker delegation, a CLI runner, MCP tool, plugin, or equivalent orchestrator.
+This shared skill prepares continuation artifacts and may route disjoint bounded
+packets to shared subagents when supported. It does not guarantee opening a new
+user-owned Codex task or conversation; that is a runtime control-plane action.
 
 ## Workflow
 
 1. Re-bootstrap from durable repository files: repo instructions, project specs, plans, task manifests, status docs, review evidence, policies, templates, and git state.
-2. Identify completed, blocked, ready, unsafe, and unknown tasks.
+2. Identify canonical task states. Represent safety concerns as `blocked` with a
+   safety blocker kind; use `unknown` only as a discovery classification before
+   materializing canonical state.
 3. Compare chat or handoff summaries against repository files. Treat summaries as context only.
 4. Select the smallest ready task that advances the bounded objective without expanding scope.
 5. Choose the recommended execution mode:
    - `continue-current-session`
    - `new-session-prompt`
-   - `delegated-worker-brief`
+   - `shared-subagent`
+   - `desktop-task-handoff`
    - `stop-for-human-gate`
 6. Prepare a continuation prompt or task brief when continuation is safe.
 7. Require the next session or worker to re-read source-of-truth files before editing.

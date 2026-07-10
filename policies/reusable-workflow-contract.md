@@ -15,9 +15,13 @@ This contract defines the shared shape for Codex CLI and Codex Desktop developme
 
 ## Runtime Differences
 
-Codex CLI may execute phases sequentially in one session or through prompts, task briefs, continuation prompts, or another explicit sequential execution path.
+Codex CLI and Codex Desktop may use bounded shared subagents when supported,
+with disjoint ownership and main-agent verification. They may otherwise execute
+phases sequentially or through prompts, task briefs, and continuation prompts.
 
-Codex Desktop may use main-agent orchestration and worker delegation, but Desktop runtime behavior does not replace durable repository artifacts or human gate policy.
+Codex Desktop may additionally control user-owned tasks, threads, worktrees,
+and schedules through documented runtime capabilities. Those control-plane
+actions do not replace durable repository artifacts or human-gate policy.
 
 ## Review And Merge
 

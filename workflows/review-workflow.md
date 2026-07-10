@@ -22,10 +22,14 @@ Use `code-review-gate` or `docs-review-gate` only when a workflow needs a formal
 
 1. Apply the requested bounded change through `implementation-slice` or `docs-update`.
 2. Run `code-review` for code or mixed changes, or `docs-review` for docs-only or docs-dominant changes. Escalate to `code-review-deep` when the code or mixed diff is high-risk.
-3. If actionable blockers remain, classify each finding as fix now, defer, answer, withdrawn, or needs human decision.
+3. Give every MUST-FIX, SHOULD-FIX, and NIT a stable id, then classify it as fix now, defer, reject with rationale, or needs human decision.
 4. Fix accepted code or mixed findings through `implementation-slice`; fix accepted docs-only findings through `docs-update`.
-5. Rerun the relevant review primitive and record disposition, evidence, verification, and remaining risk with `templates/review/review-follow-up.template.md` when useful.
+5. Rerun the relevant review primitive and record disposition, owner, durable target, promotion trigger, evidence, verification, and remaining risk with `templates/review/review-follow-up.template.md`. Deferred findings must never exist only in chat or transient review output.
 6. Run `code-review-gate` or `docs-review-gate` only when the loop reaches formal commit readiness, PR readiness, merge readiness, or another repo-policy blocking decision.
+
+A formal gate may pass only after every finding has a durable disposition. NITS
+do not block merely because of severity, but an unrecorded NIT blocks the gate
+because it can be silently lost.
 
 Default max rounds: 2, unless the user or repo policy sets a different maximum.
 

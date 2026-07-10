@@ -12,13 +12,18 @@ Stop instead of preparing executable continuation if the next step would require
 Expected triage flow:
 
 1. Re-read source-of-truth files such as `AGENTS.md`, roadmap or plan docs, task manifests, relevant templates, review evidence, and current git state.
-2. Classify candidate tasks as `done`, `ready`, `blocked`, `unsafe`, or `unknown`.
+2. Classify candidate tasks with canonical states; record safety concerns as
+   `blocked` with blocker kind `safety`, and use `unknown` only until inspection
+   establishes a persisted state.
 3. Treat chat summaries and handoff notes as context only, then verify them against repository files.
 4. Select the smallest ready task that advances the bounded objective without crossing a human gate.
 5. Choose one execution mode:
    - `continue-current-session` when the current session can safely finish the next task.
+   - `shared-subagent` when an independent bounded packet has disjoint ownership
+     and the current Codex surface supports subagents.
    - `new-session-prompt` when the work should move to another CLI or generic Codex session.
-   - `delegated-worker-brief` when Codex Desktop or another orchestrator can assign a bounded worker task.
+   - `desktop-task-handoff` only when the user requests a separate user-owned
+     Desktop task/thread and the runtime exposes that control plane.
    - `stop-for-human-gate` when the next step needs a maintainer decision.
 6. Include required source-of-truth files, in-scope and out-of-scope work, expected files, DoD, verification, review primitive, formal gate trigger, and stop conditions.
 
@@ -54,7 +59,7 @@ Stop conditions:
 - Stop if repo files conflict with this prompt, if the diff stops being docs-only, or before any external write.
 ```
 
-Desktop task brief example using `delegated-worker-brief` mode:
+Desktop task brief example using `desktop-task-handoff` mode:
 
 ```text
 Worker task: draft the task-continuation example only.
