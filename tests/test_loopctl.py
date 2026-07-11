@@ -970,8 +970,8 @@ class CliTests(unittest.TestCase):
                     {
                         "custom_agent_surface": "available",
                         "parent_sandbox_mode": "workspace-write",
-                        "available_models": ["gpt-5.6"],
-                        "reasoning_efforts": {"gpt-5.6": ["medium"]},
+                        "available_models": ["gpt-5.6-sol"],
+                        "reasoning_efforts": {"gpt-5.6-sol": ["medium"]},
                     }
                 ),
                 encoding="utf-8",
@@ -1130,8 +1130,8 @@ class CliTests(unittest.TestCase):
                     {
                         "custom_agent_surface": "available",
                         "parent_sandbox_mode": "workspace-write",
-                        "available_models": ["gpt-5.6"],
-                        "reasoning_efforts": {"gpt-5.6": ["medium"]},
+                        "available_models": ["gpt-5.6-sol"],
+                        "reasoning_efforts": {"gpt-5.6-sol": ["medium"]},
                     }
                 ),
                 encoding="utf-8",

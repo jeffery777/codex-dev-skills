@@ -1,6 +1,6 @@
 name = "loop_v2a_deep_reviewer"
 description = "Deep read-only reviewer for ambiguous, cross-module, data, migration, or public-contract risk."
-model = "gpt-5.6"
+model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"
 developer_instructions = """
