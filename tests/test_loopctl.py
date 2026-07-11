@@ -10,7 +10,7 @@ import tempfile
 import threading
 import unittest
 from unittest import mock
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 
 
@@ -114,6 +114,118 @@ def write_contract(root: pathlib.Path, document: dict) -> pathlib.Path:
         text=True,
     ).stdout.strip()
     return manifest_path
+
+
+def init_git_repository(root: pathlib.Path) -> dict[str, str]:
+    root.mkdir()
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    subprocess.run(["git", "-C", str(root), "config", "user.name", "Loop Test"], check=True)
+    subprocess.run(
+        ["git", "-C", str(root), "config", "user.email", "loop@example.invalid"],
+        check=True,
+    )
+    (root / "tracked.txt").write_text("initial\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(root), "add", "tracked.txt"], check=True)
+    subprocess.run(
+        ["git", "-C", str(root), "commit", "-q", "-m", "initial"],
+        check=True,
+    )
+    return {
+        "branch": subprocess.run(
+            ["git", "-C", str(root), "branch", "--show-current"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip(),
+        "head_sha": subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip(),
+    }
+
+
+def agent_route_document(source_revision: dict[str, str]) -> dict:
+    return {
+        "agent_route": {
+            "contract_version": 1,
+            "task": {
+                "id": "P1",
+                "factors": {
+                    "ambiguity": "moderate",
+                    "reasoning_depth": "balanced",
+                    "code_context_volume": "medium",
+                    "security_data_migration_public_contract_risk": "routine",
+                    "write_blast_radius": "bounded",
+                    "latency_sensitivity": "medium",
+                    "cost_token_sensitivity": "medium",
+                    "independence_parallelizability": "independent",
+                    "verification_burden": "medium",
+                },
+            },
+            "profile_preflight": {
+                "profile_dir": str(ROOT / "agent-profiles"),
+                "registry": str(
+                    ROOT
+                    / "skills"
+                    / "loop-engineering"
+                    / "references"
+                    / "agent-profile-registry.json"
+                ),
+                "role": "loop_v2a_balanced_worker",
+                "agent_roots": [],
+                "destination_root": str(ROOT / "agent-profiles"),
+            },
+            "assignment": {
+                "scope": ["skills/loop-engineering/scripts/agent_routing.py"],
+                "ownership": {"owner": "worker-p1", "disjoint": True},
+                "source_revision": source_revision,
+                "authority_contract": {
+                    "external_write_authorized": False,
+                    "human_gates": ["merge"],
+                    "completion_criteria": ["tests"],
+                },
+            },
+        }
+    }
+
+
+def agent_integration_document(
+    receipt: dict,
+    *,
+    artifact: str,
+    artifact_digest: str,
+    verification_artifact: str,
+    verification_digest: str,
+) -> dict:
+    return {
+        "agent_integration": {
+            "contract_version": 1,
+            "route_receipt": receipt,
+            "worker_receipt": {
+                "route_receipt_id": receipt["route_receipt_id"],
+                "task_id": receipt["task_id"],
+                "assigned_scope_sha256": receipt["assigned_scope_sha256"],
+                "source_revision_sha256": receipt["source_revision_sha256"],
+                "status": "complete",
+                "output_artifacts": [artifact],
+                "artifact_digests": {artifact: artifact_digest},
+                "conflicts": [],
+            },
+            "disposition": {
+                "route_receipt_id": receipt["route_receipt_id"],
+                "disposition": "accepted",
+                "verification": {
+                    "status": "passed",
+                    "artifacts": [verification_artifact],
+                    "artifact_digests": {
+                        verification_artifact: verification_digest
+                    },
+                },
+            },
+        }
+    }
 
 
 class StructuredYamlTests(unittest.TestCase):
@@ -844,6 +956,509 @@ class CliTests(unittest.TestCase):
                     ),
                 )
             self.assertIn('"route": "docs-update"', output.getvalue())
+
+
+    def test_agent_route_and_integrate_use_trusted_current_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            repo_root = root / "repo"
+            document = agent_route_document(init_git_repository(repo_root))
+            route_path = root / "route.json"
+            facts_path = root / "facts.json"
+            facts_path.write_text(
+                json.dumps(
+                    {
+                        "custom_agent_surface": "available",
+                        "parent_sandbox_mode": "workspace-write",
+                        "available_models": ["gpt-5.6"],
+                        "reasoning_efforts": {"gpt-5.6": ["medium"]},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            route_path.write_text(json.dumps(document), encoding="utf-8")
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    0,
+                    loopctl.main(
+                        [
+                            "agent-route",
+                            str(route_path),
+                            "--runtime-facts",
+                            str(facts_path),
+                        ]
+                    ),
+                )
+            receipt = json.loads(output.getvalue())["route_receipt"]
+            profile_path = ROOT / "agent-profiles" / "loop_v2a_balanced_worker.toml"
+            self.assertEqual(
+                hashlib.sha256(profile_path.read_bytes()).hexdigest(),
+                receipt["selected_profile_digest"],
+            )
+
+            artifact_root = root / "artifacts"
+            verification_root = root / "verification"
+            artifact_root.mkdir()
+            verification_root.mkdir()
+            result_path = artifact_root / "result.txt"
+            result_path.write_text("worker output\n", encoding="utf-8")
+            verification_path = verification_root / "tests.txt"
+            verification_path.write_text("tests passed\n", encoding="utf-8")
+            integration_path = root / "integration.json"
+            integration_path.write_text(
+                json.dumps(
+                    agent_integration_document(
+                        receipt,
+                        artifact=result_path.name,
+                        artifact_digest=hashlib.sha256(
+                            result_path.read_bytes()
+                        ).hexdigest(),
+                        verification_artifact=verification_path.name,
+                        verification_digest=hashlib.sha256(
+                            verification_path.read_bytes()
+                        ).hexdigest(),
+                    )
+                ),
+                encoding="utf-8",
+            )
+            integration_output = StringIO()
+            with redirect_stdout(integration_output):
+                self.assertEqual(
+                    0,
+                    loopctl.main(
+                        [
+                            "agent-integrate",
+                            str(integration_path),
+                            "--repo-root",
+                            str(repo_root),
+                            "--artifact-root",
+                            str(artifact_root),
+                            "--verification-root",
+                            str(verification_root),
+                            "--assignment-fresh",
+                            "--profile-path",
+                            str(profile_path),
+                        ]
+                    ),
+                )
+            integrated = json.loads(integration_output.getvalue())
+            self.assertEqual("accepted", integrated["status"])
+            self.assertFalse(integrated["integration"]["completion_proven"])
+
+            empty_agents = root / "empty-agents"
+            empty_agents.mkdir()
+            fallback_document = copy.deepcopy(document)
+            fallback_document["agent_route"]["profile_preflight"][
+                "destination_root"
+            ] = str(empty_agents)
+            route_path.write_text(json.dumps(fallback_document), encoding="utf-8")
+            facts_path.write_text(
+                json.dumps(
+                    {
+                        "custom_agent_surface": "available",
+                        "available_models": [],
+                        "reasoning_efforts": {},
+                        "parent_default": {"available": True},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            fallback_output = StringIO()
+            with redirect_stdout(fallback_output):
+                self.assertEqual(
+                    0,
+                    loopctl.main(
+                        [
+                            "agent-route",
+                            str(route_path),
+                            "--runtime-facts",
+                            str(facts_path),
+                        ]
+                    ),
+                )
+            fallback_receipt = json.loads(fallback_output.getvalue())["route_receipt"]
+            self.assertIsNone(fallback_receipt["selected_profile_digest"])
+            integration_path.write_text(
+                json.dumps(
+                    agent_integration_document(
+                        fallback_receipt,
+                        artifact=result_path.name,
+                        artifact_digest=hashlib.sha256(
+                            result_path.read_bytes()
+                        ).hexdigest(),
+                        verification_artifact=verification_path.name,
+                        verification_digest=hashlib.sha256(
+                            verification_path.read_bytes()
+                        ).hexdigest(),
+                    )
+                ),
+                encoding="utf-8",
+            )
+            no_profile_output = StringIO()
+            with redirect_stdout(no_profile_output):
+                self.assertEqual(
+                    0,
+                    loopctl.main(
+                        [
+                            "agent-integrate",
+                            str(integration_path),
+                            "--repo-root",
+                            str(repo_root),
+                            "--artifact-root",
+                            str(artifact_root),
+                            "--verification-root",
+                            str(verification_root),
+                            "--assignment-fresh",
+                        ]
+                    ),
+                )
+            self.assertEqual(
+                "accepted", json.loads(no_profile_output.getvalue())["status"]
+            )
+
+    def test_agent_routing_trusted_boundaries_fail_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            repo_root = root / "repo"
+            source_revision = init_git_repository(repo_root)
+            document = agent_route_document(source_revision)
+            route_path = root / "route.json"
+            facts_path = root / "facts.json"
+            facts_path.write_text(
+                json.dumps(
+                    {
+                        "custom_agent_surface": "available",
+                        "parent_sandbox_mode": "workspace-write",
+                        "available_models": ["gpt-5.6"],
+                        "reasoning_efforts": {"gpt-5.6": ["medium"]},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            route_path.write_text(json.dumps(document), encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                with redirect_stderr(StringIO()):
+                    loopctl.main(["agent-route", str(route_path)])
+
+            head_only = copy.deepcopy(document)
+            head_only["agent_route"]["assignment"]["source_revision"].pop("branch")
+            route_path.write_text(json.dumps(head_only), encoding="utf-8")
+            head_only_output = StringIO()
+            with redirect_stdout(head_only_output):
+                self.assertEqual(
+                    1,
+                    loopctl.main(
+                        [
+                            "agent-route",
+                            str(route_path),
+                            "--runtime-facts",
+                            str(facts_path),
+                        ]
+                    ),
+                )
+            self.assertIn("exact branch", head_only_output.getvalue())
+
+            embedded = copy.deepcopy(document)
+            embedded["agent_route"]["profile_preflight"]["runtime_facts"] = str(
+                facts_path
+            )
+            route_path.write_text(json.dumps(embedded), encoding="utf-8")
+            embedded_output = StringIO()
+            with redirect_stdout(embedded_output):
+                self.assertEqual(
+                    1,
+                    loopctl.main(
+                        [
+                            "agent-route",
+                            str(route_path),
+                            "--runtime-facts",
+                            str(facts_path),
+                        ]
+                    ),
+                )
+            self.assertIn("unknown fields: runtime_facts", embedded_output.getvalue())
+
+            alternate_registry = root / "alternate-registry.json"
+            alternate_registry.write_bytes(
+                loopctl.CANONICAL_PROFILE_REGISTRY.read_bytes()
+            )
+            alternate = copy.deepcopy(document)
+            alternate["agent_route"]["profile_preflight"]["registry"] = str(
+                alternate_registry
+            )
+            route_path.write_text(json.dumps(alternate), encoding="utf-8")
+            alternate_output = StringIO()
+            with redirect_stdout(alternate_output):
+                self.assertEqual(
+                    1,
+                    loopctl.main(
+                        [
+                            "agent-route",
+                            str(route_path),
+                            "--runtime-facts",
+                            str(facts_path),
+                        ]
+                    ),
+                )
+            self.assertIn(
+                "canonical installed skill registry", alternate_output.getvalue()
+            )
+
+            route_path.write_text(json.dumps(document), encoding="utf-8")
+            routed_output = StringIO()
+            with redirect_stdout(routed_output):
+                self.assertEqual(
+                    0,
+                    loopctl.main(
+                        [
+                            "agent-route",
+                            str(route_path),
+                            "--runtime-facts",
+                            str(facts_path),
+                        ]
+                    ),
+                )
+            receipt = json.loads(routed_output.getvalue())["route_receipt"]
+            profile_path = ROOT / "agent-profiles" / "loop_v2a_balanced_worker.toml"
+            artifact_root = root / "artifacts"
+            verification_root = root / "verification"
+            artifact_root.mkdir()
+            verification_root.mkdir()
+            result_path = artifact_root / "result.txt"
+            result_path.write_text("worker output\n", encoding="utf-8")
+            verification_path = verification_root / "tests.txt"
+            verification_path.write_text("tests passed\n", encoding="utf-8")
+            valid_digest = hashlib.sha256(result_path.read_bytes()).hexdigest()
+            integration = agent_integration_document(
+                receipt,
+                artifact=result_path.name,
+                artifact_digest=valid_digest,
+                verification_artifact=verification_path.name,
+                verification_digest=hashlib.sha256(
+                    verification_path.read_bytes()
+                ).hexdigest(),
+            )
+            integration_path = root / "integration.json"
+            common_args = [
+                "agent-integrate",
+                str(integration_path),
+                "--repo-root",
+                str(repo_root),
+                "--artifact-root",
+                str(artifact_root),
+                "--verification-root",
+                str(verification_root),
+                "--assignment-fresh",
+                "--profile-path",
+                str(profile_path),
+            ]
+
+            with_current = copy.deepcopy(integration)
+            with_current["agent_integration"]["current"] = {
+                "source_revision": source_revision,
+                "profile_digest": receipt["selected_profile_digest"],
+                "assignment_fresh": True,
+            }
+            integration_path.write_text(json.dumps(with_current), encoding="utf-8")
+            current_output = StringIO()
+            with redirect_stdout(current_output):
+                self.assertEqual(1, loopctl.main(common_args))
+            self.assertIn("unknown fields: current", current_output.getvalue())
+
+            missing = agent_integration_document(
+                receipt,
+                artifact="missing.txt",
+                artifact_digest="a" * 64,
+                verification_artifact=verification_path.name,
+                verification_digest=hashlib.sha256(
+                    verification_path.read_bytes()
+                ).hexdigest(),
+            )
+            integration_path.write_text(json.dumps(missing), encoding="utf-8")
+            missing_output = StringIO()
+            with redirect_stdout(missing_output):
+                self.assertEqual(1, loopctl.main(common_args))
+            self.assertIn("regular non-symlink file", missing_output.getvalue())
+
+            integration_path.write_text(json.dumps(integration), encoding="utf-8")
+            result_path.write_text("tampered\n", encoding="utf-8")
+            tampered_output = StringIO()
+            with redirect_stdout(tampered_output):
+                self.assertEqual(1, loopctl.main(common_args))
+            self.assertIn("digest mismatch", tampered_output.getvalue())
+            result_path.write_text("worker output\n", encoding="utf-8")
+
+            missing_verification = agent_integration_document(
+                receipt,
+                artifact=result_path.name,
+                artifact_digest=valid_digest,
+                verification_artifact="missing-tests.txt",
+                verification_digest="a" * 64,
+            )
+            integration_path.write_text(
+                json.dumps(missing_verification), encoding="utf-8"
+            )
+            verification_output = StringIO()
+            with redirect_stdout(verification_output):
+                self.assertEqual(1, loopctl.main(common_args))
+            self.assertIn(
+                "regular non-symlink file", verification_output.getvalue()
+            )
+
+            tampered_verification = copy.deepcopy(integration)
+            verification_path.write_text("tampered verification\n", encoding="utf-8")
+            integration_path.write_text(
+                json.dumps(tampered_verification), encoding="utf-8"
+            )
+            verification_digest_output = StringIO()
+            with redirect_stdout(verification_digest_output):
+                self.assertEqual(1, loopctl.main(common_args))
+            self.assertIn(
+                "verification artifact digest mismatch",
+                verification_digest_output.getvalue(),
+            )
+            verification_path.write_text("tests passed\n", encoding="utf-8")
+
+            symlink_path = artifact_root / "linked-result.txt"
+            symlink_path.symlink_to(result_path)
+            symlinked = agent_integration_document(
+                receipt,
+                artifact=symlink_path.name,
+                artifact_digest=valid_digest,
+                verification_artifact=verification_path.name,
+                verification_digest=hashlib.sha256(
+                    verification_path.read_bytes()
+                ).hexdigest(),
+            )
+            integration_path.write_text(json.dumps(symlinked), encoding="utf-8")
+            symlink_output = StringIO()
+            with redirect_stdout(symlink_output):
+                self.assertEqual(1, loopctl.main(common_args))
+            self.assertIn("regular non-symlink file", symlink_output.getvalue())
+
+            integration_path.write_text(json.dumps(integration), encoding="utf-8")
+            alternate_profile_args = common_args[:-1] + [
+                str(ROOT / "agent-profiles" / "loop_v2a_fast_explorer.toml")
+            ]
+            alternate_profile_output = StringIO()
+            with redirect_stdout(alternate_profile_output):
+                self.assertEqual(1, loopctl.main(alternate_profile_args))
+            self.assertIn(
+                "selected profile does not match",
+                alternate_profile_output.getvalue(),
+            )
+
+            integration_path.write_text(json.dumps(integration), encoding="utf-8")
+            without_assignment_flag = common_args[:]
+            without_assignment_flag.remove("--assignment-fresh")
+            with self.assertRaises(SystemExit):
+                with redirect_stderr(StringIO()):
+                    loopctl.main(without_assignment_flag)
+
+            without_profile = common_args[:-2]
+            profile_output = StringIO()
+            with redirect_stdout(profile_output):
+                self.assertEqual(1, loopctl.main(without_profile))
+            self.assertIn("requires --profile-path", profile_output.getvalue())
+
+            subprocess.run(
+                ["git", "-C", str(repo_root), "switch", "-q", "-c", "same-head"],
+                check=True,
+            )
+            same_head_output = StringIO()
+            with redirect_stdout(same_head_output):
+                self.assertEqual(1, loopctl.main(common_args))
+            self.assertIn("stale-source-revision", same_head_output.getvalue())
+            subprocess.run(
+                ["git", "-C", str(repo_root), "switch", "-q", source_revision["branch"]],
+                check=True,
+            )
+
+            (repo_root / "later.txt").write_text("later\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo_root), "add", "later.txt"], check=True)
+            subprocess.run(
+                ["git", "-C", str(repo_root), "commit", "-q", "-m", "later"],
+                check=True,
+            )
+            stale_output = StringIO()
+            with redirect_stdout(stale_output):
+                self.assertEqual(1, loopctl.main(common_args))
+            self.assertIn("stale-source-revision", stale_output.getvalue())
+
+    def test_agent_route_command_rejects_incomplete_factor_contract(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "agent-route.json"
+            facts = pathlib.Path(directory) / "facts.json"
+            facts.write_text(json.dumps({"custom_agent_surface": "unknown"}), encoding="utf-8")
+            document = {
+                "contract_version": 1,
+                "task": {"id": "P1", "factors": {"ambiguity": "low"}},
+                "profile_preflight": {
+                    "profile_dir": str(ROOT / "agent-profiles"),
+                    "registry": str(ROOT / "skills" / "loop-engineering" / "references" / "agent-profile-registry.json"),
+                    "role": "loop_v2a_balanced_worker",
+                },
+                "assignment": {
+                    "scope": ["owned.py"],
+                    "ownership": {"owner": "worker", "disjoint": True},
+                    "source_revision": {"head_sha": "abc123"},
+                    "authority_contract": {"external_write_authorized": False},
+                },
+            }
+            path.write_text(json.dumps(document), encoding="utf-8")
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    1,
+                    loopctl.main(
+                        [
+                            "agent-route",
+                            str(path),
+                            "--runtime-facts",
+                            str(facts),
+                        ]
+                    ),
+                )
+            self.assertIn("missing required fields", output.getvalue())
+
+    def test_agent_route_command_rejects_unknown_contract_fields(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "agent-route.json"
+            facts = pathlib.Path(directory) / "facts.json"
+            facts.write_text(
+                json.dumps({"custom_agent_surface": "unknown"}), encoding="utf-8"
+            )
+            path.write_text(
+                json.dumps(
+                    {
+                        "contract_version": 1,
+                        "task": {"id": "P1", "factors": {}, "permission": "write-all"},
+                        "profile_preflight": {
+                            "profile_dir": "profiles",
+                            "registry": "registry.json",
+                            "role": "loop_v2a_balanced_worker",
+                        },
+                        "assignment": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    1,
+                    loopctl.main(
+                        [
+                            "agent-route",
+                            str(path),
+                            "--runtime-facts",
+                            str(facts),
+                        ]
+                    ),
+                )
+            self.assertIn("unknown fields: permission", output.getvalue())
 
     def test_decide_ignores_repo_asserted_external_write_authority(self):
         with tempfile.TemporaryDirectory() as directory:

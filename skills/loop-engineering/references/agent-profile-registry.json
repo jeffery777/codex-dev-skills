@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "namespace": "loop_v2a_",
+  "official_surface": {
+    "documentation": "https://learn.chatgpt.com/docs/agent-configuration/subagents",
+    "last_verified": "2026-07-11",
+    "format_stability": "runtime-dependent"
+  },
+  "profiles": [
+    {
+      "name": "loop_v2a_fast_explorer",
+      "file": "loop_v2a_fast_explorer.toml",
+      "profile_sha256": "2da229ec9c16c2cf9f2dc75c7ba5373d503b1aecd61cef9bb555972a5fba344e",
+      "capability_class": "fast-read-explorer",
+      "intended_task_class": ["bounded-exploration", "large-context-read", "evidence-gathering"],
+      "sandbox_expectation": "read-only",
+      "allowed_workflow_scope": ["read", "search", "summarize", "report-receipt"],
+      "output_contract": ["assigned_scope", "evidence", "commands_run", "skipped_checks", "risks", "open_questions"],
+      "runtime_mapping": {"model": "gpt-5.6-terra", "reasoning_effort": "low", "availability": "runtime-dependent", "last_verified": "2026-07-11", "replaceable": true},
+      "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": false}
+    },
+    {
+      "name": "loop_v2a_balanced_worker",
+      "file": "loop_v2a_balanced_worker.toml",
+      "profile_sha256": "9a91be14a947f87e3e27d7943992c7f358b9b608edac328fcc052db5ee5bc6fe",
+      "capability_class": "balanced-worker",
+      "intended_task_class": ["bounded-implementation", "focused-fix", "scoped-verification"],
+      "sandbox_expectation": "workspace-write",
+      "allowed_workflow_scope": ["read", "search", "bounded-edit", "focused-verify", "report-receipt"],
+      "output_contract": ["assigned_scope", "changed_files", "commands_run", "skipped_checks", "risks", "open_questions"],
+      "runtime_mapping": {"model": "gpt-5.6", "reasoning_effort": "medium", "availability": "runtime-dependent", "last_verified": "2026-07-11", "replaceable": true},
+      "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": false}
+    },
+    {
+      "name": "loop_v2a_deep_reviewer",
+      "file": "loop_v2a_deep_reviewer.toml",
+      "profile_sha256": "1743a15890caedbc7e8c00e1873d483949a3f889fd2471e315622919b655045c",
+      "capability_class": "deep-reviewer",
+      "intended_task_class": ["ambiguous-review", "cross-module-review", "migration-review", "public-contract-review"],
+      "sandbox_expectation": "read-only",
+      "allowed_workflow_scope": ["read", "search", "verify", "report-findings", "report-receipt"],
+      "output_contract": ["assigned_scope", "findings", "verification", "skipped_checks", "risks", "open_questions"],
+      "runtime_mapping": {"model": "gpt-5.6", "reasoning_effort": "high", "availability": "runtime-dependent", "last_verified": "2026-07-11", "replaceable": true},
+      "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": true}
+    },
+    {
+      "name": "loop_v2a_security_reviewer",
+      "file": "loop_v2a_security_reviewer.toml",
+      "profile_sha256": "713aefb8197a9dd37a1a19b6714db4c69d759cc460c6c05e6321278fb010cf0f",
+      "capability_class": "security-reviewer",
+      "intended_task_class": ["security-review", "authorization-review", "data-boundary-review", "installer-review"],
+      "sandbox_expectation": "read-only",
+      "allowed_workflow_scope": ["read", "search", "validate", "attack-path-analysis", "report-findings", "report-receipt"],
+      "output_contract": ["assigned_scope", "threats", "findings", "validation", "skipped_checks", "risks", "open_questions"],
+      "runtime_mapping": {"model": "gpt-5.6", "reasoning_effort": "high", "availability": "runtime-dependent", "last_verified": "2026-07-11", "replaceable": true},
+      "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": true}
+    }
+  ]
+}

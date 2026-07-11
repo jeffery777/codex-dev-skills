@@ -19,6 +19,12 @@ sys.path.insert(0, str(HERE))
 
 import loop_core  # noqa: E402
 import loop_yaml  # noqa: E402
+import profile_preflight  # noqa: E402
+import agent_routing  # noqa: E402
+
+CANONICAL_PROFILE_REGISTRY = (
+    HERE.parent / "references" / "agent-profile-registry.json"
+).resolve()
 
 
 def render(value: object) -> None:
@@ -373,6 +379,393 @@ def command_decide(
     return 0
 
 
+def command_agent_route(
+    path: pathlib.Path, *, runtime_facts_path: pathlib.Path
+) -> int:
+    """Produce a V2a route receipt from the public decision-input contract."""
+    document = loop_yaml.load_yaml(path)
+    payload = document.get("agent_route") if isinstance(document, dict) else None
+    if payload is None:
+        payload = document
+    if not isinstance(payload, dict):
+        render({"status": "rejected", "errors": ["agent route input must be an object"]})
+        return 1
+    task = payload.get("task")
+    assignment = payload.get("assignment")
+    preflight_input = payload.get("profile_preflight")
+    if payload.get("contract_version") != 1:
+        render({"status": "rejected", "errors": ["agent route contract_version must be 1"]})
+        return 1
+    if not isinstance(task, dict) or not isinstance(assignment, dict) or not isinstance(preflight_input, dict):
+        render(
+            {
+                "status": "rejected",
+                "errors": ["agent route input requires task, profile_preflight, and assignment objects"],
+            }
+        )
+        return 1
+    contract_shapes = (
+        (payload, {"contract_version", "task", "profile_preflight", "assignment"}, "agent route"),
+        (task, {"id", "factors"}, "agent route task"),
+        (
+            preflight_input,
+            {"profile_dir", "registry", "role", "agent_roots", "destination_root"},
+            "agent route profile preflight",
+        ),
+        (
+            assignment,
+            {"scope", "ownership", "source_revision", "authority_contract"},
+            "agent route assignment",
+        ),
+    )
+    for value, allowed, label in contract_shapes:
+        unknown = sorted(set(value) - allowed)
+        if unknown:
+            render(
+                {
+                    "status": "rejected",
+                    "errors": [f"{label} contains unknown fields: {','.join(unknown)}"],
+                }
+            )
+            return 1
+    def resolved(value: Any, label: str) -> pathlib.Path:
+        if not isinstance(value, str) or not value:
+            raise profile_preflight.ProfileValidationError(f"{label} must be a non-empty path string")
+        candidate = pathlib.Path(value)
+        return candidate if candidate.is_absolute() else (path.parent / candidate).resolve()
+
+    try:
+        agent_routing.validate_task_factors(task.get("factors"))
+        source_revision = assignment.get("source_revision")
+        if not isinstance(source_revision, dict) or set(source_revision) != {
+            "branch",
+            "head_sha",
+        }:
+            raise agent_routing.AgentRoutingContractError(
+                "agent route source revision requires exact branch and immutable head_sha"
+            )
+        profile_dir = resolved(preflight_input.get("profile_dir"), "profile_dir")
+        registry_path = resolved(preflight_input.get("registry"), "registry")
+        if registry_path.resolve() != CANONICAL_PROFILE_REGISTRY:
+            raise profile_preflight.ProfileValidationError(
+                "registry must be the canonical installed skill registry"
+            )
+        runtime_facts_path = runtime_facts_path.resolve()
+        role = preflight_input.get("role")
+        if not isinstance(role, str) or not role:
+            raise profile_preflight.ProfileValidationError("role must be a non-empty string")
+        raw_roots = preflight_input.get("agent_roots", [])
+        if not isinstance(raw_roots, list):
+            raise profile_preflight.ProfileValidationError("agent_roots must be an array")
+        roots = [resolved(value, "agent root") for value in raw_roots]
+        destination_value = preflight_input.get("destination_root")
+        if not destination_value:
+            raise profile_preflight.ProfileValidationError("destination_root is required for collision preflight")
+        destination = resolved(destination_value, "destination_root")
+        if destination not in roots:
+            roots.append(destination)
+        _, entries = profile_preflight.validate(profile_dir, registry_path)
+        if role not in entries:
+            raise profile_preflight.ProfileValidationError(f"unknown role: {role}")
+        facts = profile_preflight.runtime_facts(runtime_facts_path)
+        collision_report = profile_preflight.detect_collisions(profile_dir, roots, destination)
+        preflight_result = profile_preflight.preflight(entries[role], facts, collision_report)
+        if preflight_result["decision"] == "human-gate":
+            render({"status": "human-gate", "profile_preflight": preflight_result})
+            return 2
+        evidence = preflight_result.get("route_profile_evidence")
+        if evidence is None and preflight_result.get("fallback_tier") == "same-capability-profile":
+            evidence = preflight_result.get("fallback_evidence")
+        def destination_matches(candidate: dict[str, Any]) -> bool:
+            if not destination.is_dir():
+                return False
+            for candidate_path in destination.glob("*.toml"):
+                try:
+                    candidate_name = profile_preflight.load_profile(
+                        candidate_path, require_filename_match=False
+                    )["name"]
+                except profile_preflight.ProfileValidationError:
+                    candidate_name = profile_preflight._external_name(candidate_path)
+                if (
+                    candidate_name == candidate.get("name")
+                    and profile_preflight.profile_digest(candidate_path)
+                    == candidate.get("profile_digest")
+                ):
+                    return True
+            return False
+        if isinstance(evidence, dict) and not destination_matches(evidence):
+            degraded_facts = copy.deepcopy(facts)
+            degraded_facts["available_models"] = []
+            degraded_facts["reasoning_efforts"] = {}
+            degraded_facts["compatible_profiles"] = {}
+            preflight_result = profile_preflight.preflight(
+                entries[role], degraded_facts, collision_report
+            )
+            evidence = None
+            facts = degraded_facts
+            if preflight_result["decision"] == "human-gate":
+                render({"status": "human-gate", "profile_preflight": preflight_result})
+                return 2
+        parent = facts.get("parent_default") if isinstance(facts.get("parent_default"), dict) else {}
+        sequential = facts.get("sequential") if isinstance(facts.get("sequential"), dict) else {}
+        runtime = {
+            "custom_agents_available": facts.get("custom_agent_surface") == "available",
+            "profiles": [evidence] if isinstance(evidence, dict) else [],
+            "parent_default_available": parent.get("available") is True,
+            "parent_capability_classes": parent.get("capability_classes", []),
+            "sequential_available": sequential.get("available", True) is True,
+            "current_session_capability_classes": sequential.get("capability_classes", []),
+        }
+        receipt = loop_core.evaluate_agent_route(
+            task_id=task.get("id"),
+            factors=task.get("factors"),
+            runtime=runtime,
+            assigned_scope=assignment.get("scope"),
+            ownership=assignment.get("ownership"),
+            source_revision=assignment.get("source_revision"),
+            authority_contract=assignment.get("authority_contract"),
+        )
+    except (
+        loop_core.LoopContractError,
+        profile_preflight.ProfileValidationError,
+        agent_routing.AgentRoutingContractError,
+    ) as exc:
+        render({"status": "rejected", "errors": [str(exc)]})
+        return 1
+    render({"status": "routed", "profile_preflight": preflight_result, "route_receipt": receipt})
+    return 0
+
+
+def _current_git_revision(
+    repo_root: pathlib.Path, route_source_revision: Any
+) -> dict[str, str]:
+    if repo_root.is_symlink() or not repo_root.is_dir():
+        raise agent_routing.AgentRoutingContractError(
+            "repo root must be a regular non-symlink directory"
+        )
+    root = repo_root.resolve()
+    if not isinstance(route_source_revision, dict):
+        raise agent_routing.AgentRoutingContractError(
+            "route source revision must be an object"
+        )
+    unsupported = sorted(set(route_source_revision) - {"branch", "head_sha"})
+    if unsupported:
+        raise agent_routing.AgentRoutingContractError(
+            "route source revision contains unsupported current-state keys: "
+            + ",".join(unsupported)
+        )
+    if set(route_source_revision) != {"branch", "head_sha"}:
+        raise agent_routing.AgentRoutingContractError(
+            "route source revision requires exact branch and immutable head_sha"
+        )
+    try:
+        actual_root = pathlib.Path(
+            subprocess.run(
+                ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        ).resolve()
+        head = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        branch = subprocess.run(
+            ["git", "-C", str(root), "branch", "--show-current"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise agent_routing.AgentRoutingContractError(
+            "could not read current Git source revision"
+        ) from exc
+    if actual_root != root:
+        raise agent_routing.AgentRoutingContractError(
+            "repo root must be the target Git repository root"
+        )
+    values = {"branch": branch, "head_sha": head}
+    return {key: values[key] for key in route_source_revision}
+
+
+def _contained_regular_file(
+    root: pathlib.Path, reference: Any, label: str
+) -> pathlib.Path:
+    if root.is_symlink() or not root.is_dir():
+        raise agent_routing.AgentRoutingContractError(
+            f"{label} root must be a regular non-symlink directory"
+        )
+    if not isinstance(reference, str) or not reference:
+        raise agent_routing.AgentRoutingContractError(
+            f"{label} path must be a non-empty string"
+        )
+    resolved_root = root.resolve()
+    candidate = pathlib.Path(reference)
+    if not candidate.is_absolute():
+        candidate = resolved_root / candidate
+    if candidate.is_symlink():
+        raise agent_routing.AgentRoutingContractError(
+            f"{label} must be a regular non-symlink file: {reference}"
+        )
+    resolved = candidate.resolve()
+    try:
+        resolved.relative_to(resolved_root)
+    except ValueError as exc:
+        raise agent_routing.AgentRoutingContractError(
+            f"{label} must be contained by its trusted root: {reference}"
+        ) from exc
+    if not resolved.is_file():
+        raise agent_routing.AgentRoutingContractError(
+            f"{label} must be a regular non-symlink file: {reference}"
+        )
+    return resolved
+
+
+def command_agent_integrate(
+    path: pathlib.Path,
+    *,
+    repo_root: pathlib.Path,
+    artifact_root: pathlib.Path,
+    verification_root: pathlib.Path,
+    assignment_fresh: bool,
+    profile_path: pathlib.Path | None,
+) -> int:
+    """Validate worker evidence and current-state integration disposition."""
+    document = loop_yaml.load_yaml(path)
+    payload = document.get("agent_integration") if isinstance(document, dict) else None
+    if payload is None:
+        payload = document
+    if not isinstance(payload, dict):
+        render({"status": "rejected", "errors": ["agent integration input must be an object"]})
+        return 1
+    allowed = {"contract_version", "route_receipt", "worker_receipt", "disposition"}
+    unknown = sorted(set(payload) - allowed)
+    if payload.get("contract_version") != 1 or unknown:
+        render({"status": "rejected", "errors": ["agent integration contract is invalid" if not unknown else f"agent integration contains unknown fields: {','.join(unknown)}"]})
+        return 1
+    try:
+        if assignment_fresh is not True:
+            raise agent_routing.AgentRoutingContractError(
+                "assignment freshness requires the trusted CLI flag"
+            )
+        route_receipt = payload.get("route_receipt")
+        if not isinstance(route_receipt, dict):
+            raise agent_routing.AgentRoutingContractError(
+                "route receipt must be an object"
+            )
+        worker_receipt = payload.get("worker_receipt")
+        if not isinstance(worker_receipt, dict):
+            raise agent_routing.AgentRoutingContractError(
+                "worker receipt must be an object"
+            )
+        artifacts = worker_receipt.get("output_artifacts")
+        artifact_digests = worker_receipt.get("artifact_digests")
+        if not isinstance(artifacts, list) or not isinstance(artifact_digests, dict):
+            raise agent_routing.AgentRoutingContractError(
+                "worker artifacts and digests must be present"
+            )
+        for reference in artifacts:
+            artifact_path = _contained_regular_file(
+                artifact_root, reference, "worker output artifact"
+            )
+            expected = artifact_digests.get(reference)
+            actual = hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+            if expected != actual:
+                raise agent_routing.AgentRoutingContractError(
+                    f"worker output artifact digest mismatch: {reference}"
+                )
+        disposition = payload.get("disposition")
+        if not isinstance(disposition, dict):
+            raise agent_routing.AgentRoutingContractError("disposition must be an object")
+        verification = disposition.get("verification")
+        verification_artifacts = (
+            verification.get("artifacts") if isinstance(verification, dict) else None
+        )
+        verification_digests = (
+            verification.get("artifact_digests")
+            if isinstance(verification, dict)
+            else None
+        )
+        if (
+            not isinstance(verification_artifacts, list)
+            or not verification_artifacts
+            or not isinstance(verification_digests, dict)
+            or set(verification_digests) != set(verification_artifacts)
+        ):
+            raise agent_routing.AgentRoutingContractError(
+                "main-agent verification artifacts and exact digests must be present"
+            )
+        for reference in verification_artifacts:
+            verification_path = _contained_regular_file(
+                verification_root, reference, "main-agent verification artifact"
+            )
+            actual = hashlib.sha256(verification_path.read_bytes()).hexdigest()
+            if verification_digests.get(reference) != actual:
+                raise agent_routing.AgentRoutingContractError(
+                    f"main-agent verification artifact digest mismatch: {reference}"
+                )
+        selected_profile_digest = route_receipt.get("selected_profile_digest")
+        if selected_profile_digest is None:
+            if profile_path is not None:
+                raise agent_routing.AgentRoutingContractError(
+                    "profile path must not be supplied for a non-custom route"
+                )
+            current_profile_digest = None
+        else:
+            if profile_path is None:
+                raise agent_routing.AgentRoutingContractError(
+                    "selected custom route requires --profile-path"
+                )
+            if profile_path.is_symlink() or not profile_path.is_file():
+                raise agent_routing.AgentRoutingContractError(
+                    "profile path must be a regular non-symlink file"
+                )
+            profile = profile_preflight.load_profile(
+                profile_path, require_filename_match=False
+            )
+            current_profile_digest = profile_preflight.profile_digest(profile_path)
+            evidence = route_receipt.get("config_evidence")
+            if (
+                not isinstance(evidence, dict)
+                or profile.get("name") != evidence.get("name")
+                or current_profile_digest != selected_profile_digest
+            ):
+                raise agent_routing.AgentRoutingContractError(
+                    "selected profile does not match the route receipt"
+                )
+        current_source_revision = _current_git_revision(
+            repo_root, route_receipt.get("source_revision")
+        )
+        worker_validation = agent_routing.validate_worker_receipt(
+            worker_receipt, route_receipt
+        )
+        disposition = {
+            **disposition,
+            "worker_validation_id": worker_validation["validation_receipt_id"],
+        }
+        integration = agent_routing.validate_main_agent_disposition(
+            disposition,
+            route_receipt,
+            worker_validation,
+            current_source_revision=current_source_revision,
+            current_profile_digest=current_profile_digest,
+            assignment_fresh=assignment_fresh,
+        )
+    except (
+        OSError,
+        profile_preflight.ProfileValidationError,
+        agent_routing.AgentRoutingContractError,
+    ) as exc:
+        render({"status": "rejected", "errors": [str(exc)]})
+        return 1
+    status = "accepted" if integration["integration_accepted"] else "rejected"
+    render({"status": status, "worker_validation": worker_validation, "integration": integration})
+    return 0 if status == "accepted" else 1
+
+
 def command_transition(
     path: pathlib.Path,
     task_id: str,
@@ -662,6 +1055,18 @@ def main(argv: list[str] | None = None) -> int:
         "--parent-security-report-fallback-authorized", action="store_true"
     )
     decide.add_argument("--protected-history-sha256")
+    agent_route = subparsers.add_parser("agent-route")
+    agent_route.add_argument("path", type=pathlib.Path)
+    agent_route.add_argument("--runtime-facts", required=True, type=pathlib.Path)
+    agent_integrate = subparsers.add_parser("agent-integrate")
+    agent_integrate.add_argument("path", type=pathlib.Path)
+    agent_integrate.add_argument("--repo-root", required=True, type=pathlib.Path)
+    agent_integrate.add_argument("--artifact-root", required=True, type=pathlib.Path)
+    agent_integrate.add_argument("--verification-root", required=True, type=pathlib.Path)
+    agent_integrate.add_argument(
+        "--assignment-fresh", required=True, action="store_true"
+    )
+    agent_integrate.add_argument("--profile-path", type=pathlib.Path)
     migrate = subparsers.add_parser("migrate-v1")
     migrate.add_argument("path", type=pathlib.Path)
     migrate.add_argument("--spec", type=pathlib.Path)
@@ -717,6 +1122,19 @@ def main(argv: list[str] | None = None) -> int:
                     args.parent_security_report_fallback_authorized
                 ),
                 protected_history_sha256=args.protected_history_sha256,
+            )
+        if args.command == "agent-route":
+            return command_agent_route(
+                args.path, runtime_facts_path=args.runtime_facts
+            )
+        if args.command == "agent-integrate":
+            return command_agent_integrate(
+                args.path,
+                repo_root=args.repo_root,
+                artifact_root=args.artifact_root,
+                verification_root=args.verification_root,
+                assignment_fresh=args.assignment_fresh,
+                profile_path=args.profile_path,
             )
         if args.command == "apply-event":
             return command_apply_event(

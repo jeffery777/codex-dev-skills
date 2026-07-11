@@ -20,6 +20,10 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   guards, deterministic workflow evals, native Goal mode, shared subagents, and
   thin scheduler/Desktop task adapters. The v0.x Desktop wrapper chain becomes
   legacy compatibility evidence rather than the active runtime path.
+- Loop Engineering V2a is tracked in issue #85. It adds deterministic
+  capability classification, replaceable custom-agent profiles, runtime
+  preflight/degradation, and route/worker/integration receipts while preserving
+  the V1 authority model.
 - Milestone continuation adds a shared upper-layer workflow for checking bounded milestone task state across repeated invocations, selecting the next ready task, routing through existing delivery and continuation workflows, and keeping runtime scheduling outside the skill.
 - Keep any later Desktop runtime wrapper slices behind separate review and human approval, especially before adding remediation, broader runtime thread-tool invocation, platform writes, or any other state-changing path.
 
@@ -39,6 +43,9 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 - Global profile synchronization follows the accepted Loop Engineering V1
   authority, goal, subagent, and human-gate contract. The separate global
   profile repository should not be edited in issue #81.
+- Loop Engineering V2b may define an optional external-memory abstraction after
+  V2a adoption evidence exists. V2c may evaluate GitNexus or other memory
+  backends behind that contract; neither may replace repository completion truth.
 
 ## Non-Goals
 

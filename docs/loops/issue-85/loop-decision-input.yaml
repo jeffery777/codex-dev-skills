@@ -1,0 +1,36 @@
+id: "issue-85-bootstrap"
+input:
+  request:
+    kind: "delivery"
+    risk: "high"
+    requires_external_write: false
+    scheduled: false
+    desktop_thread: false
+    goal_required: true
+  objective:
+    clear: true
+    complete: false
+  state:
+    source_conflict: false
+    verification: "not_run"
+    review: "required"
+    human_gate: "not_required"
+    task_status: "in_progress"
+    protected_history_sha256: "none"
+    goal_status: "active"
+    security_scan:
+      status: "not_started"
+      phase: "none"
+      worker_failure_kind: "none"
+      reporting_retry_count: 0
+  runtime:
+    surface: "desktop"
+    capabilities:
+      goal: true
+      subagents: true
+      scheduler: false
+      threads: false
+  work:
+    parallelizable: true
+    ownership_disjoint: true
+expect: {}

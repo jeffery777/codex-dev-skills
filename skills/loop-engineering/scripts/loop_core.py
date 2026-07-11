@@ -6,7 +6,9 @@ from __future__ import annotations
 import copy
 import datetime as dt
 import hashlib
+import importlib.util
 import json
+import pathlib
 from typing import Any
 
 
@@ -89,6 +91,20 @@ V1_MIGRATION_STATUSES = {
 
 class LoopContractError(ValueError):
     """Raised when a loop transition or event violates the shared contract."""
+
+
+def evaluate_agent_route(**kwargs: Any) -> dict[str, Any]:
+    """Thin V1 integration boundary for the optional V2a routing module."""
+    path = pathlib.Path(__file__).with_name("agent_routing.py")
+    spec = importlib.util.spec_from_file_location("loop_agent_routing", path)
+    if spec is None or spec.loader is None:
+        raise LoopContractError("agent routing module is unavailable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    try:
+        return module.build_route_receipt(**kwargs)
+    except module.AgentRoutingContractError as exc:
+        raise LoopContractError(str(exc)) from exc
 
 
 def _datetime(value: Any, label: str) -> dt.datetime:

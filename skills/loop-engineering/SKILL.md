@@ -111,6 +111,61 @@ from a task-transition payload assertion.
 
 ## Routing
 
+When the decision input contains V2a task characteristics and runtime profile
+evidence, use the production capability classifier and route receipt. Classify
+ambiguity, reasoning depth, context volume, high-risk domains, write blast
+radius, latency/cost sensitivity, independence, and verification burden; do not
+select a capability from the task name alone. Model/profile routing never
+changes permissions, scope, human gates, or completion criteria.
+
+Custom-agent `sandbox_mode` is a technical runtime constraint distinct from
+workflow authorization. Preflight must compare it with current-session
+`parent_sandbox_mode` evidence and reject or degrade any profile that would
+widen the parent sandbox. A profile never authorizes writes merely because its
+sandbox technically permits them.
+
+Preflight role/profile availability before delegation. Use a same-class profile,
+then a safe parent/default mapping, then sequential current-session execution.
+Stop at a human gate when a security or high-risk class cannot safely degrade.
+Record worker and main-agent integration receipts; worker self-report remains
+coordination evidence.
+
+Materialize the `agent_route` section from
+`templates/orchestration/loop-decision-input.template.yaml`. Keep runtime facts
+out of the repository document: obtain them from the active public runtime and
+pass that current-session evidence separately. The registry path must resolve
+to the canonical registry shipped beside the installed skill. Run:
+
+```bash
+python3 <skill-dir>/scripts/loopctl.py agent-route <decision-input.yaml> \
+  --runtime-facts <current-runtime-facts.json>
+```
+
+Use the emitted content-bound route receipt for assignment. Before accepting a
+worker result, validate its artifact digests and compare the assignment to the
+current source revision, selected profile digest, and ownership state.
+
+Materialize `templates/orchestration/agent-routing-integration.template.yaml`
+and run:
+
+```bash
+python3 <skill-dir>/scripts/loopctl.py agent-integrate <receipt.yaml> \
+  --repo-root <current-git-root> \
+  --artifact-root <worker-output-root> \
+  --verification-root <main-agent-verification-root> \
+  --assignment-fresh \
+  [--profile-path <selected-custom-profile.toml>]
+```
+
+The command independently reads exact Git branch and HEAD, regular non-symlink
+artifact and verification files with their declared SHA-256 digests, and the
+selected custom profile. Omit `--profile-path`
+only for a route that selected no custom profile. Do not embed those current
+facts in the receipt document.
+Only an `accepted` result is integration evidence, and even that result keeps
+`completion_proven: false` until repository verification/review/acceptance proves
+the objective's completion criteria.
+
 The production decision function is the active routing authority. Before using
 the table below, materialize the current decision input from
 `templates/orchestration/loop-decision-input.template.yaml` and run:

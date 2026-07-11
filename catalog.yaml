@@ -32,6 +32,7 @@ groups:
       - source: policies/runtime-compatibility-policy.md
       - source: policies/security-review-escalation-policy.md
       - source: templates/orchestration/agent-task-brief.template.md
+      - source: templates/orchestration/agent-routing-integration.template.yaml
       - source: templates/orchestration/closure-triage-overlay.template.yaml
       - source: templates/orchestration/current-task-summary.template.md
       - source: templates/orchestration/implementation-plan.template.md
@@ -95,3 +96,13 @@ groups:
       - source: skills/desktop-pr-merge-gate
     templates:
       - source: workflows/desktop-delivery-workflow.md
+
+  codex-agent-profiles:
+    description: Opt-in Loop Engineering V2a custom-agent runtime profiles.
+    runtime: shared
+    depends_on: [codex-delivery-workflow]
+    agent_profiles:
+      - source: agent-profiles/loop_v2a_fast_explorer.toml
+      - source: agent-profiles/loop_v2a_balanced_worker.toml
+      - source: agent-profiles/loop_v2a_deep_reviewer.toml
+      - source: agent-profiles/loop_v2a_security_reviewer.toml

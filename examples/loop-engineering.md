@@ -53,6 +53,39 @@ The ledger baseline works in Codex CLI and Codex Desktop because it is ordinary
 repository state. Shared subagents and Desktop automation/task/thread/worktree
 adapters may use it, but runtime state does not replace repository authority.
 
+## Heterogeneous Subagent Routing
+
+```text
+Use loop-engineering for this bounded objective.
+
+Classify ambiguity, reasoning depth, context volume, security/data/migration/public-contract
+risk, write blast radius, latency/cost sensitivity, independence, and verification burden.
+Select an installed custom-agent role only after preflight. Record the route receipt,
+worker receipt, and main-agent integration disposition. If the requested profile is
+unavailable, try the same capability class, then a safe parent/default model, then run
+sequentially. Stop at a human gate rather than downgrading high-risk work unsafely.
+Do not let the role or model expand permissions, scope, external-write authority, gates,
+or completion criteria.
+```
+
+Materialize the installed decision and integration templates, then keep live
+runtime and filesystem evidence out of those documents:
+
+```bash
+python3 <skill-dir>/scripts/loopctl.py agent-route <decision-input.yaml> \
+  --runtime-facts /path/to/current-runtime-facts.json
+python3 <skill-dir>/scripts/loopctl.py agent-integrate <receipt.yaml> \
+  --repo-root /path/to/current/repository \
+  --artifact-root /path/to/worker-output \
+  --verification-root /path/to/main-agent-verification \
+  --assignment-fresh \
+  [--profile-path /path/to/selected-custom-profile.toml]
+```
+
+The optional profile flag is required when the route selected a custom profile
+and omitted for parent/default or sequential fallback. Both commands fail
+closed on stale or self-attested evidence.
+
 ## Desktop Handoff Boundary
 
 ```text
