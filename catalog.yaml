@@ -2,7 +2,7 @@
 # Codex-only public catalog. Paths are repository-relative source paths.
 
 name: codex-dev-skills
-version: "0.5.0"
+version: "0.6.0"
 platforms:
   - codex
   - codex-desktop
