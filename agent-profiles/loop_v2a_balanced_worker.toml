@@ -1,6 +1,6 @@
 name = "loop_v2a_balanced_worker"
 description = "Balanced implementation worker for a bounded, disjoint file packet with explicit verification."
-model = "gpt-5.6"
+model = "gpt-5.6-sol"
 model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 developer_instructions = """

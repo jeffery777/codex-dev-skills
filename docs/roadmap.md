@@ -23,7 +23,9 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 - Loop Engineering V2a shipped in v0.6.0 from issue #85. It adds deterministic
   capability classification, replaceable custom-agent profiles, runtime
   preflight/degradation, and route/worker/integration receipts while preserving
-  the V1 authority model.
+  the V1 authority model. The v0.6.1 compatibility patch from issue #89 aligns
+  the deep-capability profile templates with the current Desktop-reported
+  `gpt-5.6-sol` model ID while retaining exact-ID preflight and safe fallback.
 - Milestone continuation adds a shared upper-layer workflow for checking bounded milestone task state across repeated invocations, selecting the next ready task, routing through existing delivery and continuation workflows, and keeping runtime scheduling outside the skill.
 - Keep any later Desktop runtime wrapper slices behind separate review and human approval, especially before adding remediation, broader runtime thread-tool invocation, platform writes, or any other state-changing path.
 

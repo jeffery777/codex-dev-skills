@@ -243,8 +243,8 @@ class AgentProfilePreflightTests(unittest.TestCase):
         role = "loop_v2a_balanced_worker"
         base = {
             "custom_agent_surface": "available",
-            "available_models": ["gpt-5.6"],
-            "reasoning_efforts": {"gpt-5.6": ["medium"]},
+            "available_models": ["gpt-5.6-sol"],
+            "reasoning_efforts": {"gpt-5.6-sol": ["medium"]},
             "parent_default": {"available": True},
         }
         unknown = self.check(role, base)
@@ -255,6 +255,24 @@ class AgentProfilePreflightTests(unittest.TestCase):
         ready = self.check(role, {**base, "parent_sandbox_mode": "workspace-write"})
         self.assertEqual("ready", ready["decision"])
         self.assertTrue(ready["route_profile_evidence"]["sandbox_non_widening"])
+
+    def test_runtime_model_id_must_match_exactly(self) -> None:
+        result = self.check(
+            "loop_v2a_balanced_worker",
+            {
+                "custom_agent_surface": "available",
+                "parent_sandbox_mode": "workspace-write",
+                "available_models": ["gpt-5.6"],
+                "reasoning_efforts": {"gpt-5.6": ["medium"]},
+                "parent_default": {
+                    "available": True,
+                    "capability_classes": ["balanced-worker"],
+                },
+            },
+        )
+        self.assertEqual("unavailable", result["state"])
+        self.assertEqual("fallback-safe", result["decision"])
+        self.assertEqual("parent-default", result["fallback_tier"])
 
     def test_unknown_mapping_uses_parent_without_claiming_ready(self) -> None:
         result = self.check(
