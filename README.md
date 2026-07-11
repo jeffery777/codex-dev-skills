@@ -46,6 +46,177 @@ Install CLI-compatible loop, implementation, and delivery workflows when you wan
 ./install.sh install codex-delivery-workflow
 ```
 
+Loop Engineering V2a custom-agent profiles are a separate opt-in because they
+write local runtime configuration. Inspect the inventory and mapping metadata,
+then install only when wanted:
+
+```bash
+./install.sh manifest | rg codex-agent-profiles
+sed -n '1,240p' skills/loop-engineering/references/agent-profile-registry.json
+python3 scripts/validate-agent-profiles.py
+```
+
+The profile group is excluded from `--all`. Set
+`CODEX_CUSTOM_AGENTS_DIR=/trusted/project/.codex/agents` together with
+`CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES` for explicit trusted-project
+adoption. Shared skills do not choose a permanently current model; runtime
+profiles are replaceable and must be preflighted.
+
+Create a runtime-facts JSON file from the active public runtime/model surface;
+do not inspect Desktop databases, sessions, logs, auth, caches, or private state.
+Omit unknown model fields instead of guessing:
+
+```json
+{
+  "custom_agent_surface": "available",
+  "parent_sandbox_mode": "workspace-write",
+  "available_models": ["replace-with-a-model-reported-by-this-runtime"],
+  "reasoning_efforts": {
+    "replace-with-a-model-reported-by-this-runtime": ["medium"]
+  },
+  "compatible_profiles": {},
+  "parent_default": {
+    "available": true,
+    "capability_classes": ["balanced-worker"]
+  },
+  "sequential": {
+    "available": true,
+    "capability_classes": ["balanced-worker"]
+  }
+}
+```
+
+`parent_sandbox_mode` is current-session evidence from the active public
+runtime/configuration. A `workspace-write` worker profile is usable only when
+the parent sandbox is at least `workspace-write`; otherwise routing falls back
+without activating that profile. Read-only profiles cannot widen the supported
+profile sandbox and may remain usable when the parent value is unknown.
+
+Preflight each role before installation. Scan both the destination root and the
+other applicable configuration layer so an alias filename with the same agent
+`name` is still detected. For user-level adoption from a trusted project:
+
+```bash
+python3 scripts/validate-agent-profiles.py preflight \
+  --role loop_v2a_balanced_worker \
+  --runtime-facts /path/to/runtime-facts.json \
+  --destination-root ~/.codex/agents \
+  --agent-root .codex/agents
+./install.sh install codex-agent-profiles
+```
+
+For project-scoped adoption, scan the project destination and the user layer,
+then install with the same explicit target:
+
+```bash
+python3 scripts/validate-agent-profiles.py preflight \
+  --role loop_v2a_balanced_worker \
+  --runtime-facts /path/to/runtime-facts.json \
+  --destination-root /trusted/project/.codex/agents \
+  --agent-root ~/.codex/agents
+CODEX_CUSTOM_AGENTS_DIR=/trusted/project/.codex/agents \
+CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES \
+./install.sh install codex-agent-profiles
+```
+
+The collision preflight checks TOML `name` identities across those roots. For
+install and update, the installer first validates the repository profile
+sources against the canonical installed-skill registry, then preflights all
+four profile destinations before changing any dependency skill, template, or
+profile. Dependency installation retains the existing installer sync behavior;
+the all-profile preflight prevents a profile collision from causing a partial
+expanded-group update. It also protects profile paths from overwrite, symlink
+traversal, and partial group mutation. After install, validate the
+deployed directory and identify it explicitly
+so byte-identical expected instances are distinguished from modified or
+cross-root collisions:
+
+```bash
+python3 ~/.codex/skills/loop-engineering/scripts/profile_preflight.py \
+  --profile-dir ~/.codex/agents \
+  --destination-root ~/.codex/agents \
+  --agent-root .codex/agents
+python3 ~/.codex/skills/loop-engineering/scripts/profile_preflight.py preflight \
+  --profile-dir ~/.codex/agents \
+  --destination-root ~/.codex/agents \
+  --agent-root .codex/agents \
+  --role loop_v2a_balanced_worker \
+  --runtime-facts /path/to/runtime-facts.json
+```
+
+When `CODEX_DEV_SKILLS_TARGET=agents` selected the alternative skill root,
+replace `~/.codex/skills` above with `~/.agents/skills`. A non-empty
+`compatible_profiles` runtime fact must contain structured validated evidence
+(`name`, absolute regular TOML path, capability class,
+config/model/reasoning booleans, expected sandbox,
+allowed workflow scope, and profile digest),
+not a bare profile name. Preflight exits `0` for `ready` or `fallback-safe`, `2` for a required
+`human-gate`, and `1` for invalid input. Its JSON distinguishes `ready`,
+`unknown`, `unavailable`, `sandbox-constraint-unknown-or-widening`, and
+`custom-surface-unavailable`; a safe fallback is
+not a claim that the requested model/profile is available.
+
+The production `loopctl.py agent-route` command reruns this preflight and only
+selects a custom-agent profile when the matching TOML is actually present in
+the declared destination with the expected digest. Pre-install `ready` means
+the source is adoptable; it does not claim the role is already installed. The
+route document must point to the canonical registry shipped with the installed
+skill. Runtime/model facts are separate current-session evidence and are
+required on the command line:
+
+```bash
+python3 <skill-dir>/scripts/loopctl.py agent-route <decision-input.yaml> \
+  --runtime-facts /path/to/current-runtime-facts.json
+```
+
+Integrate a worker receipt only after reading the current Git checkout, worker
+artifacts, main-agent verification artifacts, and selected profile from their
+trusted roots. The assignment freshness flag is a current-session assertion,
+not repository data:
+
+```bash
+python3 <skill-dir>/scripts/loopctl.py agent-integrate <receipt.yaml> \
+  --repo-root /path/to/current/repository \
+  --artifact-root /path/to/worker-output \
+  --verification-root /path/to/main-agent-verification \
+  --assignment-fresh \
+  --profile-path /path/to/selected-custom-profile.toml
+```
+
+Omit `--profile-path` only when the route receipt records a parent/default or
+sequential fallback rather than a selected custom profile. Integration rejects
+same-commit branch switches, stale Git revisions, missing or symlinked files,
+worker and verification digest mismatches, alternate profiles, and
+self-attested current-state fields in the receipt document.
+
+Rollback user-level adoption only after reviewing local differences:
+
+```bash
+./install.sh diff codex-agent-profiles
+./install.sh uninstall codex-agent-profiles --yes
+```
+
+For project-scoped rollback, use the same target variables used for install:
+
+```bash
+CODEX_CUSTOM_AGENTS_DIR=/trusted/project/.codex/agents \
+CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES \
+./install.sh diff codex-agent-profiles
+CODEX_CUSTOM_AGENTS_DIR=/trusted/project/.codex/agents \
+CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES \
+./install.sh uninstall codex-agent-profiles --yes
+```
+
+Uninstall refuses modified profiles and removes nothing from the group until
+all installed profile files pass its pre-delete check. Preserve and reconcile
+local edits before retrying. A forced update writes each replaced profile to
+the adjacent `<profile>.toml.bak` first and refuses the whole profile update
+before mutation if a required backup already exists. To restore, stop using the
+new profile, review the `.bak`, move it back to the original `.toml` path, and
+rerun profile validation. Remove backups only after confirming the intended
+configuration. Removing the profiles leaves V1 shared/sequential semantics
+available.
+
 `codex-review-workflow` and `codex-delivery-workflow` install their shared review gate dependencies automatically. Install `shared-review-gates` directly only when you want the formal gate adapters and orchestration templates without the review primitives.
 
 Use the installed skills in Codex by name, for example:

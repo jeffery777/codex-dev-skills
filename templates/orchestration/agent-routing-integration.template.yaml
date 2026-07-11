@@ -1,0 +1,31 @@
+agent_integration:
+  contract_version: 1
+  route_receipt: {}
+  worker_receipt:
+    route_receipt_id: "<route-receipt-id>"
+    task_id: "<task-id>"
+    assigned_scope_sha256: "<scope-digest>"
+    source_revision_sha256: "<source-digest>"
+    status: "<complete | partial | failed>"
+    output_artifacts: ["<artifact-path>"]
+    artifact_digests:
+      "<artifact-path>": "<sha256>"
+    conflicts: []
+  disposition:
+    route_receipt_id: "<route-receipt-id>"
+    disposition: "<accepted | rejected | deferred | needs-verification>"
+    verification:
+      status: "passed"
+      artifacts: ["<main-agent-verification-artifact>"]
+      artifact_digests:
+        "<main-agent-verification-artifact>": "<sha256>"
+
+# Current repository branch/HEAD, artifact/verification bytes and digests,
+# assignment, and selected-profile
+# evidence must not be embedded here. Supply it out of band:
+# loopctl.py agent-integrate <this-file>
+#   --repo-root <current-git-root>
+#   --artifact-root <worker-output-root>
+#   --verification-root <main-agent-verification-root>
+#   --assignment-fresh
+#   [--profile-path <selected-custom-profile.toml>]

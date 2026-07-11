@@ -6,11 +6,14 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/codex-dev-skills"
 STATE_FILE="$STATE_DIR/installed.jsonl"
+PROFILE_STATE_FILE=""
 DEFAULT_CODEX_LEGACY_SKILLS_DIR="$HOME/.codex/skills"
 DEFAULT_CODEX_AGENTS_SKILLS_DIR="$HOME/.agents/skills"
 DEFAULT_CODEX_TEMPLATES_DIR="$HOME/.codex/templates"
+DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-legacy}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
+CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
 VERSION="0.5.0"
 
 case "$CODEX_DEV_SKILLS_TARGET" in
@@ -44,15 +47,20 @@ Groups:
   codex-review-workflow
   codex-delivery-workflow
   desktop-delivery-workflow
+  codex-agent-profiles (explicit opt-in; excluded from --all)
 
 Targets:
   Codex skills:    ~/.codex/skills/<skill>/ by default
                    ~/.agents/skills/<skill>/ when CODEX_DEV_SKILLS_TARGET=agents
   Codex templates: ~/.codex/templates/...
+  Custom agents:   ~/.codex/agents/<profile>.toml by default
+                   Set CODEX_CUSTOM_AGENTS_DIR=<trusted-project>/.codex/agents with
+                   CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES for project adoption.
 
 This installer never overwrites ~/.codex/AGENTS.md.
-Custom CODEX_SKILLS_DIR / CODEX_TEMPLATES_DIR values require CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES.
+Custom CODEX_SKILLS_DIR / CODEX_TEMPLATES_DIR / CODEX_CUSTOM_AGENTS_DIR values require CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES.
 The default target remains legacy to avoid changing existing installations.
+The codex-agent-profiles group is never installed by --all or codex-dev-skills.
 USAGE
 }
 
@@ -89,6 +97,7 @@ reject_symlink_components() {
     current="$current/$component"
     [[ -L "$current" ]] && die "Refusing symlink target component: $current"
   done
+  return 0
 }
 
 canonicalize_root() {
@@ -120,6 +129,7 @@ reject_custom_root() {
   case "$label" in
     CODEX_SKILLS_DIR) expected_base="skills" ;;
     CODEX_TEMPLATES_DIR) expected_base="templates" ;;
+    CODEX_CUSTOM_AGENTS_DIR) expected_base="agents" ;;
     *) expected_base="" ;;
   esac
   case "$abs" in
@@ -145,6 +155,11 @@ init_targets() {
   CODEX_TEMPLATES_DIR="$(canonicalize_root "$CODEX_TEMPLATES_DIR" "$DEFAULT_CODEX_TEMPLATES_DIR" "CODEX_TEMPLATES_DIR")" || return 1
 }
 
+init_agent_target() {
+  CODEX_CUSTOM_AGENTS_DIR="$(canonicalize_root "$CODEX_CUSTOM_AGENTS_DIR" "$DEFAULT_CODEX_CUSTOM_AGENTS_DIR" "CODEX_CUSTOM_AGENTS_DIR")" || return 1
+  PROFILE_STATE_FILE="$STATE_DIR/agent-profile-$(python3 -c 'import hashlib, sys; print(hashlib.sha256(sys.argv[1].encode()).hexdigest())' "$CODEX_CUSTOM_AGENTS_DIR").tsv"
+}
+
 safe_path_under_root() {
   local root="$1" rel="$2" path
   reject_suspicious_relpath "$rel"
@@ -165,12 +180,21 @@ all_groups() {
     shared-review-gates \
     codex-review-workflow \
     codex-delivery-workflow \
+    desktop-delivery-workflow \
+    codex-agent-profiles
+}
+
+default_groups() {
+  printf '%s\n' \
+    shared-review-gates \
+    codex-review-workflow \
+    codex-delivery-workflow \
     desktop-delivery-workflow
 }
 
 group_exists() {
   case "$1" in
-    shared-review-gates|codex-review-workflow|codex-delivery-workflow|desktop-delivery-workflow) return 0 ;;
+    shared-review-gates|codex-review-workflow|codex-delivery-workflow|desktop-delivery-workflow|codex-agent-profiles) return 0 ;;
     codex-dev-skills) return 0 ;;
     *) return 1 ;;
   esac
@@ -182,6 +206,7 @@ group_description() {
     codex-review-workflow) echo "Routine and deep code, docs, and merge review workflows." ;;
     codex-delivery-workflow) echo "Loop engineering, planning, bounded implementation, docs update, and delegated delivery workflows." ;;
     desktop-delivery-workflow) echo "Thin Codex Desktop task, thread, worktree, scheduling, and integration adapters." ;;
+    codex-agent-profiles) echo "Opt-in Loop Engineering V2a custom-agent runtime profiles." ;;
     codex-dev-skills) echo "Alias for all groups." ;;
   esac
 }
@@ -192,7 +217,8 @@ group_deps() {
     codex-review-workflow) echo "shared-review-gates" ;;
     codex-delivery-workflow) echo "shared-review-gates" ;;
     desktop-delivery-workflow) echo "shared-review-gates codex-delivery-workflow" ;;
-    codex-dev-skills) all_groups ;;
+    codex-agent-profiles) echo "shared-review-gates codex-delivery-workflow" ;;
+    codex-dev-skills) default_groups ;;
   esac
 }
 
@@ -206,6 +232,18 @@ group_skills() {
       printf '%s\n' loop-engineering planning milestone-continuation project-delivery project-orchestrator implementation-slice docs-update ;;
     desktop-delivery-workflow)
       printf '%s\n' desktop-project-delivery desktop-thread-delegation desktop-spec-plan-gate desktop-implementation-gate desktop-pr-merge-gate ;;
+    codex-agent-profiles) : ;;
+  esac
+}
+
+group_agent_profiles() {
+  case "$1" in
+    codex-agent-profiles)
+      printf '%s\n' \
+        agent-profiles/loop_v2a_fast_explorer.toml \
+        agent-profiles/loop_v2a_balanced_worker.toml \
+        agent-profiles/loop_v2a_deep_reviewer.toml \
+        agent-profiles/loop_v2a_security_reviewer.toml ;;
   esac
 }
 
@@ -225,6 +263,7 @@ group_templates() {
         policies/runtime-compatibility-policy.md \
         policies/security-review-escalation-policy.md \
         templates/orchestration/agent-task-brief.template.md \
+        templates/orchestration/agent-routing-integration.template.yaml \
         templates/orchestration/closure-triage-overlay.template.yaml \
         templates/orchestration/current-task-summary.template.md \
         templates/orchestration/implementation-plan.template.md \
@@ -275,7 +314,7 @@ ensure_group() {
 expand_groups() {
   local requested="$1" seen="" result="" group dep
   if [[ "$requested" == "--all" || "$requested" == "codex-dev-skills" ]]; then
-    requested="$(all_groups | tr '\n' ' ')"
+    requested="$(default_groups | tr '\n' ' ')"
   fi
   for group in $requested; do
     ensure_group "$group"
@@ -321,6 +360,68 @@ install_template() {
   mkdir -p "$(dirname "$dst")"
   cp "$src" "$dst"
   ok "template $target_rel"
+}
+
+profile_target() {
+  basename "$1"
+}
+
+install_agent_profile() {
+  local rel="$1" src dst target_rel
+  target_rel="$(profile_target "$rel")"
+  src="$ROOT_DIR/$rel"
+  dst="$(safe_path_under_root "$CODEX_CUSTOM_AGENTS_DIR" "$target_rel")" || return 1
+  [[ -f "$src" && ! -L "$src" ]] || die "Missing or unsafe agent profile source: $rel"
+  sync_file "$src" "$dst" "agent profile $target_rel" 0
+}
+
+file_sha256() {
+  python3 -c 'import hashlib, pathlib, sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' "$1"
+}
+
+validate_agent_profile_sources() {
+  local validator registry
+  validator="$ROOT_DIR/skills/loop-engineering/scripts/profile_preflight.py"
+  registry="$ROOT_DIR/skills/loop-engineering/references/agent-profile-registry.json"
+  [[ -f "$validator" && ! -L "$validator" ]] || die "Missing or unsafe agent profile validator: $validator"
+  [[ -f "$registry" && ! -L "$registry" ]] || die "Missing or unsafe agent profile registry: $registry"
+  PYTHONDONTWRITEBYTECODE=1 python3 "$validator" \
+    --profile-dir "$ROOT_DIR/agent-profiles" \
+    --registry "$registry" >/dev/null
+}
+
+preflight_agent_profile_sync() {
+  local action="$1" force="$2" item target_rel src dst
+  for item in $(group_agent_profiles codex-agent-profiles); do
+    target_rel="$(profile_target "$item")"
+    src="$ROOT_DIR/$item"
+    dst="$(safe_path_under_root "$CODEX_CUSTOM_AGENTS_DIR" "$target_rel")" || return 1
+    [[ -f "$src" && ! -L "$src" ]] || die "Missing or unsafe agent profile source: $item"
+    [[ ! -L "$dst" ]] || die "Refusing symlink agent profile target: $dst"
+    if [[ -e "$dst" ]] && ! diff -q "$src" "$dst" >/dev/null 2>&1; then
+      if [[ "$action" == "install" ]]; then
+        die "Refusing to overwrite existing agent profile: $dst"
+      fi
+      if [[ "$force" -ne 1 ]]; then
+        warn "modified agent profile $target_rel; use update --force after reviewing diff"
+        diff -u "$src" "$dst" 2>/dev/null | sed -n '1,80p' || true
+        return 1
+      fi
+      safe_backup_path "$dst" >/dev/null
+    fi
+  done
+}
+
+record_agent_profile_state() {
+  local item target_rel temp
+  mkdir -p "$STATE_DIR"
+  temp="$PROFILE_STATE_FILE.tmp.$$"
+  : > "$temp"
+  for item in $(group_agent_profiles codex-agent-profiles); do
+    target_rel="$(profile_target "$item")"
+    printf '%s\t%s\n' "$target_rel" "$(file_sha256 "$CODEX_CUSTOM_AGENTS_DIR/$target_rel")" >> "$temp"
+  done
+  mv "$temp" "$PROFILE_STATE_FILE"
 }
 
 report_loop_cli_dependency() {
@@ -402,6 +503,15 @@ update_template() {
   sync_file "$src" "$dst" "template $target_rel" "$force"
 }
 
+update_agent_profile() {
+  local rel="$1" force="$2" src dst target_rel
+  target_rel="$(profile_target "$rel")"
+  src="$ROOT_DIR/$rel"
+  dst="$(safe_path_under_root "$CODEX_CUSTOM_AGENTS_DIR" "$target_rel")" || return 1
+  [[ -f "$src" && ! -L "$src" ]] || die "Missing or unsafe agent profile source: $rel"
+  sync_file "$src" "$dst" "agent profile $target_rel" "$force"
+}
+
 install_group() {
   local group="$1" item
   info "Installing $group"
@@ -412,6 +522,12 @@ install_group() {
   for item in $(group_templates "$group"); do
     install_template "$item"
   done
+  for item in $(group_agent_profiles "$group"); do
+    install_agent_profile "$item"
+  done
+  if [[ "$group" == "codex-agent-profiles" ]]; then
+    record_agent_profile_state
+  fi
   [[ "$group" != "codex-delivery-workflow" ]] || report_loop_cli_dependency
   record_state "install" "$group"
 }
@@ -426,6 +542,12 @@ update_group() {
   for item in $(group_templates "$group"); do
     update_template "$item" "$force" || return 1
   done
+  for item in $(group_agent_profiles "$group"); do
+    update_agent_profile "$item" "$force" || return 1
+  done
+  if [[ "$group" == "codex-agent-profiles" ]]; then
+    record_agent_profile_state
+  fi
   [[ "$group" != "codex-delivery-workflow" ]] || report_loop_cli_dependency
   record_state "update" "$group"
 }
@@ -453,21 +575,42 @@ diff_template() {
   diff -q "$src" "$dst" || return 1
 }
 
+diff_agent_profile() {
+  local rel="$1" src dst target_rel
+  target_rel="$(profile_target "$rel")"
+  src="$ROOT_DIR/$rel"
+  dst="$(safe_path_under_root "$CODEX_CUSTOM_AGENTS_DIR" "$target_rel")" || return 1
+  if [[ ! -f "$dst" ]]; then
+    warn "missing installed agent profile: $target_rel"
+    return 1
+  fi
+  diff -q "$src" "$dst" || return 1
+}
+
 diff_group() {
   local group="$1" item had_diff=0
   info "Diff $group"
+  if [[ "$group" == "codex-agent-profiles" ]]; then
+    init_agent_target
+  fi
   for item in $(group_skills "$group"); do
     diff_skill "$item" || had_diff=1
   done
   for item in $(group_templates "$group"); do
     diff_template "$item" || had_diff=1
   done
+  for item in $(group_agent_profiles "$group"); do
+    diff_agent_profile "$item" || had_diff=1
+  done
   return "$had_diff"
 }
 
 uninstall_group() {
-  local group="$1" item target target_rel
+  local group="$1" item target target_rel expected
   info "Uninstalling $group"
+  if [[ "$group" == "codex-agent-profiles" ]]; then
+    init_agent_target
+  fi
   for item in $(group_skills "$group"); do
     target="$(safe_path_under_root "$CODEX_SKILLS_DIR" "$item")" || return 1
     rm -rf "$target"
@@ -479,6 +622,36 @@ uninstall_group() {
     rm -f "$target"
     ok "removed template $target_rel"
   done
+  if [[ "$group" == "codex-agent-profiles" ]]; then
+    for item in $(group_agent_profiles "$group"); do
+      target_rel="$(profile_target "$item")"
+      target="$(safe_path_under_root "$CODEX_CUSTOM_AGENTS_DIR" "$target_rel")" || return 1
+      if [[ -e "$target" ]]; then
+        expected=""
+        if [[ -f "$PROFILE_STATE_FILE" ]]; then
+          expected="$(awk -F '\t' -v name="$target_rel" '$1 == name { print $2; exit }' "$PROFILE_STATE_FILE")"
+        fi
+        if [[ -n "$expected" ]]; then
+          [[ "$(file_sha256 "$target")" == "$expected" ]] || die "Refusing to remove modified agent profile: $target"
+        elif ! diff -q "$ROOT_DIR/$item" "$target" >/dev/null 2>&1; then
+          die "Refusing to remove agent profile without matching ownership evidence: $target"
+        fi
+      fi
+    done
+  fi
+  for item in $(group_agent_profiles "$group"); do
+    target_rel="$(profile_target "$item")"
+    target="$(safe_path_under_root "$CODEX_CUSTOM_AGENTS_DIR" "$target_rel")" || return 1
+    if [[ ! -e "$target" ]]; then
+      warn "missing installed agent profile: $target_rel"
+    else
+      rm -f "$target"
+      ok "removed agent profile $target_rel"
+    fi
+  done
+  if [[ "$group" == "codex-agent-profiles" ]]; then
+    rm -f "$PROFILE_STATE_FILE"
+  fi
   record_state "uninstall" "$group"
 }
 
@@ -496,6 +669,7 @@ cmd_list() {
 cmd_status() {
   printf 'Codex skills target: %s\n' "$CODEX_SKILLS_DIR"
   printf 'Codex templates target: %s\n' "$CODEX_TEMPLATES_DIR"
+  printf 'Custom agents target: %s\n' "$CODEX_CUSTOM_AGENTS_DIR"
   printf 'State file: %s\n\n' "$STATE_FILE"
   if [[ -f "$STATE_FILE" ]]; then
     tail -50 "$STATE_FILE"
@@ -513,12 +687,23 @@ cmd_manifest() {
     for item in $(group_templates "$group"); do
       printf '%s source: %s\n' "$group" "$item"
     done
+    for item in $(group_agent_profiles "$group"); do
+      printf '%s source: %s\n' "$group" "$item"
+    done
   done
 }
 
 run_for_groups() {
-  local action="$1" requested="$2" force="${3:-0}" group failed=0
-  for group in $(expand_groups "$requested"); do
+  local action="$1" requested="$2" force="${3:-0}" group failed=0 expanded has_agent_profiles=0
+  expanded="$(expand_groups "$requested")"
+  for group in $expanded; do
+    [[ "$group" != "codex-agent-profiles" ]] || has_agent_profiles=1
+  done
+  if [[ "$has_agent_profiles" -eq 1 && ( "$action" == "install" || "$action" == "update" ) ]]; then
+    init_agent_target
+    preflight_agent_profile_sync "$action" "$force"
+  fi
+  for group in $expanded; do
     case "$action" in
       install) install_group "$group" ;;
       update) update_group "$group" "$force" || failed=1 ;;
@@ -539,17 +724,21 @@ cmd_uninstall() {
   done
   [[ -n "$requested" ]] || die "Usage: ./install.sh uninstall <group> --yes"
   if [[ "$yes" -ne 1 ]]; then
-    warn "Uninstall removes installed Codex skills/templates for the selected group."
+    warn "Uninstall removes installed Codex skills/templates/profiles for the selected group."
     warn "Re-run with --yes after reviewing the target group."
     return 2
   fi
-  for group in $(expand_groups "$requested"); do
-    uninstall_group "$group"
-  done
+  if [[ "$requested" == "codex-agent-profiles" ]]; then
+    uninstall_group "$requested"
+  else
+    for group in $(expand_groups "$requested"); do
+      uninstall_group "$group"
+    done
+  fi
 }
 
 main() {
-  local cmd="${1:-}"
+  local cmd="${1:-}" requested="" force=0 group
   [[ -n "$cmd" ]] || { usage; exit 1; }
   shift || true
 
@@ -560,15 +749,11 @@ main() {
     -h|--help|help) usage; return ;;
   esac
 
-  init_targets
-
   case "$cmd" in
     install)
-      [[ "${1:-}" == "--all" ]] && run_for_groups install --all && exit 0
       [[ -n "${1:-}" ]] || die "Usage: ./install.sh install <group>"
-      run_for_groups install "$1" ;;
+      requested="$1" ;;
     update)
-      requested="" force=0
       while [[ $# -gt 0 ]]; do
         case "$1" in
           --all) requested="--all"; shift ;;
@@ -576,14 +761,30 @@ main() {
           *) requested="$1"; shift ;;
         esac
       done
-      [[ -n "${requested:-}" ]] || die "Usage: ./install.sh update <group> [--force]"
-      run_for_groups update "$requested" "$force" ;;
+      [[ -n "$requested" ]] || die "Usage: ./install.sh update <group> [--force]" ;;
     diff)
-      [[ "${1:-}" == "--all" ]] && run_for_groups diff --all && exit 0
       [[ -n "${1:-}" ]] || die "Usage: ./install.sh diff <group>"
-      run_for_groups diff "$1" ;;
-    uninstall) cmd_uninstall "$@" ;;
+      requested="$1" ;;
+    uninstall) : ;;
     *) usage; die "Unknown command: $cmd" ;;
+  esac
+
+  if [[ "$cmd" == "install" || "$cmd" == "update" ]]; then
+    for group in $(expand_groups "$requested"); do
+      if [[ "$group" == "codex-agent-profiles" ]]; then
+        validate_agent_profile_sources
+        break
+      fi
+    done
+  fi
+
+  init_targets
+
+  case "$cmd" in
+    install) run_for_groups install "$requested" ;;
+    update) run_for_groups update "$requested" "$force" ;;
+    diff) run_for_groups diff "$requested" ;;
+    uninstall) cmd_uninstall "$@" ;;
   esac
 }
 

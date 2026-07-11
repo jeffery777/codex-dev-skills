@@ -127,6 +127,10 @@ check_installer_target_modes() {
     || fail "installer help must document the legacy skills target"
   rg -F -q '~/.agents/skills/<skill>/' "$TMP_DIR/install-help.txt" \
     || fail "installer help must document the agents skills target"
+  rg -F -q '~/.codex/agents/<profile>.toml' "$TMP_DIR/install-help.txt" \
+    || fail "installer help must document the opt-in custom-agent target"
+  rg -F -q 'excluded from --all' "$TMP_DIR/install-help.txt" \
+    || fail "installer help must state that custom-agent profiles are excluded from --all"
 
   ./install.sh manifest | sort -u > "$legacy_manifest"
   CODEX_DEV_SKILLS_TARGET=agents ./install.sh manifest | sort -u > "$agents_manifest"
@@ -196,6 +200,18 @@ check_loop_eval() {
   ok "loop engineering workflow eval thresholds pass"
 }
 
+check_agent_profiles() {
+  python3 scripts/validate-agent-profiles.py >"$TMP_DIR/agent-profiles.json"
+  python3 -m unittest tests.test_agent_profiles tests.test_installer_agent_profiles >/dev/null
+  ok "custom-agent profiles and isolated installer contracts pass"
+}
+
+check_agent_routing_eval() {
+  python3 scripts/eval-agent-routing.py >"$TMP_DIR/agent-routing-eval.json"
+  python3 -m unittest tests.test_agent_routing tests.test_eval_agent_routing >/dev/null
+  ok "heterogeneous agent routing eval thresholds pass"
+}
+
 check_loop_contract() {
   python3 -m unittest tests.test_loop_engineering_core tests.test_loopctl >/dev/null
   ok "loop engineering event, transition, migration, and CLI contracts pass"
@@ -214,6 +230,8 @@ main() {
   check_loop_ledger
   check_loop_contract
   check_loop_eval
+  check_agent_profiles
+  check_agent_routing_eval
 }
 
 main "$@"

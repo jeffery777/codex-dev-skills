@@ -11,6 +11,10 @@ the active callable schemas and the public Codex documentation. Every adapter
 must still inspect the capability exposed by its active runtime instead of
 assuming that a recorded schema is permanently available.
 
+The custom-agent configuration facts below were last verified on 2026-07-11
+from the public Codex subagent documentation. Runtime model availability and
+reasoning support remain session capabilities and must still be preflighted.
+
 ## Shared Contract
 
 The shared loop core must express an operation in capability-neutral terms:
@@ -84,6 +88,46 @@ surfaces. It is not Desktop-only behavior. The shared orchestration policy owns:
 The active runtime may present subagent activity differently, but that UI
 difference does not change the shared delegation contract. Subagents are also
 distinct from user-owned Desktop tasks created with a thread tool.
+
+### Custom-agent profiles
+
+Local Codex clients support standalone custom-agent TOML files under
+`~/.codex/agents/` for personal adoption and `.codex/agents/` for trusted-project
+adoption. Each file requires `name`, `description`, and
+`developer_instructions`; supported session configuration keys may include
+`model`, `model_reasoning_effort`, `sandbox_mode`, `mcp_servers`, and
+`skills.config`. See [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents).
+
+The profile is a runtime configuration layer, not workflow authority. Its
+technical `sandbox_mode` may differ by role, so preflight compares it with the
+current parent sandbox and refuses a custom profile that would widen that
+boundary. A balanced `workspace-write` profile therefore requires an equal or
+more permissive parent sandbox; read-only roles remain non-widening. Separately,
+neither role nor model choice grants workflow mutation authority, external
+actions, broader assigned scope, gate satisfaction, or completion. Active
+parent permission controls and managed requirements continue to apply.
+
+General project configuration has higher documented precedence than user
+configuration, but the public custom-agent page does not currently define every
+same-name standalone-file collision. V2a therefore namespaces its roles,
+detects collisions when the caller supplies the other applicable agent roots,
+and reports an unresolved mapping instead of guessing. Project-scoped `.codex/`
+layers are ignored for untrusted projects. See official
+[Config basics](https://learn.chatgpt.com/docs/config-file/config-basic#configuration-precedence)
+for general precedence and trust behavior.
+
+The repository keeps reviewable profile sources under `agent-profiles/` so a
+checkout does not auto-activate them. The `codex-agent-profiles` installer group
+is explicit opt-in and is excluded from `--all`. The installed
+`loop-engineering` skill includes `scripts/profile_preflight.py`, the canonical
+profile registry, and `loopctl.py agent-route`; installation therefore preserves
+the same validation and receipt contract outside the source checkout. Routing
+rejects an alternate registry even when its contents look valid, and accepts
+runtime/model availability only from the required `--runtime-facts`
+current-session input. `agent-integrate` similarly reads exact Git branch/HEAD,
+artifact bytes, verification files, and selected profile from explicit trusted
+roots and checks exact worker/verification digests rather than trusting
+repository-controlled receipt assertions.
 
 ### Scheduler
 
@@ -171,6 +215,10 @@ The sequential fallback executes the same selected task in the current session
 or prepares a durable continuation prompt or task brief. It preserves the same
 source-of-truth, authority, verification, review, and completion rules. A
 missing optional runtime capability changes execution mode, not task semantics.
+
+For V2a profile routing, attempt a same-class profile, a safe parent/default
+mapping, and current-session sequential execution before stopping. Stop at a
+human gate when the requested risk class cannot be preserved safely.
 
 ## Legacy Desktop Wrapper Boundary
 

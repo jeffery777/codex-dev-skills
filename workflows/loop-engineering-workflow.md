@@ -14,6 +14,8 @@ The user-facing skill is `loop-engineering`. It is an entrypoint and router, not
 3. **Route**
    - Use the production loop decision contract to select the smallest existing
      skill that fits the classified state.
+   - When V2a characteristics are present, select an explainable capability
+     class and preflight its runtime profile without changing authority.
 4. **Act**
    - Implement, update docs, review, prepare handoff, or stop according to the routed workflow.
 5. **Verify**
@@ -38,6 +40,25 @@ The user-facing skill is `loop-engineering`. It is an entrypoint and router, not
 | Formal readiness decision | `code-review-gate`, `docs-review-gate`, or `merge-readiness-gate` |
 | Shared bounded subagent packets | `project-orchestrator` or `project-delivery` |
 | Desktop user-owned task/thread/worktree handoff | `desktop-project-delivery` or `desktop-thread-delegation` |
+
+For heterogeneous subagent work, classify the nine V2a task factors and choose
+among fast exploration, balanced implementation, deep review, and
+security/high-risk review. Record the selected class/role, runtime mapping,
+fallback, scope/ownership, worker receipt, and main-agent disposition. If no
+profile in the required class is usable, fall back to a safe parent/default
+mapping, then sequential execution; stop when the risk cannot safely degrade.
+The current parent sandbox is part of preflight evidence: never activate a
+profile whose `sandbox_mode` would widen it. Technical sandbox capability does
+not grant workflow mutation authority.
+The executable contract is `loopctl.py agent-route <decision-input.yaml>
+--runtime-facts <current-runtime-facts.json>` using the `agent_route` section of
+the installed decision-input template. Runtime facts are current-session CLI
+evidence, not repository-controlled YAML, and the route registry must be the
+canonical registry shipped with the installed skill. Main-agent integration
+uses `agent-integrate` with explicit repository, worker-artifact, and
+verification roots plus assignment freshness; it independently reads those
+files, their SHA-256 digests, and exact branch/HEAD instead of trusting a
+receipt's self-attested current state.
 
 ## State Model
 

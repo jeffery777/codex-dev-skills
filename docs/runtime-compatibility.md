@@ -42,6 +42,9 @@ The canonical mapping is [Native Runtime Capability Contract](native-runtime-cap
 - Goal mode is shared but may be created only when explicitly requested.
 - Bounded subagents are shared; ownership must be disjoint and the main agent
   must verify and integrate their output.
+- Custom-agent files are public local runtime configuration. Capability classes
+  remain shared semantics; concrete model/reasoning mappings require runtime
+  preflight and may differ across CLI, Desktop, and IDE availability.
 - Desktop user-owned task/thread/worktree actions and Desktop scheduling are
   thin runtime adapters over shared workflow semantics.
 - Hooks are optional guardrails, not complete enforcement.
@@ -51,6 +54,9 @@ The canonical mapping is [Native Runtime Capability Contract](native-runtime-cap
 When a capability is unavailable, preserve the same objective, authority,
 verification, review, and human-gate rules through the current session,
 sequential execution, a task brief, or a paste-ready continuation prompt.
+
+Absence of the custom-agent surface preserves V1 sequential/shared semantics.
+It must not be reported as task completion or as a permanent Goal failure.
 
 ## Desktop Thread And Task Actions
 
