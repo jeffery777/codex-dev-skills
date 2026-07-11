@@ -20,7 +20,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   guards, deterministic workflow evals, native Goal mode, shared subagents, and
   thin scheduler/Desktop task adapters. The v0.x Desktop wrapper chain becomes
   legacy compatibility evidence rather than the active runtime path.
-- Loop Engineering V2a is tracked in issue #85. It adds deterministic
+- Loop Engineering V2a shipped in v0.6.0 from issue #85. It adds deterministic
   capability classification, replaceable custom-agent profiles, runtime
   preflight/degradation, and route/worker/integration receipts while preserving
   the V1 authority model.
