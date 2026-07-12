@@ -1050,8 +1050,8 @@ class CliTests(unittest.TestCase):
                     {
                         "custom_agent_surface": "available",
                         "parent_sandbox_mode": "workspace-write",
-                        "available_models": ["gpt-5.6-sol"],
-                        "reasoning_efforts": {"gpt-5.6-sol": ["medium"]},
+                        "available_models": ["gpt-5.6-terra"],
+                        "reasoning_efforts": {"gpt-5.6-terra": ["medium"]},
                     }
                 ),
                 encoding="utf-8",
@@ -1210,8 +1210,8 @@ class CliTests(unittest.TestCase):
                     {
                         "custom_agent_surface": "available",
                         "parent_sandbox_mode": "workspace-write",
-                        "available_models": ["gpt-5.6-sol"],
-                        "reasoning_efforts": {"gpt-5.6-sol": ["medium"]},
+                        "available_models": ["gpt-5.6-terra"],
+                        "reasoning_efforts": {"gpt-5.6-terra": ["medium"]},
                     }
                 ),
                 encoding="utf-8",
@@ -1334,6 +1334,24 @@ class CliTests(unittest.TestCase):
                 "--profile-path",
                 str(profile_path),
             ]
+
+            malformed = copy.deepcopy(integration)
+            malformed["agent_integration"]["route_receipt"][
+                "contract_version"
+            ] = 2
+            malformed["agent_integration"]["route_receipt"][
+                "classification"
+            ] = None
+            integration_path.write_text(json.dumps(malformed), encoding="utf-8")
+            malformed_output = StringIO()
+            with redirect_stdout(malformed_output):
+                self.assertEqual(1, loopctl.main(common_args))
+            malformed_result = json.loads(malformed_output.getvalue())
+            self.assertEqual("rejected", malformed_result["status"])
+            self.assertIn(
+                "classification-semantic-mismatch",
+                malformed_result["worker_validation"]["issues"],
+            )
 
             with_current = copy.deepcopy(integration)
             with_current["agent_integration"]["current"] = {
@@ -1502,6 +1520,107 @@ class CliTests(unittest.TestCase):
                     ),
                 )
             self.assertIn("missing required fields", output.getvalue())
+
+    def test_agent_route_v2_selects_deterministic_advanced_profile(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            repo_root = root / "repo"
+            document = agent_route_document(init_git_repository(repo_root))
+            payload = document["agent_route"]
+            payload["contract_version"] = 2
+            payload["task"]["workload_kind"] = "implementation"
+            payload["task"]["factors"]["reasoning_depth"] = "deep"
+            payload["profile_preflight"]["role"] = "loop_v2a_advanced_worker"
+            path = root / "route-v2.json"
+            facts = root / "facts-v2.json"
+            path.write_text(json.dumps(document), encoding="utf-8")
+            facts.write_text(
+                json.dumps(
+                    {
+                        "custom_agent_surface": "available",
+                        "parent_sandbox_mode": "workspace-write",
+                        "available_models": ["gpt-5.6-sol"],
+                        "reasoning_efforts": {"gpt-5.6-sol": ["medium"]},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    0,
+                    loopctl.main(
+                        ["agent-route", str(path), "--runtime-facts", str(facts)]
+                    ),
+                )
+            receipt = json.loads(output.getvalue())["route_receipt"]
+            self.assertEqual(2, receipt["contract_version"])
+            self.assertEqual("advanced", receipt["classification"]["capability_tier"])
+            self.assertEqual("loop_v2a_advanced_worker", receipt["runtime_mapping"])
+
+            payload["profile_preflight"]["role"] = "loop_v2a_balanced_worker"
+            path.write_text(json.dumps(document), encoding="utf-8")
+            rejected = StringIO()
+            with redirect_stdout(rejected):
+                self.assertEqual(
+                    1,
+                    loopctl.main(
+                        ["agent-route", str(path), "--runtime-facts", str(facts)]
+                    ),
+                )
+            self.assertIn("must match the deterministic", rejected.getvalue())
+
+    def test_agent_route_v2_automatically_uses_installed_higher_tier(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            repo_root = root / "repo"
+            document = agent_route_document(init_git_repository(repo_root))
+            payload = document["agent_route"]
+            payload["contract_version"] = 2
+            payload["task"]["workload_kind"] = "mechanical"
+            payload["task"]["factors"].update(
+                {
+                    "ambiguity": "low",
+                    "reasoning_depth": "shallow",
+                    "code_context_volume": "small",
+                    "security_data_migration_public_contract_risk": "none",
+                    "write_blast_radius": "none",
+                    "verification_burden": "low",
+                }
+            )
+            payload["profile_preflight"]["role"] = "loop_v2a_mechanical_reader"
+            path = root / "route-v2-fallback.json"
+            facts = root / "facts-v2-fallback.json"
+            path.write_text(json.dumps(document), encoding="utf-8")
+            facts.write_text(
+                json.dumps(
+                    {
+                        "custom_agent_surface": "available",
+                        "available_models": ["gpt-5.6-terra"],
+                        "reasoning_efforts": {"gpt-5.6-terra": ["low"]},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    0,
+                    loopctl.main(
+                        ["agent-route", str(path), "--runtime-facts", str(facts)]
+                    ),
+                )
+            rendered = json.loads(output.getvalue())
+            receipt = rendered["route_receipt"]
+            self.assertEqual("loop_v2a_fast_explorer", receipt["runtime_mapping"])
+            self.assertEqual("mechanical", receipt["required_capability_tier"])
+            self.assertEqual("efficient", receipt["selected_capability_tier"])
+            self.assertEqual("same-class-higher-tier", receipt["fallback"])
+            self.assertTrue(receipt["cost_degraded"])
+            self.assertEqual(
+                "loop_v2a_mechanical_reader",
+                rendered["profile_preflight"]["requested_profile"],
+            )
 
     def test_agent_route_command_rejects_unknown_contract_fields(self):
         with tempfile.TemporaryDirectory() as directory:

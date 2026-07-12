@@ -119,11 +119,19 @@ from a task-transition payload assertion.
 ## Routing
 
 When the decision input contains V2a task characteristics and runtime profile
-evidence, use the production capability classifier and route receipt. Classify
+evidence, use the production capability classifier and route receipt. Version
+1 retains the published nine-factor path. Version 2 also requires an explicit
+workload kind and records a separate cost-aware capability tier. Classify
 ambiguity, reasoning depth, context volume, high-risk domains, write blast
 radius, latency/cost sensitivity, independence, and verification burden; do not
 select a capability from the task name alone. Model/profile routing never
 changes permissions, scope, human gates, or completion criteria.
+
+Keep class and tier separate. Class binds sandbox and workflow scope; tier
+binds the minimum model/reasoning need. Select the lowest verified same-class
+profile that meets the tier. Record a higher-tier selection as cost degraded
+and never silently substitute a lower tier. Reserve exceptional/xhigh routing
+for explicit quality-first research or orchestration with multiple triggers.
 
 Custom-agent `sandbox_mode` is a technical runtime constraint distinct from
 workflow authorization. Preflight must compare it with current-session
@@ -131,11 +139,19 @@ workflow authorization. Preflight must compare it with current-session
 widen the parent sandbox. A profile never authorizes writes merely because its
 sandbox technically permits them.
 
-Preflight role/profile availability before delegation. Use a same-class profile,
-then a safe parent/default mapping, then sequential current-session execution.
+Preflight role/profile availability before delegation. Use the lowest
+sufficient same-class profile, then a parent/default mapping with explicit
+class/tier evidence, then sequential current-session execution with the same
+evidence.
 Stop at a human gate when a security or high-risk class cannot safely degrade.
 Record worker and main-agent integration receipts; worker self-report remains
 coordination evidence.
+
+Security review stays defensive and local-first. Prefer static analysis, local
+fixtures, negative tests, synthetic inputs, and minimal non-invasive
+validation. When runtime policy rejects a validation path, use safer local
+evidence or record the verification limit; never evade the policy, conceal
+intent, or access or mutate external systems.
 
 Materialize the `agent_route` section from
 `templates/orchestration/loop-decision-input.template.yaml`. Keep runtime facts

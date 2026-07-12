@@ -139,6 +139,14 @@ Use `templates/orchestration/loop-state-ledger.template.yaml` when a project
 needs this durable state. Pair it with the existing loop spec, task manifest,
 current task summary, iteration report, and task claim/lease templates.
 
+V2a route contract version 2 keeps workflow class separate from cost-aware
+capability tier. The four classes continue to bind sandbox and allowed work;
+the ordered tier selects the minimum verified Luna, Terra, or Sol
+model/reasoning mapping. Version 1 route inputs remain supported. Version 2
+requires an explicit workload kind, chooses the lowest sufficient same-class
+tier, records higher-tier cost degradation, and never silently substitutes a
+lower tier for high-risk or exceptional work.
+
 External memory is optional advisory/cache/coordination input. V2b validates a
 versioned backend-neutral contract, repository/principal identity, provenance,
 freshness, digest, lifecycle, sensitivity, capability, replay, conflict, and

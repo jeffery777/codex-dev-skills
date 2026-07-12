@@ -19,7 +19,7 @@ class AgentRoutingEvalTests(unittest.TestCase):
     def test_production_backed_matrix_passes(self) -> None:
         report = runner.evaluate()
         self.assertEqual("passed", report["status"])
-        self.assertEqual(17, report["metrics"]["total_cases"])
+        self.assertEqual(24, report["metrics"]["total_cases"])
         self.assertEqual(1.0, report["metrics"]["route_correctness_rate"])
         self.assertEqual(0, report["metrics"]["false_completion_count"])
         self.assertEqual(1.0, report["metrics"]["evidence_completeness_rate"])
@@ -27,6 +27,18 @@ class AgentRoutingEvalTests(unittest.TestCase):
         self.assertEqual(1.0, report["metrics"]["authority_invariance_rate"])
         self.assertEqual(1.0, report["metrics"]["v1_sequential_fallback_rate"])
         self.assertIn("not a measured cost", report["metrics"]["latency_cost_proxy_note"])
+        cases = {case["id"]: case for case in report["cases"]}
+        self.assertEqual("mechanical", cases["v2-mechanical-luna-low"]["actual"]["tier"])
+        self.assertTrue(
+            cases["v2-mechanical-terra-fallback"]["actual"]["cost_degraded"]
+        )
+        self.assertEqual(
+            "exceptional", cases["v2-exceptional-sol-xhigh"]["actual"]["tier"]
+        )
+        self.assertEqual(
+            "stop-for-human-gate",
+            cases["v2-exceptional-unavailable-gate"]["actual"]["mode"],
+        )
 
     def test_duplicate_case_ids_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

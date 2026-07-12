@@ -35,15 +35,20 @@ UNSAFE_TEXT = (
     re.compile(r"(?i)(?:desktop|codex)[-_ ](?:database|db|session|log|cache|auth|app[-_ ]state)"),
 )
 REGISTRY_TOP_KEYS = {"schema_version", "namespace", "official_surface", "profiles"}
-REGISTRY_PROFILE_KEYS = {"name", "file", "profile_sha256", "capability_class", "intended_task_class", "sandbox_expectation", "allowed_workflow_scope", "output_contract", "runtime_mapping", "fallback"}
+REGISTRY_PROFILE_KEYS = {"name", "file", "profile_sha256", "capability_class", "capability_tier", "tier_rank", "intended_task_class", "sandbox_expectation", "allowed_workflow_scope", "output_contract", "runtime_mapping", "fallback"}
 MAPPING_KEYS = {"model", "reasoning_effort", "availability", "last_verified", "replaceable"}
 FALLBACK_KEYS = {"same_capability_first", "allow_parent_default", "allow_sequential", "human_gate_if_unresolved"}
-COMPATIBLE_PROFILE_KEYS = {"name", "profile_path", "capability_class", "config_valid", "model_available", "reasoning_available", "sandbox", "allowed_workflow_scope", "profile_digest"}
+COMPATIBLE_PROFILE_KEYS = {"name", "profile_path", "capability_class", "capability_tier", "config_valid", "model_available", "reasoning_available", "sandbox", "allowed_workflow_scope", "profile_digest"}
+CAPABILITY_TIERS = ("mechanical", "efficient", "everyday", "advanced", "deep", "exceptional")
+TIER_RANK = {tier: index for index, tier in enumerate(CAPABILITY_TIERS)}
 ROLE_CONTRACTS = {
-    "loop_v2a_fast_explorer": ("fast-read-explorer", "read-only", {"read", "search", "summarize", "report-receipt"}),
-    "loop_v2a_balanced_worker": ("balanced-worker", "workspace-write", {"read", "search", "bounded-edit", "focused-verify", "report-receipt"}),
-    "loop_v2a_deep_reviewer": ("deep-reviewer", "read-only", {"read", "search", "verify", "report-findings", "report-receipt"}),
-    "loop_v2a_security_reviewer": ("security-reviewer", "read-only", {"read", "search", "validate", "attack-path-analysis", "report-findings", "report-receipt"}),
+    "loop_v2a_mechanical_reader": ("fast-read-explorer", "mechanical", 0, "read-only", {"read", "search", "summarize", "report-receipt"}),
+    "loop_v2a_fast_explorer": ("fast-read-explorer", "efficient", 1, "read-only", {"read", "search", "summarize", "report-receipt"}),
+    "loop_v2a_balanced_worker": ("balanced-worker", "everyday", 2, "workspace-write", {"read", "search", "bounded-edit", "focused-verify", "report-receipt"}),
+    "loop_v2a_advanced_worker": ("balanced-worker", "advanced", 3, "workspace-write", {"read", "search", "bounded-edit", "focused-verify", "report-receipt"}),
+    "loop_v2a_deep_reviewer": ("deep-reviewer", "deep", 4, "read-only", {"read", "search", "verify", "report-findings", "report-receipt"}),
+    "loop_v2a_exceptional_researcher": ("deep-reviewer", "exceptional", 5, "read-only", {"read", "search", "verify", "report-findings", "report-receipt"}),
+    "loop_v2a_security_reviewer": ("security-reviewer", "deep", 4, "read-only", {"read", "search", "validate", "defensive-control-analysis", "report-findings", "report-receipt"}),
 }
 
 
@@ -133,8 +138,8 @@ def load_registry(path: pathlib.Path) -> dict[str, Any]:
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ProfileValidationError(f"invalid JSON registry {path}: {exc}") from exc
     _exact(data, REGISTRY_TOP_KEYS, "registry")
-    if data.get("schema_version") != 1 or data.get("namespace") != "loop_v2a_":
-        raise ProfileValidationError("registry must declare schema_version 1 and namespace loop_v2a_")
+    if data.get("schema_version") != 2 or data.get("namespace") != "loop_v2a_":
+        raise ProfileValidationError("registry must declare schema_version 2 and namespace loop_v2a_")
     surface = _object(data.get("official_surface"), "registry.official_surface")
     _exact(surface, {"documentation", "last_verified", "format_stability"}, "registry.official_surface")
     if surface.get("documentation") != "https://learn.chatgpt.com/docs/agent-configuration/subagents" or surface.get("format_stability") != "runtime-dependent":
@@ -171,6 +176,11 @@ def validate(profile_dir: pathlib.Path, registry_path: pathlib.Path = DEFAULT_RE
         if not isinstance(trusted_digest, str) or not SHA256.fullmatch(trusted_digest):
             raise ProfileValidationError(f"registry profile {name} requires profile_sha256")
         _string(entry.get("capability_class"), f"registry profile {name}.capability_class")
+        tier = entry.get("capability_tier")
+        if tier not in TIER_RANK or entry.get("tier_rank") != TIER_RANK.get(tier):
+            raise ProfileValidationError(
+                f"registry profile {name} has invalid capability tier or rank"
+            )
         for key in ("intended_task_class", "allowed_workflow_scope", "output_contract"):
             _strings(entry.get(key), f"registry profile {name}.{key}")
         if entry.get("sandbox_expectation") not in SAFE_SANDBOX_MODES:
@@ -178,6 +188,8 @@ def validate(profile_dir: pathlib.Path, registry_path: pathlib.Path = DEFAULT_RE
         expected_contract = ROLE_CONTRACTS.get(name)
         if expected_contract is None or (
             entry.get("capability_class"),
+            entry.get("capability_tier"),
+            entry.get("tier_rank"),
             entry.get("sandbox_expectation"),
             set(entry.get("allowed_workflow_scope") or []),
         ) != expected_contract:
@@ -261,20 +273,94 @@ def runtime_facts(path: pathlib.Path) -> dict[str, Any]:
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ProfileValidationError(f"invalid runtime facts {path}: {exc}") from exc
     _exact(facts, {"custom_agent_surface", "available_models", "reasoning_efforts", "compatible_profiles", "parent_default", "sequential", "parent_sandbox_mode"}, "runtime facts")
+    surface = facts.get("custom_agent_surface")
+    if surface is not None and (
+        not isinstance(surface, str)
+        or surface not in {"available", "unavailable", "unknown"}
+    ):
+        raise ProfileValidationError(
+            "runtime facts custom_agent_surface must be available, unavailable, or unknown"
+        )
+    models = facts.get("available_models")
+    if models is not None and (
+        not isinstance(models, list)
+        or any(not isinstance(model, str) for model in models)
+    ):
+        raise ProfileValidationError(
+            "runtime facts available_models must be a string list"
+        )
+    efforts = facts.get("reasoning_efforts")
+    if efforts is not None and (
+        not isinstance(efforts, dict)
+        or any(
+            not isinstance(model, str)
+            or not isinstance(values, list)
+            or any(not isinstance(value, str) for value in values)
+            for model, values in efforts.items()
+        )
+    ):
+        raise ProfileValidationError(
+            "runtime facts reasoning_efforts must map models to string lists"
+        )
     parent_sandbox = facts.get("parent_sandbox_mode")
-    if parent_sandbox is not None and parent_sandbox not in PARENT_SANDBOX_MODES:
+    if parent_sandbox is not None and (
+        not isinstance(parent_sandbox, str)
+        or parent_sandbox not in PARENT_SANDBOX_MODES
+    ):
         raise ProfileValidationError(
             "runtime facts parent_sandbox_mode must be read-only, workspace-write, or danger-full-access"
         )
+    known_classes = {contract[0] for contract in ROLE_CONTRACTS.values()}
+    for key in ("parent_default", "sequential"):
+        evidence = facts.get(key)
+        if evidence is None:
+            continue
+        evidence = _object(evidence, f"runtime facts {key}")
+        _exact(
+            evidence,
+            {"available", "capability_classes", "capability_tiers"},
+            f"runtime facts {key}",
+        )
+        if not isinstance(evidence.get("available"), bool):
+            raise ProfileValidationError(
+                f"runtime facts {key}.available must be boolean"
+            )
+        classes = evidence.get("capability_classes", [])
+        if not isinstance(classes, list) or any(
+            not isinstance(item, str) or item not in known_classes
+            for item in classes
+        ):
+            raise ProfileValidationError(
+                f"runtime facts {key}.capability_classes must contain known classes"
+            )
+        tiers = evidence.get("capability_tiers", {})
+        if not isinstance(tiers, dict) or any(
+            not isinstance(capability, str)
+            or capability not in known_classes
+            or not isinstance(values, list)
+            or any(
+                not isinstance(value, str) or value not in TIER_RANK
+                for value in values
+            )
+            for capability, values in tiers.items()
+        ):
+            raise ProfileValidationError(
+                f"runtime facts {key}.capability_tiers must map known classes to known tiers"
+            )
     return facts
 
 
 def _sandbox_evidence(profile_sandbox: str, facts: dict[str, Any]) -> dict[str, Any] | None:
     """Return evidence only when a custom profile cannot widen the parent sandbox."""
+    if not isinstance(profile_sandbox, str) or profile_sandbox not in SANDBOX_RANK:
+        return None
     parent_sandbox = facts.get("parent_sandbox_mode")
     if profile_sandbox == "read-only" and parent_sandbox is None:
         parent_sandbox = "unknown-at-least-read-only"
-    elif parent_sandbox not in PARENT_SANDBOX_MODES:
+    elif (
+        not isinstance(parent_sandbox, str)
+        or parent_sandbox not in PARENT_SANDBOX_MODES
+    ):
         return None
     elif SANDBOX_RANK[profile_sandbox] > SANDBOX_RANK[parent_sandbox]:
         return None
@@ -284,7 +370,13 @@ def _sandbox_evidence(profile_sandbox: str, facts: dict[str, Any]) -> dict[str, 
     }
 
 
-def _validated_same_class(entry: dict[str, Any], facts: dict[str, Any]) -> dict[str, Any] | None:
+def _validated_same_class(
+    entry: dict[str, Any],
+    facts: dict[str, Any],
+    *,
+    enforce_tier: bool,
+    trusted_profiles: dict[str, dict[str, Any]] | None,
+) -> dict[str, Any] | None:
     compatible = facts.get("compatible_profiles", {})
     if not isinstance(compatible, dict):
         raise ProfileValidationError("runtime facts compatible_profiles must be an object")
@@ -294,7 +386,17 @@ def _validated_same_class(entry: dict[str, Any], facts: dict[str, Any]) -> dict[
     valid: list[dict[str, Any]] = []
     available_models = facts.get("available_models")
     reasoning_efforts = facts.get("reasoning_efforts")
-    if not isinstance(available_models, list) or not isinstance(reasoning_efforts, dict):
+    if (
+        not isinstance(available_models, list)
+        or any(not isinstance(model, str) for model in available_models)
+        or not isinstance(reasoning_efforts, dict)
+        or any(
+            not isinstance(model, str)
+            or not isinstance(values, list)
+            or any(not isinstance(value, str) for value in values)
+            for model, values in reasoning_efforts.items()
+        )
+    ):
         return None
     for index, raw in enumerate(candidates):
         candidate = _object(raw, f"compatible profile evidence[{index}]")
@@ -308,10 +410,39 @@ def _validated_same_class(entry: dict[str, Any], facts: dict[str, Any]) -> dict[
             raise ProfileValidationError("compatible profile evidence requires an absolute profile_path")
         candidate_path = pathlib.Path(raw_path)
         loaded = load_profile(candidate_path, require_filename_match=False)
+        candidate_scope = candidate.get("allowed_workflow_scope")
+        trusted = (
+            trusted_profiles.get(name)
+            if isinstance(trusted_profiles, dict)
+            else None
+        )
+        trusted_tier_evidence = (
+            not enforce_tier
+            or (
+                isinstance(trusted, dict)
+                and candidate.get("capability_class")
+                == trusted.get("capability_class")
+                and candidate.get("capability_tier")
+                == trusted.get("capability_tier")
+                and candidate.get("profile_digest")
+                == trusted.get("_profile_digest")
+                and loaded.get("model")
+                == trusted.get("runtime_mapping", {}).get("model")
+                and loaded.get("model_reasoning_effort")
+                == trusted.get("runtime_mapping", {}).get("reasoning_effort")
+                and candidate.get("sandbox")
+                == trusted.get("sandbox_expectation")
+                and isinstance(candidate_scope, list)
+                and all(isinstance(item, str) for item in candidate_scope)
+                and set(candidate_scope)
+                == set(trusted.get("allowed_workflow_scope") or [])
+            )
+        )
         checks = (candidate.get("config_valid"), candidate.get("model_available"), candidate.get("reasoning_available"))
         sandbox_evidence = _sandbox_evidence(candidate.get("sandbox"), facts)
         if (
             checks == (True, True, True)
+            and trusted_tier_evidence
             and sandbox_evidence is not None
             and loaded.get("name") == name
             and loaded.get("sandbox_mode") == candidate.get("sandbox")
@@ -320,18 +451,64 @@ def _validated_same_class(entry: dict[str, Any], facts: dict[str, Any]) -> dict[
             and loaded.get("model_reasoning_effort")
             in reasoning_efforts.get(loaded.get("model"), [])
             and candidate.get("capability_class") == entry["capability_class"]
+            and (
+                not enforce_tier
+                or (
+                    isinstance(candidate.get("capability_tier"), str)
+                    and candidate.get("capability_tier") in TIER_RANK
+                    and TIER_RANK[candidate["capability_tier"]]
+                    >= TIER_RANK[entry["capability_tier"]]
+                )
+            )
             and candidate.get("sandbox") == entry["sandbox_expectation"]
-            and set(candidate.get("allowed_workflow_scope") or []) == set(entry["allowed_workflow_scope"])
+            and isinstance(candidate.get("allowed_workflow_scope"), list)
+            and all(
+                isinstance(item, str)
+                for item in candidate.get("allowed_workflow_scope", [])
+            )
+            and set(candidate.get("allowed_workflow_scope") or [])
+            == set(entry["allowed_workflow_scope"])
             and name != entry["name"]
         ):
             valid.append({**candidate, **sandbox_evidence})
-    return sorted(valid, key=lambda item: item["name"])[0] if valid else None
+    return sorted(
+        valid,
+        key=(
+            (lambda item: (TIER_RANK[item["capability_tier"]], item["name"]))
+            if enforce_tier
+            else (lambda item: item["name"])
+        ),
+    )[0] if valid else None
 
 
-def _fallback(entry: dict[str, Any], facts: dict[str, Any], *, custom_surface_available: bool) -> tuple[str, str | None, str, dict[str, Any] | None]:
+def _tier_evidence_satisfies(
+    evidence: dict[str, Any], capability: str, required_tier: str
+) -> bool:
+    tiers = evidence.get("capability_tiers", {})
+    return isinstance(tiers, dict) and any(
+        isinstance(tier, str)
+        and tier in TIER_RANK
+        and TIER_RANK[tier] >= TIER_RANK[required_tier]
+        for tier in tiers.get(capability, [])
+    )
+
+
+def _fallback(
+    entry: dict[str, Any],
+    facts: dict[str, Any],
+    *,
+    custom_surface_available: bool,
+    enforce_tier: bool,
+    trusted_profiles: dict[str, dict[str, Any]] | None,
+) -> tuple[str, str | None, str, dict[str, Any] | None]:
     capability = entry["capability_class"]
     if custom_surface_available:
-        candidate = _validated_same_class(entry, facts)
+        candidate = _validated_same_class(
+            entry,
+            facts,
+            enforce_tier=enforce_tier,
+            trusted_profiles=trusted_profiles,
+        )
         if candidate:
             return "fallback-safe", candidate["name"], "same-capability-profile", {**candidate, "available": True}
     fallback = entry["fallback"]
@@ -341,40 +518,77 @@ def _fallback(entry: dict[str, Any], facts: dict[str, Any], *, custom_surface_av
     ):
         evidence = facts.get(fact_key, {})
         classes = evidence.get("capability_classes", []) if isinstance(evidence, dict) else []
-        compatible = not fallback["human_gate_if_unresolved"] or capability in classes
+        compatible = (
+            capability in classes
+            and _tier_evidence_satisfies(
+                evidence, capability, entry["capability_tier"]
+            )
+            if enforce_tier
+            else (not fallback["human_gate_if_unresolved"] or capability in classes)
+        )
         if fallback[allowed_key] and isinstance(evidence, dict) and evidence.get("available") is True and compatible:
             return "fallback-safe", selected, tier, evidence
     return "human-gate", None, "stop-for-human-gate", None
 
 
-def preflight(entry: dict[str, Any], facts: dict[str, Any], collision_report: dict[str, list[dict[str, str]]] | list[dict[str, str]]) -> dict[str, Any]:
+def preflight(
+    entry: dict[str, Any],
+    facts: dict[str, Any],
+    collision_report: dict[str, list[dict[str, str]]] | list[dict[str, str]],
+    *,
+    enforce_tier: bool = True,
+    trusted_profiles: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     conflicts = collision_report.get("conflicts", []) if isinstance(collision_report, dict) else collision_report
-    base = {"profile": entry["name"], "capability_class": entry["capability_class"], "runtime_mapping": entry["runtime_mapping"], "collisions": conflicts}
+    base = {"profile": entry["name"], "capability_class": entry["capability_class"], "capability_tier": entry["capability_tier"], "tier_rank": entry["tier_rank"], "runtime_mapping": entry["runtime_mapping"], "collisions": conflicts}
     if conflicts:
         return {**base, "state": "human-gate", "decision": "human-gate", "reason": "profile-name-collision"}
     surface = facts.get("custom_agent_surface", "unknown")
-    if surface not in {"available", "unavailable", "unknown"}:
+    if not isinstance(surface, str) or surface not in {"available", "unavailable", "unknown"}:
         raise ProfileValidationError("runtime facts custom_agent_surface must be available, unavailable, or unknown")
     if surface != "available":
-        decision, selected, tier, evidence = _fallback(entry, facts, custom_surface_available=False)
+        decision, selected, tier, evidence = _fallback(
+            entry, facts, custom_surface_available=False, enforce_tier=enforce_tier,
+            trusted_profiles=trusted_profiles,
+        )
         return {**base, "state": "custom-surface-unavailable" if surface == "unavailable" else "unknown", "decision": decision, "selected": selected, "fallback_tier": tier, "fallback_evidence": evidence}
     models, efforts = facts.get("available_models"), facts.get("reasoning_efforts")
     if models is None or efforts is None:
-        decision, selected, tier, evidence = _fallback(entry, facts, custom_surface_available=True)
+        decision, selected, tier, evidence = _fallback(
+            entry, facts, custom_surface_available=True, enforce_tier=enforce_tier,
+            trusted_profiles=trusted_profiles,
+        )
         return {**base, "state": "unknown", "decision": decision, "selected": selected, "fallback_tier": tier, "fallback_evidence": evidence}
-    if not isinstance(models, list) or any(not isinstance(item, str) for item in models) or not isinstance(efforts, dict):
+    if (
+        not isinstance(models, list)
+        or any(not isinstance(item, str) for item in models)
+        or not isinstance(efforts, dict)
+        or any(
+            not isinstance(model_name, str)
+            or not isinstance(values, list)
+            or any(not isinstance(value, str) for value in values)
+            for model_name, values in efforts.items()
+        )
+    ):
         raise ProfileValidationError("runtime model/reasoning facts have invalid types")
     model, effort = entry["runtime_mapping"]["model"], entry["runtime_mapping"]["reasoning_effort"]
     if model not in models or effort not in efforts.get(model, []):
-        decision, selected, tier, evidence = _fallback(entry, facts, custom_surface_available=True)
+        decision, selected, tier, evidence = _fallback(
+            entry, facts, custom_surface_available=True, enforce_tier=enforce_tier,
+            trusted_profiles=trusted_profiles,
+        )
         return {**base, "state": "unavailable", "decision": decision, "selected": selected, "fallback_tier": tier, "fallback_evidence": evidence}
     sandbox_evidence = _sandbox_evidence(entry["sandbox_expectation"], facts)
     if sandbox_evidence is None:
-        decision, selected, tier, evidence = _fallback(entry, facts, custom_surface_available=True)
+        decision, selected, tier, evidence = _fallback(
+            entry, facts, custom_surface_available=True, enforce_tier=enforce_tier,
+            trusted_profiles=trusted_profiles,
+        )
         return {**base, "state": "sandbox-constraint-unknown-or-widening", "decision": decision, "selected": selected, "fallback_tier": tier, "fallback_evidence": evidence}
     route_profile_evidence = {
         "name": entry["name"],
         "capability_class": entry["capability_class"],
+        "capability_tier": entry["capability_tier"],
         "available": True,
         "config_valid": True,
         "model_available": True,
@@ -414,7 +628,12 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if not args.role or not args.runtime_facts or args.role not in entries:
             raise ProfileValidationError("preflight requires a known --role and --runtime-facts")
-        result = preflight(entries[args.role], runtime_facts(args.runtime_facts), collisions)
+        result = preflight(
+            entries[args.role],
+            runtime_facts(args.runtime_facts),
+            collisions,
+            trusted_profiles=entries,
+        )
         print(json.dumps(result, sort_keys=True))
         return 2 if result["decision"] == "human-gate" else 0
     except ProfileValidationError as exc:

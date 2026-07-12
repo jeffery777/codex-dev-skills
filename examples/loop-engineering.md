@@ -60,10 +60,12 @@ Use loop-engineering for this bounded objective.
 
 Classify ambiguity, reasoning depth, context volume, security/data/migration/public-contract
 risk, write blast radius, latency/cost sensitivity, independence, and verification burden.
-Select an installed custom-agent role only after preflight. Record the route receipt,
+For route contract version 2, also classify the explicit workload kind and required
+capability tier. Select an installed custom-agent role only after preflight. Record the route receipt,
 worker receipt, and main-agent integration disposition. If the requested profile is
-unavailable, try the same capability class, then a safe parent/default model, then run
-sequentially. Stop at a human gate rather than downgrading high-risk work unsafely.
+unavailable, try the lowest sufficient same-class tier, then a parent/default model with
+explicit class/tier evidence, then run sequentially with the same evidence. Stop at a
+human gate rather than downgrading high-risk or exceptional work unsafely.
 Do not let the role or model expand permissions, scope, external-write authority, gates,
 or completion criteria.
 ```

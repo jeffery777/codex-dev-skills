@@ -43,8 +43,10 @@ The canonical mapping is [Native Runtime Capability Contract](native-runtime-cap
 - Bounded subagents are shared; ownership must be disjoint and the main agent
   must verify and integrate their output.
 - Custom-agent files are public local runtime configuration. Capability classes
-  remain shared semantics; concrete model/reasoning mappings require runtime
-  preflight and may differ across CLI, Desktop, and IDE availability.
+  and cost-aware capability tiers remain shared semantics; concrete
+  model/reasoning mappings require runtime preflight and may differ across CLI,
+  Desktop, and IDE availability. A higher-tier fallback is recorded, while a
+  lower tier cannot silently satisfy a higher-tier route.
 - Desktop user-owned task/thread/worktree actions and Desktop scheduling are
   thin runtime adapters over shared workflow semantics.
 - Hooks are optional guardrails, not complete enforcement.

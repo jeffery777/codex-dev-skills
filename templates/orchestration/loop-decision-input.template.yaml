@@ -37,12 +37,15 @@ expect: {}
 
 # `loopctl.py agent-route <this-file> --runtime-facts <current-facts.json>`
 # consumes this separate V2a contract and emits a content-bound `route_receipt`.
+# Version 1 remains accepted for compatibility and omits `workload_kind`; use
+# version 2 for cost-aware class/tier selection.
 # Runtime/model facts are trusted current-session CLI evidence and must not be
 # embedded in this repository-controlled document.
 agent_route:
-  contract_version: 1
+  contract_version: 2
   task:
     id: "<task-id>"
+    workload_kind: "<mechanical | exploration | implementation | review | security-review | research-orchestration>"
     factors:
       ambiguity: "<low | moderate | high>"
       reasoning_depth: "<shallow | balanced | deep>"

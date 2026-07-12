@@ -36,8 +36,12 @@ def factors(**changes):
     return value
 
 
-def profile(name="loop-balanced", capability_class="balanced-worker"):
-    return {
+def profile(
+    name="loop-balanced",
+    capability_class="balanced-worker",
+    capability_tier=None,
+):
+    value = {
         "name": name,
         "capability_class": capability_class,
         "available": True,
@@ -52,6 +56,9 @@ def profile(name="loop-balanced", capability_class="balanced-worker"):
             routing.CLASS_WORKFLOW_SCOPE[capability_class]
         ),
     }
+    if capability_tier is not None:
+        value["capability_tier"] = capability_tier
+    return value
 
 
 def route(task_factors=None, runtime=None):
@@ -75,6 +82,30 @@ def route(task_factors=None, runtime=None):
             "human_gates": ["merge"],
             "completion_criteria": ["tests", "review"],
         },
+    )
+
+
+def route_v2(workload_kind, task_factors=None, runtime=None):
+    return routing.build_route_receipt(
+        task_id="P2",
+        factors=task_factors or factors(),
+        workload_kind=workload_kind,
+        contract_version=2,
+        runtime=runtime or {
+            "custom_agents_available": True,
+            "profiles": [
+                profile("loop-balanced", "balanced-worker", "everyday")
+            ],
+            "parent_default_available": False,
+            "parent_capability_classes": [],
+            "parent_capability_tiers": {},
+            "current_session_capability_classes": [],
+            "current_session_capability_tiers": {},
+        },
+        assigned_scope=["skills/loop-engineering/scripts/agent_routing.py"],
+        ownership={"owner": "worker-p2", "disjoint": True},
+        source_revision={"head_sha": "def456"},
+        authority_contract={"scope": "P2", "external_write": False},
     )
 
 
@@ -153,6 +184,98 @@ class ClassificationTests(unittest.TestCase):
         result = routing.classify_task(factors())
         self.assertEqual(set(routing.FACTOR_VALUES), set(result["factor_effects"]))
 
+    def test_v2_requires_explicit_known_workload_kind(self):
+        with self.assertRaisesRegex(routing.AgentRoutingContractError, "workload_kind"):
+            routing.classify_task(factors(), contract_version=2)
+        with self.assertRaisesRegex(routing.AgentRoutingContractError, "workload_kind"):
+            routing.classify_task(
+                factors(), contract_version=2, workload_kind="ordinary"
+            )
+        for malformed in ([], {}):
+            with self.subTest(malformed_workload_kind=malformed):
+                with self.assertRaisesRegex(
+                    routing.AgentRoutingContractError, "workload_kind"
+                ):
+                    routing.classify_task(
+                        factors(), contract_version=2, workload_kind=malformed
+                    )
+
+    def test_contract_version_rejects_non_integer_shapes(self):
+        for malformed in (True, [], {}):
+            with self.subTest(malformed=malformed):
+                with self.assertRaisesRegex(
+                    routing.AgentRoutingContractError, "contract version"
+                ):
+                    routing.classify_task(factors(), contract_version=malformed)
+
+    def test_v2_cost_aware_tiers(self):
+        cases = (
+            (
+                "mechanical",
+                factors(
+                    ambiguity="low",
+                    reasoning_depth="shallow",
+                    code_context_volume="small",
+                    security_data_migration_public_contract_risk="none",
+                    write_blast_radius="none",
+                    verification_burden="low",
+                ),
+                ("fast-read-explorer", "mechanical"),
+            ),
+            (
+                "exploration",
+                factors(
+                    ambiguity="low",
+                    reasoning_depth="shallow",
+                    security_data_migration_public_contract_risk="none",
+                    write_blast_radius="none",
+                    verification_burden="low",
+                ),
+                ("fast-read-explorer", "efficient"),
+            ),
+            ("implementation", factors(), ("balanced-worker", "everyday")),
+            (
+                "implementation",
+                factors(reasoning_depth="deep"),
+                ("balanced-worker", "advanced"),
+            ),
+            (
+                "research-orchestration",
+                factors(
+                    ambiguity="high",
+                    reasoning_depth="deep",
+                    code_context_volume="large",
+                    write_blast_radius="none",
+                    verification_burden="high",
+                ),
+                ("deep-reviewer", "exceptional"),
+            ),
+        )
+        for workload_kind, task_factors, expected in cases:
+            with self.subTest(workload_kind=workload_kind, expected=expected):
+                result = routing.classify_task(
+                    task_factors,
+                    contract_version=2,
+                    workload_kind=workload_kind,
+                )
+                self.assertEqual(expected, (result["capability_class"], result["capability_tier"]))
+
+    def test_v2_security_risk_cannot_be_cost_downgraded(self):
+        result = routing.classify_task(
+            factors(
+                ambiguity="low",
+                reasoning_depth="shallow",
+                security_data_migration_public_contract_risk="security",
+                write_blast_radius="none",
+                latency_sensitivity="high",
+                cost_token_sensitivity="high",
+                verification_burden="low",
+            ),
+            contract_version=2,
+            workload_kind="mechanical",
+        )
+        self.assertEqual(("security-reviewer", "deep"), (result["capability_class"], result["capability_tier"]))
+
 
 class RouteTests(unittest.TestCase):
     def test_loop_core_exposes_thin_routing_boundary(self):
@@ -194,6 +317,181 @@ class RouteTests(unittest.TestCase):
             "current_session_capability_classes": [],
         }
         self.assertEqual("a-profile", route(runtime=runtime)["runtime_mapping"])
+
+    def test_v2_selects_lowest_sufficient_tier_not_alphabetical_name(self):
+        receipt = route_v2(
+            "implementation",
+            runtime={
+                "custom_agents_available": True,
+                "profiles": [
+                    profile("a-sol", "balanced-worker", "advanced"),
+                    profile("z-terra", "balanced-worker", "everyday"),
+                ],
+                "parent_capability_classes": [],
+                "parent_capability_tiers": {},
+                "current_session_capability_classes": [],
+                "current_session_capability_tiers": {},
+            },
+        )
+        self.assertEqual("z-terra", receipt["runtime_mapping"])
+        self.assertEqual("everyday", receipt["selected_capability_tier"])
+        self.assertFalse(receipt["cost_degraded"])
+        self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+
+    def test_v2_uses_higher_same_class_tier_as_cost_degraded_fallback(self):
+        receipt = route_v2(
+            "implementation",
+            runtime={
+                "custom_agents_available": True,
+                "profiles": [profile("sol", "balanced-worker", "advanced")],
+                "parent_capability_classes": [],
+                "parent_capability_tiers": {},
+                "current_session_capability_classes": [],
+                "current_session_capability_tiers": {},
+            },
+        )
+        self.assertEqual("same-class-higher-tier", receipt["fallback"])
+        self.assertTrue(receipt["cost_degraded"])
+        self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+
+    def test_v2_rejects_lower_tier_for_advanced_work(self):
+        receipt = route_v2(
+            "implementation",
+            task_factors=factors(reasoning_depth="deep"),
+            runtime={
+                "custom_agents_available": True,
+                "profiles": [profile("terra", "balanced-worker", "everyday")],
+                "parent_default_available": False,
+                "parent_capability_classes": [],
+                "parent_capability_tiers": {},
+                "sequential_available": False,
+                "current_session_capability_classes": [],
+                "current_session_capability_tiers": {},
+            },
+        )
+        self.assertEqual("stop-for-human-gate", receipt["execution_mode"])
+
+    def test_v2_parent_fallback_requires_class_and_tier_evidence(self):
+        base = {
+            "custom_agents_available": False,
+            "profiles": [],
+            "parent_default_available": True,
+            "parent_capability_classes": ["balanced-worker"],
+            "parent_capability_tiers": {},
+            "sequential_available": False,
+            "current_session_capability_classes": [],
+            "current_session_capability_tiers": {},
+        }
+        self.assertEqual(
+            "stop-for-human-gate",
+            route_v2("implementation", runtime=base)["execution_mode"],
+        )
+        tier_only = copy.deepcopy(base)
+        tier_only["parent_capability_classes"] = []
+        tier_only["parent_capability_tiers"] = {
+            "balanced-worker": ["everyday"]
+        }
+        self.assertEqual(
+            "stop-for-human-gate",
+            route_v2("implementation", runtime=tier_only)["execution_mode"],
+        )
+        capable = copy.deepcopy(base)
+        capable["parent_capability_tiers"] = {"balanced-worker": ["everyday"]}
+        self.assertEqual(
+            "parent-default",
+            route_v2("implementation", runtime=capable)["execution_mode"],
+        )
+        higher = copy.deepcopy(base)
+        higher["parent_capability_classes"] = ["balanced-worker"]
+        higher["parent_capability_tiers"] = {"balanced-worker": ["advanced"]}
+        receipt = route_v2("implementation", runtime=higher)
+        self.assertEqual("advanced", receipt["selected_capability_tier"])
+        self.assertTrue(receipt["cost_degraded"])
+        self.assertTrue(
+            receipt["fallback_capability_evidence"][
+                "class_membership_confirmed"
+            ]
+        )
+        self.assertIn(
+            "balanced-worker",
+            receipt["fallback_capability_evidence"]["capability_classes"],
+        )
+        self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+        tampered = copy.deepcopy(receipt)
+        tampered["fallback_capability_evidence"]["capability_tiers"] = [
+            "everyday"
+        ]
+        unsigned = {
+            key: value
+            for key, value in tampered.items()
+            if key != "route_receipt_id"
+        }
+        tampered["route_receipt_id"] = routing._digest(unsigned)
+        self.assertIn(
+            "fallback-capability-evidence-mismatch",
+            routing.validate_route_receipt(tampered)["issues"],
+        )
+        missing_class = copy.deepcopy(receipt)
+        missing_class["fallback_capability_evidence"][
+            "capability_classes"
+        ] = []
+        unsigned = {
+            key: value
+            for key, value in missing_class.items()
+            if key != "route_receipt_id"
+        }
+        missing_class["route_receipt_id"] = routing._digest(unsigned)
+        self.assertIn(
+            "fallback-capability-evidence-mismatch",
+            routing.validate_route_receipt(missing_class)["issues"],
+        )
+
+    def test_v2_coupled_sequential_requires_class_and_tier_evidence(self):
+        task_factors = factors(independence_parallelizability="coupled")
+        base = {
+            "custom_agents_available": False,
+            "profiles": [],
+            "parent_default_available": False,
+            "parent_capability_classes": [],
+            "parent_capability_tiers": {},
+            "sequential_available": True,
+            "current_session_capability_classes": [],
+            "current_session_capability_tiers": {},
+        }
+        self.assertEqual(
+            "stop-for-human-gate",
+            route_v2(
+                "implementation", task_factors=task_factors, runtime=base
+            )["execution_mode"],
+        )
+        capable = copy.deepcopy(base)
+        capable["current_session_capability_classes"] = ["balanced-worker"]
+        capable["current_session_capability_tiers"] = {
+            "balanced-worker": ["everyday"]
+        }
+        receipt = route_v2(
+            "implementation", task_factors=task_factors, runtime=capable
+        )
+        self.assertEqual("sequential-current-session", receipt["execution_mode"])
+        self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+
+    def test_v2_bounded_sequential_rejects_tier_without_class_evidence(self):
+        tier_only = {
+            "custom_agents_available": False,
+            "profiles": [],
+            "parent_default_available": False,
+            "parent_capability_classes": [],
+            "parent_capability_tiers": {},
+            "sequential_available": True,
+            "current_session_capability_classes": [],
+            "current_session_capability_tiers": {
+                "balanced-worker": ["everyday"]
+            },
+        }
+        self.assertEqual(
+            "stop-for-human-gate",
+            route_v2("implementation", runtime=tier_only)["execution_mode"],
+        )
 
     def test_selected_profile_and_validation_evidence_are_bound(self):
         receipt = route()
@@ -327,6 +625,53 @@ class RouteTests(unittest.TestCase):
         result = routing.validate_route_receipt(receipt)
         self.assertFalse(result["valid"])
         self.assertIn("route-receipt-integrity-mismatch", result["issues"])
+
+    def test_v2_malformed_classification_fails_closed(self):
+        valid = route_v2("implementation")["classification"]
+        missing_tier = copy.deepcopy(valid)
+        missing_tier.pop("capability_tier")
+        unknown_tier = {**valid, "capability_tier": "unknown"}
+        for malformed in (None, [], "invalid", missing_tier, unknown_tier):
+            with self.subTest(malformed=malformed):
+                receipt = route_v2("implementation")
+                receipt["classification"] = malformed
+                result = routing.validate_route_receipt(receipt)
+                self.assertFalse(result["valid"])
+                self.assertIn(
+                    "classification-semantic-mismatch", result["issues"]
+                )
+
+    def test_v2_malformed_enum_evidence_fails_closed_without_type_error(self):
+        mutations = (
+            ("execution_mode", []),
+            ("selected_capability_tier", {}),
+        )
+        for field, malformed in mutations:
+            with self.subTest(field=field, malformed=malformed):
+                receipt = route_v2("implementation")
+                receipt[field] = malformed
+                result = routing.validate_route_receipt(receipt)
+                self.assertFalse(result["valid"])
+
+        receipt = route_v2("implementation")
+        receipt["config_evidence"]["parent_sandbox_mode"] = []
+        result = routing.validate_route_receipt(receipt)
+        self.assertFalse(result["valid"])
+        self.assertIn("profile-config-evidence-mismatch", result["issues"])
+
+    def test_runtime_profile_scope_rejects_non_string_items_without_type_error(self):
+        candidate = profile()
+        candidate["allowed_workflow_scope"] = [[]]
+        receipt = route(
+            runtime={
+                "custom_agents_available": True,
+                "profiles": [candidate],
+                "parent_default_available": True,
+                "parent_capability_classes": [],
+                "current_session_capability_classes": [],
+            }
+        )
+        self.assertEqual("parent-default", receipt["fallback"])
 
     def test_profile_evidence_semantics_are_validated(self):
         receipt = route()

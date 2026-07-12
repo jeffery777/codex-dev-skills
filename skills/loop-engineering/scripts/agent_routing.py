@@ -43,11 +43,38 @@ CAPABILITY_CLASSES = (
     "security-reviewer",
 )
 
+CAPABILITY_TIERS = (
+    "mechanical",
+    "efficient",
+    "everyday",
+    "advanced",
+    "deep",
+    "exceptional",
+)
+TIER_RANK = {tier: index for index, tier in enumerate(CAPABILITY_TIERS)}
+WORKLOAD_KINDS = {
+    "mechanical",
+    "exploration",
+    "implementation",
+    "review",
+    "security-review",
+    "research-orchestration",
+}
+
 DEFAULT_ROLES = {
     "fast-read-explorer": "fast-read-explorer",
     "balanced-worker": "balanced-worker",
     "deep-reviewer": "deep-reviewer",
     "security-reviewer": "security-reviewer",
+}
+TIER_ROLES = {
+    ("fast-read-explorer", "mechanical"): "loop_v2a_mechanical_reader",
+    ("fast-read-explorer", "efficient"): "loop_v2a_fast_explorer",
+    ("balanced-worker", "everyday"): "loop_v2a_balanced_worker",
+    ("balanced-worker", "advanced"): "loop_v2a_advanced_worker",
+    ("deep-reviewer", "deep"): "loop_v2a_deep_reviewer",
+    ("deep-reviewer", "exceptional"): "loop_v2a_exceptional_researcher",
+    ("security-reviewer", "deep"): "loop_v2a_security_reviewer",
 }
 
 HIGH_RISK_CLASSES = {"deep-reviewer", "security-reviewer"}
@@ -82,7 +109,7 @@ CLASS_WORKFLOW_SCOPE = {
         "read",
         "search",
         "validate",
-        "attack-path-analysis",
+        "defensive-control-analysis",
         "report-findings",
         "report-receipt",
     },
@@ -133,9 +160,82 @@ def validate_task_factors(factors: dict[str, Any]) -> dict[str, str]:
     return validated
 
 
-def classify_task(factors: dict[str, Any]) -> dict[str, Any]:
+def classify_task(
+    factors: dict[str, Any],
+    *,
+    contract_version: int = 1,
+    workload_kind: str | None = None,
+) -> dict[str, Any]:
     """Classify capability needs using deterministic, non-compensatory triggers."""
     factors = validate_task_factors(factors)
+    if type(contract_version) is not int or contract_version not in {1, 2}:
+        raise AgentRoutingContractError("agent route contract version must be 1 or 2")
+    if contract_version == 1:
+        if workload_kind is not None:
+            raise AgentRoutingContractError(
+                "version 1 routing does not accept workload_kind"
+            )
+        return _classify_v1(factors)
+    if not isinstance(workload_kind, str) or workload_kind not in WORKLOAD_KINDS:
+        raise AgentRoutingContractError(
+            "version 2 workload_kind must be one of: "
+            + ",".join(sorted(WORKLOAD_KINDS))
+        )
+    return _classify_v2(factors, workload_kind)
+
+
+def _factor_effects(factors: dict[str, str]) -> dict[str, str]:
+    risk = factors["security_data_migration_public_contract_risk"]
+    blast = factors["write_blast_radius"]
+    return {
+        "ambiguity": (
+            "deep-capability-trigger" if factors["ambiguity"] == "high" else "no-escalation"
+        ),
+        "reasoning_depth": (
+            "deep-capability-trigger"
+            if factors["reasoning_depth"] == "deep"
+            else "no-escalation"
+        ),
+        "code_context_volume": (
+            "fast-read-tie-break" if factors["code_context_volume"] == "large" else "neutral"
+        ),
+        "security_data_migration_public_contract_risk": (
+            "security-hard-trigger"
+            if risk == "security"
+            else (
+                "deep-hard-trigger"
+                if risk in {"data", "migration", "public-contract", "high"}
+                else "no-hard-trigger"
+            )
+        ),
+        "write_blast_radius": (
+            "deep-hard-trigger"
+            if blast == "broad"
+            else ("read-only-fast-eligible" if blast == "none" else "bounded-write")
+        ),
+        "latency_sensitivity": (
+            "fast-read-tie-break" if factors["latency_sensitivity"] == "high" else "neutral"
+        ),
+        "cost_token_sensitivity": (
+            "fast-read-tie-break"
+            if factors["cost_token_sensitivity"] == "high"
+            else "neutral"
+        ),
+        "independence_parallelizability": (
+            "requires-sequential-current-session"
+            if factors["independence_parallelizability"] == "coupled"
+            else "delegation-eligible"
+        ),
+        "verification_burden": (
+            "deep-capability-trigger"
+            if factors["verification_burden"] == "high"
+            else "no-escalation"
+        ),
+    }
+
+
+def _classify_v1(factors: dict[str, str]) -> dict[str, Any]:
+    """Preserve the published V2a version 1 classification exactly."""
     reasons: list[str] = []
     risk = factors["security_data_migration_public_contract_risk"]
     blast = factors["write_blast_radius"]
@@ -184,49 +284,91 @@ def classify_task(factors: dict[str, Any]) -> dict[str, Any]:
         capability_class = "balanced-worker"
         reasons.append("balanced-default")
 
-    factor_effects = {
-        "ambiguity": (
-            "deep-capability-trigger" if factors["ambiguity"] == "high" else "no-escalation"
-        ),
-        "reasoning_depth": (
-            "deep-capability-trigger"
-            if factors["reasoning_depth"] == "deep"
-            else "no-escalation"
-        ),
-        "code_context_volume": (
-            "fast-read-tie-break" if factors["code_context_volume"] == "large" else "neutral"
-        ),
-        "security_data_migration_public_contract_risk": (
-            "security-hard-trigger"
-            if risk == "security"
-            else ("deep-hard-trigger" if risk in {"data", "migration", "public-contract", "high"} else "no-hard-trigger")
-        ),
-        "write_blast_radius": (
-            "deep-hard-trigger" if blast == "broad" else ("read-only-fast-eligible" if blast == "none" else "bounded-write")
-        ),
-        "latency_sensitivity": (
-            "fast-read-tie-break" if factors["latency_sensitivity"] == "high" else "neutral"
-        ),
-        "cost_token_sensitivity": (
-            "fast-read-tie-break" if factors["cost_token_sensitivity"] == "high" else "neutral"
-        ),
-        "independence_parallelizability": (
-            "requires-sequential-current-session"
-            if factors["independence_parallelizability"] == "coupled"
-            else "delegation-eligible"
-        ),
-        "verification_burden": (
-            "deep-capability-trigger"
-            if factors["verification_burden"] == "high"
-            else "no-escalation"
-        ),
-    }
     return {
         "capability_class": capability_class,
         "selected_role": DEFAULT_ROLES[capability_class],
         "factors": factors,
         "reasons": reasons,
-        "factor_effects": factor_effects,
+        "factor_effects": _factor_effects(factors),
+        "hard_triggered": any(reason.endswith("hard-trigger") for reason in reasons),
+    }
+
+
+def _classify_v2(factors: dict[str, str], workload_kind: str) -> dict[str, Any]:
+    """Classify work shape and the minimum cost-aware capability tier."""
+    risk = factors["security_data_migration_public_contract_risk"]
+    blast = factors["write_blast_radius"]
+    quality_triggers = sum(
+        (
+            factors["ambiguity"] == "high",
+            factors["reasoning_depth"] == "deep",
+            factors["verification_burden"] == "high",
+            factors["code_context_volume"] == "large",
+        )
+    )
+    reasons: list[str] = []
+
+    if risk == "security" or workload_kind == "security-review":
+        capability_class, tier = "security-reviewer", "deep"
+        reasons.append("security-risk-hard-trigger")
+    elif risk in {"data", "migration", "public-contract", "high"} or blast == "broad":
+        capability_class, tier = "deep-reviewer", "deep"
+        reasons.append(
+            "broad-write-blast-radius-hard-trigger"
+            if blast == "broad"
+            else f"{risk}-risk-hard-trigger"
+        )
+    elif (
+        workload_kind == "research-orchestration"
+        and blast == "none"
+        and quality_triggers >= 3
+    ):
+        capability_class, tier = "deep-reviewer", "exceptional"
+        reasons.extend(["explicit-research-orchestration", "quality-first-exceptional-trigger"])
+    elif workload_kind == "implementation":
+        capability_class = "balanced-worker"
+        if blast != "bounded":
+            raise AgentRoutingContractError(
+                "version 2 implementation workload requires bounded write_blast_radius"
+            )
+        if (
+            factors["ambiguity"] == "high"
+            or factors["reasoning_depth"] == "deep"
+            or factors["verification_burden"] == "high"
+        ):
+            tier = "advanced"
+            reasons.append("advanced-bounded-implementation")
+        else:
+            tier = "everyday"
+            reasons.append("routine-bounded-implementation")
+    elif workload_kind == "mechanical" and (
+        blast == "none"
+        and risk == "none"
+        and factors["ambiguity"] == "low"
+        and factors["reasoning_depth"] == "shallow"
+        and factors["verification_burden"] == "low"
+    ):
+        capability_class, tier = "fast-read-explorer", "mechanical"
+        reasons.append("clear-repeatable-read-only-work")
+    elif workload_kind == "exploration" and blast == "none" and (
+        factors["ambiguity"] != "high"
+        and factors["reasoning_depth"] != "deep"
+        and factors["verification_burden"] != "high"
+    ):
+        capability_class, tier = "fast-read-explorer", "efficient"
+        reasons.append("bounded-read-heavy-work")
+    else:
+        capability_class, tier = "deep-reviewer", "deep"
+        reasons.append("deep-analysis-default")
+
+    return {
+        "capability_class": capability_class,
+        "capability_tier": tier,
+        "selected_role": TIER_ROLES[(capability_class, tier)],
+        "workload_kind": workload_kind,
+        "factors": factors,
+        "reasons": reasons,
+        "factor_effects": _factor_effects(factors),
         "hard_triggered": any(reason.endswith("hard-trigger") for reason in reasons),
     }
 
@@ -237,13 +379,17 @@ def _sandbox_is_non_widening(profile: dict[str, Any]) -> bool:
     if parent == "unknown-at-least-read-only":
         return sandbox == "read-only"
     return (
-        sandbox in SANDBOX_RANK
+        isinstance(sandbox, str)
+        and sandbox in SANDBOX_RANK
+        and isinstance(parent, str)
         and parent in SANDBOX_RANK
         and SANDBOX_RANK[sandbox] <= SANDBOX_RANK[parent]
     )
 
 
-def _valid_profile(profile: Any, capability_class: str) -> bool:
+def _valid_profile(
+    profile: Any, capability_class: str, required_tier: str | None = None
+) -> bool:
     profile_digest = profile.get("profile_digest") if isinstance(profile, dict) else None
     workflow_scope = (
         profile.get("allowed_workflow_scope") if isinstance(profile, dict) else None
@@ -251,6 +397,14 @@ def _valid_profile(profile: Any, capability_class: str) -> bool:
     return (
         isinstance(profile, dict)
         and profile.get("capability_class") == capability_class
+        and (
+            required_tier is None
+            or (
+                isinstance(profile.get("capability_tier"), str)
+                and profile.get("capability_tier") in TIER_RANK
+                and TIER_RANK[profile["capability_tier"]] >= TIER_RANK[required_tier]
+            )
+        )
         and profile.get("available") is True
         and profile.get("config_valid") is True
         and profile.get("model_available") is True
@@ -264,14 +418,17 @@ def _valid_profile(profile: Any, capability_class: str) -> bool:
         and profile.get("sandbox_non_widening") is True
         and _sandbox_is_non_widening(profile)
         and isinstance(workflow_scope, list)
+        and all(isinstance(item, str) for item in workflow_scope)
         and len(workflow_scope) == len(set(workflow_scope))
         and set(workflow_scope) == CLASS_WORKFLOW_SCOPE[capability_class]
     )
 
 
-def _profile_config_evidence(profile: dict[str, Any]) -> dict[str, Any]:
+def _profile_config_evidence(
+    profile: dict[str, Any], *, include_tier: bool = False
+) -> dict[str, Any]:
     """Project validated runtime/registry facts into receipt-bound evidence."""
-    return {
+    evidence = {
         "name": profile["name"],
         "capability_class": profile["capability_class"],
         "profile_digest": profile["profile_digest"],
@@ -283,6 +440,9 @@ def _profile_config_evidence(profile: dict[str, Any]) -> dict[str, Any]:
         "sandbox_non_widening": profile["sandbox_non_widening"],
         "allowed_workflow_scope": sorted(profile["allowed_workflow_scope"]),
     }
+    if include_tier:
+        evidence["capability_tier"] = profile["capability_tier"]
+    return evidence
 
 
 def _runtime_route(classification: dict[str, Any], runtime: dict[str, Any]) -> dict[str, Any]:
@@ -291,10 +451,77 @@ def _runtime_route(classification: dict[str, Any], runtime: dict[str, Any]) -> d
     if not isinstance(profiles, list):
         raise AgentRoutingContractError("runtime profiles must be an array")
     capability_class = classification["capability_class"]
+    required_tier = classification.get("capability_tier")
     independence = classification["factors"]["independence_parallelizability"]
+    parent_classes = runtime.get("parent_capability_classes", [])
+    current_classes = runtime.get("current_session_capability_classes", [])
+    for value, label in (
+        (parent_classes, "parent capability classes"),
+        (current_classes, "current session capability classes"),
+    ):
+        if not isinstance(value, list) or any(
+            not isinstance(item, str) or item not in CAPABILITY_CLASSES
+            for item in value
+        ):
+            raise AgentRoutingContractError(f"{label} must be an array of known classes")
+    parent_tiers = runtime.get("parent_capability_tiers", {})
+    current_tiers = runtime.get("current_session_capability_tiers", {})
+    for value, label in (
+        (parent_tiers, "parent capability tiers"),
+        (current_tiers, "current session capability tiers"),
+    ):
+        if not isinstance(value, dict) or any(
+            not isinstance(key, str)
+            or key not in CAPABILITY_CLASSES
+            or not isinstance(tiers, list)
+            or any(
+                not isinstance(tier, str) or tier not in TIER_RANK
+                for tier in tiers
+            )
+            for key, tiers in value.items()
+        ):
+            raise AgentRoutingContractError(f"{label} must map known classes to known tiers")
+
+    def tier_satisfied(evidence: dict[str, list[str]]) -> bool:
+        return required_tier is None or selected_evidence_tier(evidence) is not None
+
+    def selected_evidence_tier(
+        evidence: dict[str, list[str]],
+    ) -> str | None:
+        if required_tier is None:
+            return None
+        candidates = sorted(
+            (
+                tier
+                for tier in evidence.get(capability_class, [])
+                if isinstance(tier, str)
+                and tier in TIER_RANK
+                and TIER_RANK[tier] >= TIER_RANK[required_tier]
+            ),
+            key=TIER_RANK.__getitem__,
+        )
+        return candidates[0] if candidates else None
+
+    def fallback_capability_evidence(
+        source: str,
+        classes: list[str],
+        evidence: dict[str, list[str]],
+    ) -> dict[str, Any]:
+        selected_tier = selected_evidence_tier(evidence)
+        return {
+            "source": source,
+            "capability_class": capability_class,
+            "capability_classes": sorted(set(classes)),
+            "class_membership_confirmed": capability_class in classes,
+            "capability_tiers": sorted(
+                evidence.get(capability_class, []), key=TIER_RANK.__getitem__
+            ),
+            "selected_capability_tier": selected_tier,
+        }
+
     if independence == "coupled":
         if runtime.get("sequential_available", True) is True:
-            return {
+            route = {
                 "execution_mode": "sequential-current-session",
                 "runtime_mapping": "current-session",
                 "fallback": "sequential-current-session",
@@ -304,6 +531,36 @@ def _runtime_route(classification: dict[str, Any], runtime: dict[str, Any]) -> d
                 "config_evidence_sha256": None,
                 "config_evidence": None,
             }
+            if required_tier is not None:
+                if capability_class not in current_classes or not tier_satisfied(
+                    current_tiers
+                ):
+                    return {
+                        "execution_mode": "stop-for-human-gate",
+                        "runtime_mapping": "unresolved",
+                        "fallback": "human-gate",
+                        "degraded": True,
+                        "gate_reason": "coupled-work-requires-unavailable-sequential-execution",
+                        "selected_profile_digest": None,
+                        "config_evidence_sha256": None,
+                        "config_evidence": None,
+                    }
+                selected_tier = selected_evidence_tier(current_tiers)
+                fallback_evidence = fallback_capability_evidence(
+                    "current-session", current_classes, current_tiers
+                )
+                route.update(
+                    {
+                        "required_capability_tier": required_tier,
+                        "selected_capability_tier": selected_tier,
+                        "cost_degraded": selected_tier != required_tier,
+                        "fallback_capability_evidence": fallback_evidence,
+                        "fallback_capability_evidence_sha256": _digest(
+                            fallback_evidence
+                        ),
+                    }
+                )
+            return route
         return {
             "execution_mode": "stop-for-human-gate",
             "runtime_mapping": "unresolved",
@@ -315,34 +572,57 @@ def _runtime_route(classification: dict[str, Any], runtime: dict[str, Any]) -> d
             "config_evidence": None,
         }
     candidates = sorted(
-        (profile for profile in profiles if _valid_profile(profile, capability_class)),
-        key=lambda profile: profile["name"],
+        (
+            profile
+            for profile in profiles
+            if _valid_profile(profile, capability_class, required_tier)
+        ),
+        key=lambda profile: (
+            TIER_RANK.get(profile.get("capability_tier"), -1),
+            profile["name"],
+        ),
     )
     custom_agents = runtime.get("custom_agents_available")
     if custom_agents is True and candidates:
         profile = candidates[0]
-        config_evidence = _profile_config_evidence(profile)
-        return {
+        config_evidence = _profile_config_evidence(
+            profile, include_tier=required_tier is not None
+        )
+        route = {
             "execution_mode": "custom-agent-profile",
             "runtime_mapping": profile["name"],
-            "fallback": "none",
+            "fallback": (
+                "same-class-higher-tier"
+                if required_tier is not None
+                and profile["capability_tier"] != required_tier
+                else "none"
+            ),
             "degraded": False,
             "routing_constraint": f"{independence}-work-allows-delegation",
             "selected_profile_digest": profile["profile_digest"],
             "config_evidence_sha256": _digest(config_evidence),
             "config_evidence": config_evidence,
         }
+        if required_tier is not None:
+            route.update(
+                {
+                    "required_capability_tier": required_tier,
+                    "selected_capability_tier": profile["capability_tier"],
+                    "cost_degraded": profile["capability_tier"] != required_tier,
+                }
+            )
+        return route
 
-    parent_classes = runtime.get("parent_capability_classes", [])
-    current_classes = runtime.get("current_session_capability_classes", [])
-    for value, label in ((parent_classes, "parent capability classes"), (current_classes, "current session capability classes")):
-        if not isinstance(value, list) or any(item not in CAPABILITY_CLASSES for item in value):
-            raise AgentRoutingContractError(f"{label} must be an array of known classes")
     high_risk = capability_class in HIGH_RISK_CLASSES
     if runtime.get("parent_default_available") is True and (
-        not high_risk or capability_class in parent_classes
+        (
+            capability_class in parent_classes
+            if required_tier is not None
+            else (not high_risk or capability_class in parent_classes)
+        )
+        and tier_satisfied(parent_tiers)
     ):
-        return {
+        route = {
             "execution_mode": "parent-default",
             "runtime_mapping": "parent/default",
             "fallback": "parent-default",
@@ -352,10 +632,22 @@ def _runtime_route(classification: dict[str, Any], runtime: dict[str, Any]) -> d
             "config_evidence_sha256": None,
             "config_evidence": None,
         }
+        if required_tier is not None:
+            selected_tier = selected_evidence_tier(parent_tiers)
+            fallback_evidence = fallback_capability_evidence(
+                "parent-default", parent_classes, parent_tiers
+            )
+            route.update({"required_capability_tier": required_tier, "selected_capability_tier": selected_tier, "cost_degraded": selected_tier != required_tier, "fallback_capability_evidence": fallback_evidence, "fallback_capability_evidence_sha256": _digest(fallback_evidence)})
+        return route
     if runtime.get("sequential_available", True) is True and (
-        not high_risk or capability_class in current_classes
+        (
+            capability_class in current_classes
+            if required_tier is not None
+            else (not high_risk or capability_class in current_classes)
+        )
+        and tier_satisfied(current_tiers)
     ):
-        return {
+        route = {
             "execution_mode": "sequential-current-session",
             "runtime_mapping": "current-session",
             "fallback": "sequential-current-session",
@@ -365,6 +657,13 @@ def _runtime_route(classification: dict[str, Any], runtime: dict[str, Any]) -> d
             "config_evidence_sha256": None,
             "config_evidence": None,
         }
+        if required_tier is not None:
+            selected_tier = selected_evidence_tier(current_tiers)
+            fallback_evidence = fallback_capability_evidence(
+                "current-session", current_classes, current_tiers
+            )
+            route.update({"required_capability_tier": required_tier, "selected_capability_tier": selected_tier, "cost_degraded": selected_tier != required_tier, "fallback_capability_evidence": fallback_evidence, "fallback_capability_evidence_sha256": _digest(fallback_evidence)})
+        return route
     return {
         "execution_mode": "stop-for-human-gate",
         "runtime_mapping": "unresolved",
@@ -386,6 +685,8 @@ def build_route_receipt(
     ownership: dict[str, Any],
     source_revision: dict[str, Any],
     authority_contract: dict[str, Any],
+    contract_version: int = 1,
+    workload_kind: str | None = None,
 ) -> dict[str, Any]:
     """Build auditable routing evidence without granting any authority."""
     if not isinstance(task_id, str) or not task_id:
@@ -399,10 +700,12 @@ def build_route_receipt(
     authority_contract = _require_object(authority_contract, "authority contract")
     if ownership.get("disjoint") is not True or not ownership.get("owner"):
         raise AgentRoutingContractError("routing requires explicit disjoint ownership")
-    classification = classify_task(factors)
+    classification = classify_task(
+        factors, contract_version=contract_version, workload_kind=workload_kind
+    )
     route = _runtime_route(classification, runtime)
     body = {
-        "contract_version": 1,
+        "contract_version": contract_version,
         "task_id": task_id,
         "classification": classification,
         "selected_role": classification["selected_role"],
@@ -444,12 +747,32 @@ def validate_route_receipt(route_receipt: dict[str, Any]) -> dict[str, Any]:
     if invariants != required_invariants:
         issues.append("authority-invariants-missing-or-modified")
     classification = route_receipt.get("classification")
+    canonical_classification: dict[str, Any] | None = None
     try:
-        if not isinstance(classification, dict) or classify_task(classification.get("factors")) != classification:
+        contract_version = route_receipt.get("contract_version")
+        workload_kind = (
+            classification.get("workload_kind")
+            if isinstance(classification, dict)
+            else None
+        )
+        if not isinstance(classification, dict):
             issues.append("classification-semantic-mismatch")
+        else:
+            rebuilt = classify_task(
+                classification.get("factors"),
+                contract_version=contract_version,
+                workload_kind=workload_kind,
+            )
+            if rebuilt != classification:
+                issues.append("classification-semantic-mismatch")
+            else:
+                canonical_classification = rebuilt
     except AgentRoutingContractError:
         issues.append("classification-semantic-mismatch")
-    if isinstance(classification, dict) and route_receipt.get("selected_role") != classification.get("selected_role"):
+    trusted_classification = canonical_classification or {}
+    if canonical_classification is not None and route_receipt.get(
+        "selected_role"
+    ) != trusted_classification.get("selected_role"):
         issues.append("selected-role-semantic-mismatch")
     assigned_scope = route_receipt.get("assigned_scope")
     if not isinstance(assigned_scope, list) or route_receipt.get("assigned_scope_sha256") != _digest(assigned_scope):
@@ -462,16 +785,53 @@ def validate_route_receipt(route_receipt: dict[str, Any]) -> dict[str, Any]:
     evidence = route_receipt.get("config_evidence")
     execution_mode = route_receipt.get("execution_mode")
     routing_constraint = route_receipt.get("routing_constraint")
-    independence = (classification.get("factors") or {}).get("independence_parallelizability") if isinstance(classification, dict) else None
+    independence = (trusted_classification.get("factors") or {}).get(
+        "independence_parallelizability"
+    )
     delegation_constraint = f"{independence}-work-allows-delegation"
+    is_v2 = route_receipt.get("contract_version") == 2
+    tier_contract = (
+        not is_v2
+        or (
+            canonical_classification is not None
+            and isinstance(
+                trusted_classification.get("capability_tier"), str
+            )
+            and trusted_classification.get("capability_tier") in TIER_RANK
+            and route_receipt.get("required_capability_tier")
+            == trusted_classification.get("capability_tier")
+            and isinstance(
+                route_receipt.get("selected_capability_tier"), str
+            )
+            and route_receipt.get("selected_capability_tier") in TIER_RANK
+            and TIER_RANK[route_receipt["selected_capability_tier"]]
+            >= TIER_RANK[trusted_classification["capability_tier"]]
+            and isinstance(route_receipt.get("cost_degraded"), bool)
+            and route_receipt.get("cost_degraded")
+            == (
+                route_receipt.get("selected_capability_tier")
+                != trusted_classification.get("capability_tier")
+            )
+        )
+    )
     mode_contracts = {
         "custom-agent-profile": (
-            route_receipt.get("fallback") == "none"
+            isinstance(route_receipt.get("fallback"), str)
+            and route_receipt.get("fallback")
+            in ({"none", "same-class-higher-tier"} if is_v2 else {"none"})
             and route_receipt.get("degraded") is False
             and isinstance(route_receipt.get("runtime_mapping"), str)
             and independence in {"bounded", "independent"}
             and routing_constraint == delegation_constraint
             and "gate_reason" not in route_receipt
+            and tier_contract
+            and (
+                not is_v2
+                or (
+                    route_receipt.get("fallback") == "same-class-higher-tier"
+                )
+                == route_receipt.get("cost_degraded")
+            )
         ),
         "parent-default": (
             route_receipt.get("runtime_mapping") == "parent/default"
@@ -480,6 +840,7 @@ def validate_route_receipt(route_receipt: dict[str, Any]) -> dict[str, Any]:
             and independence in {"bounded", "independent"}
             and routing_constraint == delegation_constraint
             and "gate_reason" not in route_receipt
+            and tier_contract
         ),
         "sequential-current-session": (
             route_receipt.get("runtime_mapping") == "current-session"
@@ -489,11 +850,13 @@ def validate_route_receipt(route_receipt: dict[str, Any]) -> dict[str, Any]:
                 or (independence in {"bounded", "independent"} and route_receipt.get("degraded") is True and routing_constraint == "runtime-capability-degraded-to-sequential")
             )
             and "gate_reason" not in route_receipt
+            and tier_contract
         ),
         "stop-for-human-gate": (
             route_receipt.get("runtime_mapping") == "unresolved"
             and route_receipt.get("fallback") == "human-gate"
             and route_receipt.get("degraded") is True
+            and isinstance(route_receipt.get("gate_reason"), str)
             and route_receipt.get("gate_reason") in {
                 "required-capability-unavailable",
                 "coupled-work-requires-unavailable-sequential-execution",
@@ -505,7 +868,61 @@ def validate_route_receipt(route_receipt: dict[str, Any]) -> dict[str, Any]:
             and routing_constraint is None
         ),
     }
-    if mode_contracts.get(execution_mode) is not True:
+    fallback_capability_evidence = route_receipt.get(
+        "fallback_capability_evidence"
+    )
+    fallback_capability_evidence_sha256 = route_receipt.get(
+        "fallback_capability_evidence_sha256"
+    )
+    if is_v2 and isinstance(execution_mode, str) and execution_mode in {
+        "parent-default",
+        "sequential-current-session",
+    }:
+        expected_source = (
+            "parent-default"
+            if execution_mode == "parent-default"
+            else "current-session"
+        )
+        if (
+            not isinstance(fallback_capability_evidence, dict)
+            or set(fallback_capability_evidence)
+            != {
+                "source",
+                "capability_class",
+                "capability_classes",
+                "class_membership_confirmed",
+                "capability_tiers",
+                "selected_capability_tier",
+            }
+            or fallback_capability_evidence.get("source") != expected_source
+            or fallback_capability_evidence.get("capability_class")
+            != trusted_classification.get("capability_class")
+            or not isinstance(
+                fallback_capability_evidence.get("capability_classes"), list
+            )
+            or trusted_classification.get("capability_class")
+            not in fallback_capability_evidence.get("capability_classes", [])
+            or fallback_capability_evidence.get("class_membership_confirmed")
+            is not True
+            or not isinstance(
+                fallback_capability_evidence.get("capability_tiers"), list
+            )
+            or fallback_capability_evidence.get("selected_capability_tier")
+            != route_receipt.get("selected_capability_tier")
+            or route_receipt.get("selected_capability_tier")
+            not in fallback_capability_evidence.get("capability_tiers", [])
+            or fallback_capability_evidence_sha256
+            != _digest(fallback_capability_evidence)
+        ):
+            issues.append("fallback-capability-evidence-mismatch")
+    elif (
+        fallback_capability_evidence is not None
+        or fallback_capability_evidence_sha256 is not None
+    ):
+        issues.append("unexpected-fallback-capability-evidence")
+    if not isinstance(execution_mode, str) or mode_contracts.get(
+        execution_mode
+    ) is not True:
         issues.append("execution-mode-semantic-mismatch")
     if execution_mode == "custom-agent-profile" and profile_digest is None:
         issues.append("custom-profile-evidence-missing")
@@ -521,15 +938,30 @@ def validate_route_receipt(route_receipt: dict[str, Any]) -> dict[str, Any]:
         or evidence.get("config_valid") is not True
         or evidence.get("model_available") is not True
         or evidence.get("reasoning_available") is not True
-        or evidence.get("capability_class")
-        != (route_receipt.get("classification") or {}).get("capability_class")
+        or not isinstance(evidence.get("capability_class"), str)
+        or evidence.get("capability_class") != trusted_classification.get(
+            "capability_class"
+        )
         or evidence.get("sandbox")
         != CLASS_SANDBOX.get(evidence.get("capability_class"))
         or evidence.get("sandbox_non_widening") is not True
         or not _sandbox_is_non_widening(evidence)
         or not isinstance(evidence.get("allowed_workflow_scope"), list)
+        or any(
+            not isinstance(item, str)
+            for item in evidence.get("allowed_workflow_scope", [])
+        )
         or set(evidence.get("allowed_workflow_scope") or [])
         != CLASS_WORKFLOW_SCOPE.get(evidence.get("capability_class"))
+        or (
+            is_v2
+            and (
+                evidence.get("capability_tier")
+                != route_receipt.get("selected_capability_tier")
+                or not isinstance(evidence.get("capability_tier"), str)
+                or evidence.get("capability_tier") not in TIER_RANK
+            )
+        )
         or evidence_sha256 != _digest(evidence)
     ):
         issues.append("profile-config-evidence-mismatch")

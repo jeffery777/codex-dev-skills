@@ -393,8 +393,9 @@ def command_agent_route(
     task = payload.get("task")
     assignment = payload.get("assignment")
     preflight_input = payload.get("profile_preflight")
-    if payload.get("contract_version") != 1:
-        render({"status": "rejected", "errors": ["agent route contract_version must be 1"]})
+    contract_version = payload.get("contract_version")
+    if type(contract_version) is not int or contract_version not in {1, 2}:
+        render({"status": "rejected", "errors": ["agent route contract_version must be 1 or 2"]})
         return 1
     if not isinstance(task, dict) or not isinstance(assignment, dict) or not isinstance(preflight_input, dict):
         render(
@@ -406,7 +407,13 @@ def command_agent_route(
         return 1
     contract_shapes = (
         (payload, {"contract_version", "task", "profile_preflight", "assignment"}, "agent route"),
-        (task, {"id", "factors"}, "agent route task"),
+        (
+            task,
+            {"id", "factors"}
+            if contract_version == 1
+            else {"id", "factors", "workload_kind"},
+            "agent route task",
+        ),
         (
             preflight_input,
             {"profile_dir", "registry", "role", "agent_roots", "destination_root"},
@@ -435,7 +442,11 @@ def command_agent_route(
         return candidate if candidate.is_absolute() else (path.parent / candidate).resolve()
 
     try:
-        agent_routing.validate_task_factors(task.get("factors"))
+        classification = agent_routing.classify_task(
+            task.get("factors"),
+            contract_version=contract_version,
+            workload_kind=task.get("workload_kind"),
+        )
         source_revision = assignment.get("source_revision")
         if not isinstance(source_revision, dict) or set(source_revision) != {
             "branch",
@@ -467,15 +478,13 @@ def command_agent_route(
         _, entries = profile_preflight.validate(profile_dir, registry_path)
         if role not in entries:
             raise profile_preflight.ProfileValidationError(f"unknown role: {role}")
+        if contract_version == 2 and role != classification["selected_role"]:
+            raise profile_preflight.ProfileValidationError(
+                "version 2 role must match the deterministic cost-aware classification: "
+                + classification["selected_role"]
+            )
         facts = profile_preflight.runtime_facts(runtime_facts_path)
         collision_report = profile_preflight.detect_collisions(profile_dir, roots, destination)
-        preflight_result = profile_preflight.preflight(entries[role], facts, collision_report)
-        if preflight_result["decision"] == "human-gate":
-            render({"status": "human-gate", "profile_preflight": preflight_result})
-            return 2
-        evidence = preflight_result.get("route_profile_evidence")
-        if evidence is None and preflight_result.get("fallback_tier") == "same-capability-profile":
-            evidence = preflight_result.get("fallback_evidence")
         def destination_matches(candidate: dict[str, Any]) -> bool:
             if not destination.is_dir():
                 return False
@@ -493,13 +502,64 @@ def command_agent_route(
                 ):
                     return True
             return False
+        preflight_result = profile_preflight.preflight(
+            entries[role],
+            facts,
+            collision_report,
+            enforce_tier=contract_version == 2,
+            trusted_profiles=entries,
+        )
+        evidence = preflight_result.get("route_profile_evidence")
+        if evidence is None and preflight_result.get("fallback_tier") == "same-capability-profile":
+            evidence = preflight_result.get("fallback_evidence")
+        if contract_version == 2 and not isinstance(evidence, dict):
+            required = entries[role]
+            alternatives = sorted(
+                (
+                    entry
+                    for name, entry in entries.items()
+                    if name != role
+                    and entry["capability_class"] == required["capability_class"]
+                    and entry["tier_rank"] >= required["tier_rank"]
+                ),
+                key=lambda entry: (entry["tier_rank"], entry["name"]),
+            )
+            for candidate_entry in alternatives:
+                candidate_result = profile_preflight.preflight(
+                    candidate_entry,
+                    facts,
+                    collision_report,
+                    enforce_tier=True,
+                    trusted_profiles=entries,
+                )
+                candidate_evidence = candidate_result.get("route_profile_evidence")
+                if (
+                    candidate_result.get("decision") == "ready"
+                    and isinstance(candidate_evidence, dict)
+                    and destination_matches(candidate_evidence)
+                ):
+                    preflight_result = {
+                        **candidate_result,
+                        "requested_profile": role,
+                        "fallback_tier": "same-capability-profile",
+                        "cost_degraded": True,
+                    }
+                    evidence = candidate_evidence
+                    break
+        if preflight_result["decision"] == "human-gate":
+            render({"status": "human-gate", "profile_preflight": preflight_result})
+            return 2
         if isinstance(evidence, dict) and not destination_matches(evidence):
             degraded_facts = copy.deepcopy(facts)
             degraded_facts["available_models"] = []
             degraded_facts["reasoning_efforts"] = {}
             degraded_facts["compatible_profiles"] = {}
             preflight_result = profile_preflight.preflight(
-                entries[role], degraded_facts, collision_report
+                entries[role],
+                degraded_facts,
+                collision_report,
+                enforce_tier=contract_version == 2,
+                trusted_profiles=entries,
             )
             evidence = None
             facts = degraded_facts
@@ -513,8 +573,10 @@ def command_agent_route(
             "profiles": [evidence] if isinstance(evidence, dict) else [],
             "parent_default_available": parent.get("available") is True,
             "parent_capability_classes": parent.get("capability_classes", []),
+            "parent_capability_tiers": parent.get("capability_tiers", {}),
             "sequential_available": sequential.get("available", True) is True,
             "current_session_capability_classes": sequential.get("capability_classes", []),
+            "current_session_capability_tiers": sequential.get("capability_tiers", {}),
         }
         receipt = loop_core.evaluate_agent_route(
             task_id=task.get("id"),
@@ -524,6 +586,8 @@ def command_agent_route(
             ownership=assignment.get("ownership"),
             source_revision=assignment.get("source_revision"),
             authority_contract=assignment.get("authority_contract"),
+            contract_version=contract_version,
+            workload_kind=task.get("workload_kind"),
         )
     except (
         loop_core.LoopContractError,
