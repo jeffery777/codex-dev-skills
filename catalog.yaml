@@ -102,7 +102,10 @@ groups:
     runtime: shared
     depends_on: [codex-delivery-workflow]
     agent_profiles:
+      - source: agent-profiles/loop_v2a_mechanical_reader.toml
       - source: agent-profiles/loop_v2a_fast_explorer.toml
       - source: agent-profiles/loop_v2a_balanced_worker.toml
+      - source: agent-profiles/loop_v2a_advanced_worker.toml
       - source: agent-profiles/loop_v2a_deep_reviewer.toml
+      - source: agent-profiles/loop_v2a_exceptional_researcher.toml
       - source: agent-profiles/loop_v2a_security_reviewer.toml

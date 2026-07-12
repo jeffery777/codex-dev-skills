@@ -107,6 +107,14 @@ neither role nor model choice grants workflow mutation authority, external
 actions, broader assigned scope, gate satisfaction, or completion. Active
 parent permission controls and managed requirements continue to apply.
 
+Cost-aware route contract version 2 keeps capability class separate from
+capability tier. Class continues to bind sandbox and workflow scope; tier
+records the minimum model/reasoning need. The ordered tiers are `mechanical`,
+`efficient`, `everyday`, `advanced`, `deep`, and `exceptional`. Selection uses
+registry tier rank rather than profile filename order and may choose a higher
+tier only as an explicit cost-degraded same-class fallback. Parent/default and
+sequential fallbacks require current-session evidence for both class and tier.
+
 General project configuration has higher documented precedence than user
 configuration, but the public custom-agent page does not currently define every
 same-name standalone-file collision. V2a therefore namespaces its roles,
@@ -230,9 +238,10 @@ or prepares a durable continuation prompt or task brief. It preserves the same
 source-of-truth, authority, verification, review, and completion rules. A
 missing optional runtime capability changes execution mode, not task semantics.
 
-For V2a profile routing, attempt a same-class profile, a safe parent/default
-mapping, and current-session sequential execution before stopping. Stop at a
-human gate when the requested risk class cannot be preserved safely.
+For V2a profile routing, attempt the lowest sufficient same-class profile, a
+parent/default mapping with explicit class/tier evidence, and current-session
+sequential execution with the same evidence before stopping. Stop at a human
+gate when the requested risk class or tier cannot be preserved safely.
 
 ## Legacy Desktop Wrapper Boundary
 

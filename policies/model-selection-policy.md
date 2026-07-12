@@ -38,6 +38,20 @@ route must explain which factors selected the class and preserve the requested
 scope, mutation authority, external-write authority, human gates, and
 completion criteria unchanged.
 
+Route contract version 2 keeps those workflow classes stable and adds a
+separate ordered capability tier: `mechanical`, `efficient`, `everyday`,
+`advanced`, `deep`, and `exceptional`. The class owns sandbox and allowed work;
+the tier owns the minimum model/reasoning requirement. Use an explicit workload
+kind instead of inferring mechanical, exploration, implementation, review,
+security-review, or research/orchestration work from a task title.
+
+Select the lowest verified profile in the required class whose tier meets or
+exceeds the requirement. A higher tier is a recorded cost-degraded fallback;
+a lower tier cannot silently satisfy a higher-tier route. Reserve
+`exceptional` for explicit quality-first research or orchestration with
+multiple documented triggers. Do not create default Luna high/xhigh or Terra
+xhigh routes without representative eval evidence.
+
 ## Runtime Mapping And Fallback
 
 Custom-agent roles and concrete model/reasoning mappings are runtime profiles,
@@ -48,9 +62,9 @@ profile that is not intrinsically read-only, and reject a mapping that would
 widen that sandbox. This technical check is separate from workflow write
 authorization. Degrade in this order:
 
-1. another available profile in the same capability class;
-2. the parent or default model when it can satisfy the class safely;
-3. sequential execution in the current session with the same workflow contract;
+1. the lowest-cost available profile in the same class whose tier is sufficient;
+2. the parent or default model when current facts prove the class and tier;
+3. sequential execution when current facts prove the class and tier;
 4. a human gate when high-risk work cannot degrade safely.
 
 Unknown availability is not completion evidence and a recoverable mismatch does

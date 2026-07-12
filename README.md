@@ -78,11 +78,13 @@ Omit unknown model fields instead of guessing:
   "compatible_profiles": {},
   "parent_default": {
     "available": true,
-    "capability_classes": ["balanced-worker"]
+    "capability_classes": ["balanced-worker"],
+    "capability_tiers": {"balanced-worker": ["everyday"]}
   },
   "sequential": {
     "available": true,
-    "capability_classes": ["balanced-worker"]
+    "capability_classes": ["balanced-worker"],
+    "capability_tiers": {"balanced-worker": ["everyday"]}
   }
 }
 ```
@@ -92,6 +94,9 @@ runtime/configuration. A `workspace-write` worker profile is usable only when
 the parent sandbox is at least `workspace-write`; otherwise routing falls back
 without activating that profile. Read-only profiles cannot widen the supported
 profile sandbox and may remain usable when the parent value is unknown.
+Version 2 parent/default and sequential fallbacks require both
+`capability_classes` and `capability_tiers`; version 1 route inputs retain their
+legacy fallback interpretation.
 
 Preflight each role before installation. Scan both the destination root and the
 other applicable configuration layer so an alias filename with the same agent
@@ -123,7 +128,7 @@ CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES \
 The collision preflight checks TOML `name` identities across those roots. For
 install and update, the installer first validates the repository profile
 sources against the canonical installed-skill registry, then preflights all
-four profile destinations before changing any dependency skill, template, or
+seven profile destinations before changing any dependency skill, template, or
 profile. Dependency installation retains the existing installer sync behavior;
 the all-profile preflight prevents a profile collision from causing a partial
 expanded-group update. It also protects profile paths from overwrite, symlink
@@ -148,7 +153,7 @@ python3 ~/.codex/skills/loop-engineering/scripts/profile_preflight.py preflight 
 When `CODEX_DEV_SKILLS_TARGET=agents` selected the alternative skill root,
 replace `~/.codex/skills` above with `~/.agents/skills`. A non-empty
 `compatible_profiles` runtime fact must contain structured validated evidence
-(`name`, absolute regular TOML path, capability class,
+(`name`, absolute regular TOML path, capability class and tier,
 config/model/reasoning booleans, expected sandbox,
 allowed workflow scope, and profile digest),
 not a bare profile name. Preflight exits `0` for `ready` or `fallback-safe`, `2` for a required
@@ -189,6 +194,15 @@ sequential fallback rather than a selected custom profile. Integration rejects
 same-commit branch switches, stale Git revisions, missing or symlinked files,
 worker and verification digest mismatches, alternate profiles, and
 self-attested current-state fields in the receipt document.
+
+Route contract version 2 preserves the four workflow capability classes and
+adds ordered cost-aware tiers: Luna low for mechanical read-only work, Terra
+low for exploration, Terra medium for routine implementation, Sol medium for
+advanced bounded implementation, Sol high for deep/security review, and Sol
+xhigh for narrowly selected exceptional research. Exact model and reasoning
+availability remains current-session runtime evidence. Selection uses the
+lowest sufficient same-class tier, never alphabetical profile order, and never
+allows a lower tier to satisfy a higher-tier route silently.
 
 Rollback user-level adoption only after reviewing local differences:
 

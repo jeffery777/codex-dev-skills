@@ -32,12 +32,15 @@ class AgentProfileValidationTests(unittest.TestCase):
     def test_repo_profiles_and_registry_are_valid_and_exact(self) -> None:
         registry, entries = VALIDATOR.validate(PROFILE_DIR, REGISTRY)
 
-        self.assertEqual(1, registry["schema_version"])
+        self.assertEqual(2, registry["schema_version"])
         self.assertEqual(
             {
                 "loop_v2a_fast_explorer",
+                "loop_v2a_mechanical_reader",
                 "loop_v2a_balanced_worker",
+                "loop_v2a_advanced_worker",
                 "loop_v2a_deep_reviewer",
+                "loop_v2a_exceptional_researcher",
                 "loop_v2a_security_reviewer",
             },
             set(entries),
@@ -55,6 +58,10 @@ class AgentProfileValidationTests(unittest.TestCase):
                 self.assertEqual("runtime-dependent", entry["runtime_mapping"]["availability"])
                 self.assertTrue(entry["runtime_mapping"]["replaceable"])
                 self.assertIn("last_verified", entry["runtime_mapping"])
+                self.assertEqual(
+                    VALIDATOR.TIER_RANK[entry["capability_tier"]],
+                    entry["tier_rank"],
+                )
                 self.assertNotIn("mcp_servers", profile)
                 self.assertNotIn("skills", profile)
 
@@ -68,6 +75,28 @@ class AgentProfileValidationTests(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual("valid", json.loads(result.stdout)["status"])
+
+    def test_runtime_facts_reject_non_string_enum_shapes(self) -> None:
+        malformed_facts = (
+            {"custom_agent_surface": []},
+            {"parent_sandbox_mode": {}},
+            {"available_models": [[]]},
+            {"reasoning_efforts": {"gpt-5.6-sol": [[]]}},
+            {
+                "parent_default": {
+                    "available": True,
+                    "capability_classes": ["balanced-worker"],
+                    "capability_tiers": {"balanced-worker": [[]]},
+                }
+            },
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            path = pathlib.Path(temporary) / "facts.json"
+            for facts in malformed_facts:
+                with self.subTest(facts=facts):
+                    path.write_text(json.dumps(facts), encoding="utf-8")
+                    with self.assertRaises(VALIDATOR.ProfileValidationError):
+                        VALIDATOR.runtime_facts(path)
 
     def test_unknown_profile_key_and_unsafe_sandbox_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -123,7 +152,7 @@ class AgentProfileValidationTests(unittest.TestCase):
             shutil.copytree(PROFILE_DIR, destination)
             report = VALIDATOR.detect_collisions(PROFILE_DIR, [destination], destination)
             self.assertEqual([], report["conflicts"])
-            self.assertEqual(4, len(report["expected_instances"]))
+            self.assertEqual(7, len(report["expected_instances"]))
 
     def test_destination_modified_instance_and_cross_root_match_are_conflicts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -203,7 +232,7 @@ class AgentProfileValidationTests(unittest.TestCase):
                 encoding="utf-8",
             )
             _, entries = VALIDATOR.validate(destination, REGISTRY)
-            self.assertEqual(4, len(entries))
+            self.assertEqual(7, len(entries))
             changed = destination / "loop_v2a_balanced_worker.toml"
             changed.write_text(
                 changed.read_text(encoding="utf-8").replace(
@@ -224,13 +253,26 @@ class AgentProfilePreflightTests(unittest.TestCase):
         _, cls.entries = VALIDATOR.validate(PROFILE_DIR, REGISTRY)
 
     def check(self, role: str, facts: dict[str, object], collisions=None):
-        return VALIDATOR.preflight(self.entries[role], facts, collisions or [])
+        return VALIDATOR.preflight(
+            self.entries[role],
+            facts,
+            collisions or [],
+            trusted_profiles=self.entries,
+        )
 
     def ready_facts(self, model: str, effort: str) -> dict[str, object]:
         return {
             "custom_agent_surface": "available",
             "available_models": [model],
             "reasoning_efforts": {model: [effort]},
+        }
+
+    @staticmethod
+    def capability_evidence(capability_class: str, tier: str, *, available=True):
+        return {
+            "available": available,
+            "capability_classes": [capability_class],
+            "capability_tiers": {capability_class: [tier]},
         }
 
     def test_ready_when_profile_mapping_is_available(self) -> None:
@@ -243,9 +285,9 @@ class AgentProfilePreflightTests(unittest.TestCase):
         role = "loop_v2a_balanced_worker"
         base = {
             "custom_agent_surface": "available",
-            "available_models": ["gpt-5.6-sol"],
-            "reasoning_efforts": {"gpt-5.6-sol": ["medium"]},
-            "parent_default": {"available": True},
+            "available_models": ["gpt-5.6-terra"],
+            "reasoning_efforts": {"gpt-5.6-terra": ["medium"]},
+            "parent_default": self.capability_evidence("balanced-worker", "everyday"),
         }
         unknown = self.check(role, base)
         self.assertEqual("sandbox-constraint-unknown-or-widening", unknown["state"])
@@ -267,6 +309,7 @@ class AgentProfilePreflightTests(unittest.TestCase):
                 "parent_default": {
                     "available": True,
                     "capability_classes": ["balanced-worker"],
+                    "capability_tiers": {"balanced-worker": ["everyday"]},
                 },
             },
         )
@@ -277,7 +320,12 @@ class AgentProfilePreflightTests(unittest.TestCase):
     def test_unknown_mapping_uses_parent_without_claiming_ready(self) -> None:
         result = self.check(
             "loop_v2a_balanced_worker",
-            {"custom_agent_surface": "available", "parent_default": {"available": True}},
+            {
+                "custom_agent_surface": "available",
+                "parent_default": self.capability_evidence(
+                    "balanced-worker", "everyday"
+                ),
+            },
         )
         self.assertEqual("unknown", result["state"])
         self.assertEqual("fallback-safe", result["decision"])
@@ -302,6 +350,7 @@ class AgentProfilePreflightTests(unittest.TestCase):
                     "name": name,
                     "profile_path": str(path),
                     "capability_class": "fast-read-explorer",
+                    "capability_tier": "efficient",
                     "config_valid": True,
                     "model_available": True,
                     "reasoning_available": True,
@@ -316,13 +365,31 @@ class AgentProfilePreflightTests(unittest.TestCase):
                     "available_models": ["runtime-fast"],
                     "reasoning_efforts": {"runtime-fast": ["low"]},
                     "compatible_profiles": {"fast-read-explorer": candidates},
-                    "parent_default": {"available": True},
+                    "parent_default": self.capability_evidence(
+                        "fast-read-explorer", "efficient"
+                    ),
                 },
             )
             self.assertEqual("unavailable", result["state"])
             self.assertEqual("fallback-safe", result["decision"])
-            self.assertEqual("same-capability-profile", result["fallback_tier"])
-            self.assertEqual("loop_v2a_fast_alt_1", result["selected"])
+            self.assertEqual("parent-default", result["fallback_tier"])
+            legacy = VALIDATOR.preflight(
+                self.entries["loop_v2a_fast_explorer"],
+                {
+                    "custom_agent_surface": "available",
+                    "available_models": ["runtime-fast"],
+                    "reasoning_efforts": {"runtime-fast": ["low"]},
+                    "compatible_profiles": {"fast-read-explorer": candidates},
+                    "parent_default": self.capability_evidence(
+                        "fast-read-explorer", "efficient"
+                    ),
+                },
+                [],
+                enforce_tier=False,
+                trusted_profiles=self.entries,
+            )
+            self.assertEqual("same-capability-profile", legacy["fallback_tier"])
+            self.assertEqual("loop_v2a_fast_alt_1", legacy["selected"])
             unavailable = self.check(
                 "loop_v2a_fast_explorer",
                 {
@@ -330,7 +397,9 @@ class AgentProfilePreflightTests(unittest.TestCase):
                     "available_models": [],
                     "reasoning_efforts": {},
                     "compatible_profiles": {"fast-read-explorer": candidates},
-                    "parent_default": {"available": True},
+                    "parent_default": self.capability_evidence(
+                        "fast-read-explorer", "efficient"
+                    ),
                 },
             )
             self.assertEqual("parent-default", unavailable["fallback_tier"])
@@ -341,7 +410,9 @@ class AgentProfilePreflightTests(unittest.TestCase):
             {
                 "custom_agent_surface": "unavailable",
                 "parent_default": {"available": False},
-                "sequential": {"available": True},
+                "sequential": self.capability_evidence(
+                    "balanced-worker", "everyday"
+                ),
             },
         )
         self.assertEqual("custom-surface-unavailable", result["state"])
@@ -357,6 +428,8 @@ class AgentProfilePreflightTests(unittest.TestCase):
                     "fast-read-explorer": [{
                         "name": "cannot_run_without_surface",
                         "capability_class": "fast-read-explorer",
+                        "capability_tier": "efficient",
+                        "profile_path": "/unusable-without-surface.toml",
                         "config_valid": True,
                         "model_available": True,
                         "reasoning_available": True,
@@ -365,7 +438,9 @@ class AgentProfilePreflightTests(unittest.TestCase):
                         "profile_digest": "a" * 64,
                     }]
                 },
-                "parent_default": {"available": True},
+                "parent_default": self.capability_evidence(
+                    "fast-read-explorer", "efficient"
+                ),
             },
         )
         self.assertEqual("parent-default", result["fallback_tier"])
@@ -408,6 +483,7 @@ class AgentProfilePreflightTests(unittest.TestCase):
             "parent_default": {
                 "available": True,
                 "capability_classes": ["deep-reviewer"],
+                "capability_tiers": {"deep-reviewer": ["deep"]},
             },
         }
         result = self.check(role, unavailable)
@@ -423,7 +499,9 @@ class AgentProfilePreflightTests(unittest.TestCase):
         self.assertEqual("human-gate", self.check("loop_v2a_security_reviewer", base)["decision"])
         compatible = {
             **base,
-            "parent_default": {"available": True, "capability_classes": ["security-reviewer"]},
+            "parent_default": self.capability_evidence(
+                "security-reviewer", "deep"
+            ),
         }
         result = self.check("loop_v2a_security_reviewer", compatible)
         self.assertEqual("fallback-safe", result["decision"])
@@ -431,7 +509,7 @@ class AgentProfilePreflightTests(unittest.TestCase):
         sequential = {
             **base,
             "parent_default": {"available": False},
-            "sequential": {"available": True, "capability_classes": ["security-reviewer"]},
+            "sequential": self.capability_evidence("security-reviewer", "deep"),
         }
         result = self.check("loop_v2a_security_reviewer", sequential)
         self.assertEqual("fallback-safe", result["decision"])
@@ -445,6 +523,19 @@ class AgentProfilePreflightTests(unittest.TestCase):
         )
         self.assertEqual(("human-gate", "human-gate"), (result["state"], result["decision"]))
         self.assertEqual("profile-name-collision", result["reason"])
+
+    def test_security_profile_is_defensive_and_local_first(self) -> None:
+        profile = VALIDATOR.load_profile(
+            PROFILE_DIR / "loop_v2a_security_reviewer.toml"
+        )
+        instructions = profile["developer_instructions"]
+        for phrase in (
+            "defensive, local-first validation",
+            "local fixtures",
+            "do not evade the classifier",
+            "do not edit, publish, interact with",
+        ):
+            self.assertIn(phrase, instructions)
 
 
 if __name__ == "__main__":

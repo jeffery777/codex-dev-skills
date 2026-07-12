@@ -28,6 +28,14 @@ PROXY = {
     "deep-reviewer": {"latency": 3, "token_cost": 3},
     "security-reviewer": {"latency": 3, "token_cost": 3},
 }
+TIER_PROXY = {
+    "mechanical": {"latency": 1, "token_cost": 1},
+    "efficient": {"latency": 2, "token_cost": 2},
+    "everyday": {"latency": 3, "token_cost": 3},
+    "advanced": {"latency": 4, "token_cost": 4},
+    "deep": {"latency": 5, "token_cost": 5},
+    "exceptional": {"latency": 6, "token_cost": 6},
+}
 
 
 class EvalError(ValueError):
@@ -105,6 +113,8 @@ def _build(router, case: dict[str, Any]) -> dict[str, Any]:
             )
     return router.build_route_receipt(
         task_id=case["id"], factors=case["factors"], runtime=runtime,
+        contract_version=case.get("contract_version", 1),
+        workload_kind=case.get("workload_kind"),
         assigned_scope=["bounded/example.py"],
         ownership={"owner": "eval-worker", "disjoint": True},
         source_revision={"head_sha": "eval-source"},
@@ -130,6 +140,11 @@ def evaluate(path: pathlib.Path = DEFAULT_SUITE) -> dict[str, Any]:
             "mode": receipt["execution_mode"],
             "mapping": receipt["runtime_mapping"],
         }
+        if "capability_tier" in receipt["classification"]:
+            actual["tier"] = receipt["classification"]["capability_tier"]
+            actual["selected_tier"] = receipt.get("selected_capability_tier")
+            actual["fallback"] = receipt["fallback"]
+            actual["cost_degraded"] = receipt.get("cost_degraded")
         worker_valid = None
         false_completion = "complete" in receipt
         if worker := case.get("worker"):
@@ -185,8 +200,14 @@ def evaluate(path: pathlib.Path = DEFAULT_SUITE) -> dict[str, Any]:
             "profiles": [],
             "parent_default_available": True,
             "parent_capability_classes": [capability_class],
+            "parent_capability_tiers": {
+                capability_class: [receipt["classification"]["capability_tier"]]
+            } if "capability_tier" in receipt["classification"] else {},
             "sequential_available": True,
             "current_session_capability_classes": [capability_class],
+            "current_session_capability_tiers": {
+                capability_class: [receipt["classification"]["capability_tier"]]
+            } if "capability_tier" in receipt["classification"] else {},
         }
         authority_probe = _build(router, authority_probe_case)
         authority_invariant = (
@@ -203,7 +224,11 @@ def evaluate(path: pathlib.Path = DEFAULT_SUITE) -> dict[str, Any]:
             "expected": expected, "actual": actual, "mismatches": mismatches,
             "evidence_complete": evidence_complete, "deterministic": deterministic,
             "authority_invariant": authority_invariant, "false_completion": false_completion,
-            "latency_cost_proxy": PROXY[actual["class"]],
+            "latency_cost_proxy": (
+                TIER_PROXY[actual["selected_tier"] or actual["tier"]]
+                if "tier" in actual
+                else PROXY[actual["class"]]
+            ),
         })
     total = len(reports)
     core = load_loop_core()

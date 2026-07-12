@@ -240,9 +240,12 @@ group_agent_profiles() {
   case "$1" in
     codex-agent-profiles)
       printf '%s\n' \
+        agent-profiles/loop_v2a_mechanical_reader.toml \
         agent-profiles/loop_v2a_fast_explorer.toml \
         agent-profiles/loop_v2a_balanced_worker.toml \
+        agent-profiles/loop_v2a_advanced_worker.toml \
         agent-profiles/loop_v2a_deep_reviewer.toml \
+        agent-profiles/loop_v2a_exceptional_researcher.toml \
         agent-profiles/loop_v2a_security_reviewer.toml ;;
   esac
 }

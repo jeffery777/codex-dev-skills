@@ -26,6 +26,10 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   the V1 authority model. The v0.6.1 compatibility patch from issue #89 aligns
   the deep-capability profile templates with the current Desktop-reported
   `gpt-5.6-sol` model ID while retaining exact-ID preflight and safe fallback.
+- Issue #93 extends V2a with a versioned cost-aware class/tier route: Luna low
+  for mechanical reads, Terra low/medium for exploration and routine work, Sol
+  medium/high for advanced and deep/security work, and a narrow Sol xhigh
+  exceptional tier. It preserves version 1 compatibility and V1/V2b authority.
 - Milestone continuation adds a shared upper-layer workflow for checking bounded milestone task state across repeated invocations, selecting the next ready task, routing through existing delivery and continuation workflows, and keeping runtime scheduling outside the skill.
 - Keep any later Desktop runtime wrapper slices behind separate review and human approval, especially before adding remediation, broader runtime thread-tool invocation, platform writes, or any other state-changing path.
 

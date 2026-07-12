@@ -41,12 +41,13 @@ The user-facing skill is `loop-engineering`. It is an entrypoint and router, not
 | Shared bounded subagent packets | `project-orchestrator` or `project-delivery` |
 | Desktop user-owned task/thread/worktree handoff | `desktop-project-delivery` or `desktop-thread-delegation` |
 
-For heterogeneous subagent work, classify the nine V2a task factors and choose
-among fast exploration, balanced implementation, deep review, and
-security/high-risk review. Record the selected class/role, runtime mapping,
-fallback, scope/ownership, worker receipt, and main-agent disposition. If no
-profile in the required class is usable, fall back to a safe parent/default
-mapping, then sequential execution; stop when the risk cannot safely degrade.
+For heterogeneous subagent work, version 1 retains the nine V2a factors.
+Version 2 adds an explicit workload kind and selects a capability class plus an
+ordered tier. Record the selected class/tier/role, runtime mapping, fallback,
+scope/ownership, worker receipt, and main-agent disposition. If the exact
+profile is unavailable, select the lowest sufficient higher-tier profile in the
+same class, then use parent/default or sequential execution only with explicit
+class/tier evidence; stop when the risk or tier cannot safely degrade.
 The current parent sandbox is part of preflight evidence: never activate a
 profile whose `sandbox_mode` would widen it. Technical sandbox capability does
 not grant workflow mutation authority.
