@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "vectors": [
+    {
+      "id": "ascii-keys-unicode-string-safe-integer",
+      "value": {
+        "z": [true, null, "é", 9007199254740991],
+        "a": {"safe-key": 0, "value": 100}
+      },
+      "canonical_json": "{\"a\":{\"safe-key\":0,\"value\":100},\"z\":[true,null,\"é\",9007199254740991]}",
+      "sha256": "a9d7bf0895b9f3b2827fb45c939569c85f1e1de227186ee7982ec1fd4b37e8a0"
+    }
+  ]
+}

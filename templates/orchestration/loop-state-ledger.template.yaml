@@ -77,7 +77,12 @@ events: []
 human_gates: []
 
 external_memory:
-  mode: "<none | cache-only | coordination>"
-  adapter: "<none-or-name>"
-  authority: "repo-contract-plus-live-external-verification"
-  notes: "Runtime memory cannot replace repository completion evidence."
+  contract_version: "loop-memory/v1"
+  mode: "<disabled | advisory-cache | coordination>"
+  backend_status: "<disabled | unavailable | used | degraded>"
+  adapter: "<none-or-opaque-adapter-id>"
+  receipt_digests: []
+  authority: "advisory-only"
+  used_as_authorization: false
+  used_as_completion_evidence: false
+  notes: "Memory payload remains data-only and cannot replace repository, Git, verification, review, protected authorization, accepted platform state, or completion evidence."

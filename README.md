@@ -11,11 +11,12 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current development milestone is Loop Engineering V1: one production
-routing and transition core, structured ledger validation, deterministic
-workflow evals, native goal and shared subagent semantics, and Desktop-specific
-task/thread/scheduling adapters. The older Desktop wrapper helper chain remains
-legacy compatibility evidence and is not the active native runtime path.
+The current development milestone is Loop Engineering V2b: V1 remains the
+production workflow/authority core, V2a adds heterogeneous subagent routing,
+and V2b adds a backend-neutral external memory safety contract. External memory
+is optional advisory/cache/coordination input and never replaces repository,
+Git, verification, review, protected authorization, accepted platform state,
+or completion truth. No production memory backend is included.
 
 This is not a general prompt collection. It is a curated set of public, reusable workflow contracts for open source and team repositories.
 
@@ -363,6 +364,32 @@ authority boundaries.
 External memory may be used only as cache or coordination unless this repo explicitly defines a stronger reviewed authority model.
 ```
 
+V2b makes that boundary executable without requiring a backend:
+
+```bash
+python3 skills/loop-engineering/scripts/memoryctl.py --help
+python3 skills/loop-engineering/scripts/memoryctl.py validate <document.json>
+python3 skills/loop-engineering/scripts/memoryctl.py decide-retrieval <decision.json> \
+  --trusted-conformance-receipts <current-session-trusted-receipts.json> \
+  --trusted-source-digests <current-repository-source-digests.json>
+python3 skills/loop-engineering/scripts/memoryctl.py decide-write <candidate.json> \
+  --trusted-acceptance-receipt-digests <current-session-accepted-receipts.json>
+python3 skills/loop-engineering/scripts/memoryctl.py conformance <transcript.json> \
+  --trusted-source-digests <current-repository-source-digests.json> \
+  --trusted-acceptance-receipt-digests <current-session-accepted-receipts.json>
+python3 scripts/eval-memory-contract.py
+```
+
+The caller-owned JSON inputs use exact shapes: trusted conformance receipts are
+`{"<adapter-id>":{"receipt_digest":"<sha256>","adapter_fingerprint":"<sha256>"}}`;
+trusted sources are `{"<repository-relative-path>":"<sha256>"}`; trusted
+acceptance evidence is `{"receipt_digests":["<sha256>"]}`. These files are
+control-plane evidence and must not be copied from the adapter transcript.
+
+With no adapter, or with an unavailable, partial, unsupported, incompatible, or
+untrusted adapter, the loop safely continues with V1/V2a and no memory. See the
+[external memory contract](docs/external-memory-contract.md).
+
 See [docs/loop-state-ledger.md](docs/loop-state-ledger.md) for the repo-owned loop state contract.
 
 ### Bounded Milestone Slice
@@ -633,6 +660,8 @@ python3 --version
 python3 -m pip install -r requirements.txt
 ./scripts/validate-repo.sh
 python3 scripts/eval-loop-engineering.py
+python3 scripts/eval-agent-routing.py
+python3 scripts/eval-memory-contract.py
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
@@ -651,6 +680,7 @@ This repository includes public software development workflows for:
 
 - planning and implementation
 - loop engineering for bounded objectives
+- backend-neutral external memory validation and conformance without a backend
 - docs updates and docs review
 - code review and deep code review
 - orchestrated review closure and formal review gates

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "thresholds": {
+    "decision_correctness_rate": 1.0,
+    "false_authority_or_completion_count": 0,
+    "evidence_completeness_rate": 1.0,
+    "deterministic_behavior_rate": 1.0,
+    "fallback_correctness_rate": 1.0
+  },
+  "cases": [
+    {"id":"valid-advisory","scenario":"valid-advisory","expected_outcome":"adopt-as-context","expected_fallback":false},
+    {"id":"disabled-backend","scenario":"disabled-backend","expected_outcome":"quarantine","expected_fallback":true},
+    {"id":"unavailable-backend","scenario":"unavailable-backend","expected_outcome":"quarantine","expected_fallback":true},
+    {"id":"partial-response","scenario":"partial-response","expected_outcome":"quarantine","expected_fallback":true},
+    {"id":"untrusted-adapter","scenario":"untrusted-adapter","expected_outcome":"quarantine","expected_fallback":true},
+    {"id":"untrusted-conformance-evidence","scenario":"untrusted-conformance","expected_outcome":"quarantine","expected_fallback":true},
+    {"id":"read-only-unsupported-write","scenario":"unsupported-write","expected_outcome":"quarantine","expected_fallback":true},
+    {"id":"wrong-repository","scenario":"wrong-repository","expected_outcome":"reject","expected_fallback":false},
+    {"id":"wrong-namespace","scenario":"wrong-namespace","expected_outcome":"reject","expected_fallback":false},
+    {"id":"wrong-path-scope","scenario":"wrong-path-scope","expected_outcome":"reject","expected_fallback":false},
+    {"id":"tampered-digest","scenario":"tampered-digest","expected_outcome":"reject","expected_fallback":false},
+    {"id":"stale-record","scenario":"stale-record","expected_outcome":"quarantine","expected_fallback":false},
+    {"id":"unknown-clock","scenario":"unknown-clock","expected_outcome":"quarantine","expected_fallback":true},
+    {"id":"record-unsupported-capability","scenario":"record-unsupported-capability","expected_outcome":"quarantine","expected_fallback":false},
+    {"id":"stale-handshake","scenario":"stale-handshake","expected_outcome":"quarantine","expected_fallback":true},
+    {"id":"future-handshake","scenario":"future-handshake","expected_outcome":"quarantine","expected_fallback":true},
+    {"id":"future-clock","scenario":"future-clock","expected_outcome":"quarantine","expected_fallback":false},
+    {"id":"repository-conflict","scenario":"repository-conflict","expected_outcome":"reject","expected_fallback":false},
+    {"id":"instruction-conflict","scenario":"instruction-conflict","expected_outcome":"reject","expected_fallback":false},
+    {"id":"memory-conflict","scenario":"memory-conflict","expected_outcome":"quarantine","expected_fallback":false},
+    {"id":"prompt-injection","scenario":"prompt-injection","expected_outcome":"quarantine","expected_fallback":false},
+    {"id":"secret-record","scenario":"secret-record","expected_outcome":"reject","expected_fallback":false},
+    {"id":"undeclared-secret","scenario":"undeclared-secret","expected_outcome":"reject","expected_fallback":false},
+    {"id":"replayed-response","scenario":"replayed-response","expected_outcome":"reject","expected_fallback":true},
+    {"id":"replayed-request","scenario":"replayed-request","expected_outcome":"reject","expected_fallback":true},
+    {"id":"tombstone","scenario":"tombstone","expected_outcome":"reject","expected_fallback":false},
+    {"id":"tombstone-dominance","scenario":"tombstone-dominance","expected_outcome":"reject","expected_fallback":false},
+    {"id":"unknown-contract-version","scenario":"unknown-version","expected_outcome":"contract-reject","expected_fallback":false},
+    {"id":"valid-write-candidate","scenario":"valid-write","expected_outcome":"eligible","expected_fallback":false},
+    {"id":"chat-write-candidate","scenario":"chat-write","expected_outcome":"ineligible","expected_fallback":false},
+    {"id":"unaccepted-write-candidate","scenario":"unaccepted-write","expected_outcome":"ineligible","expected_fallback":false}
+  ]
+}

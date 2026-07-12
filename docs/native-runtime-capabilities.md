@@ -209,6 +209,20 @@ separate progress projections and cannot silently replace them.
 - Completion and failure must follow the active scan skill's canonical artifact
   and recovery contract.
 
+### External memory adapter
+
+V2b provides a shared offline validation and disposition contract, not a
+runtime adapter. A future adapter is plugin-dependent and must declare actual
+read/write/invalidation/isolation/consistency/provenance/sensitivity/audit
+capabilities and pass the V2b conformance harness. Adapter content, confidence,
+timestamps, capability claims, and receipts remain untrusted advisory data.
+
+No adapter is the default supported state. Disabled, unavailable, timeout,
+partial, unsupported, incompatible, or untrusted memory disables only that
+memory operation and preserves V1/V2a execution. Memory availability never
+changes model selection, sandbox, permission, external-write authorization,
+human gates, review, protected history, claim/lease state, or completion.
+
 ### Sequential fallback
 
 The sequential fallback executes the same selected task in the current session

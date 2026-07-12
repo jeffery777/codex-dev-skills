@@ -229,6 +229,86 @@ def agent_integration_document(
 
 
 class StructuredYamlTests(unittest.TestCase):
+    def test_external_memory_ledger_metadata_is_fail_closed(self):
+        document = valid_v2()
+        document["external_memory"] = {
+            "contract_version": "loop-memory/v1",
+            "mode": "disabled",
+            "backend_status": "disabled",
+            "adapter": None,
+            "receipt_digests": [],
+            "authority": "advisory-only",
+            "used_as_authorization": False,
+            "used_as_completion_evidence": False,
+            "notes": "Memory remains advisory-only.",
+        }
+        self.assertEqual([], loop_yaml.validate_ledger(document))
+        invalid_values = {
+            "contract_version": "bogus",
+            "backend_status": {},
+            "authority": "authoritative-completion",
+            "used_as_authorization": True,
+            "used_as_completion_evidence": True,
+        }
+        for field, value in invalid_values.items():
+            with self.subTest(field=field):
+                invalid = copy.deepcopy(document)
+                invalid["external_memory"][field] = value
+                self.assertTrue(loop_yaml.validate_ledger(invalid))
+        unknown = copy.deepcopy(document)
+        unknown["external_memory"]["unknown_field"] = True
+        self.assertTrue(loop_yaml.validate_ledger(unknown))
+        invalid_digest = copy.deepcopy(document)
+        invalid_digest["external_memory"].update({
+            "mode": "advisory-cache",
+            "backend_status": "used",
+            "adapter": "adapter-1",
+            "receipt_digests": ["not-a-digest"],
+        })
+        self.assertTrue(loop_yaml.validate_ledger(invalid_digest))
+        contradictory = copy.deepcopy(document)
+        contradictory["external_memory"].update({
+            "backend_status": "used",
+            "adapter": "adapter-1",
+            "receipt_digests": ["a" * 64],
+        })
+        self.assertTrue(loop_yaml.validate_ledger(contradictory))
+        unavailable = copy.deepcopy(document)
+        unavailable["external_memory"].update({
+            "mode": "coordination",
+            "backend_status": "unavailable",
+            "adapter": "adapter-1",
+        })
+        self.assertEqual([], loop_yaml.validate_ledger(unavailable))
+        for status in ("used", "degraded"):
+            with self.subTest(status=status):
+                active = copy.deepcopy(document)
+                active["external_memory"].update({
+                    "mode": "advisory-cache",
+                    "backend_status": status,
+                    "adapter": "adapter-1",
+                    "receipt_digests": ["a" * 64],
+                })
+                self.assertEqual([], loop_yaml.validate_ledger(active))
+        for adapter in (None, "", "   ", "../adapter", "https://example.com/adapter"):
+            with self.subTest(adapter=adapter):
+                invalid_adapter = copy.deepcopy(document)
+                invalid_adapter["external_memory"].update({
+                    "mode": "coordination",
+                    "backend_status": "used",
+                    "adapter": adapter,
+                    "receipt_digests": ["a" * 64],
+                })
+                self.assertTrue(loop_yaml.validate_ledger(invalid_adapter))
+        duplicate_receipt = copy.deepcopy(document)
+        duplicate_receipt["external_memory"].update({
+            "mode": "coordination",
+            "backend_status": "used",
+            "adapter": "adapter-1",
+            "receipt_digests": ["a" * 64, "a" * 64],
+        })
+        self.assertTrue(loop_yaml.validate_ledger(duplicate_receipt))
+
     def test_malformed_yaml_fails_closed(self):
         with tempfile.TemporaryDirectory() as directory:
             path = pathlib.Path(directory) / "ledger.yaml"

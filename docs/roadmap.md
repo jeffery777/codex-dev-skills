@@ -45,9 +45,14 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 - Global profile synchronization follows the accepted Loop Engineering V1
   authority, goal, subagent, and human-gate contract. The separate global
   profile repository should not be edited in issue #81.
-- Loop Engineering V2b may define an optional external-memory abstraction after
-  V2a adoption evidence exists. V2c may evaluate GitNexus or other memory
-  backends behind that contract; neither may replace repository completion truth.
+- Loop Engineering V2b is tracked in issue #91. It defines a versioned,
+  backend-neutral external-memory safety contract, offline validator,
+  deterministic dispositions, conformance harness, receipts, tests, and evals.
+  It remains useful with no backend and preserves V1/V2a completion authority.
+- Loop Engineering V2c may evaluate GitNexus or another concrete backend only
+  after it passes the V2b identity, provenance, sensitivity, consistency,
+  idempotency, invalidation, audit, and conformance requirements. A V2c adapter
+  remains unable to replace repository completion truth.
 
 ## Non-Goals
 

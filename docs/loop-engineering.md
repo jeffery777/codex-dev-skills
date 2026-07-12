@@ -139,11 +139,14 @@ Use `templates/orchestration/loop-state-ledger.template.yaml` when a project
 needs this durable state. Pair it with the existing loop spec, task manifest,
 current task summary, iteration report, and task claim/lease templates.
 
-External memory is optional and should be treated as cache or coordination by
-default. It can help locate objectives or recent iterations, but completion and
-acceptance still require the repository contract, validated operational state,
-and current verification/review evidence unless a repository explicitly
-defines a stronger reviewed authority model.
+External memory is optional advisory/cache/coordination input. V2b validates a
+versioned backend-neutral contract, repository/principal identity, provenance,
+freshness, digest, lifecycle, sensitivity, capability, replay, conflict, and
+prompt-injection boundaries before a record can be adopted as data context.
+Memory cannot become instruction, authorize an action, satisfy a gate, or prove
+completion. Disabled or failed memory leaves V1/V2a behavior unchanged. See
+`docs/external-memory-contract.md` and the installed
+`references/memory-contract-v1.md`.
 
 ## Runtime Compatibility
 

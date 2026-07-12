@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import importlib.util
 import pathlib
 import unittest
@@ -490,6 +491,98 @@ class ReceiptTests(unittest.TestCase):
         receipt = self.worker(assignment, artifact_digests={})
         result = routing.validate_worker_receipt(receipt, assignment)
         self.assertIn("artifact-digests-missing-or-invalid", result["issues"])
+
+    def test_memory_usage_is_optional_and_cannot_authorize_or_prove_completion(self):
+        assignment = route()
+        worker = routing.validate_worker_receipt(self.worker(assignment), assignment)
+        base = {
+            "route_receipt_id": assignment["route_receipt_id"],
+            "worker_validation_id": worker["validation_receipt_id"],
+            "disposition": "accepted",
+            "verification": {
+                "status": "passed",
+                "artifacts": ["test-output"],
+                "artifact_digests": {"test-output": routing._digest("verified")},
+            },
+            "memory_usage": {
+                "contract_version": "loop-memory/v1",
+                "enabled": False,
+                "backend_status": "disabled",
+                "receipt_digest": None,
+                "dispositions": [],
+                "used_as_authorization": False,
+                "used_as_completion_evidence": False,
+            },
+        }
+        accepted = routing.validate_main_agent_disposition(
+            base,
+            assignment,
+            worker,
+            current_source_revision=assignment["source_revision"],
+            current_profile_digest=assignment["selected_profile_digest"],
+            assignment_fresh=True,
+        )
+        self.assertTrue(accepted["integration_accepted"])
+        self.assertFalse(accepted["completion_proven"])
+        for field, issue in (
+            ("used_as_authorization", "memory-usage-cannot-authorize"),
+            ("used_as_completion_evidence", "memory-usage-cannot-prove-completion"),
+        ):
+            with self.subTest(field=field):
+                invalid = copy.deepcopy(base)
+                invalid["memory_usage"][field] = True
+                rejected = routing.validate_main_agent_disposition(
+                    invalid,
+                    assignment,
+                    worker,
+                    current_source_revision=assignment["source_revision"],
+                    current_profile_digest=assignment["selected_profile_digest"],
+                    assignment_fresh=True,
+                )
+                self.assertFalse(rejected["integration_accepted"])
+                self.assertIn(issue, rejected["issues"])
+        inconsistent = copy.deepcopy(base)
+        inconsistent["memory_usage"].update({
+            "enabled": True,
+            "backend_status": "used",
+            "receipt_digest": None,
+            "dispositions": [],
+        })
+        rejected = routing.validate_main_agent_disposition(
+            inconsistent,
+            assignment,
+            worker,
+            current_source_revision=assignment["source_revision"],
+            current_profile_digest=assignment["selected_profile_digest"],
+            assignment_fresh=True,
+        )
+        self.assertIn("memory-usage-active-state-requires-receipt", rejected["issues"])
+        self.assertIn("memory-usage-active-state-requires-disposition", rejected["issues"])
+        malformed = copy.deepcopy(base)
+        malformed["memory_usage"]["dispositions"] = [{}]
+        rejected = routing.validate_main_agent_disposition(
+            malformed,
+            assignment,
+            worker,
+            current_source_revision=assignment["source_revision"],
+            current_profile_digest=assignment["selected_profile_digest"],
+            assignment_fresh=True,
+        )
+        self.assertIn("memory-usage-dispositions-invalid", rejected["issues"])
+        for malformed_status in ([], {}):
+            with self.subTest(backend_status=malformed_status):
+                malformed = copy.deepcopy(base)
+                malformed["memory_usage"]["backend_status"] = malformed_status
+                rejected = routing.validate_main_agent_disposition(
+                    malformed,
+                    assignment,
+                    worker,
+                    current_source_revision=assignment["source_revision"],
+                    current_profile_digest=assignment["selected_profile_digest"],
+                    assignment_fresh=True,
+                )
+                self.assertFalse(rejected["integration_accepted"])
+                self.assertIn("memory-usage-backend-status-invalid", rejected["issues"])
 
     def test_main_agent_rejects_stale_source_profile_and_assignment(self):
         assignment = route()

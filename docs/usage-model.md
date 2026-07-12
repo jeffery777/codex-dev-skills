@@ -79,6 +79,12 @@ For small or single-task work, prefer the smallest direct skill such as `impleme
 
 Review primitives such as `code-review`, `docs-review`, and high-risk `code-review-deep` provide ordinary review evidence. Formal `code-review-gate` and `docs-review-gate` runs are reserved for commit readiness, PR readiness, merge readiness, or explicit repo-policy blocking decisions, and they do not replace maintainer approval.
 
+V2b external memory can accelerate bootstrap or exploration only after strict
+identity, provenance, digest, freshness, conflict, sensitivity, lifecycle, and
+adapter-capability validation. The adopted payload stays data-only. Memory
+availability does not change model selection, sandbox, permissions, external
+write authority, human gates, verification, review, or completion criteria.
+
 ## Global Guidance, Repo Instructions, And Rules
 
 Global Codex guidance is useful for cross-repository baseline behavior:

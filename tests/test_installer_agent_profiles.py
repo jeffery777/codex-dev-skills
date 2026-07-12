@@ -72,8 +72,11 @@ class AgentProfileInstallerTests(unittest.TestCase):
         for relative in (
             "scripts/agent_routing.py",
             "scripts/loopctl.py",
+            "scripts/memory_contract.py",
+            "scripts/memoryctl.py",
             "scripts/profile_preflight.py",
             "references/agent-profile-registry.json",
+            "references/memory-contract-v1.md",
         ):
             self.assertTrue((installed_skill / relative).is_file(), relative)
         deployed_validation = subprocess.run(

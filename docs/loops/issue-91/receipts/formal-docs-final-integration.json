@@ -1,0 +1,116 @@
+{
+  "agent_integration": {
+    "contract_version": 1,
+    "route_receipt": {
+      "assigned_scope": [
+        "README.md",
+        "docs",
+        "skills/loop-engineering/SKILL.md",
+        "skills/loop-engineering/references/memory-contract-v1.md"
+      ],
+      "assigned_scope_sha256": "2f78dd7e1f520e4f4898f104c81a196cf24831289d993410ab0d72531bc9890b",
+      "authority_contract_sha256": "33515e67f76a4a7b1a44af1d7bbeddf570a9b3e3bdd040b3a50e45ccb3297fc6",
+      "authority_invariants": {
+        "profile_cannot_expand_permissions": true,
+        "profile_cannot_expand_scope": true,
+        "profile_cannot_satisfy_human_gates": true,
+        "worker_receipt_cannot_prove_completion": true
+      },
+      "classification": {
+        "capability_class": "deep-reviewer",
+        "factor_effects": {
+          "ambiguity": "no-escalation",
+          "code_context_volume": "neutral",
+          "cost_token_sensitivity": "neutral",
+          "independence_parallelizability": "delegation-eligible",
+          "latency_sensitivity": "neutral",
+          "reasoning_depth": "deep-capability-trigger",
+          "security_data_migration_public_contract_risk": "deep-hard-trigger",
+          "verification_burden": "deep-capability-trigger",
+          "write_blast_radius": "read-only-fast-eligible"
+        },
+        "factors": {
+          "ambiguity": "moderate",
+          "code_context_volume": "medium",
+          "cost_token_sensitivity": "low",
+          "independence_parallelizability": "independent",
+          "latency_sensitivity": "low",
+          "reasoning_depth": "deep",
+          "security_data_migration_public_contract_risk": "public-contract",
+          "verification_burden": "high",
+          "write_blast_radius": "none"
+        },
+        "hard_triggered": true,
+        "reasons": [
+          "public-contract-risk-hard-trigger"
+        ],
+        "selected_role": "deep-reviewer"
+      },
+      "config_evidence": {
+        "allowed_workflow_scope": [
+          "read",
+          "report-findings",
+          "report-receipt",
+          "search",
+          "verify"
+        ],
+        "capability_class": "deep-reviewer",
+        "config_valid": true,
+        "model_available": true,
+        "name": "loop_v2a_deep_reviewer",
+        "parent_sandbox_mode": "workspace-write",
+        "profile_digest": "b1d9b09d36aac68ae4a76fe710af180d1889b4d0bbea3f9de5da80046d44e19a",
+        "reasoning_available": true,
+        "sandbox": "read-only",
+        "sandbox_non_widening": true
+      },
+      "config_evidence_sha256": "55ed2c3f02ac0029673d737fa8a24e08ca23709c84137fb1cb15af317a0f23f4",
+      "contract_version": 1,
+      "degraded": false,
+      "execution_mode": "custom-agent-profile",
+      "fallback": "none",
+      "ownership": {
+        "disjoint": true,
+        "owner": "loop_v2a_deep_reviewer-docs-rereview"
+      },
+      "route_receipt_id": "61d52d2efcd607cc3a85aa4d74880e966d24a3378512fc175d619dbc7c510671",
+      "routing_constraint": "independent-work-allows-delegation",
+      "runtime_mapping": "loop_v2a_deep_reviewer",
+      "selected_profile_digest": "b1d9b09d36aac68ae4a76fe710af180d1889b4d0bbea3f9de5da80046d44e19a",
+      "selected_role": "deep-reviewer",
+      "source_revision": {
+        "branch": "codex/loop-engineering-v2b-memory-contract",
+        "head_sha": "a213f7a0039bc87e1bff662b55e5464e353dc71b"
+      },
+      "source_revision_sha256": "2c0eff35612109631ef9e2491eed53c909bf48fc06546610fc1e76f2ae26c5b8",
+      "task_id": "issue-91-formal-docs-rereview"
+    },
+    "worker_receipt": {
+      "route_receipt_id": "61d52d2efcd607cc3a85aa4d74880e966d24a3378512fc175d619dbc7c510671",
+      "task_id": "issue-91-formal-docs-rereview",
+      "assigned_scope_sha256": "2f78dd7e1f520e4f4898f104c81a196cf24831289d993410ab0d72531bc9890b",
+      "source_revision_sha256": "2c0eff35612109631ef9e2491eed53c909bf48fc06546610fc1e76f2ae26c5b8",
+      "status": "complete",
+      "output_artifacts": [
+        "docs/loops/issue-91/receipts/formal-docs-final-report.md"
+      ],
+      "artifact_digests": {
+        "docs/loops/issue-91/receipts/formal-docs-final-report.md": "58e99a01e6774ff7b384eddb4355068b82e4aa77611ea1114473e376d9f0e973"
+      },
+      "conflicts": []
+    },
+    "disposition": {
+      "route_receipt_id": "61d52d2efcd607cc3a85aa4d74880e966d24a3378512fc175d619dbc7c510671",
+      "disposition": "accepted",
+      "verification": {
+        "status": "passed",
+        "artifacts": [
+          "docs/loops/issue-91/receipts/formal-review-main-verification.md"
+        ],
+        "artifact_digests": {
+          "docs/loops/issue-91/receipts/formal-review-main-verification.md": "3fdc8369b7e639633d3b11e388f8035d02953f8e8a3c2bf4a06ca8f8c63a8489"
+        }
+      }
+    }
+  }
+}

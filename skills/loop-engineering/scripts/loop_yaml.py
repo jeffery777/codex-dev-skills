@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import datetime as dt
 import pathlib
+import re
 from typing import Any
 
 import loop_core
@@ -34,6 +35,7 @@ REVIEW_MODES = {
     "docs-review",
     "formal-gate",
 }
+OPAQUE_ADAPTER_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 
 
 class LedgerValidationError(ValueError):
@@ -137,6 +139,16 @@ def _placeholder(value: Any) -> bool:
 
 def _nonempty(value: Any, *, allow_placeholders: bool) -> bool:
     return isinstance(value, str) and bool(value) and (allow_placeholders or not _placeholder(value))
+
+
+def _sha256_or_placeholder(value: Any, *, allow_placeholders: bool) -> bool:
+    return bool(
+        isinstance(value, str)
+        and (
+            (allow_placeholders and _placeholder(value))
+            or (len(value) == 64 and all(character in "0123456789abcdef" for character in value))
+        )
+    )
 
 
 def _task_list(document: dict[str, Any]) -> list[dict[str, Any]]:
@@ -334,6 +346,80 @@ def validate_ledger(document: dict[str, Any], *, allow_placeholders: bool = Fals
         last_event_hash = revision.get("last_event_hash")
         if not isinstance(last_event_hash, str):
             errors.append("ledger.state_revision.last_event_hash must be a string")
+
+        external_memory = document.get("external_memory")
+        if external_memory is not None:
+            if not isinstance(external_memory, dict):
+                errors.append("external_memory must be a mapping")
+            else:
+                expected_fields = {
+                    "contract_version", "mode", "backend_status", "adapter",
+                    "receipt_digests", "authority", "used_as_authorization",
+                    "used_as_completion_evidence", "notes",
+                }
+                missing = sorted(expected_fields - set(external_memory))
+                unknown = sorted(set(external_memory) - expected_fields)
+                if missing:
+                    errors.append(f"external_memory missing fields: {', '.join(missing)}")
+                if unknown:
+                    errors.append(f"external_memory unknown fields: {', '.join(unknown)}")
+                if external_memory.get("contract_version") != "loop-memory/v1":
+                    errors.append("external_memory.contract_version must be loop-memory/v1")
+                mode = external_memory.get("mode")
+                if not isinstance(mode, str) or (
+                    not (allow_placeholders and _placeholder(mode))
+                    and mode not in {"disabled", "advisory-cache", "coordination"}
+                ):
+                    errors.append("external_memory.mode is unsupported")
+                backend_status = external_memory.get("backend_status")
+                if not isinstance(backend_status, str) or (
+                    not (allow_placeholders and _placeholder(backend_status))
+                    and backend_status not in {"disabled", "unavailable", "used", "degraded"}
+                ):
+                    errors.append("external_memory.backend_status is unsupported")
+                adapter = external_memory.get("adapter")
+                if adapter is not None and not (
+                    isinstance(adapter, str)
+                    and (
+                        (allow_placeholders and _placeholder(adapter))
+                        or bool(OPAQUE_ADAPTER_ID.fullmatch(adapter))
+                    )
+                ):
+                    errors.append("external_memory.adapter must be null or an opaque adapter id")
+                receipt_digests = external_memory.get("receipt_digests")
+                if not isinstance(receipt_digests, list):
+                    errors.append("external_memory.receipt_digests must be a list")
+                    receipt_digests = []
+                elif any(
+                    not _sha256_or_placeholder(item, allow_placeholders=allow_placeholders)
+                    for item in receipt_digests
+                ):
+                    errors.append("external_memory.receipt_digests must contain SHA-256 digests")
+                elif len(receipt_digests) != len(set(receipt_digests)):
+                    errors.append("external_memory.receipt_digests must be unique")
+                if external_memory.get("authority") != "advisory-only":
+                    errors.append("external_memory.authority must be advisory-only")
+                for field in ("used_as_authorization", "used_as_completion_evidence"):
+                    if external_memory.get(field) is not False:
+                        errors.append(f"external_memory.{field} must be false")
+                if not _nonempty(external_memory.get("notes"), allow_placeholders=allow_placeholders):
+                    errors.append("external_memory.notes must be a non-empty string")
+                if isinstance(backend_status, str) and backend_status in {"disabled", "unavailable"} and receipt_digests:
+                    errors.append("disabled or unavailable external_memory cannot reference receipts")
+                if isinstance(backend_status, str) and backend_status in {"used", "degraded"} and not receipt_digests:
+                    errors.append("used or degraded external_memory requires a receipt digest")
+                concrete_mode = mode if isinstance(mode, str) and mode in {"disabled", "advisory-cache", "coordination"} else None
+                concrete_status = backend_status if isinstance(backend_status, str) and backend_status in {"disabled", "unavailable", "used", "degraded"} else None
+                if concrete_mode == "disabled" and concrete_status != "disabled":
+                    errors.append("disabled external_memory mode requires disabled backend_status")
+                if concrete_status == "disabled" and concrete_mode != "disabled":
+                    errors.append("disabled external_memory backend_status requires disabled mode")
+                if concrete_status == "disabled" and adapter is not None:
+                    errors.append("disabled external_memory cannot name an adapter")
+                if concrete_status in {"unavailable", "used", "degraded"} and not (
+                    isinstance(adapter, str) and bool(OPAQUE_ADAPTER_ID.fullmatch(adapter))
+                ):
+                    errors.append(f"{concrete_status} external_memory requires an adapter id")
 
         claims_raw = document.get("claims", [])
         if not isinstance(claims_raw, list):
