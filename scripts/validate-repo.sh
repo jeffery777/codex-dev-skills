@@ -212,6 +212,12 @@ check_agent_routing_eval() {
   ok "heterogeneous agent routing eval thresholds pass"
 }
 
+check_memory_contract() {
+  python3 scripts/eval-memory-contract.py >"$TMP_DIR/memory-contract-eval.json"
+  python3 -m unittest tests.test_memory_contract tests.test_memoryctl tests.test_eval_memory_contract >/dev/null
+  ok "external memory contract, CLI, and eval thresholds pass"
+}
+
 check_loop_contract() {
   python3 -m unittest tests.test_loop_engineering_core tests.test_loopctl >/dev/null
   ok "loop engineering event, transition, migration, and CLI contracts pass"
@@ -232,6 +238,7 @@ main() {
   check_loop_eval
   check_agent_profiles
   check_agent_routing_eval
+  check_memory_contract
 }
 
 main "$@"

@@ -58,6 +58,11 @@ sequential execution, a task brief, or a paste-ready continuation prompt.
 Absence of the custom-agent surface preserves V1 sequential/shared semantics.
 It must not be reported as task completion or as a permanent Goal failure.
 
+Absence of an external-memory adapter likewise preserves V1/V2a behavior. V2b
+validation is shared and offline. A concrete adapter is plugin-dependent and
+must declare its actual capabilities; unavailable or incompatible operations
+are disabled rather than simulated.
+
 ## Desktop Thread And Task Actions
 
 Use only the documented callable exposed by the active runtime. Before an

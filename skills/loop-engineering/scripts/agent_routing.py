@@ -53,6 +53,8 @@ DEFAULT_ROLES = {
 HIGH_RISK_CLASSES = {"deep-reviewer", "security-reviewer"}
 WORKER_STATUSES = {"complete", "partial", "failed"}
 DISPOSITIONS = {"accepted", "rejected", "deferred", "needs-verification"}
+MEMORY_BACKEND_STATUSES = {"disabled", "unavailable", "used", "degraded"}
+MEMORY_DISPOSITIONS = {"adopt-as-context", "reject", "quarantine", "ignore"}
 CLASS_SANDBOX = {
     "fast-read-explorer": "read-only",
     "balanced-worker": "workspace-write",
@@ -605,6 +607,62 @@ def validate_worker_receipt(
     return result
 
 
+def _validate_memory_usage_reference(value: Any) -> list[str]:
+    """Validate optional V2b usage evidence without making it authoritative."""
+    if not isinstance(value, dict):
+        return ["memory-usage-must-be-object"]
+    required = {
+        "contract_version",
+        "enabled",
+        "backend_status",
+        "receipt_digest",
+        "dispositions",
+        "used_as_authorization",
+        "used_as_completion_evidence",
+    }
+    if set(value) != required:
+        return ["memory-usage-fields-invalid"]
+    issues: list[str] = []
+    if value.get("contract_version") != "loop-memory/v1":
+        issues.append("memory-usage-contract-version-invalid")
+    if not isinstance(value.get("enabled"), bool):
+        issues.append("memory-usage-enabled-invalid")
+    backend_status = value.get("backend_status")
+    if not isinstance(backend_status, str) or backend_status not in MEMORY_BACKEND_STATUSES:
+        issues.append("memory-usage-backend-status-invalid")
+    receipt_digest = value.get("receipt_digest")
+    if receipt_digest is not None and (
+        not isinstance(receipt_digest, str)
+        or len(receipt_digest) != 64
+        or any(character not in "0123456789abcdef" for character in receipt_digest)
+    ):
+        issues.append("memory-usage-receipt-digest-invalid")
+    if isinstance(backend_status, str) and backend_status in {"disabled", "unavailable"} and receipt_digest is not None:
+        issues.append("memory-usage-disabled-or-unavailable-cannot-bind-receipt")
+    dispositions = value.get("dispositions")
+    if (
+        not isinstance(dispositions, list)
+        or any(not isinstance(item, str) or item not in MEMORY_DISPOSITIONS for item in dispositions)
+        or (all(isinstance(item, str) for item in dispositions) and len(dispositions) != len(set(dispositions)))
+    ):
+        issues.append("memory-usage-dispositions-invalid")
+    if value.get("used_as_authorization") is not False:
+        issues.append("memory-usage-cannot-authorize")
+    if value.get("used_as_completion_evidence") is not False:
+        issues.append("memory-usage-cannot-prove-completion")
+    if value.get("enabled") is False and backend_status != "disabled":
+        issues.append("memory-usage-disabled-state-inconsistent")
+    if value.get("enabled") is True and backend_status == "disabled":
+        issues.append("memory-usage-enabled-state-inconsistent")
+    if isinstance(backend_status, str) and backend_status in {"used", "degraded"} and receipt_digest is None:
+        issues.append("memory-usage-active-state-requires-receipt")
+    if isinstance(backend_status, str) and backend_status in {"used", "degraded"} and not value.get("dispositions"):
+        issues.append("memory-usage-active-state-requires-disposition")
+    if isinstance(backend_status, str) and backend_status in {"disabled", "unavailable"} and value.get("dispositions"):
+        issues.append("memory-usage-inactive-state-cannot-have-dispositions")
+    return issues
+
+
 def validate_main_agent_disposition(
     disposition: dict[str, Any],
     route_receipt: dict[str, Any],
@@ -643,6 +701,8 @@ def validate_main_agent_disposition(
         issues.append("stale-or-conflicting-profile-digest")
     if assignment_fresh is not True:
         issues.append("assignment-not-fresh")
+    if "memory_usage" in disposition:
+        issues.extend(_validate_memory_usage_reference(disposition["memory_usage"]))
     decision = disposition.get("disposition")
     if decision not in DISPOSITIONS:
         issues.append("unsupported-disposition")

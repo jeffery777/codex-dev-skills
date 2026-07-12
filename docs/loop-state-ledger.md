@@ -7,10 +7,10 @@ ledger task view is their reconstructable materialization. Replay proves
 internal consistency but not actor identity or external approval provenance. This lets Codex recover,
 continue, hand off, and audit a bounded objective without an external adapter.
 
-External memory may be added later as an optional acceleration or coordination
-layer. It must not replace the repository contract, validated events, or
-completion evidence unless a target repository explicitly defines and reviews
-that stronger authority model.
+V2b external memory is an optional advisory/cache/coordination layer. Its
+versioned receipt may be referenced by digest, but it cannot replace the
+repository contract, validated events, protected authorization, or completion
+evidence.
 
 ## Purpose
 
@@ -250,10 +250,25 @@ documented runtime capabilities and exact authorization.
 Sub-agents may work on tasks, but their reports must be verified against the
 ledger, changed files, git diff, verification commands, and review evidence.
 
-## Optional External Memory Later
+## Optional V2b External Memory
 
-Future external memory adapters should be cache or coordination layers by
-default. They may help list active objectives, find likely next tasks, or store
-iteration summaries, but loop completion and task acceptance still require
-repo-owned ledger evidence unless a repository deliberately defines a stronger
-authority contract.
+The V2b contract can validate future adapter records and record an advisory
+receipt digest in the ledger. It may help locate active objectives, likely next
+tasks, or prior context, but a receipt never proves task acceptance or loop
+completion. Disabled/unavailable memory is the normal safe fallback. Concrete
+storage, search, invalidation, deletion, or synchronization belongs to V2c.
+
+When present, `external_memory` uses the exact `loop-memory/v1` reference
+shape. `mode` is `disabled`, `advisory-cache`, or `coordination`;
+`backend_status` is `disabled`, `unavailable`, `used`, or `degraded`.
+`disabled` mode and status must appear together with no adapter or receipt.
+`unavailable` requires a non-disabled mode and an opaque adapter id, but no
+receipt. `used` or `degraded` requires a non-disabled mode, an opaque adapter
+id, and at least one unique SHA-256 receipt digest. `authority` is always
+`advisory-only`; `used_as_authorization` and
+`used_as_completion_evidence` are always `false`. Unknown fields and
+contradictory combinations fail ledger validation.
+
+An opaque adapter id is 1–128 characters, starts with an ASCII letter or
+digit, and thereafter contains only ASCII letters, digits, `.`, `_`, `:`, or
+`-`. It is an identifier, not a URL, filesystem path, or backend locator.

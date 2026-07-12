@@ -19,6 +19,14 @@ agent_integration:
       artifacts: ["<main-agent-verification-artifact>"]
       artifact_digests:
         "<main-agent-verification-artifact>": "<sha256>"
+    memory_usage:
+      contract_version: "loop-memory/v1"
+      enabled: false
+      backend_status: "disabled"
+      receipt_digest: null
+      dispositions: []
+      used_as_authorization: false
+      used_as_completion_evidence: false
 
 # Current repository branch/HEAD, artifact/verification bytes and digests,
 # assignment, and selected-profile
@@ -29,3 +37,5 @@ agent_integration:
 #   --verification-root <main-agent-verification-root>
 #   --assignment-fresh
 #   [--profile-path <selected-custom-profile.toml>]
+# Memory usage is optional advisory evidence. It cannot change the route,
+# permissions, required verification, gate state, or completion proof.

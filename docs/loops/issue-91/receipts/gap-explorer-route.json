@@ -1,0 +1,126 @@
+{
+  "profile_preflight": {
+    "capability_class": "fast-read-explorer",
+    "collisions": [],
+    "decision": "ready",
+    "fallback_tier": null,
+    "profile": "loop_v2a_fast_explorer",
+    "route_profile_evidence": {
+      "allowed_workflow_scope": [
+        "read",
+        "search",
+        "summarize",
+        "report-receipt"
+      ],
+      "available": true,
+      "capability_class": "fast-read-explorer",
+      "config_valid": true,
+      "model_available": true,
+      "name": "loop_v2a_fast_explorer",
+      "parent_sandbox_mode": "workspace-write",
+      "profile_digest": "2da229ec9c16c2cf9f2dc75c7ba5373d503b1aecd61cef9bb555972a5fba344e",
+      "reasoning_available": true,
+      "sandbox": "read-only",
+      "sandbox_non_widening": true
+    },
+    "runtime_mapping": {
+      "availability": "runtime-dependent",
+      "last_verified": "2026-07-11",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "low",
+      "replaceable": true
+    },
+    "selected": "loop_v2a_fast_explorer",
+    "state": "ready"
+  },
+  "route_receipt": {
+    "assigned_scope": [
+      "skills/loop-engineering/scripts",
+      "skills/loop-engineering/references",
+      "templates/orchestration",
+      "tests",
+      "evals",
+      "install.sh",
+      "catalog.yaml"
+    ],
+    "assigned_scope_sha256": "406f1fc37c4732d8f14731480779d70f08ddc36caa2cfa0dbe7160ce66a659f1",
+    "authority_contract_sha256": "95f1bfe8635a7de022a33a79b2163b8d8bafa5e5d4d2e7b3d9ce692fede0de75",
+    "authority_invariants": {
+      "profile_cannot_expand_permissions": true,
+      "profile_cannot_expand_scope": true,
+      "profile_cannot_satisfy_human_gates": true,
+      "worker_receipt_cannot_prove_completion": true
+    },
+    "classification": {
+      "capability_class": "fast-read-explorer",
+      "factor_effects": {
+        "ambiguity": "no-escalation",
+        "code_context_volume": "fast-read-tie-break",
+        "cost_token_sensitivity": "fast-read-tie-break",
+        "independence_parallelizability": "delegation-eligible",
+        "latency_sensitivity": "fast-read-tie-break",
+        "reasoning_depth": "no-escalation",
+        "security_data_migration_public_contract_risk": "no-hard-trigger",
+        "verification_burden": "no-escalation",
+        "write_blast_radius": "read-only-fast-eligible"
+      },
+      "factors": {
+        "ambiguity": "low",
+        "code_context_volume": "large",
+        "cost_token_sensitivity": "high",
+        "independence_parallelizability": "independent",
+        "latency_sensitivity": "high",
+        "reasoning_depth": "shallow",
+        "security_data_migration_public_contract_risk": "none",
+        "verification_burden": "low",
+        "write_blast_radius": "none"
+      },
+      "hard_triggered": false,
+      "reasons": [
+        "bounded-read-heavy-work",
+        "large-context-fast-tie-break",
+        "latency-fast-tie-break",
+        "cost-token-fast-tie-break"
+      ],
+      "selected_role": "fast-read-explorer"
+    },
+    "config_evidence": {
+      "allowed_workflow_scope": [
+        "read",
+        "report-receipt",
+        "search",
+        "summarize"
+      ],
+      "capability_class": "fast-read-explorer",
+      "config_valid": true,
+      "model_available": true,
+      "name": "loop_v2a_fast_explorer",
+      "parent_sandbox_mode": "workspace-write",
+      "profile_digest": "2da229ec9c16c2cf9f2dc75c7ba5373d503b1aecd61cef9bb555972a5fba344e",
+      "reasoning_available": true,
+      "sandbox": "read-only",
+      "sandbox_non_widening": true
+    },
+    "config_evidence_sha256": "ea95dcbaa95651049dcf55e0d37109d9690846a58acdd3d4ecdc16bda9e33c02",
+    "contract_version": 1,
+    "degraded": false,
+    "execution_mode": "custom-agent-profile",
+    "fallback": "none",
+    "ownership": {
+      "disjoint": true,
+      "owner": "loop_v2a_fast_explorer"
+    },
+    "route_receipt_id": "0d95914b9be9345a2ce5b679dbaa86c1ae37c5973d6684e6b57891c74a064e16",
+    "routing_constraint": "independent-work-allows-delegation",
+    "runtime_mapping": "loop_v2a_fast_explorer",
+    "selected_profile_digest": "2da229ec9c16c2cf9f2dc75c7ba5373d503b1aecd61cef9bb555972a5fba344e",
+    "selected_role": "fast-read-explorer",
+    "source_revision": {
+      "branch": "codex/loop-engineering-v2b-memory-contract",
+      "head_sha": "a213f7a0039bc87e1bff662b55e5464e353dc71b"
+    },
+    "source_revision_sha256": "2c0eff35612109631ef9e2491eed53c909bf48fc06546610fc1e76f2ae26c5b8",
+    "task_id": "issue-91-gap-explorer"
+  },
+  "status": "routed"
+}
