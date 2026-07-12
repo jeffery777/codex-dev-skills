@@ -44,18 +44,20 @@ their durable disposition and review receipts preserve the evidence.
 | QA-PACKAGING-001 catalog isolation coverage | SF | Fixed: the test parses the real `catalog.yaml` and checks every installable source plus installer inputs. |
 | MF-DOC-FINAL-001 rollback wording ambiguity | MF | Closed: disabling adapter use and ignoring/quarantining receipts are separate imperative sentences; final docs rereview PASS. |
 | SF-DOC-FINAL-001 ledger state combinations | SF | Closed: docs define each field and legal combination; validator and positive/negative tests enforce the same contract; final docs rereview PASS. |
-| MF-MERGE-FINAL-001 lexical path aliases | MF | Fixed: root `.` is the only special case; every other path-bearing field must equal its `PurePosixPath` canonical spelling. Fresh review and scan pending. |
+| MF-MERGE-FINAL-001 lexical path aliases | MF | Closed: root `.` is the only special case; every other path-bearing field must equal its `PurePosixPath` canonical spelling. Targeted rereview found no remaining candidate, and final scan `e8b3db88-c6d8-40e9-b931-d4ffd0261646` sealed snapshot `codex-security-snapshot/v1:sha256:dc70ced12fbde3100b06709c6e145c7f6b29111415b94ac55e98eed0cc4ee936` with complete 16/16 coverage and zero reportable findings. |
 | Historical `memory-tests-integration.json` digests | NIT | Superseded: it records an earlier implementation snapshot and is excluded from final readiness evidence; current verification, formal reviews, and final scan artifacts own the accepted bytes. |
 
 The first completed security diff scan reported three Low/P3 findings and five
 additional in-scope corrective items. The table records their implementation
-disposition; closure still requires post-fix verification, fresh formal review,
-and a new scan of the updated snapshot. Earlier formal code and documentation
-reviews were clean before these corrections and therefore do not satisfy the
-post-fix gates.
+disposition. Earlier formal code and documentation reviews preceded those
+corrections and were superseded by the post-fix verification and fresh formal
+reviews recorded in `receipts/`.
 
 The second completed scan finalized with zero reportable findings after policy
 calibration, while preserving the five correctness/assurance dispositions
-above. Because those gaps were safe and in scope, they were corrected rather
-than silently dropped. Final readiness therefore requires verification, fresh
-review, and a scan whose snapshot includes these last corrections.
+above. Those gaps were corrected rather than silently dropped. After the final
+lexical path correction, targeted rereview closed `MF-MERGE-FINAL-001`, and
+scan `e8b3db88-c6d8-40e9-b931-d4ffd0261646` finalized the corrected snapshot
+with complete coverage and zero reportable findings. This ledger update records
+that already accepted closure evidence; a later scan of this documentation-only
+update is external evidence and does not require embedding its own digest here.
