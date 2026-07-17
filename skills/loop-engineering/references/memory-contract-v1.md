@@ -198,6 +198,40 @@ The caller-owned CLI inputs use these exact JSON shapes:
   `{"<repository-relative-path>":"<sha256>"}`;
 - trusted acceptance receipts: `{"receipt_digests":["<sha256>"]}`.
 
+## Qualified GitNexus V2c-A Driver
+
+The first concrete driver baseline is default-disabled and qualified only for
+GitNexus `1.6.9`, metadata schema `5`, and a runtime-produced driver fingerprint.
+That runtime fingerprint binds CLI/runtime bytes, exact version, observed
+analyze flags, metadata filenames/schema/capability policy, and symlink policy.
+The separate qualification evidence-bundle digest binds captured package and
+raw help/status/query observations. Any
+version, bytes, flag, schema, or capability drift makes the driver incompatible
+until it is qualified and conformed again.
+
+The driver does not parse human `status` or `list` output. Although the qualified
+CLI exposed a direct JSON query command, its volatile/degraded and
+instruction-like output was not accepted as a stable record interface.
+Consequently `read_query` is `unsupported` in V2c-A. `write_upsert`,
+`invalidate`, `tombstone`, and `delete` are also `unsupported`; the driver emits
+an unsupported disposition rather than a success receipt. Strict schema-5
+metadata can establish local index identity and freshness, but cannot become a
+memory payload, caller-owned trust evidence, or completion proof.
+
+Derived-index refresh is outside the memory payload lifecycle. It requires an
+explicit runtime opt-in and only a qualified `analyze --index-only` argv, exact
+repository/HEAD binding, a clean direct worktree, pre-existing local exclude
+guard, isolated alias and `GITNEXUS_HOME`, offline bounded environment,
+timeout/lock, and complete before/after repository and Git-control checks. Any
+unexpected state fails closed without reset, restore, stash, stage, commit, or
+automatic retry. Machine-local paths, registries, indexes, databases, and
+credentials are never shared contract fields or repository artifacts.
+
+The mandatory backend-neutral V2b oracle remains unchanged and is a regression
+check, not GitNexus read/write authority. Adapter-specific tests prove
+unsupported/no-memory behavior. V2c-A creates no trusted conformance receipt
+that authorizes GitNexus query or mutation capabilities.
+
 ## Extension Policy
 
 Extension keys use `reverse.domain/name`. At most 16 keys and 4096 canonical
@@ -205,9 +239,11 @@ bytes per structured value are accepted. Unknown top-level fields are rejected.
 An extension cannot redefine identity, authority, permissions, lifecycle,
 digest, capability, disposition, gate, or completion semantics.
 
-## Operations Reserved For V2c
+## Operations Reserved For Later V2c Capabilities
 
 The v1 schema can describe write/upsert, invalidation, tombstone, deletion,
 retention, consistency, and audit capabilities, but V2b implements only
-validation, eligibility, disposition, receipt, and offline conformance. A future
-V2c adapter must pass this contract before it may perform an operation.
+validation, eligibility, disposition, receipt, and offline conformance. V2c-A
+does not implement those backend mutations. Any later V2c adapter capability
+must pass this contract and obtain separate current operation authority before
+it may perform an operation.

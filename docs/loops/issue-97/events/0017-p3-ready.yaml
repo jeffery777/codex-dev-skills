@@ -1,0 +1,11 @@
+sequence: 17
+event_id: "issue-97-p3-ready"
+occurred_at: "2026-07-16T09:15:00Z"
+actor: "codex-root"
+type: "task_transition"
+task_id: "P3"
+idempotency_key: "issue-97-p3-ready-v1"
+expected_state_revision: 16
+previous_event_hash: "7dded553b2599ad28eb00bba4ee760e76f771fea53ae42ae67fb38e913d228b0"
+payload: {target_status: "ready", evidence: {}}
+event_hash: "ca2ebb2177549cb339c3fa123a4b5616631b9c1f25f433f89f0c8816ee9c89ba"

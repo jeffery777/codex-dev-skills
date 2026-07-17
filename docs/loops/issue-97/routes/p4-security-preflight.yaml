@@ -1,0 +1,30 @@
+agent_route:
+  contract_version: 2
+  task:
+    id: "P4-security-preflight"
+    workload_kind: "mechanical"
+    factors:
+      ambiguity: "low"
+      reasoning_depth: "shallow"
+      code_context_volume: "small"
+      security_data_migration_public_contract_risk: "none"
+      write_blast_radius: "none"
+      latency_sensitivity: "high"
+      cost_token_sensitivity: "high"
+      independence_parallelizability: "independent"
+      verification_burden: "low"
+  profile_preflight:
+    profile_dir: "../../../../agent-profiles"
+    registry: "../../../../skills/loop-engineering/references/agent-profile-registry.json"
+    role: "loop_v2a_mechanical_reader"
+    agent_roots: ["../../../../agent-profiles"]
+    destination_root: "../../../../agent-profiles"
+  assignment:
+    scope: ["Codex Security security_diff_scan capability preflight only"]
+    ownership: {owner: "p4-security-preflight-worker", disjoint: true}
+    source_revision: {branch: "codex/v2c-gitnexus-adapter", head_sha: "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"}
+    authority_contract:
+      mutation_scope: "none"
+      external_write_authorized: false
+      human_gates: ["security-scan-preflight-ready"]
+      completion_criteria: ["Return exact helper command, exit code, status, unmet capabilities, and remediation; make no edits"]

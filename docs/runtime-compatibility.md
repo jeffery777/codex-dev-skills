@@ -65,6 +65,38 @@ validation is shared and offline. A concrete adapter is plugin-dependent and
 must declare its actual capabilities; unavailable or incompatible operations
 are disabled rather than simulated.
 
+## GitNexus Adapter Boundary
+
+The V2c-A GitNexus driver is shared Python code around a machine-local external
+CLI. Executable discovery/configuration must work in Codex Desktop on macOS and
+Codex CLI on Linux without committing an executable path, `GITNEXUS_HOME`,
+registry, index, database, credential, or other machine-local state. The adapter
+is disabled until the runtime explicitly supplies and qualifies that local
+configuration.
+
+The shared operator surface is
+`skills/loop-engineering/scripts/gitnexus_adapter.py`. Its `qualify`, `status`,
+`refresh`, and `disable` subcommands use only machine-local arguments and emit
+redacted JSON. The adapter stores no enable bit: `--enabled` is a per-invocation
+opt-in, and refresh also requires `--confirm-explicit-refresh`. This identical
+control boundary is intended for Desktop/macOS and CLI/Linux; only macOS arm64
+has live GitNexus evidence in V2c-A.
+
+GitNexus 1.6.9 has live macOS arm64 qualification for executable discovery,
+required flags, schema-5 metadata, isolated offline index-only refresh, and
+tracked/Git-control postconditions. Linux has portability fixtures for POSIX
+paths, regular-file/symlink policy, subprocess argv/environment, timeout/lock,
+and metadata handling, but no live GitNexus qualification. Do not present those
+fixtures as Linux runtime evidence.
+
+Refresh is supported only where the controller can prove the direct worktree
+and Git administrative boundary, including a pre-existing `.git/info/exclude`
+entry and stable `.git/info/exclude`, `.git/config`, and `.git/HEAD` digests.
+Linked-worktree or ambiguous Git administrative layouts fail closed rather than
+guessing a path. Human `status`/`list` output is never parsed. `read_query` and
+all backend write operations remain unsupported in this baseline, regardless of
+whether the executable exposes additional unqualified surfaces.
+
 ## Desktop Thread And Task Actions
 
 Use only the documented callable exposed by the active runtime. Before an

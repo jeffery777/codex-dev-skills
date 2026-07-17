@@ -1,0 +1,57 @@
+{
+  "agent_integration": {
+    "contract_version": 1,
+    "route_receipt": {
+      "assigned_scope": [".gitignore", "README.md", "docs/external-memory-contract.md", "docs/roadmap.md", "docs/usage-model.md", "docs/runtime-compatibility.md", "docs/release-readiness.md", "skills/loop-engineering/references/memory-contract-v1.md"],
+      "assigned_scope_sha256": "0e555092ac720faaa554998f8b245968f8031350157653c1f481ff5bc02c4b4d",
+      "authority_contract_sha256": "adb308e03f8527403989f02280fd1ee4b38f28188080b26a3472be75113cc8eb",
+      "authority_invariants": {"profile_cannot_expand_permissions": true, "profile_cannot_expand_scope": true, "profile_cannot_satisfy_human_gates": true, "worker_receipt_cannot_prove_completion": true},
+      "classification": {
+        "capability_class": "balanced-worker",
+        "capability_tier": "everyday",
+        "factor_effects": {"ambiguity": "no-escalation", "code_context_volume": "fast-read-tie-break", "cost_token_sensitivity": "neutral", "independence_parallelizability": "delegation-eligible", "latency_sensitivity": "neutral", "reasoning_depth": "no-escalation", "security_data_migration_public_contract_risk": "no-hard-trigger", "verification_burden": "no-escalation", "write_blast_radius": "bounded-write"},
+        "factors": {"ambiguity": "moderate", "code_context_volume": "large", "cost_token_sensitivity": "medium", "independence_parallelizability": "bounded", "latency_sensitivity": "medium", "reasoning_depth": "balanced", "security_data_migration_public_contract_risk": "routine", "verification_burden": "medium", "write_blast_radius": "bounded"},
+        "hard_triggered": false,
+        "reasons": ["routine-bounded-implementation"],
+        "selected_role": "loop_v2a_balanced_worker",
+        "workload_kind": "implementation"
+      },
+      "config_evidence": null,
+      "config_evidence_sha256": null,
+      "contract_version": 2,
+      "cost_degraded": false,
+      "degraded": true,
+      "execution_mode": "parent-default",
+      "fallback": "parent-default",
+      "fallback_capability_evidence": {"capability_class": "balanced-worker", "capability_classes": ["balanced-worker", "deep-reviewer", "fast-read-explorer", "security-reviewer"], "capability_tiers": ["everyday", "advanced"], "class_membership_confirmed": true, "selected_capability_tier": "everyday", "source": "parent-default"},
+      "fallback_capability_evidence_sha256": "ca3ee341efe7d864f9d054d9842b8e1abc6d4ba01ee3b12412468093a02135e3",
+      "ownership": {"disjoint": true, "owner": "p3-docs-worker"},
+      "required_capability_tier": "everyday",
+      "route_receipt_id": "13534c6913502689acf601152e5ebaf435d19b34b47826af2f66f6a14eb6d5a7",
+      "routing_constraint": "bounded-work-allows-delegation",
+      "runtime_mapping": "parent/default",
+      "selected_capability_tier": "everyday",
+      "selected_profile_digest": null,
+      "selected_role": "loop_v2a_balanced_worker",
+      "source_revision": {"branch": "codex/v2c-gitnexus-adapter", "head_sha": "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"},
+      "source_revision_sha256": "f9698e61663a1f2729d4d1430e7d0d85296459bc43c1032cf721e00993cba753",
+      "task_id": "P3-docs-implementation"
+    },
+    "worker_receipt": {
+      "route_receipt_id": "13534c6913502689acf601152e5ebaf435d19b34b47826af2f66f6a14eb6d5a7",
+      "task_id": "P3-docs-implementation",
+      "assigned_scope_sha256": "0e555092ac720faaa554998f8b245968f8031350157653c1f481ff5bc02c4b4d",
+      "source_revision_sha256": "f9698e61663a1f2729d4d1430e7d0d85296459bc43c1032cf721e00993cba753",
+      "status": "complete",
+      "output_artifacts": ["p3-docs-implementation-report.md"],
+      "artifact_digests": {"p3-docs-implementation-report.md": "331d2ca675202f83d6300512fec8068371038d88a5059739a39818257e752c96"},
+      "conflicts": []
+    },
+    "disposition": {
+      "route_receipt_id": "13534c6913502689acf601152e5ebaf435d19b34b47826af2f66f6a14eb6d5a7",
+      "disposition": "accepted",
+      "verification": {"status": "passed", "artifacts": ["p3-docs-implementation-main-verification.md"], "artifact_digests": {"p3-docs-implementation-main-verification.md": "38a6bf8f2f91326094a02db6062d3bdcdafee2cfcac55ae33408e8a1c54f8e74"}},
+      "memory_usage": {"contract_version": "loop-memory/v1", "enabled": false, "backend_status": "disabled", "receipt_digest": null, "dispositions": [], "used_as_authorization": false, "used_as_completion_evidence": false}
+    }
+  }
+}

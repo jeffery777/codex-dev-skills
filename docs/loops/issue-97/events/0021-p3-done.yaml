@@ -1,0 +1,35 @@
+sequence: 21
+event_id: "issue-97-p3-done"
+occurred_at: "2026-07-16T09:19:00Z"
+actor: "codex-root"
+type: "task_transition"
+task_id: "P3"
+idempotency_key: "issue-97-p3-done-v1"
+expected_state_revision: 20
+previous_event_hash: "1c7b9b7fad2167d0eae46691e8d658b32b127c115c2cd1c1522f68bc7eb70c7f"
+payload:
+  target_status: "done"
+  fencing_token: {generation: 1, nonce: "issue-97-p3-root-1"}
+  evidence:
+    verification:
+      status: "passed"
+      artifacts:
+        - "docs/loops/issue-97/receipts/verification-report.md"
+    review:
+      status: "passed"
+      mode: "docs-review"
+      artifacts:
+        - "docs/loops/issue-97/receipts/p4-docs-review-round2-final.md"
+    acceptance: {status: "not_required", artifact: ""}
+    human_gate:
+      status: "satisfied"
+      artifact: "https://github.com/jeffery777/codex-dev-skills/issues/97"
+  authorization:
+    action: "task_completion"
+    principal: {type: "platform", id: "codex-formal-docs-gate"}
+    objective_id: "issue-97"
+    artifact: "docs/loops/issue-97/receipts/p4-docs-review-round2-final.md"
+    source_revision_sha256: "7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8"
+    protected_payload_sha256: "c47fd0602cb7b2a18257a6e7329c016d4adfa815535d4545d2b0126dac3cc7ce"
+    task_id: "P3"
+event_hash: "26e4ea0cd0ee096728370f7ac6b64d701b91425cc255f05753caae1c70e3468e"

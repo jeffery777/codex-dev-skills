@@ -1,0 +1,14 @@
+sequence: 30
+event_id: "issue-97-p5-in-progress"
+occurred_at: "2026-07-17T02:18:00Z"
+actor: "codex-root"
+type: "task_transition"
+task_id: "P5"
+idempotency_key: "issue-97-p5-in-progress-v1"
+expected_state_revision: 29
+previous_event_hash: "2615bf76ec8c426a391e4b96de1530b167283e2c0f989f2881a4fa3c0201cfbd"
+payload:
+  target_status: "in_progress"
+  fencing_token: {generation: 1, nonce: "issue-97-p5-root-1"}
+  evidence: {}
+event_hash: "b81fec64e1755b8b279c893f851211c520ef4faad8d46617123d5a7e3c63cd03"

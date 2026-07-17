@@ -1,0 +1,30 @@
+agent_route:
+  contract_version: 2
+  task:
+    id: "P2-adapter-implementation"
+    workload_kind: "implementation"
+    factors:
+      ambiguity: "moderate"
+      reasoning_depth: "deep"
+      code_context_volume: "large"
+      security_data_migration_public_contract_risk: "routine"
+      write_blast_radius: "bounded"
+      latency_sensitivity: "low"
+      cost_token_sensitivity: "medium"
+      independence_parallelizability: "bounded"
+      verification_burden: "high"
+  profile_preflight:
+    profile_dir: "../../../../agent-profiles"
+    registry: "../../../../skills/loop-engineering/references/agent-profile-registry.json"
+    role: "loop_v2a_advanced_worker"
+    agent_roots: ["../../../../agent-profiles"]
+    destination_root: "../../../../agent-profiles"
+  assignment:
+    scope: ["skills/loop-engineering/scripts/gitnexus_adapter.py", "tests/test_gitnexus_adapter.py"]
+    ownership: {owner: "p2-adapter-worker", disjoint: true}
+    source_revision: {branch: "codex/v2c-gitnexus-adapter", head_sha: "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"}
+    authority_contract:
+      mutation_scope: "bounded"
+      external_write_authorized: false
+      human_gates: ["main-agent-integration", "V2b-contract-conflict", "unexpected-repository-mutation"]
+      completion_criteria: ["Add only assigned production/test files", "Focused tests pass", "No commit/push/external write"]

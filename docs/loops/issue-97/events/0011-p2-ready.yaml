@@ -1,0 +1,13 @@
+sequence: 11
+event_id: issue-97-p2-ready
+occurred_at: '2026-07-16T09:09:00Z'
+actor: codex-root
+type: task_transition
+task_id: P2
+idempotency_key: issue-97-p2-ready-v1
+expected_state_revision: 10
+previous_event_hash: d5d1a0cb1200d93ca7641832480c68dd656a6f669acb4b01b33a7b3d90e8401f
+payload:
+  target_status: ready
+  evidence: {}
+event_hash: bd743a79258618cdb034eebc86edf05c89fe4597a44326b35b67fc7ac16337b4

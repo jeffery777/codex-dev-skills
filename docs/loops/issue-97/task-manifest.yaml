@@ -1,0 +1,128 @@
+project:
+  schema_version: 2
+  name: "Loop Engineering V2c-A GitNexus adapter"
+  objective_id: "issue-97"
+  source_of_truth:
+    - "AGENTS.md"
+    - "docs/loops/issue-97/loop-spec.md"
+    - "docs/loops/issue-97/implementation-plan.md"
+    - "docs/external-memory-contract.md"
+    - "skills/loop-engineering/references/memory-contract-v1.md"
+  contract_revision:
+    previous_manifest_sha256: ""
+    updated_at: "2026-07-16T07:50:00Z"
+tasks:
+  - id: "P0"
+    title: "Contract inventory and GitNexus qualification matrix"
+    initial_status: "ready"
+    priority: "high"
+    dependencies: []
+    risk: "medium"
+    kind: "delivery"
+    objective: "Map V2b extension points and capture exact GitNexus 1.6.9 capability evidence without mutation."
+    scope:
+      in: ["V2b code/tests/evals/docs", "GitNexus CLI discovery/version/help/status/list/doctor", "qualification matrix"]
+      out: ["index refresh", "production edits", "external writes"]
+    ownership:
+      expected_paths: ["docs/loops/issue-97/receipts/"]
+      parallel_write_safe: false
+    dod: ["Exact evidence and interface limits are documented", "No human CLI output is promoted to a stable parser contract"]
+    verification: ["git status --short --branch", "gitnexus --version", "gitnexus analyze --help", "gitnexus status --help"]
+    review: {required: false, mode: "none"}
+    stop_conditions: ["CLI/version evidence conflicts", "unexpected repository mutation"]
+    human_gate: {required: false, gate: "", reason: ""}
+  - id: "P1"
+    title: "Production adapter identity freshness and advisory receipt"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P0"]
+    risk: "high"
+    kind: "implementation"
+    objective: "Implement exact-version discovery, canonical identity/snapshot/freshness, metadata validation, V2b handshake, and advisory receipts."
+    scope:
+      in: ["skills/loop-engineering/scripts/gitnexus_adapter.py", "tests/test_gitnexus_adapter.py"]
+      out: ["hooks", "MCP deployment", "backend writes", "global configuration"]
+    ownership:
+      expected_paths: ["skills/loop-engineering/scripts/gitnexus_adapter.py", "tests/test_gitnexus_adapter.py"]
+      parallel_write_safe: false
+    dod: ["All freshness states and drift cases are deterministic", "Writes remain unsupported", "Dirty trees never equal HEAD"]
+    verification: ["python3 -m unittest tests.test_gitnexus_adapter"]
+    review: {required: true, mode: "code-review-deep"}
+    stop_conditions: ["V2b contract conflict", "GitNexus structured interface cannot be safely version-gated"]
+    human_gate: {required: false, gate: "", reason: ""}
+  - id: "P2"
+    title: "Safe derived-index refresh controller"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P0"]
+    risk: "high"
+    kind: "implementation"
+    objective: "Implement explicit default-disabled index-only refresh with confinement, lock, timeout, expected-HEAD, and complete tracked-state postconditions."
+    scope:
+      in: ["skills/loop-engineering/scripts/gitnexus_adapter.py", "tests/test_gitnexus_adapter.py"]
+      out: ["auto hooks", "reset/restore/stash", "bare analyze", "setup/wiki/skills injection"]
+    ownership:
+      expected_paths: ["skills/loop-engineering/scripts/gitnexus_adapter.py", "tests/test_gitnexus_adapter.py"]
+      parallel_write_safe: false
+    dod: ["Only structured index-only argv can execute", "Unexpected tracked changes fail closed and remain untouched"]
+    verification: ["python3 -m unittest tests.test_gitnexus_adapter"]
+    review: {required: true, mode: "code-review-deep"}
+    stop_conditions: ["Cannot isolate target/registry identity", "unexpected tracked mutation"]
+    human_gate: {required: false, gate: "", reason: ""}
+  - id: "P3"
+    title: "V2b conformance fixtures tests and documentation"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P1", "P2"]
+    risk: "high"
+    kind: "delivery"
+    objective: "Prove mandatory conformance/no-backend safety and synchronize public docs, rollout, rollback, portability, and V2c-B follow-up."
+    scope:
+      in: ["tests", "evals/memory-contract", "README.md", "docs", "skill references"]
+      out: ["release notes", "release metadata", "global profile"]
+    ownership:
+      expected_paths: ["tests/", "evals/memory-contract/", "README.md", "docs/", "skills/loop-engineering/references/"]
+      parallel_write_safe: false
+    dod: ["Mandatory V2b oracle is not weakened", "No-backend default passes", "Machine-local values are absent"]
+    verification: ["python3 scripts/eval-memory-contract.py", "python3 -m unittest tests.test_memory_contract tests.test_memoryctl tests.test_eval_memory_contract"]
+    review: {required: true, mode: "docs-review"}
+    stop_conditions: ["Conformance source-of-truth conflict", "public contract ambiguity"]
+    human_gate: {required: false, gate: "", reason: ""}
+  - id: "P4"
+    title: "Verification formal review security scan and readiness"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P3"]
+    risk: "high"
+    kind: "review"
+    objective: "Complete full verification, finding closure, formal deep code/docs gates, Codex Security diff scan, and PR-readiness evidence."
+    scope:
+      in: ["main..HEAD and working-tree validated diff", "all repository verification", "docs/loops/issue-97/review-disposition.md"]
+      out: ["merge", "release", "deploy"]
+    ownership:
+      expected_paths: ["docs/loops/issue-97/receipts/", "docs/loops/issue-97/review-disposition.md"]
+      parallel_write_safe: false
+    dod: ["No unresolved MUST-FIX", "SF/NIT fixed or durably dispositioned", "security scan native finalization succeeds"]
+    verification: ["PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests", "./scripts/validate-repo.sh", "git diff --check"]
+    review: {required: true, mode: "formal-gate"}
+    stop_conditions: ["high-risk verification insufficient", "security policy conflict"]
+    human_gate: {required: false, gate: "", reason: ""}
+  - id: "P5"
+    title: "Commit push and ready-for-review PR"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P4"]
+    risk: "medium"
+    kind: "delivery"
+    objective: "Publish the reviewed branch and ready-for-review PR linked to Issue #97, then stop without merge or release."
+    scope:
+      in: ["commit", "push", "ready-for-review PR", "platform readback"]
+      out: ["merge", "tag", "GitHub Release", "deploy"]
+    ownership:
+      expected_paths: []
+      parallel_write_safe: false
+    dod: ["Commit/remote branch/PR are traceable", "PR is unmerged", "global profile is unchanged"]
+    verification: ["git status --short --branch", "git rev-parse HEAD", "GitHub PR readback"]
+    review: {required: true, mode: "formal-gate"}
+    stop_conditions: ["accepted diff changed", "GitHub identity/permission conflict"]
+    human_gate: {required: false, gate: "publication-authorized-in-issue-97", reason: "User explicitly authorized commit, push, and PR after evidence gates."}

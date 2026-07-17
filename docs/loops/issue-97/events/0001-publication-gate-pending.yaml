@@ -1,0 +1,13 @@
+sequence: 1
+event_id: issue-97-publication-gate-pending
+occurred_at: '2026-07-16T07:55:00Z'
+actor: codex-root
+type: gate_updated
+task_id: ''
+idempotency_key: issue-97-publication-gate-pending-v1
+expected_state_revision: 0
+previous_event_hash: ''
+payload:
+  gate: publication-readiness
+  status: pending
+event_hash: 60afeb16a758e16eaa0fed5807ae4b0a3951087ef2a8d575885577eaa6a781c9

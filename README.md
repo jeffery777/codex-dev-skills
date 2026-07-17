@@ -404,6 +404,78 @@ With no adapter, or with an unavailable, partial, unsupported, incompatible, or
 untrusted adapter, the loop safely continues with V1/V2a and no memory. See the
 [external memory contract](docs/external-memory-contract.md).
 
+V2c-A adds a default-disabled, version-gated GitNexus driver boundary. The live
+macOS qualification covers GitNexus `1.6.9`, a runtime-produced qualification
+fingerprint, and metadata schema `5`. Human-oriented `status` and `list` output is never parsed.
+Although qualification observed a direct JSON query surface, this baseline
+deliberately declares `read_query` and every write/upsert/invalidate/tombstone/
+delete operation unsupported. It therefore cannot manufacture memory context
+or report a successful backend mutation.
+
+The runtime control-plane flow is:
+
+1. **Qualify:** discover an explicitly configured executable, apply the regular
+   file or explicit symlink policy, and bind its exact version, entry/runtime
+   bytes, observed analyze flags, schema, and capability policy. Any drift requires qualification and V2b
+   conformance again.
+2. **Inspect status:** derive repository identity and freshness from current Git,
+   a complete tracked snapshot, and strict version-gated metadata. Treat stale,
+   dirty, missing, partial, unsupported, incompatible, corrupt, or unknown state
+   as no memory.
+3. **Enable:** opt in through machine-local runtime configuration. Executable
+   paths, `GITNEXUS_HOME`, registries, indexes, and credentials never belong in
+   repository files.
+4. **Refresh when explicitly requested:** use only `analyze --index-only` with
+   an expected HEAD, a unique isolated alias and `GITNEXUS_HOME`, offline
+   extension policy, bounded environment, timeout, lock, and before/after
+   repository checks. Automatic refresh remains disabled.
+5. **Disable or roll back:** remove the runtime opt-in and ignore adapter
+   receipts. Continue with repo-owned state; do not delete, reset, restore, or
+   rewrite repository files or user indexes as part of rollback.
+
+The supported operator entrypoint is the repo-owned module. It persists no
+configuration and redacts machine-local paths from JSON output:
+
+```bash
+ADAPTER=skills/loop-engineering/scripts/gitnexus_adapter.py
+python3 "$ADAPTER" qualify \
+  --executable "$GITNEXUS_EXECUTABLE" --allow-symlink
+
+python3 "$ADAPTER" status \
+  --executable "$GITNEXUS_EXECUTABLE" --allow-symlink \
+  --repo-root "$CANONICAL_REPO_ROOT" \
+  --repository-id "$CANONICAL_REPOSITORY_ID" \
+  --expected-remote "$EXPECTED_ORIGIN"
+```
+
+`status` is disabled by default. Add `--enabled` only to opt in for that one
+status/handshake invocation; the current baseline still falls back to no memory
+because `read_query` is unsupported. An explicit refresh additionally requires
+a new, empty, pre-created machine-local home and two independent opt-in flags:
+
+```bash
+python3 "$ADAPTER" refresh \
+  --executable "$GITNEXUS_EXECUTABLE" --allow-symlink \
+  --repo-root "$CANONICAL_REPO_ROOT" \
+  --repository-id "$CANONICAL_REPOSITORY_ID" \
+  --expected-remote "$EXPECTED_ORIGIN" \
+  --expected-head "$EXPECTED_HEAD" \
+  --gitnexus-home "$EMPTY_ISOLATED_GITNEXUS_HOME" \
+  --lock-directory "$MACHINE_LOCAL_LOCK_DIRECTORY" \
+  --enabled --confirm-explicit-refresh
+
+python3 "$ADAPTER" disable
+```
+
+`disable` is stateless: the caller stops supplying `--enabled` and ignores prior
+receipts. It does not delete indexes or rewrite repository/user configuration.
+
+Refresh accepts only a clean, directly verifiable worktree boundary with a pre-existing
+`.git/info/exclude` entry for `.gitnexus/`. It fails closed if GitNexus changes
+tracked or protected content, Git HEAD/config/local exclude state, repository
+identity, or qualified metadata. macOS arm64 has live qualification evidence;
+Linux coverage is fixture-based portability evidence, not a live qualification.
+
 See [docs/loop-state-ledger.md](docs/loop-state-ledger.md) for the repo-owned loop state contract.
 
 ### Bounded Milestone Slice

@@ -1,0 +1,14 @@
+sequence: 24
+event_id: "issue-97-p4-in-progress"
+occurred_at: "2026-07-17T02:12:00Z"
+actor: "codex-root"
+type: "task_transition"
+task_id: "P4"
+idempotency_key: "issue-97-p4-in-progress-v1"
+expected_state_revision: 23
+previous_event_hash: "84b61cd18c52137f24d32daad3608685088b22d1b508ec478cc79a9ef3b625a4"
+payload:
+  target_status: "in_progress"
+  fencing_token: {generation: 1, nonce: "issue-97-p4-root-1"}
+  evidence: {}
+event_hash: "ceb3f0f283cdc9f94dff3bb24a53bbe4efe7f7e128694c8d84b0e8a542d8ce16"

@@ -1,0 +1,30 @@
+agent_route:
+  contract_version: 2
+  task:
+    id: "P3-docs-implementation"
+    workload_kind: "implementation"
+    factors:
+      ambiguity: "moderate"
+      reasoning_depth: "balanced"
+      code_context_volume: "large"
+      security_data_migration_public_contract_risk: "routine"
+      write_blast_radius: "bounded"
+      latency_sensitivity: "medium"
+      cost_token_sensitivity: "medium"
+      independence_parallelizability: "bounded"
+      verification_burden: "medium"
+  profile_preflight:
+    profile_dir: "../../../../agent-profiles"
+    registry: "../../../../skills/loop-engineering/references/agent-profile-registry.json"
+    role: "loop_v2a_balanced_worker"
+    agent_roots: ["../../../../agent-profiles"]
+    destination_root: "../../../../agent-profiles"
+  assignment:
+    scope: [".gitignore", "README.md", "docs/external-memory-contract.md", "docs/roadmap.md", "docs/usage-model.md", "docs/runtime-compatibility.md", "docs/release-readiness.md", "skills/loop-engineering/references/memory-contract-v1.md"]
+    ownership: {owner: "p3-docs-worker", disjoint: true}
+    source_revision: {branch: "codex/v2c-gitnexus-adapter", head_sha: "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"}
+    authority_contract:
+      mutation_scope: "bounded"
+      external_write_authorized: false
+      human_gates: ["main-agent-integration", "public-contract-conflict"]
+      completion_criteria: ["Document exact disabled/qualification/status/refresh/rollback flow", "Add repo-owned .gitnexus ignore", "Do not edit release notes or AGENTS.md", "Run docs-relevant verification"]

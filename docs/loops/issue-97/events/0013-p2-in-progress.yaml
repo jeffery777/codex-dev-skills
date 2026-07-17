@@ -1,0 +1,16 @@
+sequence: 13
+event_id: issue-97-p2-in-progress
+occurred_at: '2026-07-16T09:11:00Z'
+actor: codex-root
+type: task_transition
+task_id: P2
+idempotency_key: issue-97-p2-in-progress-v1
+expected_state_revision: 12
+previous_event_hash: 46cee3dc4206081bc88c91fdbd6d392442cf5752661f886b6f4b0f8bffa6dee6
+payload:
+  target_status: in_progress
+  fencing_token:
+    generation: 1
+    nonce: issue-97-p2-root-1
+  evidence: {}
+event_hash: 2753643994ce78076c6c1ff3fd60a685bd414ea861653e13e6eb7261ababffee

@@ -1,0 +1,30 @@
+agent_route:
+  contract_version: 2
+  task:
+    id: "P4-security-threat-model"
+    workload_kind: "security-review"
+    factors:
+      ambiguity: "high"
+      reasoning_depth: "deep"
+      code_context_volume: "large"
+      security_data_migration_public_contract_risk: "security"
+      write_blast_radius: "none"
+      latency_sensitivity: "low"
+      cost_token_sensitivity: "low"
+      independence_parallelizability: "independent"
+      verification_burden: "high"
+  profile_preflight:
+    profile_dir: "../../../../agent-profiles"
+    registry: "../../../../skills/loop-engineering/references/agent-profile-registry.json"
+    role: "loop_v2a_security_reviewer"
+    agent_roots: ["../../../../agent-profiles"]
+    destination_root: "../../../../agent-profiles"
+  assignment:
+    scope: ["Repository-scoped Codex Security threat model for codex-dev-skills; ignore Issue #97 diff as a target and write only the scan-local threat model artifact"]
+    ownership: {owner: "p4-security-threat-model-worker", disjoint: true}
+    source_revision: {branch: "codex/v2c-gitnexus-adapter", head_sha: "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"}
+    authority_contract:
+      mutation_scope: "scan-local threat model artifact only"
+      external_write_authorized: false
+      human_gates: ["main-agent-security-phase-integration"]
+      completion_criteria: ["Produce a repository-scoped threat model with the required cache footer; make no repository edits and do not report diff findings"]

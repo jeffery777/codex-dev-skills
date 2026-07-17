@@ -1,0 +1,24 @@
+sequence: 29
+event_id: "issue-97-p5-claim"
+occurred_at: "2026-07-17T02:17:00Z"
+actor: "codex-root"
+type: "claim_acquired"
+task_id: "P5"
+idempotency_key: "issue-97-p5-claim-v1"
+expected_state_revision: 28
+previous_event_hash: "cba242ddc269d93e45b664670315793d4acfd09d97c9d4748d5b0db986cc113d"
+payload:
+  claim:
+    task_id: "P5"
+    status: "active"
+    owner: {type: "subagent", id: "codex-root"}
+    fencing_token: {generation: 1, nonce: "issue-97-p5-root-1"}
+    expected_state_revision: 28
+    source_revision:
+      branch: "codex/v2c-gitnexus-adapter"
+      head_sha: "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"
+      spec_sha256: "8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb"
+      task_manifest_sha256: "b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c"
+    claimed_at: "2026-07-17T02:17:00Z"
+    lease_expires_at: "2026-07-18T02:17:00Z"
+event_hash: "2615bf76ec8c426a391e4b96de1530b167283e2c0f989f2881a4fa3c0201cfbd"

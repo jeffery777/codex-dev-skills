@@ -1,0 +1,28 @@
+sequence: 4
+event_id: issue-97-p0-reviewing
+occurred_at: '2026-07-16T09:02:00Z'
+actor: codex-root
+type: task_transition
+task_id: P0
+idempotency_key: issue-97-p0-reviewing-v1
+expected_state_revision: 3
+previous_event_hash: 02307b22894b86ecd0f4dc6861a0439ea0cdc5ea914ec07f6858ca9a8dc74dc5
+payload:
+  target_status: reviewing
+  fencing_token:
+    generation: 1
+    nonce: issue-97-p0-root-1
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+      - docs/loops/issue-97/receipts/p0-inventory-main-verification.md
+    review:
+      status: not_required
+      mode: none
+      artifacts: []
+    acceptance:
+      status: not_required
+      artifact: ''
+event_hash: 222e4f7ee7cfa0345c0ca05e2e90816b94e17cb0fae89b882b64dcc6aad015df

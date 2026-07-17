@@ -1,0 +1,30 @@
+agent_route:
+  contract_version: 2
+  task:
+    id: "P1-security-design"
+    workload_kind: "security-review"
+    factors:
+      ambiguity: "high"
+      reasoning_depth: "deep"
+      code_context_volume: "large"
+      security_data_migration_public_contract_risk: "security"
+      write_blast_radius: "none"
+      latency_sensitivity: "low"
+      cost_token_sensitivity: "low"
+      independence_parallelizability: "independent"
+      verification_burden: "high"
+  profile_preflight:
+    profile_dir: "../../../../agent-profiles"
+    registry: "../../../../skills/loop-engineering/references/agent-profile-registry.json"
+    role: "loop_v2a_security_reviewer"
+    agent_roots: ["../../../../agent-profiles"]
+    destination_root: "../../../../agent-profiles"
+  assignment:
+    scope: ["GitNexus 1.6.9 qualification", "canonical identity and freshness", "untrusted metadata and prompt injection", "subprocess argv/path/symlink/TOCTOU/environment/timeout/lock", "unexpected tracked mutation", "V2b trust boundary"]
+    ownership: {owner: "p1-security-design-worker", disjoint: true}
+    source_revision: {branch: "codex/v2c-gitnexus-adapter", head_sha: "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"}
+    authority_contract:
+      mutation_scope: "none"
+      external_write_authorized: false
+      human_gates: ["main-agent-integration", "unexpected-repository-mutation"]
+      completion_criteria: ["Return defensive design findings and required negative tests; make no edits"]

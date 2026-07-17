@@ -1,0 +1,11 @@
+sequence: 28
+event_id: "issue-97-p5-ready"
+occurred_at: "2026-07-17T02:16:00Z"
+actor: "codex-root"
+type: "task_transition"
+task_id: "P5"
+idempotency_key: "issue-97-p5-ready-v1"
+expected_state_revision: 27
+previous_event_hash: "4d8928f8ae603d37d99fe04b6a9b14b0eb42fab9cc2703f2bf2b7098bbe34527"
+payload: {target_status: "ready", evidence: {}}
+event_hash: "cba242ddc269d93e45b664670315793d4acfd09d97c9d4748d5b0db986cc113d"

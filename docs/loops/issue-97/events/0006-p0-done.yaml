@@ -1,0 +1,31 @@
+sequence: 6
+event_id: issue-97-p0-done
+occurred_at: '2026-07-16T09:04:00Z'
+actor: codex-root
+type: task_transition
+task_id: P0
+idempotency_key: issue-97-p0-done-v1
+expected_state_revision: 5
+previous_event_hash: 949b32abf60a71b104ab756e764d8fb9bd65354d42cff771a6ad50f6c577f09a
+payload:
+  target_status: done
+  fencing_token:
+    generation: 1
+    nonce: issue-97-p0-root-1
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+      - docs/loops/issue-97/receipts/p0-inventory-main-verification.md
+    review:
+      status: not_required
+      mode: none
+      artifacts: []
+    acceptance:
+      status: not_required
+      artifact: ''
+    human_gate:
+      status: satisfied
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+event_hash: 76a25da9e077956beb77df0a70ff0c9454996eb7a8c28605f6f3df7bded9ffac

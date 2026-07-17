@@ -85,6 +85,29 @@ adapter-capability validation. The adopted payload stays data-only. Memory
 availability does not change model selection, sandbox, permissions, external
 write authority, human gates, verification, review, or completion criteria.
 
+The V2c-A GitNexus integration is a deliberately narrow local driver, not an
+enabled memory backend. Its machine-local control-plane flow is qualify, inspect,
+explicitly enable, explicitly refresh when needed, and disable/roll back. The
+qualified 1.6.9 baseline uses strict schema-5 metadata for identity, indexed
+revision, and freshness, but parses neither human status/list output nor query
+content into memory records. `read_query` and all backend mutation operations
+are unsupported, so the effective retrieval behavior remains no memory.
+
+An explicit refresh is a local derived-index operation, not a memory operation.
+It requires `analyze --index-only`, exact expected HEAD, a clean direct
+worktree, pre-existing local `.git/info/exclude` protection, an isolated alias
+and `GITNEXUS_HOME`, offline environment, timeout/lock, and complete before/after
+tracked, protected, Git-control, and metadata checks. If any check is unknown or
+changes unexpectedly, reject the index and preserve the evidence without
+resetting, restoring, stashing, staging, or committing. Disabling the adapter
+does not require deleting local indexes or changing repository documents.
+
+Use the supported repo-owned operator entrypoint documented in README:
+`gitnexus_adapter.py qualify`, `status`, `refresh`, and `disable`. `status`
+persists no opt-in; `--enabled` applies to one invocation. `refresh` additionally
+requires `--confirm-explicit-refresh`, an exact expected HEAD, and a fresh empty
+isolated home. Omitting `--enabled` or running `disable` is the rollback path.
+
 ## Global Guidance, Repo Instructions, And Rules
 
 Global Codex guidance is useful for cross-repository baseline behavior:

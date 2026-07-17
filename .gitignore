@@ -6,3 +6,6 @@ __pycache__/
 
 # Local review and workflow artifacts
 .work/
+
+# Local derived code indexes
+.gitnexus/

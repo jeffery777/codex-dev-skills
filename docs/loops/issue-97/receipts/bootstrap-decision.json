@@ -1,0 +1,15 @@
+{
+  "status": "decided",
+  "decision": {
+    "case_id": "issue-97-bootstrap",
+    "classification": "bounded-delivery-objective",
+    "complete": false,
+    "execution_mode": "shared-subagents",
+    "next_decision": "continue",
+    "notices": [],
+    "route": "project-delivery",
+    "violations": []
+  },
+  "authority_note": "Current-session --external-write-authorized reflects the user's exact authorization for Issue creation, branch creation, commit, push, and PR creation after evidence gates; it does not authorize merge, release, deploy, or destructive action.",
+  "protected_history_sha256": "none"
+}

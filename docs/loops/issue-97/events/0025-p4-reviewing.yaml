@@ -1,0 +1,25 @@
+sequence: 25
+event_id: "issue-97-p4-reviewing"
+occurred_at: "2026-07-17T02:13:00Z"
+actor: "codex-root"
+type: "task_transition"
+task_id: "P4"
+idempotency_key: "issue-97-p4-reviewing-v1"
+expected_state_revision: 24
+previous_event_hash: "ceb3f0f283cdc9f94dff3bb24a53bbe4efe7f7e128694c8d84b0e8a542d8ce16"
+payload:
+  target_status: "reviewing"
+  fencing_token: {generation: 1, nonce: "issue-97-p4-root-1"}
+  evidence:
+    verification:
+      status: "passed"
+      artifacts:
+        - "docs/loops/issue-97/receipts/verification-report.md"
+        - "docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md"
+    review:
+      status: "required"
+      mode: "formal-gate"
+      artifacts:
+        - "docs/loops/issue-97/receipts/p4-merge-readiness-final.md"
+    acceptance: {status: "not_required", artifact: ""}
+event_hash: "34b8749daffb3c23d832aa3bd937a5ced618d6feb8a2aeaaf5e49f957741d8cb"
