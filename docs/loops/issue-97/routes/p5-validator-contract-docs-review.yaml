@@ -1,0 +1,38 @@
+agent_route:
+  contract_version: 2
+  task:
+    id: "P5-validator-contract-docs-review"
+    workload_kind: "review"
+    factors:
+      ambiguity: "moderate"
+      reasoning_depth: "deep"
+      code_context_volume: "medium"
+      security_data_migration_public_contract_risk: "public-contract"
+      write_blast_radius: "none"
+      latency_sensitivity: "low"
+      cost_token_sensitivity: "low"
+      independence_parallelizability: "independent"
+      verification_burden: "high"
+  profile_preflight:
+    profile_dir: "../../../../agent-profiles"
+    registry: "../../../../skills/loop-engineering/references/agent-profile-registry.json"
+    role: "loop_v2a_deep_reviewer"
+    agent_roots: ["../../../../agent-profiles"]
+    destination_root: "../../../../agent-profiles"
+  assignment:
+    scope:
+      - "docs/loop-state-ledger.md"
+      - "skills/loop-engineering/scripts/git_source.py"
+      - "skills/loop-engineering/scripts/loopctl.py"
+      - "scripts/validate-loop-ledger.py"
+      - "Issue #97 verification and review receipts affected by the bounded contract fix"
+    ownership: {owner: "p5-validator-contract-docs-reviewer", disjoint: true}
+    source_revision: {branch: "codex/v2c-gitnexus-adapter", head_sha: "67be3d967e39eeab47394d0856963faff8aa4acb"}
+    authority_contract:
+      mutation_scope: "none"
+      external_write_authorized: false
+      human_gates: ["main-agent-docs-disposition", "formal-docs-review-gate"]
+      completion_criteria:
+        - "Confirm public docs accurately distinguish active exact HEAD from terminal ancestor validation"
+        - "Confirm terminal mutation/reopen and completion-evidence boundaries are explicit"
+        - "Return MF/SF/NIT with file and line evidence; make no edits"

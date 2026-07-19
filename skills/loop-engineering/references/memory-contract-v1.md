@@ -202,8 +202,18 @@ The caller-owned CLI inputs use these exact JSON shapes:
 
 The first concrete driver baseline is default-disabled and qualified only for
 GitNexus `1.6.9`, metadata schema `5`, and a runtime-produced driver fingerprint.
-That runtime fingerprint binds CLI/runtime bytes, exact version, observed
-analyze flags, metadata filenames/schema/capability policy, and symlink policy.
+Qualification requires an explicit absolute machine-local CLI path and never
+falls back to ambient `PATH`; an env-node entry also requires an explicit Node
+path. Before execution, caller-owned accepted digests must match the entry,
+bound interpreter, and complete canonical package tree under an explicit
+machine-local package root. Package symlinks must be relative, contained, and
+target a directly descriptor-bound regular file; parent and target symlinks are
+not followed. Caller-owned accepted digests come from separately trusted
+installation evidence or an explicitly approved local measurement, not adapter
+self-report. That runtime fingerprint binds CLI bytes, every qualified
+script-interpreter byte identity, exact version, observed analyze flags,
+metadata filenames/schema/capability policy, and separate
+CLI/runtime symlink policies.
 The separate qualification evidence-bundle digest binds captured package and
 raw help/status/query observations. Any
 version, bytes, flag, schema, or capability drift makes the driver incompatible
@@ -220,12 +230,36 @@ memory payload, caller-owned trust evidence, or completion proof.
 
 Derived-index refresh is outside the memory payload lifecycle. It requires an
 explicit runtime opt-in and only a qualified `analyze --index-only` argv, exact
-repository/HEAD binding, a clean direct worktree, pre-existing local exclude
+repository binding and verified commit-object HEAD, a clean direct worktree with no tracked path below
+`.gitnexus/` or filesystem case/normalization alias of that root, pre-existing local exclude
 guard, isolated alias and `GITNEXUS_HOME`, offline bounded environment,
-timeout/lock, and complete before/after repository and Git-control checks. Any
+a fixed descendant-Git `core.fsmonitor=false` override,
+an identity/status boundary with a real local non-symlink `.git` marker and
+reciprocal binding for linked worktrees that rejects enclosing-repository
+`core.worktree` aliases and forged pointers; refresh additionally requires a
+direct `.git` directory and rejects linked-worktree `.git` files,
+replacement-object neutralization, isolated system/global Git configuration,
+disabled hooks/fsmonitor/untracked-cache extensions, rejection of local and
+enabled-worktree `filter.*`, include, and external-attributes selectors,
+`GIT_NO_LAZY_FETCH=1`,
+bounded probe output/time, timeout, and a mandatory deterministic fixed-OS-temp
+per-user canonical-root lock before any optional instance lock. The lock is a
+cooperative same-UID boundary, not distributed or hostile-process isolation.
+The isolated home has its own device/inode-keyed cross-repository lock; its
+verified directory descriptor stays open for the full refresh and emptiness is
+rechecked under that lock immediately before execution.
+Refresh also requires complete before/after repository,
+worktree (including ignored content), and `.git` administrative-tree checks. A tracked alias that
+is absent from the worktree is still rejected through conservative Unicode NFC
+normalization and case-folded lexical comparison; filesystem identity checks
+are defense in depth rather than the only alias control. Any
 unexpected state fails closed without reset, restore, stash, stage, commit, or
 automatic retry. Machine-local paths, registries, indexes, databases, and
 credentials are never shared contract fields or repository artifacts.
+The V2c-A complete-snapshot envelope is limited to 250,000 entries, depth 256,
+512 MiB per regular file, and the configured total refresh deadline (120
+seconds by default); any exceeded bound is unsupported and falls back to no
+memory rather than producing a partial refresh.
 
 The mandatory backend-neutral V2b oracle remains unchanged and is a regression
 check, not GitNexus read/write authority. Adapter-specific tests prove

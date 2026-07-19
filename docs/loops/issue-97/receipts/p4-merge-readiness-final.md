@@ -2,6 +2,11 @@
 
 Gate Result: **READY for commit and PR handoff**.
 
+Historical scope notice: this gate accepted the initial adapter snapshot later
+published as `67be3d9`. It is not merge- or completion-readiness evidence for
+the subsequent bounded P5 validator-contract diff. A new readiness receipt is
+required after that diff's verification, review, and security finalization.
+
 This is a read-only evidence-and-decision gate. It does not authorize merge,
 release, deployment, tag creation, or GitHub Release publication. Commit, push,
 and ready-for-review PR creation are separately authorized by the delegating

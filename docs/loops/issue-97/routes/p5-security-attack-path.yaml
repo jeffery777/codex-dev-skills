@@ -1,0 +1,30 @@
+agent_route:
+  contract_version: 2
+  task:
+    id: "P5-security-attack-path"
+    workload_kind: "security-review"
+    factors:
+      ambiguity: "high"
+      reasoning_depth: "deep"
+      code_context_volume: "medium"
+      security_data_migration_public_contract_risk: "security"
+      write_blast_radius: "bounded"
+      latency_sensitivity: "low"
+      cost_token_sensitivity: "low"
+      independence_parallelizability: "bounded"
+      verification_burden: "high"
+  profile_preflight:
+    profile_dir: "../../../../agent-profiles"
+    registry: "../../../../skills/loop-engineering/references/agent-profile-registry.json"
+    role: "loop_v2a_security_reviewer"
+    agent_roots: ["../../../../agent-profiles"]
+    destination_root: "../../../../agent-profiles"
+  assignment:
+    scope: ["validated candidates CAND-ADAPTER-TRACKED-DERIVED-COLLISION and validator-git-replace-ancestry-001", "worker-local attack-path artifacts"]
+    ownership: {owner: "p5-security-attack-path-reviewer", disjoint: true}
+    source_revision: {branch: "codex/v2c-gitnexus-adapter", head_sha: "67be3d967e39eeab47394d0856963faff8aa4acb"}
+    authority_contract:
+      mutation_scope: "bounded worker-local scan artifacts only"
+      external_write_authorized: false
+      human_gates: ["main-agent-security-attack-path-integration"]
+      completion_criteria: ["Candidate-specific attack-path receipts with threat-model-grounded policy disposition"]

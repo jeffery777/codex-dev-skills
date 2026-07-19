@@ -1,0 +1,17 @@
+sequence: 34
+event_id: issue-97-p5-recovery-in-progress
+occurred_at: '2026-07-18T06:02:00Z'
+actor: codex-root
+type: task_transition
+task_id: P5
+idempotency_key: issue-97-p5-recovery-in-progress-v1
+expected_state_revision: 33
+previous_event_hash: 8c627f6fada8de35221c0d32c3bd1e9e1112f74c715c78e8d9011c3091be63b6
+payload:
+  target_status: in_progress
+  fencing_token:
+    generation: 2
+    nonce: issue-97-p5-root-2
+  evidence:
+    recovery_artifact: docs/loops/issue-97/events/0031-source-rebound.yaml
+event_hash: 20e5b241d307640e5027130ced9f837da7bbeaa38521bd25b98464504f921932

@@ -2,6 +2,10 @@
 
 Gate result: **PASS**.
 
+Historical scope notice: this review covers the initial adapter snapshot later
+published as `67be3d9`; it does not cover the bounded P5 validator-contract
+documentation change. See the P5 docs-review receipt for the current diff.
+
 The reviewer independently closed `MF-DOC-001` through `MF-DOC-003`,
 `SF-DOC-001` through `SF-DOC-002`, and `NIT-DOC-001`; no new MF/SF/NIT was
 reported.

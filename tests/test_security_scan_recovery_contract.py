@@ -25,10 +25,11 @@ class SecurityScanRecoveryContractTests(unittest.TestCase):
             "Goal status",
             "worker status",
             "safety_refused",
-            "--parent-security-report-fallback-authorized",
+            "--parent-security-scan-fallback-authorized",
             "must not fail or abandon the scan",
             "canonical JSON bytes",
             "sealed-manifest",
+            "fixed neutral heartbeat",
         ):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, skill)
@@ -67,6 +68,7 @@ class SecurityScanRecoveryContractTests(unittest.TestCase):
         self.assertIn("### Security scan workbench", contract)
         self.assertIn("remains `running`", contract)
         self.assertIn("terminal scan-failure operation", contract)
+        self.assertIn("neutral fixed-format heartbeat", contract)
 
 
 if __name__ == "__main__":

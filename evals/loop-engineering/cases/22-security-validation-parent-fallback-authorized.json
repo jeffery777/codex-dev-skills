@@ -1,0 +1,32 @@
+{
+  "id": "security-validation-parent-fallback-authorized",
+  "input": {
+    "request": {"kind": "continuation", "risk": "high"},
+    "objective": {"clear": true, "complete": false},
+    "state": {
+      "source_conflict": false,
+      "verification": "not_run",
+      "review": "required",
+      "human_gate": "not_required",
+      "task_status": "reviewing",
+      "goal_status": "active",
+      "security_scan": {
+        "status": "running",
+        "phase": "validation",
+        "worker_failure_kind": "safety_refused",
+        "worker_retry_count": 2
+      }
+    },
+    "runtime": {"surface": "desktop", "capabilities": {"subagents": true}},
+    "work": {}
+  },
+  "expect": {
+    "classification": "resumable-capability-failure",
+    "route": "task-continuation",
+    "execution_mode": "parent-scan-phase-fallback",
+    "next_decision": "continue",
+    "complete": false,
+    "violations": [],
+    "notices": ["security-scan-remains-running", "worker-safety-refusal", "scan-phase-validation"]
+  }
+}

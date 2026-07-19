@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import datetime as dt
 import importlib.util
 import json
 import pathlib
@@ -38,7 +39,10 @@ Evaluator = Callable[..., dict[str, Any]]
 TRUSTED_AUTHORITY_PROFILES = {
     "parent-security-report-fallback": {
         "parent_security_report_fallback_authorized": True,
-    }
+    },
+    "parent-security-scan-fallback": {
+        "parent_security_scan_fallback_authorized": True,
+    },
 }
 BASE_TRUSTED_AUTHORITY = {"protected_history_sha256": "none"}
 
@@ -324,6 +328,9 @@ def evaluate_state_contract(core_module: Any) -> dict[str, Any]:
             state,
             event,
             trusted_authority=trusted_authority,
+            trusted_time=dt.datetime.fromisoformat(
+                event["occurred_at"].replace("Z", "+00:00")
+            ),
         )
 
     def authorize(
@@ -440,7 +447,13 @@ def evaluate_state_contract(core_module: Any) -> dict[str, Any]:
         }
         stale_event["event_hash"] = core_module.calculate_event_hash(stale_event)
         try:
-            core_module.apply_event(stale_state, stale_event)
+            core_module.apply_event(
+                stale_state,
+                stale_event,
+                trusted_time=dt.datetime.fromisoformat(
+                    stale_event["occurred_at"].replace("Z", "+00:00")
+                ),
+            )
             failures.append("stale fencing token was accepted")
         except core_module.LoopContractError:
             pass

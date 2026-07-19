@@ -53,6 +53,16 @@ The workflows can carry local work to PR readiness, but they intentionally stop 
 - commit, push, PR creation, release, deploy, merge, platform comments, or review submissions
 - material security, privacy, data, migration, payment, or permission risk
 
+Machine-local executable selection is runtime control-plane state. Repository
+Git probes ignore ambient `PATH` and executable-path environment variables,
+using the OS default executable search path; a trusted library caller may pass
+an explicit absolute path directly. GitNexus operations require an explicit
+absolute CLI path. Every script entry has a bound, fingerprinted native
+interpreter: exact `#!/usr/bin/env node` or `#!/usr/bin/env -S node` entries
+require an explicit Node path; unsupported launch syntax fails closed. Git
+itself must be a native executable, not a script wrapper.
+Keep those values out of project artifacts and public receipts.
+
 Shared workflows may use native Goal mode when explicitly requested and may
 delegate bounded packets through shared subagents in supported Desktop, CLI,
 and IDE runtimes. Goal and subagent state are coordination evidence, not
@@ -97,7 +107,17 @@ An explicit refresh is a local derived-index operation, not a memory operation.
 It requires `analyze --index-only`, exact expected HEAD, a clean direct
 worktree, pre-existing local `.git/info/exclude` protection, an isolated alias
 and `GITNEXUS_HOME`, offline environment, timeout/lock, and complete before/after
-tracked, protected, Git-control, and metadata checks. If any check is unknown or
+complete worktree (including ignored paths), protected, complete local `.git`
+administrative-tree, replacement-neutral Git, local and enabled-worktree
+filter/include/attributes rejection, and metadata checks. Refresh uses a
+descriptor-bound cross-process `flock` in a current-user-owned machine-local
+lock directory. One deterministic fixed-OS-temp per-user lock for the canonical
+repository root is mandatory before any optional instance lock, so different
+temp environments or configured directories still serialize; that is coordination for cooperating same-UID local processes,
+not a distributed or hostile-same-UID security boundary. The isolated home has
+its own device/inode-keyed cross-repository lock; the controller holds its
+directory descriptor and rechecks emptiness under that lock immediately before
+execution. If any check is unknown or
 changes unexpectedly, reject the index and preserve the evidence without
 resetting, restoring, stashing, staging, or committing. Disabling the adapter
 does not require deleting local indexes or changing repository documents.
@@ -106,7 +126,11 @@ Use the supported repo-owned operator entrypoint documented in README:
 `gitnexus_adapter.py qualify`, `status`, `refresh`, and `disable`. `status`
 persists no opt-in; `--enabled` applies to one invocation. `refresh` additionally
 requires `--confirm-explicit-refresh`, an exact expected HEAD, and a fresh empty
-isolated home. Omitting `--enabled` or running `disable` is the rollback path.
+isolated home. Qualify, status, and refresh also require caller-owned accepted
+entry, interpreter-when-applicable, and complete package-tree digests plus an
+explicit canonical machine-local package root; those values are checked before
+tool execution and remain outside repository files. Omitting `--enabled` or
+running `disable` is the rollback path.
 
 ## Global Guidance, Repo Instructions, And Rules
 

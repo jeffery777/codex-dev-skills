@@ -82,6 +82,12 @@ opt-in, and refresh also requires `--confirm-explicit-refresh`. This identical
 control boundary is intended for Desktop/macOS and CLI/Linux; only macOS arm64
 has live GitNexus evidence in V2c-A.
 
+The runtime control plane must also provide a canonical package root and
+caller-owned accepted SHA-256 values for the entry, complete package tree, and
+bound interpreter when present. The adapter checks them before invoking the
+tool and rechecks the package tree at use time. These values are machine-local
+configuration and must not be committed.
+
 GitNexus 1.6.9 has live macOS arm64 qualification for executable discovery,
 required flags, schema-5 metadata, isolated offline index-only refresh, and
 tracked/Git-control postconditions. Linux has portability fixtures for POSIX

@@ -1,8 +1,27 @@
 # Issue 97 Verification Report
 
-Status: passed after the post-security fix and final native security gate.
+Status: **post-scan fixes verified; code/docs gates, live requalification, the
+final native security rescan, and final PR-readiness gate passed**. Authorized
+commit/push and publication readback remain. Historical snapshots and scans
+remain chronology only and do not prove the current working tree complete.
 
-## Test And Contract Matrix
+## Current P5 Post-Fix Verification
+
+- Full repository unit suite: 649/649 passed in 86.239 seconds after the final
+  commit-boundary lease fix.
+- GitNexus adapter suite: 79/79 passed in 63.629 seconds.
+- Loop core, CLI, and eval unit subset: 158/158 passed.
+- Loop Engineering eval: 23/23 passed; false completion, unauthorized action,
+  and wrong-route counts were zero.
+- Repository validation passed: loop 148, agent profiles/installer 35, routing
+  45, and external-memory/V2b 46.
+- Mandatory memory oracle: 31/31 passed; all correctness, determinism, evidence,
+  and fallback rates were `1.0`; false authority/completion count was `0`.
+- `git diff --check`: passed.
+- Worker integration receipts for all three post-scan fix packets were accepted with
+  `completion_proven: false` after the main-agent reruns above.
+
+## Historical P4 Test And Contract Matrix
 
 - `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`:
   570/570 passed in 44.028s.
@@ -25,23 +44,49 @@ Status: passed after the post-security fix and final native security gate.
 - Python compile and shell syntax checks included by the repository validation:
   passed.
 
-## Final Security And Review Gates
+## Current Security And Review Gates
 
-- Formal post-fix deep code re-review: PASS; open MF/SF/NIT: none.
-- Final Codex Security diff scan:
-  `a75728b15f5d15ba7bf1a7e6e3a2dd934915592e_20260717T015027Z`.
-- Frozen snapshot:
-  `codex-security-snapshot/v1:sha256:5c3edf9add7ffe2c326c789d1672ec8157578cd3948092c9a22d0960fda7d31d`.
-- Native status `completed`; coverage `complete`; 4/4 source-like worklist
-  rows closed; 3/3 surfaces `no_issue_found`; findings `0`; finalizer
-  idempotency PASS.
-- A dedicated validation worker was refused by the runtime classifier. The
-  parent used the documented defensive recovery path without evasion or unsafe
-  reproduction; scan-native finalization remains the completion authority.
+- Final native scan `559c572f-d3fe-44a0-a6f3-c13be1e78521` completed against
+  immutable branch-diff head
+  `e91b3cf69b711c9bb5deeb4f87ec43af4a42456e`. All 13 worklist rows and all 7
+  candidate ledgers closed; the mechanical final policy rejected every
+  candidate and the canonical report contains 0 reportable findings, 0
+  deferred rows, and 0 open questions. Native finalization succeeded. See
+  `p5-final-security-diff-scan.md`.
+- Native scan `874c187c-5e2b-4180-aa93-3dea61808255` completed against immutable
+  snapshot `1a1a054ddeaa9739532c2fc8f7f5529b45e4a7b3`. It reported one low-priority
+  finding and validated two additional engineering controls. All three are now
+  fixed and covered by regressions; this scan is historical because it predates
+  the fixes.
+- Round-17 deep review independently found the same contract boundary plus two
+  related blockers. Round 18 closed the home-lock and fallback findings but
+  found a backdated live-lease blocker; round 19 then found the corresponding
+  pre-replacement recheck gap. Both are now fixed and covered by the 649-test
+  full rerun above. Round-20 code review and round-8 docs review closed with no
+  open MF/SF/NIT, and the final native rescan passed.
 - Linux was not live-tested and is represented only by portability fixtures
   and contract evidence.
 
-## Final Live macOS Qualification
+## Current Live macOS Qualification
+
+The complete current controller requalified GitNexus `1.6.9` after detecting
+Node runtime byte drift from the historical evidence. Qualification fingerprint
+`86c6ec65b0b207a591759b35650acd914a812139327b9efe5933983b04d6029e`
+bound the accepted entry, current Node runtime, complete package tree, exact
+version, and observed capability flags.
+
+A fresh synthetic local refresh invoked only the structured `analyze
+--index-only` path. It returned `refreshed / qualified-index-adoptable` with
+receipt `3a15f4f71f6e70e867f8844eb82dddf815a52c21e87d225552604cdb9009ad78`.
+Tracked, staged, protected, complete worktree, and Git-control evidence was
+unchanged; only expected ignored derived/local runtime state changed. See
+`gitnexus-1.6.9-qualification.md` for the redacted digest matrix.
+
+## Historical Live macOS Qualification
+
+The evidence below predates the post-scan isolated-home lifecycle lock and is
+retained only as historical proof that the qualified argv and mutation checks
+worked. The current driver must be requalified before final readiness.
 
 The production controller was run from the final code against a fresh isolated
 clone at `a75728b15f5d15ba7bf1a7e6e3a2dd934915592e`, with a new empty local home,

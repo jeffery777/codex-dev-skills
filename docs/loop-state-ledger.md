@@ -120,9 +120,68 @@ paths and rejects contract files outside the target repository.
 
 Before transition preview, audit, or mutation, the CLI resolves the loop spec
 and task manifest, verifies their recorded SHA-256 digests, and compares the
-recorded branch and HEAD with the target git repository. Claim acquisition also
-requires the same branch, HEAD, spec digest, and manifest digest. A task may
+recorded branch and HEAD with the target git repository. Active ledgers require
+an exact Git top-level with a real local non-symlink `.git` marker (and a
+reciprocal administrative back-reference for linked worktrees), named branch,
+and verified commit-object HEAD; a format-valid SHA, enclosing repository
+identity, forged `.git` pointer, or repository-local `core.worktree` alias is
+insufficient. A terminal
+ledger whose lifecycle is `complete` and
+whose final event is `objective_completed` may retain its immutable source HEAD
+after the ledger is committed, but only when Git proves that source is an
+ancestor of the current HEAD on the same branch. Unknown, missing, malformed,
+diverged, wrong-branch, or detached-HEAD relations fail closed. The ancestry
+probe disables Git replacement-object semantics and pins the legacy graft source
+to an empty device, so repository-local replacement refs, graft files, and
+inherited graft configuration cannot redefine the accepted history. Every
+repository-root, branch, HEAD, and ancestry probe also uses a bounded Git
+environment that removes inherited repository, worktree, object database,
+index, config-injection, replacement, graft, and tracing selectors. Therefore
+`git -C <target>` cannot be redirected to a decoy repository through variables
+such as `GIT_DIR`. Every equal or ancestor relation first re-reads a typed
+`HEAD^{commit}` without replacement-object semantics, so a broken ref cannot
+pass through string equality alone. The bounded environment also sets
+`GIT_NO_LAZY_FETCH=1`; missing promisor objects fail locally instead of
+contacting a repository-configured remote or remote helper. This exception
+does not reopen the terminal objective or permit another event; it only avoids
+requiring a commit to contain its own future SHA. Claim acquisition still
+requires the exact branch, HEAD, spec digest, and manifest digest. A task may
 enter `ready` only after every manifest dependency is `done` or `accepted`.
+
+An active ledger remains exact-HEAD by default. If it was itself persisted in
+an intermediate checkpoint commit, the only continuation bridge is a
+`source_rebound` event through `loopctl.py apply-event`. Its special preflight
+requires the prior source to be a native-Git-proven same-branch ancestor and
+requires the ledger's canonical path, regular HEAD blob, index entry, working
+bytes, mode, and last-modifying commit to match the current typed HEAD. Staged,
+unstaged, symlink, copied, stale-commit, diverged, detached, replacement, and
+graft ambiguity fail closed. The event atomically rebinds the source and every
+unexpired active claim; every expired claim receives an explicit fenced
+release or blocker disposition before later recovery. Direct source edits or
+historical event rewrites are not a supported recovery path.
+
+`source_rebound` is a protected action, not a generic ancestry exception. Its
+payload binds both prior and target source revisions; the target branch and
+typed target HEAD must match the live repository. It requires concrete evidence
+and a user or platform authorization whose protected scope contains that target
+HEAD. A live write also needs the matching action and authorization-receipt
+digest through the current-session CLI inputs, never from repository YAML.
+Live application rejects a future `occurred_at` against trusted current time;
+the public CLI supplies its current UTC clock and direct library callers inject
+the trusted value. Claim expiry is calculated deterministically from the event
+time, so each
+then-expired active claim must be explicitly released or blocked in the same
+event. Live application additionally requires event-time and trusted-time
+expiry classification to agree for every active claim; a lease deadline crossed
+between those times rejects a backdated rebound. The referenced spec and
+manifest must each be a canonical tracked
+regular target-HEAD blob whose stage-zero index entry and exact working bytes
+and mode agree with that target. All ledger, event, spec, and manifest reads are
+descriptor-bound, nonblocking, size-bounded regular-file reads. Before
+replacement, the CLI repeats those bindings and its byte-level
+compare-and-swap check. Replaying the exact already-recorded rebound is a no-op
+after current protected-history re-attestation; it never repeats the mutation
+or requires a new live action authorization.
 
 ## Claim And Lease Rules
 
@@ -135,6 +194,9 @@ Baseline rules:
 - A valid claim requires an owner, lease, expected state revision, and fencing
   token containing a monotonically increasing generation plus unique nonce.
 - Every owner transition must present the current fencing token.
+- Live claim acquisition and owner transitions require the lease to remain
+  unexpired at trusted current time as well as at `occurred_at`; replay retains
+  the durable event-time rule.
 - The active claim may remain through `reviewing` and `done`; release it before
   `accepted`. Expiry or revocation atomically materializes the task as
   `blocked`, so a stale owner cannot submit a later result.
@@ -205,7 +267,8 @@ authorization as false.
 event type, idempotency input, and event hash before atomically replacing the
 materialized ledger. The previous file digest is recorded as snapshot evidence.
 The write path also uses a same-filesystem exclusive lock and a final byte-level
-compare-and-swap check. This prevents cooperating processes from silently
+compare-and-swap check. Replacement preserves the original ledger mode before
+the atomic rename. This prevents cooperating processes from silently
 overwriting one ledger path; it is not an atomic claim store across clones or
 worktrees, so those environments still require concurrency one or an external
 shared coordination adapter.

@@ -1,0 +1,135 @@
+{
+  "profile_preflight": {
+    "capability_class": "balanced-worker",
+    "capability_tier": "advanced",
+    "collisions": [],
+    "decision": "fallback-safe",
+    "fallback_evidence": {
+      "available": true,
+      "capability_classes": [
+        "balanced-worker",
+        "deep-reviewer",
+        "fast-read-explorer",
+        "security-reviewer"
+      ],
+      "capability_tiers": {
+        "balanced-worker": [
+          "everyday",
+          "advanced"
+        ],
+        "deep-reviewer": [
+          "deep",
+          "exceptional"
+        ],
+        "fast-read-explorer": [
+          "mechanical",
+          "efficient"
+        ],
+        "security-reviewer": [
+          "deep"
+        ]
+      }
+    },
+    "fallback_tier": "parent-default",
+    "profile": "loop_v2a_advanced_worker",
+    "runtime_mapping": {
+      "availability": "runtime-dependent",
+      "last_verified": "2026-07-12",
+      "model": "gpt-5.6-sol",
+      "reasoning_effort": "medium",
+      "replaceable": true
+    },
+    "selected": "parent/default",
+    "state": "custom-surface-unavailable",
+    "tier_rank": 3
+  },
+  "route_receipt": {
+    "assigned_scope": [
+      "neutralize Git graft ancestry",
+      "neutralize descendant core.fsmonitor execution",
+      "focused regression tests and contract docs"
+    ],
+    "assigned_scope_sha256": "ad1ed2d25e188e0602a3003a324b04b5b61e7a5b4370ac8f91184d0e8001a09f",
+    "authority_contract_sha256": "9ccb2649bebe559363eb46a0c019724b428389dcde221104bd8c718c3f0c5610",
+    "authority_invariants": {
+      "profile_cannot_expand_permissions": true,
+      "profile_cannot_expand_scope": true,
+      "profile_cannot_satisfy_human_gates": true,
+      "worker_receipt_cannot_prove_completion": true
+    },
+    "classification": {
+      "capability_class": "balanced-worker",
+      "capability_tier": "advanced",
+      "factor_effects": {
+        "ambiguity": "no-escalation",
+        "code_context_volume": "neutral",
+        "cost_token_sensitivity": "neutral",
+        "independence_parallelizability": "requires-sequential-current-session",
+        "latency_sensitivity": "neutral",
+        "reasoning_depth": "deep-capability-trigger",
+        "security_data_migration_public_contract_risk": "no-hard-trigger",
+        "verification_burden": "deep-capability-trigger",
+        "write_blast_radius": "bounded-write"
+      },
+      "factors": {
+        "ambiguity": "moderate",
+        "code_context_volume": "medium",
+        "cost_token_sensitivity": "medium",
+        "independence_parallelizability": "coupled",
+        "latency_sensitivity": "low",
+        "reasoning_depth": "deep",
+        "security_data_migration_public_contract_risk": "routine",
+        "verification_burden": "high",
+        "write_blast_radius": "bounded"
+      },
+      "hard_triggered": false,
+      "reasons": [
+        "advanced-bounded-implementation"
+      ],
+      "selected_role": "loop_v2a_advanced_worker",
+      "workload_kind": "implementation"
+    },
+    "config_evidence": null,
+    "config_evidence_sha256": null,
+    "contract_version": 2,
+    "cost_degraded": false,
+    "degraded": false,
+    "execution_mode": "sequential-current-session",
+    "fallback": "sequential-current-session",
+    "fallback_capability_evidence": {
+      "capability_class": "balanced-worker",
+      "capability_classes": [
+        "balanced-worker",
+        "deep-reviewer",
+        "fast-read-explorer",
+        "security-reviewer"
+      ],
+      "capability_tiers": [
+        "everyday",
+        "advanced"
+      ],
+      "class_membership_confirmed": true,
+      "selected_capability_tier": "advanced",
+      "source": "current-session"
+    },
+    "fallback_capability_evidence_sha256": "4d90d482b0a6e08c0fa956648b54b5408a24608d3053e2dc91385ccdfe34f774",
+    "ownership": {
+      "disjoint": true,
+      "owner": "main-agent"
+    },
+    "required_capability_tier": "advanced",
+    "route_receipt_id": "006300456959c588e6c2319ce5b58e916eb0cd9928d156f8b512697892342709",
+    "routing_constraint": "coupled-work-requires-sequential",
+    "runtime_mapping": "current-session",
+    "selected_capability_tier": "advanced",
+    "selected_profile_digest": null,
+    "selected_role": "loop_v2a_advanced_worker",
+    "source_revision": {
+      "branch": "codex/v2c-gitnexus-adapter",
+      "head_sha": "67be3d967e39eeab47394d0856963faff8aa4acb"
+    },
+    "source_revision_sha256": "147995be9a49b05b172cd97a9d275c608a37694eedbd329b1b3b081d5e2f483e",
+    "task_id": "P5-security-rescan-fixes"
+  },
+  "status": "routed"
+}

@@ -15,6 +15,7 @@ sys.path.insert(0, str(LOOP_SCRIPTS))
 
 try:
     import yaml
+    import git_source
     import loop_yaml
 except (ModuleNotFoundError, RuntimeError) as exc:
     print(
@@ -195,25 +196,25 @@ def validate_project_ledger(path: pathlib.Path) -> list[str]:
         if digest != source.get("spec_sha256"):
             errors.append("loop spec digest mismatch")
     try:
-        head = subprocess.run(
-            ["git", "-C", str(ROOT), "rev-parse", "HEAD"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        branch = subprocess.run(
-            ["git", "-C", str(ROOT), "branch", "--show-current"],
-            check=True,
-            capture_output=True,
-            text=True,
+        reported_root = git_source.verified_git_root(pathlib.Path(ROOT))
+        git_environment = git_source.sanitized_git_environment()
+        git_environment["GIT_WORK_TREE"] = str(reported_root)
+        head = git_source.verified_git_head(reported_root)
+        branch = git_source.run_git(
+            reported_root,
+            ["branch", "--show-current"],
+            environment=git_environment,
         ).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
-        errors.append("could not verify git source revision")
+        errors.append("could not verify git source revision or repository root mismatch")
     else:
-        if source.get("head_sha") != head:
-            errors.append("git HEAD source revision mismatch")
         if source.get("branch") != branch:
             errors.append("git branch source revision mismatch")
+        if git_source.source_head_relation(pathlib.Path(ROOT), document, head) not in {
+            "exact",
+            "ancestor",
+        }:
+            errors.append("git HEAD source revision mismatch")
     if not errors and manifest_path is not None:
         definitions = loop_yaml.manifest_definitions(
             loop_yaml.load_yaml(manifest_path),

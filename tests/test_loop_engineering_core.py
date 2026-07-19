@@ -241,7 +241,49 @@ class WorkflowDecisionTests(unittest.TestCase):
         self.assertEqual("continue", result["next_decision"])
         self.assertIn("security-scan-remains-running", result["notices"])
 
-    def test_parent_report_fallback_is_rejected_outside_reporting_phase(self):
+    def test_parent_scan_fallback_continues_outside_reporting_phase(self):
+        result = self.evaluate(
+            {
+                "state": {
+                    "security_scan": {
+                        "status": "running",
+                        "phase": "discovery",
+                        "worker_failure_kind": "safety_refused",
+                        "worker_retry_count": 2,
+                    }
+                }
+            },
+            trusted_authority={
+                "parent_security_scan_fallback_authorized": True
+            },
+        )
+        self.assertEqual("task-continuation", result["route"])
+        self.assertEqual("parent-scan-phase-fallback", result["execution_mode"])
+        self.assertEqual("continue", result["next_decision"])
+        self.assertIn("scan-phase-discovery", result["notices"])
+
+    def test_legacy_parent_report_fallback_does_not_authorize_discovery(self):
+        result = self.evaluate(
+            {
+                "state": {
+                    "security_scan": {
+                        "status": "running",
+                        "phase": "discovery",
+                        "worker_failure_kind": "safety_refused",
+                        "worker_retry_count": 2,
+                    }
+                }
+            },
+            trusted_authority={
+                "parent_security_report_fallback_authorized": True
+            },
+        )
+        self.assertEqual("stop-for-human-gate", result["execution_mode"])
+        self.assertIn(
+            "security-parent-fallback-not-authorized", result["violations"]
+        )
+
+    def test_legacy_reporting_retry_count_is_ignored_outside_reporting(self):
         result = self.evaluate(
             {
                 "state": {
@@ -254,11 +296,11 @@ class WorkflowDecisionTests(unittest.TestCase):
                 }
             },
             trusted_authority={
-                "parent_security_report_fallback_authorized": True
+                "parent_security_scan_fallback_authorized": True
             },
         )
-        self.assertEqual("human-gate", result["route"])
-        self.assertIn("security-worker-failure-phase-mismatch", result["violations"])
+        self.assertEqual("replacement-worker", result["execution_mode"])
+        self.assertEqual("continue", result["next_decision"])
 
     def test_security_scan_state_rejects_malformed_shape_and_negative_retry(self):
         with self.assertRaisesRegex(core.LoopContractError, "must be an object"):
@@ -612,7 +654,13 @@ class EventTests(unittest.TestCase):
             payload={"claim": claim},
         )
         acquired["event_hash"] = core.calculate_event_hash(acquired)
-        claimed_state, _ = core.apply_event(state, acquired)
+        claimed_state, _ = core.apply_event(
+            state,
+            acquired,
+            trusted_time=core.dt.datetime.fromisoformat(
+                "2026-07-10T00:00:00+00:00"
+            ),
+        )
 
         transition = {
             "sequence": 2,
@@ -631,14 +679,19 @@ class EventTests(unittest.TestCase):
             },
         }
         transition["event_hash"] = core.calculate_event_hash(transition)
-        progressed, _ = core.apply_event(claimed_state, transition)
+        trusted_time = core.dt.datetime.fromisoformat("2026-07-10T00:02:00+00:00")
+        progressed, _ = core.apply_event(
+            claimed_state,
+            transition,
+            trusted_time=trusted_time,
+        )
         self.assertEqual("in_progress", progressed["tasks"]["T1"]["status"])
 
         forged = copy.deepcopy(transition)
         forged["payload"]["fencing_token"] = {"generation": 1, "nonce": "forged"}
         forged["event_hash"] = core.calculate_event_hash(forged)
         with self.assertRaises(core.LoopContractError):
-            core.apply_event(claimed_state, forged)
+            core.apply_event(claimed_state, forged, trusted_time=trusted_time)
 
     def test_expired_claim_cannot_enter_in_progress(self):
         state = self.state()
@@ -759,11 +812,20 @@ class EventTests(unittest.TestCase):
             task_id="T1",
         )
         with self.assertRaisesRegex(core.LoopContractError, "live action authorization"):
-            core.apply_event(state, event)
+            core.apply_event(
+                state,
+                event,
+                trusted_time=core.dt.datetime.fromisoformat(
+                    "2026-07-10T00:02:00+00:00"
+                ),
+            )
         updated, _ = core.apply_event(
             state,
             event,
             trusted_authority=self.trusted_authority(event),
+            trusted_time=core.dt.datetime.fromisoformat(
+                "2026-07-10T00:02:00+00:00"
+            ),
         )
         self.assertEqual("done", updated["tasks"]["T1"]["status"])
         self.assertEqual(
@@ -807,7 +869,13 @@ class EventTests(unittest.TestCase):
             },
         )
         with self.assertRaisesRegex(core.LoopContractError, "manifest human gate"):
-            core.apply_event(state, event)
+            core.apply_event(
+                state,
+                event,
+                trusted_time=core.dt.datetime.fromisoformat(
+                    "2026-07-10T00:02:00+00:00"
+                ),
+            )
 
     def test_claim_expiry_rejects_event_before_deadline(self):
         state = self.state()
@@ -831,7 +899,13 @@ class EventTests(unittest.TestCase):
         )
         event["event_hash"] = core.calculate_event_hash(event)
         with self.assertRaisesRegex(core.LoopContractError, "lease deadline"):
-            core.apply_event(state, event)
+            core.apply_event(
+                state,
+                event,
+                trusted_time=core.dt.datetime.fromisoformat(
+                    "2026-07-10T00:01:00+00:00"
+                ),
+            )
 
     def test_claim_expiry_at_deadline_remains_valid(self):
         state = self.state()
@@ -854,9 +928,146 @@ class EventTests(unittest.TestCase):
             },
         )
         event["event_hash"] = core.calculate_event_hash(event)
-        updated, _ = core.apply_event(state, event)
+        updated, _ = core.apply_event(
+            state,
+            event,
+            trusted_time=core.dt.datetime.fromisoformat(
+                "2026-07-11T00:00:00+00:00"
+            ),
+        )
         self.assertEqual("expired", updated["claims"]["T1"]["status"])
         self.assertEqual("blocked", updated["tasks"]["T1"]["status"])
+
+    def test_live_claim_acquisition_uses_trusted_current_time(self):
+        state = self.state()
+        state["tasks"]["T1"]["status"] = "ready"
+        claim = {
+            "task_id": "T1",
+            "status": "active",
+            "owner": {"type": "subagent", "id": "worker-1"},
+            "fencing_token": {"generation": 1, "nonce": "current"},
+            "expected_state_revision": 0,
+            "source_revision": copy.deepcopy(state["source_revision"]),
+            "claimed_at": "2026-07-10T00:00:00Z",
+            "lease_expires_at": "2026-07-10T00:10:00Z",
+        }
+        event = self.event(
+            actor="worker-1",
+            occurred_at="2026-07-10T00:05:00Z",
+            type="claim_acquired",
+            payload={"claim": claim},
+        )
+
+        with self.assertRaisesRegex(
+            core.LoopContractError, "later than trusted current time"
+        ):
+            core.apply_event(
+                state,
+                event,
+                trusted_time=core.dt.datetime.fromisoformat(
+                    "2026-07-10T00:04:00+00:00"
+                ),
+            )
+
+        before_claimed_at = copy.deepcopy(event)
+        before_claimed_at["payload"]["claim"]["claimed_at"] = (
+            "2026-07-10T00:06:00Z"
+        )
+        before_claimed_at["event_hash"] = core.calculate_event_hash(
+            before_claimed_at
+        )
+        with self.assertRaisesRegex(core.LoopContractError, "precede claimed_at"):
+            core.apply_event(
+                state,
+                before_claimed_at,
+                trusted_time=core.dt.datetime.fromisoformat(
+                    "2026-07-10T00:05:00+00:00"
+                ),
+            )
+        with self.assertRaisesRegex(
+            core.LoopContractError, "expired at trusted current time"
+        ):
+            core.apply_event(
+                state,
+                event,
+                trusted_time=core.dt.datetime.fromisoformat(
+                    "2026-07-10T00:10:00+00:00"
+                ),
+            )
+        live, _ = core.apply_event(
+            state,
+            event,
+            trusted_time=core.dt.datetime.fromisoformat(
+                "2026-07-10T00:09:00+00:00"
+            ),
+        )
+        replayed, _ = core.replay_event(state, event)
+        self.assertEqual(live, replayed)
+        self.assertEqual("active", replayed["claims"]["T1"]["status"])
+        historical, _ = core.replay_event(state, before_claimed_at)
+        self.assertEqual("active", historical["claims"]["T1"]["status"])
+
+    def test_live_claim_expiry_uses_event_time_and_matches_replay(self):
+        state = self.state()
+        state["tasks"]["T1"]["status"] = "in_progress"
+        claim = {
+            "task_id": "T1",
+            "status": "active",
+            "owner": {"type": "subagent", "id": "worker-1"},
+            "fencing_token": {"generation": 1, "nonce": "current"},
+            "lease_expires_at": "2026-07-10T00:10:00Z",
+        }
+        state["claims"] = {"T1": claim}
+        future_event = self.event(
+            actor="coordinator",
+            occurred_at="2026-07-10T00:11:00Z",
+            type="claim_expired",
+            payload={
+                "fencing_token": claim["fencing_token"],
+                "blocker": {"reason": "lease expired"},
+            },
+        )
+        with self.assertRaisesRegex(
+            core.LoopContractError, "later than trusted current time"
+        ):
+            core.apply_event(
+                state,
+                future_event,
+                trusted_time=core.dt.datetime.fromisoformat(
+                    "2026-07-10T00:10:00+00:00"
+                ),
+            )
+
+        before_deadline = copy.deepcopy(future_event)
+        before_deadline["occurred_at"] = "2026-07-10T00:09:00Z"
+        before_deadline["event_hash"] = core.calculate_event_hash(before_deadline)
+        with self.assertRaisesRegex(core.LoopContractError, "lease deadline"):
+            core.apply_event(
+                state,
+                before_deadline,
+                trusted_time=core.dt.datetime.fromisoformat(
+                    "2026-07-10T00:10:00+00:00"
+                ),
+            )
+        with self.assertRaisesRegex(core.LoopContractError, "lease deadline"):
+            core.replay_event(state, before_deadline)
+
+        at_deadline = copy.deepcopy(future_event)
+        at_deadline["occurred_at"] = "2026-07-10T00:10:00Z"
+        at_deadline["event_hash"] = core.calculate_event_hash(at_deadline)
+        live, _ = core.apply_event(
+            state,
+            at_deadline,
+            trusted_time=core.dt.datetime.fromisoformat(
+                "2026-07-10T00:10:00+00:00"
+            ),
+        )
+        replayed, _ = core.replay_event(state, at_deadline)
+        self.assertEqual(live, replayed)
+        self.assertEqual("expired", live["claims"]["T1"]["status"])
+
+        historical, _ = core.replay_event(state, future_event)
+        self.assertEqual("expired", historical["claims"]["T1"]["status"])
 
     def test_accepted_transition_requires_bound_authorization(self):
         state = self.state()
@@ -1005,6 +1216,9 @@ class EventTests(unittest.TestCase):
                 state,
                 event,
                 trusted_authority=self.trusted_authority(event),
+                trusted_time=core.dt.datetime.fromisoformat(
+                    "2026-07-10T00:02:00+00:00"
+                ),
             )
 
     def test_acceptance_authorization_binds_principal_source_scope_and_artifact(self):

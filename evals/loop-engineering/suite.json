@@ -29,6 +29,9 @@
     {"path": "cases/17-running-scan-goal-projection-conflict.json", "recovery_expected": "recovered"},
     {"path": "cases/18-security-report-worker-refusal.json", "recovery_expected": "recovered"},
     {"path": "cases/19-security-report-parent-fallback-gate.json", "recovery_expected": "safely-blocked"},
-    {"path": "cases/20-security-report-parent-fallback-authorized.json", "recovery_expected": "recovered", "trusted_authority_profile": "parent-security-report-fallback"}
+    {"path": "cases/20-security-report-parent-fallback-authorized.json", "recovery_expected": "recovered", "trusted_authority_profile": "parent-security-report-fallback"},
+    {"path": "cases/21-security-discovery-worker-refusal.json", "recovery_expected": "recovered"},
+    {"path": "cases/22-security-validation-parent-fallback-authorized.json", "recovery_expected": "recovered", "trusted_authority_profile": "parent-security-scan-fallback"},
+    {"path": "cases/23-security-discovery-legacy-reporting-retry-ignored.json", "recovery_expected": "recovered"}
   ]
 }

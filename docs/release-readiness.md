@@ -49,6 +49,10 @@ When a change includes the GitNexus adapter, also require evidence that:
 
 - the GitNexus qualification evidence-bundle digest separately binds captured
   package/help/status/query observations without recording machine-local paths;
+- caller-owned accepted entry, interpreter, and complete package-tree digests
+  originate outside adapter self-report, are compared through descriptor-bound
+  no-follow reads before executing the qualified CLI, and package drift is
+  checked again at every use;
 - the production runtime fingerprint separately binds exact CLI/runtime bytes,
   version, observed analyze flags, schema/capability policy, and symlink policy;
 - the handshake is disabled by default and honestly reports `read_query` and
@@ -58,8 +62,15 @@ When a change includes the GitNexus adapter, also require evidence that:
   closed;
 - fixture refresh uses only `analyze --index-only`, isolated `GITNEXUS_HOME`,
   offline environment, expected HEAD, and a pre-existing local-exclude guard;
-- complete tracked/protected state and `.git/info/exclude`, Git config, Git HEAD,
-  metadata schema, and indexed revision are unchanged or exactly as qualified;
+- every refresh first acquires the deterministic fixed-OS-temp per-user lock
+  for the canonical repository root before any optional instance lock; this is
+  cooperative same-UID coordination, not distributed or hostile-process isolation;
+- complete worktree state (including untracked and ignored paths), protected
+  state, the complete local `.git` administrative tree, metadata schema, and
+  indexed revision are unchanged or exactly as qualified;
+- Git probes and refresh descendants ignore replacement refs and lazy fetch,
+  use isolated system/global configuration, disable hooks/fsmonitor/untracked
+  cache, and enforce timeout/output bounds;
 - macOS arm64 live qualification and Linux portability-only evidence are labeled accurately;
 - rollback keeps the V2b no-backend path usable and does not delete or rewrite
   user repository state.
@@ -96,6 +107,12 @@ python3 scripts/eval-memory-contract.py
 ./scripts/validate-repo.sh
 git diff --check
 ```
+
+Exercise executable-origin regressions as part of the adapter/loop suites:
+ambient `PATH` must not select Git, GitNexus qualification must reject an
+omitted executable, and an env-node GitNexus entry must reject an omitted Node
+runtime. Live qualification must supply absolute machine-local CLI and, when
+applicable, Node paths; record their fingerprints but never the paths.
 
 Record any live qualification separately from fixture tests. Running the test
 suite does not prove that a local GitNexus executable, Linux runtime, or existing

@@ -1,0 +1,30 @@
+agent_route:
+  contract_version: 2
+  task:
+    id: "P5-security-rescan-preflight"
+    workload_kind: "mechanical"
+    factors:
+      ambiguity: "low"
+      reasoning_depth: "shallow"
+      code_context_volume: "small"
+      security_data_migration_public_contract_risk: "none"
+      write_blast_radius: "none"
+      latency_sensitivity: "high"
+      cost_token_sensitivity: "high"
+      independence_parallelizability: "independent"
+      verification_burden: "low"
+  profile_preflight:
+    profile_dir: "../../../../agent-profiles"
+    registry: "../../../../skills/loop-engineering/references/agent-profile-registry.json"
+    role: "loop_v2a_mechanical_reader"
+    agent_roots: ["../../../../agent-profiles"]
+    destination_root: "../../../../agent-profiles"
+  assignment:
+    scope: ["read-only Codex Security security_diff_scan capability preflight for refreshed frozen snapshot"]
+    ownership: {owner: "p5-security-rescan-preflight", disjoint: true}
+    source_revision: {branch: "codex/v2c-gitnexus-adapter", head_sha: "67be3d967e39eeab47394d0856963faff8aa4acb"}
+    authority_contract:
+      mutation_scope: "none"
+      external_write_authorized: false
+      human_gates: ["main-agent-preflight-integration"]
+      completion_criteria: ["Exact helper command, exit code, status, unmet and unknown capabilities, remediation"]

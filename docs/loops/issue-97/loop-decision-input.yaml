@@ -16,7 +16,7 @@ input:
     task_status: "ready"
     protected_history_sha256: "none"
     goal_status: "active"
-    security_scan: {status: "not_started", phase: "none", worker_failure_kind: "none", reporting_retry_count: 0}
+    security_scan: {status: "not_started", phase: "none", worker_failure_kind: "none", worker_retry_count: 0}
   runtime:
     surface: "desktop"
     capabilities: {goal: true, subagents: true, scheduler: false, threads: false}

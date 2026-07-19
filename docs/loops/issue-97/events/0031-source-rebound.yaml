@@ -1,0 +1,68 @@
+sequence: 31
+event_id: issue-97-source-rebound-67be3d9
+occurred_at: '2026-07-18T05:58:10Z'
+actor: codex-root
+type: source_rebound
+task_id: ''
+idempotency_key: issue-97-source-rebound-67be3d9-v1
+expected_state_revision: 30
+previous_event_hash: b81fec64e1755b8b279c893f851211c520ef4faad8d46617123d5a7e3c63cd03
+payload:
+  previous_source_revision:
+    branch: codex/v2c-gitnexus-adapter
+    head_sha: a75728b15f5d15ba7bf1a7e6e3a2dd934915592e
+    spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+    task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+  target_source_revision:
+    branch: codex/v2c-gitnexus-adapter
+    head_sha: 67be3d967e39eeab47394d0856963faff8aa4acb
+    spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+    task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+  active_claim_task_ids: []
+  expired_claim_dispositions:
+    P0:
+      status: released
+      fencing_token:
+        generation: 1
+        nonce: issue-97-p0-root-1
+    P1:
+      status: released
+      fencing_token:
+        generation: 1
+        nonce: issue-97-p1-root-1
+    P2:
+      status: released
+      fencing_token:
+        generation: 1
+        nonce: issue-97-p2-root-1
+    P3:
+      status: released
+      fencing_token:
+        generation: 1
+        nonce: issue-97-p3-root-1
+    P4:
+      status: released
+      fencing_token:
+        generation: 1
+        nonce: issue-97-p4-root-1
+    P5:
+      status: expired
+      fencing_token:
+        generation: 1
+        nonce: issue-97-p5-root-1
+      blocker:
+        reason: source-checkpoint-recovery-expired-claim
+        artifact: docs/loops/issue-97/receipts/p5-goal-runtime-degradation.md
+  evidence:
+    artifact: docs/loops/issue-97/receipts/p5-source-rebound-authorization.md
+  authorization:
+    action: source_rebound
+    principal:
+      type: user
+      id: delegating-user
+    objective_id: issue-97
+    artifact: docs/loops/issue-97/receipts/p5-source-rebound-authorization.md
+    source_revision_sha256: 7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8
+    target_head_sha: 67be3d967e39eeab47394d0856963faff8aa4acb
+    protected_payload_sha256: 547b3292d58e9965772568530b01da99b37c73905cc9c170bb456836064dcf46
+event_hash: 02fa3cb8df356d5685b54903805d9fb5a1d735d0af59ccdf4ea04cb314dda2b3
