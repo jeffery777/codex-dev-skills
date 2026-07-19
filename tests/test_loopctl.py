@@ -2632,6 +2632,32 @@ class CliTests(unittest.TestCase):
                 ["git", "-C", str(root), "switch", "-q", "-c", "wrong-branch"],
                 check=True,
             )
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    0,
+                    loopctl.command_audit(ledger_path, manifest_path, repo_root=root),
+                )
+            self.assertIn('"status": "valid"', output.getvalue())
+            with self.assertRaisesRegex(loop_yaml.LedgerValidationError, "git branch mismatch"):
+                loopctl.command_audit(active_path, manifest_path, repo_root=root)
+            subprocess.run(
+                ["git", "-C", str(root), "switch", "-q", branch],
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(root),
+                    "switch",
+                    "-q",
+                    "-c",
+                    "exact-wrong-branch",
+                    source_head,
+                ],
+                check=True,
+            )
             with self.assertRaisesRegex(loop_yaml.LedgerValidationError, "git branch mismatch"):
                 loopctl.command_audit(ledger_path, manifest_path, repo_root=root)
             subprocess.run(

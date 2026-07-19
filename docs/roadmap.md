@@ -54,8 +54,8 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   backend-neutral external-memory safety contract, offline validator,
   deterministic dispositions, conformance harness, receipts, tests, and evals.
   It remains useful with no backend and preserves V1/V2a completion authority.
-- Loop Engineering V2c-A is tracked in issue #97 as v0.8.0 scope. It establishes
-  a default-disabled GitNexus 1.6.9 qualification boundary, strict schema-5
+- Loop Engineering V2c-A shipped in v0.8.0 from issue #97. It establishes a
+  default-disabled GitNexus 1.6.9 qualification boundary, strict schema-5
   identity/freshness metadata, an honestly narrowed handshake with `read_query`
   and all backend mutations unsupported, and an explicit offline `index-only`
   refresh controller. It remains unable to replace repository completion truth.

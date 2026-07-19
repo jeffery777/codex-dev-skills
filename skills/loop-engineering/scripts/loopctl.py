@@ -118,14 +118,12 @@ def _verify_git_source(
             "could not verify git source revision; pass --repo-root for the target repository"
         ) from exc
     source = document["ledger"]["source_revision"]
-    if source.get("branch") != branch:
+    head_relation = git_source.source_head_relation(resolved_root, document, head)
+    if not git_source.source_branch_compatible(document, branch, head_relation):
         raise loop_yaml.LedgerValidationError(
             f"git branch mismatch: expected {source.get('branch')!r}, got {branch!r}"
         )
-    if git_source.source_head_relation(resolved_root, document, head) not in {
-        "exact",
-        "ancestor",
-    }:
+    if head_relation not in {"exact", "ancestor"}:
         raise loop_yaml.LedgerValidationError(
             f"git HEAD mismatch: expected {source.get('head_sha')!r}, got {head}"
         )

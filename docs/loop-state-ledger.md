@@ -129,8 +129,11 @@ insufficient. A terminal
 ledger whose lifecycle is `complete` and
 whose final event is `objective_completed` may retain its immutable source HEAD
 after the ledger is committed, but only when Git proves that source is an
-ancestor of the current HEAD on the same branch. Unknown, missing, malformed,
-diverged, wrong-branch, or detached-HEAD relations fail closed. The ancestry
+ancestor of the current HEAD. A terminal ledger may be audited from another
+named descendant branch after merge or release preparation; active ledgers
+still require the exact branch and HEAD, and detached checkouts remain
+rejected. Unknown, missing, malformed, diverged, active wrong-branch,
+exact-source wrong-branch, or detached-HEAD relations fail closed. The ancestry
 probe disables Git replacement-object semantics and pins the legacy graft source
 to an empty device, so repository-local replacement refs, graft files, and
 inherited graft configuration cannot redefine the accepted history. Every

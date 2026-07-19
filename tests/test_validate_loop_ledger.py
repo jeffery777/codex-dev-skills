@@ -438,6 +438,32 @@ class ValidateLoopLedgerTests(unittest.TestCase):
                 ["git", "-C", str(root), "switch", "-q", "-c", "wrong-branch"],
                 check=True,
             )
+            self.assertEqual([], validate(document))
+            active_wrong_branch = copy.deepcopy(document)
+            active_wrong_branch["current_loop"]["lifecycle"] = "active"
+            self.assertTrue(
+                any(
+                    "git branch source revision mismatch" in error
+                    for error in validate(active_wrong_branch)
+                )
+            )
+            subprocess.run(
+                ["git", "-C", str(root), "switch", "-q", branch],
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(root),
+                    "switch",
+                    "-q",
+                    "-c",
+                    "exact-wrong-branch",
+                    source_head,
+                ],
+                check=True,
+            )
             self.assertTrue(
                 any(
                     "git branch source revision mismatch" in error
