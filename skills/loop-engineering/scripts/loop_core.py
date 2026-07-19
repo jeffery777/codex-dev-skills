@@ -1054,7 +1054,11 @@ def _apply_event(
             else:
                 rebound_source.pop(field, None)
         updated["source_revision"] = rebound_source
-        for claim_id in active_claim_ids:
+        # A source rebound advances the authoritative checkpoint for the whole
+        # materialized ledger. Released and expired claims remain part of that
+        # view, so leaving their source revisions behind would make the next
+        # semantic audit internally inconsistent.
+        for claim_id in claims:
             rebound_claim_source = copy.deepcopy(claims[claim_id]["source_revision"])
             for field in ("branch", "head_sha", "spec_sha256", "task_manifest_sha256"):
                 rebound_claim_source[field] = rebound_source[field]
@@ -1341,6 +1345,16 @@ def _apply_event(
         if nonterminal:
             raise LoopContractError(
                 "objective completion requires terminal tasks: " + ", ".join(sorted(nonterminal))
+            )
+        active_claims = sorted(
+            claim_id
+            for claim_id, claim in claims.items()
+            if claim.get("status") == "active"
+        )
+        if active_claims:
+            raise LoopContractError(
+                "objective completion requires no active claims: "
+                + ", ".join(active_claims)
             )
         if payload.get("verification") != "passed":
             raise LoopContractError("objective completion requires passed verification")

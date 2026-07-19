@@ -8,8 +8,10 @@ The P4 code/docs/security PASS receipts below are historical evidence for the
 initial adapter snapshot published as `67be3d9`. They do not by themselves
 close the later bounded P5 validator-contract diff. Frozen P5 rounds through
 round 16 have historical PASS evidence. The current post-fix diff closed through
-round-20 code review, round-8 docs review, and the final native Security Diff
-Scan. Final readiness and publication readback remain separate gates.
+round-20 code review, round-8 docs review, and the earlier final native Security
+Diff Scan. The initial `21e4e0a` publication readback passed; the later bounded
+closure fix still requires current review, final-diff validation, publication,
+and a new remote readback.
 
 | Finding | Severity | Status | Disposition / Evidence |
 | --- | --- | --- | --- |
@@ -73,6 +75,7 @@ Scan. Final readiness and publication readback remain separate gates.
 | MF-DOC-STATUS-003 / SF-DOC-VERIFY-002 | MUST-FIX / SHOULD-FIX documentation | fixed; final docs review closed | Round-18 is marked closed by round 19, the separate commit-boundary finding remains distinct, and all three post-scan fix integration receipts are counted. |
 | MF-DOC-STATUS-004 | MUST-FIX status accuracy | rejected as stale; final docs review closed | The routed reviewer quoted text already replaced by the concurrent round-20 status update. Current source contains no claim that round 6 remains pending. |
 | P5-FINAL-SCAN-CANDIDATES | Security scan candidate set | rejected by final policy; native scan complete | Seven candidate ledgers closed through discovery, validation, and attack-path analysis. None reached protected authority, mutation, query/context adoption, gate, merge, publication, or completion authority; canonical findings are empty and native scan `559c572f-d3fe-44a0-a6f3-c13be1e78521` completed. |
+| P5-FINAL-CLOSURE-CLAIMS | MUST-FIX ledger materialization and terminal ordering | fixed, tested, re-reviewed, final native diff scan passed | Source rebound now advances every materialized claim source revision, including released and expired claims. Objective completion now rejects active claims, and final closure must release P5 after task completion. The focused regressions, 651-test full suite, repository validation, 36-event active-ledger audit, final closure code/docs reviews, and scan `5848409e-ca54-4b85-98a8-82b66aff6702` passed with 0 reportable findings. |
 
 Round evidence:
 
@@ -101,11 +104,17 @@ Round evidence:
 - `receipts/p5-final-security-diff-scan.md`
 - `receipts/p5-postscan-docs-review-round9-final.md`
 - `receipts/p5-merge-readiness-final.md`
+- `receipts/p5-final-closure-fix-verification.md`
+- `receipts/p5-final-closure-code-review.md`
+- `receipts/p5-final-closure-docs-review.md`
+- `receipts/p5-final-closure-security-diff-scan.md`
+- `receipts/p5-final-closure-evidence-docs-review.md`
+- `receipts/p5-final-closure-merge-readiness.md`
 
 Historical P4, round-14, and round-16 code gates are **PASS** for their frozen
 diffs. Rounds 17 through 19 were **BLOCKED** while closing live/replay,
 isolated-home, fallback, lease-freshness, and commit-boundary findings. The
-round-19 fix and current 649-test full verification are recorded; round-20 code
+round-19 fix and current 651-test full verification are recorded; round-20 code
 gate and round-8 docs gate passed with no open MF/SF/NIT. Final native Security
 Diff Scan `559c572f-d3fe-44a0-a6f3-c13be1e78521` completed with 13/13 worklist
 coverage, 7/7 candidate-ledger closure, and 0 reportable findings. Round-9
@@ -115,8 +124,9 @@ MF/SF/NIT.
 Historical P4 security gate: **PASS**. Codex Security native scan status `completed`,
 coverage `complete`, 3/3 surfaces `no_issue_found`, reportable findings `0`.
 See `receipts/p4-security-diff-scan-final.md`. This historical scan does not
-cover the bounded validator-contract diff; the separate P5 final scan recorded
-above supplies the current closure evidence.
+cover the bounded validator-contract diff. The separate P5 scan recorded above
+covers the published adapter diff through its bound snapshot; neither scan
+covers the later unpublished final-closure fix.
 
 Accepted residuals are documented in the final code-gate receipt. Their owner
 is the V2c adapter maintainer; reconsider them if the adapter later enables a

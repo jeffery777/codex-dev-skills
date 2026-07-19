@@ -1,13 +1,19 @@
 # Issue 97 Verification Report
 
-Status: **post-scan fixes verified; code/docs gates, live requalification, the
-final native security rescan, and final PR-readiness gate passed**. Authorized
-commit/push and publication readback remain. Historical snapshots and scans
-remain chronology only and do not prove the current working tree complete.
+Status: **published adapter baseline and prior gates passed; bounded final
+closure fix verified, formally reviewed, and scan-native finalized**. The
+closure fix still requires publication and remote readback.
+Historical snapshots and scans remain chronology only and do not prove the
+current working tree complete.
 
 ## Current P5 Post-Fix Verification
 
-- Full repository unit suite: 649/649 passed in 86.239 seconds after the final
+- Final closure rerun: 651/651 full repository unit tests passed in 105.371
+  seconds; repository validation passed with 150 loop tests, 35 profile and
+  installer tests, 45 routing tests, and 46 V2b tests. The 36-event active
+  ledger audit and `git diff --check` also passed. See
+  `p5-final-closure-fix-verification.md`.
+- Pre-publication full repository unit suite: 649/649 passed in 86.239 seconds after the final
   commit-boundary lease fix.
 - GitNexus adapter suite: 79/79 passed in 63.629 seconds.
 - Loop core, CLI, and eval unit subset: 158/158 passed.
@@ -18,6 +24,9 @@ remain chronology only and do not prove the current working tree complete.
 - Mandatory memory oracle: 31/31 passed; all correctness, determinism, evidence,
   and fallback rates were `1.0`; false authority/completion count was `0`.
 - `git diff --check`: passed.
+- Final closure native diff scan `5848409e-ca54-4b85-98a8-82b66aff6702`:
+  complete, 1/1 source worklist row, 0 reportable findings, no deferred rows or
+  open questions. See `p5-final-closure-security-diff-scan.md`.
 - Worker integration receipts for all three post-scan fix packets were accepted with
   `completion_proven: false` after the main-agent reruns above.
 
@@ -61,7 +70,7 @@ remain chronology only and do not prove the current working tree complete.
 - Round-17 deep review independently found the same contract boundary plus two
   related blockers. Round 18 closed the home-lock and fallback findings but
   found a backdated live-lease blocker; round 19 then found the corresponding
-  pre-replacement recheck gap. Both are now fixed and covered by the 649-test
+  pre-replacement recheck gap. Both are now fixed and covered by the 651-test
   full rerun above. Round-20 code review and round-8 docs review closed with no
   open MF/SF/NIT, and the final native rescan passed.
 - Linux was not live-tested and is represented only by portability fixtures

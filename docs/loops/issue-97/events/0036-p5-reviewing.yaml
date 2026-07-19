@@ -1,0 +1,24 @@
+sequence: 36
+event_id: issue-97-p5-reviewing
+occurred_at: '2026-07-19T11:43:00Z'
+actor: codex-root
+type: task_transition
+task_id: P5
+idempotency_key: issue-97-p5-reviewing-v1
+expected_state_revision: 35
+previous_event_hash: f272a54e7836a77db8723e52aea6f5ccde29953003fd86378dbc1b6615c029cb
+payload:
+  target_status: reviewing
+  fencing_token:
+    generation: 2
+    nonce: issue-97-p5-root-2
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+        - docs/loops/issue-97/receipts/p5-publication-readback.md
+    review:
+      status: required
+      mode: formal-gate
+      artifacts: []
+event_hash: bf5090c1c04b507f7dd52f9b01fc6e00966407f2429bb3e1e1e8d6fa16a019c3

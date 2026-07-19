@@ -1141,6 +1141,83 @@ class EventTests(unittest.TestCase):
         )
         self.assertEqual("complete", updated["objective_status"])
 
+    def test_objective_completion_rejects_active_claim(self):
+        state = self.state()
+        state["tasks"]["T1"]["status"] = "done"
+        state["claims"] = {
+            "T1": {
+                "status": "active",
+                "source_revision": copy.deepcopy(state["source_revision"]),
+                "lease_expires_at": "2026-07-11T00:00:00Z",
+            }
+        }
+        event = self.event(
+            actor="maintainer",
+            type="objective_completed",
+            task_id="",
+            payload={
+                "verification": "passed",
+                "review": "passed",
+                "human_gate": "satisfied",
+                "evidence": {"artifact": "approval-record"},
+            },
+        )
+        self.bind_authorization(state, event, "objective_completion")
+
+        with self.assertRaisesRegex(core.LoopContractError, "no active claims"):
+            core.apply_event(
+                state,
+                event,
+                trusted_authority=self.trusted_authority(event),
+            )
+
+    def test_source_rebound_updates_released_and_active_claim_sources(self):
+        state = self.state()
+        previous_source = copy.deepcopy(state["source_revision"])
+        target_source = {**previous_source, "head_sha": "def456"}
+        state["claims"] = {
+            "T0": {
+                "status": "released",
+                "source_revision": copy.deepcopy(previous_source),
+            },
+            "T1": {
+                "status": "active",
+                "source_revision": copy.deepcopy(previous_source),
+                "lease_expires_at": "2026-07-11T00:00:00Z",
+            },
+        }
+        event = self.event(
+            actor="maintainer",
+            type="source_rebound",
+            task_id="",
+            payload={
+                "previous_source_revision": previous_source,
+                "target_source_revision": target_source,
+                "active_claim_task_ids": ["T1"],
+                "expired_claim_dispositions": {},
+                "evidence": {"artifact": "approval-record"},
+            },
+        )
+        self.bind_authorization(
+            state,
+            event,
+            "source_rebound",
+            target_head_sha="def456",
+        )
+
+        updated, _ = core.apply_event(
+            state,
+            event,
+            trusted_authority=self.trusted_authority(event),
+            trusted_time=core.dt.datetime.fromisoformat(
+                "2026-07-10T00:01:00+00:00"
+            ),
+        )
+
+        self.assertEqual("def456", updated["source_revision"]["head_sha"])
+        self.assertEqual("def456", updated["claims"]["T0"]["source_revision"]["head_sha"])
+        self.assertEqual("def456", updated["claims"]["T1"]["source_revision"]["head_sha"])
+
     def test_protected_event_rejects_mismatched_live_receipt(self):
         state = self.state()
         state["tasks"]["T1"]["status"] = "done"

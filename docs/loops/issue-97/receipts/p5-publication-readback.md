@@ -1,19 +1,20 @@
-# P5 Publication And Desktop PR Gate Readback
+# P5 Intermediate Publication And Desktop PR Gate Readback
 
 Gate Result: **PASS**.
 
-Historical scope notice: this is the first publication readback for `67be3d9`.
-It does not prove publication or completion of the later bounded
-validator-contract fix. The final P5 closure must bind the updated PR head and
-current verification, review, and security receipts.
+This readback binds the implementation and evidence published in `21e4e0a` to
+the ready-for-review PR. A later bounded ledger-closure fix remains unpublished;
+therefore this receipt is not the final branch publication readback and does not
+prove objective completion.
 
 ## Local and remote identity
 
 - Repository: `jeffery777/codex-dev-skills`
 - Remote: `https://github.com/jeffery777/codex-dev-skills.git`
 - Branch: `codex/v2c-gitnexus-adapter`
-- Published commit: `67be3d967e39eeab47394d0856963faff8aa4acb`
+- Published commit: `21e4e0a67f98832de5115efea5d974fee9c683c6`
 - Base: `main`
+- Read back at: `2026-07-19T11:37:05Z`
 
 ## Pull request
 
@@ -24,12 +25,14 @@ current verification, review, and security receipts.
 - Mergeability readback: `clean`
 - Head branch/SHA:
   `codex/v2c-gitnexus-adapter` /
-  `67be3d967e39eeab47394d0856963faff8aa4acb`
+  `21e4e0a67f98832de5115efea5d974fee9c683c6`
 - Base branch: `main`
 
 The PR body links Issue #97, spec, implementation plan, GitNexus qualification,
-verification, review disposition, formal readiness, final security evidence,
-and the V2c-B roadmap follow-up. No duplicate open PR existed before creation.
+verification, review disposition, final code and documentation reviews, final
+validation evidence, merge readiness, and the V2c-B roadmap follow-up. The
+remote branch readback matched the PR head and local published commit. No
+duplicate open PR existed before creation.
 
 ## Boundary
 
