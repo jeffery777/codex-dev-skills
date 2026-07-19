@@ -571,6 +571,30 @@ def _is_terminal_completed_ledger(document: dict[str, Any]) -> bool:
     )
 
 
+def source_branch_compatible(
+    document: dict[str, Any], current_branch: str, head_relation: SourceHeadRelation
+) -> bool:
+    """Return whether a named checkout can consume the ledger source branch.
+
+    Active ledgers remain bound to the exact branch. A terminal completed
+    ledger may be audited from another named branch only when its immutable
+    source commit is a verified strict ancestor of current HEAD. Keeping exact
+    commits branch-bound prevents an unrelated repository with identical commit
+    bytes from being accepted. Detached checkouts remain rejected.
+    """
+
+    if not current_branch:
+        return False
+    ledger = document.get("ledger")
+    source = ledger.get("source_revision") if isinstance(ledger, dict) else None
+    source_branch = source.get("branch") if isinstance(source, dict) else None
+    if not isinstance(source_branch, str) or not source_branch:
+        return False
+    if source_branch == current_branch:
+        return True
+    return _is_terminal_completed_ledger(document) and head_relation == "ancestor"
+
+
 def source_head_relation(
     repo_root: pathlib.Path,
     document: dict[str, Any],

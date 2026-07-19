@@ -208,12 +208,12 @@ def validate_project_ledger(path: pathlib.Path) -> list[str]:
     except (OSError, subprocess.CalledProcessError):
         errors.append("could not verify git source revision or repository root mismatch")
     else:
-        if source.get("branch") != branch:
+        head_relation = git_source.source_head_relation(
+            pathlib.Path(ROOT), document, head
+        )
+        if not git_source.source_branch_compatible(document, branch, head_relation):
             errors.append("git branch source revision mismatch")
-        if git_source.source_head_relation(pathlib.Path(ROOT), document, head) not in {
-            "exact",
-            "ancestor",
-        }:
+        if head_relation not in {"exact", "ancestor"}:
             errors.append("git HEAD source revision mismatch")
     if not errors and manifest_path is not None:
         definitions = loop_yaml.manifest_definitions(
