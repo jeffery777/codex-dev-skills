@@ -1,0 +1,21 @@
+{
+  "profile_preflight": {"capability_class": "deep-reviewer", "capability_tier": "deep", "collisions": [], "decision": "fallback-safe", "fallback_tier": "parent-default", "profile": "loop_v2a_deep_reviewer", "runtime_mapping": {"availability": "runtime-dependent", "last_verified": "2026-07-12", "model": "gpt-5.6-sol", "reasoning_effort": "high", "replaceable": true}, "selected": "parent/default", "state": "custom-surface-unavailable", "tier_rank": 4},
+  "route_receipt": {
+    "assigned_scope": ["skills/loop-engineering/scripts/gitnexus_adapter.py", "tests/test_gitnexus_adapter.py", "V2b contract call sites", "Issue #97 spec and qualification evidence"],
+    "assigned_scope_sha256": "9987a59b5fbb9a326b89f604a4b54831b0dd8f25d309c74d570036f2e3c225c8",
+    "authority_contract_sha256": "51e032779dee3cc916710e484bb53962afc60566d009913cc015095851dc2cab",
+    "authority_invariants": {"profile_cannot_expand_permissions": true, "profile_cannot_expand_scope": true, "profile_cannot_satisfy_human_gates": true, "worker_receipt_cannot_prove_completion": true},
+    "classification": {
+      "capability_class": "deep-reviewer", "capability_tier": "deep",
+      "factor_effects": {"ambiguity": "deep-capability-trigger", "code_context_volume": "fast-read-tie-break", "cost_token_sensitivity": "neutral", "independence_parallelizability": "delegation-eligible", "latency_sensitivity": "neutral", "reasoning_depth": "deep-capability-trigger", "security_data_migration_public_contract_risk": "deep-hard-trigger", "verification_burden": "deep-capability-trigger", "write_blast_radius": "read-only-fast-eligible"},
+      "factors": {"ambiguity": "high", "code_context_volume": "large", "cost_token_sensitivity": "low", "independence_parallelizability": "independent", "latency_sensitivity": "low", "reasoning_depth": "deep", "security_data_migration_public_contract_risk": "public-contract", "verification_burden": "high", "write_blast_radius": "none"},
+      "hard_triggered": true, "reasons": ["public-contract-risk-hard-trigger"], "selected_role": "loop_v2a_deep_reviewer", "workload_kind": "review"
+    },
+    "config_evidence": null, "config_evidence_sha256": null, "contract_version": 2, "cost_degraded": false, "degraded": true, "execution_mode": "parent-default", "fallback": "parent-default",
+    "fallback_capability_evidence": {"capability_class": "deep-reviewer", "capability_classes": ["balanced-worker", "deep-reviewer", "fast-read-explorer", "security-reviewer"], "capability_tiers": ["deep", "exceptional"], "class_membership_confirmed": true, "selected_capability_tier": "deep", "source": "parent-default"},
+    "fallback_capability_evidence_sha256": "09f073a457b03ffdfea42de4e7da0b8313f934382dcc03b25b389619506711a9",
+    "ownership": {"disjoint": true, "owner": "p4-code-reviewer"}, "required_capability_tier": "deep", "route_receipt_id": "86f063bf7f114bf325fff6116ff52718fa31536721558adaada5b94e314d627b", "routing_constraint": "independent-work-allows-delegation", "runtime_mapping": "parent/default", "selected_capability_tier": "deep", "selected_profile_digest": null, "selected_role": "loop_v2a_deep_reviewer",
+    "source_revision": {"branch": "codex/v2c-gitnexus-adapter", "head_sha": "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"}, "source_revision_sha256": "f9698e61663a1f2729d4d1430e7d0d85296459bc43c1032cf721e00993cba753", "task_id": "P4-code-review"
+  },
+  "status": "routed"
+}

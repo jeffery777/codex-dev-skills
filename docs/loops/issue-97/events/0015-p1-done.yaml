@@ -1,0 +1,36 @@
+sequence: 15
+event_id: "issue-97-p1-done"
+occurred_at: "2026-07-16T09:13:00Z"
+actor: "codex-root"
+type: "task_transition"
+task_id: "P1"
+idempotency_key: "issue-97-p1-done-v1"
+expected_state_revision: 14
+previous_event_hash: "e3423da7d5a1ca3a945836d4a64cedea5760bc92a796b363b8424376d77d852c"
+payload:
+  target_status: "done"
+  fencing_token: {generation: 1, nonce: "issue-97-p1-root-1"}
+  evidence:
+    verification:
+      status: "passed"
+      artifacts:
+        - "docs/loops/issue-97/receipts/p2-adapter-implementation-main-verification.md"
+        - "docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md"
+    review:
+      status: "passed"
+      mode: "code-review-deep"
+      artifacts:
+        - "docs/loops/issue-97/receipts/p4-code-review-round6-final.md"
+    acceptance: {status: "not_required", artifact: ""}
+    human_gate:
+      status: "satisfied"
+      artifact: "https://github.com/jeffery777/codex-dev-skills/issues/97"
+  authorization:
+    action: "task_completion"
+    principal: {type: "platform", id: "codex-formal-review-gate"}
+    objective_id: "issue-97"
+    artifact: "docs/loops/issue-97/receipts/p4-code-review-round6-final.md"
+    source_revision_sha256: "7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8"
+    protected_payload_sha256: "1f58a24b21bca9b157524fa3a6e092bef2ca9840ff2b67e9cc253c34b9673b77"
+    task_id: "P1"
+event_hash: "da2f61647828ff270e518b6295757ef0b2610174e1afef7fde52b0a049548782"

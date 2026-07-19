@@ -1,0 +1,39 @@
+sequence: 26
+event_id: "issue-97-p4-done"
+occurred_at: "2026-07-17T02:14:00Z"
+actor: "codex-root"
+type: "task_transition"
+task_id: "P4"
+idempotency_key: "issue-97-p4-done-v1"
+expected_state_revision: 25
+previous_event_hash: "34b8749daffb3c23d832aa3bd937a5ced618d6feb8a2aeaaf5e49f957741d8cb"
+payload:
+  target_status: "done"
+  fencing_token: {generation: 1, nonce: "issue-97-p4-root-1"}
+  evidence:
+    verification:
+      status: "passed"
+      artifacts:
+        - "docs/loops/issue-97/receipts/verification-report.md"
+        - "docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md"
+    review:
+      status: "passed"
+      mode: "formal-gate"
+      artifacts:
+        - "docs/loops/issue-97/receipts/p4-merge-readiness-final.md"
+        - "docs/loops/issue-97/receipts/p4-code-review-round7-post-security-fix-final.md"
+        - "docs/loops/issue-97/receipts/p4-docs-review-round2-final.md"
+        - "docs/loops/issue-97/receipts/p4-security-diff-scan-final.md"
+    acceptance: {status: "not_required", artifact: ""}
+    human_gate:
+      status: "satisfied"
+      artifact: "https://github.com/jeffery777/codex-dev-skills/issues/97"
+  authorization:
+    action: "task_completion"
+    principal: {type: "platform", id: "codex-desktop-merge-readiness-gate"}
+    objective_id: "issue-97"
+    artifact: "docs/loops/issue-97/receipts/p4-merge-readiness-final.md"
+    source_revision_sha256: "7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8"
+    protected_payload_sha256: "053705f094d35fc67c835b1c4e1a479d26f8a1441054d19ec432024b687ca739"
+    task_id: "P4"
+event_hash: "0f07e0617638c8f5d801f5fb580151fd1be03e7a22b01212145f63344f04f34b"

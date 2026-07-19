@@ -45,6 +45,7 @@ ROUTES = {
 
 EVENT_TYPES = {
     "migration_snapshot",
+    "source_rebound",
     "task_transition",
     "claim_acquired",
     "claim_released",
@@ -55,6 +56,7 @@ EVENT_TYPES = {
 }
 
 PROTECTED_EVENT_ACTIONS = (
+    "source_rebound",
     "task_acceptance",
     "task_completion",
     "claim_revocation",
@@ -312,7 +314,12 @@ def evaluate_workflow_case(
     scan_status = security_scan.get("status")
     scan_phase = security_scan.get("phase", "none")
     worker_failure = security_scan.get("worker_failure_kind", "none")
-    retry_count = security_scan.get("reporting_retry_count", 0)
+    if "worker_retry_count" in security_scan:
+        retry_count = security_scan["worker_retry_count"]
+    elif scan_phase == "reporting":
+        retry_count = security_scan.get("reporting_retry_count", 0)
+    else:
+        retry_count = 0
     if scan_status is not None and scan_status not in SECURITY_SCAN_STATUSES:
         raise LoopContractError("security scan status is unsupported")
     if scan_phase not in SECURITY_SCAN_PHASES:
@@ -325,41 +332,54 @@ def evaluate_workflow_case(
         or retry_count < 0
     ):
         raise LoopContractError(
-            "security scan reporting_retry_count must be a non-negative integer"
+            "security scan worker retry count must be a non-negative integer"
         )
     if scan_status == "running":
         goal_projection_conflict = state.get("goal_status") == "blocked"
         if worker_failure == "safety_refused":
-            if scan_phase != "reporting":
-                return _workflow_result(
-                    case_id,
-                    classification="human-gate",
-                    route="human-gate",
-                    execution_mode="stop-for-human-gate",
-                    next_decision="blocked-by-human-gate",
-                    violations=["security-worker-failure-phase-mismatch"],
-                    notices=["security-scan-remains-running"],
-                )
             if retry_count >= 2:
-                if authority.get("parent_security_report_fallback_authorized") is not True:
+                fallback_authorized = (
+                    authority.get("parent_security_scan_fallback_authorized") is True
+                    or (
+                        scan_phase == "reporting"
+                        and authority.get(
+                            "parent_security_report_fallback_authorized"
+                        )
+                        is True
+                    )
+                )
+                if not fallback_authorized:
                     return _workflow_result(
                         case_id,
                         classification="human-gate",
                         route="human-gate",
                         execution_mode="stop-for-human-gate",
                         next_decision="blocked-by-human-gate",
-                        violations=["security-report-parent-fallback-not-authorized"],
+                        violations=[
+                            "security-report-parent-fallback-not-authorized"
+                            if scan_phase == "reporting"
+                            else "security-parent-fallback-not-authorized"
+                        ],
                         notices=["security-scan-remains-running"],
                     )
                 return _workflow_result(
                     case_id,
                     classification="resumable-capability-failure",
                     route="task-continuation",
-                    execution_mode="parent-report-fallback",
+                    execution_mode=(
+                        "parent-report-fallback"
+                        if scan_phase == "reporting"
+                        else "parent-scan-phase-fallback"
+                    ),
                     next_decision="continue",
                     notices=[
                         "security-scan-remains-running",
                         "worker-safety-refusal",
+                        *(
+                            [f"scan-phase-{scan_phase}"]
+                            if scan_phase != "reporting"
+                            else []
+                        ),
                         *(
                             ["goal-projection-conflict"]
                             if goal_projection_conflict
@@ -380,6 +400,11 @@ def evaluate_workflow_case(
                 notices=[
                     "security-scan-remains-running",
                     "worker-safety-refusal",
+                    *(
+                        [f"scan-phase-{scan_phase}"]
+                        if scan_phase != "reporting"
+                        else []
+                    ),
                     *(
                         ["goal-projection-conflict"]
                         if goal_projection_conflict
@@ -635,6 +660,8 @@ def protected_event_action(event: dict[str, Any]) -> str | None:
         return "task_completion"
     if event_type == "claim_revoked":
         return "claim_revocation"
+    if event_type == "source_rebound":
+        return "source_rebound"
     if event_type == "gate_updated" and payload.get("status") in {
         "not_required",
         "satisfied",
@@ -864,6 +891,7 @@ def _apply_event(
     *,
     trusted_authority: dict[str, Any] | None,
     enforce_live_authority: bool,
+    trusted_time: dt.datetime | None,
 ) -> tuple[dict[str, Any], bool]:
     """Apply one event with revision, hash-chain, and idempotency checks.
 
@@ -940,6 +968,127 @@ def _apply_event(
         )
         updated["tasks"] = migrated_tasks
         updated["claims"] = migrated_claims
+    elif event_type == "source_rebound":
+        if task_id not in {None, ""}:
+            raise LoopContractError("source rebound must not target one task")
+        previous_source = payload.get("previous_source_revision")
+        target_source = payload.get("target_source_revision")
+        if not isinstance(previous_source, dict) or not isinstance(target_source, dict):
+            raise LoopContractError("source rebound requires previous and target source revisions")
+        current_source = state.get("source_revision") or {}
+        if source_revision_digest(previous_source) != source_revision_digest(current_source):
+            raise LoopContractError("source rebound previous revision does not match current state")
+        for field in ("branch", "spec_sha256", "task_manifest_sha256", "migration_source_sha256"):
+            if previous_source.get(field) != target_source.get(field):
+                raise LoopContractError(f"source rebound cannot change {field}")
+        target_head = target_source.get("head_sha")
+        if not isinstance(target_head, str) or not target_head or target_head == previous_source.get("head_sha"):
+            raise LoopContractError("source rebound requires a new target head")
+        evidence = payload.get("evidence") or {}
+        if not isinstance(evidence, dict):
+            raise LoopContractError("source rebound evidence must be an object")
+        _require_bound_authorization(
+            state,
+            event,
+            payload,
+            action="source_rebound",
+            allowed_principal_types={"user", "platform"},
+            scope={"target_head_sha": target_head},
+            evidence_artifact=evidence.get("artifact"),
+            principal_must_match_actor=False,
+        )
+        active_claim_ids = sorted(
+            claim_id
+            for claim_id, claim in claims.items()
+            if claim.get("status") == "active"
+        )
+        event_time = _datetime(event.get("occurred_at"), "event occurred_at")
+        expired_claim_ids = sorted(
+            claim_id
+            for claim_id in active_claim_ids
+            if _datetime(
+                claims[claim_id].get("lease_expires_at"),
+                "claim lease_expires_at",
+            )
+            <= event_time
+        )
+        if enforce_live_authority:
+            if trusted_time is None:
+                raise LoopContractError(
+                    "source rebound live application requires current-session trusted time"
+                )
+            current_time = _datetime(trusted_time, "trusted current time")
+            if event_time > current_time:
+                raise LoopContractError(
+                    "source rebound occurred_at must not be in the future"
+                )
+            trusted_expired_claim_ids = sorted(
+                claim_id
+                for claim_id in active_claim_ids
+                if _datetime(
+                    claims[claim_id].get("lease_expires_at"),
+                    "claim lease_expires_at",
+                )
+                <= current_time
+            )
+            if trusted_expired_claim_ids != expired_claim_ids:
+                raise LoopContractError(
+                    "source rebound claim expiry classification changed between occurred_at and trusted current time"
+                )
+        rebound_claim_ids = sorted(set(active_claim_ids) - set(expired_claim_ids))
+        if payload.get("active_claim_task_ids") != rebound_claim_ids:
+            raise LoopContractError("source rebound must bind every unexpired active claim")
+        dispositions = payload.get("expired_claim_dispositions") or {}
+        if not isinstance(dispositions, dict) or sorted(dispositions) != expired_claim_ids:
+            raise LoopContractError("source rebound must disposition every expired claim")
+        rebound_source = copy.deepcopy(current_source)
+        for field in (
+            "branch",
+            "head_sha",
+            "spec_sha256",
+            "task_manifest_sha256",
+            "migration_source_sha256",
+        ):
+            if field in target_source:
+                rebound_source[field] = target_source[field]
+            else:
+                rebound_source.pop(field, None)
+        updated["source_revision"] = rebound_source
+        # A source rebound advances the authoritative checkpoint for the whole
+        # materialized ledger. Released and expired claims remain part of that
+        # view, so leaving their source revisions behind would make the next
+        # semantic audit internally inconsistent.
+        for claim_id in claims:
+            rebound_claim_source = copy.deepcopy(claims[claim_id]["source_revision"])
+            for field in ("branch", "head_sha", "spec_sha256", "task_manifest_sha256"):
+                rebound_claim_source[field] = rebound_source[field]
+            claims[claim_id]["source_revision"] = rebound_claim_source
+        for claim_id in expired_claim_ids:
+            disposition = dispositions[claim_id]
+            if not isinstance(disposition, dict):
+                raise LoopContractError("expired claim disposition must be an object")
+            if disposition.get("fencing_token") != claims[claim_id].get("fencing_token"):
+                raise LoopContractError(
+                    "expired claim disposition requires the current fencing token"
+                )
+            task_status = tasks[claim_id].get("status")
+            if task_status in {"done", "accepted", "cancelled"}:
+                if disposition.get("status") != "released":
+                    raise LoopContractError(
+                        "terminal task expired claims must be released during rebound"
+                    )
+                claims[claim_id]["status"] = "released"
+            else:
+                blocker = disposition.get("blocker")
+                if disposition.get("status") != "expired" or not isinstance(
+                    blocker, dict
+                ) or not blocker.get("reason"):
+                    raise LoopContractError(
+                        "in-flight expired claims require blocker evidence during rebound"
+                    )
+                claims[claim_id]["status"] = "expired"
+                tasks[claim_id]["status"] = "blocked"
+                tasks[claim_id]["blocker"] = copy.deepcopy(blocker)
     elif event_type == "task_transition":
         if not isinstance(task_id, str) or task_id not in tasks:
             raise LoopContractError("task transition references unknown task")
@@ -952,9 +1101,27 @@ def _apply_event(
                 raise LoopContractError("task transition requires the active claim owner")
             if payload.get("fencing_token") != active_claim.get("fencing_token"):
                 raise LoopContractError("task transition requires the current fencing token")
-            if _datetime(active_claim.get("lease_expires_at"), "claim lease_expires_at") <= _datetime(
+            transition_reference = _datetime(
                 event.get("occurred_at"), "event occurred_at"
-            ):
+            )
+            lease_expires_at = _datetime(
+                active_claim.get("lease_expires_at"), "claim lease_expires_at"
+            )
+            if enforce_live_authority:
+                if trusted_time is None:
+                    raise LoopContractError(
+                        "live task transition requires current-session trusted time"
+                    )
+                current_time = _datetime(trusted_time, "trusted current time")
+                if transition_reference > current_time:
+                    raise LoopContractError(
+                        "task transition occurred_at must not be in the future"
+                    )
+                if current_time >= lease_expires_at:
+                    raise LoopContractError(
+                        "task transition requires an unexpired claim lease at trusted current time"
+                    )
+            if lease_expires_at <= transition_reference:
                 raise LoopContractError("task transition requires an unexpired claim lease")
         elif task.get("status") in {"in_progress", "reviewing"}:
             raise LoopContractError("in-flight task transition requires an active fenced claim")
@@ -1060,13 +1227,32 @@ def _apply_event(
             raise LoopContractError("claim requires a positive generation and unique nonce")
         if not claim.get("claimed_at") or not claim.get("lease_expires_at"):
             raise LoopContractError("claim requires claimed_at and lease_expires_at")
-        if _datetime(claim["lease_expires_at"], "claim lease_expires_at") <= _datetime(
-            claim["claimed_at"], "claim claimed_at"
-        ):
+        claimed_at = _datetime(claim["claimed_at"], "claim claimed_at")
+        lease_expires_at = _datetime(
+            claim["lease_expires_at"], "claim lease_expires_at"
+        )
+        event_time = _datetime(event.get("occurred_at"), "event occurred_at")
+        if lease_expires_at <= claimed_at:
             raise LoopContractError("claim lease must expire after it is acquired")
-        if _datetime(claim["lease_expires_at"], "claim lease_expires_at") <= _datetime(
-            event.get("occurred_at"), "event occurred_at"
-        ):
+        if enforce_live_authority:
+            if trusted_time is None:
+                raise LoopContractError(
+                    "live claim acquisition requires trusted current time"
+                )
+            current_time = _datetime(trusted_time, "trusted current time")
+            if claimed_at > event_time:
+                raise LoopContractError(
+                    "live claim acquisition cannot precede claimed_at"
+                )
+            if event_time > current_time:
+                raise LoopContractError(
+                    "live claim acquisition event time cannot be later than trusted current time"
+                )
+            if current_time >= lease_expires_at:
+                raise LoopContractError(
+                    "cannot acquire a claim expired at trusted current time"
+                )
+        if lease_expires_at <= event_time:
             raise LoopContractError("cannot acquire an already expired claim")
         previous_claim = claims.get(task_id) or {}
         if previous_claim.get("status") == "active":
@@ -1086,10 +1272,22 @@ def _apply_event(
         owner = claim.get("owner") or {}
         if event_type == "claim_released" and event.get("actor") != owner.get("id"):
             raise LoopContractError("claim release requires the active claim owner")
-        if event_type == "claim_expired" and _datetime(
-            event.get("occurred_at"), "event occurred_at"
-        ) < _datetime(claim.get("lease_expires_at"), "claim lease_expires_at"):
-            raise LoopContractError("claim expiry requires reaching the lease deadline")
+        if event_type == "claim_expired":
+            event_time = _datetime(event.get("occurred_at"), "event occurred_at")
+            if enforce_live_authority:
+                if trusted_time is None:
+                    raise LoopContractError(
+                        "live claim expiry requires trusted current time"
+                    )
+                current_time = _datetime(trusted_time, "trusted current time")
+                if event_time > current_time:
+                    raise LoopContractError(
+                        "live claim expiry event time cannot be later than trusted current time"
+                    )
+            if event_time < _datetime(
+                claim.get("lease_expires_at"), "claim lease_expires_at"
+            ):
+                raise LoopContractError("claim expiry requires reaching the lease deadline")
         if event_type == "claim_revoked":
             blocker = payload.get("blocker") or {}
             _require_bound_authorization(
@@ -1148,6 +1346,16 @@ def _apply_event(
             raise LoopContractError(
                 "objective completion requires terminal tasks: " + ", ".join(sorted(nonterminal))
             )
+        active_claims = sorted(
+            claim_id
+            for claim_id, claim in claims.items()
+            if claim.get("status") == "active"
+        )
+        if active_claims:
+            raise LoopContractError(
+                "objective completion requires no active claims: "
+                + ", ".join(active_claims)
+            )
         if payload.get("verification") != "passed":
             raise LoopContractError("objective completion requires passed verification")
         if payload.get("review") not in {"not_required", "passed"}:
@@ -1178,6 +1386,7 @@ def apply_event(
     event: dict[str, Any],
     *,
     trusted_authority: dict[str, Any] | None = None,
+    trusted_time: dt.datetime | None = None,
 ) -> tuple[dict[str, Any], bool]:
     """Apply a live event, requiring out-of-band authority for protected actions."""
     return _apply_event(
@@ -1185,6 +1394,7 @@ def apply_event(
         event,
         trusted_authority=trusted_authority,
         enforce_live_authority=True,
+        trusted_time=trusted_time,
     )
 
 
@@ -1200,4 +1410,5 @@ def replay_event(
         event,
         trusted_authority=None,
         enforce_live_authority=False,
+        trusted_time=None,
     )

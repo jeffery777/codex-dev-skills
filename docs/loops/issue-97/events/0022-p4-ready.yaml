@@ -1,0 +1,11 @@
+sequence: 22
+event_id: "issue-97-p4-ready"
+occurred_at: "2026-07-17T02:10:00Z"
+actor: "codex-root"
+type: "task_transition"
+task_id: "P4"
+idempotency_key: "issue-97-p4-ready-v1"
+expected_state_revision: 21
+previous_event_hash: "26e4ea0cd0ee096728370f7ac6b64d701b91425cc255f05753caae1c70e3468e"
+payload: {target_status: "ready", evidence: {}}
+event_hash: "1081778a399557842d6e2f8d01de53c680046a2dc1f9b0eddcec038575006b4c"

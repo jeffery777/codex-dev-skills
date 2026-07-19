@@ -1,0 +1,134 @@
+{
+  "profile_preflight": {
+    "capability_class": "balanced-worker",
+    "capability_tier": "advanced",
+    "collisions": [],
+    "decision": "fallback-safe",
+    "fallback_evidence": {
+      "available": true,
+      "capability_classes": [
+        "fast-read-explorer",
+        "balanced-worker",
+        "deep-reviewer",
+        "security-reviewer"
+      ],
+      "capability_tiers": {
+        "balanced-worker": [
+          "everyday",
+          "advanced"
+        ],
+        "deep-reviewer": [
+          "deep",
+          "exceptional"
+        ],
+        "fast-read-explorer": [
+          "mechanical",
+          "efficient"
+        ],
+        "security-reviewer": [
+          "deep"
+        ]
+      }
+    },
+    "fallback_tier": "parent-default",
+    "profile": "loop_v2a_advanced_worker",
+    "runtime_mapping": {
+      "availability": "runtime-dependent",
+      "last_verified": "2026-07-12",
+      "model": "gpt-5.6-sol",
+      "reasoning_effort": "medium",
+      "replaceable": true
+    },
+    "selected": "parent/default",
+    "state": "custom-surface-unavailable",
+    "tier_rank": 3
+  },
+  "route_receipt": {
+    "assigned_scope": [
+      "skills/loop-engineering/scripts/gitnexus_adapter.py",
+      "tests/test_gitnexus_adapter.py"
+    ],
+    "assigned_scope_sha256": "2e058013bcbcc43205f5b36884888ab97a5a517369023506e0aa76966147da39",
+    "authority_contract_sha256": "02cc87d296b3af596a56d97485521320548b45d32ea316484f584ea046e86e85",
+    "authority_invariants": {
+      "profile_cannot_expand_permissions": true,
+      "profile_cannot_expand_scope": true,
+      "profile_cannot_satisfy_human_gates": true,
+      "worker_receipt_cannot_prove_completion": true
+    },
+    "classification": {
+      "capability_class": "balanced-worker",
+      "capability_tier": "advanced",
+      "factor_effects": {
+        "ambiguity": "no-escalation",
+        "code_context_volume": "fast-read-tie-break",
+        "cost_token_sensitivity": "neutral",
+        "independence_parallelizability": "delegation-eligible",
+        "latency_sensitivity": "neutral",
+        "reasoning_depth": "deep-capability-trigger",
+        "security_data_migration_public_contract_risk": "no-hard-trigger",
+        "verification_burden": "deep-capability-trigger",
+        "write_blast_radius": "bounded-write"
+      },
+      "factors": {
+        "ambiguity": "moderate",
+        "code_context_volume": "large",
+        "cost_token_sensitivity": "medium",
+        "independence_parallelizability": "bounded",
+        "latency_sensitivity": "low",
+        "reasoning_depth": "deep",
+        "security_data_migration_public_contract_risk": "routine",
+        "verification_burden": "high",
+        "write_blast_radius": "bounded"
+      },
+      "hard_triggered": false,
+      "reasons": [
+        "advanced-bounded-implementation"
+      ],
+      "selected_role": "loop_v2a_advanced_worker",
+      "workload_kind": "implementation"
+    },
+    "config_evidence": null,
+    "config_evidence_sha256": null,
+    "contract_version": 2,
+    "cost_degraded": false,
+    "degraded": true,
+    "execution_mode": "parent-default",
+    "fallback": "parent-default",
+    "fallback_capability_evidence": {
+      "capability_class": "balanced-worker",
+      "capability_classes": [
+        "balanced-worker",
+        "deep-reviewer",
+        "fast-read-explorer",
+        "security-reviewer"
+      ],
+      "capability_tiers": [
+        "everyday",
+        "advanced"
+      ],
+      "class_membership_confirmed": true,
+      "selected_capability_tier": "advanced",
+      "source": "parent-default"
+    },
+    "fallback_capability_evidence_sha256": "a26084b2b64a66e7dee031c16b5d910f8733f6ab1551420af853126a5f126dd6",
+    "ownership": {
+      "disjoint": true,
+      "owner": "p2-adapter-worker"
+    },
+    "required_capability_tier": "advanced",
+    "route_receipt_id": "97c07c42f20f3d9d82062d75d5f24a5ee4ceaea9bf49cc9ebcccbea5cfa2c73c",
+    "routing_constraint": "bounded-work-allows-delegation",
+    "runtime_mapping": "parent/default",
+    "selected_capability_tier": "advanced",
+    "selected_profile_digest": null,
+    "selected_role": "loop_v2a_advanced_worker",
+    "source_revision": {
+      "branch": "codex/v2c-gitnexus-adapter",
+      "head_sha": "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"
+    },
+    "source_revision_sha256": "f9698e61663a1f2729d4d1430e7d0d85296459bc43c1032cf721e00993cba753",
+    "task_id": "P2-adapter-implementation"
+  },
+  "status": "routed"
+}

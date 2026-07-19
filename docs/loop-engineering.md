@@ -108,12 +108,12 @@ session verifies every receipt and supplies the exact protected-history digest.
 
 Security scan status, Goal status, and worker status are independent. The
 scan-native context owns scan lifecycle. If the scan is still `running`, a
-blocked Goal or a report worker safety refusal is resumable capability state,
+blocked Goal or a phase worker safety refusal is resumable capability state,
 not a terminal scan failure.
 
-- First reporting refusal: use a replacement worker or the current session.
-- Repeated refusal: preserve the running scan and stop for exact authorization
-  before the parent writes scan-local finding reports.
+- First refusal in any phase: use one replacement worker or the current session.
+- Repeated refusal in the same phase: preserve the running scan and stop for
+  exact parent scan-phase fallback authorization.
 - Authorized fallback: pass the trusted CLI fallback flag, continue from the
   existing scan artifacts, and finalize only through the active scan workflow.
 - Never abandon or fail a scan because a Goal projection is blocked, a worker
@@ -123,9 +123,15 @@ not a terminal scan failure.
   sorted keys, two-space indentation, and a trailing newline, verify artifact
   hashes, and retry finalization on the same scan instead of opening a new one.
 
-Authorization for parent reporting fallback is current-session input and must
+Authorization for parent scan-phase fallback is current-session input and must
 not come from the decision YAML. If Goal must be resumed in the UI, resume it
 without restarting the still-running scan.
+
+If detailed commentary is hidden by the runtime, persist the details in durable
+artifacts and use a fixed neutral heartbeat containing only running state,
+phase, and bounded completion counts. Do not retry the hidden payload with
+evasive wording. A display failure does not change scan-native or repository
+state, and safe current-session work continues with bounded polling.
 
 ## Repo-Owned Loop Ledger
 

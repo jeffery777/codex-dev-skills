@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import os
 import pathlib
 import hashlib
 import json
 import copy
+import datetime as dt
+import shutil
+import stat
 import sys
 import subprocess
 import tempfile
 import threading
+import time
 import unittest
 from unittest import mock
 from contextlib import redirect_stderr, redirect_stdout
@@ -21,6 +26,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 import loop_yaml
 import loopctl
 import loop_core
+import git_source
 
 
 def valid_v1() -> dict:
@@ -116,6 +122,45 @@ def write_contract(root: pathlib.Path, document: dict) -> pathlib.Path:
     return manifest_path
 
 
+def materialized_claim_contract(
+    root: pathlib.Path,
+    *,
+    lease_expires_at: str = "2026-07-10T00:10:00Z",
+) -> tuple[dict, pathlib.Path, dict, dict]:
+    document = valid_v2()
+    manifest_path = write_contract(root, document)
+    definitions = loop_yaml.manifest_definitions(
+        loop_yaml.load_yaml(manifest_path),
+        expected_objective_id=document["ledger"]["objective_id"],
+    )
+    state = loop_yaml.state_from_ledger(document, definitions)
+    claim = {
+        "task_id": "T1",
+        "status": "active",
+        "owner": {"type": "subagent", "id": "worker-1"},
+        "fencing_token": {"generation": 1, "nonce": "precommit"},
+        "expected_state_revision": 0,
+        "source_revision": copy.deepcopy(state["source_revision"]),
+        "claimed_at": "2026-07-10T00:00:00Z",
+        "lease_expires_at": lease_expires_at,
+    }
+    acquired = {
+        "sequence": 1,
+        "event_id": "claim-before-precommit",
+        "occurred_at": "2026-07-10T00:00:00Z",
+        "actor": "worker-1",
+        "type": "claim_acquired",
+        "task_id": "T1",
+        "idempotency_key": "claim-before-precommit",
+        "expected_state_revision": 0,
+        "previous_event_hash": "",
+        "payload": {"claim": claim},
+    }
+    acquired["event_hash"] = loop_core.calculate_event_hash(acquired)
+    state, _ = loop_core.replay_event(state, acquired)
+    return loop_yaml.update_ledger_view(document, state), manifest_path, claim, acquired
+
+
 def init_git_repository(root: pathlib.Path) -> dict[str, str]:
     root.mkdir()
     subprocess.run(["git", "init", "-q", str(root)], check=True)
@@ -144,6 +189,78 @@ def init_git_repository(root: pathlib.Path) -> dict[str, str]:
             text=True,
         ).stdout.strip(),
     }
+
+
+def completed_v2_contract(
+    root: pathlib.Path,
+) -> tuple[pathlib.Path, pathlib.Path, str]:
+    """Write a semantically valid terminal ledger anchored to the first commit."""
+
+    document = valid_v2()
+    manifest_path = write_contract(root, document)
+    definitions = loop_yaml.manifest_definitions(
+        loop_yaml.load_yaml(manifest_path),
+        expected_objective_id=document["ledger"]["objective_id"],
+    )
+    state = loop_yaml.state_from_ledger(document, definitions)
+    cancelled = {
+        "sequence": 1,
+        "event_id": "cancel-task",
+        "actor": "test",
+        "occurred_at": "2026-07-10T00:01:00Z",
+        "expected_state_revision": 0,
+        "previous_event_hash": "",
+        "idempotency_key": "cancel-task",
+        "type": "task_transition",
+        "task_id": "T1",
+        "payload": {"target_status": "cancelled", "evidence": {}},
+    }
+    cancelled["event_hash"] = loop_core.calculate_event_hash(cancelled)
+    state, _ = loop_core.apply_event(state, cancelled)
+
+    completed = {
+        "sequence": 2,
+        "event_id": "complete-objective",
+        "actor": "maintainer",
+        "occurred_at": "2026-07-10T00:02:00Z",
+        "expected_state_revision": 1,
+        "previous_event_hash": state["last_event_hash"],
+        "idempotency_key": "complete-objective",
+        "type": "objective_completed",
+        "task_id": "",
+        "payload": {
+            "verification": "passed",
+            "review": "not_required",
+            "human_gate": "not_required",
+            "evidence": {"artifact": "completion-receipt"},
+        },
+    }
+    authorization = {
+        "action": "objective_completion",
+        "principal": {"type": "user", "id": "maintainer"},
+        "objective_id": state["objective_id"],
+        "artifact": "completion-receipt",
+        "source_revision_sha256": loop_core.source_revision_digest(
+            state["source_revision"]
+        ),
+    }
+    completed["payload"]["authorization"] = authorization
+    authorization["protected_payload_sha256"] = loop_core.protected_payload_digest(
+        completed["payload"]
+    )
+    completed["event_hash"] = loop_core.calculate_event_hash(completed)
+    state, _ = loop_core.apply_event(
+        state,
+        completed,
+        trusted_authority={
+            "action": "objective_completion",
+            "authorization_receipt_sha256": loop_core.digest(authorization),
+        },
+    )
+    document = loop_yaml.update_ledger_view(document, state)
+    ledger_path = root / "loop-state-ledger.yaml"
+    ledger_path.write_text(loop_yaml.dump_yaml(document), encoding="utf-8")
+    return ledger_path, manifest_path, document["ledger"]["source_revision"]["head_sha"]
 
 
 def agent_route_document(source_revision: dict[str, str]) -> dict:
@@ -585,7 +702,11 @@ class MigrationTests(unittest.TestCase):
             },
         }
         event["event_hash"] = loop_core.calculate_event_hash(event)
-        updated, replayed = loop_core.apply_event(state, event)
+        updated, replayed = loop_core.apply_event(
+            state,
+            event,
+            trusted_time=dt.datetime.fromisoformat("2026-07-10T00:02:00+00:00"),
+        )
         self.assertFalse(replayed)
         materialized = loop_yaml.update_ledger_view(migrated, updated)
         self.assertEqual("blocked", materialized["tasks"][0]["status"])
@@ -675,7 +796,7 @@ class MigrationTests(unittest.TestCase):
                     "owner": {"type": "subagent", "id": "worker-1"},
                     "claim": {
                         "lease_id": "lease-1",
-                        "lease_expires_at": "2026-07-11T00:00:00Z",
+                        "lease_expires_at": "2099-07-11T00:00:00Z",
                     },
                 }
             )
@@ -920,6 +1041,1614 @@ class MigrationTests(unittest.TestCase):
 
 
 class CliTests(unittest.TestCase):
+    def test_claim_acquisition_crossing_deadline_before_replace_writes_nothing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            document = valid_v2()
+            manifest_path = write_contract(root, document)
+            ledger_path = root / "ledger.yaml"
+            event_path = root / "event.yaml"
+            claim = {
+                "task_id": "T1",
+                "status": "active",
+                "owner": {"type": "subagent", "id": "worker-1"},
+                "fencing_token": {"generation": 1, "nonce": "acquire-race"},
+                "expected_state_revision": 0,
+                "source_revision": {
+                    field: document["ledger"]["source_revision"][field]
+                    for field in (
+                        "branch",
+                        "head_sha",
+                        "spec_sha256",
+                        "task_manifest_sha256",
+                    )
+                },
+                "claimed_at": "2026-07-10T00:00:00Z",
+                "lease_expires_at": "2026-07-10T00:10:00Z",
+            }
+            event = {
+                "sequence": 1,
+                "event_id": "acquire-race",
+                "occurred_at": "2026-07-10T00:05:00Z",
+                "actor": "worker-1",
+                "type": "claim_acquired",
+                "task_id": "T1",
+                "idempotency_key": "acquire-race",
+                "expected_state_revision": 0,
+                "previous_event_hash": "",
+                "payload": {"claim": claim},
+            }
+            event["event_hash"] = loop_core.calculate_event_hash(event)
+            ledger_path.write_text(loop_yaml.dump_yaml(document), encoding="utf-8")
+            event_path.write_text(loop_yaml.dump_yaml(event), encoding="utf-8")
+            original = ledger_path.read_bytes()
+
+            output = StringIO()
+            with mock.patch.object(
+                loopctl,
+                "_trusted_current_time",
+                side_effect=(
+                    dt.datetime.fromisoformat("2026-07-10T00:09:00+00:00"),
+                    dt.datetime.fromisoformat("2026-07-10T00:10:00+00:00"),
+                ),
+            ) as trusted_time:
+                with redirect_stdout(output):
+                    self.assertEqual(
+                        1,
+                        loopctl.command_apply_event(
+                            ledger_path,
+                            event_path,
+                            manifest_path=manifest_path,
+                            write=True,
+                            repo_root=root,
+                        ),
+                    )
+            self.assertEqual(2, trusted_time.call_count)
+            self.assertIn("expired at trusted current time", output.getvalue())
+            self.assertEqual(original, ledger_path.read_bytes())
+
+    def test_active_transition_crossing_deadline_before_replace_writes_nothing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            document, manifest_path, claim, acquired = materialized_claim_contract(root)
+            ledger_path = root / "ledger.yaml"
+            event_path = root / "event.yaml"
+            event = {
+                "sequence": 2,
+                "event_id": "transition-race",
+                "occurred_at": "2026-07-10T00:05:00Z",
+                "actor": "worker-1",
+                "type": "task_transition",
+                "task_id": "T1",
+                "idempotency_key": "transition-race",
+                "expected_state_revision": 1,
+                "previous_event_hash": acquired["event_hash"],
+                "payload": {
+                    "target_status": "in_progress",
+                    "fencing_token": claim["fencing_token"],
+                    "evidence": {},
+                },
+            }
+            event["event_hash"] = loop_core.calculate_event_hash(event)
+            ledger_path.write_text(loop_yaml.dump_yaml(document), encoding="utf-8")
+            event_path.write_text(loop_yaml.dump_yaml(event), encoding="utf-8")
+            original = ledger_path.read_bytes()
+
+            output = StringIO()
+            with mock.patch.object(
+                loopctl,
+                "_trusted_current_time",
+                side_effect=(
+                    dt.datetime.fromisoformat("2026-07-10T00:09:00+00:00"),
+                    dt.datetime.fromisoformat("2026-07-10T00:10:00+00:00"),
+                ),
+            ) as trusted_time:
+                with redirect_stdout(output):
+                    self.assertEqual(
+                        1,
+                        loopctl.command_apply_event(
+                            ledger_path,
+                            event_path,
+                            manifest_path=manifest_path,
+                            write=True,
+                            repo_root=root,
+                        ),
+                    )
+            self.assertEqual(2, trusted_time.call_count)
+            self.assertIn("unexpired claim lease at trusted current time", output.getvalue())
+            self.assertEqual(original, ledger_path.read_bytes())
+
+    def test_source_rebound_crossing_deadline_before_replace_writes_nothing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory).resolve()
+            document, manifest_path, claim, acquired = materialized_claim_contract(root)
+            ledger_path = root / "loop-state-ledger.yaml"
+            ledger_path.write_text(loop_yaml.dump_yaml(document), encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(root), "add", ledger_path.name], check=True
+            )
+            subprocess.run(
+                ["git", "-C", str(root), "commit", "-q", "-m", "checkpoint claim"],
+                check=True,
+            )
+            checkpoint_head = subprocess.run(
+                ["git", "-C", str(root), "rev-parse", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            previous_source = {
+                field: document["ledger"]["source_revision"][field]
+                for field in (
+                    "branch",
+                    "head_sha",
+                    "spec_sha256",
+                    "task_manifest_sha256",
+                )
+            }
+            target_source = {**previous_source, "head_sha": checkpoint_head}
+            event = {
+                "sequence": 2,
+                "event_id": "rebound-race",
+                "occurred_at": "2026-07-10T00:05:00Z",
+                "actor": "maintainer",
+                "type": "source_rebound",
+                "task_id": "",
+                "idempotency_key": "rebound-race",
+                "expected_state_revision": 1,
+                "previous_event_hash": acquired["event_hash"],
+                "payload": {
+                    "previous_source_revision": previous_source,
+                    "target_source_revision": target_source,
+                    "active_claim_task_ids": ["T1"],
+                    "expired_claim_dispositions": {},
+                    "evidence": {"artifact": "source-rebound-receipt"},
+                },
+            }
+            authorization = {
+                "action": "source_rebound",
+                "principal": {"type": "user", "id": "maintainer"},
+                "objective_id": document["ledger"]["objective_id"],
+                "artifact": "source-rebound-receipt",
+                "source_revision_sha256": loop_core.source_revision_digest(
+                    previous_source
+                ),
+                "target_head_sha": checkpoint_head,
+            }
+            event["payload"]["authorization"] = authorization
+            authorization["protected_payload_sha256"] = (
+                loop_core.protected_payload_digest(event["payload"])
+            )
+            event["event_hash"] = loop_core.calculate_event_hash(event)
+            event_path = root / "source-rebound.yaml"
+            event_path.write_text(loop_yaml.dump_yaml(event), encoding="utf-8")
+            original = ledger_path.read_bytes()
+
+            output = StringIO()
+            with mock.patch.object(
+                loopctl,
+                "_trusted_current_time",
+                side_effect=(
+                    dt.datetime.fromisoformat("2026-07-10T00:09:00+00:00"),
+                    dt.datetime.fromisoformat("2026-07-10T00:10:00+00:00"),
+                ),
+            ) as trusted_time:
+                with redirect_stdout(output):
+                    self.assertEqual(
+                        1,
+                        loopctl.command_apply_event(
+                            ledger_path,
+                            event_path,
+                            manifest_path=manifest_path,
+                            write=True,
+                            repo_root=root,
+                            authorize_action="source_rebound",
+                            authorization_receipt_sha256=loop_core.digest(
+                                authorization
+                            ),
+                        ),
+                    )
+            self.assertEqual(2, trusted_time.call_count)
+            self.assertIn("expiry classification changed", output.getvalue())
+            self.assertEqual(original, ledger_path.read_bytes())
+
+    def test_source_rebound_advances_clean_checkpointed_active_ledger(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory).resolve()
+            document = valid_v2()
+            manifest_path = write_contract(root, document)
+            ledger_path = root / "loop-state-ledger.yaml"
+            ledger_path.write_text(loop_yaml.dump_yaml(document), encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(root), "add", ledger_path.name], check=True
+            )
+            subprocess.run(
+                ["git", "-C", str(root), "commit", "-q", "-m", "checkpoint ledger"],
+                check=True,
+            )
+            checkpoint_head = subprocess.run(
+                ["git", "-C", str(root), "rev-parse", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            previous_source = {
+                field: document["ledger"]["source_revision"][field]
+                for field in (
+                    "branch",
+                    "head_sha",
+                    "spec_sha256",
+                    "task_manifest_sha256",
+                )
+            }
+            target_source = {**previous_source, "head_sha": checkpoint_head}
+            event = {
+                "sequence": 1,
+                "event_id": "rebind-checkpoint",
+                "actor": "test",
+                "occurred_at": "2026-07-10T00:01:00Z",
+                "expected_state_revision": 0,
+                "previous_event_hash": "",
+                "idempotency_key": "rebind-checkpoint",
+                "type": "source_rebound",
+                "task_id": "",
+                "payload": {
+                    "previous_source_revision": previous_source,
+                    "target_source_revision": target_source,
+                    "active_claim_task_ids": [],
+                    "evidence": {"artifact": "source-rebound-receipt"},
+                },
+            }
+            authorization = {
+                "action": "source_rebound",
+                "principal": {"type": "user", "id": "maintainer"},
+                "objective_id": document["ledger"]["objective_id"],
+                "artifact": "source-rebound-receipt",
+                "source_revision_sha256": loop_core.source_revision_digest(
+                    previous_source
+                ),
+                "target_head_sha": checkpoint_head,
+            }
+            event["payload"]["authorization"] = authorization
+            authorization["protected_payload_sha256"] = (
+                loop_core.protected_payload_digest(event["payload"])
+            )
+            event["event_hash"] = loop_core.calculate_event_hash(event)
+            event_path = root / "source-rebound.yaml"
+            event_path.write_text(loop_yaml.dump_yaml(event), encoding="utf-8")
+
+            output = StringIO()
+            with mock.patch.object(
+                loopctl,
+                "_source_rebound_contract",
+                wraps=loopctl._source_rebound_contract,
+            ) as contract_preflight:
+                with redirect_stdout(output):
+                    result = loopctl.command_apply_event(
+                        ledger_path,
+                        event_path,
+                        manifest_path=manifest_path,
+                        write=True,
+                        repo_root=root,
+                        authorize_action="source_rebound",
+                        authorization_receipt_sha256=loop_core.digest(authorization),
+                    )
+            self.assertEqual(0, result, output.getvalue())
+            self.assertEqual(2, contract_preflight.call_count)
+            applied = json.loads(output.getvalue())
+            self.assertEqual("source_rebound", applied["protected_action"])
+            self.assertTrue(applied["live_authorization_verified"])
+            self.assertIsNotNone(applied["protected_history_sha256"])
+            rebound = loop_yaml.load_yaml(ledger_path)
+            self.assertEqual(
+                checkpoint_head,
+                rebound["ledger"]["source_revision"]["head_sha"],
+            )
+            self.assertEqual(0o644, stat.S_IMODE(ledger_path.stat().st_mode))
+            self.assertEqual([], loop_yaml.semantic_audit(
+                rebound,
+                loop_yaml.manifest_definitions(
+                    loop_yaml.load_yaml(manifest_path),
+                    expected_objective_id="issue-81",
+                ),
+            ))
+            audit_output = StringIO()
+            with redirect_stdout(audit_output):
+                self.assertEqual(
+                    0,
+                    loopctl.command_audit(
+                        ledger_path, manifest_path, repo_root=root
+                    ),
+                    audit_output.getvalue(),
+                )
+
+            protected_history_sha256 = loop_core.protected_history_digest(
+                rebound["events"]
+            )
+            replay_before = ledger_path.read_bytes()
+            with redirect_stdout(StringIO()):
+                self.assertEqual(
+                    1,
+                    loopctl.command_apply_event(
+                        ledger_path,
+                        event_path,
+                        manifest_path=manifest_path,
+                        write=True,
+                        repo_root=root,
+                    ),
+                )
+            self.assertEqual(replay_before, ledger_path.read_bytes())
+            replay_output = StringIO()
+            with redirect_stdout(replay_output):
+                self.assertEqual(
+                    0,
+                    loopctl.command_apply_event(
+                        ledger_path,
+                        event_path,
+                        manifest_path=manifest_path,
+                        write=True,
+                        repo_root=root,
+                        protected_history_sha256=protected_history_sha256,
+                    ),
+                    replay_output.getvalue(),
+                )
+            self.assertEqual("replayed", json.loads(replay_output.getvalue())["status"])
+            self.assertEqual(replay_before, ledger_path.read_bytes())
+
+            later = {
+                "sequence": 2,
+                "event_id": "later-block",
+                "actor": "test",
+                "occurred_at": "2026-07-10T00:02:00Z",
+                "expected_state_revision": 1,
+                "previous_event_hash": rebound["ledger"]["state_revision"][
+                    "last_event_hash"
+                ],
+                "idempotency_key": "later-block",
+                "type": "task_transition",
+                "task_id": "T1",
+                "payload": {
+                    "target_status": "blocked",
+                    "evidence": {"artifact": "test-receipt"},
+                    "blocker": {"kind": "test", "reason": "test blocker"},
+                },
+            }
+            later["event_hash"] = loop_core.calculate_event_hash(later)
+            later_path = root / "later.yaml"
+            later_path.write_text(loop_yaml.dump_yaml(later), encoding="utf-8")
+            with redirect_stdout(StringIO()):
+                self.assertEqual(
+                    0,
+                    loopctl.command_apply_event(
+                        ledger_path,
+                        later_path,
+                        manifest_path=manifest_path,
+                        write=True,
+                        repo_root=root,
+                        protected_history_sha256=protected_history_sha256,
+                    ),
+                )
+            after_later = loop_yaml.load_yaml(ledger_path)
+            later_history_sha256 = loop_core.protected_history_digest(
+                after_later["events"]
+            )
+            replay_before = ledger_path.read_bytes()
+            replay_output = StringIO()
+            with redirect_stdout(replay_output):
+                self.assertEqual(
+                    0,
+                    loopctl.command_apply_event(
+                        ledger_path,
+                        event_path,
+                        manifest_path=manifest_path,
+                        write=True,
+                        repo_root=root,
+                        protected_history_sha256=later_history_sha256,
+                    ),
+                    replay_output.getvalue(),
+                )
+            self.assertEqual("replayed", json.loads(replay_output.getvalue())["status"])
+            self.assertEqual(replay_before, ledger_path.read_bytes())
+
+    def test_source_rebound_rejects_worktree_or_index_tamper(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory).resolve()
+            document = valid_v2()
+            write_contract(root, document)
+            ledger_path = root / "loop-state-ledger.yaml"
+            ledger_path.write_text(loop_yaml.dump_yaml(document), encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", ledger_path.name], check=True)
+            subprocess.run(
+                ["git", "-C", str(root), "commit", "-q", "-m", "checkpoint ledger"],
+                check=True,
+            )
+            outside_manifest = root.parent / "outside-manifest.yaml"
+            outside_manifest.write_bytes((root / "task-manifest.yaml").read_bytes())
+            with self.assertRaisesRegex(
+                loop_yaml.LedgerValidationError, "inside the target repository"
+            ):
+                loopctl._source_rebound_contract(
+                    ledger_path,
+                    document,
+                    outside_manifest,
+                    root,
+                    target_head=subprocess.run(
+                        ["git", "-C", str(root), "rev-parse", "HEAD"],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    ).stdout.strip(),
+                )
+            ledger_path.write_text(
+                ledger_path.read_text(encoding="utf-8") + "\n# tamper\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                loop_yaml.LedgerValidationError,
+                "working ledger bytes and mode",
+            ):
+                loopctl._verified_rebind_source(ledger_path, document, root)
+
+            subprocess.run(
+                ["git", "-C", str(root), "restore", ledger_path.name], check=True
+            )
+            ledger_path.write_text(
+                ledger_path.read_text(encoding="utf-8") + "\n# staged tamper\n",
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "-C", str(root), "add", ledger_path.name], check=True)
+            subprocess.run(
+                ["git", "-C", str(root), "restore", "--worktree", ledger_path.name],
+                check=True,
+            )
+            with self.assertRaisesRegex(
+                loop_yaml.LedgerValidationError,
+                "index and HEAD blob",
+            ):
+                loopctl._verified_rebind_source(ledger_path, document, root)
+
+    def test_source_rebound_contract_requires_target_head_index_and_worktree(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory).resolve()
+            document = valid_v2()
+            manifest_path = write_contract(root, document)
+            ledger_path = root / "loop-state-ledger.yaml"
+            ledger_path.write_text(loop_yaml.dump_yaml(document), encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", ledger_path.name], check=True)
+            subprocess.run(
+                ["git", "-C", str(root), "commit", "-q", "-m", "checkpoint ledger"],
+                check=True,
+            )
+            target_head = subprocess.run(
+                ["git", "-C", str(root), "rev-parse", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+
+            with mock.patch.object(
+                loopctl.git_source,
+                "run_git",
+                side_effect=OSError("bounded probe failed"),
+            ):
+                with self.assertRaisesRegex(
+                    loop_yaml.LedgerValidationError,
+                    "task manifest target Git binding cannot be verified",
+                ):
+                    loopctl._source_rebound_contract(
+                        ledger_path,
+                        document,
+                        manifest_path,
+                        root,
+                        target_head=target_head,
+                    )
+
+            manifest_path.write_text(
+                manifest_path.read_text(encoding="utf-8") + "\n# modified\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(
+                loop_yaml.LedgerValidationError, "task manifest digest mismatch"
+            ):
+                loopctl._source_rebound_contract(
+                    ledger_path,
+                    document,
+                    manifest_path,
+                    root,
+                    target_head=target_head,
+                )
+            subprocess.run(
+                ["git", "-C", str(root), "restore", manifest_path.name], check=True
+            )
+
+            manifest_path.write_text(
+                manifest_path.read_text(encoding="utf-8") + "\n# staged\n",
+                encoding="utf-8",
+            )
+            subprocess.run(
+                ["git", "-C", str(root), "add", manifest_path.name], check=True
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(root),
+                    "restore",
+                    "--source=HEAD",
+                    "--worktree",
+                    manifest_path.name,
+                ],
+                check=True,
+            )
+            with self.assertRaisesRegex(
+                loop_yaml.LedgerValidationError,
+                "task manifest index and target HEAD blob",
+            ):
+                loopctl._source_rebound_contract(
+                    ledger_path,
+                    document,
+                    manifest_path,
+                    root,
+                    target_head=target_head,
+                )
+            subprocess.run(
+                ["git", "-C", str(root), "restore", "--staged", manifest_path.name],
+                check=True,
+            )
+
+            untracked = root / "untracked-spec.md"
+            untracked.write_text("# untracked\n", encoding="utf-8")
+            untracked_document = copy.deepcopy(document)
+            untracked_document["ledger"]["loop_spec"] = untracked.name
+            untracked_document["ledger"]["source_revision"]["spec_sha256"] = (
+                hashlib.sha256(untracked.read_bytes()).hexdigest()
+            )
+            with self.assertRaisesRegex(
+                loop_yaml.LedgerValidationError, "loop spec must be one tracked"
+            ):
+                loopctl._source_rebound_contract(
+                    ledger_path,
+                    untracked_document,
+                    manifest_path,
+                    root,
+                    target_head=target_head,
+                )
+
+            spec_path = root / "loop-spec.md"
+            expected_spec = spec_path.read_bytes()
+            spec_path.write_text("# Changed in target HEAD\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(root), "add", spec_path.name], check=True
+            )
+            subprocess.run(
+                ["git", "-C", str(root), "commit", "-q", "-m", "change spec"],
+                check=True,
+            )
+            divergent_head = subprocess.run(
+                ["git", "-C", str(root), "rev-parse", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            spec_path.write_bytes(expected_spec)
+            with self.assertRaisesRegex(
+                loop_yaml.LedgerValidationError,
+                "loop spec working bytes and mode must match target HEAD",
+            ):
+                loopctl._source_rebound_contract(
+                    ledger_path,
+                    document,
+                    manifest_path,
+                    root,
+                    target_head=divergent_head,
+                )
+
+    def test_source_rebound_rejects_special_ledger_mode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory).resolve()
+            document = valid_v2()
+            write_contract(root, document)
+            ledger_path = root / "loop-state-ledger.yaml"
+            ledger_path.write_text(loop_yaml.dump_yaml(document), encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", ledger_path.name], check=True)
+            subprocess.run(
+                ["git", "-C", str(root), "commit", "-q", "-m", "checkpoint ledger"],
+                check=True,
+            )
+            ledger_path.chmod(0o1644)
+            with self.assertRaisesRegex(
+                loop_yaml.LedgerValidationError, "bytes and mode to match HEAD"
+            ):
+                loopctl._verified_rebind_source(ledger_path, document, root)
+
+    def test_bound_contract_rejects_fifo_device_and_path_swap_without_hanging(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory).resolve()
+            fifo = root / "contract.fifo"
+            os.mkfifo(fifo)
+            probe = (
+                "import pathlib,sys;"
+                f"sys.path.insert(0,{str(SCRIPT_DIR)!r});"
+                "import loopctl;"
+                f"loopctl._bound_contract_bytes(pathlib.Path({str(fifo)!r}),"
+                f"pathlib.Path({str(root)!r}),None,'fifo contract')"
+            )
+            completed = subprocess.run(
+                [sys.executable, "-c", probe],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            self.assertNotEqual(0, completed.returncode)
+            self.assertIn("single-link regular file", completed.stderr)
+
+            event_path = root / "event.yaml"
+            event_path.write_text("type: source_rebound\n", encoding="utf-8")
+            apply_probe = (
+                "import pathlib,sys;"
+                f"sys.path.insert(0,{str(SCRIPT_DIR)!r});"
+                "import loopctl;"
+                f"loopctl.command_apply_event(pathlib.Path({str(fifo)!r}),"
+                f"pathlib.Path({str(event_path)!r}),manifest_path=None,write=False,"
+                f"repo_root=pathlib.Path({str(root)!r}))"
+            )
+            completed = subprocess.run(
+                [sys.executable, "-c", apply_probe],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            self.assertNotEqual(0, completed.returncode)
+            self.assertIn("single-link regular file", completed.stderr)
+
+            if pathlib.Path("/dev/null").exists():
+                with self.assertRaisesRegex(
+                    loop_yaml.LedgerValidationError, "single-link regular file"
+                ):
+                    loopctl._bound_contract_bytes(
+                        pathlib.Path("/dev/null"), pathlib.Path("/dev"), None, "device"
+                    )
+
+            artifact = root / "contract.yaml"
+            replacement = root / "replacement.yaml"
+            artifact.write_bytes(b"original\n")
+            replacement.write_bytes(b"replacement\n")
+            real_read = loopctl.os.read
+            swapped = False
+
+            def swap_after_read(descriptor: int, amount: int) -> bytes:
+                nonlocal swapped
+                chunk = real_read(descriptor, amount)
+                if not swapped:
+                    os.replace(replacement, artifact)
+                    swapped = True
+                return chunk
+
+            with mock.patch.object(loopctl.os, "read", side_effect=swap_after_read):
+                with self.assertRaisesRegex(
+                    loop_yaml.LedgerValidationError,
+                    "changed while it was read|path binding changed",
+                ):
+                    loopctl._bound_contract_bytes(
+                        artifact, root, None, "swapped contract"
+                    )
+
+    def test_source_rebound_requires_matching_live_and_event_time_expiry(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory).resolve()
+            document = valid_v2()
+            manifest_path = write_contract(root, document)
+            definitions = loop_yaml.manifest_definitions(
+                loop_yaml.load_yaml(manifest_path), expected_objective_id="issue-81"
+            )
+            state = loop_yaml.state_from_ledger(document, definitions)
+            source = copy.deepcopy(state["source_revision"])
+            state["claims"]["T1"] = {
+                "task_id": "T1",
+                "owner": {"type": "agent", "id": "worker"},
+                "fencing_token": {"generation": 1, "nonce": "lease-1"},
+                "status": "active",
+                "claimed_at": "2026-07-10T00:00:00Z",
+                "lease_expires_at": "2026-07-10T00:02:00Z",
+                "source_revision": copy.deepcopy(source),
+            }
+
+            def rebound(occurred_at: str, *, expired: bool) -> tuple[dict, dict]:
+                target = {**source, "head_sha": "f" * 40}
+                claim_payload = (
+                    {
+                        "active_claim_task_ids": [],
+                        "expired_claim_dispositions": {
+                            "T1": {
+                                "status": "expired",
+                                "fencing_token": {
+                                    "generation": 1,
+                                    "nonce": "lease-1",
+                                },
+                                "blocker": {"reason": "lease expired"},
+                            }
+                        },
+                    }
+                    if expired
+                    else {
+                        "active_claim_task_ids": ["T1"],
+                        "expired_claim_dispositions": {},
+                    }
+                )
+                event = {
+                    "sequence": 1,
+                    "event_id": f"rebound-{occurred_at}",
+                    "actor": "maintainer",
+                    "occurred_at": occurred_at,
+                    "expected_state_revision": 0,
+                    "previous_event_hash": "",
+                    "idempotency_key": f"rebound-{occurred_at}",
+                    "type": "source_rebound",
+                    "task_id": "",
+                    "payload": {
+                        "previous_source_revision": source,
+                        "target_source_revision": target,
+                        **claim_payload,
+                        "evidence": {"artifact": "source-rebound-receipt"},
+                    },
+                }
+                authorization = {
+                    "action": "source_rebound",
+                    "principal": {"type": "user", "id": "maintainer"},
+                    "objective_id": "issue-81",
+                    "artifact": "source-rebound-receipt",
+                    "source_revision_sha256": loop_core.source_revision_digest(source),
+                    "target_head_sha": target["head_sha"],
+                }
+                event["payload"]["authorization"] = authorization
+                authorization["protected_payload_sha256"] = (
+                    loop_core.protected_payload_digest(event["payload"])
+                )
+                event["event_hash"] = loop_core.calculate_event_hash(event)
+                return event, authorization
+
+            event, authorization = rebound(
+                "2026-07-10T00:01:00Z", expired=False
+            )
+            trusted = {
+                "action": "source_rebound",
+                "authorization_receipt_sha256": loop_core.digest(authorization),
+            }
+            with self.assertRaisesRegex(
+                loop_core.LoopContractError, "expiry classification changed"
+            ):
+                loop_core.apply_event(
+                    state,
+                    event,
+                    trusted_authority=trusted,
+                    trusted_time=dt.datetime.fromisoformat(
+                        "2026-07-10T00:03:00+00:00"
+                    ),
+                )
+            live, _ = loop_core.apply_event(
+                state,
+                event,
+                trusted_authority=trusted,
+                trusted_time=dt.datetime.fromisoformat(
+                    "2026-07-10T00:01:30+00:00"
+                ),
+            )
+            replayed, _ = loop_core.replay_event(state, event)
+            self.assertEqual(live, replayed)
+            self.assertEqual("active", replayed["claims"]["T1"]["status"])
+
+            expired_event, expired_authorization = rebound(
+                "2026-07-10T00:02:00Z", expired=True
+            )
+            expired_live, _ = loop_core.apply_event(
+                state,
+                expired_event,
+                trusted_authority={
+                    "action": "source_rebound",
+                    "authorization_receipt_sha256": loop_core.digest(
+                        expired_authorization
+                    ),
+                },
+                trusted_time=dt.datetime.fromisoformat(
+                    "2026-07-10T00:03:00+00:00"
+                ),
+            )
+            expired_replay, _ = loop_core.replay_event(state, expired_event)
+            self.assertEqual(expired_live, expired_replay)
+            self.assertEqual(
+                "expired", expired_live["claims"]["T1"]["status"]
+            )
+
+            future, future_authorization = rebound(
+                "2100-01-01T00:00:00Z", expired=True
+            )
+            with self.assertRaisesRegex(loop_core.LoopContractError, "future"):
+                loop_core.apply_event(
+                    state,
+                    future,
+                    trusted_authority={
+                        "action": "source_rebound",
+                        "authorization_receipt_sha256": loop_core.digest(
+                            future_authorization
+                        ),
+                    },
+                    trusted_time=dt.datetime.fromisoformat(
+                        "2026-07-10T00:03:00+00:00"
+                    ),
+                )
+
+    def test_live_task_transition_requires_fresh_lease_and_matches_replay(self):
+        document = valid_v2()
+        definitions = {
+            "T1": {
+                "initial_status": "ready",
+                "dependencies": [],
+                "scope": {"in": ["x"], "out": []},
+                "dod": ["done"],
+                "verification": ["test"],
+                "review_required": False,
+                "human_gate_required": False,
+            }
+        }
+        state = loop_yaml.state_from_ledger(document, definitions)
+        state["claims"]["T1"] = {
+            "task_id": "T1",
+            "owner": {"type": "agent", "id": "worker"},
+            "fencing_token": {"generation": 1, "nonce": "lease-1"},
+            "status": "active",
+            "claimed_at": "2026-07-10T00:00:00Z",
+            "lease_expires_at": "2026-07-10T00:02:00Z",
+            "source_revision": copy.deepcopy(state["source_revision"]),
+        }
+        event = {
+            "sequence": 1,
+            "event_id": "backdated-transition",
+            "actor": "worker",
+            "occurred_at": "2026-07-10T00:01:00Z",
+            "expected_state_revision": 0,
+            "previous_event_hash": "",
+            "idempotency_key": "backdated-transition",
+            "type": "task_transition",
+            "task_id": "T1",
+            "payload": {
+                "target_status": "in_progress",
+                "fencing_token": {"generation": 1, "nonce": "lease-1"},
+                "evidence": {},
+            },
+        }
+        event["event_hash"] = loop_core.calculate_event_hash(event)
+        with self.assertRaisesRegex(
+            loop_core.LoopContractError, "trusted current time"
+        ):
+            loop_core.apply_event(
+                state,
+                event,
+                trusted_time=dt.datetime.fromisoformat(
+                    "2026-07-10T00:03:00+00:00"
+                ),
+            )
+        live, _ = loop_core.apply_event(
+            state,
+            event,
+            trusted_time=dt.datetime.fromisoformat(
+                "2026-07-10T00:01:30+00:00"
+            ),
+        )
+        replayed, _ = loop_core.replay_event(state, event)
+        self.assertEqual(live, replayed)
+        self.assertEqual("in_progress", live["tasks"]["T1"]["status"])
+
+    def test_verified_git_head_disables_promisor_lazy_fetch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory)
+            root = base / "repo"
+            initial = init_git_repository(root)
+            marker = base / "remote-helper-executed"
+            helper = base / "remote-helper.py"
+            helper.write_text(
+                f"#!{sys.executable}\n"
+                "import pathlib\n"
+                f"pathlib.Path({str(marker)!r}).write_text('executed\\n', encoding='utf-8')\n",
+                encoding="utf-8",
+            )
+            helper.chmod(0o700)
+            subprocess.run(
+                ["git", "-C", str(root), "config", "extensions.partialClone", "origin"],
+                check=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(root), "config", "remote.origin.promisor", "true"],
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(root),
+                    "config",
+                    "remote.origin.partialclonefilter",
+                    "blob:none",
+                ],
+                check=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(root), "config", "remote.origin.url", f"ext::{helper}"],
+                check=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(root), "config", "protocol.ext.allow", "always"],
+                check=True,
+            )
+            fake_head = "a" * 40
+            (root / ".git" / "refs" / "heads" / initial["branch"]).write_text(
+                fake_head + "\n", encoding="ascii"
+            )
+            with self.assertRaises(subprocess.CalledProcessError):
+                git_source.verified_git_head(root)
+            self.assertFalse(marker.exists())
+            self.assertEqual(
+                "1", git_source.sanitized_git_environment()["GIT_NO_LAZY_FETCH"]
+            )
+
+    def test_source_head_relation_allows_only_terminal_completed_ancestor(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory) / "repo"
+            initial = init_git_repository(root)
+            source_head = initial["head_sha"]
+            branch = initial["branch"]
+            (root / "tracked.txt").write_text("second\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "tracked.txt"], check=True)
+            subprocess.run(
+                ["git", "-C", str(root), "commit", "-q", "-m", "second"],
+                check=True,
+            )
+            current_head = subprocess.run(
+                ["git", "-C", str(root), "rev-parse", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            completed = {
+                "ledger": {"source_revision": {"head_sha": source_head}},
+                "current_loop": {"lifecycle": "complete"},
+                "events": [{"type": "objective_completed"}],
+            }
+            self.assertEqual(
+                "ancestor",
+                git_source.source_head_relation(root, completed, current_head),
+            )
+
+            active = copy.deepcopy(completed)
+            active["current_loop"]["lifecycle"] = "active"
+            self.assertEqual(
+                "mismatch",
+                git_source.source_head_relation(root, active, current_head),
+            )
+            incomplete = copy.deepcopy(completed)
+            incomplete["events"] = [{"type": "task_transition"}]
+            self.assertEqual(
+                "mismatch",
+                git_source.source_head_relation(root, incomplete, current_head),
+            )
+            self.assertEqual(
+                "unknown",
+                git_source.source_head_relation(
+                    root,
+                    {
+                        **completed,
+                        "ledger": {"source_revision": {"head_sha": "0" * 40}},
+                    },
+                    current_head,
+                ),
+            )
+            self.assertEqual(
+                "unknown",
+                git_source.source_head_relation(
+                    root,
+                    {**completed, "ledger": {"source_revision": {}}},
+                    current_head,
+                ),
+            )
+            for malformed in ("A" * 40, "a" * 39, "a" * 41, "not-a-sha"):
+                with self.subTest(malformed=malformed):
+                    self.assertEqual(
+                        "unknown",
+                        git_source.source_head_relation(
+                            root,
+                            {
+                                **completed,
+                                "ledger": {
+                                    "source_revision": {"head_sha": malformed}
+                                },
+                            },
+                            current_head,
+                        ),
+                    )
+            self.assertEqual(
+                "unknown",
+                git_source.source_head_relation(root, active, source_head),
+            )
+            exact = copy.deepcopy(active)
+            exact["ledger"]["source_revision"]["head_sha"] = current_head
+            self.assertEqual(
+                "exact",
+                git_source.source_head_relation(root, exact, current_head),
+            )
+
+            fake_head = "a" * 40
+            (root / ".git" / "refs" / "heads" / branch).write_text(
+                fake_head + "\n", encoding="ascii"
+            )
+            broken = copy.deepcopy(active)
+            broken["ledger"]["source_revision"]["head_sha"] = fake_head
+            self.assertEqual(
+                "unknown",
+                git_source.source_head_relation(root, broken, fake_head),
+            )
+            subprocess.run(
+                ["git", "-C", str(root), "update-ref", f"refs/heads/{branch}", current_head],
+                check=False,
+                capture_output=True,
+            )
+            (root / ".git" / "refs" / "heads" / branch).write_text(
+                current_head + "\n", encoding="ascii"
+            )
+
+            subprocess.run(
+                ["git", "-C", str(root), "switch", "-q", "-c", "diverged", source_head],
+                check=True,
+            )
+            (root / "tracked.txt").write_text("diverged\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "tracked.txt"], check=True)
+            subprocess.run(
+                ["git", "-C", str(root), "commit", "-q", "-m", "diverged"],
+                check=True,
+            )
+            diverged_head = subprocess.run(
+                ["git", "-C", str(root), "rev-parse", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            subprocess.run(
+                ["git", "-C", str(root), "switch", "-q", branch],
+                check=True,
+            )
+            diverged = copy.deepcopy(completed)
+            diverged["ledger"]["source_revision"]["head_sha"] = diverged_head
+            self.assertEqual(
+                "mismatch",
+                git_source.source_head_relation(root, diverged, current_head),
+            )
+            grafts = root / ".git" / "info" / "grafts"
+            grafts.write_text(
+                f"{current_head} {diverged_head}\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                0,
+                subprocess.run(
+                    [
+                        "git",
+                        "--no-replace-objects",
+                        "-C",
+                        str(root),
+                        "merge-base",
+                        "--is-ancestor",
+                        diverged_head,
+                        current_head,
+                    ],
+                    check=False,
+                    capture_output=True,
+                ).returncode,
+            )
+            self.assertEqual(
+                "mismatch",
+                git_source.source_head_relation(root, diverged, current_head),
+            )
+            grafts.unlink()
+            inherited_grafts = root / "inherited-grafts"
+            inherited_grafts.write_text(
+                f"{current_head} {diverged_head}\n",
+                encoding="utf-8",
+            )
+            with mock.patch.dict(
+                os.environ,
+                {"GIT_GRAFT_FILE": str(inherited_grafts)},
+                clear=False,
+            ):
+                self.assertEqual(
+                    "mismatch",
+                    git_source.source_head_relation(root, diverged, current_head),
+                )
+
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(root),
+                    "switch",
+                    "-q",
+                    "-c",
+                    "replacement-target",
+                    diverged_head,
+                ],
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(root),
+                    "commit",
+                    "-q",
+                    "--allow-empty",
+                    "-m",
+                    "replacement",
+                ],
+                check=True,
+            )
+            replacement_head = subprocess.run(
+                ["git", "-C", str(root), "rev-parse", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            subprocess.run(["git", "-C", str(root), "switch", "-q", branch], check=True)
+            subprocess.run(
+                ["git", "-C", str(root), "replace", current_head, replacement_head],
+                check=True,
+            )
+            self.assertEqual(
+                0,
+                subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(root),
+                        "merge-base",
+                        "--is-ancestor",
+                        diverged_head,
+                        current_head,
+                    ],
+                    check=False,
+                ).returncode,
+            )
+            self.assertEqual(
+                "mismatch",
+                git_source.source_head_relation(root, diverged, current_head),
+            )
+
+    def test_git_source_and_loopctl_ignore_repository_selector_environment(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory)
+            target = base / "target"
+            decoy = base / "decoy"
+            target_state = init_git_repository(target)
+            decoy_state = init_git_repository(decoy)
+            subprocess.run(
+                ["git", "-C", str(decoy), "switch", "-q", "-c", "decoy-branch"],
+                check=True,
+            )
+            decoy_state["branch"] = "decoy-branch"
+            (decoy / "later.txt").write_text("later\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(decoy), "add", "later.txt"], check=True)
+            subprocess.run(
+                ["git", "-C", str(decoy), "commit", "-q", "-m", "later"],
+                check=True,
+            )
+            decoy_head = subprocess.run(
+                ["git", "-C", str(decoy), "rev-parse", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            document = {
+                "ledger": {
+                    "source_revision": {
+                        "branch": decoy_state["branch"],
+                        "head_sha": decoy_state["head_sha"],
+                    }
+                },
+                "current_loop": {"lifecycle": "complete"},
+                "events": [{"type": "objective_completed"}],
+            }
+            ledger_path = target / "loop-state-ledger.yaml"
+            ledger_path.write_text("ledger: {}\n", encoding="utf-8")
+            with mock.patch.dict(
+                os.environ,
+                {"GIT_DIR": str(decoy / ".git")},
+                clear=False,
+            ):
+                self.assertEqual(
+                    "unknown",
+                    git_source.source_head_relation(target, document, decoy_head),
+                )
+                with self.assertRaisesRegex(
+                    loop_yaml.LedgerValidationError,
+                    "git branch mismatch|git HEAD mismatch",
+                ):
+                    loopctl._verify_git_source(ledger_path, document, target)
+            self.assertNotEqual(target_state["head_sha"], decoy_head)
+
+    def test_git_marker_bounded_reader_rejects_swap_fifo_and_oversize(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory)
+            marker = base / "marker"
+            marker.write_text("gitdir: admin\n", encoding="utf-8")
+            expected_identity = git_source._stat_identity(marker.lstat())
+            replacement = base / "replacement"
+            replacement.write_text("gitdir: other\n", encoding="utf-8")
+            os.replace(replacement, marker)
+            with self.assertRaisesRegex(OSError, "cannot be read safely"):
+                git_source._read_bounded_single_line(
+                    marker,
+                    "test marker",
+                    expected_identity=expected_identity,
+                )
+
+            fifo = base / "marker-fifo"
+            os.mkfifo(fifo)
+            started = time.monotonic()
+            with self.assertRaisesRegex(OSError, "cannot be read safely"):
+                git_source._read_bounded_single_line(fifo, "test FIFO")
+            self.assertLess(time.monotonic() - started, 1.0)
+
+            oversized = base / "oversized-marker"
+            oversized.write_bytes(b"x" * 4097)
+            with self.assertRaisesRegex(OSError, "cannot be read safely"):
+                git_source._read_bounded_single_line(oversized, "oversized marker")
+
+    def test_git_probe_timeout_and_output_are_bounded(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory)
+            slow = base / "slow-git"
+            slow.write_text("#!/bin/sh\n/bin/sleep 2\n", encoding="utf-8")
+            slow.chmod(0o700)
+            with (
+                mock.patch.object(
+                    git_source, "_resolved_git_executable", return_value=slow
+                ),
+                self.assertRaisesRegex(OSError, "exceeded its timeout"),
+            ):
+                git_source.run_git(base, ["status"], timeout_seconds=0.1)
+
+            noisy = base / "noisy-git"
+            noisy.write_text(
+                "#!/bin/sh\n/usr/bin/printf '0123456789abcdef'\n",
+                encoding="utf-8",
+            )
+            noisy.chmod(0o700)
+            with (
+                mock.patch.object(
+                    git_source, "_resolved_git_executable", return_value=noisy
+                ),
+                self.assertRaisesRegex(OSError, "exceeded its output limit"),
+            ):
+                git_source.run_git(base, ["status"], output_limit_bytes=8)
+
+    def test_git_executable_discovery_ignores_ambient_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory)
+            fake_git = base / "git"
+            fake_git.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            fake_git.chmod(0o700)
+            trusted = shutil.which("git", path=os.defpath)
+            self.assertIsNotNone(trusted)
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "PATH": str(base),
+                    "CODEX_LOOP_GIT_EXECUTABLE": str(fake_git),
+                },
+                clear=False,
+            ):
+                selected = git_source._resolved_git_executable()
+            self.assertEqual(pathlib.Path(trusted).resolve(strict=True), selected)
+            self.assertNotEqual(fake_git, selected)
+
+    def test_git_executable_default_discovery_skips_usrmerge_symlink_candidate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory).resolve()
+            safe_bin = base / "usr-bin"
+            safe_bin.mkdir()
+            safe_git = safe_bin / "git"
+            safe_git.write_bytes(b"\x7fELF-test-native-git")
+            safe_git.chmod(0o700)
+            linked_bin = base / "bin"
+            linked_bin.symlink_to(safe_bin, target_is_directory=True)
+
+            with mock.patch.object(
+                git_source.os,
+                "defpath",
+                os.pathsep.join((str(linked_bin), str(safe_bin))),
+            ):
+                selected = git_source._resolved_git_executable()
+
+            self.assertEqual(safe_git, selected)
+
+    def test_git_executable_explicit_script_wrapper_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory).resolve()
+            explicit_git = base / "operator-selected-git"
+            explicit_git.write_text(
+                "#!/bin/sh\nprintf 'trusted-explicit-git\\n'\n",
+                encoding="utf-8",
+            )
+            explicit_git.chmod(0o700)
+            with mock.patch.dict(os.environ, {}, clear=False):
+                with self.assertRaisesRegex(OSError, "script wrappers"):
+                    git_source._resolved_git_executable(explicit_git)
+                self.assertNotIn(
+                    "CODEX_LOOP_GIT_EXECUTABLE",
+                    git_source.sanitized_git_environment(),
+                )
+
+    def test_git_executable_explicit_override_rejects_relative_and_symlink_paths(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory).resolve()
+            executable = base / "git-real"
+            executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            executable.chmod(0o700)
+            link = base / "git-link"
+            link.symlink_to(executable)
+            with self.assertRaisesRegex(OSError, "absolute"):
+                git_source._resolved_git_executable("relative/git")
+            with self.assertRaisesRegex(OSError, "regular file"):
+                git_source._resolved_git_executable(pathlib.Path("/"))
+            with self.assertRaisesRegex(OSError, "symlink"):
+                git_source._resolved_git_executable(link)
+
+            real_parent = base.resolve() / "real-parent"
+            real_parent.mkdir()
+            parent_git = real_parent / "git"
+            parent_git.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            parent_git.chmod(0o700)
+            parent_link = base.resolve() / "parent-link"
+            parent_link.symlink_to(real_parent, target_is_directory=True)
+            with self.assertRaisesRegex(OSError, "symlink"):
+                git_source._resolved_git_executable(parent_link / "git")
+
+    def test_git_probe_environment_is_allowlisted_and_rejects_unsafe_overrides(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory).resolve()
+            hostile = {
+                "PATH": str(base),
+                "DEVELOPER_DIR": str(base / "missing-developer"),
+                "SDKROOT": str(base / "missing-sdk"),
+                "LD_PRELOAD": str(base / "fake-loader.so"),
+                "LD_LIBRARY_PATH": str(base),
+                "DYLD_INSERT_LIBRARIES": str(base / "fake-dyld.dylib"),
+                "CODEX_LOOP_GIT_EXECUTABLE": str(base / "fake-git"),
+            }
+            with mock.patch.dict(os.environ, hostile, clear=False):
+                safe = git_source.sanitized_git_environment()
+                for key in hostile:
+                    self.assertNotIn(key, safe)
+                result = git_source.run_git(base, ["--version"])
+                self.assertEqual(0, result.returncode)
+                with self.assertRaisesRegex(ValueError, "unsupported keys"):
+                    git_source.run_git(
+                        base,
+                        ["--version"],
+                        environment={**safe, "LD_PRELOAD": hostile["LD_PRELOAD"]},
+                    )
+
+    def test_git_probe_timeout_cleans_descendants_after_parent_exit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory)
+            marker = base / "late-descendant"
+            fake_git = base / "descendant-git"
+            child = (
+                "import pathlib,time; time.sleep(0.4); "
+                f"pathlib.Path({str(marker)!r}).write_text('late')"
+            )
+            fake_git.write_text(
+                f"#!{sys.executable}\n"
+                "import subprocess,sys\n"
+                f"subprocess.Popen([sys.executable, '-c', {child!r}])\n",
+                encoding="utf-8",
+            )
+            fake_git.chmod(0o700)
+            with (
+                mock.patch.object(
+                    git_source, "_resolved_git_executable", return_value=fake_git
+                ),
+                self.assertRaisesRegex(OSError, "exceeded its timeout"),
+            ):
+                git_source.run_git(base, ["status"], timeout_seconds=0.1)
+            time.sleep(0.6)
+            self.assertFalse(marker.exists())
+
+    def test_successful_git_probe_cleans_detached_output_descendants(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory)
+            marker = base / "late-success-descendant"
+            fake_git = base / "successful-descendant-git"
+            child = (
+                "import pathlib,time; time.sleep(0.4); "
+                f"pathlib.Path({str(marker)!r}).write_text('late')"
+            )
+            fake_git.write_text(
+                f"#!{sys.executable}\n"
+                "import subprocess,sys\n"
+                "with open('/dev/null', 'wb') as sink:\n"
+                f"    subprocess.Popen([sys.executable, '-c', {child!r}], "
+                "stdout=sink, stderr=sink)\n",
+                encoding="utf-8",
+            )
+            fake_git.chmod(0o700)
+            with mock.patch.object(
+                git_source, "_resolved_git_executable", return_value=fake_git
+            ):
+                result = git_source.run_git(base, ["status"], timeout_seconds=2)
+            self.assertEqual(0, result.returncode)
+            self.assertFalse(marker.exists())
+            time.sleep(0.6)
+            self.assertFalse(marker.exists())
+
+    def test_git_probe_interrupt_cleans_process_group_and_reraises(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory)
+            fake_git = base / "interruptible-git"
+            fake_git.write_text(
+                "#!/bin/sh\n/bin/sleep 2\n",
+                encoding="utf-8",
+            )
+            fake_git.chmod(0o700)
+            original_cleanup = git_source._terminate_process_group
+            with (
+                mock.patch.object(
+                    git_source, "_resolved_git_executable", return_value=fake_git
+                ),
+                mock.patch.object(
+                    git_source.selectors.DefaultSelector,
+                    "select",
+                    side_effect=KeyboardInterrupt,
+                ),
+                mock.patch.object(
+                    git_source,
+                    "_terminate_process_group",
+                    wraps=original_cleanup,
+                ) as cleanup,
+                self.assertRaises(KeyboardInterrupt),
+            ):
+                git_source.run_git(base, ["status"], timeout_seconds=2)
+            cleanup.assert_called_once()
+
+    def test_git_marker_accepts_valid_linked_worktree_and_rejects_bad_backref(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory)
+            root = base / "repo"
+            init_git_repository(root)
+            linked = base / "linked"
+            subprocess.run(
+                ["git", "-C", str(root), "worktree", "add", "-q", "-b", "linked", str(linked)],
+                check=True,
+            )
+            evidence = git_source.validated_git_marker(linked)
+            self.assertTrue(evidence.git_dir.is_dir())
+            self.assertEqual(linked.resolve(), git_source.verified_git_root(linked))
+
+            marker_line = (linked / ".git").read_text(encoding="utf-8").strip()
+            admin = pathlib.Path(marker_line.removeprefix("gitdir: "))
+            (admin / "gitdir").write_text(str(root / ".git") + "\n", encoding="utf-8")
+            with self.assertRaises(OSError):
+                git_source.validated_git_marker(linked)
+
+    def test_loopctl_rejects_enclosing_repository_core_worktree_alias(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = pathlib.Path(directory)
+            outer = base / "outer"
+            source = init_git_repository(outer)
+            nested = outer / "nested"
+            nested.mkdir()
+            subprocess.run(
+                ["git", "-C", str(outer), "config", "--local", "core.worktree", str(nested)],
+                check=True,
+            )
+            document = {
+                "ledger": {"source_revision": source},
+                "current_loop": {"lifecycle": "active"},
+                "events": [{"type": "task_transition"}],
+            }
+            ledger_path = nested / "loop-state-ledger.yaml"
+            ledger_path.write_text("ledger: {}\n", encoding="utf-8")
+            with self.assertRaisesRegex(
+                loop_yaml.LedgerValidationError,
+                "could not verify git source revision|exact target Git repository root",
+            ):
+                loopctl._verify_git_source(ledger_path, document, nested)
+
+            with self.assertRaises(OSError):
+                git_source.verified_git_root(nested)
+            (nested / ".git").write_text("gitdir: ../.git\n", encoding="utf-8")
+            with self.assertRaises(OSError):
+                git_source.verified_git_root(nested)
+
+    def test_terminal_contract_audit_accepts_ancestor_but_transition_rejects(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            ledger_path, manifest_path, source_head = completed_v2_contract(root)
+
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    0,
+                    loopctl.command_audit(ledger_path, manifest_path, repo_root=root),
+                )
+            self.assertIn('"status": "valid"', output.getvalue())
+
+            for reopen in (False, True):
+                with self.subTest(reopen=reopen):
+                    output = StringIO()
+                    with redirect_stdout(output):
+                        result = loopctl.command_transition(
+                            ledger_path,
+                            "T1",
+                            "ready",
+                            manifest_path=manifest_path,
+                            repo_root=root,
+                            reopen=reopen,
+                        )
+                    self.assertEqual(1, result)
+                    self.assertIn("objective completion is terminal", output.getvalue())
+
+            (root / "later.txt").write_text("later\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "later.txt"], check=True)
+            subprocess.run(
+                ["git", "-C", str(root), "commit", "-q", "-m", "later"],
+                check=True,
+            )
+            current_head = subprocess.run(
+                ["git", "-C", str(root), "rev-parse", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            self.assertNotEqual(source_head, current_head)
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    0,
+                    loopctl.command_audit(ledger_path, manifest_path, repo_root=root),
+                )
+            self.assertIn('"status": "valid"', output.getvalue())
+
+            document = loop_yaml.load_yaml(ledger_path)
+            document["current_loop"]["lifecycle"] = "active"
+            active_path = root / "active-ledger.yaml"
+            active_path.write_text(loop_yaml.dump_yaml(document), encoding="utf-8")
+            with self.assertRaisesRegex(loop_yaml.LedgerValidationError, "git HEAD mismatch"):
+                loopctl.command_audit(active_path, manifest_path, repo_root=root)
+
+            branch = subprocess.run(
+                ["git", "-C", str(root), "branch", "--show-current"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            subprocess.run(
+                ["git", "-C", str(root), "switch", "-q", "-c", "wrong-branch"],
+                check=True,
+            )
+            with self.assertRaisesRegex(loop_yaml.LedgerValidationError, "git branch mismatch"):
+                loopctl.command_audit(ledger_path, manifest_path, repo_root=root)
+            subprocess.run(
+                ["git", "-C", str(root), "switch", "-q", branch],
+                check=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(root), "switch", "-q", "--detach"],
+                check=True,
+            )
+            with self.assertRaisesRegex(loop_yaml.LedgerValidationError, "git branch mismatch"):
+                loopctl.command_audit(ledger_path, manifest_path, repo_root=root)
+            subprocess.run(
+                ["git", "-C", str(root), "switch", "-q", branch],
+                check=True,
+            )
+
     def test_transition_preview_rejects_non_replayable_materialization(self):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
@@ -1765,6 +3494,199 @@ class CliTests(unittest.TestCase):
                 )
             self.assertIn('"execution_mode": "parent-report-fallback"', output.getvalue())
 
+    def test_decide_legacy_report_fallback_flag_does_not_authorize_discovery(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "decision.yaml"
+            decision = {
+                "id": "legacy-report-fallback-discovery",
+                "input": {
+                    "request": {"kind": "continuation", "risk": "high"},
+                    "objective": {"clear": True, "complete": False},
+                    "state": {
+                        "source_conflict": False,
+                        "verification": "not_run",
+                        "review": "required",
+                        "human_gate": "not_required",
+                        "task_status": "reviewing",
+                        "security_scan": {
+                            "status": "running",
+                            "phase": "discovery",
+                            "worker_failure_kind": "safety_refused",
+                            "worker_retry_count": 2,
+                        },
+                    },
+                    "runtime": {"surface": "desktop", "capabilities": {}},
+                    "work": {},
+                },
+                "expect": {},
+            }
+            path.write_text(loop_yaml.dump_yaml(decision), encoding="utf-8")
+
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    0,
+                    loopctl.main(
+                        [
+                            "decide",
+                            str(path),
+                            "--parent-security-report-fallback-authorized",
+                            "--protected-history-sha256",
+                            "none",
+                        ]
+                    ),
+                )
+            rendered = output.getvalue()
+            self.assertIn('"execution_mode": "stop-for-human-gate"', rendered)
+            self.assertIn("security-parent-fallback-not-authorized", rendered)
+
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    0,
+                    loopctl.main(
+                        [
+                            "decide",
+                            str(path),
+                            "--parent-security-scan-fallback-authorized",
+                            "--protected-history-sha256",
+                            "none",
+                        ]
+                    ),
+                )
+            self.assertIn(
+                '"execution_mode": "parent-scan-phase-fallback"',
+                output.getvalue(),
+            )
+
+    def test_decide_ignores_legacy_reporting_retry_count_during_discovery(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "decision.yaml"
+            decision = {
+                "id": "legacy-reporting-retry-discovery",
+                "input": {
+                    "request": {"kind": "continuation", "risk": "high"},
+                    "objective": {"clear": True, "complete": False},
+                    "state": {
+                        "source_conflict": False,
+                        "verification": "not_run",
+                        "review": "required",
+                        "human_gate": "not_required",
+                        "task_status": "reviewing",
+                        "security_scan": {
+                            "status": "running",
+                            "phase": "discovery",
+                            "worker_failure_kind": "safety_refused",
+                            "reporting_retry_count": 2,
+                        },
+                    },
+                    "runtime": {
+                        "surface": "desktop",
+                        "capabilities": {"subagents": True},
+                    },
+                    "work": {},
+                },
+                "expect": {},
+            }
+            path.write_text(loop_yaml.dump_yaml(decision), encoding="utf-8")
+
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    0,
+                    loopctl.main(
+                        [
+                            "decide",
+                            str(path),
+                            "--parent-security-scan-fallback-authorized",
+                            "--protected-history-sha256",
+                            "none",
+                        ]
+                    ),
+                )
+            rendered = output.getvalue()
+            self.assertIn('"execution_mode": "replacement-worker"', rendered)
+            self.assertNotIn("parent-scan-phase-fallback", rendered)
+
+    def test_decide_worker_refusal_is_resumable_in_every_scan_phase(self):
+        phases = ("preflight", "threat_model", "discovery", "validation", "attack_path", "reporting")
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "decision.yaml"
+            for phase in phases:
+                with self.subTest(phase=phase, step="current-session"):
+                    decision = {
+                        "id": f"refusal-{phase}",
+                        "input": {
+                            "request": {"kind": "continuation", "risk": "high"},
+                            "objective": {"clear": True, "complete": False},
+                            "state": {
+                                "source_conflict": False,
+                                "verification": "not_run",
+                                "review": "required",
+                                "human_gate": "not_required",
+                                "task_status": "reviewing",
+                                "goal_status": "blocked",
+                                "security_scan": {
+                                    "status": "running",
+                                    "phase": phase,
+                                    "worker_failure_kind": "safety_refused",
+                                    "worker_retry_count": 1,
+                                },
+                            },
+                            "runtime": {
+                                "surface": "desktop",
+                                "capabilities": {"subagents": False},
+                            },
+                            "work": {},
+                        },
+                        "expect": {},
+                    }
+                    path.write_text(loop_yaml.dump_yaml(decision), encoding="utf-8")
+                    output = StringIO()
+                    with redirect_stdout(output):
+                        self.assertEqual(
+                            0,
+                            loopctl.main(
+                                [
+                                    "decide",
+                                    str(path),
+                                    "--protected-history-sha256",
+                                    "none",
+                                ]
+                            ),
+                        )
+                    result = json.loads(output.getvalue())["decision"]
+                    self.assertEqual("current-session", result["execution_mode"])
+                    self.assertEqual("continue", result["next_decision"])
+                    self.assertIn("security-scan-remains-running", result["notices"])
+                    self.assertIn("goal-projection-conflict", result["notices"])
+
+                with self.subTest(phase=phase, step="parent-fallback"):
+                    decision["input"]["state"]["security_scan"]["worker_retry_count"] = 2
+                    path.write_text(loop_yaml.dump_yaml(decision), encoding="utf-8")
+                    output = StringIO()
+                    with redirect_stdout(output):
+                        self.assertEqual(
+                            0,
+                            loopctl.main(
+                                [
+                                    "decide",
+                                    str(path),
+                                    "--parent-security-scan-fallback-authorized",
+                                    "--protected-history-sha256",
+                                    "none",
+                                ]
+                            ),
+                        )
+                    result = json.loads(output.getvalue())["decision"]
+                    expected_mode = (
+                        "parent-report-fallback"
+                        if phase == "reporting"
+                        else "parent-scan-phase-fallback"
+                    )
+                    self.assertEqual(expected_mode, result["execution_mode"])
+                    self.assertEqual("continue", result["next_decision"])
+
     def test_decide_protected_history_requires_matching_cli_digest(self):
         with tempfile.TemporaryDirectory() as directory:
             path = pathlib.Path(directory) / "decision.yaml"
@@ -2032,7 +3954,7 @@ class CliTests(unittest.TestCase):
                     for key in ("branch", "head_sha", "spec_sha256", "task_manifest_sha256")
                 },
                 "claimed_at": "2026-07-10T00:00:00Z",
-                "lease_expires_at": "2026-07-11T00:00:00Z",
+                "lease_expires_at": "2099-07-11T00:00:00Z",
             }
             event = {
                 "sequence": 1,
@@ -2120,6 +4042,208 @@ class CliTests(unittest.TestCase):
                     final, loop_yaml.manifest_definitions(loop_yaml.load_yaml(manifest_path))
                 ),
             )
+
+    def test_live_future_claim_acquisition_rejects_without_writing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            ledger_path = root / "ledger.yaml"
+            event_path = root / "event.yaml"
+            document = valid_v2()
+            manifest_path = write_contract(root, document)
+            claim = {
+                "task_id": "T1",
+                "status": "active",
+                "owner": {"type": "subagent", "id": "worker-1"},
+                "fencing_token": {"generation": 1, "nonce": "future"},
+                "expected_state_revision": 0,
+                "source_revision": {
+                    field: document["ledger"]["source_revision"][field]
+                    for field in (
+                        "branch",
+                        "head_sha",
+                        "spec_sha256",
+                        "task_manifest_sha256",
+                    )
+                },
+                "claimed_at": "2099-07-10T00:00:00Z",
+                "lease_expires_at": "2099-07-10T00:10:00Z",
+            }
+            event = {
+                "sequence": 1,
+                "event_id": "future-claim",
+                "occurred_at": "2099-07-10T00:00:00Z",
+                "actor": "worker-1",
+                "type": "claim_acquired",
+                "task_id": "T1",
+                "idempotency_key": "future-claim",
+                "expected_state_revision": 0,
+                "previous_event_hash": "",
+                "payload": {"claim": claim},
+            }
+            event["event_hash"] = loop_core.calculate_event_hash(event)
+            ledger_path.write_text(loop_yaml.dump_yaml(document), encoding="utf-8")
+            event_path.write_text(loop_yaml.dump_yaml(event), encoding="utf-8")
+            original = ledger_path.read_bytes()
+
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    1,
+                    loopctl.command_apply_event(
+                        ledger_path,
+                        event_path,
+                        manifest_path=manifest_path,
+                        write=True,
+                        repo_root=root,
+                    ),
+                )
+            self.assertIn("later than trusted current time", output.getvalue())
+            self.assertEqual(original, ledger_path.read_bytes())
+
+    def test_live_future_claim_expiry_rejects_without_writing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            ledger_path = root / "ledger.yaml"
+            event_path = root / "event.yaml"
+            document = valid_v2()
+            manifest_path = write_contract(root, document)
+            definitions = loop_yaml.manifest_definitions(
+                loop_yaml.load_yaml(manifest_path),
+                expected_objective_id=document["ledger"]["objective_id"],
+            )
+            state = loop_yaml.state_from_ledger(document, definitions)
+            claim = {
+                "task_id": "T1",
+                "status": "active",
+                "owner": {"type": "subagent", "id": "worker-1"},
+                "fencing_token": {"generation": 1, "nonce": "expiry"},
+                "expected_state_revision": 0,
+                "source_revision": copy.deepcopy(state["source_revision"]),
+                "claimed_at": "2026-07-10T00:00:00Z",
+                "lease_expires_at": "2098-07-10T00:00:00Z",
+            }
+            acquired = {
+                "sequence": 1,
+                "event_id": "claim-for-expiry",
+                "occurred_at": "2026-07-10T00:00:00Z",
+                "actor": "worker-1",
+                "type": "claim_acquired",
+                "task_id": "T1",
+                "idempotency_key": "claim-for-expiry",
+                "expected_state_revision": 0,
+                "previous_event_hash": "",
+                "payload": {"claim": claim},
+            }
+            acquired["event_hash"] = loop_core.calculate_event_hash(acquired)
+            state, _ = loop_core.replay_event(state, acquired)
+            document = loop_yaml.update_ledger_view(document, state)
+            expiry = {
+                "sequence": 2,
+                "event_id": "future-expiry",
+                "occurred_at": "2099-07-10T00:00:00Z",
+                "actor": "coordinator",
+                "type": "claim_expired",
+                "task_id": "T1",
+                "idempotency_key": "future-expiry",
+                "expected_state_revision": 1,
+                "previous_event_hash": acquired["event_hash"],
+                "payload": {
+                    "fencing_token": claim["fencing_token"],
+                    "blocker": {"reason": "lease expired"},
+                },
+            }
+            expiry["event_hash"] = loop_core.calculate_event_hash(expiry)
+            ledger_path.write_text(loop_yaml.dump_yaml(document), encoding="utf-8")
+            event_path.write_text(loop_yaml.dump_yaml(expiry), encoding="utf-8")
+            original = ledger_path.read_bytes()
+
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    1,
+                    loopctl.command_apply_event(
+                        ledger_path,
+                        event_path,
+                        manifest_path=manifest_path,
+                        write=True,
+                        repo_root=root,
+                    ),
+                )
+            self.assertIn("later than trusted current time", output.getvalue())
+            self.assertEqual(original, ledger_path.read_bytes())
+
+    def test_live_claim_expiry_materializes_a_replayable_event(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            ledger_path = root / "ledger.yaml"
+            event_path = root / "event.yaml"
+            document = valid_v2()
+            manifest_path = write_contract(root, document)
+            definitions = loop_yaml.manifest_definitions(
+                loop_yaml.load_yaml(manifest_path),
+                expected_objective_id=document["ledger"]["objective_id"],
+            )
+            state = loop_yaml.state_from_ledger(document, definitions)
+            claim = {
+                "task_id": "T1",
+                "status": "active",
+                "owner": {"type": "subagent", "id": "worker-1"},
+                "fencing_token": {"generation": 1, "nonce": "replayable"},
+                "expected_state_revision": 0,
+                "source_revision": copy.deepcopy(state["source_revision"]),
+                "claimed_at": "2026-07-10T00:00:00Z",
+                "lease_expires_at": "2026-07-10T00:02:00Z",
+            }
+            acquired = {
+                "sequence": 1,
+                "event_id": "claim-before-expiry",
+                "occurred_at": "2026-07-10T00:00:00Z",
+                "actor": "worker-1",
+                "type": "claim_acquired",
+                "task_id": "T1",
+                "idempotency_key": "claim-before-expiry",
+                "expected_state_revision": 0,
+                "previous_event_hash": "",
+                "payload": {"claim": claim},
+            }
+            acquired["event_hash"] = loop_core.calculate_event_hash(acquired)
+            state, _ = loop_core.replay_event(state, acquired)
+            document = loop_yaml.update_ledger_view(document, state)
+            expiry = {
+                "sequence": 2,
+                "event_id": "replayable-expiry",
+                "occurred_at": claim["lease_expires_at"],
+                "actor": "coordinator",
+                "type": "claim_expired",
+                "task_id": "T1",
+                "idempotency_key": "replayable-expiry",
+                "expected_state_revision": 1,
+                "previous_event_hash": acquired["event_hash"],
+                "payload": {
+                    "fencing_token": claim["fencing_token"],
+                    "blocker": {"reason": "lease expired"},
+                },
+            }
+            expiry["event_hash"] = loop_core.calculate_event_hash(expiry)
+            ledger_path.write_text(loop_yaml.dump_yaml(document), encoding="utf-8")
+            event_path.write_text(loop_yaml.dump_yaml(expiry), encoding="utf-8")
+
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(
+                    0,
+                    loopctl.command_apply_event(
+                        ledger_path,
+                        event_path,
+                        manifest_path=manifest_path,
+                        write=True,
+                        repo_root=root,
+                    ),
+                    output.getvalue(),
+                )
+            materialized = loop_yaml.load_yaml(ledger_path)
+            self.assertEqual("expired", materialized["claims"][0]["status"])
+            self.assertEqual([], loop_yaml.semantic_audit(materialized, definitions))
 
     def test_semantic_audit_detects_missing_gate_materialization(self):
         with tempfile.TemporaryDirectory() as directory:

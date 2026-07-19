@@ -207,15 +207,19 @@ records are authoritative for scan lifecycle. Goal status and worker status are
 separate progress projections and cannot silently replace them.
 
 - A scan that remains `running` is resumable even when Goal is blocked or a
-  report worker returns `safety_refused`.
+  phase worker returns `safety_refused`.
 - Worker refusal is a capability failure. Retry with a replacement worker or
-  the current session before requesting exact parent-report fallback authority.
-- Parent-report fallback authority must come from current-session control-plane
+  the current session before requesting exact parent scan-phase fallback authority.
+- Parent scan-phase fallback authority must come from current-session control-plane
   input, never repository YAML.
 - Partial scan artifacts, worker activity, Goal projection conflict, and turn
   boundaries are not reasons to invoke a terminal scan-failure operation.
 - Completion and failure must follow the active scan skill's canonical artifact
   and recovery contract.
+- If the UI suppresses detailed commentary, retain detailed evidence in durable
+  artifacts and emit only a neutral fixed-format heartbeat. Do not infer task
+  failure, repeatedly recreate Goal, or retry the same content with disguised
+  wording. Bounded polling and current-session continuation remain available.
 
 ### External memory adapter
 

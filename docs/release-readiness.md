@@ -45,6 +45,36 @@ Check these items before asking a maintainer to approve external writes:
 - Review evidence exists: ordinary review primitives or formal gates were run at the stage that needs them.
 - Verification is re-runnable: commands and skipped checks are listed with enough context for another maintainer.
 
+When a change includes the GitNexus adapter, also require evidence that:
+
+- the GitNexus qualification evidence-bundle digest separately binds captured
+  package/help/status/query observations without recording machine-local paths;
+- caller-owned accepted entry, interpreter, and complete package-tree digests
+  originate outside adapter self-report, are compared through descriptor-bound
+  no-follow reads before executing the qualified CLI, and package drift is
+  checked again at every use;
+- the production runtime fingerprint separately binds exact CLI/runtime bytes,
+  version, observed analyze flags, schema/capability policy, and symlink policy;
+- the handshake is disabled by default and honestly reports `read_query` and
+  all backend mutations unsupported;
+- stale, dirty, missing, partial, unsupported, incompatible, corrupt, unknown, wrong-repo,
+  unsafe-path, symlink, timeout, lock, and capability/version drift cases fail
+  closed;
+- fixture refresh uses only `analyze --index-only`, isolated `GITNEXUS_HOME`,
+  offline environment, expected HEAD, and a pre-existing local-exclude guard;
+- every refresh first acquires the deterministic fixed-OS-temp per-user lock
+  for the canonical repository root before any optional instance lock; this is
+  cooperative same-UID coordination, not distributed or hostile-process isolation;
+- complete worktree state (including untracked and ignored paths), protected
+  state, the complete local `.git` administrative tree, metadata schema, and
+  indexed revision are unchanged or exactly as qualified;
+- Git probes and refresh descendants ignore replacement refs and lazy fetch,
+  use isolated system/global configuration, disable hooks/fsmonitor/untracked
+  cache, and enforce timeout/output bounds;
+- macOS arm64 live qualification and Linux portability-only evidence are labeled accurately;
+- rollback keeps the V2b no-backend path usable and does not delete or rewrite
+  user repository state.
+
 ## Suggested Verification
 
 Run the repository hygiene check:
@@ -66,6 +96,27 @@ python3 --version
 ```
 
 This repository pins Python 3.12.9 with `.python-version`.
+
+For the GitNexus adapter scope, run at least:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_gitnexus_adapter
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
+  tests.test_memory_contract tests.test_memoryctl tests.test_eval_memory_contract
+python3 scripts/eval-memory-contract.py
+./scripts/validate-repo.sh
+git diff --check
+```
+
+Exercise executable-origin regressions as part of the adapter/loop suites:
+ambient `PATH` must not select Git, GitNexus qualification must reject an
+omitted executable, and an env-node GitNexus entry must reject an omitted Node
+runtime. Live qualification must supply absolute machine-local CLI and, when
+applicable, Node paths; record their fingerprints but never the paths.
+
+Record any live qualification separately from fixture tests. Running the test
+suite does not prove that a local GitNexus executable, Linux runtime, or existing
+index was qualified.
 
 For release-sensitive branch readiness, use the review primitive that matches risk:
 

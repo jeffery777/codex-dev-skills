@@ -1,0 +1,133 @@
+{
+  "profile_preflight": {
+    "capability_class": "security-reviewer",
+    "capability_tier": "deep",
+    "collisions": [],
+    "decision": "fallback-safe",
+    "fallback_evidence": {
+      "available": true,
+      "capability_classes": [
+        "balanced-worker",
+        "deep-reviewer",
+        "fast-read-explorer",
+        "security-reviewer"
+      ],
+      "capability_tiers": {
+        "balanced-worker": [
+          "everyday",
+          "advanced"
+        ],
+        "deep-reviewer": [
+          "deep",
+          "exceptional"
+        ],
+        "fast-read-explorer": [
+          "mechanical",
+          "efficient"
+        ],
+        "security-reviewer": [
+          "deep"
+        ]
+      }
+    },
+    "fallback_tier": "parent-default",
+    "profile": "loop_v2a_security_reviewer",
+    "runtime_mapping": {
+      "availability": "runtime-dependent",
+      "last_verified": "2026-07-12",
+      "model": "gpt-5.6-sol",
+      "reasoning_effort": "high",
+      "replaceable": true
+    },
+    "selected": "parent/default",
+    "state": "custom-surface-unavailable",
+    "tier_rank": 4
+  },
+  "route_receipt": {
+    "assigned_scope": [
+      "validated graft ancestry and descendant Git config candidates",
+      "candidate attack-path artifacts"
+    ],
+    "assigned_scope_sha256": "0701b8eb141c776e906ec168db88222cf8b9dbeefe8061f3d81ee967f0725a48",
+    "authority_contract_sha256": "142d4562334b3eff86baa80a5dde730f8a9daa6be9025ee718a744de95a14c3f",
+    "authority_invariants": {
+      "profile_cannot_expand_permissions": true,
+      "profile_cannot_expand_scope": true,
+      "profile_cannot_satisfy_human_gates": true,
+      "worker_receipt_cannot_prove_completion": true
+    },
+    "classification": {
+      "capability_class": "security-reviewer",
+      "capability_tier": "deep",
+      "factor_effects": {
+        "ambiguity": "deep-capability-trigger",
+        "code_context_volume": "neutral",
+        "cost_token_sensitivity": "neutral",
+        "independence_parallelizability": "delegation-eligible",
+        "latency_sensitivity": "neutral",
+        "reasoning_depth": "deep-capability-trigger",
+        "security_data_migration_public_contract_risk": "security-hard-trigger",
+        "verification_burden": "deep-capability-trigger",
+        "write_blast_radius": "bounded-write"
+      },
+      "factors": {
+        "ambiguity": "high",
+        "code_context_volume": "medium",
+        "cost_token_sensitivity": "low",
+        "independence_parallelizability": "bounded",
+        "latency_sensitivity": "low",
+        "reasoning_depth": "deep",
+        "security_data_migration_public_contract_risk": "security",
+        "verification_burden": "high",
+        "write_blast_radius": "bounded"
+      },
+      "hard_triggered": true,
+      "reasons": [
+        "security-risk-hard-trigger"
+      ],
+      "selected_role": "loop_v2a_security_reviewer",
+      "workload_kind": "security-review"
+    },
+    "config_evidence": null,
+    "config_evidence_sha256": null,
+    "contract_version": 2,
+    "cost_degraded": false,
+    "degraded": true,
+    "execution_mode": "parent-default",
+    "fallback": "parent-default",
+    "fallback_capability_evidence": {
+      "capability_class": "security-reviewer",
+      "capability_classes": [
+        "balanced-worker",
+        "deep-reviewer",
+        "fast-read-explorer",
+        "security-reviewer"
+      ],
+      "capability_tiers": [
+        "deep"
+      ],
+      "class_membership_confirmed": true,
+      "selected_capability_tier": "deep",
+      "source": "parent-default"
+    },
+    "fallback_capability_evidence_sha256": "f0b51981084b21742bd9aaaf4115f56ecbe65628a65eacd1f6b09eb11651781a",
+    "ownership": {
+      "disjoint": true,
+      "owner": "p5-security-rescan-attack-path-reviewer"
+    },
+    "required_capability_tier": "deep",
+    "route_receipt_id": "be9d42fa352b7fc1d04a354d7c3e4d26320ee7b5a268fc8695a2a5bad94aa78d",
+    "routing_constraint": "bounded-work-allows-delegation",
+    "runtime_mapping": "parent/default",
+    "selected_capability_tier": "deep",
+    "selected_profile_digest": null,
+    "selected_role": "loop_v2a_security_reviewer",
+    "source_revision": {
+      "branch": "codex/v2c-gitnexus-adapter",
+      "head_sha": "67be3d967e39eeab47394d0856963faff8aa4acb"
+    },
+    "source_revision_sha256": "147995be9a49b05b172cd97a9d275c608a37694eedbd329b1b3b081d5e2f483e",
+    "task_id": "P5-security-rescan-attack-path"
+  },
+  "status": "routed"
+}

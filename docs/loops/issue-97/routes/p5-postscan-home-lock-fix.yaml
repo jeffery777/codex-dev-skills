@@ -1,0 +1,30 @@
+agent_route:
+  contract_version: 2
+  task:
+    id: "P5-postscan-home-lock-fix"
+    workload_kind: "implementation"
+    factors:
+      ambiguity: "moderate"
+      reasoning_depth: "deep"
+      code_context_volume: "large"
+      security_data_migration_public_contract_risk: "routine"
+      write_blast_radius: "bounded"
+      latency_sensitivity: "low"
+      cost_token_sensitivity: "medium"
+      independence_parallelizability: "bounded"
+      verification_burden: "high"
+  profile_preflight:
+    profile_dir: "../../../../agent-profiles"
+    registry: "../../../../skills/loop-engineering/references/agent-profile-registry.json"
+    role: "loop_v2a_advanced_worker"
+    agent_roots: ["../../../../agent-profiles"]
+    destination_root: "../../../../agent-profiles"
+  assignment:
+    scope: ["GitNexus isolated-home lifecycle lock", "same-inode contamination controls", "focused concurrency regressions"]
+    ownership: {owner: "fix_isolated_home", disjoint: true}
+    source_revision: {branch: "codex/v2c-gitnexus-adapter", head_sha: "67be3d967e39eeab47394d0856963faff8aa4acb"}
+    authority_contract:
+      mutation_scope: "bounded GitNexus adapter and tests"
+      external_write_authorized: false
+      human_gates: ["main-agent-integration", "formal-re-review", "native-rescan"]
+      completion_criteria: ["isolated home is mutually exclusive across repositories", "identity and emptiness stay bound through runner start", "focused regressions pass"]

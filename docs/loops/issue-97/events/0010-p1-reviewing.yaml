@@ -1,0 +1,28 @@
+sequence: 10
+event_id: issue-97-p1-reviewing
+occurred_at: '2026-07-16T09:08:00Z'
+actor: codex-root
+type: task_transition
+task_id: P1
+idempotency_key: issue-97-p1-reviewing-v1
+expected_state_revision: 9
+previous_event_hash: 863213d3b69644ded92bf2a6b1ff3936899583d44c11b0f287df278420757de6
+payload:
+  target_status: reviewing
+  fencing_token:
+    generation: 1
+    nonce: issue-97-p1-root-1
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-97/receipts/p2-adapter-implementation-main-verification.md
+    review:
+      status: required
+      mode: code-review-deep
+      artifacts:
+      - docs/loops/issue-97/receipts/p4-code-review-route.json
+    acceptance:
+      status: not_required
+      artifact: ''
+event_hash: d5d1a0cb1200d93ca7641832480c68dd656a6f669acb4b01b33a7b3d90e8401f

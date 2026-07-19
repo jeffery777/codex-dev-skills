@@ -22,7 +22,7 @@ input:
       status: "<not_started | running | complete | failed | cancelled>"
       phase: "<none | preflight | threat_model | discovery | validation | attack_path | reporting>"
       worker_failure_kind: "<none | safety_refused | transient | unrecoverable>"
-      reporting_retry_count: 0
+      worker_retry_count: 0
   runtime:
     surface: "<cli | desktop | ide>"
     capabilities:
@@ -78,7 +78,17 @@ agent_route:
 
 # Trusted authority is intentionally absent. Supply current-session authority
 # only through loopctl flags such as --external-write-authorized or
-# --parent-security-report-fallback-authorized after exact user authorization.
+# --parent-security-scan-fallback-authorized after exact user authorization.
+# The scan-wide parent fallback flag applies to every scan phase. The legacy
+# --parent-security-report-fallback-authorized spelling is accepted only as a
+# reporting-phase compatibility alias and cannot authorize any other phase.
+# `reporting_retry_count` is likewise a reporting-only legacy input;
+# non-reporting phases use `worker_retry_count` and ignore the legacy field.
+# Event trusted current time is not repository input: loopctl obtains it from the
+# CLI clock, while direct live library callers inject it at their write boundary.
+# Durable lease semantics remain event-time based, but live claim acquisition,
+# active-claim transitions, and source rebound also reject leases stale at that
+# trusted current time.
 # Every decide call must pass an independently verified value through
 # --protected-history-sha256. Use the exact audit-reported digest, or the literal
 # `none` only after the trusted caller verifies that no protected history exists;

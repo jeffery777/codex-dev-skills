@@ -1,0 +1,21 @@
+{
+  "integration": {
+    "completion_proven": false,
+    "disposition": "accepted",
+    "integration_accepted": true,
+    "issues": [],
+    "valid": true,
+    "worker_validation_id": "d51440fd87b229e858673d4f82e9ec12c14b75b08aa620af7041bb7bedbab6d9"
+  },
+  "status": "accepted",
+  "worker_validation": {
+    "accepted_as_completion": false,
+    "artifact_digests_sha256": "58341944657ce318fd5ff084308b9ecce0475ffb3edc09c7ec0d6620a34a3ba5",
+    "issues": [],
+    "route_receipt_id": "3d7d429fc181590fdb85268c4dba105776ed9978e344ea8be84242398d13dc22",
+    "valid_coordination_evidence": true,
+    "validation_receipt_id": "d51440fd87b229e858673d4f82e9ec12c14b75b08aa620af7041bb7bedbab6d9",
+    "worker_receipt_sha256": "7fb81855384247bb1b42ec715d40ba2a299a60c874668300a25c86563314278a",
+    "worker_status": "complete"
+  }
+}

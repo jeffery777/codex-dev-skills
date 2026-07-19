@@ -404,6 +404,166 @@ With no adapter, or with an unavailable, partial, unsupported, incompatible, or
 untrusted adapter, the loop safely continues with V1/V2a and no memory. See the
 [external memory contract](docs/external-memory-contract.md).
 
+V2c-A adds a default-disabled, version-gated GitNexus driver boundary. The live
+macOS qualification covers GitNexus `1.6.9`, a runtime-produced qualification
+fingerprint, and metadata schema `5`. Human-oriented `status` and `list` output is never parsed.
+Although qualification observed a direct JSON query surface, this baseline
+deliberately declares `read_query` and every write/upsert/invalidate/tombstone/
+delete operation unsupported. It therefore cannot manufacture memory context
+or report a successful backend mutation.
+
+The runtime control-plane flow is:
+
+1. **Qualify:** discover an explicitly configured executable, apply the regular
+   file or explicit symlink policy, and bind its exact version, entry bytes,
+   every script interpreter (when applicable), observed analyze flags, schema,
+   and capability policy. Any drift requires qualification and V2b
+   conformance again.
+2. **Inspect status:** derive repository identity and freshness from the exact
+   Git top-level with a real local `.git` marker (including reciprocal
+   linked-worktree binding) and a verified commit-object HEAD;
+   repository-local `core.worktree` cannot substitute an enclosing repository
+   identity,
+   a complete tracked snapshot, and strict version-gated metadata. Treat stale,
+   dirty, missing, partial, unsupported, incompatible, corrupt, or unknown state
+   as no memory.
+3. **Enable:** opt in through machine-local runtime configuration. Executable
+   paths, `GITNEXUS_HOME`, registries, indexes, and credentials never belong in
+   repository files.
+4. **Refresh when explicitly requested:** use only `analyze --index-only` with
+   an expected HEAD, a unique isolated alias and `GITNEXUS_HOME`, offline
+   extension policy, bounded environment, timeout, lock, replacement-object
+   neutralization, and complete before/after worktree plus Git-administration
+   checks. Automatic refresh remains disabled.
+5. **Disable or roll back:** remove the runtime opt-in and ignore adapter
+   receipts. Continue with repo-owned state; do not delete, reset, restore, or
+   rewrite repository files or user indexes as part of rollback.
+
+The supported operator entrypoint is the repo-owned module. It persists no
+configuration and redacts machine-local paths from JSON output:
+
+```bash
+ADAPTER=skills/loop-engineering/scripts/gitnexus_adapter.py
+python3 "$ADAPTER" qualify \
+  --executable "$GITNEXUS_EXECUTABLE" --allow-symlink \
+  --node-executable "$GITNEXUS_NODE_EXECUTABLE" --allow-node-symlink \
+  --package-root "$GITNEXUS_PACKAGE_ROOT" \
+  --accepted-executable-sha256 "$GITNEXUS_EXECUTABLE_SHA256" \
+  --accepted-runtime-sha256 "$GITNEXUS_NODE_SHA256" \
+  --accepted-package-sha256 "$GITNEXUS_PACKAGE_SHA256"
+
+python3 "$ADAPTER" status \
+  --executable "$GITNEXUS_EXECUTABLE" --allow-symlink \
+  --node-executable "$GITNEXUS_NODE_EXECUTABLE" --allow-node-symlink \
+  --package-root "$GITNEXUS_PACKAGE_ROOT" \
+  --accepted-executable-sha256 "$GITNEXUS_EXECUTABLE_SHA256" \
+  --accepted-runtime-sha256 "$GITNEXUS_NODE_SHA256" \
+  --accepted-package-sha256 "$GITNEXUS_PACKAGE_SHA256" \
+  --git-executable "$GIT_EXECUTABLE" \
+  --repo-root "$CANONICAL_REPO_ROOT" \
+  --repository-id "$CANONICAL_REPOSITORY_ID" \
+  --expected-remote "$EXPECTED_ORIGIN"
+```
+
+`status` is disabled by default. Add `--enabled` only to opt in for that one
+status/handshake invocation; the current baseline still falls back to no memory
+because `read_query` is unsupported. An explicit refresh additionally requires
+a new, empty, pre-created machine-local home and two independent opt-in flags:
+
+```bash
+python3 "$ADAPTER" refresh \
+  --executable "$GITNEXUS_EXECUTABLE" --allow-symlink \
+  --node-executable "$GITNEXUS_NODE_EXECUTABLE" --allow-node-symlink \
+  --package-root "$GITNEXUS_PACKAGE_ROOT" \
+  --accepted-executable-sha256 "$GITNEXUS_EXECUTABLE_SHA256" \
+  --accepted-runtime-sha256 "$GITNEXUS_NODE_SHA256" \
+  --accepted-package-sha256 "$GITNEXUS_PACKAGE_SHA256" \
+  --git-executable "$GIT_EXECUTABLE" \
+  --repo-root "$CANONICAL_REPO_ROOT" \
+  --repository-id "$CANONICAL_REPOSITORY_ID" \
+  --expected-remote "$EXPECTED_ORIGIN" \
+  --expected-head "$EXPECTED_HEAD" \
+  --gitnexus-home "$EMPTY_ISOLATED_GITNEXUS_HOME" \
+  --lock-directory "$MACHINE_LOCAL_LOCK_DIRECTORY" \
+  --enabled --confirm-explicit-refresh
+
+python3 "$ADAPTER" disable
+```
+
+`--executable` and the caller-owned accepted entry/package digests are mandatory
+and never fall back to ambient `PATH` or tool self-report. `--package-root`
+must be a canonical machine-local directory containing the resolved entry; its
+complete descriptor-bound regular-file tree and contained direct relative file
+symlinks are compared before the CLI runs and at every later use. Derive the
+accepted digests from a separately trusted package installation manifest or an
+explicitly approved local measurement; adapter output cannot promote its own
+measurement into caller-owned trust. Every
+script entry is launched only through a bound native interpreter and that
+interpreter identity is included in the qualification fingerprint. When the
+resolved GitNexus entry begins with exact `#!/usr/bin/env node` or
+`#!/usr/bin/env -S node`, `--node-executable` and
+`--accepted-runtime-sha256` are mandatory; an allowed absolute
+shebang interpreter is resolved and fingerprinted independently. Unsupported
+launcher syntax and script-on-script interpreters fail closed. Omit the Node
+arguments only for a directly executable or allowed non-env-node entry. Resolve
+any permitted symlink target during local setup and keep machine-local paths
+and accepted digests outside repository files. The caller must regenerate the
+accepted evidence and rerun qualification/conformance after any entry,
+interpreter, package, version, or capability drift.
+
+Repository identity helpers likewise ignore ambient `PATH`, Apple developer
+tool selectors, dynamic-loader variables, and executable-path environment
+variables. Omitting `--git-executable` uses the operating system's default
+executable search path (`os.defpath`); a trusted operator or library caller may
+instead supply an explicit absolute path. The regular, canonical, non-symlink
+Git executable is bound before every use, and no machine-local value is
+committed.
+
+Status and refresh fail closed before worktree-reading Git commands when local
+or enabled worktree configuration defines content filters, external config
+includes, or an external attributes file. The refresh lock directory must
+resolve outside the repository to a current-user-owned directory that is not
+group/world writable; parent symlinks and symlinked or hard-linked lock files
+are rejected. Refresh takes its cross-process advisory lock on a verified
+descriptor (not a pathname), uses `flock`, and rechecks the descriptor identity
+after acquisition. It always takes a deterministic, fixed-OS-temp per-user lock
+for the canonical repository root before any optional configured-directory
+lock; different `TMPDIR` values or `--lock-directory` arguments cannot create
+parallel refresh lanes. This protects cooperating same-UID local processes; it is
+not a distributed lock or a defense against a same-UID process that can modify
+the machine-local control plane. The same verified lock directory also holds a
+device/inode-keyed lock for the isolated home. The controller keeps that home
+open by descriptor for the full refresh, checks emptiness after locking and
+again immediately before the runner, and therefore rejects cooperating
+cross-repository reuse of one home.
+
+`disable` is stateless: the caller stops supplying `--enabled` and ignores prior
+receipts. It does not delete indexes or rewrite repository/user configuration.
+
+Refresh accepts only a clean, directly verifiable worktree boundary with no
+tracked path below `.gitnexus/`—including case or normalization aliases that
+are missing from the worktree and therefore cannot be compared with
+`samefile()`—and a pre-existing `.git/info/exclude` entry for `.gitnexus/`.
+Conservative Unicode-normalized, case-folded lexical equivalence rejects those
+tracked aliases before the runner executes. It fails closed if GitNexus changes
+tracked, untracked, ignored, or protected worktree content; any `.git`
+administrative state; repository identity; or qualified metadata. Git probes
+and descendants ignore replacement refs, disable repository-local fsmonitor,
+hooks, and untracked-cache extensions, reject interactive credential prompts,
+ignore system/global Git configuration, and use `GIT_NO_LAZY_FETCH=1` to
+prevent implicit promisor remote/helper access. Probe output and time are
+bounded. macOS arm64
+has live qualification evidence;
+Linux coverage is fixture-based portability evidence, not a live qualification.
+
+The complete-snapshot safety envelope supports at most 250,000 filesystem
+entries, directory depth 256, and 512 MiB per regular file, all within the
+configured total refresh deadline (120 seconds by default). A repository or
+Git packfile outside those bounds is not partially indexed: refresh fails
+closed before the runner or rejects adoption, and the operator must use the
+no-memory path unless a later driver version is separately qualified for a
+wider envelope.
+
 See [docs/loop-state-ledger.md](docs/loop-state-ledger.md) for the repo-owned loop state contract.
 
 ### Bounded Milestone Slice

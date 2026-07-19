@@ -1,0 +1,15 @@
+sequence: 32
+event_id: issue-97-p5-recovery-ready
+occurred_at: '2026-07-18T06:00:00Z'
+actor: codex-root
+type: task_transition
+task_id: P5
+idempotency_key: issue-97-p5-recovery-ready-v1
+expected_state_revision: 31
+previous_event_hash: 02fa3cb8df356d5685b54903805d9fb5a1d735d0af59ccdf4ea04cb314dda2b3
+payload:
+  target_status: ready
+  evidence:
+    blocker_resolved: true
+    recovery_artifact: docs/loops/issue-97/events/0031-source-rebound.yaml
+event_hash: 9780b3e2932c5e67e4c9c3f78d381778f0ff85efc9e807082c36e3a1ae8f8707

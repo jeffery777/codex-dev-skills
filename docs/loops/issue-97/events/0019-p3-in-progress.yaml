@@ -1,0 +1,14 @@
+sequence: 19
+event_id: "issue-97-p3-in-progress"
+occurred_at: "2026-07-16T09:17:00Z"
+actor: "codex-root"
+type: "task_transition"
+task_id: "P3"
+idempotency_key: "issue-97-p3-in-progress-v1"
+expected_state_revision: 18
+previous_event_hash: "b7f0b27ba903a7c33cb2803a6f28dea7eb6c01d7c5bc1a30030eea10a582b738"
+payload:
+  target_status: "in_progress"
+  fencing_token: {generation: 1, nonce: "issue-97-p3-root-1"}
+  evidence: {}
+event_hash: "cf2af84a4d24fb334acda23626ddb52008e7905db7082f8762dc43f0b80bf239"

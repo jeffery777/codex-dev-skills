@@ -1,0 +1,30 @@
+agent_route:
+  contract_version: 2
+  task:
+    id: "P0-inventory"
+    workload_kind: "mechanical"
+    factors:
+      ambiguity: "low"
+      reasoning_depth: "shallow"
+      code_context_volume: "medium"
+      security_data_migration_public_contract_risk: "none"
+      write_blast_radius: "none"
+      latency_sensitivity: "high"
+      cost_token_sensitivity: "high"
+      independence_parallelizability: "independent"
+      verification_burden: "low"
+  profile_preflight:
+    profile_dir: "../../../../agent-profiles"
+    registry: "../../../../skills/loop-engineering/references/agent-profile-registry.json"
+    role: "loop_v2a_mechanical_reader"
+    agent_roots: ["../../../../agent-profiles"]
+    destination_root: "../../../../agent-profiles"
+  assignment:
+    scope: ["docs/external-memory-contract.md", "skills/loop-engineering/references/memory-contract-v1.md", "skills/loop-engineering/scripts/memory_contract.py", "skills/loop-engineering/scripts/memoryctl.py", "tests/test_memory_contract.py", "tests/test_memoryctl.py", "evals/memory-contract", "catalog.yaml", "install.sh", "docs"]
+    ownership: {owner: "p0-inventory-worker", disjoint: true}
+    source_revision: {branch: "codex/v2c-gitnexus-adapter", head_sha: "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"}
+    authority_contract:
+      mutation_scope: "none"
+      external_write_authorized: false
+      human_gates: ["main-agent-integration"]
+      completion_criteria: ["Return a path-referenced inventory and verification matrix; make no edits"]

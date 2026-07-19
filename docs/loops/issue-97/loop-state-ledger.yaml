@@ -1,0 +1,1375 @@
+ledger:
+  schema_version: 2
+  objective_id: issue-97
+  objective: Deliver the production GitNexus safe adapter baseline through validated
+    PR readiness without merge or release.
+  loop_spec: docs/loops/issue-97/loop-spec.md
+  task_manifest: docs/loops/issue-97/task-manifest.yaml
+  source_revision:
+    branch: codex/v2c-gitnexus-adapter
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+    spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+    task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+    previous_ledger_sha256: 37bd3fdc688603553037eedc23cf062ef0d050c086561ecb3463ce015357b74f
+    updated_at: '2026-07-19T12:30:00Z'
+  state_revision:
+    sequence: 40
+    last_event_hash: ef095d48508a9658f2a863707e015d0cbe6b12812e9f3238ef5452074cc06d25
+status_model:
+  task_allowed:
+  - planned
+  - ready
+  - in_progress
+  - blocked
+  - reviewing
+  - done
+  - accepted
+  - cancelled
+  claim_allowed:
+  - active
+  - released
+  - expired
+  - revoked
+  done_means: Task DoD, verification, review, and required gate evidence are satisfied.
+  accepted_means: A bound receipt was applied through an independently authorized
+    live write; consumers revalidate current external state before publication.
+current_loop:
+  lifecycle: complete
+  classification: bounded-delivery-objective
+  execution_mode: shared-subagents
+  selected_task_id: P5
+  next_decision: complete
+  decision_reason: The bounded final-closure contract fix passed final review and
+    validation, was published and read back, and the objective is complete at the
+    authorized ready-for-review boundary.
+tasks:
+- id: P0
+  status: done
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+      - docs/loops/issue-97/receipts/p0-inventory-main-verification.md
+    review:
+      status: not_required
+      mode: none
+      artifacts: []
+    acceptance:
+      status: not_required
+      artifact: ''
+    human_gate:
+      status: satisfied
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+  blocker: {}
+  residual_risk:
+  - Human-oriented status/query output remains deliberately unqualified.
+- id: P1
+  status: done
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-97/receipts/p2-adapter-implementation-main-verification.md
+      - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+    review:
+      status: passed
+      mode: code-review-deep
+      artifacts:
+      - docs/loops/issue-97/receipts/p4-code-review-round6-final.md
+    acceptance:
+      status: not_required
+      artifact: ''
+    human_gate:
+      status: satisfied
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+  blocker: {}
+  residual_risk:
+  - Cooperative local-filesystem deadlines and same-user TOCTOU remain bounded residuals.
+- id: P2
+  status: done
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-97/receipts/p2-adapter-implementation-main-verification.md
+      - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+    review:
+      status: passed
+      mode: code-review-deep
+      artifacts:
+      - docs/loops/issue-97/receipts/p4-code-review-round6-final.md
+    acceptance:
+      status: not_required
+      artifact: ''
+    human_gate:
+      status: satisfied
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+  blocker: {}
+  residual_risk:
+  - Linux has portability fixtures but no live GitNexus qualification.
+- id: P3
+  status: done
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-97/receipts/verification-report.md
+    review:
+      status: passed
+      mode: docs-review
+      artifacts:
+      - docs/loops/issue-97/receipts/p4-docs-review-round2-final.md
+    acceptance:
+      status: not_required
+      artifact: ''
+    human_gate:
+      status: satisfied
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+  blocker: {}
+  residual_risk:
+  - Current P5 final gates do not reopen the completed P3 documentation slice.
+- id: P4
+  status: done
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-97/receipts/verification-report.md
+      - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+    review:
+      status: passed
+      mode: formal-gate
+      artifacts:
+      - docs/loops/issue-97/receipts/p4-merge-readiness-final.md
+      - docs/loops/issue-97/receipts/p4-code-review-round7-post-security-fix-final.md
+      - docs/loops/issue-97/receipts/p4-docs-review-round2-final.md
+      - docs/loops/issue-97/receipts/p4-security-diff-scan-final.md
+    acceptance:
+      status: not_required
+      artifact: ''
+    human_gate:
+      status: satisfied
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+  blocker: {}
+  residual_risk:
+  - Historical P4 gates passed; the final closure delta requires its own current review
+    and validation.
+- id: P5
+  status: done
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-97/receipts/p5-publication-readback.md
+      - docs/loops/issue-97/receipts/p5-final-closure-fix-verification.md
+      - docs/loops/issue-97/receipts/verification-report.md
+    review:
+      status: passed
+      mode: formal-gate
+      artifacts:
+      - docs/loops/issue-97/receipts/p5-final-closure-merge-readiness.md
+      - docs/loops/issue-97/receipts/p5-final-closure-code-review.md
+      - docs/loops/issue-97/receipts/p5-final-closure-docs-review.md
+      - docs/loops/issue-97/receipts/p5-final-closure-security-diff-scan.md
+      - docs/loops/issue-97/receipts/p5-final-closure-evidence-docs-review.md
+    acceptance:
+      status: not_required
+      artifact: ''
+    human_gate:
+      status: satisfied
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+  blocker:
+    kind: none
+    reason: ''
+  residual_risk:
+  - 'PR #98 remains open and unmerged for human review; the terminal evidence-only
+    descendant does not change the validated runtime implementation.'
+claims:
+- task_id: P0
+  status: released
+  owner:
+    type: subagent
+    id: codex-root
+  fencing_token:
+    generation: 1
+    nonce: issue-97-p0-root-1
+  expected_state_revision: 1
+  source_revision:
+    branch: codex/v2c-gitnexus-adapter
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+    spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+    task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+  claimed_at: '2026-07-16T09:00:00Z'
+  lease_expires_at: '2026-07-17T09:00:00Z'
+- task_id: P1
+  status: released
+  owner:
+    type: subagent
+    id: codex-root
+  fencing_token:
+    generation: 1
+    nonce: issue-97-p1-root-1
+  expected_state_revision: 7
+  source_revision:
+    branch: codex/v2c-gitnexus-adapter
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+    spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+    task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+  claimed_at: '2026-07-16T09:06:00Z'
+  lease_expires_at: '2026-07-17T09:06:00Z'
+- task_id: P2
+  status: released
+  owner:
+    type: subagent
+    id: codex-root
+  fencing_token:
+    generation: 1
+    nonce: issue-97-p2-root-1
+  expected_state_revision: 11
+  source_revision:
+    branch: codex/v2c-gitnexus-adapter
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+    spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+    task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+  claimed_at: '2026-07-16T09:10:00Z'
+  lease_expires_at: '2026-07-17T09:10:00Z'
+- task_id: P3
+  status: released
+  owner:
+    type: subagent
+    id: codex-root
+  fencing_token:
+    generation: 1
+    nonce: issue-97-p3-root-1
+  expected_state_revision: 17
+  source_revision:
+    branch: codex/v2c-gitnexus-adapter
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+    spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+    task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+  claimed_at: '2026-07-16T09:16:00Z'
+  lease_expires_at: '2026-07-17T09:16:00Z'
+- task_id: P4
+  status: released
+  owner:
+    type: subagent
+    id: codex-root
+  fencing_token:
+    generation: 1
+    nonce: issue-97-p4-root-1
+  expected_state_revision: 22
+  source_revision:
+    branch: codex/v2c-gitnexus-adapter
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+    spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+    task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+  claimed_at: '2026-07-17T02:11:00Z'
+  lease_expires_at: '2026-07-18T02:11:00Z'
+- task_id: P5
+  status: released
+  owner:
+    type: subagent
+    id: codex-root
+  fencing_token:
+    generation: 2
+    nonce: issue-97-p5-root-2
+  expected_state_revision: 32
+  source_revision:
+    branch: codex/v2c-gitnexus-adapter
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+    spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+    task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+  claimed_at: '2026-07-18T06:01:00Z'
+  lease_expires_at: '2026-07-20T06:01:00Z'
+events:
+- sequence: 1
+  event_id: issue-97-publication-gate-pending
+  occurred_at: '2026-07-16T07:55:00Z'
+  actor: codex-root
+  type: gate_updated
+  task_id: ''
+  idempotency_key: issue-97-publication-gate-pending-v1
+  expected_state_revision: 0
+  previous_event_hash: ''
+  payload:
+    gate: publication-readiness
+    status: pending
+  event_hash: 60afeb16a758e16eaa0fed5807ae4b0a3951087ef2a8d575885577eaa6a781c9
+- sequence: 2
+  event_id: issue-97-p0-claim
+  occurred_at: '2026-07-16T09:00:00Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P0
+  idempotency_key: issue-97-p0-claim-v1
+  expected_state_revision: 1
+  previous_event_hash: 60afeb16a758e16eaa0fed5807ae4b0a3951087ef2a8d575885577eaa6a781c9
+  payload:
+    claim:
+      task_id: P0
+      status: active
+      owner:
+        type: subagent
+        id: codex-root
+      fencing_token:
+        generation: 1
+        nonce: issue-97-p0-root-1
+      expected_state_revision: 1
+      source_revision:
+        branch: codex/v2c-gitnexus-adapter
+        head_sha: a75728b15f5d15ba7bf1a7e6e3a2dd934915592e
+        spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+        task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+      claimed_at: '2026-07-16T09:00:00Z'
+      lease_expires_at: '2026-07-17T09:00:00Z'
+  event_hash: 3c22315010a96f340f9ce10c4a872631556712f6c48a128ec72bba8ed5406f32
+- sequence: 3
+  event_id: issue-97-p0-in-progress
+  occurred_at: '2026-07-16T09:01:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P0
+  idempotency_key: issue-97-p0-in-progress-v1
+  expected_state_revision: 2
+  previous_event_hash: 3c22315010a96f340f9ce10c4a872631556712f6c48a128ec72bba8ed5406f32
+  payload:
+    target_status: in_progress
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p0-root-1
+    evidence: {}
+  event_hash: 02307b22894b86ecd0f4dc6861a0439ea0cdc5ea914ec07f6858ca9a8dc74dc5
+- sequence: 4
+  event_id: issue-97-p0-reviewing
+  occurred_at: '2026-07-16T09:02:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P0
+  idempotency_key: issue-97-p0-reviewing-v1
+  expected_state_revision: 3
+  previous_event_hash: 02307b22894b86ecd0f4dc6861a0439ea0cdc5ea914ec07f6858ca9a8dc74dc5
+  payload:
+    target_status: reviewing
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p0-root-1
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+        - docs/loops/issue-97/receipts/p0-inventory-main-verification.md
+      review:
+        status: not_required
+        mode: none
+        artifacts: []
+      acceptance:
+        status: not_required
+        artifact: ''
+  event_hash: 222e4f7ee7cfa0345c0ca05e2e90816b94e17cb0fae89b882b64dcc6aad015df
+- sequence: 5
+  event_id: issue-97-publication-authorized
+  occurred_at: '2026-07-16T09:03:00Z'
+  actor: delegating-user
+  type: gate_updated
+  task_id: ''
+  idempotency_key: issue-97-publication-authorized-v1
+  expected_state_revision: 4
+  previous_event_hash: 222e4f7ee7cfa0345c0ca05e2e90816b94e17cb0fae89b882b64dcc6aad015df
+  payload:
+    gate: publication-readiness
+    status: satisfied
+    evidence:
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+      scope: commit-push-ready-pr-only-after-evidence-gates
+    authorization:
+      action: gate_satisfaction
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-97
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+      source_revision_sha256: 7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8
+      protected_payload_sha256: f6aeeeafab873e3deefed2fbde100145bcf3a952dd050ab8937c8c2c4abe8aac
+      gate: publication-readiness
+  event_hash: 949b32abf60a71b104ab756e764d8fb9bd65354d42cff771a6ad50f6c577f09a
+- sequence: 6
+  event_id: issue-97-p0-done
+  occurred_at: '2026-07-16T09:04:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P0
+  idempotency_key: issue-97-p0-done-v1
+  expected_state_revision: 5
+  previous_event_hash: 949b32abf60a71b104ab756e764d8fb9bd65354d42cff771a6ad50f6c577f09a
+  payload:
+    target_status: done
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p0-root-1
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+        - docs/loops/issue-97/receipts/p0-inventory-main-verification.md
+      review:
+        status: not_required
+        mode: none
+        artifacts: []
+      acceptance:
+        status: not_required
+        artifact: ''
+      human_gate:
+        status: satisfied
+        artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+  event_hash: 76a25da9e077956beb77df0a70ff0c9454996eb7a8c28605f6f3df7bded9ffac
+- sequence: 7
+  event_id: issue-97-p1-ready
+  occurred_at: '2026-07-16T09:05:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P1
+  idempotency_key: issue-97-p1-ready-v1
+  expected_state_revision: 6
+  previous_event_hash: 76a25da9e077956beb77df0a70ff0c9454996eb7a8c28605f6f3df7bded9ffac
+  payload:
+    target_status: ready
+    evidence: {}
+  event_hash: e8c803a35b8e90e643569b6a4b059f8a07415d3f6d88929342746a2c39279fc1
+- sequence: 8
+  event_id: issue-97-p1-claim
+  occurred_at: '2026-07-16T09:06:00Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P1
+  idempotency_key: issue-97-p1-claim-v1
+  expected_state_revision: 7
+  previous_event_hash: e8c803a35b8e90e643569b6a4b059f8a07415d3f6d88929342746a2c39279fc1
+  payload:
+    claim:
+      task_id: P1
+      status: active
+      owner:
+        type: subagent
+        id: codex-root
+      fencing_token:
+        generation: 1
+        nonce: issue-97-p1-root-1
+      expected_state_revision: 7
+      source_revision:
+        branch: codex/v2c-gitnexus-adapter
+        head_sha: a75728b15f5d15ba7bf1a7e6e3a2dd934915592e
+        spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+        task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+      claimed_at: '2026-07-16T09:06:00Z'
+      lease_expires_at: '2026-07-17T09:06:00Z'
+  event_hash: c23e4f955beab7396534b69cc64ba0de25d1027c51f699ec3aff9ac697d11c7e
+- sequence: 9
+  event_id: issue-97-p1-in-progress
+  occurred_at: '2026-07-16T09:07:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P1
+  idempotency_key: issue-97-p1-in-progress-v1
+  expected_state_revision: 8
+  previous_event_hash: c23e4f955beab7396534b69cc64ba0de25d1027c51f699ec3aff9ac697d11c7e
+  payload:
+    target_status: in_progress
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p1-root-1
+    evidence: {}
+  event_hash: 863213d3b69644ded92bf2a6b1ff3936899583d44c11b0f287df278420757de6
+- sequence: 10
+  event_id: issue-97-p1-reviewing
+  occurred_at: '2026-07-16T09:08:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P1
+  idempotency_key: issue-97-p1-reviewing-v1
+  expected_state_revision: 9
+  previous_event_hash: 863213d3b69644ded92bf2a6b1ff3936899583d44c11b0f287df278420757de6
+  payload:
+    target_status: reviewing
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p1-root-1
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/p2-adapter-implementation-main-verification.md
+      review:
+        status: required
+        mode: code-review-deep
+        artifacts:
+        - docs/loops/issue-97/receipts/p4-code-review-route.json
+      acceptance:
+        status: not_required
+        artifact: ''
+  event_hash: d5d1a0cb1200d93ca7641832480c68dd656a6f669acb4b01b33a7b3d90e8401f
+- sequence: 11
+  event_id: issue-97-p2-ready
+  occurred_at: '2026-07-16T09:09:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P2
+  idempotency_key: issue-97-p2-ready-v1
+  expected_state_revision: 10
+  previous_event_hash: d5d1a0cb1200d93ca7641832480c68dd656a6f669acb4b01b33a7b3d90e8401f
+  payload:
+    target_status: ready
+    evidence: {}
+  event_hash: bd743a79258618cdb034eebc86edf05c89fe4597a44326b35b67fc7ac16337b4
+- sequence: 12
+  event_id: issue-97-p2-claim
+  occurred_at: '2026-07-16T09:10:00Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P2
+  idempotency_key: issue-97-p2-claim-v1
+  expected_state_revision: 11
+  previous_event_hash: bd743a79258618cdb034eebc86edf05c89fe4597a44326b35b67fc7ac16337b4
+  payload:
+    claim:
+      task_id: P2
+      status: active
+      owner:
+        type: subagent
+        id: codex-root
+      fencing_token:
+        generation: 1
+        nonce: issue-97-p2-root-1
+      expected_state_revision: 11
+      source_revision:
+        branch: codex/v2c-gitnexus-adapter
+        head_sha: a75728b15f5d15ba7bf1a7e6e3a2dd934915592e
+        spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+        task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+      claimed_at: '2026-07-16T09:10:00Z'
+      lease_expires_at: '2026-07-17T09:10:00Z'
+  event_hash: 46cee3dc4206081bc88c91fdbd6d392442cf5752661f886b6f4b0f8bffa6dee6
+- sequence: 13
+  event_id: issue-97-p2-in-progress
+  occurred_at: '2026-07-16T09:11:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P2
+  idempotency_key: issue-97-p2-in-progress-v1
+  expected_state_revision: 12
+  previous_event_hash: 46cee3dc4206081bc88c91fdbd6d392442cf5752661f886b6f4b0f8bffa6dee6
+  payload:
+    target_status: in_progress
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p2-root-1
+    evidence: {}
+  event_hash: 2753643994ce78076c6c1ff3fd60a685bd414ea861653e13e6eb7261ababffee
+- sequence: 14
+  event_id: issue-97-p2-reviewing
+  occurred_at: '2026-07-16T09:12:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P2
+  idempotency_key: issue-97-p2-reviewing-v1
+  expected_state_revision: 13
+  previous_event_hash: 2753643994ce78076c6c1ff3fd60a685bd414ea861653e13e6eb7261ababffee
+  payload:
+    target_status: reviewing
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p2-root-1
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/p2-adapter-implementation-main-verification.md
+        - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+      review:
+        status: required
+        mode: code-review-deep
+        artifacts:
+        - docs/loops/issue-97/receipts/p4-code-review-route.json
+      acceptance:
+        status: not_required
+        artifact: ''
+  event_hash: e3423da7d5a1ca3a945836d4a64cedea5760bc92a796b363b8424376d77d852c
+- sequence: 15
+  event_id: issue-97-p1-done
+  occurred_at: '2026-07-16T09:13:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P1
+  idempotency_key: issue-97-p1-done-v1
+  expected_state_revision: 14
+  previous_event_hash: e3423da7d5a1ca3a945836d4a64cedea5760bc92a796b363b8424376d77d852c
+  payload:
+    target_status: done
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p1-root-1
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/p2-adapter-implementation-main-verification.md
+        - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+      review:
+        status: passed
+        mode: code-review-deep
+        artifacts:
+        - docs/loops/issue-97/receipts/p4-code-review-round6-final.md
+      acceptance:
+        status: not_required
+        artifact: ''
+      human_gate:
+        status: satisfied
+        artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+    authorization:
+      action: task_completion
+      principal:
+        type: platform
+        id: codex-formal-review-gate
+      objective_id: issue-97
+      artifact: docs/loops/issue-97/receipts/p4-code-review-round6-final.md
+      source_revision_sha256: 7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8
+      protected_payload_sha256: 1f58a24b21bca9b157524fa3a6e092bef2ca9840ff2b67e9cc253c34b9673b77
+      task_id: P1
+  event_hash: da2f61647828ff270e518b6295757ef0b2610174e1afef7fde52b0a049548782
+- sequence: 16
+  event_id: issue-97-p2-done
+  occurred_at: '2026-07-16T09:14:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P2
+  idempotency_key: issue-97-p2-done-v1
+  expected_state_revision: 15
+  previous_event_hash: da2f61647828ff270e518b6295757ef0b2610174e1afef7fde52b0a049548782
+  payload:
+    target_status: done
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p2-root-1
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/p2-adapter-implementation-main-verification.md
+        - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+      review:
+        status: passed
+        mode: code-review-deep
+        artifacts:
+        - docs/loops/issue-97/receipts/p4-code-review-round6-final.md
+      acceptance:
+        status: not_required
+        artifact: ''
+      human_gate:
+        status: satisfied
+        artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+    authorization:
+      action: task_completion
+      principal:
+        type: platform
+        id: codex-formal-review-gate
+      objective_id: issue-97
+      artifact: docs/loops/issue-97/receipts/p4-code-review-round6-final.md
+      source_revision_sha256: 7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8
+      protected_payload_sha256: 0428a5e508f34aa278ebbb33f318ee34a63895f4d441eed41dcebd0b732cea8e
+      task_id: P2
+  event_hash: 7dded553b2599ad28eb00bba4ee760e76f771fea53ae42ae67fb38e913d228b0
+- sequence: 17
+  event_id: issue-97-p3-ready
+  occurred_at: '2026-07-16T09:15:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P3
+  idempotency_key: issue-97-p3-ready-v1
+  expected_state_revision: 16
+  previous_event_hash: 7dded553b2599ad28eb00bba4ee760e76f771fea53ae42ae67fb38e913d228b0
+  payload:
+    target_status: ready
+    evidence: {}
+  event_hash: ca2ebb2177549cb339c3fa123a4b5616631b9c1f25f433f89f0c8816ee9c89ba
+- sequence: 18
+  event_id: issue-97-p3-claim
+  occurred_at: '2026-07-16T09:16:00Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P3
+  idempotency_key: issue-97-p3-claim-v1
+  expected_state_revision: 17
+  previous_event_hash: ca2ebb2177549cb339c3fa123a4b5616631b9c1f25f433f89f0c8816ee9c89ba
+  payload:
+    claim:
+      task_id: P3
+      status: active
+      owner:
+        type: subagent
+        id: codex-root
+      fencing_token:
+        generation: 1
+        nonce: issue-97-p3-root-1
+      expected_state_revision: 17
+      source_revision:
+        branch: codex/v2c-gitnexus-adapter
+        head_sha: a75728b15f5d15ba7bf1a7e6e3a2dd934915592e
+        spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+        task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+      claimed_at: '2026-07-16T09:16:00Z'
+      lease_expires_at: '2026-07-17T09:16:00Z'
+  event_hash: b7f0b27ba903a7c33cb2803a6f28dea7eb6c01d7c5bc1a30030eea10a582b738
+- sequence: 19
+  event_id: issue-97-p3-in-progress
+  occurred_at: '2026-07-16T09:17:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P3
+  idempotency_key: issue-97-p3-in-progress-v1
+  expected_state_revision: 18
+  previous_event_hash: b7f0b27ba903a7c33cb2803a6f28dea7eb6c01d7c5bc1a30030eea10a582b738
+  payload:
+    target_status: in_progress
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p3-root-1
+    evidence: {}
+  event_hash: cf2af84a4d24fb334acda23626ddb52008e7905db7082f8762dc43f0b80bf239
+- sequence: 20
+  event_id: issue-97-p3-reviewing
+  occurred_at: '2026-07-16T09:18:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P3
+  idempotency_key: issue-97-p3-reviewing-v1
+  expected_state_revision: 19
+  previous_event_hash: cf2af84a4d24fb334acda23626ddb52008e7905db7082f8762dc43f0b80bf239
+  payload:
+    target_status: reviewing
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p3-root-1
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+        - 'repository validation: 568 unit tests and validate-repo PASS'
+      review:
+        status: required
+        mode: docs-review
+        artifacts:
+        - docs/loops/issue-97/receipts/p4-docs-review-route.json
+      acceptance:
+        status: not_required
+        artifact: ''
+  event_hash: 1c7b9b7fad2167d0eae46691e8d658b32b127c115c2cd1c1522f68bc7eb70c7f
+- sequence: 21
+  event_id: issue-97-p3-done
+  occurred_at: '2026-07-16T09:19:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P3
+  idempotency_key: issue-97-p3-done-v1
+  expected_state_revision: 20
+  previous_event_hash: 1c7b9b7fad2167d0eae46691e8d658b32b127c115c2cd1c1522f68bc7eb70c7f
+  payload:
+    target_status: done
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p3-root-1
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/verification-report.md
+      review:
+        status: passed
+        mode: docs-review
+        artifacts:
+        - docs/loops/issue-97/receipts/p4-docs-review-round2-final.md
+      acceptance:
+        status: not_required
+        artifact: ''
+      human_gate:
+        status: satisfied
+        artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+    authorization:
+      action: task_completion
+      principal:
+        type: platform
+        id: codex-formal-docs-gate
+      objective_id: issue-97
+      artifact: docs/loops/issue-97/receipts/p4-docs-review-round2-final.md
+      source_revision_sha256: 7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8
+      protected_payload_sha256: c47fd0602cb7b2a18257a6e7329c016d4adfa815535d4545d2b0126dac3cc7ce
+      task_id: P3
+  event_hash: 26e4ea0cd0ee096728370f7ac6b64d701b91425cc255f05753caae1c70e3468e
+- sequence: 22
+  event_id: issue-97-p4-ready
+  occurred_at: '2026-07-17T02:10:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P4
+  idempotency_key: issue-97-p4-ready-v1
+  expected_state_revision: 21
+  previous_event_hash: 26e4ea0cd0ee096728370f7ac6b64d701b91425cc255f05753caae1c70e3468e
+  payload:
+    target_status: ready
+    evidence: {}
+  event_hash: 1081778a399557842d6e2f8d01de53c680046a2dc1f9b0eddcec038575006b4c
+- sequence: 23
+  event_id: issue-97-p4-claim
+  occurred_at: '2026-07-17T02:11:00Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P4
+  idempotency_key: issue-97-p4-claim-v1
+  expected_state_revision: 22
+  previous_event_hash: 1081778a399557842d6e2f8d01de53c680046a2dc1f9b0eddcec038575006b4c
+  payload:
+    claim:
+      task_id: P4
+      status: active
+      owner:
+        type: subagent
+        id: codex-root
+      fencing_token:
+        generation: 1
+        nonce: issue-97-p4-root-1
+      expected_state_revision: 22
+      source_revision:
+        branch: codex/v2c-gitnexus-adapter
+        head_sha: a75728b15f5d15ba7bf1a7e6e3a2dd934915592e
+        spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+        task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+      claimed_at: '2026-07-17T02:11:00Z'
+      lease_expires_at: '2026-07-18T02:11:00Z'
+  event_hash: 84b61cd18c52137f24d32daad3608685088b22d1b508ec478cc79a9ef3b625a4
+- sequence: 24
+  event_id: issue-97-p4-in-progress
+  occurred_at: '2026-07-17T02:12:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P4
+  idempotency_key: issue-97-p4-in-progress-v1
+  expected_state_revision: 23
+  previous_event_hash: 84b61cd18c52137f24d32daad3608685088b22d1b508ec478cc79a9ef3b625a4
+  payload:
+    target_status: in_progress
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p4-root-1
+    evidence: {}
+  event_hash: ceb3f0f283cdc9f94dff3bb24a53bbe4efe7f7e128694c8d84b0e8a542d8ce16
+- sequence: 25
+  event_id: issue-97-p4-reviewing
+  occurred_at: '2026-07-17T02:13:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P4
+  idempotency_key: issue-97-p4-reviewing-v1
+  expected_state_revision: 24
+  previous_event_hash: ceb3f0f283cdc9f94dff3bb24a53bbe4efe7f7e128694c8d84b0e8a542d8ce16
+  payload:
+    target_status: reviewing
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p4-root-1
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/verification-report.md
+        - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+      review:
+        status: required
+        mode: formal-gate
+        artifacts:
+        - docs/loops/issue-97/receipts/p4-merge-readiness-final.md
+      acceptance:
+        status: not_required
+        artifact: ''
+  event_hash: 34b8749daffb3c23d832aa3bd937a5ced618d6feb8a2aeaaf5e49f957741d8cb
+- sequence: 26
+  event_id: issue-97-p4-done
+  occurred_at: '2026-07-17T02:14:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P4
+  idempotency_key: issue-97-p4-done-v1
+  expected_state_revision: 25
+  previous_event_hash: 34b8749daffb3c23d832aa3bd937a5ced618d6feb8a2aeaaf5e49f957741d8cb
+  payload:
+    target_status: done
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p4-root-1
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/verification-report.md
+        - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+      review:
+        status: passed
+        mode: formal-gate
+        artifacts:
+        - docs/loops/issue-97/receipts/p4-merge-readiness-final.md
+        - docs/loops/issue-97/receipts/p4-code-review-round7-post-security-fix-final.md
+        - docs/loops/issue-97/receipts/p4-docs-review-round2-final.md
+        - docs/loops/issue-97/receipts/p4-security-diff-scan-final.md
+      acceptance:
+        status: not_required
+        artifact: ''
+      human_gate:
+        status: satisfied
+        artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+    authorization:
+      action: task_completion
+      principal:
+        type: platform
+        id: codex-desktop-merge-readiness-gate
+      objective_id: issue-97
+      artifact: docs/loops/issue-97/receipts/p4-merge-readiness-final.md
+      source_revision_sha256: 7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8
+      protected_payload_sha256: 053705f094d35fc67c835b1c4e1a479d26f8a1441054d19ec432024b687ca739
+      task_id: P4
+  event_hash: 0f07e0617638c8f5d801f5fb580151fd1be03e7a22b01212145f63344f04f34b
+- sequence: 27
+  event_id: issue-97-p5-publication-authorized
+  occurred_at: '2026-07-17T02:15:00Z'
+  actor: delegating-user
+  type: gate_updated
+  task_id: ''
+  idempotency_key: issue-97-p5-publication-authorized-v1
+  expected_state_revision: 26
+  previous_event_hash: 0f07e0617638c8f5d801f5fb580151fd1be03e7a22b01212145f63344f04f34b
+  payload:
+    gate: publication-authorized-in-issue-97
+    status: satisfied
+    evidence:
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+      scope: commit-push-ready-pr-only-after-evidence-gates
+    authorization:
+      action: gate_satisfaction
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-97
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+      source_revision_sha256: 7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8
+      protected_payload_sha256: 5ffd1cb6d5f5811364ef54986dfd9c6e721865ff338a54a015be63c5242fa74d
+      gate: publication-authorized-in-issue-97
+  event_hash: 4d8928f8ae603d37d99fe04b6a9b14b0eb42fab9cc2703f2bf2b7098bbe34527
+- sequence: 28
+  event_id: issue-97-p5-ready
+  occurred_at: '2026-07-17T02:16:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P5
+  idempotency_key: issue-97-p5-ready-v1
+  expected_state_revision: 27
+  previous_event_hash: 4d8928f8ae603d37d99fe04b6a9b14b0eb42fab9cc2703f2bf2b7098bbe34527
+  payload:
+    target_status: ready
+    evidence: {}
+  event_hash: cba242ddc269d93e45b664670315793d4acfd09d97c9d4748d5b0db986cc113d
+- sequence: 29
+  event_id: issue-97-p5-claim
+  occurred_at: '2026-07-17T02:17:00Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P5
+  idempotency_key: issue-97-p5-claim-v1
+  expected_state_revision: 28
+  previous_event_hash: cba242ddc269d93e45b664670315793d4acfd09d97c9d4748d5b0db986cc113d
+  payload:
+    claim:
+      task_id: P5
+      status: active
+      owner:
+        type: subagent
+        id: codex-root
+      fencing_token:
+        generation: 1
+        nonce: issue-97-p5-root-1
+      expected_state_revision: 28
+      source_revision:
+        branch: codex/v2c-gitnexus-adapter
+        head_sha: a75728b15f5d15ba7bf1a7e6e3a2dd934915592e
+        spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+        task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+      claimed_at: '2026-07-17T02:17:00Z'
+      lease_expires_at: '2026-07-18T02:17:00Z'
+  event_hash: 2615bf76ec8c426a391e4b96de1530b167283e2c0f989f2881a4fa3c0201cfbd
+- sequence: 30
+  event_id: issue-97-p5-in-progress
+  occurred_at: '2026-07-17T02:18:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P5
+  idempotency_key: issue-97-p5-in-progress-v1
+  expected_state_revision: 29
+  previous_event_hash: 2615bf76ec8c426a391e4b96de1530b167283e2c0f989f2881a4fa3c0201cfbd
+  payload:
+    target_status: in_progress
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p5-root-1
+    evidence: {}
+  event_hash: b81fec64e1755b8b279c893f851211c520ef4faad8d46617123d5a7e3c63cd03
+- sequence: 31
+  event_id: issue-97-source-rebound-67be3d9
+  occurred_at: '2026-07-18T05:58:10Z'
+  actor: codex-root
+  type: source_rebound
+  task_id: ''
+  idempotency_key: issue-97-source-rebound-67be3d9-v1
+  expected_state_revision: 30
+  previous_event_hash: b81fec64e1755b8b279c893f851211c520ef4faad8d46617123d5a7e3c63cd03
+  payload:
+    previous_source_revision:
+      branch: codex/v2c-gitnexus-adapter
+      head_sha: a75728b15f5d15ba7bf1a7e6e3a2dd934915592e
+      spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+      task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+    target_source_revision:
+      branch: codex/v2c-gitnexus-adapter
+      head_sha: 67be3d967e39eeab47394d0856963faff8aa4acb
+      spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+      task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+    active_claim_task_ids: []
+    expired_claim_dispositions:
+      P0:
+        status: released
+        fencing_token:
+          generation: 1
+          nonce: issue-97-p0-root-1
+      P1:
+        status: released
+        fencing_token:
+          generation: 1
+          nonce: issue-97-p1-root-1
+      P2:
+        status: released
+        fencing_token:
+          generation: 1
+          nonce: issue-97-p2-root-1
+      P3:
+        status: released
+        fencing_token:
+          generation: 1
+          nonce: issue-97-p3-root-1
+      P4:
+        status: released
+        fencing_token:
+          generation: 1
+          nonce: issue-97-p4-root-1
+      P5:
+        status: expired
+        fencing_token:
+          generation: 1
+          nonce: issue-97-p5-root-1
+        blocker:
+          reason: source-checkpoint-recovery-expired-claim
+          artifact: docs/loops/issue-97/receipts/p5-goal-runtime-degradation.md
+    evidence:
+      artifact: docs/loops/issue-97/receipts/p5-source-rebound-authorization.md
+    authorization:
+      action: source_rebound
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-97
+      artifact: docs/loops/issue-97/receipts/p5-source-rebound-authorization.md
+      source_revision_sha256: 7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8
+      target_head_sha: 67be3d967e39eeab47394d0856963faff8aa4acb
+      protected_payload_sha256: 547b3292d58e9965772568530b01da99b37c73905cc9c170bb456836064dcf46
+  event_hash: 02fa3cb8df356d5685b54903805d9fb5a1d735d0af59ccdf4ea04cb314dda2b3
+- sequence: 32
+  event_id: issue-97-p5-recovery-ready
+  occurred_at: '2026-07-18T06:00:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P5
+  idempotency_key: issue-97-p5-recovery-ready-v1
+  expected_state_revision: 31
+  previous_event_hash: 02fa3cb8df356d5685b54903805d9fb5a1d735d0af59ccdf4ea04cb314dda2b3
+  payload:
+    target_status: ready
+    evidence:
+      blocker_resolved: true
+      recovery_artifact: docs/loops/issue-97/events/0031-source-rebound.yaml
+  event_hash: 9780b3e2932c5e67e4c9c3f78d381778f0ff85efc9e807082c36e3a1ae8f8707
+- sequence: 33
+  event_id: issue-97-p5-recovery-claim
+  occurred_at: '2026-07-18T06:01:00Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P5
+  idempotency_key: issue-97-p5-recovery-claim-v1
+  expected_state_revision: 32
+  previous_event_hash: 9780b3e2932c5e67e4c9c3f78d381778f0ff85efc9e807082c36e3a1ae8f8707
+  payload:
+    claim:
+      task_id: P5
+      status: active
+      owner:
+        type: subagent
+        id: codex-root
+      fencing_token:
+        generation: 2
+        nonce: issue-97-p5-root-2
+      expected_state_revision: 32
+      source_revision:
+        branch: codex/v2c-gitnexus-adapter
+        head_sha: 67be3d967e39eeab47394d0856963faff8aa4acb
+        spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+        task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+      claimed_at: '2026-07-18T06:01:00Z'
+      lease_expires_at: '2026-07-20T06:01:00Z'
+  event_hash: 8c627f6fada8de35221c0d32c3bd1e9e1112f74c715c78e8d9011c3091be63b6
+- sequence: 34
+  event_id: issue-97-p5-recovery-in-progress
+  occurred_at: '2026-07-18T06:02:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P5
+  idempotency_key: issue-97-p5-recovery-in-progress-v1
+  expected_state_revision: 33
+  previous_event_hash: 8c627f6fada8de35221c0d32c3bd1e9e1112f74c715c78e8d9011c3091be63b6
+  payload:
+    target_status: in_progress
+    fencing_token:
+      generation: 2
+      nonce: issue-97-p5-root-2
+    evidence:
+      recovery_artifact: docs/loops/issue-97/events/0031-source-rebound.yaml
+  event_hash: 20e5b241d307640e5027130ced9f837da7bbeaa38521bd25b98464504f921932
+- sequence: 35
+  event_id: issue-97-final-source-rebound-21e4e0a
+  occurred_at: '2026-07-19T11:39:35Z'
+  actor: codex-root
+  type: source_rebound
+  task_id: ''
+  idempotency_key: issue-97-final-source-rebound-21e4e0a-v1
+  expected_state_revision: 34
+  previous_event_hash: 20e5b241d307640e5027130ced9f837da7bbeaa38521bd25b98464504f921932
+  payload:
+    previous_source_revision:
+      branch: codex/v2c-gitnexus-adapter
+      head_sha: 67be3d967e39eeab47394d0856963faff8aa4acb
+      spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+      task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+    target_source_revision:
+      branch: codex/v2c-gitnexus-adapter
+      head_sha: 21e4e0a67f98832de5115efea5d974fee9c683c6
+      spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+      task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+    active_claim_task_ids:
+    - P5
+    expired_claim_dispositions: {}
+    evidence:
+      artifact: docs/loops/issue-97/receipts/p5-final-source-rebound-authorization.md
+    authorization:
+      action: source_rebound
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-97
+      artifact: docs/loops/issue-97/receipts/p5-final-source-rebound-authorization.md
+      source_revision_sha256: 1fb39fbaa5fc00a35d82f4349e7a93af39cd464b1d3027ddc5cec8cda94c298b
+      target_head_sha: 21e4e0a67f98832de5115efea5d974fee9c683c6
+      protected_payload_sha256: cfca011d969b7965daf8e90cff18444311d055e07b0db4a9fee5c71cd57d319d
+  event_hash: f272a54e7836a77db8723e52aea6f5ccde29953003fd86378dbc1b6615c029cb
+- sequence: 36
+  event_id: issue-97-p5-reviewing
+  occurred_at: '2026-07-19T11:43:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P5
+  idempotency_key: issue-97-p5-reviewing-v1
+  expected_state_revision: 35
+  previous_event_hash: f272a54e7836a77db8723e52aea6f5ccde29953003fd86378dbc1b6615c029cb
+  payload:
+    target_status: reviewing
+    fencing_token:
+      generation: 2
+      nonce: issue-97-p5-root-2
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/p5-publication-readback.md
+      review:
+        status: required
+        mode: formal-gate
+        artifacts: []
+  event_hash: bf5090c1c04b507f7dd52f9b01fc6e00966407f2429bb3e1e1e8d6fa16a019c3
+- sequence: 37
+  event_id: issue-97-publication-source-rebound-5684dbe
+  occurred_at: '2026-07-19T12:26:00Z'
+  actor: codex-root
+  type: source_rebound
+  task_id: ''
+  idempotency_key: issue-97-publication-source-rebound-5684dbe-v1
+  expected_state_revision: 36
+  previous_event_hash: bf5090c1c04b507f7dd52f9b01fc6e00966407f2429bb3e1e1e8d6fa16a019c3
+  payload:
+    previous_source_revision:
+      branch: codex/v2c-gitnexus-adapter
+      head_sha: 21e4e0a67f98832de5115efea5d974fee9c683c6
+      spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+      task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+    target_source_revision:
+      branch: codex/v2c-gitnexus-adapter
+      spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+      task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+      head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+    active_claim_task_ids:
+    - P5
+    expired_claim_dispositions: {}
+    evidence:
+      artifact: docs/loops/issue-97/receipts/p5-publication-source-rebound-authorization.md
+    authorization:
+      action: source_rebound
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-97
+      artifact: docs/loops/issue-97/receipts/p5-publication-source-rebound-authorization.md
+      source_revision_sha256: 0fdd54e5df5b236ca4378fe80d64124fa730a9433d4e3990726aa24550ea7c6b
+      target_head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+      protected_payload_sha256: 01df00a33f4b25734453ddaa23f2d61c9d581fc9866839349e65330cdc3d24a3
+  event_hash: 5a50fd15049c197c13db0120dc4f76923cb8fd53925f59e2a2edeceb365f21ac
+- sequence: 38
+  event_id: issue-97-p5-done
+  occurred_at: '2026-07-19T12:28:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P5
+  idempotency_key: issue-97-p5-done-v1
+  expected_state_revision: 37
+  previous_event_hash: 5a50fd15049c197c13db0120dc4f76923cb8fd53925f59e2a2edeceb365f21ac
+  payload:
+    target_status: done
+    fencing_token:
+      generation: 2
+      nonce: issue-97-p5-root-2
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/p5-publication-readback.md
+        - docs/loops/issue-97/receipts/p5-final-closure-fix-verification.md
+        - docs/loops/issue-97/receipts/verification-report.md
+      review:
+        status: passed
+        mode: formal-gate
+        artifacts:
+        - docs/loops/issue-97/receipts/p5-final-closure-merge-readiness.md
+        - docs/loops/issue-97/receipts/p5-final-closure-code-review.md
+        - docs/loops/issue-97/receipts/p5-final-closure-docs-review.md
+        - docs/loops/issue-97/receipts/p5-final-closure-security-diff-scan.md
+        - docs/loops/issue-97/receipts/p5-final-closure-evidence-docs-review.md
+      acceptance:
+        status: not_required
+        artifact: ''
+      human_gate:
+        status: satisfied
+        artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+    authorization:
+      action: task_completion
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-97
+      artifact: docs/loops/issue-97/receipts/p5-final-closure-merge-readiness.md
+      source_revision_sha256: f149eb7b0c60ff6fd40ed0772fffcc16a1d3f6b37783569756c2c623c96cf8ed
+      task_id: P5
+      protected_payload_sha256: 4c8c01c92e6f70b026fa4befef07bd43a88cf93f4370d7ad7f791f93d83993db
+  event_hash: b4d94fc7c17312146f6c574cf81d5554dec8ad3df903913b58babc1bdfb234a5
+- sequence: 39
+  event_id: issue-97-p5-claim-released
+  occurred_at: '2026-07-19T12:29:00Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P5
+  idempotency_key: issue-97-p5-claim-released-v1
+  expected_state_revision: 38
+  previous_event_hash: b4d94fc7c17312146f6c574cf81d5554dec8ad3df903913b58babc1bdfb234a5
+  payload:
+    fencing_token:
+      generation: 2
+      nonce: issue-97-p5-root-2
+  event_hash: 4e8efec7f889887df38cbefbe6257b4ca2cc516ff952d87eae52112f117988ef
+- sequence: 40
+  event_id: issue-97-objective-completed
+  occurred_at: '2026-07-19T12:30:00Z'
+  actor: delegating-user
+  type: objective_completed
+  task_id: ''
+  idempotency_key: issue-97-objective-completed-v1
+  expected_state_revision: 39
+  previous_event_hash: 4e8efec7f889887df38cbefbe6257b4ca2cc516ff952d87eae52112f117988ef
+  payload:
+    verification: passed
+    review: passed
+    human_gate: satisfied
+    evidence:
+      artifact: docs/loops/issue-97/receipts/p5-publication-readback.md
+    authorization:
+      action: objective_completion
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-97
+      artifact: docs/loops/issue-97/receipts/p5-publication-readback.md
+      source_revision_sha256: f149eb7b0c60ff6fd40ed0772fffcc16a1d3f6b37783569756c2c623c96cf8ed
+      protected_payload_sha256: 7db1e46b792386ce46c829a36e048eac1c9a1dc746f8c95269f591d857531487
+  event_hash: ef095d48508a9658f2a863707e015d0cbe6b12812e9f3238ef5452074cc06d25
+human_gates:
+- gate: publication-readiness
+  status: satisfied
+  evidence:
+    artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+    scope: commit-push-ready-pr-only-after-evidence-gates
+  authorization:
+    action: gate_satisfaction
+    principal:
+      type: user
+      id: delegating-user
+    objective_id: issue-97
+    artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+    source_revision_sha256: 7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8
+    protected_payload_sha256: f6aeeeafab873e3deefed2fbde100145bcf3a952dd050ab8937c8c2c4abe8aac
+    gate: publication-readiness
+- gate: publication-authorized-in-issue-97
+  status: satisfied
+  evidence:
+    artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+    scope: commit-push-ready-pr-only-after-evidence-gates
+  authorization:
+    action: gate_satisfaction
+    principal:
+      type: user
+      id: delegating-user
+    objective_id: issue-97
+    artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+    source_revision_sha256: 7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8
+    protected_payload_sha256: 5ffd1cb6d5f5811364ef54986dfd9c6e721865ff338a54a015be63c5242fa74d
+    gate: publication-authorized-in-issue-97
+external_memory:
+  contract_version: loop-memory/v1
+  mode: disabled
+  backend_status: disabled
+  adapter: null
+  receipt_digests: []
+  authority: advisory-only
+  used_as_authorization: false
+  used_as_completion_evidence: false
+  notes: GitNexus 1.6.9 runtime and schema 5 are qualified for the local driver, but
+    external memory remains disabled and no query/write receipt is adopted.

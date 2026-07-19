@@ -6,7 +6,7 @@ sequence: 1
 event_id: "<unique-event-id>"
 occurred_at: "<iso-8601>"
 actor: "<actor-id>"
-type: "<migration_snapshot | task_transition | claim_acquired | claim_released | claim_expired | claim_revoked | gate_updated | objective_completed>"
+type: "<migration_snapshot | source_rebound | task_transition | claim_acquired | claim_released | claim_expired | claim_revoked | gate_updated | objective_completed>"
 task_id: "<task-id-or-empty>"
 idempotency_key: "<stable-request-key>"
 expected_state_revision: 0
@@ -34,9 +34,17 @@ event_hash: "<canonical-event-sha256>"
 #     source_revision_sha256: "<immutable-source-identity-sha256>"
 #     protected_payload_sha256: "<canonical-payload-excluding-authorization-sha256>"
 #     task_id: "<same-task-id>"
+# A live transition under an active claim requires occurred_at <= trusted
+# current time < lease_expires_at. Replay retains the durable occurred_at lease
+# check, so every live-accepted transition remains replayable.
 #
 # claim_acquired payload:
 #   claim: <copy the complete active claim record>
+# A live --write acquisition requires claimed_at <= occurred_at <= trusted
+# current time < lease_expires_at. loopctl supplies trusted current time from its
+# CLI clock; direct library callers inject trusted_time. Replay uses the durable
+# event-time lease semantics, and the live freshness check ensures an accepted
+# claim is still active when written.
 #
 # claim_released / claim_expired / claim_revoked payload:
 #   fencing_token: {generation: 1, nonce: "<current-nonce>"}
@@ -49,6 +57,9 @@ event_hash: "<canonical-event-sha256>"
 #     source_revision_sha256: "<immutable-source-identity-sha256>"
 #     protected_payload_sha256: "<canonical-payload-excluding-authorization-sha256>"
 #     task_id: "<same-task-id>"
+# A live --write expiry requires lease_expires_at <= occurred_at <= the
+# CLI-supplied (or library-injected) trusted current time. Replay determines the
+# same durable expiry from occurred_at.
 #
 # gate_updated status satisfied/not_required and objective_completed also
 # require a bound authorization with action gate_satisfaction or
@@ -65,3 +76,45 @@ event_hash: "<canonical-event-sha256>"
 # sequence 1 and embeds the complete validated V1 source plus its canonical hash.
 # Its hash is bound by immutable source_revision.migration_source_sha256, not by
 # the rolling previous_ledger_sha256 field.
+#
+# source_rebound is the only supported bridge after an active ledger is
+# checkpointed in an intermediate commit. apply-event accepts it only when the
+# baseline is a verified same-branch ancestor and the ledger path, HEAD blob,
+# index entry, working bytes, mode, and last-modifying commit all bind to the
+# current typed HEAD. The spec and task manifest must also be tracked regular
+# blobs whose target-HEAD tree, stage-zero index, working bytes, and modes agree.
+# All four artifact reads are nonblocking, descriptor-bound, and size-bounded.
+# It atomically binds the source plus every unexpired active
+# claim, and requires an explicit disposition for every expired claim:
+#   previous_source_revision: {branch: "...", head_sha: "...", spec_sha256: "...", task_manifest_sha256: "..."}
+#   target_source_revision: {branch: "...", head_sha: "...", spec_sha256: "...", task_manifest_sha256: "..."}
+#   active_claim_task_ids: ["<every-unexpired-active-claim>"]
+#   expired_claim_dispositions:
+#     <task-id>:
+#       status: "<released | expired>"
+#       fencing_token: {generation: 1, nonce: "<current-nonce>"}
+#       blocker: {reason: "<required-for-nonterminal-expiry>", artifact: "<evidence>"}
+#   evidence:
+#     artifact: "<concrete-checkpoint-recovery-evidence>"
+#   authorization:  # required protected action; target head is the scope
+#     action: "source_rebound"
+#     principal: {type: "user | platform", id: "<authorizer-id>"}
+#     objective_id: "<same-as-ledger-objective-id>"
+#     artifact: "<same-as-evidence-artifact>"
+#     source_revision_sha256: "<immutable-source-identity-sha256>"
+#     target_head_sha: "<same-as-target_source_revision.head_sha>"
+#     protected_payload_sha256: "<canonical-payload-excluding-authorization-sha256>"
+# The live --write command additionally requires --authorize-action
+# source_rebound and --authorization-receipt-sha256 from current-session input.
+# loopctl supplies trusted current time from its CLI clock; direct library callers
+# inject trusted_time at their live write boundary. Both live application and
+# replay use occurred_at for the durable disposition set, while live application
+# additionally requires every active claim to have the same expiry classification
+# at trusted current time. A deadline in (occurred_at, trusted_time] is stale and
+# the live rebound is rejected.
+# For every non-replay live write, loopctl repeats live acceptance with a newly
+# sampled trusted current time after compare-and-swap validation and immediately
+# before ledger replacement. Lease expiry or classification drift fails closed
+# without replacing ledger bytes; trusted time is never stored in the event.
+# Replaying the byte-identical already-recorded event is a no-op after current
+# protected-history re-attestation and does not repeat live authorization.

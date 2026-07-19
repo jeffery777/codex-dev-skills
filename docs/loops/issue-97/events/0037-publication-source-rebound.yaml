@@ -1,0 +1,36 @@
+sequence: 37
+event_id: issue-97-publication-source-rebound-5684dbe
+occurred_at: '2026-07-19T12:26:00Z'
+actor: codex-root
+type: source_rebound
+task_id: ''
+idempotency_key: issue-97-publication-source-rebound-5684dbe-v1
+expected_state_revision: 36
+previous_event_hash: bf5090c1c04b507f7dd52f9b01fc6e00966407f2429bb3e1e1e8d6fa16a019c3
+payload:
+  previous_source_revision:
+    branch: codex/v2c-gitnexus-adapter
+    head_sha: 21e4e0a67f98832de5115efea5d974fee9c683c6
+    spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+    task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+  target_source_revision:
+    branch: codex/v2c-gitnexus-adapter
+    spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+    task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+  active_claim_task_ids:
+  - P5
+  expired_claim_dispositions: {}
+  evidence:
+    artifact: docs/loops/issue-97/receipts/p5-publication-source-rebound-authorization.md
+  authorization:
+    action: source_rebound
+    principal:
+      type: user
+      id: delegating-user
+    objective_id: issue-97
+    artifact: docs/loops/issue-97/receipts/p5-publication-source-rebound-authorization.md
+    source_revision_sha256: 0fdd54e5df5b236ca4378fe80d64124fa730a9433d4e3990726aa24550ea7c6b
+    target_head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+    protected_payload_sha256: 01df00a33f4b25734453ddaa23f2d61c9d581fc9866839349e65330cdc3d24a3
+event_hash: 5a50fd15049c197c13db0120dc4f76923cb8fd53925f59e2a2edeceb365f21ac

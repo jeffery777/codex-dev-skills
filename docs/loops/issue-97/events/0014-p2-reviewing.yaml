@@ -1,0 +1,29 @@
+sequence: 14
+event_id: issue-97-p2-reviewing
+occurred_at: '2026-07-16T09:12:00Z'
+actor: codex-root
+type: task_transition
+task_id: P2
+idempotency_key: issue-97-p2-reviewing-v1
+expected_state_revision: 13
+previous_event_hash: 2753643994ce78076c6c1ff3fd60a685bd414ea861653e13e6eb7261ababffee
+payload:
+  target_status: reviewing
+  fencing_token:
+    generation: 1
+    nonce: issue-97-p2-root-1
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-97/receipts/p2-adapter-implementation-main-verification.md
+      - docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md
+    review:
+      status: required
+      mode: code-review-deep
+      artifacts:
+      - docs/loops/issue-97/receipts/p4-code-review-route.json
+    acceptance:
+      status: not_required
+      artifact: ''
+event_hash: e3423da7d5a1ca3a945836d4a64cedea5760bc92a796b363b8424376d77d852c

@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import argparse
 import copy
+import datetime as dt
 import hashlib
 import json
 import os
 import pathlib
+import stat
 import subprocess
 import sys
 import tempfile
@@ -19,6 +21,7 @@ sys.path.insert(0, str(HERE))
 
 import loop_core  # noqa: E402
 import loop_yaml  # noqa: E402
+import git_source  # noqa: E402
 import profile_preflight  # noqa: E402
 import agent_routing  # noqa: E402
 
@@ -29,6 +32,11 @@ CANONICAL_PROFILE_REGISTRY = (
 
 def render(value: object) -> None:
     print(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True, default=str))
+
+
+def _trusted_current_time() -> dt.datetime:
+    """Return caller-owned current time for live write-boundary checks."""
+    return dt.datetime.now(dt.timezone.utc)
 
 
 def _manifest_path(
@@ -88,38 +96,174 @@ def _verify_git_source(
 ) -> pathlib.Path:
     start = explicit_repo_root or ledger_path.parent
     try:
-        root = subprocess.run(
-            ["git", "-C", str(start), "rev-parse", "--show-toplevel"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        head = subprocess.run(
-            ["git", "-C", root, "rev-parse", "HEAD"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        branch = subprocess.run(
-            ["git", "-C", root, "branch", "--show-current"],
-            check=True,
-            capture_output=True,
-            text=True,
+        resolved_root = (
+            git_source.verified_git_root(explicit_repo_root)
+            if explicit_repo_root is not None
+            else git_source.discover_git_root(start)
+        )
+        if explicit_repo_root is not None and resolved_root != explicit_repo_root.resolve():
+            raise loop_yaml.LedgerValidationError(
+                "repo root must be the exact target Git repository root"
+            )
+        git_environment = git_source.sanitized_git_environment()
+        git_environment["GIT_WORK_TREE"] = str(resolved_root)
+        head = git_source.verified_git_head(resolved_root)
+        branch = git_source.run_git(
+            resolved_root,
+            ["branch", "--show-current"],
+            environment=git_environment,
         ).stdout.strip()
     except (OSError, subprocess.CalledProcessError) as exc:
         raise loop_yaml.LedgerValidationError(
             "could not verify git source revision; pass --repo-root for the target repository"
         ) from exc
     source = document["ledger"]["source_revision"]
-    if source.get("head_sha") != head:
-        raise loop_yaml.LedgerValidationError(
-            f"git HEAD mismatch: expected {source.get('head_sha')!r}, got {head}"
-        )
     if source.get("branch") != branch:
         raise loop_yaml.LedgerValidationError(
             f"git branch mismatch: expected {source.get('branch')!r}, got {branch!r}"
         )
-    return pathlib.Path(root).resolve()
+    if git_source.source_head_relation(resolved_root, document, head) not in {
+        "exact",
+        "ancestor",
+    }:
+        raise loop_yaml.LedgerValidationError(
+            f"git HEAD mismatch: expected {source.get('head_sha')!r}, got {head}"
+        )
+    return resolved_root
+
+
+def _verified_rebind_source(
+    ledger_path: pathlib.Path,
+    document: dict[str, Any],
+    explicit_repo_root: pathlib.Path | None,
+    *,
+    expected_ledger_bytes: bytes | None = None,
+    expected_ledger_binding: tuple[Any, ...] | None = None,
+) -> tuple[pathlib.Path, dict[str, str]]:
+    """Verify the one safe bridge from a committed active ledger to current HEAD."""
+
+    start = explicit_repo_root or ledger_path.parent
+    try:
+        root = (
+            git_source.verified_git_root(explicit_repo_root)
+            if explicit_repo_root is not None
+            else git_source.discover_git_root(start)
+        )
+        if explicit_repo_root is not None and root != explicit_repo_root.resolve():
+            raise loop_yaml.LedgerValidationError(
+                "repo root must be the exact target Git repository root"
+            )
+        lexical = pathlib.Path(os.path.abspath(ledger_path))
+        resolved = lexical.resolve(strict=True)
+        relative = resolved.relative_to(root).as_posix()
+        if lexical != resolved or not resolved.is_file() or resolved.is_symlink():
+            raise loop_yaml.LedgerValidationError(
+                "source rebound requires a canonical regular ledger path"
+            )
+        current = root
+        for part in pathlib.PurePosixPath(relative).parts[:-1]:
+            current /= part
+            if current.is_symlink():
+                raise loop_yaml.LedgerValidationError(
+                    "source rebound ledger path contains a symlink"
+                )
+        environment = git_source.sanitized_git_environment()
+        environment["GIT_WORK_TREE"] = str(root)
+        head = git_source.verified_git_head(root)
+        branch = git_source.run_git(
+            root, ["branch", "--show-current"], environment=environment
+        ).stdout.strip()
+        source = document["ledger"]["source_revision"]
+        relation = git_source.source_head_relation(
+            root,
+            document,
+            head,
+            allow_active_ancestor=True,
+        )
+        if source.get("branch") != branch or relation != "ancestor":
+            raise loop_yaml.LedgerValidationError(
+                "source rebound requires a same-branch verified ancestor baseline"
+            )
+        literal_path = f":(literal){relative}"
+        index = git_source.run_git(
+            root,
+            ["ls-files", "--stage", "-z", "--", literal_path],
+            environment=environment,
+            output_limit_bytes=4 * 1024 * 1024,
+        ).stdout
+        tree = git_source.run_git(
+            root,
+            ["ls-tree", "-z", "HEAD", "--", literal_path],
+            environment=environment,
+            output_limit_bytes=4 * 1024 * 1024,
+        ).stdout
+        index_records = [item for item in index.split("\0") if item]
+        tree_records = [item for item in tree.split("\0") if item]
+        if len(index_records) != 1 or len(tree_records) != 1:
+            raise loop_yaml.LedgerValidationError(
+                "source rebound requires one tracked ledger blob"
+            )
+        index_meta, index_path = index_records[0].split("\t", 1)
+        tree_meta, tree_path = tree_records[0].split("\t", 1)
+        index_mode, index_oid, index_stage = index_meta.split(" ")
+        tree_mode, tree_kind, tree_oid = tree_meta.split(" ")
+        if (
+            index_path != relative
+            or tree_path != relative
+            or index_stage != "0"
+            or tree_kind != "blob"
+            or tree_mode not in {"100644", "100755"}
+            or (index_mode, index_oid) != (tree_mode, tree_oid)
+        ):
+            raise loop_yaml.LedgerValidationError(
+                "source rebound ledger index and HEAD blob must be identical"
+            )
+        last_commit = git_source.run_git(
+            root,
+            ["log", "-1", "--format=%H", "--", literal_path],
+            environment=environment,
+        ).stdout.strip()
+        if last_commit != head:
+            raise loop_yaml.LedgerValidationError(
+                "source rebound requires the ledger to be checkpointed at current HEAD"
+            )
+        head_bytes = git_source.run_git(
+            root,
+            ["cat-file", "blob", tree_oid],
+            environment=environment,
+            output_limit_bytes=4 * 1024 * 1024,
+        ).stdout.encode("utf-8", "surrogateescape")
+        expected_bytes = expected_ledger_bytes
+        if expected_bytes is None:
+            expected_bytes, expected_ledger_binding = _bound_contract_bytes(
+                resolved, root, None, "source rebound ledger"
+            )
+        working_bytes, ledger_binding = _bound_contract_bytes(
+            resolved,
+            root,
+            hashlib.sha256(expected_bytes).hexdigest(),
+            "source rebound ledger",
+        )
+        if (
+            expected_ledger_binding is not None
+            and ledger_binding[1:] != expected_ledger_binding[1:]
+        ):
+            raise loop_yaml.LedgerValidationError(
+                "source rebound ledger path binding changed"
+            )
+        expected_mode = 0o755 if tree_mode == "100755" else 0o644
+        working_mode = stat.S_IMODE(ledger_binding[3])
+        if working_bytes != head_bytes or working_mode != expected_mode:
+            raise loop_yaml.LedgerValidationError(
+                "source rebound requires working ledger bytes and mode to match HEAD"
+            )
+    except (OSError, ValueError, subprocess.CalledProcessError) as exc:
+        if isinstance(exc, loop_yaml.LedgerValidationError):
+            raise
+        raise loop_yaml.LedgerValidationError(
+            "could not verify source rebound boundary"
+        ) from exc
+    return root, {"branch": branch, "head_sha": head}
 
 
 def _repo_contract_path(
@@ -135,25 +279,260 @@ def _repo_contract_path(
     return resolved
 
 
-def _git_revision(start: pathlib.Path) -> dict[str, str]:
+def _bound_contract_bytes(
+    path: pathlib.Path,
+    repo_root: pathlib.Path,
+    expected_sha256: Any | None,
+    label: str,
+) -> tuple[bytes, tuple[Any, ...]]:
+    """Read one repo-confined contract through an anchored descriptor chain."""
+    if not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_NONBLOCK"):
+        raise loop_yaml.LedgerValidationError(
+            f"{label} requires no-follow nonblocking file support"
+        )
+    lexical_root = pathlib.Path(os.path.abspath(repo_root.expanduser()))
+    root = lexical_root.resolve(strict=True)
+    lexical = pathlib.Path(os.path.abspath(path.expanduser()))
     try:
-        root = subprocess.run(
-            ["git", "-C", str(start), "rev-parse", "--show-toplevel"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        head = subprocess.run(
-            ["git", "-C", root, "rev-parse", "HEAD"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        branch = subprocess.run(
-            ["git", "-C", root, "branch", "--show-current"],
-            check=True,
-            capture_output=True,
-            text=True,
+        relative = lexical.relative_to(lexical_root)
+    except ValueError as exc:
+        raise loop_yaml.LedgerValidationError(
+            f"{label} must be inside the target repository"
+        ) from exc
+    if not relative.parts:
+        raise loop_yaml.LedgerValidationError(f"{label} must be a regular file")
+    flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | getattr(os, "O_CLOEXEC", 0)
+    directory_flags = flags | getattr(os, "O_DIRECTORY", 0)
+    descriptor: int | None = None
+    try:
+        descriptor = os.open(root, directory_flags)
+        for part in relative.parts[:-1]:
+            child = os.open(part, directory_flags, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+        artifact = os.open(relative.parts[-1], flags, dir_fd=descriptor)
+        os.close(descriptor)
+        descriptor = artifact
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+            raise loop_yaml.LedgerValidationError(
+                f"{label} must be a single-link regular file"
+            )
+        if before.st_size > 4 * 1024 * 1024:
+            raise loop_yaml.LedgerValidationError(f"{label} exceeds its size bound")
+        chunks: list[bytes] = []
+        total = 0
+        while True:
+            chunk = os.read(descriptor, min(1024 * 1024, 4 * 1024 * 1024 + 1 - total))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            total += len(chunk)
+            if total > 4 * 1024 * 1024:
+                raise loop_yaml.LedgerValidationError(f"{label} exceeds its size bound")
+        after = os.fstat(descriptor)
+        live = os.stat(lexical, follow_symlinks=False)
+    except loop_yaml.LedgerValidationError:
+        raise
+    except OSError as exc:
+        raise loop_yaml.LedgerValidationError(
+            f"{label} cannot be opened through the repository boundary"
+        ) from exc
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+    identity = (
+        after.st_dev,
+        after.st_ino,
+        after.st_mode,
+        after.st_nlink,
+        after.st_size,
+        after.st_mtime_ns,
+        after.st_ctime_ns,
+    )
+    if identity != (
+        before.st_dev,
+        before.st_ino,
+        before.st_mode,
+        before.st_nlink,
+        before.st_size,
+        before.st_mtime_ns,
+        before.st_ctime_ns,
+    ):
+        raise loop_yaml.LedgerValidationError(f"{label} changed while it was read")
+    if (
+        live.st_dev,
+        live.st_ino,
+        live.st_mode,
+        live.st_nlink,
+        live.st_size,
+        live.st_mtime_ns,
+        live.st_ctime_ns,
+    ) != identity:
+        raise loop_yaml.LedgerValidationError(f"{label} path binding changed while it was read")
+    content = b"".join(chunks)
+    actual_sha256 = hashlib.sha256(content).hexdigest()
+    if expected_sha256 is not None and expected_sha256 != actual_sha256:
+        raise loop_yaml.LedgerValidationError(
+            f"{label} digest mismatch: expected {expected_sha256!r}, got {actual_sha256}"
+        )
+    return content, (relative.as_posix(), *identity, actual_sha256)
+
+
+def _verified_head_contract_bytes(
+    path: pathlib.Path,
+    repo_root: pathlib.Path,
+    expected_sha256: Any,
+    label: str,
+    *,
+    target_head: str,
+) -> tuple[bytes, tuple[Any, ...]]:
+    """Bind a contract to its working file, index stage 0, and target tree blob."""
+
+    content, binding = _bound_contract_bytes(
+        path, repo_root, expected_sha256, label
+    )
+    relative = binding[0]
+    literal_path = f":(literal){relative}"
+    environment = git_source.sanitized_git_environment()
+    environment["GIT_WORK_TREE"] = str(repo_root)
+    try:
+        index = git_source.run_git(
+            repo_root,
+            ["ls-files", "--stage", "-z", "--", literal_path],
+            environment=environment,
+            output_limit_bytes=4 * 1024 * 1024,
+        ).stdout
+        tree = git_source.run_git(
+            repo_root,
+            ["ls-tree", "-z", target_head, "--", literal_path],
+            environment=environment,
+            output_limit_bytes=4 * 1024 * 1024,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise loop_yaml.LedgerValidationError(
+            f"{label} target Git binding cannot be verified"
+        ) from exc
+    index_records = [item for item in index.split("\0") if item]
+    tree_records = [item for item in tree.split("\0") if item]
+    if len(index_records) != 1 or len(tree_records) != 1:
+        raise loop_yaml.LedgerValidationError(
+            f"{label} must be one tracked target-HEAD blob"
+        )
+    try:
+        index_meta, index_path = index_records[0].split("\t", 1)
+        tree_meta, tree_path = tree_records[0].split("\t", 1)
+        index_mode, index_oid, index_stage = index_meta.split(" ")
+        tree_mode, tree_kind, tree_oid = tree_meta.split(" ")
+    except ValueError as exc:
+        raise loop_yaml.LedgerValidationError(
+            f"{label} Git metadata is malformed"
+        ) from exc
+    if (
+        index_path != relative
+        or tree_path != relative
+        or index_stage != "0"
+        or tree_kind != "blob"
+        or tree_mode not in {"100644", "100755"}
+        or (index_mode, index_oid) != (tree_mode, tree_oid)
+    ):
+        raise loop_yaml.LedgerValidationError(
+            f"{label} index and target HEAD blob must be identical"
+        )
+    try:
+        head_bytes = git_source.run_git(
+            repo_root,
+            ["cat-file", "blob", tree_oid],
+            environment=environment,
+            output_limit_bytes=4 * 1024 * 1024,
+        ).stdout.encode("utf-8", "surrogateescape")
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise loop_yaml.LedgerValidationError(
+            f"{label} target Git binding cannot be verified"
+        ) from exc
+    expected_mode = 0o755 if tree_mode == "100755" else 0o644
+    working_mode = stat.S_IMODE(binding[3])
+    if content != head_bytes or working_mode != expected_mode:
+        raise loop_yaml.LedgerValidationError(
+            f"{label} working bytes and mode must match target HEAD"
+        )
+    return content, (*binding, target_head, tree_mode, tree_oid)
+
+
+def _load_bound_yaml(content: bytes, label: str) -> dict[str, Any]:
+    descriptor, name = tempfile.mkstemp(prefix=".loop-contract-", suffix=".yaml")
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(content)
+        return loop_yaml.load_yaml(pathlib.Path(name))
+    except UnicodeError as exc:
+        raise loop_yaml.LedgerValidationError(f"{label} must be UTF-8 YAML") from exc
+    finally:
+        try:
+            os.unlink(name)
+        except FileNotFoundError:
+            pass
+
+
+def _source_rebound_contract(
+    ledger_path: pathlib.Path,
+    document: dict[str, Any],
+    explicit_manifest: pathlib.Path | None,
+    repo_root: pathlib.Path,
+    *,
+    target_head: str,
+) -> tuple[dict[str, dict[str, Any]], tuple[tuple[Any, ...], tuple[Any, ...]]]:
+    source = document["ledger"]["source_revision"]
+    manifest_path = _manifest_path(
+        ledger_path, document, explicit_manifest, repo_root
+    )
+    if manifest_path is None:
+        raise loop_yaml.LedgerValidationError("source rebound requires a task manifest")
+    manifest_bytes, manifest_binding = _verified_head_contract_bytes(
+        manifest_path,
+        repo_root,
+        source.get("task_manifest_sha256"),
+        "task manifest",
+        target_head=target_head,
+    )
+    spec_reference = document["ledger"].get("loop_spec")
+    if not isinstance(spec_reference, str) or not spec_reference or spec_reference.startswith("<"):
+        raise loop_yaml.LedgerValidationError("source rebound requires a loop spec")
+    spec_path = _reference_path(ledger_path, spec_reference, repo_root)
+    _, spec_binding = _verified_head_contract_bytes(
+        spec_path,
+        repo_root,
+        source.get("spec_sha256"),
+        "loop spec",
+        target_head=target_head,
+    )
+    definitions = loop_yaml.manifest_definitions(
+        _load_bound_yaml(manifest_bytes, "task manifest"),
+        expected_objective_id=document["ledger"].get("objective_id"),
+    )
+    return definitions, (manifest_binding, spec_binding)
+
+
+def _git_revision(
+    start: pathlib.Path, *, require_exact_root: bool = False
+) -> dict[str, str]:
+    try:
+        resolved_root = (
+            git_source.verified_git_root(start)
+            if require_exact_root
+            else git_source.discover_git_root(start)
+        )
+        if require_exact_root and resolved_root != start.resolve():
+            raise loop_yaml.LedgerValidationError(
+                "repo root must be the exact target Git repository root"
+            )
+        git_environment = git_source.sanitized_git_environment()
+        git_environment["GIT_WORK_TREE"] = str(resolved_root)
+        head = git_source.verified_git_head(resolved_root)
+        branch = git_source.run_git(
+            resolved_root,
+            ["branch", "--show-current"],
+            environment=git_environment,
         ).stdout.strip()
     except (OSError, subprocess.CalledProcessError) as exc:
         raise loop_yaml.LedgerValidationError(
@@ -161,7 +540,7 @@ def _git_revision(start: pathlib.Path) -> dict[str, str]:
         ) from exc
     if not branch:
         raise loop_yaml.LedgerValidationError("bound migration requires a named git branch")
-    return {"root": root, "head_sha": head, "branch": branch}
+    return {"root": str(resolved_root), "head_sha": head, "branch": branch}
 
 
 def _definitions(
@@ -291,7 +670,9 @@ def command_migrate(
     if spec_path is not None and manifest_path is not None:
         if not spec_path.is_file() or not manifest_path.is_file():
             raise loop_yaml.LedgerValidationError("bound migration spec and manifest must exist")
-        git_source = _git_revision(repo_root or path.parent)
+        git_source = _git_revision(
+            repo_root or path.parent, require_exact_root=repo_root is not None
+        )
         root_path = pathlib.Path(git_source["root"]).resolve()
         resolved_spec = spec_path.resolve()
         resolved_manifest = manifest_path.resolve()
@@ -346,6 +727,7 @@ def command_decide(
     path: pathlib.Path,
     *,
     external_write_authorized: bool = False,
+    parent_security_scan_fallback_authorized: bool = False,
     parent_security_report_fallback_authorized: bool = False,
     protected_history_sha256: str | None = None,
 ) -> int:
@@ -366,6 +748,9 @@ def command_decide(
             case,
             trusted_authority={
                 "external_write_authorized": external_write_authorized,
+                "parent_security_scan_fallback_authorized": (
+                    parent_security_scan_fallback_authorized
+                ),
                 "parent_security_report_fallback_authorized": (
                     parent_security_report_fallback_authorized
                 ),
@@ -623,25 +1008,14 @@ def _current_git_revision(
             "route source revision requires exact branch and immutable head_sha"
         )
     try:
-        actual_root = pathlib.Path(
-            subprocess.run(
-                ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
-        ).resolve()
-        head = subprocess.run(
-            ["git", "-C", str(root), "rev-parse", "HEAD"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        branch = subprocess.run(
-            ["git", "-C", str(root), "branch", "--show-current"],
-            check=True,
-            capture_output=True,
-            text=True,
+        actual_root = git_source.verified_git_root(root)
+        git_environment = git_source.sanitized_git_environment()
+        git_environment["GIT_WORK_TREE"] = str(actual_root)
+        head = git_source.verified_git_head(root)
+        branch = git_source.run_git(
+            root,
+            ["branch", "--show-current"],
+            environment=git_environment,
         ).stdout.strip()
     except (OSError, subprocess.CalledProcessError) as exc:
         raise agent_routing.AgentRoutingContractError(
@@ -846,6 +1220,15 @@ def command_transition(
     if errors:
         render({"status": "invalid", "errors": errors})
         return 1
+    if (document.get("current_loop") or {}).get("lifecycle") == "complete":
+        render(
+            {
+                "status": "rejected",
+                "errors": ["objective completion is terminal"],
+                "writes_performed": False,
+            }
+        )
+        return 1
     task = next((item for item in document["tasks"] if item.get("id") == task_id), None)
     if task is None:
         render({"status": "invalid", "errors": [f"unknown task {task_id}"]})
@@ -939,9 +1322,21 @@ def command_apply_event(
             )
             return 1
     try:
-        original_bytes = path.read_bytes()
-        document = loop_yaml.load_yaml(path)
-        event = loop_yaml.load_yaml(event_path)
+        original_bytes, original_binding = _bound_contract_bytes(
+            path,
+            pathlib.Path(os.path.abspath(path.parent)),
+            None,
+            "apply-event ledger",
+        )
+        original_mode = stat.S_IMODE(original_binding[3])
+        event_bytes, _ = _bound_contract_bytes(
+            event_path,
+            pathlib.Path(os.path.abspath(event_path.parent)),
+            None,
+            "apply-event event",
+        )
+        document = _load_bound_yaml(original_bytes, "apply-event ledger")
+        event = _load_bound_yaml(event_bytes, "apply-event event")
         structural_errors = loop_yaml.validate_ledger(document)
         if structural_errors:
             render(
@@ -961,13 +1356,67 @@ def command_apply_event(
                 }
             )
             return 1
-        definitions = _definitions(
-            path,
-            document,
-            manifest_path,
-            require_contract=True,
-            repo_root=repo_root,
+        is_source_rebound = event.get("type") == "source_rebound"
+        prior_same_key = [
+            item
+            for item in document.get("events", [])
+            if isinstance(item, dict)
+            and item.get("idempotency_key") == event.get("idempotency_key")
+        ]
+        source_rebound_replay = is_source_rebound and any(
+            item == event for item in prior_same_key
         )
+        if is_source_rebound and prior_same_key and not source_rebound_replay:
+            render(
+                {
+                    "status": "rejected",
+                    "errors": ["idempotency key reused with different payload"],
+                    "writes_performed": False,
+                }
+            )
+            return 1
+        if is_source_rebound and not source_rebound_replay:
+            verified_root, live_revision = _verified_rebind_source(
+                path,
+                document,
+                repo_root,
+                expected_ledger_bytes=original_bytes,
+                expected_ledger_binding=original_binding,
+            )
+            definitions, rebound_contract_binding = _source_rebound_contract(
+                path,
+                document,
+                manifest_path,
+                verified_root,
+                target_head=live_revision["head_sha"],
+            )
+            target_source = (event.get("payload") or {}).get(
+                "target_source_revision"
+            )
+            if not isinstance(target_source, dict) or any(
+                target_source.get(field) != live_revision[field]
+                for field in ("branch", "head_sha")
+            ):
+                raise loop_yaml.LedgerValidationError(
+                    "source rebound target must match the current typed Git revision"
+                )
+        elif source_rebound_replay:
+            verified_root = _verify_git_source(path, document, repo_root)
+            definitions, _ = _source_rebound_contract(
+                path,
+                document,
+                manifest_path,
+                verified_root,
+                target_head=document["ledger"]["source_revision"]["head_sha"],
+            )
+        else:
+            definitions = _definitions(
+                path,
+                document,
+                manifest_path,
+                require_contract=True,
+                repo_root=repo_root,
+            )
         history_digest = loop_core.protected_history_digest(
             document.get("events", [])
         )
@@ -997,6 +1446,7 @@ def command_apply_event(
                 state,
                 event,
                 trusted_authority=trusted_authority,
+                trusted_time=_trusted_current_time(),
             )
         else:
             updated, replayed = loop_core.replay_event(state, event)
@@ -1017,18 +1467,43 @@ def command_apply_event(
             rendered = loop_yaml.dump_yaml(materialized)
             descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
             try:
+                os.fchmod(descriptor, original_mode)
                 with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
                     handle.write(rendered)
                     handle.flush()
                     os.fsync(handle.fileno())
                 try:
-                    _definitions(
-                        path,
-                        document,
-                        manifest_path,
-                        require_contract=True,
-                        repo_root=repo_root,
-                    )
+                    if is_source_rebound:
+                        _, repeated_live_revision = _verified_rebind_source(
+                            path,
+                            document,
+                            repo_root,
+                            expected_ledger_bytes=original_bytes,
+                            expected_ledger_binding=original_binding,
+                        )
+                        if repeated_live_revision != live_revision:
+                            raise loop_yaml.LedgerValidationError(
+                                "source rebound Git revision changed before commit"
+                            )
+                        _, repeated_contract_binding = _source_rebound_contract(
+                            path,
+                            document,
+                            manifest_path,
+                            verified_root,
+                            target_head=live_revision["head_sha"],
+                        )
+                        if repeated_contract_binding != rebound_contract_binding:
+                            raise loop_yaml.LedgerValidationError(
+                                "source rebound contract artifacts changed before commit"
+                            )
+                    else:
+                        _definitions(
+                            path,
+                            document,
+                            manifest_path,
+                            require_contract=True,
+                            repo_root=repo_root,
+                        )
                 except loop_yaml.LedgerValidationError as exc:
                     render(
                         {
@@ -1038,7 +1513,13 @@ def command_apply_event(
                         }
                     )
                     return 1
-                if path.read_bytes() != original_bytes:
+                _, current_binding = _bound_contract_bytes(
+                    path,
+                    pathlib.Path(os.path.abspath(path.parent)),
+                    hashlib.sha256(original_bytes).hexdigest(),
+                    "apply-event ledger",
+                )
+                if current_binding != original_binding:
                     render(
                         {
                             "status": "rejected",
@@ -1047,6 +1528,31 @@ def command_apply_event(
                         }
                     )
                     return 1
+                rechecked, rechecked_replayed = loop_core.apply_event(
+                    state,
+                    event,
+                    trusted_authority=trusted_authority,
+                    trusted_time=_trusted_current_time(),
+                )
+                rechecked_materialized = loop_yaml.update_ledger_view(
+                    document, rechecked
+                )
+                if not rechecked_replayed:
+                    rechecked_source = rechecked_materialized["ledger"][
+                        "source_revision"
+                    ]
+                    rechecked_source["previous_ledger_sha256"] = hashlib.sha256(
+                        original_bytes
+                    ).hexdigest()
+                    rechecked_source["updated_at"] = event["occurred_at"]
+                if (
+                    rechecked != updated
+                    or rechecked_replayed != replayed
+                    or rechecked_materialized != materialized
+                ):
+                    raise loop_core.LoopContractError(
+                        "live event acceptance changed before commit"
+                    )
                 os.replace(temporary_name, path)
                 directory_descriptor: int | None = None
                 try:
@@ -1116,7 +1622,12 @@ def main(argv: list[str] | None = None) -> int:
     decide.add_argument("path", type=pathlib.Path)
     decide.add_argument("--external-write-authorized", action="store_true")
     decide.add_argument(
-        "--parent-security-report-fallback-authorized", action="store_true"
+        "--parent-security-scan-fallback-authorized",
+        action="store_true",
+    )
+    decide.add_argument(
+        "--parent-security-report-fallback-authorized",
+        action="store_true",
     )
     decide.add_argument("--protected-history-sha256")
     agent_route = subparsers.add_parser("agent-route")
@@ -1182,6 +1693,9 @@ def main(argv: list[str] | None = None) -> int:
             return command_decide(
                 args.path,
                 external_write_authorized=args.external_write_authorized,
+                parent_security_scan_fallback_authorized=(
+                    args.parent_security_scan_fallback_authorized
+                ),
                 parent_security_report_fallback_authorized=(
                     args.parent_security_report_fallback_authorized
                 ),

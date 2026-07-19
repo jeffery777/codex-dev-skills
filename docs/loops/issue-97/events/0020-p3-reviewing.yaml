@@ -1,0 +1,25 @@
+sequence: 20
+event_id: "issue-97-p3-reviewing"
+occurred_at: "2026-07-16T09:18:00Z"
+actor: "codex-root"
+type: "task_transition"
+task_id: "P3"
+idempotency_key: "issue-97-p3-reviewing-v1"
+expected_state_revision: 19
+previous_event_hash: "cf2af84a4d24fb334acda23626ddb52008e7905db7082f8762dc43f0b80bf239"
+payload:
+  target_status: "reviewing"
+  fencing_token: {generation: 1, nonce: "issue-97-p3-root-1"}
+  evidence:
+    verification:
+      status: "passed"
+      artifacts:
+        - "docs/loops/issue-97/receipts/gitnexus-1.6.9-qualification.md"
+        - "repository validation: 568 unit tests and validate-repo PASS"
+    review:
+      status: "required"
+      mode: "docs-review"
+      artifacts:
+        - "docs/loops/issue-97/receipts/p4-docs-review-route.json"
+    acceptance: {status: "not_required", artifact: ""}
+event_hash: "1c7b9b7fad2167d0eae46691e8d658b32b127c115c2cd1c1522f68bc7eb70c7f"

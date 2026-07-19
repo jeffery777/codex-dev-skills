@@ -1,0 +1,26 @@
+sequence: 5
+event_id: issue-97-publication-authorized
+occurred_at: '2026-07-16T09:03:00Z'
+actor: delegating-user
+type: gate_updated
+task_id: ''
+idempotency_key: issue-97-publication-authorized-v1
+expected_state_revision: 4
+previous_event_hash: 222e4f7ee7cfa0345c0ca05e2e90816b94e17cb0fae89b882b64dcc6aad015df
+payload:
+  gate: publication-readiness
+  status: satisfied
+  evidence:
+    artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+    scope: commit-push-ready-pr-only-after-evidence-gates
+  authorization:
+    action: gate_satisfaction
+    principal:
+      type: user
+      id: delegating-user
+    objective_id: issue-97
+    artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+    source_revision_sha256: 7ab3677ce7c903bdbad63f5fac285009f79f4bf9e42d0ff604112e74310a16f8
+    protected_payload_sha256: f6aeeeafab873e3deefed2fbde100145bcf3a952dd050ab8937c8c2c4abe8aac
+    gate: publication-readiness
+event_hash: 949b32abf60a71b104ab756e764d8fb9bd65354d42cff771a6ad50f6c577f09a

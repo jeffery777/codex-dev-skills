@@ -1,0 +1,39 @@
+agent_route:
+  contract_version: 2
+  task:
+    id: "P5-validator-contract-review"
+    workload_kind: "review"
+    factors:
+      ambiguity: "high"
+      reasoning_depth: "deep"
+      code_context_volume: "medium"
+      security_data_migration_public_contract_risk: "public-contract"
+      write_blast_radius: "none"
+      latency_sensitivity: "low"
+      cost_token_sensitivity: "low"
+      independence_parallelizability: "independent"
+      verification_burden: "high"
+  profile_preflight:
+    profile_dir: "../../../../agent-profiles"
+    registry: "../../../../skills/loop-engineering/references/agent-profile-registry.json"
+    role: "loop_v2a_deep_reviewer"
+    agent_roots: ["../../../../agent-profiles"]
+    destination_root: "../../../../agent-profiles"
+  assignment:
+    scope:
+      - "skills/loop-engineering/scripts/git_source.py"
+      - "skills/loop-engineering/scripts/loopctl.py"
+      - "scripts/validate-loop-ledger.py"
+      - "tests/test_loopctl.py"
+      - "docs/loop-state-ledger.md"
+      - "docs/loops/issue-97 terminal P5 ledger closure artifacts"
+    ownership: {owner: "p5-validator-contract-reviewer", disjoint: true}
+    source_revision: {branch: "codex/v2c-gitnexus-adapter", head_sha: "67be3d967e39eeab47394d0856963faff8aa4acb"}
+    authority_contract:
+      mutation_scope: "none"
+      external_write_authorized: false
+      human_gates: ["main-agent-finding-disposition", "formal-code-review-gate"]
+      completion_criteria:
+        - "Return stable MF/SF/NIT findings with file and line evidence for the bounded terminal-ledger ancestor contract"
+        - "Assess fail-closed behavior for active, wrong-branch, missing, unknown, diverged, malformed, and terminal histories"
+        - "Assess the tests, documentation, and P5 closure semantics; make no edits"

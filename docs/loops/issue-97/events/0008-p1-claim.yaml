@@ -1,0 +1,28 @@
+sequence: 8
+event_id: issue-97-p1-claim
+occurred_at: '2026-07-16T09:06:00Z'
+actor: codex-root
+type: claim_acquired
+task_id: P1
+idempotency_key: issue-97-p1-claim-v1
+expected_state_revision: 7
+previous_event_hash: e8c803a35b8e90e643569b6a4b059f8a07415d3f6d88929342746a2c39279fc1
+payload:
+  claim:
+    task_id: P1
+    status: active
+    owner:
+      type: subagent
+      id: codex-root
+    fencing_token:
+      generation: 1
+      nonce: issue-97-p1-root-1
+    expected_state_revision: 7
+    source_revision:
+      branch: codex/v2c-gitnexus-adapter
+      head_sha: a75728b15f5d15ba7bf1a7e6e3a2dd934915592e
+      spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+      task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+    claimed_at: '2026-07-16T09:06:00Z'
+    lease_expires_at: '2026-07-17T09:06:00Z'
+event_hash: c23e4f955beab7396534b69cc64ba0de25d1027c51f699ec3aff9ac697d11c7e

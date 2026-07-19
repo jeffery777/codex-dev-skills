@@ -1,0 +1,30 @@
+agent_route:
+  contract_version: 2
+  task:
+    id: "P4-docs-review"
+    workload_kind: "review"
+    factors:
+      ambiguity: "moderate"
+      reasoning_depth: "deep"
+      code_context_volume: "large"
+      security_data_migration_public_contract_risk: "public-contract"
+      write_blast_radius: "none"
+      latency_sensitivity: "medium"
+      cost_token_sensitivity: "medium"
+      independence_parallelizability: "independent"
+      verification_burden: "high"
+  profile_preflight:
+    profile_dir: "../../../../agent-profiles"
+    registry: "../../../../skills/loop-engineering/references/agent-profile-registry.json"
+    role: "loop_v2a_deep_reviewer"
+    agent_roots: ["../../../../agent-profiles"]
+    destination_root: "../../../../agent-profiles"
+  assignment:
+    scope: ["README.md", "docs and Loop Engineering memory reference changed for Issue #97", "qualification and routing artifacts", "release-readiness and rollback claims"]
+    ownership: {owner: "p4-docs-reviewer", disjoint: true}
+    source_revision: {branch: "codex/v2c-gitnexus-adapter", head_sha: "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"}
+    authority_contract:
+      mutation_scope: "none"
+      external_write_authorized: false
+      human_gates: ["main-agent-finding-disposition", "formal-docs-review-gate"]
+      completion_criteria: ["Return stable MF/SF/NIT documentation findings with evidence against code and qualification; make no edits"]

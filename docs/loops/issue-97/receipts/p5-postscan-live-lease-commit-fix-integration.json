@@ -1,0 +1,130 @@
+{
+  "agent_integration": {
+    "contract_version": 1,
+    "disposition": {
+      "disposition": "accepted",
+      "memory_usage": {
+        "backend_status": "disabled",
+        "contract_version": "loop-memory/v1",
+        "dispositions": [],
+        "enabled": false,
+        "receipt_digest": null,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "route_receipt_id": "405b1f51ea046c438cbc7892c286a672f52c5fe1a1e94f198730eeb277981c8f",
+      "verification": {
+        "artifact_digests": {
+          "p5-postscan-live-lease-commit-fix-main-verification.md": "872237a38115e40e9e6f00352138d3de62ff0690b5fde6e3559b88993ae48e1e"
+        },
+        "artifacts": [
+          "p5-postscan-live-lease-commit-fix-main-verification.md"
+        ],
+        "status": "passed"
+      }
+    },
+    "route_receipt": {
+      "assigned_scope": [
+        "loop trusted-time and fallback contract",
+        "core/CLI/eval tests",
+        "contract templates"
+      ],
+      "assigned_scope_sha256": "248e88492464ddca20919f2842d0258e2128498cb182fdcaf4f1f3e2e7cd8603",
+      "authority_contract_sha256": "a59ef9dd849bbc9a6a238143c7c534fbe5e722310f96e021d9a4b3ec86575a55",
+      "authority_invariants": {
+        "profile_cannot_expand_permissions": true,
+        "profile_cannot_expand_scope": true,
+        "profile_cannot_satisfy_human_gates": true,
+        "worker_receipt_cannot_prove_completion": true
+      },
+      "classification": {
+        "capability_class": "balanced-worker",
+        "capability_tier": "advanced",
+        "factor_effects": {
+          "ambiguity": "no-escalation",
+          "code_context_volume": "fast-read-tie-break",
+          "cost_token_sensitivity": "neutral",
+          "independence_parallelizability": "delegation-eligible",
+          "latency_sensitivity": "neutral",
+          "reasoning_depth": "deep-capability-trigger",
+          "security_data_migration_public_contract_risk": "no-hard-trigger",
+          "verification_burden": "deep-capability-trigger",
+          "write_blast_radius": "bounded-write"
+        },
+        "factors": {
+          "ambiguity": "moderate",
+          "code_context_volume": "large",
+          "cost_token_sensitivity": "medium",
+          "independence_parallelizability": "bounded",
+          "latency_sensitivity": "low",
+          "reasoning_depth": "deep",
+          "security_data_migration_public_contract_risk": "routine",
+          "verification_burden": "high",
+          "write_blast_radius": "bounded"
+        },
+        "hard_triggered": false,
+        "reasons": [
+          "advanced-bounded-implementation"
+        ],
+        "selected_role": "loop_v2a_advanced_worker",
+        "workload_kind": "implementation"
+      },
+      "config_evidence": {
+        "allowed_workflow_scope": [
+          "bounded-edit",
+          "focused-verify",
+          "read",
+          "report-receipt",
+          "search"
+        ],
+        "capability_class": "balanced-worker",
+        "capability_tier": "advanced",
+        "config_valid": true,
+        "model_available": true,
+        "name": "loop_v2a_advanced_worker",
+        "parent_sandbox_mode": "workspace-write",
+        "profile_digest": "0a517da2c22da5a718cc6077890427bbdda64509be0ccbfbbceda64ba3acdf6c",
+        "reasoning_available": true,
+        "sandbox": "workspace-write",
+        "sandbox_non_widening": true
+      },
+      "config_evidence_sha256": "ac35d016ef761e8797064d50131e03ccf9cf6da53806be4dc92035dab28b0bc2",
+      "contract_version": 2,
+      "cost_degraded": false,
+      "degraded": false,
+      "execution_mode": "custom-agent-profile",
+      "fallback": "none",
+      "ownership": {
+        "disjoint": true,
+        "owner": "fix_claim_and_alias"
+      },
+      "required_capability_tier": "advanced",
+      "route_receipt_id": "405b1f51ea046c438cbc7892c286a672f52c5fe1a1e94f198730eeb277981c8f",
+      "routing_constraint": "bounded-work-allows-delegation",
+      "runtime_mapping": "loop_v2a_advanced_worker",
+      "selected_capability_tier": "advanced",
+      "selected_profile_digest": "0a517da2c22da5a718cc6077890427bbdda64509be0ccbfbbceda64ba3acdf6c",
+      "selected_role": "loop_v2a_advanced_worker",
+      "source_revision": {
+        "branch": "codex/v2c-gitnexus-adapter",
+        "head_sha": "67be3d967e39eeab47394d0856963faff8aa4acb"
+      },
+      "source_revision_sha256": "147995be9a49b05b172cd97a9d275c608a37694eedbd329b1b3b081d5e2f483e",
+      "task_id": "P5-postscan-time-fallback-fixes"
+    },
+    "worker_receipt": {
+      "artifact_digests": {
+        "p5-postscan-live-lease-commit-fix-report.md": "35cb7f1e1068a89debddc422464f1358e6b8e5eeede9580d166c17ec7502eec0"
+      },
+      "assigned_scope_sha256": "248e88492464ddca20919f2842d0258e2128498cb182fdcaf4f1f3e2e7cd8603",
+      "conflicts": [],
+      "output_artifacts": [
+        "p5-postscan-live-lease-commit-fix-report.md"
+      ],
+      "route_receipt_id": "405b1f51ea046c438cbc7892c286a672f52c5fe1a1e94f198730eeb277981c8f",
+      "source_revision_sha256": "147995be9a49b05b172cd97a9d275c608a37694eedbd329b1b3b081d5e2f483e",
+      "status": "complete",
+      "task_id": "P5-postscan-time-fallback-fixes"
+    }
+  }
+}

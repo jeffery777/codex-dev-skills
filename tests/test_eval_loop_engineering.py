@@ -18,7 +18,7 @@ class LoopEngineeringEvalTests(unittest.TestCase):
         report = runner.evaluate_suite()
 
         self.assertEqual("passed", report["status"])
-        self.assertEqual(20, report["metrics"]["total_cases"])
+        self.assertEqual(23, report["metrics"]["total_cases"])
         self.assertEqual(1.0, report["metrics"]["task_success_rate"])
         self.assertEqual(0, report["metrics"]["false_complete_count"])
         self.assertEqual(0, report["metrics"]["wrong_route_count"])

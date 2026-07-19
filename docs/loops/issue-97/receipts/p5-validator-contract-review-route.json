@@ -1,0 +1,138 @@
+{
+  "profile_preflight": {
+    "capability_class": "deep-reviewer",
+    "capability_tier": "deep",
+    "collisions": [],
+    "decision": "fallback-safe",
+    "fallback_evidence": {
+      "available": true,
+      "capability_classes": [
+        "balanced-worker",
+        "deep-reviewer",
+        "fast-read-explorer",
+        "security-reviewer"
+      ],
+      "capability_tiers": {
+        "balanced-worker": [
+          "everyday",
+          "advanced"
+        ],
+        "deep-reviewer": [
+          "deep",
+          "exceptional"
+        ],
+        "fast-read-explorer": [
+          "mechanical",
+          "efficient"
+        ],
+        "security-reviewer": [
+          "deep"
+        ]
+      }
+    },
+    "fallback_tier": "parent-default",
+    "profile": "loop_v2a_deep_reviewer",
+    "runtime_mapping": {
+      "availability": "runtime-dependent",
+      "last_verified": "2026-07-12",
+      "model": "gpt-5.6-sol",
+      "reasoning_effort": "high",
+      "replaceable": true
+    },
+    "selected": "parent/default",
+    "state": "custom-surface-unavailable",
+    "tier_rank": 4
+  },
+  "route_receipt": {
+    "assigned_scope": [
+      "skills/loop-engineering/scripts/git_source.py",
+      "skills/loop-engineering/scripts/loopctl.py",
+      "scripts/validate-loop-ledger.py",
+      "tests/test_loopctl.py",
+      "docs/loop-state-ledger.md",
+      "docs/loops/issue-97 terminal P5 ledger closure artifacts"
+    ],
+    "assigned_scope_sha256": "603f217962fb598bdcf5e87efd3a569f1730db92d51f08590f4e90a6dc76fca3",
+    "authority_contract_sha256": "5605c687de7f77c10532cc6bc49ca232e36a6c1246a54a827a31ba2e2eb9addf",
+    "authority_invariants": {
+      "profile_cannot_expand_permissions": true,
+      "profile_cannot_expand_scope": true,
+      "profile_cannot_satisfy_human_gates": true,
+      "worker_receipt_cannot_prove_completion": true
+    },
+    "classification": {
+      "capability_class": "deep-reviewer",
+      "capability_tier": "deep",
+      "factor_effects": {
+        "ambiguity": "deep-capability-trigger",
+        "code_context_volume": "neutral",
+        "cost_token_sensitivity": "neutral",
+        "independence_parallelizability": "delegation-eligible",
+        "latency_sensitivity": "neutral",
+        "reasoning_depth": "deep-capability-trigger",
+        "security_data_migration_public_contract_risk": "deep-hard-trigger",
+        "verification_burden": "deep-capability-trigger",
+        "write_blast_radius": "read-only-fast-eligible"
+      },
+      "factors": {
+        "ambiguity": "high",
+        "code_context_volume": "medium",
+        "cost_token_sensitivity": "low",
+        "independence_parallelizability": "independent",
+        "latency_sensitivity": "low",
+        "reasoning_depth": "deep",
+        "security_data_migration_public_contract_risk": "public-contract",
+        "verification_burden": "high",
+        "write_blast_radius": "none"
+      },
+      "hard_triggered": true,
+      "reasons": [
+        "public-contract-risk-hard-trigger"
+      ],
+      "selected_role": "loop_v2a_deep_reviewer",
+      "workload_kind": "review"
+    },
+    "config_evidence": null,
+    "config_evidence_sha256": null,
+    "contract_version": 2,
+    "cost_degraded": false,
+    "degraded": true,
+    "execution_mode": "parent-default",
+    "fallback": "parent-default",
+    "fallback_capability_evidence": {
+      "capability_class": "deep-reviewer",
+      "capability_classes": [
+        "balanced-worker",
+        "deep-reviewer",
+        "fast-read-explorer",
+        "security-reviewer"
+      ],
+      "capability_tiers": [
+        "deep",
+        "exceptional"
+      ],
+      "class_membership_confirmed": true,
+      "selected_capability_tier": "deep",
+      "source": "parent-default"
+    },
+    "fallback_capability_evidence_sha256": "09f073a457b03ffdfea42de4e7da0b8313f934382dcc03b25b389619506711a9",
+    "ownership": {
+      "disjoint": true,
+      "owner": "p5-validator-contract-reviewer"
+    },
+    "required_capability_tier": "deep",
+    "route_receipt_id": "98ed06ca15eabb46e409acc41872c7232cc1b70d3bf8edee96841e50a19d013f",
+    "routing_constraint": "independent-work-allows-delegation",
+    "runtime_mapping": "parent/default",
+    "selected_capability_tier": "deep",
+    "selected_profile_digest": null,
+    "selected_role": "loop_v2a_deep_reviewer",
+    "source_revision": {
+      "branch": "codex/v2c-gitnexus-adapter",
+      "head_sha": "67be3d967e39eeab47394d0856963faff8aa4acb"
+    },
+    "source_revision_sha256": "147995be9a49b05b172cd97a9d275c608a37694eedbd329b1b3b081d5e2f483e",
+    "task_id": "P5-validator-contract-review"
+  },
+  "status": "routed"
+}

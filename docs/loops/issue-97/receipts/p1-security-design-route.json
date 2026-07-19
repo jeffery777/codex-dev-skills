@@ -1,0 +1,137 @@
+{
+  "profile_preflight": {
+    "capability_class": "security-reviewer",
+    "capability_tier": "deep",
+    "collisions": [],
+    "decision": "fallback-safe",
+    "fallback_evidence": {
+      "available": true,
+      "capability_classes": [
+        "fast-read-explorer",
+        "balanced-worker",
+        "deep-reviewer",
+        "security-reviewer"
+      ],
+      "capability_tiers": {
+        "balanced-worker": [
+          "everyday",
+          "advanced"
+        ],
+        "deep-reviewer": [
+          "deep",
+          "exceptional"
+        ],
+        "fast-read-explorer": [
+          "mechanical",
+          "efficient"
+        ],
+        "security-reviewer": [
+          "deep"
+        ]
+      }
+    },
+    "fallback_tier": "parent-default",
+    "profile": "loop_v2a_security_reviewer",
+    "runtime_mapping": {
+      "availability": "runtime-dependent",
+      "last_verified": "2026-07-12",
+      "model": "gpt-5.6-sol",
+      "reasoning_effort": "high",
+      "replaceable": true
+    },
+    "selected": "parent/default",
+    "state": "custom-surface-unavailable",
+    "tier_rank": 4
+  },
+  "route_receipt": {
+    "assigned_scope": [
+      "GitNexus 1.6.9 qualification",
+      "canonical identity and freshness",
+      "untrusted metadata and prompt injection",
+      "subprocess argv/path/symlink/TOCTOU/environment/timeout/lock",
+      "unexpected tracked mutation",
+      "V2b trust boundary"
+    ],
+    "assigned_scope_sha256": "008444cba8b848bd3600d98a88dabf21673ea0e39b16493ad42860e2f3e883ab",
+    "authority_contract_sha256": "666ecf59f6e59769c6509f74f4483fcd34f838a514bf768153b3f28375d3a7f9",
+    "authority_invariants": {
+      "profile_cannot_expand_permissions": true,
+      "profile_cannot_expand_scope": true,
+      "profile_cannot_satisfy_human_gates": true,
+      "worker_receipt_cannot_prove_completion": true
+    },
+    "classification": {
+      "capability_class": "security-reviewer",
+      "capability_tier": "deep",
+      "factor_effects": {
+        "ambiguity": "deep-capability-trigger",
+        "code_context_volume": "fast-read-tie-break",
+        "cost_token_sensitivity": "neutral",
+        "independence_parallelizability": "delegation-eligible",
+        "latency_sensitivity": "neutral",
+        "reasoning_depth": "deep-capability-trigger",
+        "security_data_migration_public_contract_risk": "security-hard-trigger",
+        "verification_burden": "deep-capability-trigger",
+        "write_blast_radius": "read-only-fast-eligible"
+      },
+      "factors": {
+        "ambiguity": "high",
+        "code_context_volume": "large",
+        "cost_token_sensitivity": "low",
+        "independence_parallelizability": "independent",
+        "latency_sensitivity": "low",
+        "reasoning_depth": "deep",
+        "security_data_migration_public_contract_risk": "security",
+        "verification_burden": "high",
+        "write_blast_radius": "none"
+      },
+      "hard_triggered": true,
+      "reasons": [
+        "security-risk-hard-trigger"
+      ],
+      "selected_role": "loop_v2a_security_reviewer",
+      "workload_kind": "security-review"
+    },
+    "config_evidence": null,
+    "config_evidence_sha256": null,
+    "contract_version": 2,
+    "cost_degraded": false,
+    "degraded": true,
+    "execution_mode": "parent-default",
+    "fallback": "parent-default",
+    "fallback_capability_evidence": {
+      "capability_class": "security-reviewer",
+      "capability_classes": [
+        "balanced-worker",
+        "deep-reviewer",
+        "fast-read-explorer",
+        "security-reviewer"
+      ],
+      "capability_tiers": [
+        "deep"
+      ],
+      "class_membership_confirmed": true,
+      "selected_capability_tier": "deep",
+      "source": "parent-default"
+    },
+    "fallback_capability_evidence_sha256": "f0b51981084b21742bd9aaaf4115f56ecbe65628a65eacd1f6b09eb11651781a",
+    "ownership": {
+      "disjoint": true,
+      "owner": "p1-security-design-worker"
+    },
+    "required_capability_tier": "deep",
+    "route_receipt_id": "3d7d429fc181590fdb85268c4dba105776ed9978e344ea8be84242398d13dc22",
+    "routing_constraint": "independent-work-allows-delegation",
+    "runtime_mapping": "parent/default",
+    "selected_capability_tier": "deep",
+    "selected_profile_digest": null,
+    "selected_role": "loop_v2a_security_reviewer",
+    "source_revision": {
+      "branch": "codex/v2c-gitnexus-adapter",
+      "head_sha": "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"
+    },
+    "source_revision_sha256": "f9698e61663a1f2729d4d1430e7d0d85296459bc43c1032cf721e00993cba753",
+    "task_id": "P1-security-design"
+  },
+  "status": "routed"
+}

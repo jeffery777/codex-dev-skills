@@ -1,0 +1,133 @@
+{
+  "profile_preflight": {
+    "capability_class": "fast-read-explorer",
+    "capability_tier": "mechanical",
+    "collisions": [],
+    "decision": "fallback-safe",
+    "fallback_evidence": {
+      "available": true,
+      "capability_classes": [
+        "balanced-worker",
+        "deep-reviewer",
+        "fast-read-explorer",
+        "security-reviewer"
+      ],
+      "capability_tiers": {
+        "balanced-worker": [
+          "everyday",
+          "advanced"
+        ],
+        "deep-reviewer": [
+          "deep",
+          "exceptional"
+        ],
+        "fast-read-explorer": [
+          "mechanical",
+          "efficient"
+        ],
+        "security-reviewer": [
+          "deep"
+        ]
+      }
+    },
+    "fallback_tier": "parent-default",
+    "profile": "loop_v2a_mechanical_reader",
+    "runtime_mapping": {
+      "availability": "runtime-dependent",
+      "last_verified": "2026-07-12",
+      "model": "gpt-5.6-luna",
+      "reasoning_effort": "low",
+      "replaceable": true
+    },
+    "selected": "parent/default",
+    "state": "custom-surface-unavailable",
+    "tier_rank": 0
+  },
+  "route_receipt": {
+    "assigned_scope": [
+      "read-only Codex Security security_diff_scan capability preflight for refreshed frozen snapshot"
+    ],
+    "assigned_scope_sha256": "ed418e6146bb2cf9a188625affbc2f03a618aa76de799c6f4c4d86e10bbae706",
+    "authority_contract_sha256": "19a3b086974ea8c585a1c901dcaef9644f2620bbc4f57e16223ba092624c1869",
+    "authority_invariants": {
+      "profile_cannot_expand_permissions": true,
+      "profile_cannot_expand_scope": true,
+      "profile_cannot_satisfy_human_gates": true,
+      "worker_receipt_cannot_prove_completion": true
+    },
+    "classification": {
+      "capability_class": "fast-read-explorer",
+      "capability_tier": "mechanical",
+      "factor_effects": {
+        "ambiguity": "no-escalation",
+        "code_context_volume": "neutral",
+        "cost_token_sensitivity": "fast-read-tie-break",
+        "independence_parallelizability": "delegation-eligible",
+        "latency_sensitivity": "fast-read-tie-break",
+        "reasoning_depth": "no-escalation",
+        "security_data_migration_public_contract_risk": "no-hard-trigger",
+        "verification_burden": "no-escalation",
+        "write_blast_radius": "read-only-fast-eligible"
+      },
+      "factors": {
+        "ambiguity": "low",
+        "code_context_volume": "small",
+        "cost_token_sensitivity": "high",
+        "independence_parallelizability": "independent",
+        "latency_sensitivity": "high",
+        "reasoning_depth": "shallow",
+        "security_data_migration_public_contract_risk": "none",
+        "verification_burden": "low",
+        "write_blast_radius": "none"
+      },
+      "hard_triggered": false,
+      "reasons": [
+        "clear-repeatable-read-only-work"
+      ],
+      "selected_role": "loop_v2a_mechanical_reader",
+      "workload_kind": "mechanical"
+    },
+    "config_evidence": null,
+    "config_evidence_sha256": null,
+    "contract_version": 2,
+    "cost_degraded": false,
+    "degraded": true,
+    "execution_mode": "parent-default",
+    "fallback": "parent-default",
+    "fallback_capability_evidence": {
+      "capability_class": "fast-read-explorer",
+      "capability_classes": [
+        "balanced-worker",
+        "deep-reviewer",
+        "fast-read-explorer",
+        "security-reviewer"
+      ],
+      "capability_tiers": [
+        "mechanical",
+        "efficient"
+      ],
+      "class_membership_confirmed": true,
+      "selected_capability_tier": "mechanical",
+      "source": "parent-default"
+    },
+    "fallback_capability_evidence_sha256": "5d2dec3a61b230c39d82eb8ad6061016710c8ab63890621da11d6ebe76e5832f",
+    "ownership": {
+      "disjoint": true,
+      "owner": "p5-security-rescan-preflight"
+    },
+    "required_capability_tier": "mechanical",
+    "route_receipt_id": "f5d82612cc4a223fa4bed4742219534191b164065f82ad278cf5f96918d69933",
+    "routing_constraint": "independent-work-allows-delegation",
+    "runtime_mapping": "parent/default",
+    "selected_capability_tier": "mechanical",
+    "selected_profile_digest": null,
+    "selected_role": "loop_v2a_mechanical_reader",
+    "source_revision": {
+      "branch": "codex/v2c-gitnexus-adapter",
+      "head_sha": "67be3d967e39eeab47394d0856963faff8aa4acb"
+    },
+    "source_revision_sha256": "147995be9a49b05b172cd97a9d275c608a37694eedbd329b1b3b081d5e2f483e",
+    "task_id": "P5-security-rescan-preflight"
+  },
+  "status": "routed"
+}

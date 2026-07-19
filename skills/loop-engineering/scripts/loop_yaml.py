@@ -612,6 +612,60 @@ def validate_ledger(document: dict[str, Any], *, allow_placeholders: bool = Fals
                     errors.append(f"{label} migration_snapshot source hash mismatch")
                 if source_hash != source_map.get("migration_source_sha256"):
                     errors.append(f"{label} migration_snapshot provenance mismatch")
+            elif event_type == "source_rebound":
+                if event_task_id not in {None, ""}:
+                    errors.append(f"{label} source_rebound must not target one task")
+                for revision_name in (
+                    "previous_source_revision",
+                    "target_source_revision",
+                ):
+                    revision = payload.get(revision_name)
+                    if not isinstance(revision, dict):
+                        errors.append(f"{label} source_rebound requires {revision_name}")
+                        continue
+                    for field in (
+                        "branch",
+                        "head_sha",
+                        "spec_sha256",
+                        "task_manifest_sha256",
+                    ):
+                        if not _nonempty(
+                            revision.get(field), allow_placeholders=allow_placeholders
+                        ):
+                            errors.append(
+                                f"{label} source_rebound {revision_name} requires {field}"
+                            )
+                claim_ids = payload.get("active_claim_task_ids")
+                if not isinstance(claim_ids, list) or any(
+                    not isinstance(item, str) or item not in ids for item in claim_ids
+                ):
+                    errors.append(
+                        f"{label} source_rebound active_claim_task_ids must name tasks"
+                    )
+                dispositions = payload.get("expired_claim_dispositions") or {}
+                if not isinstance(dispositions, dict) or any(
+                    task_id not in ids or not isinstance(disposition, dict)
+                    for task_id, disposition in (
+                        dispositions.items() if isinstance(dispositions, dict) else []
+                    )
+                ):
+                    errors.append(
+                        f"{label} source_rebound expired_claim_dispositions must name tasks"
+                    )
+                elif isinstance(dispositions, dict):
+                    for task_id, disposition in dispositions.items():
+                        status_value = disposition.get("status")
+                        if status_value not in {"released", "expired"}:
+                            errors.append(
+                                f"{label} source_rebound claim disposition has unsupported status"
+                            )
+                            continue
+                        event_claim_status[task_id] = (
+                            status_value,
+                            copy.deepcopy(disposition.get("fencing_token")),
+                        )
+                        if status_value == "expired":
+                            event_task_status[task_id] = "blocked"
             elif event_type == "task_transition" and isinstance(event_task_id, str):
                 target = payload.get("target_status")
                 if target not in V2_STATUSES:
@@ -904,6 +958,35 @@ def replay_ledger(
             "evidence": {},
             "blocker": {},
         }
+    events = document.get("events", [])
+    first_rebound = next(
+        (
+            event
+            for event in events
+            if event.get("type") == "source_rebound"
+        ),
+        None,
+    )
+    initial_source = copy.deepcopy(document["ledger"]["source_revision"])
+    if first_rebound is not None:
+        previous_source = (first_rebound.get("payload") or {}).get(
+            "previous_source_revision"
+        )
+        if not isinstance(previous_source, dict):
+            raise LedgerValidationError(
+                "source_rebound history requires a previous source revision"
+            )
+        for field in (
+            "branch",
+            "head_sha",
+            "spec_sha256",
+            "task_manifest_sha256",
+            "migration_source_sha256",
+        ):
+            if field in previous_source:
+                initial_source[field] = previous_source[field]
+            else:
+                initial_source.pop(field, None)
     state: dict[str, Any] = {
         "revision": 0,
         "last_event_hash": "",
@@ -914,9 +997,9 @@ def replay_ledger(
         "idempotency": {},
         "gates": {},
         "objective_status": "active",
-        "source_revision": copy.deepcopy(document["ledger"]["source_revision"]),
+        "source_revision": initial_source,
     }
-    for event in document.get("events", []):
+    for event in events:
         try:
             state, _ = loop_core.replay_event(state, event)
         except loop_core.LoopContractError as exc:
@@ -982,6 +1065,15 @@ def semantic_audit(
     lifecycle = (document.get("current_loop") or {}).get("lifecycle", "active")
     if lifecycle != replayed.get("objective_status", "active"):
         errors.append("materialized objective lifecycle does not match event replay")
+    actual_source = document["ledger"]["source_revision"]
+    replayed_source = replayed.get("source_revision") or {}
+    try:
+        if loop_core.source_revision_digest(actual_source) != loop_core.source_revision_digest(
+            replayed_source
+        ):
+            errors.append("materialized source revision does not match event replay")
+    except loop_core.LoopContractError as exc:
+        errors.append(str(exc))
     return errors
 
 
@@ -1002,6 +1094,18 @@ def update_ledger_view(document: dict[str, Any], state: dict[str, Any]) -> dict[
             task["blocker"] = copy.deepcopy(materialized["blocker"])
     result["claims"] = [copy.deepcopy(claim) for claim in state.get("claims", {}).values()]
     result["events"] = copy.deepcopy(state.get("events", []))
+    state_source = state.get("source_revision") or {}
+    for field in (
+        "branch",
+        "head_sha",
+        "spec_sha256",
+        "task_manifest_sha256",
+        "migration_source_sha256",
+    ):
+        if field in state_source:
+            result["ledger"]["source_revision"][field] = state_source[field]
+        else:
+            result["ledger"]["source_revision"].pop(field, None)
     if result["events"]:
         result["ledger"]["source_revision"]["updated_at"] = result["events"][-1][
             "occurred_at"

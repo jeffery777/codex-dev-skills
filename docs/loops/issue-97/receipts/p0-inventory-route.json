@@ -1,0 +1,142 @@
+{
+  "profile_preflight": {
+    "capability_class": "fast-read-explorer",
+    "capability_tier": "mechanical",
+    "collisions": [],
+    "decision": "fallback-safe",
+    "fallback_evidence": {
+      "available": true,
+      "capability_classes": [
+        "fast-read-explorer",
+        "balanced-worker",
+        "deep-reviewer",
+        "security-reviewer"
+      ],
+      "capability_tiers": {
+        "balanced-worker": [
+          "everyday",
+          "advanced"
+        ],
+        "deep-reviewer": [
+          "deep",
+          "exceptional"
+        ],
+        "fast-read-explorer": [
+          "mechanical",
+          "efficient"
+        ],
+        "security-reviewer": [
+          "deep"
+        ]
+      }
+    },
+    "fallback_tier": "parent-default",
+    "profile": "loop_v2a_mechanical_reader",
+    "runtime_mapping": {
+      "availability": "runtime-dependent",
+      "last_verified": "2026-07-12",
+      "model": "gpt-5.6-luna",
+      "reasoning_effort": "low",
+      "replaceable": true
+    },
+    "selected": "parent/default",
+    "state": "custom-surface-unavailable",
+    "tier_rank": 0
+  },
+  "route_receipt": {
+    "assigned_scope": [
+      "docs/external-memory-contract.md",
+      "skills/loop-engineering/references/memory-contract-v1.md",
+      "skills/loop-engineering/scripts/memory_contract.py",
+      "skills/loop-engineering/scripts/memoryctl.py",
+      "tests/test_memory_contract.py",
+      "tests/test_memoryctl.py",
+      "evals/memory-contract",
+      "catalog.yaml",
+      "install.sh",
+      "docs"
+    ],
+    "assigned_scope_sha256": "3b4bff6ce91d7638907e0605d1e1ae2b29a7ca543d8e72ec6134408c162e7468",
+    "authority_contract_sha256": "d50f7d3b4f9ec9e6d6c9079e7c6890558c88b425f864b86cb9b08376050793b2",
+    "authority_invariants": {
+      "profile_cannot_expand_permissions": true,
+      "profile_cannot_expand_scope": true,
+      "profile_cannot_satisfy_human_gates": true,
+      "worker_receipt_cannot_prove_completion": true
+    },
+    "classification": {
+      "capability_class": "fast-read-explorer",
+      "capability_tier": "mechanical",
+      "factor_effects": {
+        "ambiguity": "no-escalation",
+        "code_context_volume": "neutral",
+        "cost_token_sensitivity": "fast-read-tie-break",
+        "independence_parallelizability": "delegation-eligible",
+        "latency_sensitivity": "fast-read-tie-break",
+        "reasoning_depth": "no-escalation",
+        "security_data_migration_public_contract_risk": "no-hard-trigger",
+        "verification_burden": "no-escalation",
+        "write_blast_radius": "read-only-fast-eligible"
+      },
+      "factors": {
+        "ambiguity": "low",
+        "code_context_volume": "medium",
+        "cost_token_sensitivity": "high",
+        "independence_parallelizability": "independent",
+        "latency_sensitivity": "high",
+        "reasoning_depth": "shallow",
+        "security_data_migration_public_contract_risk": "none",
+        "verification_burden": "low",
+        "write_blast_radius": "none"
+      },
+      "hard_triggered": false,
+      "reasons": [
+        "clear-repeatable-read-only-work"
+      ],
+      "selected_role": "loop_v2a_mechanical_reader",
+      "workload_kind": "mechanical"
+    },
+    "config_evidence": null,
+    "config_evidence_sha256": null,
+    "contract_version": 2,
+    "cost_degraded": false,
+    "degraded": true,
+    "execution_mode": "parent-default",
+    "fallback": "parent-default",
+    "fallback_capability_evidence": {
+      "capability_class": "fast-read-explorer",
+      "capability_classes": [
+        "balanced-worker",
+        "deep-reviewer",
+        "fast-read-explorer",
+        "security-reviewer"
+      ],
+      "capability_tiers": [
+        "mechanical",
+        "efficient"
+      ],
+      "class_membership_confirmed": true,
+      "selected_capability_tier": "mechanical",
+      "source": "parent-default"
+    },
+    "fallback_capability_evidence_sha256": "5d2dec3a61b230c39d82eb8ad6061016710c8ab63890621da11d6ebe76e5832f",
+    "ownership": {
+      "disjoint": true,
+      "owner": "p0-inventory-worker"
+    },
+    "required_capability_tier": "mechanical",
+    "route_receipt_id": "c70cf76ddc6497b81c5fab9ad88c245f160a238fc8d5c3a639637c6a61d234a3",
+    "routing_constraint": "independent-work-allows-delegation",
+    "runtime_mapping": "parent/default",
+    "selected_capability_tier": "mechanical",
+    "selected_profile_digest": null,
+    "selected_role": "loop_v2a_mechanical_reader",
+    "source_revision": {
+      "branch": "codex/v2c-gitnexus-adapter",
+      "head_sha": "a75728b15f5d15ba7bf1a7e6e3a2dd934915592e"
+    },
+    "source_revision_sha256": "f9698e61663a1f2729d4d1430e7d0d85296459bc43c1032cf721e00993cba753",
+    "task_id": "P0-inventory"
+  },
+  "status": "routed"
+}

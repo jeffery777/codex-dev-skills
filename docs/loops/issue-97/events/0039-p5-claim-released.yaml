@@ -1,0 +1,14 @@
+sequence: 39
+event_id: issue-97-p5-claim-released
+occurred_at: '2026-07-19T12:29:00Z'
+actor: codex-root
+type: claim_released
+task_id: P5
+idempotency_key: issue-97-p5-claim-released-v1
+expected_state_revision: 38
+previous_event_hash: b4d94fc7c17312146f6c574cf81d5554dec8ad3df903913b58babc1bdfb234a5
+payload:
+  fencing_token:
+    generation: 2
+    nonce: issue-97-p5-root-2
+event_hash: 4e8efec7f889887df38cbefbe6257b4ca2cc516ff952d87eae52112f117988ef
