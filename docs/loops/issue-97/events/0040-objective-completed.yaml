@@ -1,0 +1,25 @@
+sequence: 40
+event_id: issue-97-objective-completed
+occurred_at: '2026-07-19T12:30:00Z'
+actor: delegating-user
+type: objective_completed
+task_id: ''
+idempotency_key: issue-97-objective-completed-v1
+expected_state_revision: 39
+previous_event_hash: 4e8efec7f889887df38cbefbe6257b4ca2cc516ff952d87eae52112f117988ef
+payload:
+  verification: passed
+  review: passed
+  human_gate: satisfied
+  evidence:
+    artifact: docs/loops/issue-97/receipts/p5-publication-readback.md
+  authorization:
+    action: objective_completion
+    principal:
+      type: user
+      id: delegating-user
+    objective_id: issue-97
+    artifact: docs/loops/issue-97/receipts/p5-publication-readback.md
+    source_revision_sha256: f149eb7b0c60ff6fd40ed0772fffcc16a1d3f6b37783569756c2c623c96cf8ed
+    protected_payload_sha256: 7db1e46b792386ce46c829a36e048eac1c9a1dc746f8c95269f591d857531487
+event_hash: ef095d48508a9658f2a863707e015d0cbe6b12812e9f3238ef5452074cc06d25

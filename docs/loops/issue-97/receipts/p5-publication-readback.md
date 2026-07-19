@@ -1,20 +1,20 @@
-# P5 Intermediate Publication And Desktop PR Gate Readback
+# P5 Publication And Desktop PR Gate Readback
 
 Gate Result: **PASS**.
 
-This readback binds the implementation and evidence published in `21e4e0a` to
-the ready-for-review PR. A later bounded ledger-closure fix remains unpublished;
-therefore this receipt is not the final branch publication readback and does not
-prove objective completion.
+This readback binds the reviewed implementation and bounded ledger-closure fix
+published in `5684dbe` to the ready-for-review PR. A final descendant commit may
+materialize terminal ledger evidence only; it does not change the validated
+runtime implementation represented by this publication checkpoint.
 
 ## Local and remote identity
 
 - Repository: `jeffery777/codex-dev-skills`
 - Remote: `https://github.com/jeffery777/codex-dev-skills.git`
 - Branch: `codex/v2c-gitnexus-adapter`
-- Published commit: `21e4e0a67f98832de5115efea5d974fee9c683c6`
+- Published commit: `5684dbe1d2983544fcef39e0dfe9f994a483d501`
 - Base: `main`
-- Read back at: `2026-07-19T11:37:05Z`
+- Read back at: `2026-07-19T12:27:00Z`
 
 ## Pull request
 
@@ -25,7 +25,7 @@ prove objective completion.
 - Mergeability readback: `clean`
 - Head branch/SHA:
   `codex/v2c-gitnexus-adapter` /
-  `21e4e0a67f98832de5115efea5d974fee9c683c6`
+  `5684dbe1d2983544fcef39e0dfe9f994a483d501`
 - Base branch: `main`
 
 The PR body links Issue #97, spec, implementation plan, GitNexus qualification,
@@ -43,3 +43,13 @@ delivery worktree and must remain clean on `main`.
 
 Desktop PR readiness: **PASS**. Merge remains unauthorized and intentionally
 unperformed.
+
+## Terminal ledger closure
+
+After the publication checkpoint was independently read back, P5 transitioned
+to done with its required verification and formal-gate evidence, its active
+claim was released, and the objective-completion event was applied. The final
+40-event ledger audit returned `valid` with no errors. The terminal ledger is
+anchored to the published `5684dbe` source checkpoint; the descendant
+evidence-only commit that records these terminal events is permitted by the
+ledger's verified ancestor rule.

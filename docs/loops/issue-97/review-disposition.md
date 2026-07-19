@@ -9,9 +9,10 @@ initial adapter snapshot published as `67be3d9`. They do not by themselves
 close the later bounded P5 validator-contract diff. Frozen P5 rounds through
 round 16 have historical PASS evidence. The current post-fix diff closed through
 round-20 code review, round-8 docs review, and the earlier final native Security
-Diff Scan. The initial `21e4e0a` publication readback passed; the later bounded
-closure fix still requires current review, final-diff validation, publication,
-and a new remote readback.
+Diff Scan. The later bounded closure fix passed its separate code/docs gates,
+651-test verification, and native scan, then was published and read back at
+`5684dbe`. The 40-event terminal ledger audit passes with P5 done, its claim
+released, and the objective complete.
 
 | Finding | Severity | Status | Disposition / Evidence |
 | --- | --- | --- | --- |
@@ -110,6 +111,7 @@ Round evidence:
 - `receipts/p5-final-closure-security-diff-scan.md`
 - `receipts/p5-final-closure-evidence-docs-review.md`
 - `receipts/p5-final-closure-merge-readiness.md`
+- `receipts/p5-terminal-evidence-docs-review.md`
 
 Historical P4, round-14, and round-16 code gates are **PASS** for their frozen
 diffs. Rounds 17 through 19 were **BLOCKED** while closing live/replay,
@@ -125,8 +127,10 @@ Historical P4 security gate: **PASS**. Codex Security native scan status `comple
 coverage `complete`, 3/3 surfaces `no_issue_found`, reportable findings `0`.
 See `receipts/p4-security-diff-scan-final.md`. This historical scan does not
 cover the bounded validator-contract diff. The separate P5 scan recorded above
-covers the published adapter diff through its bound snapshot; neither scan
-covers the later unpublished final-closure fix.
+covers the published adapter diff through its bound snapshot. The separate
+final-closure scan `5848409e-ca54-4b85-98a8-82b66aff6702` covers the bounded
+closure fix and completed with 1/1 worklist coverage and zero reportable
+findings.
 
 Accepted residuals are documented in the final code-gate receipt. Their owner
 is the V2c adapter maintainer; reconsider them if the adapter later enables a

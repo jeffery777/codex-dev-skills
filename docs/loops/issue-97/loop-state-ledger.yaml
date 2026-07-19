@@ -7,14 +7,14 @@ ledger:
   task_manifest: docs/loops/issue-97/task-manifest.yaml
   source_revision:
     branch: codex/v2c-gitnexus-adapter
-    head_sha: 21e4e0a67f98832de5115efea5d974fee9c683c6
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
     spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
     task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
-    previous_ledger_sha256: 3f75f4e9af958f3b1fef48b4238ce5883cf13e02959a489ba6b9548683f71ef4
-    updated_at: '2026-07-19T11:43:00Z'
+    previous_ledger_sha256: 37bd3fdc688603553037eedc23cf062ef0d050c086561ecb3463ce015357b74f
+    updated_at: '2026-07-19T12:30:00Z'
   state_revision:
-    sequence: 36
-    last_event_hash: bf5090c1c04b507f7dd52f9b01fc6e00966407f2429bb3e1e1e8d6fa16a019c3
+    sequence: 40
+    last_event_hash: ef095d48508a9658f2a863707e015d0cbe6b12812e9f3238ef5452074cc06d25
 status_model:
   task_allowed:
   - planned
@@ -34,13 +34,14 @@ status_model:
   accepted_means: A bound receipt was applied through an independently authorized
     live write; consumers revalidate current external state before publication.
 current_loop:
-  lifecycle: active
+  lifecycle: complete
   classification: bounded-delivery-objective
   execution_mode: shared-subagents
   selected_task_id: P5
-  next_decision: continue
-  decision_reason: The bounded final-closure contract fix requires final review, final
-    diff validation, publication, and remote readback before completion.
+  next_decision: complete
+  decision_reason: The bounded final-closure contract fix passed final review and
+    validation, was published and read back, and the objective is complete at the
+    authorized ready-for-review boundary.
 tasks:
 - id: P0
   status: done
@@ -155,22 +156,35 @@ tasks:
   - Historical P4 gates passed; the final closure delta requires its own current review
     and validation.
 - id: P5
-  status: reviewing
+  status: done
   evidence:
     verification:
       status: passed
       artifacts:
       - docs/loops/issue-97/receipts/p5-publication-readback.md
+      - docs/loops/issue-97/receipts/p5-final-closure-fix-verification.md
+      - docs/loops/issue-97/receipts/verification-report.md
     review:
-      status: required
+      status: passed
       mode: formal-gate
-      artifacts: []
+      artifacts:
+      - docs/loops/issue-97/receipts/p5-final-closure-merge-readiness.md
+      - docs/loops/issue-97/receipts/p5-final-closure-code-review.md
+      - docs/loops/issue-97/receipts/p5-final-closure-docs-review.md
+      - docs/loops/issue-97/receipts/p5-final-closure-security-diff-scan.md
+      - docs/loops/issue-97/receipts/p5-final-closure-evidence-docs-review.md
+    acceptance:
+      status: not_required
+      artifact: ''
+    human_gate:
+      status: satisfied
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
   blocker:
     kind: none
     reason: ''
   residual_risk:
-  - Final closure fix must be reviewed, validated, published, and read back before
-    task completion.
+  - 'PR #98 remains open and unmerged for human review; the terminal evidence-only
+    descendant does not change the validated runtime implementation.'
 claims:
 - task_id: P0
   status: released
@@ -183,7 +197,7 @@ claims:
   expected_state_revision: 1
   source_revision:
     branch: codex/v2c-gitnexus-adapter
-    head_sha: 21e4e0a67f98832de5115efea5d974fee9c683c6
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
     spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
     task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
   claimed_at: '2026-07-16T09:00:00Z'
@@ -199,7 +213,7 @@ claims:
   expected_state_revision: 7
   source_revision:
     branch: codex/v2c-gitnexus-adapter
-    head_sha: 21e4e0a67f98832de5115efea5d974fee9c683c6
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
     spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
     task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
   claimed_at: '2026-07-16T09:06:00Z'
@@ -215,7 +229,7 @@ claims:
   expected_state_revision: 11
   source_revision:
     branch: codex/v2c-gitnexus-adapter
-    head_sha: 21e4e0a67f98832de5115efea5d974fee9c683c6
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
     spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
     task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
   claimed_at: '2026-07-16T09:10:00Z'
@@ -231,7 +245,7 @@ claims:
   expected_state_revision: 17
   source_revision:
     branch: codex/v2c-gitnexus-adapter
-    head_sha: 21e4e0a67f98832de5115efea5d974fee9c683c6
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
     spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
     task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
   claimed_at: '2026-07-16T09:16:00Z'
@@ -247,13 +261,13 @@ claims:
   expected_state_revision: 22
   source_revision:
     branch: codex/v2c-gitnexus-adapter
-    head_sha: 21e4e0a67f98832de5115efea5d974fee9c683c6
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
     spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
     task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
   claimed_at: '2026-07-17T02:11:00Z'
   lease_expires_at: '2026-07-18T02:11:00Z'
 - task_id: P5
-  status: active
+  status: released
   owner:
     type: subagent
     id: codex-root
@@ -263,7 +277,7 @@ claims:
   expected_state_revision: 32
   source_revision:
     branch: codex/v2c-gitnexus-adapter
-    head_sha: 21e4e0a67f98832de5115efea5d974fee9c683c6
+    head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
     spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
     task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
   claimed_at: '2026-07-18T06:01:00Z'
@@ -1195,6 +1209,128 @@ events:
         mode: formal-gate
         artifacts: []
   event_hash: bf5090c1c04b507f7dd52f9b01fc6e00966407f2429bb3e1e1e8d6fa16a019c3
+- sequence: 37
+  event_id: issue-97-publication-source-rebound-5684dbe
+  occurred_at: '2026-07-19T12:26:00Z'
+  actor: codex-root
+  type: source_rebound
+  task_id: ''
+  idempotency_key: issue-97-publication-source-rebound-5684dbe-v1
+  expected_state_revision: 36
+  previous_event_hash: bf5090c1c04b507f7dd52f9b01fc6e00966407f2429bb3e1e1e8d6fa16a019c3
+  payload:
+    previous_source_revision:
+      branch: codex/v2c-gitnexus-adapter
+      head_sha: 21e4e0a67f98832de5115efea5d974fee9c683c6
+      spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+      task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+    target_source_revision:
+      branch: codex/v2c-gitnexus-adapter
+      spec_sha256: 8d3fd78a66e2cd7067bec6e464f99c89ed3fc2c20f9cc5f5be007277ca9496fb
+      task_manifest_sha256: b9def1477ba0c6b5a35859706b62cefacd7ad648a1c01d48d76d17c529e6184c
+      head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+    active_claim_task_ids:
+    - P5
+    expired_claim_dispositions: {}
+    evidence:
+      artifact: docs/loops/issue-97/receipts/p5-publication-source-rebound-authorization.md
+    authorization:
+      action: source_rebound
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-97
+      artifact: docs/loops/issue-97/receipts/p5-publication-source-rebound-authorization.md
+      source_revision_sha256: 0fdd54e5df5b236ca4378fe80d64124fa730a9433d4e3990726aa24550ea7c6b
+      target_head_sha: 5684dbe1d2983544fcef39e0dfe9f994a483d501
+      protected_payload_sha256: 01df00a33f4b25734453ddaa23f2d61c9d581fc9866839349e65330cdc3d24a3
+  event_hash: 5a50fd15049c197c13db0120dc4f76923cb8fd53925f59e2a2edeceb365f21ac
+- sequence: 38
+  event_id: issue-97-p5-done
+  occurred_at: '2026-07-19T12:28:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P5
+  idempotency_key: issue-97-p5-done-v1
+  expected_state_revision: 37
+  previous_event_hash: 5a50fd15049c197c13db0120dc4f76923cb8fd53925f59e2a2edeceb365f21ac
+  payload:
+    target_status: done
+    fencing_token:
+      generation: 2
+      nonce: issue-97-p5-root-2
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-97/receipts/p5-publication-readback.md
+        - docs/loops/issue-97/receipts/p5-final-closure-fix-verification.md
+        - docs/loops/issue-97/receipts/verification-report.md
+      review:
+        status: passed
+        mode: formal-gate
+        artifacts:
+        - docs/loops/issue-97/receipts/p5-final-closure-merge-readiness.md
+        - docs/loops/issue-97/receipts/p5-final-closure-code-review.md
+        - docs/loops/issue-97/receipts/p5-final-closure-docs-review.md
+        - docs/loops/issue-97/receipts/p5-final-closure-security-diff-scan.md
+        - docs/loops/issue-97/receipts/p5-final-closure-evidence-docs-review.md
+      acceptance:
+        status: not_required
+        artifact: ''
+      human_gate:
+        status: satisfied
+        artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+    authorization:
+      action: task_completion
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-97
+      artifact: docs/loops/issue-97/receipts/p5-final-closure-merge-readiness.md
+      source_revision_sha256: f149eb7b0c60ff6fd40ed0772fffcc16a1d3f6b37783569756c2c623c96cf8ed
+      task_id: P5
+      protected_payload_sha256: 4c8c01c92e6f70b026fa4befef07bd43a88cf93f4370d7ad7f791f93d83993db
+  event_hash: b4d94fc7c17312146f6c574cf81d5554dec8ad3df903913b58babc1bdfb234a5
+- sequence: 39
+  event_id: issue-97-p5-claim-released
+  occurred_at: '2026-07-19T12:29:00Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P5
+  idempotency_key: issue-97-p5-claim-released-v1
+  expected_state_revision: 38
+  previous_event_hash: b4d94fc7c17312146f6c574cf81d5554dec8ad3df903913b58babc1bdfb234a5
+  payload:
+    fencing_token:
+      generation: 2
+      nonce: issue-97-p5-root-2
+  event_hash: 4e8efec7f889887df38cbefbe6257b4ca2cc516ff952d87eae52112f117988ef
+- sequence: 40
+  event_id: issue-97-objective-completed
+  occurred_at: '2026-07-19T12:30:00Z'
+  actor: delegating-user
+  type: objective_completed
+  task_id: ''
+  idempotency_key: issue-97-objective-completed-v1
+  expected_state_revision: 39
+  previous_event_hash: 4e8efec7f889887df38cbefbe6257b4ca2cc516ff952d87eae52112f117988ef
+  payload:
+    verification: passed
+    review: passed
+    human_gate: satisfied
+    evidence:
+      artifact: docs/loops/issue-97/receipts/p5-publication-readback.md
+    authorization:
+      action: objective_completion
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-97
+      artifact: docs/loops/issue-97/receipts/p5-publication-readback.md
+      source_revision_sha256: f149eb7b0c60ff6fd40ed0772fffcc16a1d3f6b37783569756c2c623c96cf8ed
+      protected_payload_sha256: 7db1e46b792386ce46c829a36e048eac1c9a1dc746f8c95269f591d857531487
+  event_hash: ef095d48508a9658f2a863707e015d0cbe6b12812e9f3238ef5452074cc06d25
 human_gates:
 - gate: publication-readiness
   status: satisfied

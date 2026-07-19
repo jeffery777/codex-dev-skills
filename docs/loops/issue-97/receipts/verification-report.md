@@ -1,17 +1,16 @@
 # Issue 97 Verification Report
 
-Status: **published adapter baseline and prior gates passed; bounded final
-closure fix verified, formally reviewed, and scan-native finalized**. The
-closure fix still requires publication and remote readback.
-Historical snapshots and scans remain chronology only and do not prove the
-current working tree complete.
+Status: **complete for the authorized ready-for-review delivery boundary**.
+The bounded final closure fix was verified, formally reviewed, scan-native
+finalized, published at `5684dbe`, and read back from the remote branch and PR
+#98. Historical snapshots and scans remain chronology only.
 
 ## Current P5 Post-Fix Verification
 
 - Final closure rerun: 651/651 full repository unit tests passed in 105.371
   seconds; repository validation passed with 150 loop tests, 35 profile and
-  installer tests, 45 routing tests, and 46 V2b tests. The 36-event active
-  ledger audit and `git diff --check` also passed. See
+  installer tests, 45 routing tests, and 46 V2b tests. The final 40-event
+  terminal ledger audit and `git diff --check` also passed. See
   `p5-final-closure-fix-verification.md`.
 - Pre-publication full repository unit suite: 649/649 passed in 86.239 seconds after the final
   commit-boundary lease fix.

@@ -1,0 +1,47 @@
+sequence: 38
+event_id: issue-97-p5-done
+occurred_at: '2026-07-19T12:28:00Z'
+actor: codex-root
+type: task_transition
+task_id: P5
+idempotency_key: issue-97-p5-done-v1
+expected_state_revision: 37
+previous_event_hash: 5a50fd15049c197c13db0120dc4f76923cb8fd53925f59e2a2edeceb365f21ac
+payload:
+  target_status: done
+  fencing_token:
+    generation: 2
+    nonce: issue-97-p5-root-2
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-97/receipts/p5-publication-readback.md
+      - docs/loops/issue-97/receipts/p5-final-closure-fix-verification.md
+      - docs/loops/issue-97/receipts/verification-report.md
+    review:
+      status: passed
+      mode: formal-gate
+      artifacts:
+      - docs/loops/issue-97/receipts/p5-final-closure-merge-readiness.md
+      - docs/loops/issue-97/receipts/p5-final-closure-code-review.md
+      - docs/loops/issue-97/receipts/p5-final-closure-docs-review.md
+      - docs/loops/issue-97/receipts/p5-final-closure-security-diff-scan.md
+      - docs/loops/issue-97/receipts/p5-final-closure-evidence-docs-review.md
+    acceptance:
+      status: not_required
+      artifact: ''
+    human_gate:
+      status: satisfied
+      artifact: https://github.com/jeffery777/codex-dev-skills/issues/97
+  authorization:
+    action: task_completion
+    principal:
+      type: user
+      id: delegating-user
+    objective_id: issue-97
+    artifact: docs/loops/issue-97/receipts/p5-final-closure-merge-readiness.md
+    source_revision_sha256: f149eb7b0c60ff6fd40ed0772fffcc16a1d3f6b37783569756c2c623c96cf8ed
+    task_id: P5
+    protected_payload_sha256: 4c8c01c92e6f70b026fa4befef07bd43a88cf93f4370d7ad7f791f93d83993db
+event_hash: b4d94fc7c17312146f6c574cf81d5554dec8ad3df903913b58babc1bdfb234a5
