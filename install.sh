@@ -293,6 +293,8 @@ group_templates() {
         templates/orchestration/loop-iteration-report.template.md \
         templates/orchestration/loop-state-ledger.template.yaml \
         templates/orchestration/task-claim-lease.template.yaml \
+        templates/hooks/gitnexus-v2c-b/hooks.json.template \
+        templates/hooks/gitnexus-v2c-b/config.json.template \
         workflows/implementation-workflow.md \
         workflows/loop-engineering-workflow.md ;;
     desktop-delivery-workflow)

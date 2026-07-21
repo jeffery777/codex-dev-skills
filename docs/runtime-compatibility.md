@@ -110,6 +110,24 @@ guessing a path. Human `status`/`list` output is never parsed. `read_query` and
 all backend write operations remain unsupported in this baseline, regardless of
 whether the executable exposes additional unqualified surfaces.
 
+## GitNexus Hook Boundary
+
+The V2c-B hook runner is shared Python code intended for the current Codex CLI
+and desktop hook contract on POSIX hosts. It uses only documented
+`SessionStart` and `PostToolUse` `Bash` JSON fields. The current live evidence
+does not provide a native `post-commit` event, asynchronous command hooks, or
+complete tool interception, so the Bash path is a best-effort freshness signal
+and `SessionStart` is the compensating check.
+
+Project hooks load only for trusted projects and non-managed command hooks must
+be reviewed and trusted. Templates are installed inertly; neither CLI nor
+Desktop installation activates a hook or writes runtime config. Hooks disabled,
+unavailable, skipped, or unsupported leave V2c-A and the no-backend workflow
+unchanged. Controller failure installs a repository-bound machine-local circuit
+breaker so later events cannot retry automatically without operator clearance.
+Windows command/runtime behavior is not qualified in this increment; the
+runner fails safe outside POSIX rather than claiming portability.
+
 ## Desktop Thread And Task Actions
 
 Use only the documented callable exposed by the active runtime. Before an

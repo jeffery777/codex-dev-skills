@@ -75,6 +75,24 @@ When a change includes the GitNexus adapter, also require evidence that:
 - rollback keeps the V2b no-backend path usable and does not delete or rewrite
   user repository state.
 
+When a change includes V2c-B hooks, additionally require evidence that:
+
+- only documented bounded `SessionStart` and `PostToolUse` `Bash` input is
+  consumed; transcripts and shell command strings are not parsed;
+- notify-only is the default and template installation performs no activation
+  or config mutation;
+- changed-HEAD notification remains honest about incomplete hook/tool coverage;
+- auto-on-demand reaches only the existing V2c-A controller for a clean eligible
+  state with exact identity, qualification, expected HEAD, secure fresh isolated
+  home, and lock evidence;
+- dirty, malformed, unavailable, unsafe, incompatible, and controller-failure
+  cases preserve no-memory fallback and never claim a successful refresh;
+- controller failure durably installs a repository-bound machine-local circuit
+  breaker and subsequent hooks do not retry until explicit operator clearance;
+- hook-created machine-local homes are not committed or automatically deleted,
+  and rollback only disables/removes the hook definition;
+- CLI/Desktop shared behavior and POSIX-only qualification limits are labeled.
+
 ## Suggested Verification
 
 Run the repository hygiene check:

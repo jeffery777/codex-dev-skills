@@ -132,6 +132,32 @@ explicit canonical machine-local package root; those values are checked before
 tool execution and remain outside repository files. Omitting `--enabled` or
 running `disable` is the rollback path.
 
+V2c-B optionally adds `gitnexus_hook.py` as a thin Codex hook runner. The
+repository ships inactive templates under `templates/hooks/gitnexus-v2c-b/`;
+installing the delivery group copies them as templates and never changes
+`.codex/hooks.json`, global config, or hook trust. The operator materializes an
+absolute machine-local config outside the repository, validates it with
+`--validate-config`, reviews the exact project hook, and explicitly chooses
+`notify-only` or `auto-on-demand`.
+
+`SessionStart` checks all documented start sources. Because Codex has no native
+`post-commit` event, `PostToolUse` for `Bash` performs a compensating freshness
+check after shell actions without parsing the command string. It suppresses
+ordinary uncommitted-worktree noise when the indexed revision still equals
+HEAD, but reports a changed HEAD. This does not cover Git mutations from other
+tools, processes, or clients; the next `SessionStart` still rechecks live state.
+
+Auto-on-demand is narrower than general automation. It requires a clean
+eligible state, exact configured identity and qualification, a secure
+machine-local isolated-home parent, and a lock directory. The runner creates a
+fresh `0700` home only for an eligible refresh and then delegates to the V2c-A
+controller. It never invokes bare `gitnexus analyze`, adopts stale data, parses
+the transcript, or turns hook output into authority. Hook-created homes remain
+for operator inspection and explicit cleanup; the runner does not auto-delete
+them. Controller failure persists a repository-bound `0600` circuit-breaker
+marker in the same parent. Subsequent hooks refuse automatic retry until an
+operator inspects the evidence and explicitly clears that exact marker.
+
 ## Global Guidance, Repo Instructions, And Rules
 
 Global Codex guidance is useful for cross-repository baseline behavior:

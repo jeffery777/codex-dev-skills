@@ -81,6 +81,8 @@ groups:
       - source: templates/orchestration/loop-iteration-report.template.md
       - source: templates/orchestration/loop-state-ledger.template.yaml
       - source: templates/orchestration/task-claim-lease.template.yaml
+      - source: templates/hooks/gitnexus-v2c-b/hooks.json.template
+      - source: templates/hooks/gitnexus-v2c-b/config.json.template
       - source: workflows/implementation-workflow.md
       - source: workflows/loop-engineering-workflow.md
 

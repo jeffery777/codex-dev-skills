@@ -1,0 +1,31 @@
+{
+  "description": "Optional V2c-B GitNexus freshness notifications and on-demand refresh.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"__ABSOLUTE_PYTHON3_EXECUTABLE__\" \"__ABSOLUTE_GITNEXUS_HOOK_SCRIPT__\" --config \"__ABSOLUTE_MACHINE_LOCAL_CONFIG__\"",
+            "timeout": 180,
+            "statusMessage": "Checking GitNexus index freshness"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"__ABSOLUTE_PYTHON3_EXECUTABLE__\" \"__ABSOLUTE_GITNEXUS_HOOK_SCRIPT__\" --config \"__ABSOLUTE_MACHINE_LOCAL_CONFIG__\"",
+            "timeout": 180,
+            "statusMessage": "Checking GitNexus index after shell activity"
+          }
+        ]
+      }
+    ]
+  }
+}

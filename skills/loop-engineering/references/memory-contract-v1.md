@@ -266,6 +266,29 @@ check, not GitNexus read/write authority. Adapter-specific tests prove
 unsupported/no-memory behavior. V2c-A creates no trusted conformance receipt
 that authorizes GitNexus query or mutation capabilities.
 
+## Optional GitNexus V2c-B Freshness Hooks
+
+V2c-B may observe documented Codex `SessionStart` and `PostToolUse` `Bash`
+events through the repo-owned `gitnexus_hook.py` runner. The current runtime has
+no native commit lifecycle event, so `PostToolUse` is only a best-effort signal
+after shell activity. It must not parse the command, claim complete
+interception, or replace the next `SessionStart` freshness check.
+
+The hook is `notify-only` unless machine-local control-plane config explicitly
+selects `auto-on-demand`. Refresh is eligible only for a clean missing index or
+clean indexed-revision mismatch. The runner creates a fresh empty `0700`
+isolated home below a pre-approved secure machine-local parent and delegates to
+the unchanged V2c-A controller with exact expected HEAD. Dirty, malformed,
+unknown, incompatible, corrupt, unsafe, unqualified, or controller-failed state
+remains no memory. Hook-created homes are not automatically deleted. Controller
+failure persists a repository-bound machine-local circuit breaker; subsequent
+hooks cannot retry automatically until an operator explicitly clears it.
+
+Hook input and output remain untrusted coordination context. They cannot
+authorize index adoption, backend mutation, external writes, gates, reviews,
+or completion. Absent, disabled, untrusted, skipped, timed-out, or unsupported
+hooks preserve the same no-backend behavior.
+
 ## Extension Policy
 
 Extension keys use `reverse.domain/name`. At most 16 keys and 4096 canonical

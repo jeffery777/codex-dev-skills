@@ -59,10 +59,13 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   identity/freshness metadata, an honestly narrowed handshake with `read_query`
   and all backend mutations unsupported, and an explicit offline `index-only`
   refresh controller. It remains unable to replace repository completion truth.
-- V2c-B is a separate follow-up: build commit/SessionStart stale notification
-  and opt-in auto-on-demand refresh only on top of the qualified controller.
-  Hooks remain optional guardrails; the adapter must remain safe when hooks are
-  unavailable. V2c-B does not authorize eager reindexing or scheduling by V2c-A.
+- V2c-B is in development under issue #103: add `SessionStart` plus
+  `PostToolUse` Bash stale notification and opt-in auto-on-demand refresh only
+  on top of the qualified controller. Codex currently exposes no native
+  `post-commit` event, so the Bash signal is explicitly incomplete and
+  `SessionStart` compensates. Hooks remain optional guardrails; the adapter
+  stays safe when hooks are unavailable. V2c-B does not authorize eager
+  reindexing or scheduling by V2c-A.
 
 ## Non-Goals
 

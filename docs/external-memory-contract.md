@@ -207,6 +207,45 @@ V2c-A does not emit a trusted conformance receipt authorizing GitNexus reads or
 writes; any future supported capability requires its own current qualification
 and adapter-specific conformance evidence.
 
+## V2c-B Optional Freshness Hooks
+
+V2c-B adds an optional hook runner without changing V2b authority or the V2c-A
+refresh controller. The runner consumes at most 64 KiB of strict UTF-8 JSON,
+rejects duplicate or unknown fields, ignores transcripts, and accepts only
+documented `SessionStart` or `PostToolUse` `Bash` events. Its machine-local
+configuration is an absolute current-user-owned regular file outside the
+repository with no group/world write permission. Repository identity,
+qualification digests, executable paths, isolated-home parent, and lock path
+remain control-plane input and are not committed.
+
+Codex does not currently expose a native `post-commit` lifecycle event.
+`PostToolUse` therefore rechecks the configured repository after Bash tool
+calls but does not parse or trust `tool_input.command`. It reports HEAD/index
+revision drift and suppresses ordinary uncommitted-only noise. This is a useful
+signal, not complete interception: other tools, processes, clients, and
+unsupported hook paths can change Git state. `SessionStart` rechecks live state
+for `startup`, `resume`, `clear`, and `compact` as the compensation path.
+
+`notify-only` is the default. `auto-on-demand` is separately configured and may
+refresh only a clean `stale` revision mismatch or clean `missing` index. The
+runner creates one new `0700` empty child below an approved secure
+machine-local parent and passes it to `RefreshController` with exact expected
+HEAD and explicit opt-in. The controller remains solely responsible for argv,
+environment, locking, qualification, repository preconditions, mutation
+detection, and metadata postconditions. Dirty, partial, incompatible, corrupt,
+unknown, identity-conflicted, or unsafe states never reach refresh.
+
+The runner does not automatically delete hook-created isolated homes. This
+preserves failure evidence and avoids an implicit cleanup authority; later
+cleanup is a separate exact operator action. A controller failure atomically
+persists and fsyncs a repository-bound `0600` circuit-breaker marker in the
+approved parent. Later hooks refuse automatic retry until an operator inspects
+the failure and explicitly clears that exact marker. Hooks disabled, absent,
+untrusted, skipped, timed out, malformed, or unsupported preserve the
+V1/V2a/V2b/V2c-A no-memory path. Hook output is advisory context and cannot
+authorize index adoption, repository mutation, an external write, review
+acceptance, gate satisfaction, or completion.
+
 ## Disable And Roll Back
 
 Leave the GitNexus adapter disabled, or remove its machine-local opt-in and
@@ -215,3 +254,8 @@ state. Rollback does not require deleting an index or rewriting repository
 files; do not reset, restore, or clean a repository that may contain user work.
 Source rollback may revert the reviewed V2c-A change independently. V1/V2a and
 the V2b no-backend path remain usable throughout.
+
+For V2c-B, disable or remove the materialized hook definition and stop
+supplying its machine-local config. Template installation is inert, so no
+uninstall is required to disable hooks. Rollback does not delete the derived
+index or hook-created isolated homes.
