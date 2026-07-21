@@ -12,6 +12,7 @@ summaries do not close findings; the final diff, tests, and review receipts do.
 | `V2CB-MF-CIRCUIT-BREAKER` | MUST-FIX | Fixed | Controller failure persists/fsyncs a secure repository-bound marker and later hooks do not retry automatically. |
 | `V2CB-NIT-NUL-PATH` | NIT | Fixed | Absolute path parser rejects NUL before filesystem calls. |
 | `V2CB-NIT-NODE-TEMPLATE` | NIT | Fixed | Qualified env-node template requires explicit Node and runtime-digest placeholders. |
+| `V2CB-MERGE-LEDGER-SOURCE` | MUST-FIX | Fixed | Authorized `source_rebound`, task/gate completion, and terminal objective events replace the stale active ledger; `receipts/merge-review-finding-resolution.md` records the remediation and verification boundary. |
 
 ## Final State
 
@@ -26,3 +27,6 @@ Final evidence:
 - `receipts/deep-code-review-final.md`
 - `receipts/docs-review-final.md`
 - `receipts/verification-report.md`
+- `receipts/publication-authorization.md`
+- `receipts/merge-review-finding-resolution.md`
+- `receipts/ledger-remediation-docs-review-gate.md`
