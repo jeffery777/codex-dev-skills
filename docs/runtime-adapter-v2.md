@@ -17,6 +17,8 @@ A second-version adapter may expose a narrow, documented control surface for Des
 - create a new Desktop thread from a prepared prompt;
 - fork or continue from an existing Desktop thread when the runtime explicitly supports it;
 - send a prepared message to a selected thread;
+- list tasks or wait for bounded, compact progress snapshots when the active
+  runtime explicitly exposes those observation operations;
 - read thread metadata needed to verify delegation state, such as thread identifier, title, branch or worktree label when exposed, created time, and current lifecycle state.
 
 All metadata reads are read-only and must be limited to what the configured runtime, connector, plugin, official documentation, or caller-supplied documented runtime metadata intentionally exposes. The adapter should not infer state from private Desktop runtime state, including local databases, logs, sessions, auth files, caches, app state, unpublished endpoints, UI scraping, daemons, background services, or unpublished services.
@@ -26,7 +28,10 @@ All metadata reads are read-only and must be limited to what the configured runt
 A future adapter may use only these sources:
 
 - documented and configured APIs that are intentionally exposed for thread operations;
-- runtime-provided MCP or thread tools such as `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or equivalent named tools when they are present in the active tool list;
+- runtime-provided MCP or thread tools such as `create_thread`, `fork_thread`,
+  `list_threads`, `read_thread`, `wait_threads`, `send_message_to_thread`,
+  `handoff_thread`, or equivalent named tools when they are present in the
+  active tool list;
 - explicitly installed plugins or connectors that expose thread operations through a documented interface;
 - caller-supplied documented metadata, such as an active tool list excerpt, connector metadata, or runtime-reported schema that has already been gathered and supplied to the wrapper;
 - ordinary repository files and git commands for repo state, branch checks, prompts, and evidence.
@@ -36,14 +41,29 @@ Caller-supplied metadata is evidence to normalize, not permission to call the ca
 
 ## Contract Family Boundary
 
-Facts last verified on 2026-07-07:
+Facts last verified on 2026-07-21. The current public product surface is the
+ChatGPT desktop app; this document retains `Desktop` as the compatibility label
+for its Codex task and thread control plane:
 
-- Desktop app tools are app-level tools exposed by Codex Desktop. Current thread-tool evidence includes `create_thread`, `read_thread`, `send_message_to_thread`, and `fork_thread`.
+- Desktop app tools are app-level tools exposed by the active desktop runtime.
+  Current thread-tool evidence includes `create_thread`, `fork_thread`,
+  `list_threads`, `read_thread`, `wait_threads`, `send_message_to_thread`, and
+  `handoff_thread`.
 - Desktop also exposes `list_projects`; project-scoped `create_thread` callers should use a returned `projectId` rather than infer project identity from private Desktop runtime state.
 - Desktop `create_thread` requires `prompt` and `target`; `target` is a `project` or `projectless` union, with project targets carrying a `projectId` plus a local or worktree `environment`. Worktree targets may include `startingState` only for an explicitly requested existing git state; otherwise the worktree starts from the project's default branch. `model` and `thinking` are optional and should generally be omitted unless explicitly requested and supported.
+- Immediate creation returns `threadId` plus `hostId`; queued worktree setup
+  returns `clientThreadId`. These are lifecycle and routing evidence, not
+  completion proof.
 - Desktop `read_thread` requires `threadId` and supports optional `hostId`, `turnLimit`, `cursor`, `includeOutputs`, and `maxOutputCharsPerItem`.
+- Desktop `wait_threads` accepts one to eight targets with `threadId` plus
+  optional `hostId` and `afterCursor`, and supports a bounded timeout. It
+  returns compact progress snapshots, wakes on completion or attention rather
+  than ordinary commentary, and does not prove repository completion.
 - Desktop `send_message_to_thread` requires `threadId` and `prompt`; `hostId`, `model`, and `thinking` are optional.
 - Desktop `fork_thread` accepts optional `threadId` and optional `environment`.
+- Desktop `handoff_thread` is state-changing and returns operation progress
+  evidence that must be followed through the documented status operation when
+  that operation is exposed.
 - `codex app-server` is a separate JSON-RPC interface, with methods such as `thread/start`, `thread/read`, `thread/fork`, and `turn/start`. Its initialization, transport/auth handling, request fields, and response envelopes are not interchangeable with Desktop app tools.
 - The Codex SDK wraps app-server. It is not evidence that this repository already implements a CLI `create_thread` path.
 
@@ -55,7 +75,9 @@ Before a future adapter or wrapper calls a runtime thread tool or documented API
 
 For each supported runtime action, record:
 
-- runtime thread tool or API contract name, such as `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or the documented equivalent;
+- runtime thread tool or API contract name, such as `create_thread`,
+  `fork_thread`, `list_threads`, `read_thread`, `wait_threads`,
+  `send_message_to_thread`, `handoff_thread`, or the documented equivalent;
 - underlying API or tool contract version when the runtime exposes one;
 - `version unavailable` when the runtime does not expose a version, plus the verifiable capability source used instead, such as the active tool list, connector metadata, official documentation version, or runtime-reported schema;
 - minimal request shape required by the adapter, including required parameters, optional parameters used, and target identity fields;
@@ -87,7 +109,7 @@ runtime_contracts:
     response_shape_minimum:
       required: ["threadId for immediate creation or clientThreadId for queued creation"]
       errors: ["runtime-provided error shape"]
-    last_verified: "2026-07-10"
+    last_verified: "2026-07-21"
 ```
 
 ## Prohibited Sources

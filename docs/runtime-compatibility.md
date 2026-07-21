@@ -2,6 +2,13 @@
 
 This repository uses four compatibility labels.
 
+In current product naming, the Desktop control surface runs inside the ChatGPT
+desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
+compatibility labels for Codex task, thread, worktree, UI, and scheduling
+controls. The labels do not imply that shared reasoning or subagent delegation
+is Desktop-only. See the maintained
+[2026-07-21 compatibility evidence](codex-runtime-compatibility-evidence-2026-07-21.md).
+
 ## `shared`
 
 Works in Codex CLI, Codex Desktop, and supported IDE surfaces through repository
@@ -126,6 +133,12 @@ Creating, forking, messaging, archiving, pinning, or otherwise mutating a
 user-owned Desktop task requires the authority specified by the active runtime
 and repository policy. A CLI fallback may prepare the same prompt or task brief
 but must not claim to control Desktop tasks.
+
+`list_threads`, `read_thread`, and `wait_threads` are observation and
+coordination operations when the active callable schema classifies them that
+way. A bounded wait may return compact progress for multiple tasks, but it is
+not repository completion evidence and does not replace detailed reads,
+integration checks, verification, or review.
 
 ## Evidence
 
