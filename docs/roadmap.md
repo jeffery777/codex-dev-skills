@@ -59,13 +59,14 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   identity/freshness metadata, an honestly narrowed handshake with `read_query`
   and all backend mutations unsupported, and an explicit offline `index-only`
   refresh controller. It remains unable to replace repository completion truth.
-- V2c-B is in development under issue #103: add `SessionStart` plus
-  `PostToolUse` Bash stale notification and opt-in auto-on-demand refresh only
-  on top of the qualified controller. Codex currently exposes no native
-  `post-commit` event, so the Bash signal is explicitly incomplete and
-  `SessionStart` compensates. Hooks remain optional guardrails; the adapter
-  stays safe when hooks are unavailable. V2c-B does not authorize eager
-  reindexing or scheduling by V2c-A.
+- Loop Engineering V2c-B shipped in v0.9.0 from issue #103. It adds bounded
+  `SessionStart` plus `PostToolUse` Bash freshness checks and separately
+  enabled auto-on-demand refresh only through the qualified V2c-A controller.
+  Codex currently exposes no native `post-commit` event, so the Bash signal is
+  explicitly incomplete and `SessionStart` compensates. Hooks remain optional,
+  inactive-by-default guardrails; the adapter stays safe when hooks are absent,
+  untrusted, malformed, or unavailable. V2c-B does not add eager reindexing,
+  scheduling, a daemon, or a direct bare GitNexus mutation path.
 
 ## Non-Goals
 
