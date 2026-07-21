@@ -1,0 +1,107 @@
+project:
+  schema_version: 2
+  name: "Loop Engineering V2c-B GitNexus hooks"
+  objective_id: "issue-103"
+  source_of_truth:
+    - "AGENTS.md"
+    - "docs/loops/issue-103/loop-spec.md"
+    - "docs/loops/issue-103/implementation-plan.md"
+  contract_revision:
+    previous_manifest_sha256: ""
+    updated_at: "2026-07-21T03:30:15Z"
+
+tasks:
+  - id: "P0-contract"
+    title: "Define V2c-B hook and safety contract"
+    initial_status: "ready"
+    priority: "high"
+    dependencies: []
+    risk: "medium"
+    kind: "docs"
+    objective: "Bind supported events, opt-in semantics, controller delegation, fallback, and DoD."
+    scope:
+      in: ["loop spec", "implementation plan", "task manifest"]
+      out: ["runtime mutation", "plugin packaging"]
+    ownership:
+      expected_paths: ["docs/loops/issue-103"]
+      parallel_write_safe: false
+    dod: ["Normative behavior and verification are explicit and non-conflicting."]
+    verification: ["python3 scripts/validate-loop-ledger.py --help"]
+    review: {required: true, mode: "docs-review"}
+    stop_conditions: ["Official hook contract conflicts with repository policy."]
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P1-hook-runner"
+    title: "Implement bounded hook runner and inactive templates"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P0-contract"]
+    risk: "high"
+    kind: "implementation"
+    objective: "Provide notify-only and opt-in auto-on-demand freshness handling through V2c-A."
+    scope:
+      in: ["SessionStart", "PostToolUse Bash", "machine-local config", "V2c-A controller"]
+      out: ["command parsing", "eager refresh", "scheduler", "global config mutation"]
+    ownership:
+      expected_paths:
+        - "skills/loop-engineering/scripts/gitnexus_hook.py"
+        - "templates/hooks/gitnexus-v2c-b"
+        - "catalog.yaml"
+        - "install.sh"
+      parallel_write_safe: false
+    dod:
+      - "Notify-only is default and refresh requires separate opt-in."
+      - "Malformed, untrusted, dirty, conflicted, and unavailable states fail safe."
+      - "Refresh delegates only to V2c-A RefreshController."
+    verification: ["PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_gitnexus_hook"]
+    review: {required: true, mode: "code-review-deep"}
+    stop_conditions: ["Implementation requires undocumented runtime state or broader authority."]
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P2-tests-docs"
+    title: "Complete negative tests and public documentation"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P1-hook-runner"]
+    risk: "medium"
+    kind: "implementation"
+    objective: "Prove safe fallback and document adoption, rollout, and rollback."
+    scope:
+      in: ["unit tests", "integration tests", "README", "contract docs", "roadmap"]
+      out: ["release tag", "GitHub Release"]
+    ownership:
+      expected_paths: ["tests", "README.md", "docs"]
+      parallel_write_safe: false
+    dod:
+      - "Targeted and full repository verification pass."
+      - "Docs state coverage limits and inactive opt-in adoption."
+    verification:
+      - "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests"
+      - "./scripts/validate-repo.sh"
+      - "git diff --check"
+    review: {required: true, mode: "code-review-deep"}
+    stop_conditions: ["Existing V2b/V2c-A contract would need weakening."]
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P3-readiness"
+    title: "Review closure and PR-readiness evidence"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P2-tests-docs"]
+    risk: "medium"
+    kind: "review"
+    objective: "Close review findings and prepare a non-published PR-ready branch."
+    scope:
+      in: ["deep code review", "docs review", "formal readiness gate"]
+      out: ["commit", "push", "PR creation", "merge", "release"]
+    ownership:
+      expected_paths: ["docs/loops/issue-103"]
+      parallel_write_safe: false
+    dod: ["No unresolved MUST-FIX findings and residual risks are recorded."]
+    verification: ["git status --short --branch", "git diff --check"]
+    review: {required: true, mode: "formal-gate"}
+    stop_conditions: ["Publication requires a new exact human authorization."]
+    human_gate:
+      required: true
+      gate: "publication"
+      reason: "Commit, push, and PR creation require exact authorization."

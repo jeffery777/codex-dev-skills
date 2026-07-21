@@ -1,0 +1,820 @@
+ledger:
+  schema_version: 2
+  objective_id: issue-103
+  objective: Deliver optional GitNexus hook-driven index freshness through local PR
+    readiness without publication.
+  loop_spec: docs/loops/issue-103/loop-spec.md
+  task_manifest: docs/loops/issue-103/task-manifest.yaml
+  source_revision:
+    branch: codex/issue-103-v2c-b-hooks
+    head_sha: 81552619340f1e96bee7880fd23bb6da65f035e5
+    spec_sha256: eb7ef3e57402b045b46d57ac613994c111e73847b0ba2e16ff18b0f056d589c2
+    task_manifest_sha256: 6a323de5f6385ecffbf1147c3b8961898d5cef46081065b44d1385d644f96de1
+    previous_ledger_sha256: 3a4aaa3c3f5da21adda105f06c638c5c87e0ea51730922177a101e31ff20d86c
+    updated_at: '2026-07-21T04:13:56Z'
+  state_revision:
+    sequence: 26
+    last_event_hash: d8b589c0c1cbec93d0be19167ea2a4f92d2148b7390c7554611a91704db9494a
+status_model:
+  task_allowed:
+  - planned
+  - ready
+  - in_progress
+  - blocked
+  - reviewing
+  - done
+  - accepted
+  - cancelled
+  claim_allowed:
+  - active
+  - released
+  - expired
+  - revoked
+  done_means: Task DoD, verification, review, and required gate evidence are satisfied
+    through an independently authorized task-completion event.
+  accepted_means: A bound receipt was applied through an independently authorized
+    live write; consumers revalidate current external state before publication.
+current_loop:
+  lifecycle: complete
+  classification: complete
+  execution_mode: current-session
+  selected_task_id: ''
+  next_decision: complete
+  decision_reason: All task DoD, verification, review, protected completion, and
+    publication gate evidence are satisfied for ready-for-review PR 104; merge and
+    release remain outside this objective.
+tasks:
+- id: P0-contract
+  status: done
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-103/loop-spec.md
+      - docs/loops/issue-103/task-manifest.yaml
+    review:
+      status: passed
+      mode: docs-review
+      artifacts:
+      - docs/loops/issue-103/receipts/docs-review-final.md
+    acceptance:
+      status: not_required
+      artifact: ''
+  blocker: {}
+  residual_risk: []
+- id: P1-hook-runner
+  status: done
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-103/receipts/verification-report.md
+    review:
+      status: passed
+      mode: code-review-deep
+      artifacts:
+      - docs/loops/issue-103/receipts/deep-code-review-final.md
+    acceptance:
+      status: not_required
+      artifact: ''
+  blocker: {}
+  residual_risk:
+  - Live auto-on-demand GitNexus execution is not part of this repository test run.
+- id: P2-tests-docs
+  status: done
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-103/receipts/verification-report.md
+    review:
+      status: passed
+      mode: code-review-deep
+      artifacts:
+      - docs/loops/issue-103/receipts/deep-code-review-final.md
+    acceptance:
+      status: not_required
+      artifact: ''
+  blocker: {}
+  residual_risk:
+  - Windows hook execution remains explicitly unsupported.
+- id: P3-readiness
+  status: done
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-103/receipts/verification-report.md
+    review:
+      status: passed
+      mode: formal-gate
+      artifacts:
+      - docs/loops/issue-103/receipts/pr-readiness-gate.md
+    acceptance:
+      status: not_required
+      artifact: ''
+  blocker: {}
+  residual_risk:
+  - Merge, release, deployment, and machine-local hook activation remain unauthorized
+    external actions.
+claims:
+- task_id: P0-contract
+  status: released
+  owner:
+    type: current_session
+    id: codex-root
+  fencing_token:
+    generation: 1
+    nonce: issue-103-P0-contract-current-session
+  expected_state_revision: 1
+  source_revision:
+    branch: codex/issue-103-v2c-b-hooks
+    head_sha: 81552619340f1e96bee7880fd23bb6da65f035e5
+    spec_sha256: eb7ef3e57402b045b46d57ac613994c111e73847b0ba2e16ff18b0f056d589c2
+    task_manifest_sha256: 6a323de5f6385ecffbf1147c3b8961898d5cef46081065b44d1385d644f96de1
+  claimed_at: '2026-07-21T04:12:47Z'
+  lease_expires_at: '2026-07-21T05:17:47Z'
+- task_id: P1-hook-runner
+  status: released
+  owner:
+    type: current_session
+    id: codex-root
+  fencing_token:
+    generation: 1
+    nonce: issue-103-P1-hook-runner-current-session
+  expected_state_revision: 7
+  source_revision:
+    branch: codex/issue-103-v2c-b-hooks
+    head_sha: 81552619340f1e96bee7880fd23bb6da65f035e5
+    spec_sha256: eb7ef3e57402b045b46d57ac613994c111e73847b0ba2e16ff18b0f056d589c2
+    task_manifest_sha256: 6a323de5f6385ecffbf1147c3b8961898d5cef46081065b44d1385d644f96de1
+  claimed_at: '2026-07-21T04:12:54Z'
+  lease_expires_at: '2026-07-21T05:17:51Z'
+- task_id: P2-tests-docs
+  status: released
+  owner:
+    type: current_session
+    id: codex-root
+  fencing_token:
+    generation: 1
+    nonce: issue-103-P2-tests-docs-current-session
+  expected_state_revision: 13
+  source_revision:
+    branch: codex/issue-103-v2c-b-hooks
+    head_sha: 81552619340f1e96bee7880fd23bb6da65f035e5
+    spec_sha256: eb7ef3e57402b045b46d57ac613994c111e73847b0ba2e16ff18b0f056d589c2
+    task_manifest_sha256: 6a323de5f6385ecffbf1147c3b8961898d5cef46081065b44d1385d644f96de1
+  claimed_at: '2026-07-21T04:13:01Z'
+  lease_expires_at: '2026-07-21T05:17:56Z'
+- task_id: P3-readiness
+  status: released
+  owner:
+    type: current_session
+    id: codex-root
+  fencing_token:
+    generation: 1
+    nonce: issue-103-P3-readiness-current-session
+  expected_state_revision: 19
+  source_revision:
+    branch: codex/issue-103-v2c-b-hooks
+    head_sha: 81552619340f1e96bee7880fd23bb6da65f035e5
+    spec_sha256: eb7ef3e57402b045b46d57ac613994c111e73847b0ba2e16ff18b0f056d589c2
+    task_manifest_sha256: 6a323de5f6385ecffbf1147c3b8961898d5cef46081065b44d1385d644f96de1
+  claimed_at: '2026-07-21T04:13:08Z'
+  lease_expires_at: '2026-07-21T05:18:01Z'
+events:
+- sequence: 1
+  event_id: issue-103-source-rebound-pr-head
+  occurred_at: '2026-07-21T04:12:29Z'
+  actor: jeffery777
+  type: source_rebound
+  task_id: ''
+  idempotency_key: issue-103-source-rebound-pr-head
+  expected_state_revision: 0
+  previous_event_hash: ''
+  payload:
+    previous_source_revision:
+      branch: codex/issue-103-v2c-b-hooks
+      head_sha: 012d1de0148362468c3861fff65883577c58be01
+      spec_sha256: eb7ef3e57402b045b46d57ac613994c111e73847b0ba2e16ff18b0f056d589c2
+      task_manifest_sha256: 6a323de5f6385ecffbf1147c3b8961898d5cef46081065b44d1385d644f96de1
+    target_source_revision:
+      branch: codex/issue-103-v2c-b-hooks
+      head_sha: 81552619340f1e96bee7880fd23bb6da65f035e5
+      spec_sha256: eb7ef3e57402b045b46d57ac613994c111e73847b0ba2e16ff18b0f056d589c2
+      task_manifest_sha256: 6a323de5f6385ecffbf1147c3b8961898d5cef46081065b44d1385d644f96de1
+    active_claim_task_ids: []
+    evidence:
+      artifact: https://github.com/jeffery777/codex-dev-skills/commit/81552619340f1e96bee7880fd23bb6da65f035e5
+    authorization:
+      action: source_rebound
+      principal:
+        type: user
+        id: jeffery777
+      objective_id: issue-103
+      artifact: https://github.com/jeffery777/codex-dev-skills/commit/81552619340f1e96bee7880fd23bb6da65f035e5
+      source_revision_sha256: dde9ee3d7aa347aece10432f1d8f7114cbbfa065241789e73403a21477d7d3fc
+      target_head_sha: 81552619340f1e96bee7880fd23bb6da65f035e5
+      protected_payload_sha256: 45927e9f5e7a9eff1f39b6d0305585b1385f0cec08449aeebd4bb3c8486f738b
+  event_hash: 7390c00692168b674e1a799d9e38f9500b995bdd6ad7b539e4d32f8dda580641
+- sequence: 2
+  event_id: issue-103-P0-contract-claim
+  occurred_at: '2026-07-21T04:12:47Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P0-contract
+  idempotency_key: issue-103-P0-contract-claim
+  expected_state_revision: 1
+  previous_event_hash: 7390c00692168b674e1a799d9e38f9500b995bdd6ad7b539e4d32f8dda580641
+  payload:
+    claim:
+      task_id: P0-contract
+      status: active
+      owner:
+        type: current_session
+        id: codex-root
+      fencing_token:
+        generation: 1
+        nonce: issue-103-P0-contract-current-session
+      expected_state_revision: 1
+      source_revision:
+        branch: codex/issue-103-v2c-b-hooks
+        head_sha: 81552619340f1e96bee7880fd23bb6da65f035e5
+        spec_sha256: eb7ef3e57402b045b46d57ac613994c111e73847b0ba2e16ff18b0f056d589c2
+        task_manifest_sha256: 6a323de5f6385ecffbf1147c3b8961898d5cef46081065b44d1385d644f96de1
+      claimed_at: '2026-07-21T04:12:47Z'
+      lease_expires_at: '2026-07-21T05:17:47Z'
+  event_hash: bd3b8a71e355b2696c8e139a06d8a62a20d9b874cec201a1e4b2f19c90dce09b
+- sequence: 3
+  event_id: issue-103-P0-contract-in-progress
+  occurred_at: '2026-07-21T04:12:49Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P0-contract
+  idempotency_key: issue-103-P0-contract-in-progress
+  expected_state_revision: 2
+  previous_event_hash: bd3b8a71e355b2696c8e139a06d8a62a20d9b874cec201a1e4b2f19c90dce09b
+  payload:
+    target_status: in_progress
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P0-contract-current-session
+    evidence: {}
+  event_hash: 2cc8924a33956fbc73df3bf0a11225cb872dc8e8726c515f4cbfc8cce226d434
+- sequence: 4
+  event_id: issue-103-P0-contract-reviewing
+  occurred_at: '2026-07-21T04:12:50Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P0-contract
+  idempotency_key: issue-103-P0-contract-reviewing
+  expected_state_revision: 3
+  previous_event_hash: 2cc8924a33956fbc73df3bf0a11225cb872dc8e8726c515f4cbfc8cce226d434
+  payload:
+    target_status: reviewing
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P0-contract-current-session
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-103/loop-spec.md
+        - docs/loops/issue-103/task-manifest.yaml
+      review:
+        status: required
+        mode: docs-review
+        artifacts: []
+  event_hash: 6d44158d25e0a01b76733293ceb17f10d99cd152c6532a3ad3f14ed1f7e0e264
+- sequence: 5
+  event_id: issue-103-P0-contract-done
+  occurred_at: '2026-07-21T04:12:51Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P0-contract
+  idempotency_key: issue-103-P0-contract-done
+  expected_state_revision: 4
+  previous_event_hash: 6d44158d25e0a01b76733293ceb17f10d99cd152c6532a3ad3f14ed1f7e0e264
+  payload:
+    target_status: done
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P0-contract-current-session
+    human_gate: not_required
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-103/loop-spec.md
+        - docs/loops/issue-103/task-manifest.yaml
+      review:
+        status: passed
+        mode: docs-review
+        artifacts:
+        - docs/loops/issue-103/receipts/docs-review-final.md
+      acceptance:
+        status: not_required
+        artifact: ''
+    authorization:
+      action: task_completion
+      principal:
+        type: user
+        id: jeffery777
+      objective_id: issue-103
+      artifact: docs/loops/issue-103/receipts/docs-review-final.md
+      source_revision_sha256: d9ad5d081851fbeb5d98ace4aeee78604ea20bd2c773f34fac68bb63ecdb8671
+      task_id: P0-contract
+      protected_payload_sha256: 101b8bdb2ad4afb5e17eb8b804ccdcbcc0a8d009a185bc02e8d618134a252fdb
+  event_hash: 91ab81de7eb361f3ba5efd61522f1cad52a9004f336c98e22c474b24b5bb0f41
+- sequence: 6
+  event_id: issue-103-P0-contract-claim-released
+  occurred_at: '2026-07-21T04:12:52Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P0-contract
+  idempotency_key: issue-103-P0-contract-claim-released
+  expected_state_revision: 5
+  previous_event_hash: 91ab81de7eb361f3ba5efd61522f1cad52a9004f336c98e22c474b24b5bb0f41
+  payload:
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P0-contract-current-session
+  event_hash: 61557e086da6d2f884cc76e32907d435eca699be63df278b713f791f52107ec2
+- sequence: 7
+  event_id: issue-103-P1-hook-runner-ready
+  occurred_at: '2026-07-21T04:12:53Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P1-hook-runner
+  idempotency_key: issue-103-P1-hook-runner-ready
+  expected_state_revision: 6
+  previous_event_hash: 61557e086da6d2f884cc76e32907d435eca699be63df278b713f791f52107ec2
+  payload:
+    target_status: ready
+    evidence: {}
+  event_hash: e62b1d8a076fe348e6b532b553c706dc1a2083a6daa5f46c3f857fb1cb29986f
+- sequence: 8
+  event_id: issue-103-P1-hook-runner-claim
+  occurred_at: '2026-07-21T04:12:54Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P1-hook-runner
+  idempotency_key: issue-103-P1-hook-runner-claim
+  expected_state_revision: 7
+  previous_event_hash: e62b1d8a076fe348e6b532b553c706dc1a2083a6daa5f46c3f857fb1cb29986f
+  payload:
+    claim:
+      task_id: P1-hook-runner
+      status: active
+      owner:
+        type: current_session
+        id: codex-root
+      fencing_token:
+        generation: 1
+        nonce: issue-103-P1-hook-runner-current-session
+      expected_state_revision: 7
+      source_revision:
+        branch: codex/issue-103-v2c-b-hooks
+        head_sha: 81552619340f1e96bee7880fd23bb6da65f035e5
+        spec_sha256: eb7ef3e57402b045b46d57ac613994c111e73847b0ba2e16ff18b0f056d589c2
+        task_manifest_sha256: 6a323de5f6385ecffbf1147c3b8961898d5cef46081065b44d1385d644f96de1
+      claimed_at: '2026-07-21T04:12:54Z'
+      lease_expires_at: '2026-07-21T05:17:51Z'
+  event_hash: a5d95b221563ecd8ce0ca71d3e4413d49ebbc0ae72eea392465f30c0013ba037
+- sequence: 9
+  event_id: issue-103-P1-hook-runner-in-progress
+  occurred_at: '2026-07-21T04:12:56Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P1-hook-runner
+  idempotency_key: issue-103-P1-hook-runner-in-progress
+  expected_state_revision: 8
+  previous_event_hash: a5d95b221563ecd8ce0ca71d3e4413d49ebbc0ae72eea392465f30c0013ba037
+  payload:
+    target_status: in_progress
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P1-hook-runner-current-session
+    evidence: {}
+  event_hash: ed66c532a65944a8fe8687372a71078d143594c26ac2678c245efd267d221631
+- sequence: 10
+  event_id: issue-103-P1-hook-runner-reviewing
+  occurred_at: '2026-07-21T04:12:57Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P1-hook-runner
+  idempotency_key: issue-103-P1-hook-runner-reviewing
+  expected_state_revision: 9
+  previous_event_hash: ed66c532a65944a8fe8687372a71078d143594c26ac2678c245efd267d221631
+  payload:
+    target_status: reviewing
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P1-hook-runner-current-session
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-103/receipts/verification-report.md
+      review:
+        status: required
+        mode: code-review-deep
+        artifacts: []
+  event_hash: 9ed3f00c74380bc174b9274c761f44a5793f25b6929e2f56c7799aa717172bbf
+- sequence: 11
+  event_id: issue-103-P1-hook-runner-done
+  occurred_at: '2026-07-21T04:12:58Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P1-hook-runner
+  idempotency_key: issue-103-P1-hook-runner-done
+  expected_state_revision: 10
+  previous_event_hash: 9ed3f00c74380bc174b9274c761f44a5793f25b6929e2f56c7799aa717172bbf
+  payload:
+    target_status: done
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P1-hook-runner-current-session
+    human_gate: not_required
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-103/receipts/verification-report.md
+      review:
+        status: passed
+        mode: code-review-deep
+        artifacts:
+        - docs/loops/issue-103/receipts/deep-code-review-final.md
+      acceptance:
+        status: not_required
+        artifact: ''
+    authorization:
+      action: task_completion
+      principal:
+        type: user
+        id: jeffery777
+      objective_id: issue-103
+      artifact: docs/loops/issue-103/receipts/deep-code-review-final.md
+      source_revision_sha256: d9ad5d081851fbeb5d98ace4aeee78604ea20bd2c773f34fac68bb63ecdb8671
+      task_id: P1-hook-runner
+      protected_payload_sha256: 417f56d763a20687c649f4747ea081fffd5a35a58c268dffd9dc234b392c8992
+  event_hash: d5effd1ce907836fcc0792c87158145241a8e58c8c11a3d2cfa9ac403cfc51c8
+- sequence: 12
+  event_id: issue-103-P1-hook-runner-claim-released
+  occurred_at: '2026-07-21T04:12:59Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P1-hook-runner
+  idempotency_key: issue-103-P1-hook-runner-claim-released
+  expected_state_revision: 11
+  previous_event_hash: d5effd1ce907836fcc0792c87158145241a8e58c8c11a3d2cfa9ac403cfc51c8
+  payload:
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P1-hook-runner-current-session
+  event_hash: 8f56382d9910df82ada5a73a0f15cb91b3329357430eb83a8b1fa99c32415110
+- sequence: 13
+  event_id: issue-103-P2-tests-docs-ready
+  occurred_at: '2026-07-21T04:13:00Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P2-tests-docs
+  idempotency_key: issue-103-P2-tests-docs-ready
+  expected_state_revision: 12
+  previous_event_hash: 8f56382d9910df82ada5a73a0f15cb91b3329357430eb83a8b1fa99c32415110
+  payload:
+    target_status: ready
+    evidence: {}
+  event_hash: c7413c7c964f0a962150dcf7c295b89519d36453e0193aa07884550a7dc0c0c6
+- sequence: 14
+  event_id: issue-103-P2-tests-docs-claim
+  occurred_at: '2026-07-21T04:13:01Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P2-tests-docs
+  idempotency_key: issue-103-P2-tests-docs-claim
+  expected_state_revision: 13
+  previous_event_hash: c7413c7c964f0a962150dcf7c295b89519d36453e0193aa07884550a7dc0c0c6
+  payload:
+    claim:
+      task_id: P2-tests-docs
+      status: active
+      owner:
+        type: current_session
+        id: codex-root
+      fencing_token:
+        generation: 1
+        nonce: issue-103-P2-tests-docs-current-session
+      expected_state_revision: 13
+      source_revision:
+        branch: codex/issue-103-v2c-b-hooks
+        head_sha: 81552619340f1e96bee7880fd23bb6da65f035e5
+        spec_sha256: eb7ef3e57402b045b46d57ac613994c111e73847b0ba2e16ff18b0f056d589c2
+        task_manifest_sha256: 6a323de5f6385ecffbf1147c3b8961898d5cef46081065b44d1385d644f96de1
+      claimed_at: '2026-07-21T04:13:01Z'
+      lease_expires_at: '2026-07-21T05:17:56Z'
+  event_hash: b6991a957235ad87a54fa933439c30c95b499f60f7e3de9d42a0190332f4398c
+- sequence: 15
+  event_id: issue-103-P2-tests-docs-in-progress
+  occurred_at: '2026-07-21T04:13:03Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P2-tests-docs
+  idempotency_key: issue-103-P2-tests-docs-in-progress
+  expected_state_revision: 14
+  previous_event_hash: b6991a957235ad87a54fa933439c30c95b499f60f7e3de9d42a0190332f4398c
+  payload:
+    target_status: in_progress
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P2-tests-docs-current-session
+    evidence: {}
+  event_hash: 6f2be2aaaded0ff88d92630aa45998014480822ca96580b1d270f18379fa0934
+- sequence: 16
+  event_id: issue-103-P2-tests-docs-reviewing
+  occurred_at: '2026-07-21T04:13:04Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P2-tests-docs
+  idempotency_key: issue-103-P2-tests-docs-reviewing
+  expected_state_revision: 15
+  previous_event_hash: 6f2be2aaaded0ff88d92630aa45998014480822ca96580b1d270f18379fa0934
+  payload:
+    target_status: reviewing
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P2-tests-docs-current-session
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-103/receipts/verification-report.md
+      review:
+        status: required
+        mode: code-review-deep
+        artifacts: []
+  event_hash: 1b197ae0dbcc1a1a11d38b8fcb3284f53c95823054159f64cda0671fb6c06012
+- sequence: 17
+  event_id: issue-103-P2-tests-docs-done
+  occurred_at: '2026-07-21T04:13:05Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P2-tests-docs
+  idempotency_key: issue-103-P2-tests-docs-done
+  expected_state_revision: 16
+  previous_event_hash: 1b197ae0dbcc1a1a11d38b8fcb3284f53c95823054159f64cda0671fb6c06012
+  payload:
+    target_status: done
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P2-tests-docs-current-session
+    human_gate: not_required
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-103/receipts/verification-report.md
+      review:
+        status: passed
+        mode: code-review-deep
+        artifacts:
+        - docs/loops/issue-103/receipts/deep-code-review-final.md
+      acceptance:
+        status: not_required
+        artifact: ''
+    authorization:
+      action: task_completion
+      principal:
+        type: user
+        id: jeffery777
+      objective_id: issue-103
+      artifact: docs/loops/issue-103/receipts/deep-code-review-final.md
+      source_revision_sha256: d9ad5d081851fbeb5d98ace4aeee78604ea20bd2c773f34fac68bb63ecdb8671
+      task_id: P2-tests-docs
+      protected_payload_sha256: 4c3ba118bafb850b9dbae73d5ef1fe967c5da9ec723cbe0910ac9d86a7075cbd
+  event_hash: 213d6f99c608c7f07d628bf65fd47c6928f6f2f86930687dbaf817c5369be962
+- sequence: 18
+  event_id: issue-103-P2-tests-docs-claim-released
+  occurred_at: '2026-07-21T04:13:06Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P2-tests-docs
+  idempotency_key: issue-103-P2-tests-docs-claim-released
+  expected_state_revision: 17
+  previous_event_hash: 213d6f99c608c7f07d628bf65fd47c6928f6f2f86930687dbaf817c5369be962
+  payload:
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P2-tests-docs-current-session
+  event_hash: 13643b9258cdf6352b66ecb8145fe224a37afb3874b78c980bc40732df02b2ee
+- sequence: 19
+  event_id: issue-103-P3-readiness-ready
+  occurred_at: '2026-07-21T04:13:07Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P3-readiness
+  idempotency_key: issue-103-P3-readiness-ready
+  expected_state_revision: 18
+  previous_event_hash: 13643b9258cdf6352b66ecb8145fe224a37afb3874b78c980bc40732df02b2ee
+  payload:
+    target_status: ready
+    evidence: {}
+  event_hash: f4dce68829bd8eedec7cb836d8157e8b7ab42e08dd4cf32117006e29a09a8e7a
+- sequence: 20
+  event_id: issue-103-P3-readiness-claim
+  occurred_at: '2026-07-21T04:13:08Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P3-readiness
+  idempotency_key: issue-103-P3-readiness-claim
+  expected_state_revision: 19
+  previous_event_hash: f4dce68829bd8eedec7cb836d8157e8b7ab42e08dd4cf32117006e29a09a8e7a
+  payload:
+    claim:
+      task_id: P3-readiness
+      status: active
+      owner:
+        type: current_session
+        id: codex-root
+      fencing_token:
+        generation: 1
+        nonce: issue-103-P3-readiness-current-session
+      expected_state_revision: 19
+      source_revision:
+        branch: codex/issue-103-v2c-b-hooks
+        head_sha: 81552619340f1e96bee7880fd23bb6da65f035e5
+        spec_sha256: eb7ef3e57402b045b46d57ac613994c111e73847b0ba2e16ff18b0f056d589c2
+        task_manifest_sha256: 6a323de5f6385ecffbf1147c3b8961898d5cef46081065b44d1385d644f96de1
+      claimed_at: '2026-07-21T04:13:08Z'
+      lease_expires_at: '2026-07-21T05:18:01Z'
+  event_hash: fe0f8b676d4df32b93a91bb713cf1f10b70b3dd84366afd97133fd1a7e93fdf7
+- sequence: 21
+  event_id: issue-103-P3-readiness-in-progress
+  occurred_at: '2026-07-21T04:13:10Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P3-readiness
+  idempotency_key: issue-103-P3-readiness-in-progress
+  expected_state_revision: 20
+  previous_event_hash: fe0f8b676d4df32b93a91bb713cf1f10b70b3dd84366afd97133fd1a7e93fdf7
+  payload:
+    target_status: in_progress
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P3-readiness-current-session
+    evidence: {}
+  event_hash: b96865b1d4f4df919846dd44c2db30fd30632684b25801b0480da8a394780ea9
+- sequence: 22
+  event_id: issue-103-P3-readiness-reviewing
+  occurred_at: '2026-07-21T04:13:11Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P3-readiness
+  idempotency_key: issue-103-P3-readiness-reviewing
+  expected_state_revision: 21
+  previous_event_hash: b96865b1d4f4df919846dd44c2db30fd30632684b25801b0480da8a394780ea9
+  payload:
+    target_status: reviewing
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P3-readiness-current-session
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-103/receipts/verification-report.md
+      review:
+        status: required
+        mode: formal-gate
+        artifacts: []
+  event_hash: 672dde6a1dde9dad4c6dfb0ec35df4f7f190abdb4683e3519d1c4ad74af39b62
+- sequence: 23
+  event_id: issue-103-publication-gate-satisfied
+  occurred_at: '2026-07-21T04:13:12Z'
+  actor: jeffery777
+  type: gate_updated
+  task_id: ''
+  idempotency_key: issue-103-publication-gate-satisfied
+  expected_state_revision: 22
+  previous_event_hash: 672dde6a1dde9dad4c6dfb0ec35df4f7f190abdb4683e3519d1c4ad74af39b62
+  payload:
+    gate: publication
+    status: satisfied
+    evidence:
+      artifact: docs/loops/issue-103/receipts/publication-authorization.md
+    authorization:
+      action: gate_satisfaction
+      principal:
+        type: user
+        id: jeffery777
+      objective_id: issue-103
+      artifact: docs/loops/issue-103/receipts/publication-authorization.md
+      source_revision_sha256: d9ad5d081851fbeb5d98ace4aeee78604ea20bd2c773f34fac68bb63ecdb8671
+      gate: publication
+      protected_payload_sha256: a8dd7f715362fa331ba2e3868e5f285f434eb635060f73c478da6461fda6a0de
+  event_hash: aaf4ec8ce16cfe02869f8be815082ead01a901c1157e6a214eb3635d8a56848a
+- sequence: 24
+  event_id: issue-103-P3-readiness-done
+  occurred_at: '2026-07-21T04:13:13Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P3-readiness
+  idempotency_key: issue-103-P3-readiness-done
+  expected_state_revision: 23
+  previous_event_hash: aaf4ec8ce16cfe02869f8be815082ead01a901c1157e6a214eb3635d8a56848a
+  payload:
+    target_status: done
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P3-readiness-current-session
+    human_gate: satisfied
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-103/receipts/verification-report.md
+      review:
+        status: passed
+        mode: formal-gate
+        artifacts:
+        - docs/loops/issue-103/receipts/pr-readiness-gate.md
+      acceptance:
+        status: not_required
+        artifact: ''
+    authorization:
+      action: task_completion
+      principal:
+        type: user
+        id: jeffery777
+      objective_id: issue-103
+      artifact: docs/loops/issue-103/receipts/pr-readiness-gate.md
+      source_revision_sha256: d9ad5d081851fbeb5d98ace4aeee78604ea20bd2c773f34fac68bb63ecdb8671
+      task_id: P3-readiness
+      protected_payload_sha256: bd308928fe1451dff232f1af1fb241257c573d97aaf9acc4c33339d4a8d14d64
+  event_hash: 4db48ab3aeaa86fbde1594f8db82711a12cd33a47bd5b643aafb2c245c59b3ab
+- sequence: 25
+  event_id: issue-103-P3-readiness-claim-released
+  occurred_at: '2026-07-21T04:13:14Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P3-readiness
+  idempotency_key: issue-103-P3-readiness-claim-released
+  expected_state_revision: 24
+  previous_event_hash: 4db48ab3aeaa86fbde1594f8db82711a12cd33a47bd5b643aafb2c245c59b3ab
+  payload:
+    fencing_token:
+      generation: 1
+      nonce: issue-103-P3-readiness-current-session
+  event_hash: 7ee706c61af26f95d764b3ce0fa6e848a82c0b2c28cc67e965b0d731414e7854
+- sequence: 26
+  event_id: issue-103-objective-completed
+  occurred_at: '2026-07-21T04:13:56Z'
+  actor: jeffery777
+  type: objective_completed
+  task_id: ''
+  idempotency_key: issue-103-objective-completed
+  expected_state_revision: 25
+  previous_event_hash: 7ee706c61af26f95d764b3ce0fa6e848a82c0b2c28cc67e965b0d731414e7854
+  payload:
+    verification: passed
+    review: passed
+    human_gate: satisfied
+    evidence:
+      artifact: docs/loops/issue-103/receipts/merge-review-finding-resolution.md
+    authorization:
+      action: objective_completion
+      principal:
+        type: user
+        id: jeffery777
+      objective_id: issue-103
+      artifact: docs/loops/issue-103/receipts/merge-review-finding-resolution.md
+      source_revision_sha256: d9ad5d081851fbeb5d98ace4aeee78604ea20bd2c773f34fac68bb63ecdb8671
+      protected_payload_sha256: 3ff32dc2627eebded2ff136322ac94b31c9c70ff7b5e089383bc3b6afd6c97e6
+  event_hash: d8b589c0c1cbec93d0be19167ea2a4f92d2148b7390c7554611a91704db9494a
+human_gates:
+- gate: publication
+  status: satisfied
+  evidence:
+    artifact: docs/loops/issue-103/receipts/publication-authorization.md
+  authorization:
+    action: gate_satisfaction
+    principal:
+      type: user
+      id: jeffery777
+    objective_id: issue-103
+    artifact: docs/loops/issue-103/receipts/publication-authorization.md
+    source_revision_sha256: d9ad5d081851fbeb5d98ace4aeee78604ea20bd2c773f34fac68bb63ecdb8671
+    gate: publication
+    protected_payload_sha256: a8dd7f715362fa331ba2e3868e5f285f434eb635060f73c478da6461fda6a0de
+external_memory:
+  contract_version: loop-memory/v1
+  mode: disabled
+  backend_status: disabled
+  adapter: null
+  receipt_digests: []
+  authority: advisory-only
+  used_as_authorization: false
+  used_as_completion_evidence: false
+  notes: External memory was not used; repository, Git, verification, review, and
+    accepted platform state remain authoritative.

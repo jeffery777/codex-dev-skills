@@ -545,6 +545,67 @@ cross-repository reuse of one home.
 `disable` is stateless: the caller stops supplying `--enabled` and ignores prior
 receipts. It does not delete indexes or rewrite repository/user configuration.
 
+V2c-B adds an optional hook runner on top of that unchanged controller. Codex
+currently has no native `post-commit` hook event, so the integration uses two
+compensating checks:
+
+- `SessionStart` checks freshness for `startup`, `resume`, `clear`, and
+  `compact` sources;
+- `PostToolUse` for `Bash` rechecks live Git state after shell activity and
+  reports a commit/HEAD change without parsing or trusting the shell command.
+
+The Bash hook is not complete interception. A Git mutation performed through an
+uncovered tool, another process, or another client may not trigger it;
+`SessionStart` is the compensating check. Notify-only mode is the default. In
+auto-on-demand mode, a clean stale or missing index may be refreshed only
+through `RefreshController` with exact expected HEAD and all V2c-A checks.
+Dirty worktrees, identity conflicts, corrupt metadata, failed qualification,
+and unsafe paths remain notification-only or fail safe.
+
+The installer copies inactive examples to
+`~/.codex/templates/hooks/gitnexus-v2c-b/`; it does not create or enable a
+project hook. Review these sources before materializing machine-local values:
+
+```bash
+HOOK_RUNNER=skills/loop-engineering/scripts/gitnexus_hook.py
+HOOK_TEMPLATE=templates/hooks/gitnexus-v2c-b/hooks.json.template
+CONFIG_TEMPLATE=templates/hooks/gitnexus-v2c-b/config.json.template
+
+python3 "$HOOK_RUNNER" \
+  --config /absolute/machine-local/gitnexus-v2c-b.json \
+  --validate-config
+```
+
+Create the active configuration outside the repository as a current-user-owned
+regular file that is not group/world writable. Replace every placeholder in
+both templates, inspect any existing `.codex/hooks.json` instead of overwriting
+it, and keep the active machine-specific hook definition untracked. Project
+hooks load only for a trusted project and must be reviewed through `/hooks`
+before they run.
+
+To enable auto-on-demand refresh, change `mode` from `notify-only` to
+`auto-on-demand` and replace `refresh: null` with:
+
+```json
+{
+  "gitnexus_home_parent": "/absolute/secure/machine-local/isolated-homes",
+  "lock_directory": "/absolute/secure/machine-local/locks",
+  "timeout_seconds": 120
+}
+```
+
+Both directories must already exist outside the repository and be owned by the
+current user without group/world write permission. Each eligible refresh creates
+a new `0700` isolated home below the configured parent because V2c-A requires a
+fresh empty home. The hook does not automatically delete those derived homes;
+inspect exact targets and retain or clean them through a separate explicit
+operator action. A failed controller run also creates one repository-bound
+`0600` `.codex-v2c-b-auto-disabled-<digest>.json` circuit-breaker marker in the
+parent. Later hooks notify but do not retry until the operator inspects the
+failure and explicitly clears that exact marker. Disable or remove the hook
+definition to roll back without deleting the index or changing
+V2c-A/no-backend behavior.
+
 Refresh accepts only a clean, directly verifiable worktree boundary with no
 tracked path below `.gitnexus/`—including case or normalization aliases that
 are missing from the worktree and therefore cannot be compared with

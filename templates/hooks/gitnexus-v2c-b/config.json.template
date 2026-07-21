@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "mode": "notify-only",
+  "repository": {
+    "root": "__ABSOLUTE_CANONICAL_REPOSITORY_ROOT__",
+    "id": "__CALLER_OWNED_CANONICAL_REPOSITORY_ID__",
+    "expected_remote": "__CALLER_OWNED_EXPECTED_REMOTE__",
+    "git_executable": null
+  },
+  "qualification": {
+    "executable": "__ABSOLUTE_GITNEXUS_EXECUTABLE__",
+    "allow_symlink": false,
+    "node_executable": "__ABSOLUTE_NODE_EXECUTABLE__",
+    "allow_node_symlink": false,
+    "package_root": "__ABSOLUTE_GITNEXUS_PACKAGE_ROOT__",
+    "accepted_executable_sha256": "__64_HEX_CALLER_ACCEPTED_EXECUTABLE_DIGEST__",
+    "accepted_package_sha256": "__64_HEX_CALLER_ACCEPTED_PACKAGE_DIGEST__",
+    "accepted_runtime_sha256": "__64_HEX_CALLER_ACCEPTED_RUNTIME_DIGEST__"
+  },
+  "refresh": null
+}

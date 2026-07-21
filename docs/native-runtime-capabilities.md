@@ -210,6 +210,16 @@ Repo-local hooks should be opt-in through a trusted project configuration or a
 separately packaged plugin. The Loop Engineering V1 native core must not depend
 on a hook to remain safe or correct.
 
+The optional V2c-B GitNexus hook follows this boundary. `SessionStart` checks
+live index freshness, while `PostToolUse` for `Bash` compensates for the absence
+of a native commit lifecycle event. It never parses the shell command and must
+not claim to observe Git changes made through uncovered tools or other
+processes. Notify-only is the default; auto-on-demand delegates only to the
+qualified V2c-A controller for an exact clean HEAD. Installed templates are
+inactive and do not grant hook trust or mutate project/global configuration.
+Controller failure persists a machine-local circuit breaker; later hook events
+notify but do not retry until explicit operator clearance.
+
 ### Security scan workbench
 
 A Codex Security workbench is a plugin-dependent workflow with its own durable
