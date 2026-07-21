@@ -19,6 +19,10 @@ not perform ordinary task selection, redefine completion, or own shared
 subagent delegation. Subagents remain available through the shared delegation
 policy in current Desktop, CLI, and IDE runtimes.
 
+The current public product surface is the ChatGPT desktop app. This skill keeps
+`Desktop` as its runtime compatibility label for Codex task, thread, worktree,
+and scheduling controls; it does not create a separate reasoning layer.
+
 ## CLI Fallback
 
 Use the already selected task brief in the current CLI session, delegate
@@ -42,15 +46,18 @@ continuation prompt. Do not claim that CLI holds Desktop app task/thread tools.
    infer project identity from private runtime state. Omit model and reasoning
    overrides unless the user explicitly requests supported values.
 5. Recheck the target, prompt, local or worktree behavior, and authorization at
-   the actual call site. Treat `threadId` as created-task dispatch evidence and
-   `clientThreadId` as queued worktree dispatch evidence; neither proves task
-   completion.
+   the actual call site. Treat `threadId` plus `hostId` as created-task dispatch
+   and routing evidence, and `clientThreadId` as queued worktree dispatch
+   evidence; none proves task completion.
 6. If the runtime provides a supported create or fork operation, call it only
    after the exact task action is authorized. A fork copies completed history;
    send a follow-up only when the child must continue working.
-7. Use list/read operations for observation. Treat create, fork, send, handoff,
-   archive, pin, and rename as runtime-state mutations requiring authority for
-   the exact action.
+7. Use list, read, and wait operations for observation. When supported, prefer
+   a bounded `wait_threads` call for compact progress snapshots across one to
+   eight dispatched tasks; preserve each target's `hostId` and `afterCursor`.
+   Commentary alone does not wake the wait, and a snapshot never proves
+   completion. Treat create, fork, send, handoff, archive, pin, and rename as
+   runtime-state mutations requiring authority for the exact action.
 8. If the capability is unavailable or fails, return the prepared prompt as a
    paste-ready handoff or continue through the shared sequential fallback.
 9. Keep the originating task responsible for integration, verification, review
@@ -61,7 +68,9 @@ continuation prompt. Do not claim that CLI holds Desktop app task/thread tools.
 Allowed tool use:
 
 - runtime-provided project and task/thread tools when they are exposed in the active tool list;
-- read-only inspection of thread metadata through runtime-provided tools when needed to verify handoff state.
+- read-only inspection of thread metadata and bounded `wait_threads`
+  observation through runtime-provided tools when needed to verify handoff
+  state.
 
 The repository's `docs/native-runtime-capabilities.md` is canonical; filesystem
 installation also places it at

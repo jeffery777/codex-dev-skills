@@ -6,6 +6,11 @@
 
 `codex-dev-skills` is an OSS maintenance workflow pack for OpenAI Codex CLI and Codex Desktop.
 
+In current product naming, the Desktop surface runs inside the ChatGPT desktop
+app. This repository retains `Codex Desktop` and `desktop` as compatibility
+labels for Codex task, thread, worktree, and scheduling controls; those labels
+do not make shared reasoning or subagent delegation Desktop-only.
+
 It helps maintainers move beyond one-off prompts. Teams can combine reusable
 skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
@@ -660,6 +665,8 @@ Keep review, commit, PR, merge, platform comments, and other external writes beh
 The main thread remains responsible for integrating returned work, checking the diff, running verification, and enforcing review or merge gates.
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
+The latest maintained comparison is
+[Codex runtime compatibility evidence (2026-07-21)](docs/codex-runtime-compatibility-evidence-2026-07-21.md).
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 `desktop_runtime_*` scripts and [historical V1 plan](docs/desktop-runtime-wrapper-v1-plan.md)

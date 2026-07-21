@@ -101,7 +101,9 @@ callable is actually present.
 Before using a runtime thread callable, record contract evidence consistent
 with [Runtime Compatibility](runtime-compatibility.md):
 
-- runtime thread tool or API contract name, such as `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or the documented equivalent;
+- runtime thread tool or API contract name, such as `create_thread`,
+  `fork_thread`, `list_threads`, `read_thread`, `wait_threads`,
+  `send_message_to_thread`, `handoff_thread`, or the documented equivalent;
 - underlying tool or API contract version when exposed;
 - `version unavailable` when no version is exposed, plus a verifiable capability source such as the active tool list, connector metadata, official documentation version, or runtime-reported schema;
 - minimal request shape used by the workflow, including required parameters, optional parameters used, and target identity fields;
@@ -111,9 +113,12 @@ with [Runtime Compatibility](runtime-compatibility.md):
 
 Validate target identity, permission/auth failures, and the actual response at
 the call site. Current creation responses distinguish an immediate `threadId`
-from a queued `clientThreadId`; do not reuse historical wrapper response shapes
-as active schema evidence. Legacy `desktop_runtime_*` helpers remain historical
-compatibility evidence only and must not be executed by the active workflow.
+plus `hostId` from a queued `clientThreadId`; do not reuse historical wrapper
+response shapes as active schema evidence. Legacy `desktop_runtime_*` helpers
+remain historical compatibility evidence only and must not be executed by the
+active workflow.
+Use `wait_threads` only as bounded, host-aware observation when exposed; its
+compact snapshots are not shared-subagent semantics or completion evidence.
 
 ## Merge Readiness
 

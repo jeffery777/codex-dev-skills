@@ -6,8 +6,9 @@ shared contract owns objective, task, evidence, review, and completion
 semantics. Runtime capabilities may start, coordinate, observe, or wake work,
 but they do not become completion authority.
 
-Facts in the current capability table were last verified on 2026-07-10 from
-the active callable schemas and the public Codex documentation. Every adapter
+Facts in the current capability table were last verified on 2026-07-21 from
+the active callable schemas, the public Codex documentation, and the maintained
+[compatibility evidence](codex-runtime-compatibility-evidence-2026-07-21.md). Every adapter
 must still inspect the capability exposed by its active runtime instead of
 assuming that a recorded schema is permanently available.
 
@@ -157,6 +158,8 @@ scripts.
 
 Desktop thread tools manage user-owned tasks and their local or worktree
 execution context. They are Desktop adapters, not the shared subagent primitive.
+The current public product surface is the ChatGPT desktop app; this repository
+retains `Desktop` as the compatibility label for its Codex control plane.
 
 Current callable semantics include:
 
@@ -165,16 +168,24 @@ Current callable semantics include:
   project target uses a returned `projectId` and selects local or worktree
   execution. Omit model and reasoning overrides unless the user explicitly
   requests supported values.
-- A created task may return `threadId`; queued worktree setup may return
-  `clientThreadId`. Either is dispatch evidence only.
+- A created task may return `threadId` plus `hostId`; queued worktree setup may
+  return `clientThreadId`. These values are dispatch and routing evidence only.
 - `fork_thread` may return a child thread identifier immediately for a
   same-directory fork or a client thread identifier while worktree setup is
   queued. A fork copies completed history only; send a follow-up only when work
   must continue in the child.
-- `list_threads` and `read_thread` are observation operations.
+- `list_threads`, `read_thread`, and `wait_threads` are observation and
+  coordination operations. When supported, prefer a bounded `wait_threads`
+  call for compact progress snapshots across one to eight targets instead of
+  repeatedly reading every thread. Preserve each target's `hostId` and
+  `afterCursor` when supplied. Commentary alone does not wake the wait, and a
+  returned snapshot never proves repository completion.
 - `send_message_to_thread`, `handoff_thread`, create, fork, archive, pin, and
   rename mutate runtime state and require the authority applicable to that
   exact action.
+- `handoff_thread` moves a task between supported checkout, worktree, or host
+  contexts. Its operation identifier is progress evidence; use the documented
+  status operation when exposed and retain the same state-changing-action gate.
 
 Creating a new or background Desktop task requires an explicit user request.
 Before a project-scoped action, resolve the project through the documented

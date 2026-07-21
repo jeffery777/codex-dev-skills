@@ -70,6 +70,32 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertNotIn("- Candidate tasks and statuses", thread_skill)
         self.assertNotIn("- Selected next safe task", thread_skill)
 
+    def test_desktop_wait_observation_is_host_aware_and_non_authoritative(self) -> None:
+        contract = read("docs/native-runtime-capabilities.md")
+        adapter = read("docs/runtime-adapter-v2.md")
+        thread_skill = read("skills/desktop-thread-delegation/SKILL.md")
+        combined = "\n".join((contract, adapter, thread_skill))
+
+        self.assertIn("wait_threads", combined)
+        self.assertIn("hostId", combined)
+        self.assertIn("afterCursor", combined)
+        self.assertIn("one to eight", combined)
+        self.assertIn("compact progress snapshots", combined)
+        self.assertRegex(combined, re.compile(r"snapshot never proves\s+completion"))
+
+    def test_chatgpt_desktop_name_preserves_runtime_layers(self) -> None:
+        readme = read("README.md")
+        compatibility = read("docs/runtime-compatibility.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-21.md")
+        contract = read("docs/native-runtime-capabilities.md")
+        combined = "\n".join((readme, compatibility, evidence, contract))
+
+        self.assertIn("ChatGPT desktop app", combined)
+        self.assertIn("compatibility labels", combined)
+        self.assertIn("shared reasoning or subagent delegation", combined)
+        self.assertIn("thin adapters", evidence)
+        self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
+
     def test_hooks_are_optional_incomplete_guardrails(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
         loop_skill = read("skills/loop-engineering/SKILL.md")
