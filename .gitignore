@@ -9,3 +9,6 @@ __pycache__/
 
 # Local derived code indexes
 .gitnexus/
+
+# Active project hooks are machine-local and reviewed through Codex trust.
+.codex/hooks.json

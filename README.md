@@ -16,12 +16,21 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current development milestone is Loop Engineering V2b: V1 remains the
-production workflow/authority core, V2a adds heterogeneous subagent routing,
-and V2b adds a backend-neutral external memory safety contract. External memory
-is optional advisory/cache/coordination input and never replaces repository,
-Git, verification, review, protected authorization, accepted platform state,
-or completion truth. No production memory backend is included.
+The current released Loop Engineering baseline is V2c-B, shipped in v0.9.0:
+V1 remains the production workflow/authority core, V2a adds heterogeneous
+subagent routing, V2b adds a backend-neutral external-memory safety contract,
+V2c-A adds the qualified default-disabled GitNexus adapter/controller boundary,
+and V2c-B adds optional trusted lifecycle freshness hooks. External memory,
+GitNexus metadata, and hook output remain advisory and never replace
+repository, Git, verification, review, protected authorization, accepted
+platform state, or completion truth. No production memory backend, scheduler,
+daemon, or automatic hook activation is included.
+
+The next planned feature milestone is
+[Loop Engineering V2d: Operational Evidence Contract V0](docs/programs/operational-evidence/README.md).
+It will define public, non-sensitive evidence contracts before the later
+Evidence-Driven Self-Improvement milestone; it does not move private runtime
+state into this repository.
 
 This is not a general prompt collection. It is a curated set of public, reusable workflow contracts for open source and team repositories.
 
