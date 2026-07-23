@@ -67,6 +67,26 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   inactive-by-default guardrails; the adapter stays safe when hooks are absent,
   untrusted, malformed, or unavailable. V2c-B does not add eager reindexing,
   scheduling, a daemon, or a direct bare GitNexus mutation path.
+- The v0.9.1 alignment patch is tracked in issue #107. It updates the README to
+  the shipped V2c-B baseline, records one real machine-local `notify-only`
+  project-hook adoption without committing active configuration, and preserves
+  the accepted next-program context for later tasks. The live report is
+  advisory pilot evidence, not an operational-evidence schema or completion
+  authority.
+- Loop Engineering V2d is the next planned feature milestone. V2d-A will define
+  `loop-operational-evidence/v0` core contracts for run receipts, iteration
+  summaries, failure taxonomy, redacted environment fingerprints, and artifact
+  references with strict validators and synthetic fixtures. V2d-B will add
+  improvement lineage, a tool-neutral human-readable projection boundary, an
+  optional Obsidian reference profile, and the minimum typed graph projection
+  manifest. See
+  [the Operational Evidence program](programs/operational-evidence/README.md).
+- A private manual/CI proof of concept must validate the V2d contracts before
+  Loop Engineering V3-A begins. V3-A remains the reserved
+  Evidence-Driven Self-Improvement milestone and starts with evidence-to-proposal
+  workflow only. Candidate output cannot self-approve, activate, merge, release,
+  or deploy. Resident hooks, schedulers, controllers, database services, and
+  graph execution remain deferred beyond that gate.
 
 ## Non-Goals
 

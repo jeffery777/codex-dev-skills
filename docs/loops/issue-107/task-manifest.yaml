@@ -1,0 +1,126 @@
+project:
+  schema_version: 2
+  name: "v0.9.1 alignment and live notify-only adoption"
+  objective_id: "issue-107"
+  source_of_truth:
+    - "AGENTS.md"
+    - "docs/loops/issue-107/loop-spec.md"
+    - "docs/loops/issue-107/implementation-plan.md"
+    - "docs/programs/operational-evidence/README.md"
+  contract_revision:
+    previous_manifest_sha256: ""
+    updated_at: "2026-07-23T03:54:17Z"
+
+tasks:
+  - id: "P0-contract-program"
+    title: "Record the v0.9.1 contract and future program"
+    initial_status: "ready"
+    priority: "high"
+    dependencies: []
+    risk: "medium"
+    kind: "docs"
+    objective: "Create durable Issue #107 and Operational Evidence planning context."
+    scope:
+      in: ["loop spec", "implementation plan", "program decisions", "phase map", "continuation handoff"]
+      out: ["operational evidence schemas", "runtime services", "private data"]
+    ownership:
+      expected_paths:
+        - "docs/loops/issue-107"
+        - "docs/programs/operational-evidence"
+      parallel_write_safe: false
+    dod:
+      - "Accepted decisions and boundaries are explicit."
+      - "A future task can identify the next bounded issue without chat history."
+      - "The raw research report has a documented disposition."
+    verification:
+      - "git diff --check"
+    review: {required: true, mode: "docs-review"}
+    stop_conditions: ["The architecture boundary conflicts with V1/V2 authority."]
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P1-public-alignment"
+    title: "Align README, roadmap, and v0.9.1 release notes"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P0-contract-program"]
+    risk: "low"
+    kind: "docs"
+    objective: "Make the public released baseline and next development order accurate."
+    scope:
+      in: ["README", "roadmap", "v0.9.1 release notes"]
+      out: ["V2d implementation", "historical v0.9.0 note rewriting"]
+    ownership:
+      expected_paths:
+        - "README.md"
+        - "docs/roadmap.md"
+        - "docs/release-notes-v0.9.1.md"
+      parallel_write_safe: false
+    dod:
+      - "V2c-B/v0.9.0 is identified as the released baseline."
+      - "V2d is sequenced before V3-A without claiming it is implemented."
+    verification:
+      - "./scripts/validate-repo.sh"
+      - "git diff --check"
+    review: {required: true, mode: "docs-review"}
+    stop_conditions: ["Alignment would require changing shipped runtime behavior."]
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P2-live-adoption"
+    title: "Adopt and observe the V2c-B hook in notify-only mode"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P1-public-alignment"]
+    risk: "medium"
+    kind: "verification"
+    objective: "Obtain sanitized live evidence without enabling refresh or tracking machine-local state."
+    scope:
+      in: ["machine-local config", "untracked project hook", "normal trust review", "supported live events", "sanitized evidence"]
+      out: ["auto-on-demand", "raw logs", "transcripts", "active config in Git"]
+    ownership:
+      expected_paths:
+        - "docs/loops/issue-107/receipts"
+      parallel_write_safe: false
+    dod:
+      - "The config validates in notify-only mode."
+      - "At least one supported live event is observed or the runtime limit is explicit."
+      - "No refresh occurs and no private or machine-local values enter tracked artifacts."
+    verification:
+      - "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_gitnexus_hook"
+      - "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_gitnexus_adapter"
+    review: {required: true, mode: "docs-review"}
+    stop_conditions:
+      - "The active hook cannot be reviewed through the normal trust flow."
+      - "Validation requires auto-on-demand or private runtime inspection."
+    human_gate:
+      required: true
+      gate: "hook-trust"
+      reason: "The exact non-managed project hook must be reviewed before it runs."
+
+  - id: "P3-review-readiness"
+    title: "Close verification and formal review"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P2-live-adoption"]
+    risk: "medium"
+    kind: "review"
+    objective: "Prove the tracked patch is accurate, sanitized, and publication-ready."
+    scope:
+      in: ["focused tests", "repo validation", "docs review", "formal gate", "readiness evidence"]
+      out: ["automatic merge", "automatic tag", "automatic release"]
+    ownership:
+      expected_paths:
+        - "docs/loops/issue-107/receipts"
+      parallel_write_safe: false
+    dod:
+      - "No unresolved MUST-FIX findings remain."
+      - "Publication actions remain behind exact authorization."
+    verification:
+      - "./scripts/validate-repo.sh"
+      - "git diff --check"
+      - "git status --short --branch"
+    review: {required: true, mode: "formal-gate"}
+    stop_conditions: ["Publication authority is absent or review evidence is insufficient."]
+    human_gate:
+      required: true
+      gate: "publication"
+      reason: "Commit, push, PR, merge, tag, and release require exact authorization."
