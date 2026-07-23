@@ -73,6 +73,12 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   the accepted next-program context for later tasks. The live report is
   advisory pilot evidence, not an operational-evidence schema or completion
   authority.
+- The v0.9.1 repository-guardrail follow-up is tracked in issue #109. It makes
+  direct GitNexus analysis index-only by default and requires ready pull
+  requests to close an open same-repository Issue through a template,
+  fail-closed validator, and least-privilege CI check. These controls provide
+  repository hygiene and traceability only; they do not change completion or
+  merge authority.
 - Loop Engineering V2d is the next planned feature milestone. V2d-A will define
   `loop-operational-evidence/v0` core contracts for run receipts, iteration
   summaries, failure taxonomy, redacted environment fingerprints, and artifact

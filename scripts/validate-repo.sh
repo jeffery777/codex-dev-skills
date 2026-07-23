@@ -223,11 +223,20 @@ check_loop_contract() {
   ok "loop engineering event, transition, migration, and CLI contracts pass"
 }
 
+check_repository_guardrails() {
+  python3 scripts/validate-gitnexus-config.py >"$TMP_DIR/gitnexus-config.json"
+  python3 -m unittest \
+    tests.test_gitnexus_config_guard \
+    tests.test_pr_issue_link >/dev/null
+  ok "GitNexus and pull request linkage repository guardrails pass"
+}
+
 main() {
   require_rg
   check_no_provider_terms
   check_sensitive_private_terms
   check_legacy_private_names
+  check_repository_guardrails
   check_catalog_sources
   check_installer_catalog_consistency
   check_installer_target_modes

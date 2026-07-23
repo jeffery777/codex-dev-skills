@@ -1,0 +1,92 @@
+project:
+  schema_version: 2
+  name: "repository guardrails for GitNexus and PR linkage"
+  objective_id: "issue-109"
+  source_of_truth:
+    - "AGENTS.md"
+    - "docs/loops/issue-109/loop-spec.md"
+    - "docs/loops/issue-109/implementation-plan.md"
+    - "policies/pull-request-issue-linkage-policy.md"
+  contract_revision:
+    previous_manifest_sha256: ""
+    updated_at: "2026-07-23T10:30:00Z"
+
+tasks:
+  - id: "P0-gitnexus-default"
+    title: "Enforce index-only GitNexus analysis"
+    initial_status: "ready"
+    priority: "high"
+    dependencies: []
+    risk: "medium"
+    kind: "implementation"
+    objective: "Prevent repository instruction and provider-skill generation."
+    scope:
+      in: [".gitnexusrc", "validator", "tests"]
+      out: ["hook activation", "automatic refresh", "private indexes"]
+    ownership:
+      expected_paths: [".gitnexusrc", "scripts/validate-gitnexus-config.py", "tests/test_gitnexus_config_guard.py"]
+      parallel_write_safe: false
+    dod:
+      - "The exact index-only default validates."
+      - "Broader or malformed configurations fail closed."
+      - "Bare analysis does not change instruction or provider files."
+    verification:
+      - "python3 scripts/validate-gitnexus-config.py"
+      - "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_gitnexus_config_guard"
+    review: {required: true, mode: "code-review-deep"}
+    stop_conditions: ["GitNexus still generates repository files."]
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P1-pr-linkage"
+    title: "Require ready pull requests to close open Issues"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P0-gitnexus-default"]
+    risk: "medium"
+    kind: "implementation"
+    objective: "Make Issue-first traceability visible and enforceable."
+    scope:
+      in: ["PR template", "read-only CI", "validator", "tests", "policy"]
+      out: ["branch protection settings", "automatic merge", "platform writes"]
+    ownership:
+      expected_paths: [".github", "scripts/validate-pr-issue-link.py", "tests/test_pr_issue_link.py", "policies/pull-request-issue-linkage-policy.md"]
+      parallel_write_safe: false
+    dod:
+      - "Draft pull requests are skipped."
+      - "Ready pull requests must close an open same-repository Issue."
+      - "Untrusted pull-request head code is never checked out or executed."
+    verification:
+      - "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_pr_issue_link"
+      - "./scripts/validate-repo.sh"
+    review: {required: true, mode: "code-review-deep"}
+    stop_conditions: ["The workflow requires write permission or head-code execution."]
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P2-review-publication"
+    title: "Close review and publication evidence"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P1-pr-linkage"]
+    risk: "medium"
+    kind: "review"
+    objective: "Prove the guardrails are safe, documented, and ready for publication."
+    scope:
+      in: ["verification", "formal reviews", "bootstrap record", "publication"]
+      out: ["release tag", "release publication", "repository-settings mutation"]
+    ownership:
+      expected_paths: ["docs/loops/issue-109/receipts"]
+      parallel_write_safe: false
+    dod:
+      - "No unresolved blocking review findings remain."
+      - "The first-PR CI bootstrap limitation is explicit."
+      - "Publication is anchored to the reviewed head."
+    verification:
+      - "./scripts/validate-repo.sh"
+      - "git diff --check"
+      - "git status --short --branch"
+    review: {required: true, mode: "formal-gate"}
+    stop_conditions: ["Review evidence is incomplete or head SHA changes."]
+    human_gate:
+      required: true
+      gate: "publication"
+      reason: "Use only the exact commit, push, PR, review-comment, and merge authority granted for Issue #109."

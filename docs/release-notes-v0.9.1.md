@@ -2,9 +2,9 @@
 
 Release date: pending
 
-v0.9.1 is a documentation and live-adoption alignment patch for the V2c-B
-baseline shipped in v0.9.0. It does not change the GitNexus adapter, hook
-runner, controller, installer, or authority model.
+v0.9.1 is a documentation, live-adoption, and repository-guardrail alignment
+patch for the V2c-B baseline shipped in v0.9.0. It does not change the
+GitNexus adapter, hook runner, controller, installer, or authority model.
 
 ## Changes
 
@@ -19,6 +19,25 @@ runner, controller, installer, or authority model.
 - Disposed of the supplied deep-research draft as non-authoritative research
   input and replaced its accepted conclusions with reviewable repository
   decision records.
+
+## Repository Guardrails
+
+Issue #109 adds two narrow maintainer controls:
+
+- a tracked, strictly validated `.gitnexusrc` that makes direct GitNexus
+  analysis index-only by default and prevents repository instruction/provider
+  file generation; and
+- a pull-request template plus least-privilege metadata-only CI validation
+  requiring every ready pull request to close an open same-repository Issue.
+
+The linkage check uses trusted base-branch code and read-only permissions; it
+does not check out or execute pull-request head code. The PR that introduces
+the workflow has a documented bootstrap limitation because GitHub loads
+`pull_request_target` workflow code from the base branch. Later pull requests
+are covered after the workflow reaches the default branch.
+
+Both controls remain non-authoritative. They do not approve changes, satisfy
+review gates, authorize merge or release, or prove completion.
 
 ## Live Notify-Only Adoption
 
@@ -69,6 +88,10 @@ The release candidate must complete:
 python3 --version
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_gitnexus_hook
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_gitnexus_adapter
+python3 scripts/validate-gitnexus-config.py
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
+  tests.test_gitnexus_config_guard \
+  tests.test_pr_issue_link
 ./scripts/validate-repo.sh
 git diff --check
 ```
@@ -92,5 +115,7 @@ the V2c-B runtime implementation.
 
 - Alignment issue:
   <https://github.com/jeffery777/codex-dev-skills/issues/107>
+- Repository guardrails:
+  <https://github.com/jeffery777/codex-dev-skills/issues/109>
 - Program plan:
   [docs/programs/operational-evidence/README.md](programs/operational-evidence/README.md)
