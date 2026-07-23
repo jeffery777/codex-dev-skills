@@ -453,6 +453,16 @@ The runtime control-plane flow is:
    receipts. Continue with repo-owned state; do not delete, reset, restore, or
    rewrite repository files or user indexes as part of rollback.
 
+For maintainers running GitNexus directly in this repository, the tracked
+`.gitnexusrc` sets `analyze.indexOnly` to `true`. This makes a bare
+`gitnexus analyze` index-only by default and prevents GitNexus from generating
+or rewriting repository instruction and provider-skill files. The repository
+validator requires that exact minimal setting; `--skip-agents-md` is not an
+equivalent substitute because it can still permit other generated files. CLI
+and controller paths still pass `--index-only` explicitly so their invocation
+evidence remains self-contained rather than depending only on repository
+defaults.
+
 The supported operator entrypoint is the repo-owned module. It persists no
 configuration and redacts machine-local paths from JSON output:
 
@@ -697,6 +707,19 @@ Re-check closure evidence, rollback path, security/privacy, migration safety, an
 ```
 
 The deep result is still review evidence, not merge authorization.
+
+Every ready-for-review pull request must also contain a standalone closing
+reference to an open Issue in this repository, for example:
+
+```text
+Closes #123
+```
+
+Draft pull requests may omit it while being prepared. The repository template
+and read-only CI check implement
+[the PR-to-Issue linkage policy](policies/pull-request-issue-linkage-policy.md).
+A valid link provides traceability only; it does not replace verification,
+formal review, human approval, merge authority, or completion evidence.
 
 Use `merge-readiness-gate` only when a workflow needs a formal branch readiness gate before PR handoff, merge readiness, or final human approval:
 
