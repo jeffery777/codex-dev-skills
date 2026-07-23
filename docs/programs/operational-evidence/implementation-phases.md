@@ -1,6 +1,6 @@
 # Operational Evidence Program Phases
 
-## Phase 0 — v0.9.1 Alignment And Pilot Adoption
+## Phase 0 — v0.9.1 Alignment, Guardrails, And Pilot Adoption
 
 **Purpose:** Close README drift and obtain one real notify-only hook observation
 before designing the evidence contracts.
@@ -11,10 +11,15 @@ before designing the evidence contracts.
 - v0.9.1 release notes;
 - untracked machine-local hook adoption;
 - sanitized, non-authoritative live evidence;
+- exact index-only GitNexus repository defaults;
+- trusted-base, read-only ready-PR Issue-linkage validation;
+- version, release-readiness, and post-bootstrap CI evidence;
 - this durable program plan.
 
-**Exit criteria:** Issue #107 DoD and formal documentation gate pass. No
-Operational Evidence schema is implemented in this phase.
+**Exit criteria:** Issue #107 and Issue #109 DoD pass through PRs #108 and
+#110; the Issue #111 verification, formal documentation/release-readiness
+gates, and post-bootstrap PR-linkage check pass; and v0.9.1 is formally tagged
+and released. No Operational Evidence schema is implemented in this phase.
 
 ## Phase 1 — V2d-A Operational Evidence V0 Core
 

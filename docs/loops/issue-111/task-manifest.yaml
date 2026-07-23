@@ -1,0 +1,142 @@
+project:
+  schema_version: 2
+  name: "v0.9.1 release closure and Operational Evidence handoff"
+  objective_id: "issue-111"
+  source_of_truth:
+    - "AGENTS.md"
+    - "docs/loops/issue-111/loop-spec.md"
+    - "docs/loops/issue-111/implementation-plan.md"
+    - "docs/release-notes-v0.9.1.md"
+    - "docs/programs/operational-evidence/README.md"
+  contract_revision:
+    previous_manifest_sha256: ""
+    updated_at: "2026-07-23T08:32:00Z"
+
+tasks:
+  - id: "P0-release-alignment"
+    title: "Align v0.9.1 version and release documentation"
+    initial_status: "ready"
+    priority: "high"
+    dependencies: []
+    risk: "low"
+    kind: "docs"
+    objective: "Make the repository release candidate internally consistent."
+    scope:
+      in: ["installer version", "catalog version", "README", "roadmap", "release notes"]
+      out: ["runtime feature behavior", "historical receipt rewriting"]
+    ownership:
+      expected_paths: ["install.sh", "catalog.yaml", "README.md", "docs/roadmap.md", "docs/release-notes-v0.9.1.md"]
+      parallel_write_safe: false
+    dod:
+      - "Current release references and version metadata agree on v0.9.1."
+      - "V2c-B remains the released feature baseline."
+    verification:
+      - "bash -n install.sh"
+      - "./scripts/validate-repo.sh"
+    review: {required: true, mode: "docs-review-gate"}
+    stop_conditions: ["The patch requires runtime or public-contract changes."]
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P1-program-handoff"
+    title: "Close Operational Evidence Phase 0 handoff"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P0-release-alignment"]
+    risk: "low"
+    kind: "docs"
+    objective: "Record guardrail completion and keep V2d-A after the release gate."
+    scope:
+      in: ["program status", "Phase 0", "continuation"]
+      out: ["V2d implementation", "private operational evidence"]
+    ownership:
+      expected_paths: ["docs/programs/operational-evidence"]
+      parallel_write_safe: false
+    dod:
+      - "Issue #109 and PR #110 are in the baseline."
+      - "Release closure and V2d-A are separate bounded Issues."
+    verification:
+      - "git diff --check"
+    review: {required: true, mode: "docs-review-gate"}
+    stop_conditions: ["Accepted architecture boundaries would change."]
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P2-verification-review"
+    title: "Record release verification and formal gate evidence"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P1-program-handoff"]
+    risk: "medium"
+    kind: "review"
+    objective: "Prove the candidate is safe and release-ready."
+    scope:
+      in: ["tests", "repository validation", "GitNexus checks", "formal reviews", "receipts"]
+      out: ["tag", "GitHub Release", "installed-skill mutation"]
+    ownership:
+      expected_paths: ["docs/loops/issue-111/receipts"]
+      parallel_write_safe: false
+    dod:
+      - "Required checks pass with no unresolved review findings."
+      - "Receipts contain no prohibited local or private material."
+    verification:
+      - "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests"
+      - "./scripts/validate-repo.sh"
+      - "git diff --check"
+    review: {required: true, mode: "formal-gate"}
+    stop_conditions: ["Verification fails or private material is found."]
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P3-pr-merge"
+    title: "Prove post-bootstrap linkage and merge exact head"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P2-verification-review"]
+    risk: "medium"
+    kind: "publication"
+    objective: "Publish the bounded repository change with traceable exact-head evidence."
+    scope:
+      in: ["commit", "push", "ready PR", "linkage CI", "merge review", "merge"]
+      out: ["tag", "GitHub Release", "local skill update"]
+    ownership:
+      expected_paths: ["docs/loops/issue-111/receipts"]
+      parallel_write_safe: false
+    dod:
+      - "The ready PR closes open Issue #111 and linkage CI passes."
+      - "Exact-head deep merge review has no findings."
+      - "Merge uses the reviewed expected head SHA."
+    verification:
+      - "git status --short --branch"
+      - "GitHub PR checks and Issue metadata"
+    review: {required: true, mode: "merge-review-deep"}
+    stop_conditions: ["The PR head moves after review or a required check fails."]
+    human_gate:
+      required: false
+      gate: ""
+      reason: "Bounded commit, push, ready PR, review comment, and expected-head merge are explicitly authorized."
+
+  - id: "P4-tag-release"
+    title: "Publish v0.9.1 and update one local skill root"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P3-pr-merge"]
+    risk: "high"
+    kind: "release"
+    objective: "Publish the exact reviewed main commit only after explicit approval."
+    scope:
+      in: ["v0.9.1 tag", "GitHub Release", "one confirmed local skill target"]
+      out: ["multiple discovery-root installation", "global AGENTS.md mutation"]
+    ownership:
+      expected_paths: []
+      parallel_write_safe: false
+    dod:
+      - "Tag and release point to the approved main SHA."
+      - "Only one confirmed skill discovery root is updated."
+    verification:
+      - "GitHub tag and release metadata"
+      - "./install.sh status"
+      - "./install.sh diff --all"
+    review: {required: true, mode: "human-release-gate"}
+    stop_conditions: ["Explicit tag/release approval or exact install target is absent."]
+    human_gate:
+      required: true
+      gate: "tag-release-and-local-update"
+      reason: "Tag, GitHub Release, and installed-skill mutation remain separate explicit gates."

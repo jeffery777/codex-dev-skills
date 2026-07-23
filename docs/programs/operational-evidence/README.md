@@ -1,6 +1,7 @@
 # Operational Evidence And Self-Improvement Program
 
-Status: accepted program direction; implementation has not started.
+Status: Phase 0 changes from Issues #107 and #109 are merged; v0.9.1 release
+closure is tracked in Issue #111; V2d implementation has not started.
 
 ## Purpose
 
@@ -25,6 +26,10 @@ remains reserved.
 - V2c-A provides a qualified, default-disabled GitNexus adapter/controller
   boundary.
 - V2c-B provides optional, trusted lifecycle freshness hooks.
+- Issue #109 adds an exact index-only GitNexus repository default and
+  trusted-base, read-only ready-PR Issue-linkage guardrail. These controls are
+  repository hygiene and traceability evidence, not completion or merge
+  authority.
 - The repository does not yet define a general run receipt, failure taxonomy,
   redacted environment fingerprint, typed artifact-reference set, or
   improvement lineage contract.
@@ -36,7 +41,8 @@ model.
 
 ## Accepted Dependency Order
 
-1. v0.9.1 alignment and live notify-only hook adoption.
+1. v0.9.1 alignment, live notify-only hook adoption, repository guardrails,
+   and release closure.
 2. V2d-A — Operational Evidence V0 core contracts.
 3. V2d-B — Projection boundary and improvement lineage.
 4. Private manual/CI proof of concept against the public contracts.
