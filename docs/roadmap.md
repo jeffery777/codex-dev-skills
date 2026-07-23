@@ -67,19 +67,23 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   inactive-by-default guardrails; the adapter stays safe when hooks are absent,
   untrusted, malformed, or unavailable. V2c-B does not add eager reindexing,
   scheduling, a daemon, or a direct bare GitNexus mutation path.
-- The v0.9.1 alignment patch is tracked in issue #107. It updates the README to
-  the shipped V2c-B baseline, records one real machine-local `notify-only`
-  project-hook adoption without committing active configuration, and preserves
-  the accepted next-program context for later tasks. The live report is
-  advisory pilot evidence, not an operational-evidence schema or completion
-  authority.
-- The v0.9.1 repository-guardrail follow-up is tracked in issue #109. It makes
-  direct GitNexus analysis index-only by default and requires ready pull
-  requests to close an open same-repository Issue through a template,
-  fail-closed validator, and least-privilege CI check. These controls provide
-  repository hygiene and traceability only; they do not change completion or
-  merge authority.
-- Loop Engineering V2d is the next planned feature milestone. V2d-A will define
+- The v0.9.1 alignment patch was completed by issue #107 and PR #108. It
+  updates the README to the shipped V2c-B baseline, records one real
+  machine-local `notify-only` project-hook adoption without committing active
+  configuration, and preserves the accepted next-program context for later
+  tasks. The live report is advisory pilot evidence, not an
+  operational-evidence schema or completion authority.
+- The v0.9.1 repository-guardrail follow-up was completed by issue #109 and PR
+  #110. It makes direct GitNexus analysis index-only by default and requires
+  ready pull requests to close an open same-repository Issue through a
+  template, fail-closed validator, and least-privilege CI check. These controls
+  provide repository hygiene and traceability only; they do not change
+  completion or merge authority.
+- The bounded v0.9.1 release closure is tracked in issue #111. It aligns
+  version and release metadata, closes Phase 0 program handoff evidence, and
+  proves the post-bootstrap PR linkage workflow without implementing V2d-A.
+- Loop Engineering V2d is the next planned feature milestone after the v0.9.1
+  release. V2d-A will define
   `loop-operational-evidence/v0` core contracts for run receipts, iteration
   summaries, failure taxonomy, redacted environment fingerprints, and artifact
   references with strict validators and synthetic fixtures. V2d-B will add

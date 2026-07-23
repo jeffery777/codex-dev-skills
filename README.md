@@ -16,15 +16,19 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current released Loop Engineering baseline is V2c-B, shipped in v0.9.0:
-V1 remains the production workflow/authority core, V2a adds heterogeneous
-subagent routing, V2b adds a backend-neutral external-memory safety contract,
-V2c-A adds the qualified default-disabled GitNexus adapter/controller boundary,
-and V2c-B adds optional trusted lifecycle freshness hooks. External memory,
-GitNexus metadata, and hook output remain advisory and never replace
-repository, Git, verification, review, protected authorization, accepted
-platform state, or completion truth. No production memory backend, scheduler,
-daemon, or automatic hook activation is included.
+The current released Loop Engineering feature baseline is V2c-B, shipped in
+v0.9.0 and retained by the v0.9.1 maintenance release: V1 remains the
+production workflow/authority core, V2a adds heterogeneous subagent routing,
+V2b adds a backend-neutral external-memory safety contract, V2c-A adds the
+qualified default-disabled GitNexus adapter/controller boundary, and V2c-B
+adds optional trusted lifecycle freshness hooks. v0.9.1 aligns the public
+handoff, records one bounded notify-only adoption, and adds repository
+guardrails for index-only GitNexus analysis and ready-PR Issue linkage; it
+does not add a new runtime milestone. External memory, GitNexus metadata, hook
+output, and linkage CI remain advisory and never replace repository, Git,
+verification, review, protected authorization, accepted platform state, or
+completion truth. No production memory backend, scheduler, daemon, or
+automatic hook activation is included.
 
 The next planned feature milestone is
 [Loop Engineering V2d: Operational Evidence Contract V0](docs/programs/operational-evidence/README.md).
@@ -830,7 +834,7 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Merge review and readiness](examples/merge-review.md)
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
-See `docs/roadmap.md` for the near-term public roadmap, `docs/release-notes-v0.9.0.md` for the current v0.9.0 release notes, and `docs/release-notes-v0.1.0.md` for the historical v0.1.0 release notes.
+See `docs/roadmap.md` for the near-term public roadmap, `docs/release-notes-v0.9.1.md` for the current v0.9.1 release notes, and `docs/release-notes-v0.1.0.md` for the historical v0.1.0 release notes.
 
 ## Installation
 

@@ -1,10 +1,11 @@
 # Release Notes: v0.9.1
 
-Release date: pending
+Release date: 2026-07-23
 
 v0.9.1 is a documentation, live-adoption, and repository-guardrail alignment
 patch for the V2c-B baseline shipped in v0.9.0. It does not change the
-GitNexus adapter, hook runner, controller, installer, or authority model.
+GitNexus adapter, hook runner, controller, installer behavior, or authority
+model.
 
 ## Changes
 
@@ -19,6 +20,8 @@ GitNexus adapter, hook runner, controller, installer, or authority model.
 - Disposed of the supplied deep-research draft as non-authoritative research
   input and replaced its accepted conclusions with reviewable repository
   decision records.
+- Aligned the installer and catalog version metadata with the v0.9.1 release
+  and recorded a separate release-closure verification and review path.
 
 ## Repository Guardrails
 
@@ -96,8 +99,9 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
 git diff --check
 ```
 
-The final verification report and review gate will be recorded under
-`docs/loops/issue-107/receipts/`.
+The final release verification and review evidence is recorded under
+`docs/loops/issue-111/receipts/`. Issue #107 and Issue #109 receipts remain
+point-in-time evidence and are not rewritten by the release closure.
 
 The sanitized live adoption receipt is
 [docs/loops/issue-107/receipts/live-notify-only-adoption.md](loops/issue-107/receipts/live-notify-only-adoption.md).
@@ -108,8 +112,10 @@ Disable or remove the untracked project hook definition to stop notify-only
 checks. Do not delete derived indexes or unrelated machine-local state as an
 implicit rollback.
 
-The tracked documentation patch can be reverted independently without changing
-the V2c-B runtime implementation.
+The tracked release-closure patch can be reverted independently without
+changing the V2c-B runtime implementation. Before reinstalling v0.9.0, inspect
+local differences with `./install.sh diff --all`; do not overwrite modified
+installed skills or machine-local configuration as an implicit rollback.
 
 ## Traceability
 
@@ -117,5 +123,7 @@ the V2c-B runtime implementation.
   <https://github.com/jeffery777/codex-dev-skills/issues/107>
 - Repository guardrails:
   <https://github.com/jeffery777/codex-dev-skills/issues/109>
+- Release closure:
+  <https://github.com/jeffery777/codex-dev-skills/issues/111>
 - Program plan:
   [docs/programs/operational-evidence/README.md](programs/operational-evidence/README.md)
