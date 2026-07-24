@@ -1,26 +1,35 @@
 ---
 name: desktop-spec-plan-gate
-description: Codex Desktop gate for spec, plan, and DoD drafts before implementation delegation.
+description: Deprecated Desktop compatibility alias that routes spec, plan, and DoD work to the shared planning skill.
 ---
 
 # desktop-spec-plan-gate
 
 Runtime compatibility: desktop
 
+Compatibility status: deprecated compatibility alias
+
 ## Purpose
 
-Use this skill before Desktop implementation work when the project needs a reviewed spec, implementation plan, or DoD.
+This name is retained so existing prompts and installations continue to work.
+It does not use a Desktop callable or define a Desktop-specific planning gate.
+New callers should use the shared `planning` skill directly.
 
 ## CLI Fallback
 
-Use `planning` and request user confirmation before implementation when ambiguity remains.
+Use `planning`. The behavior is the same because the authoritative capability
+is shared.
 
 ## Workflow
 
-1. Read existing specs, docs, repo policy, and current state.
-2. Delegate drafting only when the runtime supports it.
-3. Main agent reviews drafts for scope, source-of-truth alignment, risk, and testability.
-4. Stop for user confirmation if product semantics, public API, data model, or migration behavior is unclear.
+1. Route the request to `planning` and preserve its assumptions, risks, DoD,
+   verification strategy, and human gates.
+2. Use shared subagents only under the shared delegation policy.
+3. If a later step needs a user-owned Desktop task or worktree, invoke
+   `desktop-thread-delegation` separately after shared orchestration selects the
+   bounded handoff.
+4. Stop for user confirmation if product semantics, public API, data model, or
+   migration behavior is unclear.
 
 ## Output
 
@@ -29,3 +38,4 @@ Use `planning` and request user confirmation before implementation when ambiguit
 - Risks
 - Open questions
 - Implementation readiness decision
+- Compatibility route used: `planning`

@@ -156,11 +156,11 @@ so byte-identical expected instances are distinguished from modified or
 cross-root collisions:
 
 ```bash
-python3 ~/.codex/skills/loop-engineering/scripts/profile_preflight.py \
+python3 ~/.agents/skills/loop-engineering/scripts/profile_preflight.py \
   --profile-dir ~/.codex/agents \
   --destination-root ~/.codex/agents \
   --agent-root .codex/agents
-python3 ~/.codex/skills/loop-engineering/scripts/profile_preflight.py preflight \
+python3 ~/.agents/skills/loop-engineering/scripts/profile_preflight.py preflight \
   --profile-dir ~/.codex/agents \
   --destination-root ~/.codex/agents \
   --agent-root .codex/agents \
@@ -168,8 +168,8 @@ python3 ~/.codex/skills/loop-engineering/scripts/profile_preflight.py preflight 
   --runtime-facts /path/to/runtime-facts.json
 ```
 
-When `CODEX_DEV_SKILLS_TARGET=agents` selected the alternative skill root,
-replace `~/.codex/skills` above with `~/.agents/skills`. A non-empty
+When `CODEX_DEV_SKILLS_TARGET=legacy` selects the compatibility skill root,
+replace `~/.agents/skills` above with `~/.codex/skills`. A non-empty
 `compatible_profiles` runtime fact must contain structured validated evidence
 (`name`, absolute regular TOML path, capability class and tier,
 config/model/reasoning booleans, expected sandbox,
@@ -320,6 +320,22 @@ Use the smallest entry point that matches the request:
 If `project-orchestrator` receives a single clear implementation task, it should route to `implementation-slice` semantics and avoid unnecessary project-level planning.
 
 For automated review closure, let `project-orchestrator` or `project-delivery` compose the primitive shared workflows dynamically. A user or repo policy may set the maximum number of review/fix rounds; the default is 2.
+
+### CLI And Desktop Entry Paths
+
+Codex CLI enters the shared layer directly through skills such as
+`loop-engineering`, `project-delivery`, `project-orchestrator`, and the review
+primitives. CLI `/agent` and `/subagents` expose shared subagent threads.
+User-facing CLI session controls such as `/new`, `/fork`, `/resume`, and
+`/archive` manage saved CLI sessions; they are not aliases for Desktop
+`create_thread` callables.
+
+Use `/app` in an interactive CLI session, or `codex app <path>` from the shell,
+when the user intentionally wants to continue in the ChatGPT desktop app. Once
+there, `desktop-project-delivery` may add Desktop task, thread, worktree,
+handoff, or scheduling controls while still routing execution, verification,
+review, and completion through the shared layer. A surface transition changes
+the runtime adapter, not the objective, authority, or completion contract.
 
 ### Routine Code Review
 
@@ -763,7 +779,7 @@ The main thread remains responsible for integrating returned work, checking the 
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-07-21)](docs/codex-runtime-compatibility-evidence-2026-07-21.md).
+[Codex runtime compatibility evidence (2026-07-24)](docs/codex-runtime-compatibility-evidence-2026-07-24.md).
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 `desktop_runtime_*` scripts and [historical V1 plan](docs/desktop-runtime-wrapper-v1-plan.md)
@@ -803,9 +819,9 @@ must not import, execute, or recommend them.
 | `task-continuation` | shared | Select the next safe task and prepare a continuation prompt or task brief from durable project context. |
 | `desktop-project-delivery` | desktop | Thin Desktop UX adapter over shared project delivery. |
 | `desktop-thread-delegation` | desktop | Control a user-authorized Desktop task/thread/worktree handoff selected by shared orchestration. |
-| `desktop-spec-plan-gate` | desktop | Desktop gate for spec, plan, and DoD drafts. |
-| `desktop-implementation-gate` | desktop | Desktop formal integration gate for worker outputs before commit readiness. |
-| `desktop-pr-merge-gate` | desktop | Desktop PR and merge readiness gate that summarizes evidence without publishing or merging. |
+| `desktop-spec-plan-gate` | desktop | Deprecated compatibility alias; new workflows use shared `planning`. |
+| `desktop-implementation-gate` | desktop | Deprecated compatibility alias; new workflows use shared review primitives and formal gates. |
+| `desktop-pr-merge-gate` | desktop | Deprecated compatibility alias; new workflows use shared `merge-readiness-gate`. |
 
 ## Workflows
 
@@ -873,11 +889,11 @@ The installed Loop Engineering YAML CLI has one explicit Python dependency.
 Install it into the Python environment that will run `loopctl.py`:
 
 ```bash
-python3 -m pip install -r ~/.codex/skills/loop-engineering/requirements.txt
+python3 -m pip install -r ~/.agents/skills/loop-engineering/requirements.txt
 ```
 
-When `CODEX_DEV_SKILLS_TARGET=agents` is used, replace `~/.codex/skills` with
-`~/.agents/skills`. The installer reports this prerequisite but does not
+When `CODEX_DEV_SKILLS_TARGET=legacy` is used, replace `~/.agents/skills` with
+`~/.codex/skills`. The installer reports this prerequisite but does not
 silently modify the user's Python environment. `loopctl.py --help` remains
 available before the dependency is installed; YAML commands fail closed with
 the same installation instruction.
@@ -914,10 +930,16 @@ Uninstall is destructive because it removes installed Codex skills and templates
 ./install.sh uninstall shared-review-gates --yes
 ```
 
+Use the same target mode that was used to install the group. For a legacy installation:
+
+```bash
+CODEX_DEV_SKILLS_TARGET=legacy ./install.sh uninstall shared-review-gates --yes
+```
+
 Installer scope:
 
-- Codex skills are installed to `~/.codex/skills/<skill>/` by default to preserve existing installations.
-- To opt in to the current Codex user-skill discovery location, run installer commands with `CODEX_DEV_SKILLS_TARGET=agents`; this installs skills to `~/.agents/skills/<skill>/`.
+- New installations use the documented Codex user-skill discovery location at `~/.agents/skills/<skill>/`.
+- Existing legacy installations remain available through `CODEX_DEV_SKILLS_TARGET=legacy`, which targets `~/.codex/skills/<skill>/`; the installer does not silently move or delete either installation.
 - Codex templates are installed to `~/.codex/templates/...`.
 - Custom `CODEX_SKILLS_DIR` or `CODEX_TEMPLATES_DIR` overrides require `CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES`.
 - The installer refuses symlink target roots and symlink target paths before install, update, diff, or uninstall.

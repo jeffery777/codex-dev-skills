@@ -1,5 +1,7 @@
 # codex-dev-skills catalog
 # Codex-only public catalog. Paths are repository-relative source paths.
+# Skill lifecycle metadata is optional. Omitted status means a normal active
+# skill. routes_to is always a list and is required only for deprecated aliases.
 
 name: codex-dev-skills
 version: "0.9.1"
@@ -87,15 +89,30 @@ groups:
       - source: workflows/loop-engineering-workflow.md
 
   desktop-delivery-workflow:
-    description: Thin Codex Desktop task, thread, worktree, scheduling, and integration adapters over shared delivery workflows.
+    description: Two active Codex Desktop entry/control-plane adapters plus deprecated compatibility aliases over shared planning and review gates.
     runtime: desktop
     depends_on: [shared-review-gates, codex-delivery-workflow]
     skills:
       - source: skills/desktop-project-delivery
+        status: active-desktop-adapter
       - source: skills/desktop-thread-delegation
+        status: active-desktop-adapter
       - source: skills/desktop-spec-plan-gate
+        status: deprecated-compatibility-alias
+        routes_to:
+          - skills/planning
       - source: skills/desktop-implementation-gate
+        status: deprecated-compatibility-alias
+        routes_to:
+          - skills/code-review
+          - skills/code-review-deep
+          - skills/docs-review
+          - skills/code-review-gate
+          - skills/docs-review-gate
       - source: skills/desktop-pr-merge-gate
+        status: deprecated-compatibility-alias
+        routes_to:
+          - skills/merge-readiness-gate
     templates:
       - source: workflows/desktop-delivery-workflow.md
 

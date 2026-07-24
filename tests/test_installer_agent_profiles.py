@@ -49,6 +49,69 @@ class AgentProfileInstallerTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertFalse((self.home / ".codex" / "agents").exists())
 
+    def test_default_and_legacy_skill_targets_are_explicit(self) -> None:
+        help_result = self.run_installer("help")
+        self.assertEqual(0, help_result.returncode, help_result.stderr)
+        self.assertIn("~/.agents/skills/<skill>/ by default", help_result.stdout)
+        self.assertIn("CODEX_DEV_SKILLS_TARGET=legacy", help_result.stdout)
+        self.assertIn("never moved or removed automatically", help_result.stdout)
+
+        default = self.run_installer("install", "shared-review-gates")
+        self.assertEqual(0, default.returncode, default.stderr)
+        self.assertTrue(
+            (self.home / ".agents" / "skills" / "code-review-gate" / "SKILL.md").is_file()
+        )
+        legacy_conflict_env = {**self.env, "CODEX_DEV_SKILLS_TARGET": "legacy"}
+        legacy_conflict = self.run_installer(
+            "install", "shared-review-gates", env=legacy_conflict_env
+        )
+        self.assertNotEqual(0, legacy_conflict.returncode)
+        self.assertIn("alternate discovery root", legacy_conflict.stderr)
+
+        legacy_home = self.root / "legacy-home"
+        legacy_home.mkdir()
+        legacy_env = {
+            **self.env,
+            "HOME": str(legacy_home),
+            "CODEX_DEV_SKILLS_TARGET": "legacy",
+        }
+        legacy = self.run_installer("install", "shared-review-gates", env=legacy_env)
+        self.assertEqual(0, legacy.returncode, legacy.stderr)
+        self.assertTrue(
+            (legacy_home / ".codex" / "skills" / "code-review-gate" / "SKILL.md").is_file()
+        )
+        self.assertFalse((legacy_home / ".agents").exists())
+
+    def test_cross_root_collision_fails_before_install_mutation_and_status_reports_it(self) -> None:
+        legacy_skill = self.home / ".codex" / "skills" / "code-review-gate"
+        legacy_skill.mkdir(parents=True)
+        legacy_skill.joinpath("SKILL.md").write_text("legacy\n", encoding="utf-8")
+
+        refused = self.run_installer("install", "shared-review-gates")
+        self.assertNotEqual(0, refused.returncode)
+        self.assertIn("alternate discovery root", refused.stderr)
+        self.assertIn("Existing installs are not moved or removed automatically", refused.stderr)
+        self.assertFalse((self.home / ".agents").exists())
+        self.assertFalse((self.home / ".codex" / "templates").exists())
+        self.assertFalse((self.root / "state" / "codex-dev-skills").exists())
+        self.assertEqual("legacy\n", legacy_skill.joinpath("SKILL.md").read_text(encoding="utf-8"))
+
+        alternate_status = self.run_installer("status")
+        self.assertEqual(0, alternate_status.returncode, alternate_status.stderr)
+        self.assertIn(
+            "Alternate-root managed skill detected: code-review-gate",
+            alternate_status.stdout,
+        )
+
+        current_skill = self.home / ".agents" / "skills" / "code-review-gate"
+        current_skill.mkdir(parents=True)
+        current_skill.joinpath("SKILL.md").write_text("current\n", encoding="utf-8")
+        status = self.run_installer("status")
+        self.assertEqual(0, status.returncode, status.stderr)
+        self.assertIn("Codex skills target mode: agents", status.stdout)
+        self.assertIn(f"Alternate discovery target: {self.home / '.codex' / 'skills'}", status.stdout)
+        self.assertIn("Cross-target skill collision: code-review-gate", status.stdout)
+
     def test_explicit_install_is_exact_and_idempotent(self) -> None:
         first = self.run_installer("install", "codex-agent-profiles")
         self.assertEqual(0, first.returncode, first.stderr)
@@ -56,9 +119,9 @@ class AgentProfileInstallerTests(unittest.TestCase):
         self.assertEqual(PROFILE_NAMES, sorted(path.name for path in target.glob("*.toml")))
         for name in PROFILE_NAMES:
             self.assertEqual((SOURCE_PROFILES / name).read_bytes(), (target / name).read_bytes())
-        installed_skill = self.home / ".codex" / "skills" / "loop-engineering"
+        installed_skill = self.home / ".agents" / "skills" / "loop-engineering"
         self.assertTrue(
-            (self.home / ".codex" / "skills" / "code-review-gate" / "SKILL.md").is_file()
+            (self.home / ".agents" / "skills" / "code-review-gate" / "SKILL.md").is_file()
         )
         self.assertTrue(
             (
@@ -189,7 +252,7 @@ class AgentProfileInstallerTests(unittest.TestCase):
         target_dir.mkdir(parents=True)
         collision = target_dir / "loop_v2a_balanced_worker.toml"
         collision.write_text("existing config\n", encoding="utf-8")
-        skill = self.home / ".codex" / "skills" / "loop-engineering" / "SKILL.md"
+        skill = self.home / ".agents" / "skills" / "loop-engineering" / "SKILL.md"
         template = self.home / ".codex" / "templates" / "docs" / "native-runtime-capabilities.md"
         skill.parent.mkdir(parents=True)
         template.parent.mkdir(parents=True)
@@ -213,7 +276,7 @@ class AgentProfileInstallerTests(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         self.assertTrue(target.exists())
         self.assertEqual(PROFILE_NAMES, sorted(path.name for path in target.parent.glob("*.toml")))
-        self.assertTrue((self.home / ".codex" / "skills" / "loop-engineering").is_dir())
+        self.assertTrue((self.home / ".agents" / "skills" / "loop-engineering").is_dir())
 
     def test_unmodified_uninstall_removes_profiles_only(self) -> None:
         self.assertEqual(0, self.run_installer("install", "codex-agent-profiles").returncode)
@@ -221,7 +284,78 @@ class AgentProfileInstallerTests(unittest.TestCase):
         result = self.run_installer("uninstall", "codex-agent-profiles", "--yes")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual([], list(target_dir.glob("*.toml")))
-        self.assertTrue((self.home / ".codex" / "skills" / "loop-engineering").is_dir())
+        self.assertTrue((self.home / ".agents" / "skills" / "loop-engineering").is_dir())
+
+    def test_uninstall_requires_matching_legacy_target_and_preserves_templates(self) -> None:
+        legacy_env = {**self.env, "CODEX_DEV_SKILLS_TARGET": "legacy"}
+        installed = self.run_installer(
+            "install", "shared-review-gates", env=legacy_env
+        )
+        self.assertEqual(0, installed.returncode, installed.stderr)
+        state_file = (
+            self.root / "state" / "codex-dev-skills" / "installed.jsonl"
+        )
+        self.assertIn(
+            '"target_mode":"legacy"',
+            state_file.read_text(encoding="utf-8"),
+        )
+        legacy_skill = (
+            self.home / ".codex" / "skills" / "code-review-gate" / "SKILL.md"
+        )
+        runtime_template = (
+            self.home
+            / ".codex"
+            / "templates"
+            / "orchestration"
+            / "policies"
+            / "runtime-compatibility-policy.md"
+        )
+        self.assertTrue(legacy_skill.is_file())
+        self.assertTrue(runtime_template.is_file())
+
+        refused = self.run_installer(
+            "uninstall", "shared-review-gates", "--yes"
+        )
+        self.assertNotEqual(0, refused.returncode)
+        self.assertIn("wrong skill target", refused.stderr)
+        self.assertTrue(legacy_skill.is_file())
+        self.assertTrue(runtime_template.is_file())
+        self.assertFalse((self.home / ".agents").exists())
+
+        removed = self.run_installer(
+            "uninstall", "shared-review-gates", "--yes", env=legacy_env
+        )
+        self.assertEqual(0, removed.returncode, removed.stderr)
+        self.assertFalse(legacy_skill.exists())
+        self.assertFalse(runtime_template.exists())
+
+    def test_uninstall_preserves_templates_used_by_alternate_root_dependents(self) -> None:
+        installed = self.run_installer("install", "shared-review-gates")
+        self.assertEqual(0, installed.returncode, installed.stderr)
+        selected_skill = (
+            self.home / ".agents" / "skills" / "code-review-gate" / "SKILL.md"
+        )
+        runtime_template = (
+            self.home
+            / ".codex"
+            / "templates"
+            / "orchestration"
+            / "policies"
+            / "runtime-compatibility-policy.md"
+        )
+        alternate_dependent = (
+            self.home / ".codex" / "skills" / "project-delivery" / "SKILL.md"
+        )
+        alternate_dependent.parent.mkdir(parents=True)
+        alternate_dependent.write_text("legacy dependent\n", encoding="utf-8")
+
+        refused = self.run_installer(
+            "uninstall", "shared-review-gates", "--yes"
+        )
+        self.assertNotEqual(0, refused.returncode)
+        self.assertIn("dependent skills remain", refused.stderr)
+        self.assertTrue(selected_skill.is_file())
+        self.assertTrue(runtime_template.is_file())
 
     def test_uninstall_uses_recorded_digest_across_source_version_drift(self) -> None:
         target_dir = self.home / ".codex" / "agents"

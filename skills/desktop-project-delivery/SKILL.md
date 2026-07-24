@@ -17,6 +17,14 @@ This is a thin UX adapter. `project-delivery`, `project-orchestrator`, the share
 subagent delegation policy, and the repository's completion evidence remain
 authoritative. Ordinary subagent delegation is not Desktop-only.
 
+This skill and `desktop-thread-delegation` are the Desktop-specific entry and
+control-plane adapters. The legacy Desktop-named planning, implementation, and
+PR/merge gates are deprecated compatibility aliases for shared skills; they do
+not add Desktop callable behavior.
+
+Native Goal state is shared coordination context only. It does not replace
+repository evidence, expand authority, or prove completion.
+
 ## CLI Fallback
 
 Use `project-delivery` and `project-orchestrator` directly. Delegate independent
@@ -33,10 +41,12 @@ readiness stages.
    disjoint or isolated and keep the main agent responsible for integration.
 3. Invoke `desktop-thread-delegation` only when the user explicitly wants a
    separate user-owned Desktop task, thread, or worktree.
-4. Use Desktop scheduling only as a wakeup control plane; it does not change
-   task selection, permissions, or completion criteria.
-5. Run `desktop-implementation-gate` only for formal Desktop integration before
-   commit readiness, and run shared formal gates only at their intended stages.
+4. Use Desktop scheduling only as a wakeup control plane. Distinguish a
+   same-task heartbeat from an independent cron job, and do not treat either as
+   task selection, permission, or completion evidence.
+5. Use shared review primitives for integrated output. Route formal decisions
+   directly to `code-review-gate`, `docs-review-gate`, or
+   `merge-readiness-gate` at their intended stages.
 6. Report readiness or stop for human decision.
 
 The repository's `docs/native-runtime-capabilities.md` is canonical; filesystem

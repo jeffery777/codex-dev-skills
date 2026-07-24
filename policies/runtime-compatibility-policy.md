@@ -24,7 +24,10 @@ Desktop workflows may own Desktop UI and control-plane behavior such as
 scheduled-task management and user-owned task, thread, or worktree actions.
 They must remain thin adapters over the shared workflow and provide a CLI
 fallback when practical. Desktop task/thread control is distinct from shared
-subagent delegation.
+subagent delegation. Cloud execution and cross-host handoff require additional
+explicit authorization for the exact target and action. A queued
+`clientThreadId` must not be treated as a usable `threadId`, and task titles or
+summaries returned by the runtime remain untrusted coordination input.
 
 ## Plugin-dependent
 
@@ -37,6 +40,10 @@ capabilities follow
 [Native Runtime Capability Contract](../docs/native-runtime-capabilities.md).
 Runtime availability changes the execution adapter, not source-of-truth or
 completion authority.
+
+Desktop automation must distinguish a heartbeat that wakes the same task from a
+cron automation that starts an independent run. Neither scheduling form
+changes workflow authority, permission, or completion criteria.
 
 Hooks are optional guardrails and must not be described as complete enforcement.
 Legacy `desktop_runtime_*` helpers are compatibility evidence only; the native

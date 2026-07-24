@@ -4,6 +4,8 @@ import pathlib
 import re
 import unittest
 
+import yaml
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -86,7 +88,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
     def test_chatgpt_desktop_name_preserves_runtime_layers(self) -> None:
         readme = read("README.md")
         compatibility = read("docs/runtime-compatibility.md")
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-21.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-24.md")
         contract = read("docs/native-runtime-capabilities.md")
         combined = "\n".join((readme, compatibility, evidence, contract))
 
@@ -95,6 +97,110 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("shared reasoning or subagent delegation", combined)
         self.assertIn("thin adapters", evidence)
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
+
+    def test_latest_runtime_evidence_records_current_versions_and_counts(self) -> None:
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-24.md")
+
+        for expected in (
+            "0.145.0",
+            "26.721.30844",
+            "5813",
+            "com.openai.codex",
+            "234",
+            "89",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, evidence)
+
+    def test_desktop_callable_contract_covers_new_boundaries(self) -> None:
+        contract = read("docs/native-runtime-capabilities.md")
+        adapter = read("docs/runtime-adapter-v2.md")
+        policy = read("policies/runtime-compatibility-policy.md")
+        combined = "\n".join((contract, adapter, policy))
+
+        for expected in (
+            "chatgptWorkCloud",
+            "projectless.directoryName",
+            "chatgptWorkCloud.projectId",
+            "isGitRepository",
+            "get_handoff_status",
+            "Cloud handoff is unsupported",
+            "heartbeat",
+            "cron automation",
+            "untrusted",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, combined)
+
+        self.assertRegex(
+            combined,
+            re.compile(r"`clientThreadId` is not a `threadId`"),
+        )
+        self.assertRegex(
+            combined,
+            re.compile(
+                r"cloud target(?:s)? may\s+carry\s+`chatgptWorkCloud\.projectId`",
+                re.IGNORECASE,
+            ),
+        )
+        self.assertRegex(
+            combined,
+            re.compile(
+                r"cross-host\s+handoff requires\s+additional explicit authorization",
+                re.IGNORECASE,
+            ),
+        )
+
+    def test_cli_and_desktop_entry_paths_remain_distinct(self) -> None:
+        readme = read("README.md")
+        shared = read("skills/project-orchestrator/SKILL.md")
+        desktop = read("skills/desktop-project-delivery/SKILL.md")
+
+        self.assertIn("### CLI And Desktop Entry Paths", readme)
+        self.assertIn("Codex CLI enters the shared layer directly", readme)
+        self.assertIn("`/app`", readme)
+        self.assertIn("Runtime compatibility: shared", shared)
+        self.assertIn("Runtime compatibility: desktop", desktop)
+        self.assertIn("thin UX adapter", desktop)
+
+    def test_legacy_desktop_gates_are_compatibility_aliases(self) -> None:
+        routes = {
+            "skills/desktop-spec-plan-gate/SKILL.md": "`planning`",
+            "skills/desktop-implementation-gate/SKILL.md": "`code-review`",
+            "skills/desktop-pr-merge-gate/SKILL.md": "`merge-readiness-gate`",
+        }
+
+        for path, route in routes.items():
+            with self.subTest(path=path):
+                skill = read(path)
+                self.assertIn("Compatibility status: deprecated compatibility alias", skill)
+                self.assertIn(route, skill)
+                self.assertIn("does not use a Desktop callable", skill)
+
+        workflow = read("workflows/desktop-delivery-workflow.md")
+        self.assertIn("deprecated compatibility aliases", workflow)
+        self.assertRegex(workflow, re.compile(r"do\s+not add Desktop callable behavior"))
+
+    def test_catalog_alias_metadata_is_typed_and_resolvable(self) -> None:
+        catalog = yaml.safe_load(read("catalog.yaml"))
+        entries = [
+            entry
+            for group in catalog["groups"].values()
+            for entry in group.get("skills", [])
+        ]
+        sources = {entry["source"] for entry in entries}
+        aliases = [
+            entry
+            for entry in entries
+            if entry.get("status") == "deprecated-compatibility-alias"
+        ]
+
+        self.assertEqual(3, len(aliases))
+        for entry in aliases:
+            with self.subTest(source=entry["source"]):
+                self.assertIsInstance(entry.get("routes_to"), list)
+                self.assertTrue(entry["routes_to"])
+                self.assertLessEqual(set(entry["routes_to"]), sources)
 
     def test_hooks_are_optional_incomplete_guardrails(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
