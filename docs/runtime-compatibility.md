@@ -7,7 +7,7 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only. See the maintained
-[2026-07-21 compatibility evidence](codex-runtime-compatibility-evidence-2026-07-21.md).
+[2026-07-24 compatibility evidence](codex-runtime-compatibility-evidence-2026-07-24.md).
 
 ## `shared`
 

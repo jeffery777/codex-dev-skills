@@ -11,7 +11,7 @@ DEFAULT_CODEX_LEGACY_SKILLS_DIR="$HOME/.codex/skills"
 DEFAULT_CODEX_AGENTS_SKILLS_DIR="$HOME/.agents/skills"
 DEFAULT_CODEX_TEMPLATES_DIR="$HOME/.codex/templates"
 DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
-CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-legacy}"
+CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
 VERSION="0.9.1"
@@ -50,8 +50,8 @@ Groups:
   codex-agent-profiles (explicit opt-in; excluded from --all)
 
 Targets:
-  Codex skills:    ~/.codex/skills/<skill>/ by default
-                   ~/.agents/skills/<skill>/ when CODEX_DEV_SKILLS_TARGET=agents
+  Codex skills:    ~/.agents/skills/<skill>/ by default
+                   ~/.codex/skills/<skill>/ when CODEX_DEV_SKILLS_TARGET=legacy
   Codex templates: ~/.codex/templates/...
   Custom agents:   ~/.codex/agents/<profile>.toml by default
                    Set CODEX_CUSTOM_AGENTS_DIR=<trusted-project>/.codex/agents with
@@ -59,7 +59,9 @@ Targets:
 
 This installer never overwrites ~/.codex/AGENTS.md.
 Custom CODEX_SKILLS_DIR / CODEX_TEMPLATES_DIR / CODEX_CUSTOM_AGENTS_DIR values require CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES.
-The default target remains legacy to avoid changing existing installations.
+Existing installs are never moved or removed automatically.
+If the same skill exists in both standard discovery paths, resolve the duplicate
+or use CODEX_DEV_SKILLS_TARGET=legacy to maintain an existing legacy install.
 The codex-agent-profiles group is never installed by --all or codex-dev-skills.
 USAGE
 }
@@ -160,6 +162,53 @@ init_agent_target() {
   PROFILE_STATE_FILE="$STATE_DIR/agent-profile-$(python3 -c 'import hashlib, sys; print(hashlib.sha256(sys.argv[1].encode()).hexdigest())' "$CODEX_CUSTOM_AGENTS_DIR").tsv"
 }
 
+alternate_standard_skills_root() {
+  case "$CODEX_SKILLS_DIR" in
+    "$DEFAULT_CODEX_AGENTS_SKILLS_DIR") printf '%s\n' "$DEFAULT_CODEX_LEGACY_SKILLS_DIR" ;;
+    "$DEFAULT_CODEX_LEGACY_SKILLS_DIR") printf '%s\n' "$DEFAULT_CODEX_AGENTS_SKILLS_DIR" ;;
+    *) return 1 ;;
+  esac
+}
+
+preflight_cross_root_skill_collisions() {
+  local requested="$1" alternate group skill collision=0
+  alternate="$(alternate_standard_skills_root)" || return 0
+  for group in $(expand_groups "$requested"); do
+    for skill in $(group_skills "$group"); do
+      if [[ -e "$alternate/$skill" || -L "$alternate/$skill" ]]; then
+        warn "skill '$skill' also exists in alternate discovery root: $alternate/$skill"
+        collision=1
+      fi
+    done
+  done
+  if [[ "$collision" -eq 1 ]]; then
+    die "Refusing to create duplicate skill discovery entries across ~/.agents/skills and ~/.codex/skills. Existing installs are not moved or removed automatically."
+  fi
+}
+
+report_cross_root_skill_collisions() {
+  local alternate group skill seen="" found=0
+  alternate="$(alternate_standard_skills_root)" || {
+    printf 'Cross-target skill collisions: not checked for custom skills target\n'
+    return
+  }
+  for group in $(all_groups); do
+    for skill in $(group_skills "$group"); do
+      case " $seen " in *" $skill "*) continue ;; esac
+      seen="$seen $skill"
+      if [[ -e "$alternate/$skill" || -L "$alternate/$skill" ]]; then
+        if [[ -e "$CODEX_SKILLS_DIR/$skill" || -L "$CODEX_SKILLS_DIR/$skill" ]]; then
+          printf 'Cross-target skill collision: %s\n' "$skill"
+        else
+          printf 'Alternate-root managed skill detected: %s\n' "$skill"
+        fi
+        found=1
+      fi
+    done
+  done
+  [[ "$found" -eq 1 ]] || printf 'Alternate-root managed skills: none detected\n'
+}
+
 safe_path_under_root() {
   local root="$1" rel="$2" path
   reject_suspicious_relpath "$rel"
@@ -205,7 +254,7 @@ group_description() {
     shared-review-gates) echo "Shared review gates, closure triage, safety policies, and orchestration templates." ;;
     codex-review-workflow) echo "Routine and deep code, docs, and merge review workflows." ;;
     codex-delivery-workflow) echo "Loop engineering, planning, bounded implementation, docs update, and delegated delivery workflows." ;;
-    desktop-delivery-workflow) echo "Thin Codex Desktop task, thread, worktree, scheduling, and integration adapters." ;;
+    desktop-delivery-workflow) echo "Two active Codex Desktop entry/control-plane adapters plus deprecated shared-gate compatibility aliases." ;;
     codex-agent-profiles) echo "Opt-in Loop Engineering V2a custom-agent runtime profiles." ;;
     codex-dev-skills) echo "Alias for all groups." ;;
   esac
@@ -331,12 +380,62 @@ expand_groups() {
   printf '%s\n' $result
 }
 
+group_has_installed_skill() {
+  local root="$1" group="$2" skill
+  for skill in $(group_skills "$group"); do
+    if [[ -e "$root/$skill" || -L "$root/$skill" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+group_depends_on() {
+  local group="$1" dependency="$2" candidate
+  [[ "$group" != "$dependency" ]] || return 0
+  for candidate in $(group_deps "$group"); do
+    [[ "$candidate" != "$dependency" ]] || return 0
+  done
+  return 1
+}
+
+preflight_uninstall_cross_root() {
+  local requested="$1" alternate expanded group alternate_group mismatch=0 protected=0
+  alternate="$(alternate_standard_skills_root)" || return 0
+  expanded="$(expand_groups "$requested")"
+
+  for group in $expanded; do
+    if ! group_has_installed_skill "$CODEX_SKILLS_DIR" "$group" &&
+       group_has_installed_skill "$alternate" "$group"; then
+      warn "selected target has no installed '$group' skills, but the alternate discovery root does: $alternate"
+      mismatch=1
+    fi
+  done
+  if [[ "$mismatch" -eq 1 ]]; then
+    die "Refusing uninstall from the wrong skill target. Re-run with CODEX_DEV_SKILLS_TARGET=legacy when uninstalling a legacy installation."
+  fi
+
+  for group in $expanded; do
+    [[ -n "$(group_templates "$group")" ]] || continue
+    for alternate_group in $(all_groups); do
+      if group_depends_on "$alternate_group" "$group" &&
+         group_has_installed_skill "$alternate" "$alternate_group"; then
+        warn "alternate-root '$alternate_group' skills still depend on templates from '$group': $alternate"
+        protected=1
+      fi
+    done
+  done
+  if [[ "$protected" -eq 1 ]]; then
+    die "Refusing to remove shared templates while dependent skills remain in the alternate discovery root."
+  fi
+}
+
 record_state() {
   local action="$1" group="$2" ts
   ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   mkdir -p "$STATE_DIR"
-  printf '{"repo":"codex-dev-skills","version":"%s","action":"%s","group":"%s","installed_at":"%s"}\n' \
-    "$VERSION" "$action" "$group" "$ts" >> "$STATE_FILE"
+  printf '{"repo":"codex-dev-skills","version":"%s","action":"%s","group":"%s","target_mode":"%s","installed_at":"%s"}\n' \
+    "$VERSION" "$action" "$group" "$CODEX_DEV_SKILLS_TARGET" "$ts" >> "$STATE_FILE"
 }
 
 remove_transient_skill_files() {
@@ -672,10 +771,16 @@ cmd_list() {
 }
 
 cmd_status() {
+  printf 'Codex skills target mode: %s\n' "$CODEX_DEV_SKILLS_TARGET"
   printf 'Codex skills target: %s\n' "$CODEX_SKILLS_DIR"
+  if alternate_standard_skills_root >/dev/null; then
+    printf 'Alternate discovery target: %s\n' "$(alternate_standard_skills_root)"
+  fi
   printf 'Codex templates target: %s\n' "$CODEX_TEMPLATES_DIR"
   printf 'Custom agents target: %s\n' "$CODEX_CUSTOM_AGENTS_DIR"
   printf 'State file: %s\n\n' "$STATE_FILE"
+  report_cross_root_skill_collisions
+  printf '\n'
   if [[ -f "$STATE_FILE" ]]; then
     tail -50 "$STATE_FILE"
   else
@@ -736,6 +841,8 @@ cmd_uninstall() {
   if [[ "$requested" == "codex-agent-profiles" ]]; then
     uninstall_group "$requested"
   else
+    preflight_uninstall_cross_root "$requested"
+    init_targets
     for group in $(expand_groups "$requested"); do
       uninstall_group "$group"
     done
@@ -783,12 +890,21 @@ main() {
     done
   fi
 
-  init_targets
-
   case "$cmd" in
-    install) run_for_groups install "$requested" ;;
-    update) run_for_groups update "$requested" "$force" ;;
-    diff) run_for_groups diff "$requested" ;;
+    install)
+      preflight_cross_root_skill_collisions "$requested"
+      init_targets
+      run_for_groups install "$requested"
+      ;;
+    update)
+      preflight_cross_root_skill_collisions "$requested"
+      init_targets
+      run_for_groups update "$requested" "$force"
+      ;;
+    diff)
+      init_targets
+      run_for_groups diff "$requested"
+      ;;
     uninstall) cmd_uninstall "$@" ;;
   esac
 }

@@ -21,6 +21,33 @@ This compact guide helps new users choose the smallest skill or gate that matche
 | Codex Desktop should coordinate shared delivery with user-owned Desktop tasks, threads, worktrees, or scheduling. | `desktop-project-delivery` | Thin Desktop control-plane entry point over shared project delivery and subagent semantics. |
 | Shared orchestration has selected a bounded handoff and Codex Desktop should choose its task/thread/worktree execution mode. | `desktop-thread-delegation` | Thin Desktop control-plane adapter that can use runtime thread tools when authorized, while falling back to the already selected task brief or continuation prompt. |
 
+The three older Desktop-named gates remain installable only as deprecated
+compatibility aliases:
+
+| Compatibility name | Prefer | Contract |
+| --- | --- | --- |
+| `desktop-spec-plan-gate` | `planning` | No Desktop callable; preserves existing prompts while routing to shared planning and DoD behavior. |
+| `desktop-implementation-gate` | `code-review`, `code-review-deep`, `docs-review`, then the matching shared formal gate when required | No Desktop callable or separate integration decision. |
+| `desktop-pr-merge-gate` | `merge-readiness-gate` | No Desktop callable or separate merge decision. |
+
+New workflows should not select these aliases. Use
+`desktop-project-delivery` only for the Desktop delivery entry point and
+`desktop-thread-delegation` only for the Desktop task/thread/worktree control
+plane.
+
+## Runtime Entry Boundary
+
+Codex CLI enters shared skills directly. CLI `/agent` and `/subagents` expose
+the shared subagent control plane, while `/new`, `/fork`, `/resume`, and
+`/archive` manage CLI sessions rather than Desktop tasks. Use `/app` or
+`codex app <path>` only when the user intentionally moves the work into the
+ChatGPT desktop app.
+
+Once work is in the Desktop surface, add `desktop-project-delivery` or
+`desktop-thread-delegation` only for task, thread, worktree, handoff, or
+scheduling controls. A runtime transition never changes the shared objective,
+authority, verification, review, or completion contract.
+
 ## Review Primitive Or Formal Gate
 
 Use review primitives for ordinary feedback:
@@ -82,6 +109,11 @@ Use orchestration or delivery skills when Codex must decide or coordinate multip
 - `milestone-continuation` to keep a bounded milestone moving across repeated invocations by checking the current task, selecting the next ready task, and stopping at human gates.
 - `desktop-project-delivery` only when the Desktop runtime is intentionally part of the workflow.
 - `desktop-thread-delegation` when the Desktop runtime may open a new thread, but the main thread must still choose the next safe task and retain review or merge gates.
+
+Do not add a Desktop-prefixed gate after these entry points. Planning, ordinary
+review, formal review gates, merge readiness, Goal evidence, subagent
+delegation, and completion semantics remain shared. Goal state is coordination
+context, not repository completion proof.
 
 Use `loop-engineering` when the user wants the agent to own the whole repeated decision loop and dynamically choose among existing workflows as state changes. Use `project-delivery` directly when the request is one bounded delivery effort and does not need a named loop entrypoint. Use `milestone-continuation` instead of `project-delivery` when the distinctive need is repeated milestone progress from durable task state. Use `task-continuation` when the immediate goal is only to choose the next safe task or prepare a handoff prompt.
 

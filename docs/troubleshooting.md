@@ -17,12 +17,12 @@ If no state has been recorded yet, that does not prove nothing is installed; it 
 
 Installer writes normally target:
 
-- `~/.codex/skills/<skill>/` by default, preserving legacy installs
-- `~/.agents/skills/<skill>/` when `CODEX_DEV_SKILLS_TARGET=agents` is set explicitly
+- `~/.agents/skills/<skill>/` by default
+- `~/.codex/skills/<skill>/` when `CODEX_DEV_SKILLS_TARGET=legacy` is set explicitly
 - `~/.codex/templates/...`
 - `~/.local/state/codex-dev-skills` unless `XDG_STATE_HOME` changes it
 
-Use one skills target per Codex profile for this pack. Installing the same skill names into both `~/.codex/skills` and `~/.agents/skills` can make duplicate skills appear.
+Use one skills target per Codex profile for this pack. Before install or update, the installer refuses skill-name collisions between `~/.agents/skills` and `~/.codex/skills`. It never moves or deletes an existing installation automatically. Use `./install.sh status` to inspect cross-target collisions; use `CODEX_DEV_SKILLS_TARGET=legacy` when intentionally maintaining an existing legacy installation.
 
 Custom `CODEX_SKILLS_DIR` or `CODEX_TEMPLATES_DIR` values require `CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES`.
 
@@ -46,7 +46,7 @@ Install one group at a time when you want the smallest write:
 Use it only when that broader scope is intentional.
 
 If install fails with an unknown group error, re-run `./install.sh list` and choose one of the listed group names.
-If a current Codex setup expects user skills under `~/.agents/skills`, re-run the intended command with `CODEX_DEV_SKILLS_TARGET=agents` instead of changing broad custom paths.
+If an existing installation is intentionally maintained under `~/.codex/skills`, re-run the intended command with `CODEX_DEV_SKILLS_TARGET=legacy` instead of creating a duplicate under the default target.
 If install fails because custom target paths are rejected, remove the custom target override or set `CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES` only after confirming the target is narrow and intentional.
 
 Risk: install is an external write. It copies skills and templates into the configured Codex target directories and records installer state.
@@ -102,6 +102,8 @@ It requires `--yes`:
 ./install.sh uninstall shared-review-gates --yes
 ./install.sh uninstall --all --yes
 ```
+
+Use the same target mode that was used for installation. For a legacy installation, prefix uninstall with `CODEX_DEV_SKILLS_TARGET=legacy`. The installer refuses a mismatched target and will not remove shared templates while dependent skills remain in the alternate standard discovery root.
 
 Use a single-group uninstall when possible.
 `./install.sh uninstall --all --yes` removes every installed group target managed by this installer, including Desktop-only workflows.

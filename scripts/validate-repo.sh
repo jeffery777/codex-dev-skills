@@ -103,6 +103,47 @@ check_catalog_sources() {
   ok "catalog sources exist"
 }
 
+check_catalog_skill_metadata() {
+  python3 - <<'PY'
+from pathlib import Path
+
+import yaml
+
+catalog = yaml.safe_load(Path("catalog.yaml").read_text(encoding="utf-8"))
+groups = catalog.get("groups", {})
+skill_entries = [
+    entry
+    for group in groups.values()
+    for entry in group.get("skills", [])
+]
+skill_sources = {entry["source"] for entry in skill_entries}
+allowed_statuses = {
+    "active-desktop-adapter",
+    "deprecated-compatibility-alias",
+}
+
+for entry in skill_entries:
+    source = entry["source"]
+    status = entry.get("status")
+    routes = entry.get("routes_to")
+    if status is not None and status not in allowed_statuses:
+        raise SystemExit(f"invalid catalog skill status for {source}: {status}")
+    if routes is not None:
+        if not isinstance(routes, list) or not routes:
+            raise SystemExit(f"catalog routes_to must be a non-empty list for {source}")
+        missing = sorted(set(routes) - skill_sources)
+        if missing:
+            raise SystemExit(
+                f"catalog routes_to for {source} references missing skills: {missing}"
+            )
+    if status == "deprecated-compatibility-alias" and routes is None:
+        raise SystemExit(f"deprecated catalog alias lacks routes_to: {source}")
+    if status != "deprecated-compatibility-alias" and routes is not None:
+        raise SystemExit(f"only deprecated catalog aliases may declare routes_to: {source}")
+PY
+  ok "catalog skill lifecycle and routes metadata are valid"
+}
+
 check_installer_catalog_consistency() {
   local catalog_list installer_list
   catalog_list="$TMP_DIR/catalog-sources.txt"
@@ -121,8 +162,10 @@ check_installer_target_modes() {
   agents_manifest="$TMP_DIR/installer-agents-manifest.txt"
 
   ./install.sh help > "$TMP_DIR/install-help.txt"
-  rg -F -q 'CODEX_DEV_SKILLS_TARGET=agents' "$TMP_DIR/install-help.txt" \
-    || fail "installer help must document CODEX_DEV_SKILLS_TARGET=agents"
+  rg -F -q 'by default' "$TMP_DIR/install-help.txt" \
+    || fail "installer help must document the default skills target"
+  rg -F -q 'CODEX_DEV_SKILLS_TARGET=legacy' "$TMP_DIR/install-help.txt" \
+    || fail "installer help must document CODEX_DEV_SKILLS_TARGET=legacy"
   rg -F -q '~/.codex/skills/<skill>/' "$TMP_DIR/install-help.txt" \
     || fail "installer help must document the legacy skills target"
   rg -F -q '~/.agents/skills/<skill>/' "$TMP_DIR/install-help.txt" \
@@ -132,8 +175,8 @@ check_installer_target_modes() {
   rg -F -q 'excluded from --all' "$TMP_DIR/install-help.txt" \
     || fail "installer help must state that custom-agent profiles are excluded from --all"
 
-  ./install.sh manifest | sort -u > "$legacy_manifest"
-  CODEX_DEV_SKILLS_TARGET=agents ./install.sh manifest | sort -u > "$agents_manifest"
+  CODEX_DEV_SKILLS_TARGET=legacy ./install.sh manifest | sort -u > "$legacy_manifest"
+  ./install.sh manifest | sort -u > "$agents_manifest"
   if ! diff -u "$legacy_manifest" "$agents_manifest"; then
     fail "installer manifests must not differ by target mode"
   fi
@@ -238,6 +281,7 @@ main() {
   check_legacy_private_names
   check_repository_guardrails
   check_catalog_sources
+  check_catalog_skill_metadata
   check_installer_catalog_consistency
   check_installer_target_modes
   check_installer_version

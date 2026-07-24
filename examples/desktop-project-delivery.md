@@ -5,8 +5,8 @@ Use `desktop-project-delivery` in Codex Desktop for delegated bounded work:
 ```text
 Use desktop-project-delivery to deliver this feature to PR readiness.
 Review integrated output with code-review or docs-review, escalating high-risk code or mixed changes to code-review-deep.
-Use desktop-implementation-gate only for formal Desktop integration before commit readiness.
 Use code-review-gate or docs-review-gate only for formal commit readiness, PR readiness, merge readiness, or repo-policy blocking decisions.
+Treat desktop-implementation-gate as a deprecated compatibility alias; do not add a separate Desktop integration decision.
 Stop for product ambiguity, external writes such as commit, push, PR creation, platform comments, or review submissions; destructive actions; or final merge approval.
 ```
 
