@@ -36,6 +36,7 @@ The user-facing skill is `loop-engineering`. It is an entrypoint and router, not
 | Bounded objective to PR readiness | `project-delivery` |
 | Repeated milestone progress across invocations | `milestone-continuation` |
 | Next-task selection or handoff artifact | `task-continuation` |
+| Separate or resumed Codex CLI session after handoff selection | `cli-session-handoff` |
 | Routine code or docs feedback | `code-review`, `docs-review`, or `code-review-deep` |
 | Formal readiness decision | `code-review-gate`, `docs-review-gate`, or `merge-readiness-gate` |
 | Shared bounded subagent packets | `project-orchestrator` or `project-delivery` |

@@ -18,6 +18,7 @@ This compact guide helps new users choose the smallest skill or gate that matche
 | Codex should classify the next safe action or run a bounded review/fix closure loop. | `project-orchestrator` | Routes between planning, implementation, docs update, review primitives, formal gates, continuation, or human decision. |
 | Codex should carry a bounded objective through discovery, implementation, verification, review, docs sync, and PR readiness. | `project-delivery` | Delivery workflow for multi-step but bounded objectives that still stop at the next human gate. |
 | A bounded milestone should be checked and advanced across repeated invocations until complete or blocked. | `milestone-continuation` | Upper-layer loop that checks task completion, selects the next ready task, and routes through existing workflows without owning runtime scheduling. |
+| Shared orchestration selected a bounded task and the user wants one separate or resumed Codex CLI session. | `cli-session-handoff` | Thin CLI control-plane adapter over stable non-interactive start/resume; it validates the exact worktree and sandbox and returns non-authoritative redacted evidence. |
 | Codex Desktop should coordinate shared delivery with user-owned Desktop tasks, threads, worktrees, or scheduling. | `desktop-project-delivery` | Thin Desktop control-plane entry point over shared project delivery and subagent semantics. |
 | Shared orchestration has selected a bounded handoff and Codex Desktop should choose its task/thread/worktree execution mode. | `desktop-thread-delegation` | Thin Desktop control-plane adapter that can use runtime thread tools when authorized, while falling back to the already selected task brief or continuation prompt. |
 
@@ -42,6 +43,12 @@ the shared subagent control plane, while `/new`, `/fork`, `/resume`, and
 `/archive` manage CLI sessions rather than Desktop tasks. Use `/app` or
 `codex app <path>` only when the user intentionally moves the work into the
 ChatGPT desktop app.
+
+When shared orchestration has already selected a task,
+`cli-session-handoff` may invoke one explicitly authorized
+`codex exec --json` start or exact-UUID resume. It is not a task selector,
+scheduler, background observer, or Desktop adapter. Its receipt cannot replace
+parent diff inspection, verification, review, or completion evidence.
 
 Once work is in the Desktop surface, add `desktop-project-delivery` or
 `desktop-thread-delegation` only for task, thread, worktree, handoff, or
@@ -107,6 +114,8 @@ Use orchestration or delivery skills when Codex must decide or coordinate multip
 - `project-orchestrator` to choose the next safe action, route work, or run a bounded review closure loop.
 - `project-delivery` to advance a bounded objective through implementation, verification, review, docs sync, and PR readiness.
 - `milestone-continuation` to keep a bounded milestone moving across repeated invocations by checking the current task, selecting the next ready task, and stopping at human gates.
+- `cli-session-handoff` only for one selected CLI session mutation after exact
+  authorization and target validation.
 - `desktop-project-delivery` only when the Desktop runtime is intentionally part of the workflow.
 - `desktop-thread-delegation` when the Desktop runtime may open a new thread, but the main thread must still choose the next safe task and retain review or merge gates.
 

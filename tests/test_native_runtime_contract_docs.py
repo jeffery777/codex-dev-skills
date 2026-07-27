@@ -154,14 +154,76 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
     def test_cli_and_desktop_entry_paths_remain_distinct(self) -> None:
         readme = read("README.md")
         shared = read("skills/project-orchestrator/SKILL.md")
+        cli = read("skills/cli-session-handoff/SKILL.md")
         desktop = read("skills/desktop-project-delivery/SKILL.md")
 
         self.assertIn("### CLI And Desktop Entry Paths", readme)
         self.assertIn("Codex CLI enters the shared layer directly", readme)
         self.assertIn("`/app`", readme)
         self.assertIn("Runtime compatibility: shared", shared)
+        self.assertIn("Runtime compatibility: cli", cli)
         self.assertIn("Runtime compatibility: desktop", desktop)
+        self.assertIn("thin CLI control-plane adapter", cli)
         self.assertIn("thin UX adapter", desktop)
+
+    def test_cli_session_adapter_uses_stable_public_surface(self) -> None:
+        contract = read("docs/native-runtime-capabilities.md")
+        skill = read("skills/cli-session-handoff/SKILL.md")
+        policy = read("policies/runtime-compatibility-policy.md")
+        implementation = read(
+            "skills/cli-session-handoff/scripts/cli_session_handoff.py"
+        )
+        combined = "\n".join((contract, skill, policy))
+
+        for expected in (
+            "codex exec --json",
+            "codex exec resume",
+            "parent integration",
+            "permission widening",
+            "private session",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, combined)
+
+        self.assertIn('"codex-cli-session-handoff/v0"', implementation)
+        self.assertIn("shell=False", implementation)
+        self.assertIn('shell_environment_policy.inherit="core"', implementation)
+        self.assertIn("ProcessTreeTracker", implementation)
+        self.assertIn("_prepare_isolated_workspace", implementation)
+        self.assertIn("_apply_isolated_patch", implementation)
+        self.assertIn("OMITTED_FINAL_SUMMARY", implementation)
+        self.assertIn("private clone", combined)
+        self.assertNotIn("shell=True", implementation)
+        self.assertNotIn("desktop_runtime_", implementation)
+        self.assertNotIn("create_thread", implementation)
+
+    def test_cli_session_skill_group_separation(self) -> None:
+        catalog = yaml.safe_load(read("catalog.yaml"))
+        groups = catalog["groups"]
+
+        def transitive_skill_sources(group_name: str) -> set[str]:
+            pending = [group_name]
+            visited: set[str] = set()
+            sources: set[str] = set()
+            while pending:
+                current = pending.pop()
+                if current in visited:
+                    continue
+                visited.add(current)
+                group = groups[current]
+                sources.update(entry["source"] for entry in group.get("skills", []))
+                pending.extend(group.get("depends_on", []))
+            return sources
+
+        cli_sources = transitive_skill_sources("codex-cli-session-handoff")
+        delivery_sources = transitive_skill_sources("codex-delivery-workflow")
+        desktop_sources = transitive_skill_sources("desktop-delivery-workflow")
+
+        self.assertEqual("cli", groups["codex-cli-session-handoff"]["runtime"])
+        self.assertIn("codex-delivery-workflow", groups["codex-cli-session-handoff"]["depends_on"])
+        self.assertIn("skills/cli-session-handoff", cli_sources)
+        self.assertNotIn("skills/cli-session-handoff", delivery_sources)
+        self.assertNotIn("skills/cli-session-handoff", desktop_sources)
 
     def test_legacy_desktop_gates_are_compatibility_aliases(self) -> None:
         routes = {

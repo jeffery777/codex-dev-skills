@@ -138,6 +138,60 @@ artifact bytes, verification files, and selected profile from explicit trusted
 roots and checks exact worker/verification digests rather than trusting
 repository-controlled receipt assertions.
 
+### CLI session control plane
+
+Codex CLI has its own session control plane, distinct from shared subagents and
+Desktop tasks. The documented stable non-interactive surface supports
+`codex exec --json` for a new saved session and
+`codex exec resume <SESSION_ID> --json` for a known session. Public JSONL events
+include `thread.started`, terminal turn events, item events, and errors.
+
+The repo-owned `cli-session-handoff` adapter may use that surface only after
+shared orchestration selects a bounded task and the user authorizes one exact
+session mutation. It:
+
+- requires an explicit canonical CLI executable and clean canonical Git
+  worktree at an exact expected HEAD;
+- fails closed for sparse-checkout worktrees and indexes containing submodules,
+  whose checkout semantics are not reproduced by the private clone;
+- supports only read-only or workspace-write sandboxing and never accepts
+  arbitrary flags, approval bypasses, or permission widening;
+- ignores user configuration for the child run while retaining the CLI's
+  documented authentication behavior;
+- fixes `shell_environment_policy.inherit="core"` and keeps the CLI's default
+  KEY/SECRET/TOKEN exclusions for model-proposed tool subprocesses;
+- sends the prompt over stdin rather than process argv;
+- probes executable identity in a disposable directory with bounded
+  stdout/stderr, time, and process-tree cleanup;
+- runs the child in a private clone at the expected HEAD, removes its source
+  remote, discards read-only changes, and integrates a bounded binary patch for
+  an authorized workspace-write request only after rechecking the original
+  clean worktree;
+- bounds timeout, output, JSONL line/event count, and integrated patch size;
+- records the public session identifier, observed CLI version, executable
+  digest, terminal classification, and a result whose untrusted child summary
+  is replaced by a fixed omission marker;
+- prevents nested adapter dispatch and appends a versioned
+  no-publication/no-recursion prompt boundary;
+- never reads CLI private session files or treats child output as completion
+  evidence.
+
+`start` and `resume` are runtime-state mutations. A successful process and
+`turn.completed` event prove only that the bounded child run reached its CLI
+terminal event. The originating session must inspect Git state, integrate the
+result, run verification, and apply review and human gates.
+
+The initial adapter does not automate interactive `/new` or `/fork`, use
+`--last`, or implement an app-server client. Its macOS/Linux process-group and
+descendant inventory remain defense-in-depth cleanup; observed descendant PIDs
+are paired with OS process-start tokens before later liveness checks or
+signals. A rapidly reparented process cannot retain direct authority over the
+target worktree because the child's writable root is the disposable private
+clone; polling completeness is not the target-integrity boundary. Other hosts
+must use the fallback until separately qualified.
+When the adapter is unavailable or unauthorized, use a continuation prompt,
+shared subagent, manual CLI invocation, or sequential fallback.
+
 ### Scheduler
 
 Scheduling is a runtime control-plane capability. Current Desktop and web

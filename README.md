@@ -65,6 +65,13 @@ Install CLI-compatible loop, implementation, and delivery workflows when you wan
 ./install.sh install codex-delivery-workflow
 ```
 
+Install the CLI-only live session handoff adapter separately. This group
+depends on the shared delivery workflow but does not alter Desktop packaging:
+
+```bash
+./install.sh install codex-cli-session-handoff
+```
+
 Loop Engineering V2a custom-agent profiles are a separate opt-in because they
 write local runtime configuration. Inspect the inventory and mapping metadata,
 then install only when wanted:
@@ -250,7 +257,10 @@ rerun profile validation. Remove backups only after confirming the intended
 configuration. Removing the profiles leaves V1 shared/sequential semantics
 available.
 
-`codex-review-workflow` and `codex-delivery-workflow` install their shared review gate dependencies automatically. Install `shared-review-gates` directly only when you want the formal gate adapters and orchestration templates without the review primitives.
+`codex-review-workflow`, `codex-delivery-workflow`, and
+`codex-cli-session-handoff` install their shared dependencies automatically.
+Install `shared-review-gates` directly only when you want the formal gate
+adapters and orchestration templates without the review primitives.
 
 Use the installed skills in Codex by name, for example:
 
@@ -314,6 +324,8 @@ Use the smallest entry point that matches the request:
 - `project-orchestrator` when Codex should classify the task, choose the next safe action, or decide whether to continue, hand off, review, or stop.
 - `project-delivery` when the objective is larger than one task but still bounded.
 - `milestone-continuation` when a bounded milestone should be checked and advanced across repeated invocations until complete or blocked by a human gate.
+- `cli-session-handoff` only after shared orchestration has selected a bounded
+  handoff and the user explicitly authorizes one new or resumed CLI session.
 
 `loop-engineering` is a thin entrypoint over the existing phase skills. It should classify the current state, route to the smallest suitable workflow, verify evidence, and stop at human gates. It does not replace focused implementation, review primitives, formal gates, milestone continuation, task continuation, shared subagents, or Desktop user-owned task/thread/worktree controls.
 
@@ -329,6 +341,18 @@ primitives. CLI `/agent` and `/subagents` expose shared subagent threads.
 User-facing CLI session controls such as `/new`, `/fork`, `/resume`, and
 `/archive` manage saved CLI sessions; they are not aliases for Desktop
 `create_thread` callables.
+
+After shared orchestration selects a bounded handoff,
+`cli-session-handoff` may use the documented stable
+`codex exec --json` or `codex exec resume <SESSION_ID> --json` surface. The
+adapter requires one exact authorization, a clean canonical Git worktree,
+matching expected HEAD, an explicit read-only or workspace-write sandbox, and
+a fixed no-publication/no-recursion prompt boundary. The child runs in a
+disposable private clone; an authorized write result is transferred as a
+bounded patch only after the original clean worktree is rechecked. It captures
+only a bounded receipt and replaces child-summary text with a fixed omission
+marker. It does not use Desktop identifiers, app-server,
+private session files, or child output as repository completion evidence.
 
 Use `/app` in an interactive CLI session, or `codex app <path>` from the shell,
 when the user intentionally wants to continue in the ChatGPT desktop app. Once
@@ -708,6 +732,23 @@ Shared subagents can handle bounded packets when available; opening a separate
 user-owned Desktop task or thread remains a runtime-specific control-plane
 action.
 
+### Codex CLI Session Handoff
+
+Use `cli-session-handoff` only after `task-continuation` or another shared
+orchestrator has already selected the task:
+
+```text
+Use cli-session-handoff for the already selected bounded task.
+Start one clean Codex CLI session in the exact worktree and sandbox I authorize.
+Do not commit, push, open pull requests, merge, perform platform writes, or dispatch another session.
+Return the bounded handoff receipt; I will verify the worktree and child result separately.
+```
+
+The adapter uses prompt stdin so task text is not placed in process argv,
+parses bounded public JSONL events, and supports exact-UUID resume. A real
+start or resume is a runtime-state mutation and requires explicit authority;
+offline tests use controlled fake executables and create no Codex session.
+
 ### Merge Readiness
 
 Use `merge-review` when you want the normal base-to-head merge quality and DoD review:
@@ -800,6 +841,7 @@ must not import, execute, or recommend them.
 | Skill | Runtime | Purpose |
 | --- | --- | --- |
 | `loop-engineering` | shared | Explicit loop entrypoint for clear bounded objectives; routes through planning, implementation, verification, review, continuation, handoff, and gates until complete or stopped. |
+| `cli-session-handoff` | cli | Start or resume one explicitly authorized bounded CLI session after shared orchestration selects the handoff; returns non-authoritative redacted evidence. |
 | `planning` | shared | Produce scoped implementation plans with assumptions, risks, DoD, and verification. |
 | `milestone-continuation` | shared | Continue a bounded milestone across repeated invocations by checking task completion, choosing the next ready task, and stopping at human gates. |
 | `project-delivery` | shared | Carry a bounded delivery objective through discovery, plan, implementation, review, docs sync, and PR readiness or the next human gate. |
@@ -843,6 +885,7 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Multi-step maintenance](examples/multi-step-maintenance.md)
 - [Milestone continuation](examples/milestone-continuation.md)
 - [Task continuation](examples/task-continuation.md)
+- [CLI session handoff](examples/cli-session-handoff.md)
 - [Desktop thread delegation](examples/desktop-thread-delegation.md)
 - [Runtime adapter boundary](examples/runtime-adapter-boundary.md)
 - [Language verification](examples/language-verification.md)
@@ -861,6 +904,7 @@ Use the Codex-only installer:
 ./install.sh install shared-review-gates
 ./install.sh install codex-review-workflow
 ./install.sh install codex-delivery-workflow
+./install.sh install codex-cli-session-handoff
 ```
 
 `./install.sh install --all` installs every group, including Desktop-only workflows. Use it only when you want the Desktop group installed too.
@@ -883,6 +927,12 @@ Install CLI-compatible loop and delivery workflows:
 
 ```bash
 ./install.sh install codex-delivery-workflow
+```
+
+Install the CLI-only live session handoff adapter:
+
+```bash
+./install.sh install codex-cli-session-handoff
 ```
 
 The installed Loop Engineering YAML CLI has one explicit Python dependency.
@@ -920,6 +970,7 @@ Update installed files from this repository:
 ./install.sh update shared-review-gates
 ./install.sh update codex-review-workflow
 ./install.sh update codex-delivery-workflow
+./install.sh update codex-cli-session-handoff
 ```
 
 `./install.sh update --all` updates every group, including Desktop-only workflows. Use it only when that is intentional.

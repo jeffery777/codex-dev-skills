@@ -18,6 +18,13 @@ or Desktop task-control capability is unavailable, use the current session,
 manual invocation, a continuation prompt, a task brief, or a sequential
 execution path without changing the shared completion contract.
 
+A CLI session adapter may start or resume one bounded non-interactive session
+only after shared orchestration selects the handoff and the user authorizes the
+exact runtime mutation. It must use documented public CLI output, prevent
+permission widening and recursive dispatch, keep raw/private runtime state out
+of repository artifacts, and retain parent integration and completion
+responsibility.
+
 ## Desktop
 
 Desktop workflows may own Desktop UI and control-plane behavior such as
@@ -35,8 +42,8 @@ Plugin-dependent workflows must name the required plugin or connector and define
 
 ## Native Capability Adapters
 
-Native Goal, subagent, scheduler, Desktop thread, hook, and sequential fallback
-capabilities follow
+Native Goal, subagent, CLI session, scheduler, Desktop thread, hook, and
+sequential fallback capabilities follow
 [Native Runtime Capability Contract](../docs/native-runtime-capabilities.md).
 Runtime availability changes the execution adapter, not source-of-truth or
 completion authority.

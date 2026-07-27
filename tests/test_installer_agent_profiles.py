@@ -286,6 +286,55 @@ class AgentProfileInstallerTests(unittest.TestCase):
         self.assertEqual([], list(target_dir.glob("*.toml")))
         self.assertTrue((self.home / ".agents" / "skills" / "loop-engineering").is_dir())
 
+    def test_dependency_uninstall_refuses_installed_profiles(self) -> None:
+        self.assertEqual(
+            0,
+            self.run_installer("install", "codex-agent-profiles").returncode,
+        )
+
+        result = self.run_installer(
+            "uninstall", "codex-delivery-workflow", "--yes"
+        )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("still depend on", result.stderr)
+        self.assertTrue(
+            (self.home / ".agents" / "skills" / "loop-engineering").is_dir()
+        )
+        self.assertEqual(
+            PROFILE_NAMES,
+            sorted(
+                path.name
+                for path in (self.home / ".codex" / "agents").glob("*.toml")
+            ),
+        )
+
+    def test_dependency_uninstall_detects_profiles_in_previous_custom_root(self) -> None:
+        custom_target = self.root / "project" / ".codex" / "agents"
+        custom_env = {
+            **self.env,
+            "CODEX_CUSTOM_AGENTS_DIR": str(custom_target),
+            "CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS": "YES",
+        }
+        installed = self.run_installer(
+            "install", "codex-agent-profiles", env=custom_env
+        )
+        self.assertEqual(0, installed.returncode, installed.stderr)
+
+        refused = self.run_installer(
+            "uninstall", "codex-delivery-workflow", "--yes"
+        )
+
+        self.assertNotEqual(0, refused.returncode)
+        self.assertIn("still depend on", refused.stderr)
+        self.assertTrue(
+            (self.home / ".agents" / "skills" / "loop-engineering").is_dir()
+        )
+        self.assertEqual(
+            PROFILE_NAMES,
+            sorted(path.name for path in custom_target.glob("*.toml")),
+        )
+
     def test_uninstall_requires_matching_legacy_target_and_preserves_templates(self) -> None:
         legacy_env = {**self.env, "CODEX_DEV_SKILLS_TARGET": "legacy"}
         installed = self.run_installer(
