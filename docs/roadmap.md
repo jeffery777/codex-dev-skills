@@ -82,8 +82,12 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 - The bounded v0.9.1 release closure is tracked in issue #111. It aligns
   version and release metadata, closes Phase 0 program handoff evidence, and
   proves the post-bootstrap PR linkage workflow without implementing V2d-A.
-- Loop Engineering V2d is the next planned feature milestone after the v0.9.1
-  release. V2d-A will define
+- The v0.9.2 runtime-compatibility release closure is tracked in issue #117.
+  It publishes the Codex CLI/Desktop interface refresh from issue #113 and the
+  bounded CLI-only session handoff adapter from issue #115 without changing
+  the V2c-B feature baseline or implementing V2d-A.
+- Loop Engineering V2d is the next planned feature milestone after the v0.9.2
+  maintenance release. V2d-A will define
   `loop-operational-evidence/v0` core contracts for run receipts, iteration
   summaries, failure taxonomy, redacted environment fingerprints, and artifact
   references with strict validators and synthetic fixtures. V2d-B will add
