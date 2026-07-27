@@ -22,7 +22,7 @@
 
 - Task: `<task-id>`
 - Objective: `<bounded-objective>`
-- Execution mode: `<continue-current-session | shared-subagent | new-session-prompt | desktop-task-handoff | stop-for-human-gate>`; describe CLI fallback in prose as a prompt, task brief, continuation prompt, or sequential execution path.
+- Execution mode: `<continue-current-session | shared-subagent | new-session-prompt | cli-session-handoff | desktop-task-handoff | stop-for-human-gate>`; use `cli-session-handoff` only after exact authorization and runtime validation, otherwise describe the CLI fallback as a prompt, task brief, continuation prompt, or sequential execution path.
 - Reason: `<why-this-is-the-smallest-safe-next-task>`
 
 ## Required Context For Next Agent

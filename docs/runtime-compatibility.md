@@ -20,6 +20,12 @@ subagent delegation when those capabilities are available.
 Designed primarily for Codex CLI. A Desktop user may still follow the workflow
 manually, but the skill must document the fallback.
 
+`cli-session-handoff` is the thin CLI control-plane adapter for one bounded,
+explicitly authorized `codex exec --json` start or exact-UUID resume. It is
+separate from shared task selection/subagents and from Desktop task/thread
+callables. Its redacted receipt is coordination evidence, not completion
+authority.
+
 ## `desktop`
 
 Requires Codex Desktop user-owned task, thread, worktree, UI, or scheduling
@@ -49,6 +55,9 @@ The canonical mapping is [Native Runtime Capability Contract](native-runtime-cap
 - Goal mode is shared but may be created only when explicitly requested.
 - Bounded subagents are shared; ownership must be disjoint and the main agent
   must verify and integrate their output.
+- CLI session start/resume is owned by the CLI adapter after shared
+  orchestration selects the handoff; it requires exact mutation authority and
+  parent integration.
 - Custom-agent files are public local runtime configuration. Capability classes
   and cost-aware capability tiers remain shared semantics; concrete
   model/reasoning mappings require runtime preflight and may differ across CLI,

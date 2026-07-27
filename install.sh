@@ -46,6 +46,7 @@ Groups:
   shared-review-gates
   codex-review-workflow
   codex-delivery-workflow
+  codex-cli-session-handoff
   desktop-delivery-workflow
   codex-agent-profiles (explicit opt-in; excluded from --all)
 
@@ -229,6 +230,7 @@ all_groups() {
     shared-review-gates \
     codex-review-workflow \
     codex-delivery-workflow \
+    codex-cli-session-handoff \
     desktop-delivery-workflow \
     codex-agent-profiles
 }
@@ -238,12 +240,13 @@ default_groups() {
     shared-review-gates \
     codex-review-workflow \
     codex-delivery-workflow \
+    codex-cli-session-handoff \
     desktop-delivery-workflow
 }
 
 group_exists() {
   case "$1" in
-    shared-review-gates|codex-review-workflow|codex-delivery-workflow|desktop-delivery-workflow|codex-agent-profiles) return 0 ;;
+    shared-review-gates|codex-review-workflow|codex-delivery-workflow|codex-cli-session-handoff|desktop-delivery-workflow|codex-agent-profiles) return 0 ;;
     codex-dev-skills) return 0 ;;
     *) return 1 ;;
   esac
@@ -253,7 +256,8 @@ group_description() {
   case "$1" in
     shared-review-gates) echo "Shared review gates, closure triage, safety policies, and orchestration templates." ;;
     codex-review-workflow) echo "Routine and deep code, docs, and merge review workflows." ;;
-    codex-delivery-workflow) echo "Loop engineering, planning, bounded implementation, docs update, and delegated delivery workflows." ;;
+    codex-delivery-workflow) echo "Shared loop engineering, planning, bounded implementation, docs update, and delegated delivery workflows." ;;
+    codex-cli-session-handoff) echo "CLI-only live session handoff adapter over the shared delivery workflow." ;;
     desktop-delivery-workflow) echo "Two active Codex Desktop entry/control-plane adapters plus deprecated shared-gate compatibility aliases." ;;
     codex-agent-profiles) echo "Opt-in Loop Engineering V2a custom-agent runtime profiles." ;;
     codex-dev-skills) echo "Alias for all groups." ;;
@@ -265,6 +269,7 @@ group_deps() {
     shared-review-gates) : ;;
     codex-review-workflow) echo "shared-review-gates" ;;
     codex-delivery-workflow) echo "shared-review-gates" ;;
+    codex-cli-session-handoff) echo "shared-review-gates codex-delivery-workflow" ;;
     desktop-delivery-workflow) echo "shared-review-gates codex-delivery-workflow" ;;
     codex-agent-profiles) echo "shared-review-gates codex-delivery-workflow" ;;
     codex-dev-skills) default_groups ;;
@@ -279,6 +284,8 @@ group_skills() {
       printf '%s\n' code-review code-review-deep docs-review merge-review merge-review-deep ;;
     codex-delivery-workflow)
       printf '%s\n' loop-engineering planning milestone-continuation project-delivery project-orchestrator implementation-slice docs-update ;;
+    codex-cli-session-handoff)
+      printf '%s\n' cli-session-handoff ;;
     desktop-delivery-workflow)
       printf '%s\n' desktop-project-delivery desktop-thread-delegation desktop-spec-plan-gate desktop-implementation-gate desktop-pr-merge-gate ;;
     codex-agent-profiles) : ;;
@@ -380,10 +387,48 @@ expand_groups() {
   printf '%s\n' $result
 }
 
+selected_uninstall_groups() {
+  local requested="$1"
+  if [[ "$requested" == "--all" || "$requested" == "codex-dev-skills" ]]; then
+    default_groups
+    return
+  fi
+  ensure_group "$requested"
+  printf '%s\n' "$requested"
+}
+
 group_has_installed_skill() {
   local root="$1" group="$2" skill
   for skill in $(group_skills "$group"); do
     if [[ -e "$root/$skill" || -L "$root/$skill" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+agent_profile_state_exists() {
+  local state
+  [[ -d "$STATE_DIR" ]] || return 1
+  for state in "$STATE_DIR"/agent-profile-*.tsv; do
+    if [[ -f "$state" && -s "$state" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+group_has_installed_artifact() {
+  local group="$1" profile
+  if group_has_installed_skill "$CODEX_SKILLS_DIR" "$group"; then
+    return 0
+  fi
+  if [[ "$group" == "codex-agent-profiles" ]] &&
+     agent_profile_state_exists; then
+    return 0
+  fi
+  for profile in $(group_agent_profiles "$group"); do
+    if [[ -e "$CODEX_CUSTOM_AGENTS_DIR/$(profile_target "$profile")" ]]; then
       return 0
     fi
   done
@@ -402,7 +447,7 @@ group_depends_on() {
 preflight_uninstall_cross_root() {
   local requested="$1" alternate expanded group alternate_group mismatch=0 protected=0
   alternate="$(alternate_standard_skills_root)" || return 0
-  expanded="$(expand_groups "$requested")"
+  expanded="$(selected_uninstall_groups "$requested")"
 
   for group in $expanded; do
     if ! group_has_installed_skill "$CODEX_SKILLS_DIR" "$group" &&
@@ -427,6 +472,27 @@ preflight_uninstall_cross_root() {
   done
   if [[ "$protected" -eq 1 ]]; then
     die "Refusing to remove shared templates while dependent skills remain in the alternate discovery root."
+  fi
+}
+
+preflight_uninstall_same_root() {
+  local requested="$1" selected group dependent protected=0
+  selected="$(selected_uninstall_groups "$requested")"
+  init_agent_target
+  for group in $selected; do
+    for dependent in $(all_groups); do
+      case " $selected " in
+        *" $dependent "*) continue ;;
+      esac
+      if group_depends_on "$dependent" "$group" &&
+         group_has_installed_artifact "$dependent"; then
+        warn "installed '$dependent' skills still depend on '$group' in the selected discovery root: $CODEX_SKILLS_DIR"
+        protected=1
+      fi
+    done
+  done
+  if [[ "$protected" -eq 1 ]]; then
+    die "Refusing to remove a group while installed groups in the selected discovery root still depend on it."
   fi
 }
 
@@ -843,7 +909,8 @@ cmd_uninstall() {
   else
     preflight_uninstall_cross_root "$requested"
     init_targets
-    for group in $(expand_groups "$requested"); do
+    preflight_uninstall_same_root "$requested"
+    for group in $(selected_uninstall_groups "$requested"); do
       uninstall_group "$group"
     done
   fi

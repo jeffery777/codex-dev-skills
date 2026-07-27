@@ -266,6 +266,13 @@ check_loop_contract() {
   ok "loop engineering event, transition, migration, and CLI contracts pass"
 }
 
+check_native_runtime_contract() {
+  python3 -m unittest \
+    tests.test_cli_session_handoff \
+    tests.test_native_runtime_contract_docs >/dev/null
+  ok "native CLI/Desktop runtime adapter contracts pass"
+}
+
 check_repository_guardrails() {
   python3 scripts/validate-gitnexus-config.py >"$TMP_DIR/gitnexus-config.json"
   python3 -m unittest \
@@ -288,6 +295,7 @@ main() {
   check_skill_metadata
   check_loop_ledger
   check_loop_contract
+  check_native_runtime_contract
   check_loop_eval
   check_agent_profiles
   check_agent_routing_eval

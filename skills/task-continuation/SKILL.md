@@ -27,11 +27,15 @@ user-owned Codex task or conversation; that is a runtime control-plane action.
    - `continue-current-session`
    - `new-session-prompt`
    - `shared-subagent`
+   - `cli-session-handoff`
    - `desktop-task-handoff`
    - `stop-for-human-gate`
 6. Prepare a continuation prompt or task brief when continuation is safe.
-7. Require the next session or worker to re-read source-of-truth files before editing.
-8. Stop for a human decision when continuation would cross a gate.
+7. Route `cli-session-handoff` only when the user explicitly authorized one
+   bounded CLI session mutation and the active CLI adapter can validate the
+   exact executable, worktree, Git head, sandbox, and session identifier.
+8. Require the next session or worker to re-read source-of-truth files before editing.
+9. Stop for a human decision when continuation would cross a gate.
 
 ## Stop Conditions
 

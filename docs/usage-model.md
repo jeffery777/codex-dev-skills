@@ -71,6 +71,16 @@ managing scheduled work remain runtime-specific control-plane actions. CLI can
 prepare and test scheduled prompts but does not provide the Scheduled
 management interface.
 
+After the shared layer selects a bounded handoff, `cli-session-handoff` can
+start or resume one explicitly authorized CLI session through the documented
+non-interactive surface. The adapter validates the exact executable, clean Git
+worktree, expected HEAD, sandbox, and session UUID, then returns a bounded
+receipt. The child runs in a disposable private clone; authorized writes are
+transferred as a bounded patch after the original worktree is rechecked, and
+the untrusted child summary is replaced by a fixed omission marker. The receipt
+remains coordination evidence; the parent must inspect and verify repository
+state.
+
 `loop-engineering` is a shared entrypoint for repeated decision-making, routing,
 verification, review, and stopping behavior. It can prepare Desktop handoff
 prompts or route to Desktop-specific skills when the runtime and authorization

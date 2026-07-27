@@ -63,7 +63,7 @@ groups:
       - source: workflows/merge-readiness-workflow.md
 
   codex-delivery-workflow:
-    description: Loop engineering, planning, bounded implementation, documentation update, and delegated delivery workflows.
+    description: Shared loop engineering, planning, bounded implementation, documentation update, and delegated delivery workflows.
     runtime: shared
     depends_on: [shared-review-gates]
     skills:
@@ -87,6 +87,13 @@ groups:
       - source: templates/hooks/gitnexus-v2c-b/config.json.template
       - source: workflows/implementation-workflow.md
       - source: workflows/loop-engineering-workflow.md
+
+  codex-cli-session-handoff:
+    description: CLI-only live session handoff adapter over the shared delivery workflow.
+    runtime: cli
+    depends_on: [shared-review-gates, codex-delivery-workflow]
+    skills:
+      - source: skills/cli-session-handoff
 
   desktop-delivery-workflow:
     description: Two active Codex Desktop entry/control-plane adapters plus deprecated compatibility aliases over shared planning and review gates.

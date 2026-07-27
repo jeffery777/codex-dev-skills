@@ -40,6 +40,7 @@ Install one group at a time when you want the smallest write:
 ./install.sh install shared-review-gates
 ./install.sh install codex-review-workflow
 ./install.sh install codex-delivery-workflow
+./install.sh install codex-cli-session-handoff
 ```
 
 `./install.sh install --all` installs every group, including Desktop-only workflows.
@@ -77,6 +78,7 @@ Update one group when you want the smallest write:
 ./install.sh update shared-review-gates
 ./install.sh update codex-review-workflow
 ./install.sh update codex-delivery-workflow
+./install.sh update codex-cli-session-handoff
 ```
 
 `./install.sh update --all` updates every group, including Desktop-only workflows.
@@ -92,6 +94,46 @@ Use force only after reviewing the diff and confirming the installed local chang
 ```
 
 Risk: update is an external write. With `--force`, the installer backs up the existing target and overwrites installed skills or templates from this repository.
+
+## CLI Session Handoff
+
+Inspect the non-live example first:
+
+```bash
+python3 skills/cli-session-handoff/scripts/cli_session_handoff.py --example
+```
+
+This prints a request shape and performs no Codex runtime call. A real
+`--request` start or resume creates or mutates CLI session state and requires
+explicit authority for the exact executable, workspace, expected HEAD,
+sandbox, prompt, and session UUID when resuming.
+
+Common fail-closed results:
+
+- `capability_unavailable`: the absolute executable is missing, unsafe,
+  repository-controlled, or does not identify a documented Codex CLI.
+- `target_mismatch` or `dirty_workspace`: the canonical Git root, exact HEAD,
+  or clean-worktree precondition failed.
+- `authorization_missing` or `permission_widening`: the one-session marker or
+  sandbox ceiling is insufficient.
+- `prompt_boundary_missing`: the request does not select the supported
+  canonical boundary appendix that prohibits commit, push, PR, merge, platform
+  writes, and nested session dispatch.
+- `timeout`, `output_limit`, or `malformed_jsonl`: the child did not stay
+  within the bounded public CLI contract.
+- `isolation_error` or `integration_error`: the disposable private clone could
+  not be prepared or cleaned, or its bounded patch could not be applied to the
+  still-clean authorized worktree.
+- `child_boundary_violation`: the child changed Git HEAD despite the fixed
+  no-commit boundary; no child patch is integrated.
+- `capability_unavailable` for sparse checkout or submodules: those worktree
+  shapes are not yet qualified for private-clone handoff and require a manual
+  continuation or separately reviewed workflow.
+
+Do not fix these failures by adding arbitrary CLI flags, reading private
+session files, using `--last`, widening to `danger-full-access`, or starting an
+app-server/remote-control daemon. Revalidate the target and prepare a manual
+continuation prompt when the safe adapter path is unavailable.
 
 ## Uninstall
 
