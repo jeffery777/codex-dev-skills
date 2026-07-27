@@ -4,15 +4,19 @@
 
 - Issue #107 and PR #108 completed the v0.9.1 alignment and notify-only pilot.
 - Issue #109 and PR #110 completed the repository guardrails.
-- Issue #111 owns only version alignment, release readiness, post-bootstrap
-  linkage evidence, and the formal v0.9.1 release closure.
-- Merge of the Issue #111 PR closes the repository change, but tag creation
-  and GitHub Release publication remain a separate human gate.
-- Open the V2d-A implementation Issue only after v0.9.1 is tagged and released.
+- Issue #111 completed the v0.9.1 version, release-readiness, linkage, tag, and
+  GitHub Release closure.
+- Issues #113 and #115, through PRs #114 and #116, completed the independent
+  CLI/Desktop runtime-interface refresh and the bounded CLI-only session
+  handoff adapter.
+- Issue #117 owns only v0.9.2 version alignment, release notes, release
+  readiness, tag, and GitHub Release publication. It does not implement V2d-A.
+- Open the V2d-A implementation Issue after the v0.9.2 closure so the released
+  maintenance baseline and next feature milestone remain unambiguous.
 
 ## Next Bounded Issue
 
-After v0.9.1 is merged and released, open:
+After v0.9.2 is merged and released, open:
 
 > **Define `loop-operational-evidence/v0` core contracts and fail-closed
 > validators**
@@ -72,8 +76,8 @@ details, broken digests, and cross-record identity or lineage mismatches.
 A future Codex task should:
 
 1. Read `AGENTS.md`, `README.md`, `docs/roadmap.md`, and this directory.
-2. Confirm Issues #107, #109, and #111 are closed and v0.9.1 is tagged and
-   released.
+2. Confirm Issues #107, #109, #111, #113, #115, and #117 are closed and
+   v0.9.2 is tagged and released.
 3. Inspect current Git status, branch, upstream, and installed GitNexus index
    freshness.
 4. Search GitHub for an existing V2d-A issue before creating one.
@@ -88,7 +92,7 @@ A future Codex task should:
 ## Handoff Summary
 
 - Accepted target: V2d Operational Evidence Contract V0 before V3-A.
-- Required predecessor: finish Issue #111, publish v0.9.1 through the separate
+- Required predecessor: finish Issue #117, publish v0.9.2 through the separate
   release gate, then open the V2d-A Issue.
 - Next implementation slice: V2d-A core contracts and validators.
 - Public repo role: contracts and synthetic evidence only.

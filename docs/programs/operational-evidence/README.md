@@ -1,12 +1,13 @@
 # Operational Evidence And Self-Improvement Program
 
-Status: Phase 0 changes from Issues #107 and #109 are merged; v0.9.1 release
-closure is tracked in Issue #111; V2d implementation has not started.
+Status: v0.9.1 is released; the post-release runtime compatibility work from
+Issues #113 and #115 is included in the v0.9.2 closure tracked by Issue #117;
+V2d implementation has not started.
 
 ## Purpose
 
-This directory is the durable handoff for development after the v0.9.1
-alignment release. It records why Operational Evidence V0 must precede
+This directory is the durable handoff for development after the v0.9.x
+maintenance releases. It records why Operational Evidence V0 must precede
 Evidence-Driven Self-Improvement, which public/private boundaries must remain
 intact, and how the work is divided into independently reviewable stages.
 
@@ -42,7 +43,7 @@ model.
 ## Accepted Dependency Order
 
 1. v0.9.1 alignment, live notify-only hook adoption, repository guardrails,
-   and release closure.
+   release closure, and the v0.9.2 runtime-compatibility maintenance release.
 2. V2d-A — Operational Evidence V0 core contracts.
 3. V2d-B — Projection boundary and improvement lineage.
 4. Private manual/CI proof of concept against the public contracts.
