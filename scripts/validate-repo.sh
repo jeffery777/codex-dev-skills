@@ -156,6 +156,12 @@ check_installer_catalog_consistency() {
   ok "catalog and installer manifest match"
 }
 
+check_code_mode_tool_policy() {
+  python3 scripts/validate-code-mode-tool-policy.py
+  python3 -m unittest tests.test_code_mode_tool_policy >/dev/null
+  ok "Code Mode tool policy references and isolated packaging contracts pass"
+}
+
 check_installer_target_modes() {
   local legacy_manifest agents_manifest
   legacy_manifest="$TMP_DIR/installer-legacy-manifest.txt"
@@ -290,6 +296,7 @@ main() {
   check_catalog_sources
   check_catalog_skill_metadata
   check_installer_catalog_consistency
+  check_code_mode_tool_policy
   check_installer_target_modes
   check_installer_version
   check_skill_metadata

@@ -7,6 +7,11 @@ description: Normal user-facing entry point for base-to-head merge quality and D
 
 Runtime compatibility: shared
 
+Code Mode tool orchestration: follow
+`policies/code-mode-tool-orchestration-policy.md` in source checkouts or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill for ordinary base-to-head merge quality and DoD review.

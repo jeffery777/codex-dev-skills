@@ -7,6 +7,11 @@ description: Higher-scrutiny merge review for high-risk, release-sensitive, or p
 
 Runtime compatibility: shared
 
+Code Mode tool orchestration: follow
+`policies/code-mode-tool-orchestration-policy.md` in source checkouts or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill for high-risk, release-sensitive, or policy-required merge review where routine `merge-review` is insufficient.

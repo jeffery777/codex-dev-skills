@@ -7,6 +7,11 @@ description: Continue a bounded milestone across repeated invocations by checkin
 
 Runtime compatibility: shared
 
+Code Mode tool orchestration: follow
+`policies/code-mode-tool-orchestration-policy.md` in source checkouts or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when a bounded milestone, such as `MVP1`, should keep advancing across repeated Codex invocations until the milestone is complete or the next human gate is reached.

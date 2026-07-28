@@ -7,6 +7,11 @@ description: Read-only review for docs-only or docs-dominant changes.
 
 Runtime compatibility: shared
 
+Code Mode tool orchestration: follow
+`policies/code-mode-tool-orchestration-policy.md` in source checkouts or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when the changed surface is documentation.

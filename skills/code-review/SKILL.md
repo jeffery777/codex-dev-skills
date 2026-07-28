@@ -7,6 +7,11 @@ description: Routine read-only review for code or mixed diffs, focused on bugs, 
 
 Runtime compatibility: shared
 
+Code Mode tool orchestration: follow
+`policies/code-mode-tool-orchestration-policy.md` in source checkouts or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill for routine review of working-tree, branch, or patch changes.

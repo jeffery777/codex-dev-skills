@@ -7,6 +7,11 @@ description: Select the next smallest safe packet from repo policy, project over
 
 Runtime compatibility: shared
 
+Code Mode tool orchestration: follow
+`policies/code-mode-tool-orchestration-policy.md` in source checkouts or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when a project needs to decide what to do next: implement, verify, review, document, clean artifacts, or stop at a human gate.

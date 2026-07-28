@@ -86,7 +86,13 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   It publishes the Codex CLI/Desktop interface refresh from issue #113 and the
   bounded CLI-only session handoff adapter from issue #115 without changing
   the V2c-B feature baseline or implementing V2d-A.
-- Loop Engineering V2d is the next planned feature milestone after the v0.9.2
+- The v0.9.3 Code Mode tool-orchestration maintenance release is tracked in
+  issue #119. It adds one shared repository-owned batching and concurrency
+  policy, deploys it through existing workflow-group dependencies, validates
+  source and installed references, and preserves sequential fallback,
+  approval, mutation-order, output-bound, and runtime-compatibility contracts.
+  It does not change the V2c-B feature baseline or implement V2d-A.
+- Loop Engineering V2d is the next planned feature milestone after the v0.9.3
   maintenance release. V2d-A will define
   `loop-operational-evidence/v0` core contracts for run receipts, iteration
   summaries, failure taxonomy, redacted environment fingerprints, and artifact
