@@ -7,6 +7,11 @@ description: Create a scoped software development plan with assumptions, risks, 
 
 Runtime compatibility: shared
 
+Code Mode tool orchestration: follow
+`policies/code-mode-tool-orchestration-policy.md` in source checkouts or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when the user asks for a plan, implementation outline, task breakdown, or risk assessment before code changes.

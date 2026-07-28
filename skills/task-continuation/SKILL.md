@@ -7,6 +7,11 @@ description: Select the next safe task from durable project context, prepare a b
 
 Runtime compatibility: shared
 
+Code Mode tool orchestration: follow
+`policies/code-mode-tool-orchestration-policy.md` in source checkouts or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when a larger bounded project is underway and Codex needs to continue safely by choosing the next task, preparing a continuation prompt or task brief for another session, worker, or sequential execution path, and preserving enough verified handoff context without treating chat memory as source of truth.

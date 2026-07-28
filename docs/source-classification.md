@@ -23,8 +23,8 @@ Public outputs:
 - closure triage and task continuation;
 - code, documentation, and merge readiness gates;
 - review artifact cleanup;
-- human-gate, model-selection, review, security, delegation, and reusable
-  workflow policies;
+- Code Mode tool orchestration, human-gate, model-selection, review, security,
+  delegation, and reusable workflow policies;
 - shared project/task/review orchestration templates.
 
 ## KEEP_CLI_OR_SHARED

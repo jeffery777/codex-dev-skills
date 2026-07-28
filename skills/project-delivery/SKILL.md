@@ -7,6 +7,11 @@ description: Carry a bounded software delivery objective through discovery, plan
 
 Runtime compatibility: shared
 
+Code Mode tool orchestration: follow
+`policies/code-mode-tool-orchestration-policy.md` in source checkouts or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when the user delegates an end-to-end project goal and expects the agent to act as delivery owner until the next real human gate.

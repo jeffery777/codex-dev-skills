@@ -7,6 +7,11 @@ description: Run an explicit loop engineering workflow for a clear bounded objec
 
 Runtime compatibility: shared
 
+Code Mode tool orchestration: follow
+`policies/code-mode-tool-orchestration-policy.md` in source checkouts or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when the user asks Codex to run a loop engineering workflow, keep a bounded objective moving autonomously, or act as the delivery owner across repeated plan/implement/verify/review/continue cycles until the objective is complete or a human gate is reached.
