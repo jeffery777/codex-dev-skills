@@ -7,14 +7,14 @@ ledger:
   task_manifest: docs/loops/issue-121/task-manifest.yaml
   source_revision:
     branch: codex/issue-121-operational-evidence-v0
-    head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
+    head_sha: 8d08d1823b986e047c43a321ae637decd88b6084
     spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
     task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
-    previous_ledger_sha256: a8ce8ec96013f6861115990a1099581a559c3263d59083054cd9bf533aaf8f1f
-    updated_at: '2026-07-29T06:55:34.005924Z'
+    previous_ledger_sha256: 68403e6684fc4492cf2ba7deb2f08ce5d1e4b8b823ade631685d7641c9931a23
+    updated_at: '2026-07-29T10:48:27.968119Z'
   state_revision:
-    sequence: 25
-    last_event_hash: 904d2edbef396f294284146f64d5cf1ce9e7666a9e1da8d26832c0f691baea24
+    sequence: 33
+    last_event_hash: 153caa4ee4d7e42823907d8b6173f3455df00522199b09c7bca4db00b7d151f3
 status_model:
   task_allowed:
   - planned
@@ -34,13 +34,16 @@ status_model:
   accepted_means: A bound receipt was applied through an independently authorized
     live write; consumers revalidate current external state before publication.
 current_loop:
-  lifecycle: active
-  classification: bounded-delivery-objective
+  lifecycle: complete
+  classification: complete
   execution_mode: current-session
-  selected_task_id: P4-readiness
-  next_decision: blocked-by-human-gate
-  decision_reason: P0-P3 are complete and all local evidence gates pass; exact commit
-    authorization is pending.
+  selected_task_id: ''
+  next_decision: complete
+  decision_reason: >-
+    All Issue #121 task DoD, verification, reviews, protected completions, and
+    publication gate evidence are satisfied; PR merge remains conditional on
+    renewed zero-findings exact-head review, while tag and Release remain a
+    separate post-merge gate.
 tasks:
 - id: P0-contract
   status: done
@@ -114,8 +117,22 @@ tasks:
   blocker: {}
   residual_risk: []
 - id: P4-readiness
-  status: ready
-  evidence: {}
+  status: done
+  evidence:
+    verification:
+      status: passed
+      artifacts:
+      - docs/loops/issue-121/receipts/verification-report.md
+      - docs/loops/issue-121/receipts/merge-review-exact-head-initial.md
+    review:
+      status: passed
+      mode: formal-gate
+      artifacts:
+      - docs/loops/issue-121/receipts/merge-review-finding-resolution.md
+      - docs/loops/issue-121/receipts/merge-review-exact-head-initial.md
+    acceptance:
+      status: not_required
+      artifact: ''
   blocker: {}
   residual_risk: []
 claims:
@@ -130,7 +147,7 @@ claims:
   expected_state_revision: 0
   source_revision:
     branch: codex/issue-121-operational-evidence-v0
-    head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
+    head_sha: 8d08d1823b986e047c43a321ae637decd88b6084
     spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
     task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
   claimed_at: '2026-07-29T05:44:16.352596Z'
@@ -146,7 +163,7 @@ claims:
   expected_state_revision: 6
   source_revision:
     branch: codex/issue-121-operational-evidence-v0
-    head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
+    head_sha: 8d08d1823b986e047c43a321ae637decd88b6084
     spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
     task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
   claimed_at: '2026-07-29T05:44:20.529980Z'
@@ -162,7 +179,7 @@ claims:
   expected_state_revision: 12
   source_revision:
     branch: codex/issue-121-operational-evidence-v0
-    head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
+    head_sha: 8d08d1823b986e047c43a321ae637decd88b6084
     spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
     task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
   claimed_at: '2026-07-29T05:44:24.949666Z'
@@ -178,11 +195,27 @@ claims:
   expected_state_revision: 18
   source_revision:
     branch: codex/issue-121-operational-evidence-v0
-    head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
+    head_sha: 8d08d1823b986e047c43a321ae637decd88b6084
     spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
     task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
   claimed_at: '2026-07-29T05:44:29.621266Z'
   lease_expires_at: '2026-07-29T06:44:29.621279Z'
+- task_id: P4-readiness
+  status: released
+  owner:
+    type: current_session
+    id: codex-root
+  fencing_token:
+    generation: 1
+    nonce: issue-121-P4-readiness-current-session
+  expected_state_revision: 26
+  source_revision:
+    branch: codex/issue-121-operational-evidence-v0
+    head_sha: 8d08d1823b986e047c43a321ae637decd88b6084
+    spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
+    task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
+  claimed_at: '2026-07-29T10:48:22.513976Z'
+  lease_expires_at: '2026-07-29T11:48:22.514074Z'
 events:
 - sequence: 1
   event_id: issue-121-P0-contract-claim
@@ -759,7 +792,230 @@ events:
       target_head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
       protected_payload_sha256: 2566552ed0a0620bdb4254f73617c3d02d51291faada0cd08dc2ee8470f4982a
   event_hash: 904d2edbef396f294284146f64d5cf1ce9e7666a9e1da8d26832c0f691baea24
-human_gates: []
+- sequence: 26
+  event_id: issue-121-source-rebound-pr-head
+  occurred_at: '2026-07-29T10:47:28.940585Z'
+  actor: codex-root
+  type: source_rebound
+  task_id: ''
+  idempotency_key: issue-121-source-rebound-pr-head
+  expected_state_revision: 25
+  previous_event_hash: 904d2edbef396f294284146f64d5cf1ce9e7666a9e1da8d26832c0f691baea24
+  payload:
+    previous_source_revision:
+      branch: codex/issue-121-operational-evidence-v0
+      head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
+      spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
+      task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
+    target_source_revision:
+      branch: codex/issue-121-operational-evidence-v0
+      head_sha: 8d08d1823b986e047c43a321ae637decd88b6084
+      spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
+      task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
+    active_claim_task_ids: []
+    expired_claim_dispositions: {}
+    evidence:
+      artifact: docs/loops/issue-121/receipts/source-rebound-pr-head-authorization.md
+    authorization:
+      action: source_rebound
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-121
+      artifact: docs/loops/issue-121/receipts/source-rebound-pr-head-authorization.md
+      source_revision_sha256: 31a7314cb045a2450db5327872fc3674965558e2deef74993e3be3f351acfdef
+      target_head_sha: 8d08d1823b986e047c43a321ae637decd88b6084
+      protected_payload_sha256: 4b6c26ca5a7e321737d3e85d15d8d1911eecb6be672353e4819365cb285a633b
+  event_hash: d9e193345bc58a75ed1a0e73cf58998454dbc9465ce7f9ea7192f236c5fc6aab
+- sequence: 27
+  event_id: issue-121-P4-readiness-claim
+  occurred_at: '2026-07-29T10:48:22.541622Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P4-readiness
+  idempotency_key: issue-121-P4-readiness-claim
+  expected_state_revision: 26
+  previous_event_hash: d9e193345bc58a75ed1a0e73cf58998454dbc9465ce7f9ea7192f236c5fc6aab
+  payload:
+    claim:
+      task_id: P4-readiness
+      status: active
+      owner:
+        type: current_session
+        id: codex-root
+      fencing_token:
+        generation: 1
+        nonce: issue-121-P4-readiness-current-session
+      expected_state_revision: 26
+      source_revision:
+        branch: codex/issue-121-operational-evidence-v0
+        head_sha: 8d08d1823b986e047c43a321ae637decd88b6084
+        spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
+        task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
+      claimed_at: '2026-07-29T10:48:22.513976Z'
+      lease_expires_at: '2026-07-29T11:48:22.514074Z'
+  event_hash: 6f0a03a593ddf6af6d15906af71b55c1810b9589a2e029663dbd50a41b443d58
+- sequence: 28
+  event_id: issue-121-P4-readiness-in-progress
+  occurred_at: '2026-07-29T10:48:23.440975Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P4-readiness
+  idempotency_key: issue-121-P4-readiness-in-progress
+  expected_state_revision: 27
+  previous_event_hash: 6f0a03a593ddf6af6d15906af71b55c1810b9589a2e029663dbd50a41b443d58
+  payload:
+    target_status: in_progress
+    fencing_token:
+      generation: 1
+      nonce: issue-121-P4-readiness-current-session
+    evidence: {}
+  event_hash: d4f3cbaa3987f4b5ce1a4d9ee72709a4a0ea35f5702b9542c34ff90c4e3c7a0d
+- sequence: 29
+  event_id: issue-121-P4-readiness-reviewing
+  occurred_at: '2026-07-29T10:48:24.403430Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P4-readiness
+  idempotency_key: issue-121-P4-readiness-reviewing
+  expected_state_revision: 28
+  previous_event_hash: d4f3cbaa3987f4b5ce1a4d9ee72709a4a0ea35f5702b9542c34ff90c4e3c7a0d
+  payload:
+    target_status: reviewing
+    fencing_token:
+      generation: 1
+      nonce: issue-121-P4-readiness-current-session
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-121/receipts/verification-report.md
+        - docs/loops/issue-121/receipts/merge-review-exact-head-initial.md
+      review:
+        status: required
+        mode: formal-gate
+        artifacts: []
+  event_hash: 0b0e1119cb23ee9da71d09dccdd1da2b68337e2fdea628d94b34bb88b05cf3aa
+- sequence: 30
+  event_id: issue-121-publication-gate-satisfied
+  occurred_at: '2026-07-29T10:48:25.277527Z'
+  actor: delegating-user
+  type: gate_updated
+  task_id: ''
+  idempotency_key: issue-121-publication-gate-satisfied
+  expected_state_revision: 29
+  previous_event_hash: 0b0e1119cb23ee9da71d09dccdd1da2b68337e2fdea628d94b34bb88b05cf3aa
+  payload:
+    gate: publication
+    status: satisfied
+    evidence:
+      artifact: docs/loops/issue-121/receipts/terminalization-authorization.md
+    authorization:
+      action: gate_satisfaction
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-121
+      artifact: docs/loops/issue-121/receipts/terminalization-authorization.md
+      source_revision_sha256: 56f088284b1b2528bdc1373b844a411defc9c4e70d4acb03048c0fee232b17a6
+      gate: publication
+      protected_payload_sha256: 0796924bad29a98cd6c6fbc8dc0b8e2259ed79ac9954f72d00ea3372643ad36f
+  event_hash: 05794305346eaaf8d600ee156e2106f574e6301f147339f012fdc03d13dd6673
+- sequence: 31
+  event_id: issue-121-P4-readiness-done
+  occurred_at: '2026-07-29T10:48:26.150826Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P4-readiness
+  idempotency_key: issue-121-P4-readiness-done
+  expected_state_revision: 30
+  previous_event_hash: 05794305346eaaf8d600ee156e2106f574e6301f147339f012fdc03d13dd6673
+  payload:
+    target_status: done
+    fencing_token:
+      generation: 1
+      nonce: issue-121-P4-readiness-current-session
+    human_gate: satisfied
+    evidence:
+      verification:
+        status: passed
+        artifacts:
+        - docs/loops/issue-121/receipts/verification-report.md
+        - docs/loops/issue-121/receipts/merge-review-exact-head-initial.md
+      review:
+        status: passed
+        mode: formal-gate
+        artifacts:
+        - docs/loops/issue-121/receipts/merge-review-finding-resolution.md
+        - docs/loops/issue-121/receipts/merge-review-exact-head-initial.md
+      acceptance:
+        status: not_required
+        artifact: ''
+    authorization:
+      action: task_completion
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-121
+      artifact: docs/loops/issue-121/receipts/merge-review-finding-resolution.md
+      source_revision_sha256: 56f088284b1b2528bdc1373b844a411defc9c4e70d4acb03048c0fee232b17a6
+      task_id: P4-readiness
+      protected_payload_sha256: 4121c754267e92de8110357ab3edd25bd99866d5fef8e9c1063ac6229506b8ef
+  event_hash: be4d4fa74c0b7011a8eb08d6c1026de8c0caa37123020af8a7de79d4c3794478
+- sequence: 32
+  event_id: issue-121-P4-readiness-claim-released
+  occurred_at: '2026-07-29T10:48:27.043601Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P4-readiness
+  idempotency_key: issue-121-P4-readiness-claim-released
+  expected_state_revision: 31
+  previous_event_hash: be4d4fa74c0b7011a8eb08d6c1026de8c0caa37123020af8a7de79d4c3794478
+  payload:
+    fencing_token:
+      generation: 1
+      nonce: issue-121-P4-readiness-current-session
+  event_hash: 6300b49d4b5c71be8887fc719ad99f02e81cbf3c9485e1948f78a6266c815b57
+- sequence: 33
+  event_id: issue-121-objective-completed
+  occurred_at: '2026-07-29T10:48:27.968119Z'
+  actor: delegating-user
+  type: objective_completed
+  task_id: ''
+  idempotency_key: issue-121-objective-completed
+  expected_state_revision: 32
+  previous_event_hash: 6300b49d4b5c71be8887fc719ad99f02e81cbf3c9485e1948f78a6266c815b57
+  payload:
+    verification: passed
+    review: passed
+    human_gate: satisfied
+    evidence:
+      artifact: docs/loops/issue-121/receipts/merge-review-finding-resolution.md
+    authorization:
+      action: objective_completion
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-121
+      artifact: docs/loops/issue-121/receipts/merge-review-finding-resolution.md
+      source_revision_sha256: 56f088284b1b2528bdc1373b844a411defc9c4e70d4acb03048c0fee232b17a6
+      protected_payload_sha256: 794787de8b9dcade3889b5382847350556f8a5349217afe6037364dff1c9d5df
+  event_hash: 153caa4ee4d7e42823907d8b6173f3455df00522199b09c7bca4db00b7d151f3
+human_gates:
+- gate: publication
+  status: satisfied
+  evidence:
+    artifact: docs/loops/issue-121/receipts/terminalization-authorization.md
+  authorization:
+    action: gate_satisfaction
+    principal:
+      type: user
+      id: delegating-user
+    objective_id: issue-121
+    artifact: docs/loops/issue-121/receipts/terminalization-authorization.md
+    source_revision_sha256: 56f088284b1b2528bdc1373b844a411defc9c4e70d4acb03048c0fee232b17a6
+    gate: publication
+    protected_payload_sha256: 0796924bad29a98cd6c6fbc8dc0b8e2259ed79ac9954f72d00ea3372643ad36f
 external_memory:
   contract_version: loop-memory/v1
   mode: disabled

@@ -27,14 +27,26 @@ focused re-review found no open MUST-FIX or SHOULD-FIX.
 | --- | --- | --- |
 | `DR121-DOC-001` canonical ledger state is stale | Fixed | The user authorized P0–P3 protected completion within the recorded boundary; P0–P3 are done and P4 is accurately ready at the commit human gate |
 | `DR121-DOC-002` implementation plan retained a resolved GitNexus precondition | Fixed | `implementation-plan.md` now records the satisfied analysis and the remaining untracked-file limitation |
+| `MR121-DOC-001` active ledger rejects the ledger-only exact head | Fixed by authorized terminalization | `receipts/merge-review-finding-resolution.md` records the existing terminal-ancestor resolution and mandatory exact-head re-review |
+| `MR121-DOC-002` authorization boundary became stale after publication actions | Fixed | The boundary below is explicitly retained as a point-in-time pre-authorization record; current authority is recorded in the later authorization receipts |
 
 ## Deferred Findings
 
 None.
 
-## Human Boundary
+## Historical Human Boundary
 
-Review disposition is evidence only. P0–P3 protected task completions have
-been applied with live authorization. P4 completion, objective completion,
-commit, push, PR creation, review submission, merge, tag creation, GitHub
-Release publication, deployment, and promotion remain unauthorized.
+The following was the exact boundary when the pre-commit review disposition
+was first recorded: P0–P3 protected task completions had been applied, while
+P4 completion, objective completion, commit, push, PR creation, review
+submission, merge, tag creation, GitHub Release publication, deployment, and
+promotion remained unauthorized.
+
+Later current-session authorizations are independently recorded in:
+
+- `receipts/source-rebound-authorization.md`;
+- `receipts/source-rebound-pr-head-authorization.md`;
+- `receipts/terminalization-authorization.md`.
+
+Those receipts authorize the named ledger and PR actions only. Tag creation,
+GitHub Release publication, deployment, and promotion remain unauthorized.
