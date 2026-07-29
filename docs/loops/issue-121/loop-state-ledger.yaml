@@ -7,14 +7,14 @@ ledger:
   task_manifest: docs/loops/issue-121/task-manifest.yaml
   source_revision:
     branch: codex/issue-121-operational-evidence-v0
-    head_sha: 845c768ca6a8b0c6d8591a79aa5101c0dd12bd17
+    head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
     spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
     task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
-    previous_ledger_sha256: 674a072765848518b44b1ff16dd9b8881f501ea44bdb33e525e36ec3e42a1b5b
-    updated_at: '2026-07-29T05:47:59.410201Z'
+    previous_ledger_sha256: a8ce8ec96013f6861115990a1099581a559c3263d59083054cd9bf533aaf8f1f
+    updated_at: '2026-07-29T06:55:34.005924Z'
   state_revision:
-    sequence: 24
-    last_event_hash: 1dda64217e912819649f12edf0e5f7c8508e15ef1a5273fd0b3dbdf48857fc8e
+    sequence: 25
+    last_event_hash: 904d2edbef396f294284146f64d5cf1ce9e7666a9e1da8d26832c0f691baea24
 status_model:
   task_allowed:
   - planned
@@ -39,8 +39,8 @@ current_loop:
   execution_mode: current-session
   selected_task_id: P4-readiness
   next_decision: blocked-by-human-gate
-  decision_reason: P0-P3 are complete and all local evidence gates pass; exact
-    commit authorization is pending.
+  decision_reason: P0-P3 are complete and all local evidence gates pass; exact commit
+    authorization is pending.
 tasks:
 - id: P0-contract
   status: done
@@ -130,7 +130,7 @@ claims:
   expected_state_revision: 0
   source_revision:
     branch: codex/issue-121-operational-evidence-v0
-    head_sha: 845c768ca6a8b0c6d8591a79aa5101c0dd12bd17
+    head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
     spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
     task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
   claimed_at: '2026-07-29T05:44:16.352596Z'
@@ -146,7 +146,7 @@ claims:
   expected_state_revision: 6
   source_revision:
     branch: codex/issue-121-operational-evidence-v0
-    head_sha: 845c768ca6a8b0c6d8591a79aa5101c0dd12bd17
+    head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
     spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
     task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
   claimed_at: '2026-07-29T05:44:20.529980Z'
@@ -162,7 +162,7 @@ claims:
   expected_state_revision: 12
   source_revision:
     branch: codex/issue-121-operational-evidence-v0
-    head_sha: 845c768ca6a8b0c6d8591a79aa5101c0dd12bd17
+    head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
     spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
     task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
   claimed_at: '2026-07-29T05:44:24.949666Z'
@@ -178,7 +178,7 @@ claims:
   expected_state_revision: 18
   source_revision:
     branch: codex/issue-121-operational-evidence-v0
-    head_sha: 845c768ca6a8b0c6d8591a79aa5101c0dd12bd17
+    head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
     spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
     task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
   claimed_at: '2026-07-29T05:44:29.621266Z'
@@ -724,6 +724,41 @@ events:
     target_status: ready
     evidence: {}
   event_hash: 1dda64217e912819649f12edf0e5f7c8508e15ef1a5273fd0b3dbdf48857fc8e
+- sequence: 25
+  event_id: issue-121-source-rebound-implementation-commit
+  occurred_at: '2026-07-29T06:55:34.005924Z'
+  actor: codex-root
+  type: source_rebound
+  task_id: ''
+  idempotency_key: issue-121-source-rebound-implementation-commit
+  expected_state_revision: 24
+  previous_event_hash: 1dda64217e912819649f12edf0e5f7c8508e15ef1a5273fd0b3dbdf48857fc8e
+  payload:
+    previous_source_revision:
+      branch: codex/issue-121-operational-evidence-v0
+      head_sha: 845c768ca6a8b0c6d8591a79aa5101c0dd12bd17
+      spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
+      task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
+    target_source_revision:
+      branch: codex/issue-121-operational-evidence-v0
+      head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
+      spec_sha256: b3ddd312f9cfa42b651028ab3ade8ad71590693df41612d0a3cce6e1de28c007
+      task_manifest_sha256: f55cdbf00bc9346d5b582c6035cdeee42c548d85be23be45b97af75d941aad64
+    active_claim_task_ids: []
+    expired_claim_dispositions: {}
+    evidence:
+      artifact: docs/loops/issue-121/receipts/source-rebound-authorization.md
+    authorization:
+      action: source_rebound
+      principal:
+        type: user
+        id: delegating-user
+      objective_id: issue-121
+      artifact: docs/loops/issue-121/receipts/source-rebound-authorization.md
+      source_revision_sha256: b77dc90ae33d1c28cda5dcd477d24d4f83af76f491cc4930c0e365cdd4363a79
+      target_head_sha: d498d3a314b47e7c6128f0ac4f4130b4e6f7765c
+      protected_payload_sha256: 2566552ed0a0620bdb4254f73617c3d02d51291faada0cd08dc2ee8470f4982a
+  event_hash: 904d2edbef396f294284146f64d5cf1ce9e7666a9e1da8d26832c0f691baea24
 human_gates: []
 external_memory:
   contract_version: loop-memory/v1
