@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "thresholds": {
+    "decision_correctness_rate": 1.0,
+    "false_authority_or_completion_count": 0,
+    "evidence_completeness_rate": 1.0,
+    "deterministic_behavior_rate": 1.0,
+    "privacy_safe_rejection_rate": 1.0
+  },
+  "cases": [
+    {"id":"valid-set","fixture":"fixtures/positive-valid-set.json","mode":"set","expected_status":"valid","expected_code":null},
+    {"id":"valid-run-receipt","fixture":"fixtures/positive-run-receipt.json","mode":"document","expected_status":"valid","expected_code":null},
+    {"id":"tampered-digest","fixture":"fixtures/negative-tampered-digest.json","mode":"document","expected_status":"rejected","expected_code":"digest-mismatch"},
+    {"id":"duplicate-key","fixture":"fixtures/negative-duplicate-key.json","mode":"document","expected_status":"rejected","expected_code":"duplicate-key"},
+    {"id":"unknown-field","fixture":"fixtures/negative-unknown-field.json","mode":"document","expected_status":"rejected","expected_code":"invalid-structure"},
+    {"id":"synthetic-secret","fixture":"fixtures/negative-synthetic-secret.json","mode":"document","expected_status":"rejected","expected_code":"privacy-violation"},
+    {"id":"synthetic-token","fixture":"fixtures/negative-synthetic-token.json","mode":"document","expected_status":"rejected","expected_code":"privacy-violation"},
+    {"id":"private-path","fixture":"fixtures/negative-private-path.json","mode":"document","expected_status":"rejected","expected_code":"privacy-violation"},
+    {"id":"raw-log","fixture":"fixtures/negative-raw-log.json","mode":"document","expected_status":"rejected","expected_code":"privacy-violation"},
+    {"id":"invalid-reference","fixture":"fixtures/negative-invalid-reference.json","mode":"set","expected_status":"rejected","expected_code":"relationship-mismatch"},
+    {"id":"duplicate-document-id","fixture":"fixtures/negative-duplicate-document-id.json","mode":"set","expected_status":"rejected","expected_code":"relationship-mismatch"},
+    {"id":"cross-record-mismatch","fixture":"fixtures/negative-cross-record-mismatch.json","mode":"set","expected_status":"rejected","expected_code":"relationship-mismatch"}
+  ]
+}

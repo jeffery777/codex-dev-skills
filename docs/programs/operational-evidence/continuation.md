@@ -1,103 +1,85 @@
 # Operational Evidence Program Continuation
 
-## Release Closure Gate
+## Current Release Gate
 
-- Issue #107 and PR #108 completed the v0.9.1 alignment and notify-only pilot.
-- Issue #109 and PR #110 completed the repository guardrails.
-- Issue #111 completed the v0.9.1 version, release-readiness, linkage, tag, and
-  GitHub Release closure.
-- Issues #113 and #115, through PRs #114 and #116, completed the independent
-  CLI/Desktop runtime-interface refresh and the bounded CLI-only session
-  handoff adapter.
-- Issue #117 owns only v0.9.2 version alignment, release notes, release
-  readiness, tag, and GitHub Release publication. It does not implement V2d-A.
-- Open the V2d-A implementation Issue after the v0.9.2 closure so the released
-  maintenance baseline and next feature milestone remain unambiguous.
+- Issues #107, #109, #111, #113, #115, #117, and #119 completed the v0.9.x
+  alignment, guardrail, runtime-interface, CLI handoff, and Code Mode policy
+  prerequisites.
+- Issue #121 implements V2d-A and owns v0.10.0 version metadata, release notes,
+  and release-readiness preparation on the same implementation branch.
+- Commit, push, PR creation, merge, tag `v0.10.0`, and GitHub Release
+  publication remain separately authorized actions against reviewed state.
+- V2d-A operational evidence remains advisory and cannot authorize those
+  actions or prove Issue #121 complete.
+
+## Delivered V2d-A Boundary
+
+Issue #121 adds:
+
+- the versioned `loop-operational-evidence/v0` envelope;
+- run receipt and machine-readable iteration summary;
+- failure summary with bounded category/code taxonomy;
+- redacted environment fingerprint;
+- typed artifact-reference set;
+- exact false-authority invariants;
+- public data-placement and redaction rules;
+- strict offline document and bundle validation;
+- positive, tamper, duplicate-key, unknown-field, synthetic-secret,
+  standalone-token, private-path, raw-log, invalid-reference,
+  duplicate-document-id, and cross-record-mismatch fixtures/tests;
+- relationship rules for ledgers, events, route/worker/integration/memory
+  receipts, verification/review artifacts, Git commits/platform artifacts, and
+  GitNexus fingerprints.
+
+It does not add improvement records, projections, private PoC data, automatic
+collection, hooks, plugins, schedulers, controllers, databases, graph
+execution, or automatic promotion.
 
 ## Next Bounded Issue
 
-After v0.9.2 is merged and released, open:
+After v0.10.0 is merged and released, reassess and open a separate V2d-B issue:
 
-> **Define `loop-operational-evidence/v0` core contracts and fail-closed
-> validators**
+> **Define V2d-B improvement lineage and tool-neutral projection contracts**
 
-### Scope
+The V2d-B issue may include:
 
-- versioned operational-evidence envelope;
-- run receipt;
-- iteration summary;
-- failure summary and bounded taxonomy;
-- redacted environment fingerprint;
-- artifact reference set;
-- authority/data-placement matrix;
-- redaction policy;
-- strict validator;
-- synthetic fixtures and tests;
-- integration rules for existing ledger, route, worker, memory, verification,
-  review, and GitNexus references.
+- `improvement-record` identity and baseline/candidate lineage;
+- proposer/evaluator/verifier/promoter role separation;
+- a tool-neutral human-readable projection manifest;
+- an optional Obsidian reference profile;
+- the minimum typed graph projection manifest;
+- deterministic projection fixtures and validators.
 
-### Required Invariants
-
-Every validated document must preserve:
-
-```text
-used_as_authorization: false
-used_as_completion_evidence: false
-external_write_authorized: false
-promotion_authorized: false
-```
-
-The validator must reject unknown or duplicate fields, self-authorization,
-unbounded free text where a bounded field is required, credential/secret
-patterns, private absolute paths, raw large logs, unsupported environment
-details, broken digests, and cross-record identity or lineage mismatches.
-
-### Out Of Scope
-
-- improvement record;
-- Obsidian renderer or sync;
-- graph projection manifest;
-- private PoC data;
-- hooks, plugins, schedulers, controllers, databases, graph runtime;
-- proposal generation or automatic promotion.
-
-### Definition Of Done
-
-- contracts are versioned, strict, documented, and independently usable;
-- non-sensitive examples validate;
-- negative and tamper fixtures fail closed;
-- relationships to existing receipts and authority are explicit;
-- repository validation and focused evals pass;
-- docs, code, security/privacy, and formal readiness reviews have no unresolved
-  MUST-FIX findings.
+It must continue to exclude production Obsidian synchronization, private
+evidence stores, graph databases or execution engines, schedulers,
+controllers, and automatic candidate promotion.
 
 ## New Task Bootstrap Checklist
 
 A future Codex task should:
 
-1. Read `AGENTS.md`, `README.md`, `docs/roadmap.md`, and this directory.
-2. Confirm Issues #107, #109, #111, #113, #115, and #117 are closed and
-   v0.9.2 is tagged and released.
-3. Inspect current Git status, branch, upstream, and installed GitNexus index
-   freshness.
-4. Search GitHub for an existing V2d-A issue before creating one.
-5. Create the Issue before the implementation branch.
-6. Reassess repository facts instead of trusting chat summaries.
-7. Keep the first issue limited to V2d-A core contracts.
-8. Run GitNexus impact analysis before changing any implementation symbol and
-   `detect_changes` before commit.
-9. Stop at public-contract, privacy, authorization, publication, merge, tag,
-   and release gates required by current policy.
+1. Read `AGENTS.md`, `README.md`, `docs/roadmap.md`, this program directory,
+   and `docs/operational-evidence-contract.md`.
+2. Confirm Issue #121, its PR, tag `v0.10.0`, and the GitHub Release are in the
+   expected accepted state.
+3. Inspect current branch/status/upstream/diff, tags/releases, open issues, and
+   the installed GitNexus index freshness.
+4. Search GitHub for an existing V2d-B issue before creating one.
+5. Reassess private PoC sequencing and public-contract lessons instead of
+   trusting a chat summary.
+6. Keep V2d-B separate from V3 self-improvement execution and runtime services.
+7. Run GitNexus impact analysis before implementation and `detect_changes`
+   before commit.
+8. Stop at public-contract, privacy, authority, external-write, merge, tag, and
+   release gates required by current policy.
 
 ## Handoff Summary
 
-- Accepted target: V2d Operational Evidence Contract V0 before V3-A.
-- Required predecessor: finish Issue #117, publish v0.9.2 through the separate
-  release gate, then open the V2d-A Issue.
-- Next implementation slice: V2d-A core contracts and validators.
-- Public repo role: contracts and synthetic evidence only.
-- Private role: real operational records and later PoC execution.
-- Projection role: tool-neutral first; Obsidian is a reference view only.
-- Graph role: typed projection first; no graph runtime or database.
+- Delivered slice: V2d-A Operational Evidence V0 core for v0.10.0.
+- Next public slice: V2d-B improvement lineage and projection contracts.
+- Public role: contracts, validators, synthetic fixtures, tests, and docs.
+- Private role: real operational records and the later manual/CI PoC.
+- Projection role: tool-neutral first; Obsidian remains an optional reference.
+- Graph role: typed projection only; no graph runtime or database.
 - Automation role: manual/CI first; controller deferred.
 - Candidate role: proposal-only until independent verification and promotion.

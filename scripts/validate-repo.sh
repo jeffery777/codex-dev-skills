@@ -267,6 +267,15 @@ check_memory_contract() {
   ok "external memory contract, CLI, and eval thresholds pass"
 }
 
+check_operational_evidence_contract() {
+  python3 scripts/eval-operational-evidence.py >"$TMP_DIR/operational-evidence-eval.json"
+  python3 -m unittest \
+    tests.test_operational_evidence \
+    tests.test_evidencectl \
+    tests.test_eval_operational_evidence >/dev/null
+  ok "operational evidence contract, CLI, fixtures, and eval thresholds pass"
+}
+
 check_loop_contract() {
   python3 -m unittest tests.test_loop_engineering_core tests.test_loopctl >/dev/null
   ok "loop engineering event, transition, migration, and CLI contracts pass"
@@ -307,6 +316,7 @@ main() {
   check_agent_profiles
   check_agent_routing_eval
   check_memory_contract
+  check_operational_evidence_contract
 }
 
 main "$@"

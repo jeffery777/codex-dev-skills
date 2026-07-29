@@ -25,6 +25,9 @@ and released. No Operational Evidence schema is implemented in this phase.
 
 **Target release:** v0.10.0
 
+**Status:** Implemented by Issue #121; release publication remains separately
+authorized.
+
 **Deliverables:**
 
 - `loop-operational-evidence/v0` envelope and versioning rules;
@@ -36,8 +39,9 @@ and released. No Operational Evidence schema is implemented in this phase.
 - authority/data-placement matrix;
 - redaction policy;
 - strict offline validators;
-- positive, negative, tamper, duplicate-key, unknown-field, secret, private-path,
-  and raw-log fixtures/tests;
+- positive, negative, tamper, duplicate-key, unknown-field, secret,
+  standalone-token, private-path, raw-log, invalid-reference,
+  duplicate-document-id, and cross-record-mismatch fixtures/tests;
 - relationship rules for existing ledger, route, worker, integration, memory,
   verification, and review artifacts.
 
@@ -48,6 +52,12 @@ and released. No Operational Evidence schema is implemented in this phase.
 - graph projection manifests;
 - private PoC data;
 - hooks, plugins, controllers, schedulers, databases, and automatic promotion.
+
+**Exit criteria:** the public contract and portable skill reference agree with
+the strict offline validator; the five document kinds and bundle relationships
+validate; required positive/adversarial fixtures and eval thresholds pass;
+repository validation passes; and deep code, docs, security/privacy, and
+formal readiness reviews have no unresolved MUST-FIX findings.
 
 ## Phase 2 — V2d-B Projection And Improvement Lineage
 
