@@ -99,10 +99,11 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   synthetic adversarial fixtures, and deterministic evals. The contract
   preserves false authorization, completion, external-write, and promotion
   invariants and stores no real operational records in this public repository.
-- V2d-B is the next planned feature slice. It will add
-  improvement lineage, a tool-neutral human-readable projection boundary, an
-  optional Obsidian reference profile, and the minimum typed graph projection
-  manifest. See
+- Loop Engineering V2d-B is delivered by issue #124 for v0.11.0 preparation.
+  It adds separate strict improvement-lineage and projection families,
+  baseline/candidate lineage, declared role separation, deterministic
+  tool-neutral Markdown and typed graph manifests, and an optional declarative
+  Obsidian profile while preserving V2d-A. See
   [the Operational Evidence program](programs/operational-evidence/README.md).
 - A private manual/CI proof of concept must validate the completed V2d
   contracts before

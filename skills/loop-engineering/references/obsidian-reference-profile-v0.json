@@ -1,0 +1,22 @@
+{
+  "profile_id": "obsidian-reference/v0",
+  "source_contract": "loop-evidence-projection/v0",
+  "source_kind": "human-readable-projection-manifest",
+  "required_dependency": false,
+  "target_mutation": false,
+  "note_id_source": "improvement_id",
+  "link_style": "escaped-stable-id-wikilink",
+  "frontmatter": {
+    "baseline": "baseline_evidence_set_digest",
+    "candidate": "candidate_evidence_set_digest",
+    "disposition": "candidate_disposition",
+    "improvement": "improvement_id",
+    "record": "record_digest"
+  },
+  "authority_invariants": {
+    "used_as_authorization": false,
+    "used_as_completion_evidence": false,
+    "external_write_authorized": false,
+    "promotion_authorized": false
+  }
+}

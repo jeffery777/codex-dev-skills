@@ -116,6 +116,24 @@ evidence that:
   scheduler, controller, database, graph runtime, or automatic promotion was
   added.
 
+When a change includes V2d-B improvement lineage or projections, additionally
+require evidence that:
+
+- V2d-A remains an exact independent five-kind contract with no migration or
+  extension;
+- every cross-family reference resolves by contract, kind, id, and digest;
+- duplicate/conflicting improvement identity, missing or stale predecessors,
+  cycle attempts, source/environment mismatch, and artifact mismatch reject;
+- proposer, evaluator, independent verifier, and promoter ids remain
+  structurally distinct without claiming identity authentication or authority;
+- human and typed graph projections are byte-deterministic, source-derived,
+  bounded, and reject mismatch/injection;
+- the optional Obsidian profile is declarative, dependency-free, and
+  non-mutating;
+- all four false-authority invariants remain exact;
+- no real records/projections, private store, vault sync, graph runtime,
+  controller, or automatic promotion was added.
+
 ## Suggested Verification
 
 Run the repository hygiene check:

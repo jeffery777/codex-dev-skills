@@ -125,9 +125,14 @@ duplicate-key, unknown-field, synthetic assignment-secret, standalone-token,
 private-path, raw-log, invalid-reference, duplicate-document-id, and
 cross-record-mismatch rejections.
 
-## Deferred Work
+## Separate Composed Work
 
-V0 does not define improvement records, baseline/candidate lineage,
-human-readable or Obsidian projections, the V2d-B typed graph projection
-manifest, private PoC data, automatic collection, hooks, schedulers,
-controllers, databases, graph execution, or automatic promotion.
+V0 does not define improvement records, baseline/candidate lineage, or
+projections. V2d-B adds those capabilities through the separate
+`loop-improvement-lineage/v0` and `loop-evidence-projection/v0` families; it
+does not extend this envelope. See
+[Improvement Lineage And Projection Contracts V0](improvement-lineage-contract.md).
+
+Private PoC data, automatic collection, hooks, schedulers, controllers,
+databases, graph execution, production Obsidian synchronization, and automatic
+promotion remain out of scope.

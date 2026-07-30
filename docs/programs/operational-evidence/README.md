@@ -1,7 +1,7 @@
 # Operational Evidence And Self-Improvement Program
 
-Status: V2d-A is implemented by Issue #121 for v0.10.0; V2d-B projection and
-improvement-lineage work remains a separate future slice.
+Status: V2d-A is released in v0.10.0; V2d-B improvement lineage and projection
+contracts are implemented by Issue #124 for v0.11.0 release preparation.
 
 ## Purpose
 
@@ -30,12 +30,16 @@ remains reserved.
   family, bounded failure taxonomy, redacted environment allowlist, typed
   artifact references, relationship validation, synthetic fixtures, and
   deterministic evals.
+- V2d-B provides separate strict `loop-improvement-lineage/v0` and
+  `loop-evidence-projection/v0` families, declared role separation,
+  baseline/candidate lineage, deterministic Markdown/typed-graph projection,
+  and an optional declarative Obsidian reference profile.
 - Issue #109 adds an exact index-only GitNexus repository default and
   trusted-base, read-only ready-PR Issue-linkage guardrail. These controls are
   repository hygiene and traceability evidence, not completion or merge
   authority.
-- The repository does not yet define the V2d-B improvement-lineage or
-  projection contracts.
+- The repository does not store real operational/improvement records or run
+  the private proof of concept.
 
 Existing ledgers, route receipts, worker receipts, memory receipts, GitNexus
 qualification fingerprints, and iteration reports are useful inputs, but none
@@ -47,7 +51,7 @@ model.
 1. v0.9.1 alignment, live notify-only hook adoption, repository guardrails,
    release closure, and the v0.9.2 runtime-compatibility maintenance release.
 2. V2d-A — Operational Evidence V0 core contracts (Issue #121, v0.10.0).
-3. V2d-B — Projection boundary and improvement lineage.
+3. V2d-B — Projection boundary and improvement lineage (Issue #124, v0.11.0).
 4. Private manual/CI proof of concept against the public contracts.
 5. V3-A — Manual/CI evidence-to-proposal workflow.
 6. V3-B — Isolated candidate evaluation workflow.
@@ -84,6 +88,9 @@ entry/exit criteria.
 - [../../operational-evidence-contract.md](../../operational-evidence-contract.md)
   — implemented V2d-A public contract, authority/data-placement matrix,
   redaction policy, CLI, and verification.
+- [../../improvement-lineage-contract.md](../../improvement-lineage-contract.md)
+  — implemented V2d-B lineage, role, human projection, graph projection,
+  optional Obsidian profile, CLI, and verification.
 
 ## Research Input Disposition
 
