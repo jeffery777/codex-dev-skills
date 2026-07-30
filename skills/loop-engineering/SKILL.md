@@ -79,6 +79,16 @@ only an advisory receipt digest. Disabled, unavailable, timeout, partial,
 unsupported, incompatible, or untrusted memory falls back to no memory without
 changing V1/V2a permissions, routing, verification, gates, or completion.
 
+When a loop produces `loop-operational-evidence/v0` documents, validate each
+document and the complete supplied bundle through
+`scripts/evidencectl.py`. Treat the result as advisory, tamper-evident
+operational evidence only. It never authenticates a producer, mutates the
+ledger, satisfies a gate, proves completion, authorizes an external write, or
+authorizes promotion. Use only synthetic evidence in this public repository;
+keep real run records, logs, transcripts, private paths, machine configuration,
+and private PoC data outside it. See
+`references/operational-evidence-v0.md`.
+
 ### Protected Event Authorization
 
 Treat `task_acceptance`, `claim_revocation`, `gate_satisfaction`, and

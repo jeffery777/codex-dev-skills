@@ -1,8 +1,7 @@
 # Operational Evidence And Self-Improvement Program
 
-Status: v0.9.1 is released; the post-release runtime compatibility work from
-Issues #113 and #115 is included in the v0.9.2 closure tracked by Issue #117;
-V2d implementation has not started.
+Status: V2d-A is implemented by Issue #121 for v0.10.0; V2d-B projection and
+improvement-lineage work remains a separate future slice.
 
 ## Purpose
 
@@ -11,11 +10,11 @@ maintenance releases. It records why Operational Evidence V0 must precede
 Evidence-Driven Self-Improvement, which public/private boundaries must remain
 intact, and how the work is divided into independently reviewable stages.
 
-The next feature milestone is:
+The current feature milestone is:
 
 > **Loop Engineering V2d: Operational Evidence Contract V0**
 
-The proposed repository release for that milestone is v0.10.0. The later
+The repository release for V2d-A is v0.10.0. The later
 milestone name **Loop Engineering V3-A: Evidence-Driven Self-Improvement**
 remains reserved.
 
@@ -27,13 +26,16 @@ remains reserved.
 - V2c-A provides a qualified, default-disabled GitNexus adapter/controller
   boundary.
 - V2c-B provides optional, trusted lifecycle freshness hooks.
+- V2d-A provides the strict offline `loop-operational-evidence/v0` document
+  family, bounded failure taxonomy, redacted environment allowlist, typed
+  artifact references, relationship validation, synthetic fixtures, and
+  deterministic evals.
 - Issue #109 adds an exact index-only GitNexus repository default and
   trusted-base, read-only ready-PR Issue-linkage guardrail. These controls are
   repository hygiene and traceability evidence, not completion or merge
   authority.
-- The repository does not yet define a general run receipt, failure taxonomy,
-  redacted environment fingerprint, typed artifact-reference set, or
-  improvement lineage contract.
+- The repository does not yet define the V2d-B improvement-lineage or
+  projection contracts.
 
 Existing ledgers, route receipts, worker receipts, memory receipts, GitNexus
 qualification fingerprints, and iteration reports are useful inputs, but none
@@ -44,7 +46,7 @@ model.
 
 1. v0.9.1 alignment, live notify-only hook adoption, repository guardrails,
    release closure, and the v0.9.2 runtime-compatibility maintenance release.
-2. V2d-A — Operational Evidence V0 core contracts.
+2. V2d-A — Operational Evidence V0 core contracts (Issue #121, v0.10.0).
 3. V2d-B — Projection boundary and improvement lineage.
 4. Private manual/CI proof of concept against the public contracts.
 5. V3-A — Manual/CI evidence-to-proposal workflow.
@@ -79,6 +81,9 @@ entry/exit criteria.
   original V3-A mapping, deferred work, and acceptance gates.
 - [continuation.md](continuation.md) — next bounded issue and a new-task
   bootstrap checklist.
+- [../../operational-evidence-contract.md](../../operational-evidence-contract.md)
+  — implemented V2d-A public contract, authority/data-placement matrix,
+  redaction policy, CLI, and verification.
 
 ## Research Input Disposition
 

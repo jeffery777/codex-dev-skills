@@ -93,6 +93,29 @@ When a change includes V2c-B hooks, additionally require evidence that:
   and rollback only disables/removes the hook definition;
 - CLI/Desktop shared behavior and POSIX-only qualification limits are labeled.
 
+When a change includes V2d-A operational evidence, additionally require
+evidence that:
+
+- every document has the exact `loop-operational-evidence/v0` envelope and the
+  four false authority/completion/write/promotion invariants;
+- duplicate keys, unknown fields, unsupported versions/enums, floats, size,
+  depth, count, digest, identity, sequence, ownership, and reference failures
+  reject offline;
+- environment fields use the finite redacted allowlist and prohibited private
+  values are omitted rather than hashed;
+- typed artifact locators reject absolute/private paths, URLs, traversal, and
+  kind/locator conflicts without dereferencing artifacts;
+- secret, private-path, and raw-log rejections use generic non-echoing output;
+- positive, negative, tamper, duplicate-key, unknown-field, synthetic
+  assignment-secret, standalone-token, private-path, raw-log,
+  invalid-reference, duplicate-document-id, and cross-record-mismatch
+  fixtures remain synthetic and deterministic;
+- references to ledger, route, worker, integration, memory, verification,
+  review, Git, platform, or GitNexus artifacts cannot raise authority;
+- no private PoC data, improvement lineage, projection runtime, hook,
+  scheduler, controller, database, graph runtime, or automatic promotion was
+  added.
+
 ## Suggested Verification
 
 Run the repository hygiene check:
@@ -122,6 +145,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_gitnexus_adapter
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
   tests.test_memory_contract tests.test_memoryctl tests.test_eval_memory_contract
 python3 scripts/eval-memory-contract.py
+python3 scripts/eval-operational-evidence.py
 ./scripts/validate-repo.sh
 git diff --check
 ```

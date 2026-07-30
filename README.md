@@ -16,12 +16,15 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current released Loop Engineering feature baseline is V2c-B, shipped in
-v0.9.0 and retained by the v0.9.1, v0.9.2, and v0.9.3 maintenance releases: V1 remains
+The current Loop Engineering feature baseline is V2d-A, introduced in v0.10.0.
+V1 remains
 the production workflow/authority core, V2a adds heterogeneous subagent
 routing, V2b adds a backend-neutral external-memory safety contract, V2c-A
 adds the qualified default-disabled GitNexus adapter/controller boundary, and
-V2c-B adds optional trusted lifecycle freshness hooks. v0.9.1 aligned the
+V2c-B adds optional trusted lifecycle freshness hooks. V2d-A adds the strict
+offline `loop-operational-evidence/v0` envelope, run/iteration/failure/
+environment/artifact document family, bounded taxonomy, redaction boundary,
+typed relationships, synthetic fixtures, and deterministic evals. v0.9.1 aligned the
 public handoff, recorded one bounded notify-only adoption, and added repository
 guardrails for index-only GitNexus analysis and ready-PR Issue linkage.
 v0.9.2 refreshes the independent Codex CLI and Desktop runtime interfaces,
@@ -31,19 +34,18 @@ session handoff adapter over the shared delivery layer. v0.9.3 adds one
 repository-owned Code Mode tool-orchestration policy, deploys it with the
 workflow groups that need substantial tool execution, and validates source,
 installed-target, dependency, manifest, update, and runtime-reference
-consistency. These maintenance releases do not add a new Loop Engineering
-milestone. Runtime observations, handoff
+consistency. Runtime observations, handoff
 receipts, external memory, GitNexus metadata, hook output, and linkage CI
 remain advisory and never replace repository, Git, verification, review,
 protected authorization, accepted platform state, or completion truth. No
 production memory backend, scheduler, daemon, or automatic hook activation is
 included.
 
-The next planned feature milestone is
-[Loop Engineering V2d: Operational Evidence Contract V0](docs/programs/operational-evidence/README.md).
-It will define public, non-sensitive evidence contracts before the later
-Evidence-Driven Self-Improvement milestone; it does not move private runtime
-state into this repository.
+The next bounded feature slice is V2d-B projection and improvement lineage.
+V2d-A's public, non-sensitive evidence contract remains a prerequisite; neither
+slice moves private runtime state into this repository or starts the later
+Evidence-Driven Self-Improvement milestone. See the
+[Operational Evidence program](docs/programs/operational-evidence/README.md).
 
 This is not a general prompt collection. It is a curated set of public, reusable workflow contracts for open source and team repositories.
 
@@ -470,6 +472,23 @@ control-plane evidence and must not be copied from the adapter transcript.
 With no adapter, or with an unavailable, partial, unsupported, incompatible, or
 untrusted adapter, the loop safely continues with V1/V2a and no memory. See the
 [external memory contract](docs/external-memory-contract.md).
+
+V2d-A adds independently usable operational evidence without a backend:
+
+```bash
+python3 skills/loop-engineering/scripts/evidencectl.py --help
+python3 skills/loop-engineering/scripts/evidencectl.py validate <document.json>
+python3 skills/loop-engineering/scripts/evidencectl.py validate-set <document.json>...
+python3 scripts/eval-operational-evidence.py
+```
+
+The validator accepts only strict `loop-operational-evidence/v0` JSON, checks
+canonical digests, bounded failure taxonomy, redacted environment fields,
+typed artifact references, and cross-document relationships, and always
+preserves false authorization/completion/promotion invariants. It is offline,
+does not dereference artifacts, and does not mutate a ledger or external
+system. See the
+[operational evidence contract](docs/operational-evidence-contract.md).
 
 V2c-A adds a default-disabled, version-gated GitNexus driver boundary. The live
 macOS qualification covers GitNexus `1.6.9`, a runtime-produced qualification
@@ -908,7 +927,7 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Merge review and readiness](examples/merge-review.md)
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
-See `docs/roadmap.md` for the near-term public roadmap, `docs/release-notes-v0.9.3.md` for the current v0.9.3 release notes, and `docs/release-notes-v0.1.0.md` for the historical v0.1.0 release notes.
+See `docs/roadmap.md` for the near-term public roadmap, `docs/release-notes-v0.10.0.md` for the current v0.10.0 release notes, and `docs/release-notes-v0.1.0.md` for the historical v0.1.0 release notes.
 
 ## Installation
 
@@ -1028,6 +1047,7 @@ python3 -m pip install -r requirements.txt
 python3 scripts/eval-loop-engineering.py
 python3 scripts/eval-agent-routing.py
 python3 scripts/eval-memory-contract.py
+python3 scripts/eval-operational-evidence.py
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 

@@ -92,16 +92,20 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   source and installed references, and preserves sequential fallback,
   approval, mutation-order, output-bound, and runtime-compatibility contracts.
   It does not change the V2c-B feature baseline or implement V2d-A.
-- Loop Engineering V2d is the next planned feature milestone after the v0.9.3
-  maintenance release. V2d-A will define
+- Loop Engineering V2d-A is delivered by issue #121 for v0.10.0. It defines
   `loop-operational-evidence/v0` core contracts for run receipts, iteration
   summaries, failure taxonomy, redacted environment fingerprints, and artifact
-  references with strict validators and synthetic fixtures. V2d-B will add
+  references with strict offline validators, typed relationship rules,
+  synthetic adversarial fixtures, and deterministic evals. The contract
+  preserves false authorization, completion, external-write, and promotion
+  invariants and stores no real operational records in this public repository.
+- V2d-B is the next planned feature slice. It will add
   improvement lineage, a tool-neutral human-readable projection boundary, an
   optional Obsidian reference profile, and the minimum typed graph projection
   manifest. See
   [the Operational Evidence program](programs/operational-evidence/README.md).
-- A private manual/CI proof of concept must validate the V2d contracts before
+- A private manual/CI proof of concept must validate the completed V2d
+  contracts before
   Loop Engineering V3-A begins. V3-A remains the reserved
   Evidence-Driven Self-Improvement milestone and starts with evidence-to-proposal
   workflow only. Candidate output cannot self-approve, activate, merge, release,
