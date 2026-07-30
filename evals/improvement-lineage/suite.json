@@ -1,0 +1,18 @@
+{
+  "contract_version": "loop-improvement-lineage-eval/v0",
+  "positive_fixture": "fixtures/positive-valid-lineage.json",
+  "negative_cases": "negative-cases.json",
+  "duplicate_key_fixture": "fixtures/negative-duplicate-key.json",
+  "obsidian_profile": "../../skills/loop-engineering/references/obsidian-reference-profile-v0.json",
+  "expected": {
+    "positive_cases": 6,
+    "negative_cases": 23,
+    "false_authority_claims": 0,
+    "projection_mismatches": 0,
+    "source_record_set_digest": "f10ca8755a87bb93df643357ca1222cc4bb00d7c884adffe5df2cd2442f07981",
+    "human_projection_digest": "94f36553a1d39019f8f562fd7ae4ff74edf75d3266e91f700a7e4030297f8444",
+    "graph_projection_digest": "163331d3da21fe8fe62550b3a5542e3dae1ae0e13ac799f824ccf09066efe4b9",
+    "graph_nodes": 30,
+    "graph_edges": 35
+  }
+}

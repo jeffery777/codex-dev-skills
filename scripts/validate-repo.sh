@@ -276,6 +276,16 @@ check_operational_evidence_contract() {
   ok "operational evidence contract, CLI, fixtures, and eval thresholds pass"
 }
 
+check_improvement_lineage_contract() {
+  python3 scripts/eval-improvement-lineage.py >"$TMP_DIR/improvement-lineage-eval.json"
+  python3 -m unittest \
+    tests.test_improvement_lineage \
+    tests.test_improvementctl \
+    tests.test_eval_improvement_lineage \
+    tests.test_improvement_lineage_contract_docs >/dev/null
+  ok "improvement lineage and deterministic projection contracts pass"
+}
+
 check_loop_contract() {
   python3 -m unittest tests.test_loop_engineering_core tests.test_loopctl >/dev/null
   ok "loop engineering event, transition, migration, and CLI contracts pass"
@@ -317,6 +327,7 @@ main() {
   check_agent_routing_eval
   check_memory_contract
   check_operational_evidence_contract
+  check_improvement_lineage_contract
 }
 
 main "$@"

@@ -89,6 +89,19 @@ keep real run records, logs, transcripts, private paths, machine configuration,
 and private PoC data outside it. See
 `references/operational-evidence-v0.md`.
 
+When a loop consumes `loop-improvement-lineage/v0` records or
+`loop-evidence-projection/v0` manifests, validate the complete explicit source
+set through `scripts/improvementctl.py`. Keep the V2d-A document family
+unchanged and resolve references by contract, kind, id, and digest. Human,
+typed graph, and optional Obsidian views are deterministic advisory
+projections only; they do not authenticate roles, select a promoted branch,
+mutate a vault/graph, satisfy a gate, prove completion, or authorize an
+external write. A validated human manifest does not attest to separately
+stored Markdown; present the rendering from the same `project-human`
+invocation or compare its UTF-8 bytes with `rendered_content_sha256`. Keep real
+improvement records and projections outside this public repository. See
+`references/improvement-lineage-v0.md`.
+
 ### Protected Event Authorization
 
 Treat `task_acceptance`, `claim_revocation`, `gate_satisfaction`, and

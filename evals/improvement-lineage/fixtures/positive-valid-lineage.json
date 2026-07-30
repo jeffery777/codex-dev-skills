@@ -1,0 +1,747 @@
+{
+  "evidence": [
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-operational-evidence/v0",
+      "document_digest": "7a7b8fcd0ee9c7ddea17b62d3f9e4441cae33e735462894454d260fb635e4960",
+      "document_id": "receipt-1",
+      "kind": "run-receipt",
+      "objective_id": "issue-124",
+      "observed_at": "2026-07-30T04:00:00Z",
+      "payload": {
+        "artifact_reference_set": {
+          "document_digest": "203880d0f4384d74a311255f2cf0e75955f945624a39567b7891f2e9e1a3222a",
+          "document_id": "artifacts-1"
+        },
+        "ended_at": "2026-07-30T04:00:00Z",
+        "environment_fingerprint": {
+          "document_digest": "c1781ba26b2d8b79a83befbb693c779e96b7e947bd0cc7d09b0f83501dc83f53",
+          "document_id": "environment-1"
+        },
+        "execution_mode": "current-session",
+        "failure_summaries": [
+          {
+            "document_digest": "92c2430a73b3e459e99233e0766db0765f87ceae0d7506d42d827c75139d9c60",
+            "document_id": "failure-1"
+          }
+        ],
+        "human_gate_observation": "not-required",
+        "iteration_summaries": [],
+        "outcome": "work-recorded",
+        "review_observation": "passed",
+        "started_at": "2026-07-30T03:00:00Z",
+        "verification_observation": "passed"
+      },
+      "producer": {
+        "id": "candidate-runner-1",
+        "kind": "agent"
+      },
+      "run_id": "run-1",
+      "source_revision": {
+        "commit_sha": "0000000000000000000000000000000000000001",
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    },
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-operational-evidence/v0",
+      "document_digest": "92c2430a73b3e459e99233e0766db0765f87ceae0d7506d42d827c75139d9c60",
+      "document_id": "failure-1",
+      "kind": "failure-summary",
+      "objective_id": "issue-124",
+      "observed_at": "2026-07-30T04:00:00Z",
+      "payload": {
+        "artifact_ids": [
+          "review-1"
+        ],
+        "category": "review",
+        "code": "review-incomplete",
+        "iteration_sequence": null,
+        "phase": "review",
+        "retry": "manual"
+      },
+      "producer": {
+        "id": "candidate-runner-1",
+        "kind": "agent"
+      },
+      "run_id": "run-1",
+      "source_revision": {
+        "commit_sha": "0000000000000000000000000000000000000001",
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    },
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-operational-evidence/v0",
+      "document_digest": "c1781ba26b2d8b79a83befbb693c779e96b7e947bd0cc7d09b0f83501dc83f53",
+      "document_id": "environment-1",
+      "kind": "environment-fingerprint",
+      "objective_id": "issue-124",
+      "observed_at": "2026-07-30T04:00:00Z",
+      "payload": {
+        "architecture": "arm64",
+        "execution_mode": "current-session",
+        "os_family": "macos",
+        "prohibited_fields_present": false,
+        "python": {
+          "major": 3,
+          "minor": 12
+        },
+        "redaction_applied": true,
+        "runtime_surface": "codex-cli",
+        "sandbox_mode": "workspace-write"
+      },
+      "producer": {
+        "id": "candidate-runner-1",
+        "kind": "agent"
+      },
+      "run_id": "run-1",
+      "source_revision": {
+        "commit_sha": "0000000000000000000000000000000000000001",
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    },
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-operational-evidence/v0",
+      "document_digest": "203880d0f4384d74a311255f2cf0e75955f945624a39567b7891f2e9e1a3222a",
+      "document_id": "artifacts-1",
+      "kind": "artifact-reference-set",
+      "objective_id": "issue-124",
+      "observed_at": "2026-07-30T04:00:00Z",
+      "payload": {
+        "artifacts": [
+          {
+            "artifact_id": "review-1",
+            "artifact_kind": "review",
+            "content_sha256": "0000000000000000000000000000000000000000000000000000000000000065",
+            "locator": "docs/loops/issue-124/review-1.md",
+            "locator_kind": "repository-relative-path",
+            "media_type": "text/markdown"
+          },
+          {
+            "artifact_id": "verification-1",
+            "artifact_kind": "verification",
+            "content_sha256": "00000000000000000000000000000000000000000000000000000000000000c9",
+            "locator": "docs/loops/issue-124/verification-1.md",
+            "locator_kind": "repository-relative-path",
+            "media_type": "text/markdown"
+          }
+        ]
+      },
+      "producer": {
+        "id": "candidate-runner-1",
+        "kind": "agent"
+      },
+      "run_id": "run-1",
+      "source_revision": {
+        "commit_sha": "0000000000000000000000000000000000000001",
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    },
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-operational-evidence/v0",
+      "document_digest": "5ac4493e429103103a34bce15a5f35ad2d377795f87f9904b32d5025ea10a26c",
+      "document_id": "receipt-2",
+      "kind": "run-receipt",
+      "objective_id": "issue-124",
+      "observed_at": "2026-07-30T04:00:00Z",
+      "payload": {
+        "artifact_reference_set": {
+          "document_digest": "5e25e98367706a495c010ae0375b9056c2dab21c0c4784b58765733937062392",
+          "document_id": "artifacts-2"
+        },
+        "ended_at": "2026-07-30T04:00:00Z",
+        "environment_fingerprint": {
+          "document_digest": "ff328f63c0b6e0b293cd94ffa8a6d315d224cd4d1bd67ec9147be4f0c76c0272",
+          "document_id": "environment-2"
+        },
+        "execution_mode": "current-session",
+        "failure_summaries": [
+          {
+            "document_digest": "989bd94dca286be04de7937cb5005a7aec8751aec1fd1812d78077dc0c8bfdfd",
+            "document_id": "failure-2"
+          }
+        ],
+        "human_gate_observation": "not-required",
+        "iteration_summaries": [],
+        "outcome": "work-recorded",
+        "review_observation": "passed",
+        "started_at": "2026-07-30T03:00:00Z",
+        "verification_observation": "passed"
+      },
+      "producer": {
+        "id": "candidate-runner-2",
+        "kind": "agent"
+      },
+      "run_id": "run-2",
+      "source_revision": {
+        "commit_sha": "0000000000000000000000000000000000000002",
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    },
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-operational-evidence/v0",
+      "document_digest": "989bd94dca286be04de7937cb5005a7aec8751aec1fd1812d78077dc0c8bfdfd",
+      "document_id": "failure-2",
+      "kind": "failure-summary",
+      "objective_id": "issue-124",
+      "observed_at": "2026-07-30T04:00:00Z",
+      "payload": {
+        "artifact_ids": [
+          "review-2"
+        ],
+        "category": "review",
+        "code": "review-incomplete",
+        "iteration_sequence": null,
+        "phase": "review",
+        "retry": "manual"
+      },
+      "producer": {
+        "id": "candidate-runner-2",
+        "kind": "agent"
+      },
+      "run_id": "run-2",
+      "source_revision": {
+        "commit_sha": "0000000000000000000000000000000000000002",
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    },
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-operational-evidence/v0",
+      "document_digest": "ff328f63c0b6e0b293cd94ffa8a6d315d224cd4d1bd67ec9147be4f0c76c0272",
+      "document_id": "environment-2",
+      "kind": "environment-fingerprint",
+      "objective_id": "issue-124",
+      "observed_at": "2026-07-30T04:00:00Z",
+      "payload": {
+        "architecture": "arm64",
+        "execution_mode": "current-session",
+        "os_family": "macos",
+        "prohibited_fields_present": false,
+        "python": {
+          "major": 3,
+          "minor": 12
+        },
+        "redaction_applied": true,
+        "runtime_surface": "codex-cli",
+        "sandbox_mode": "workspace-write"
+      },
+      "producer": {
+        "id": "candidate-runner-2",
+        "kind": "agent"
+      },
+      "run_id": "run-2",
+      "source_revision": {
+        "commit_sha": "0000000000000000000000000000000000000002",
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    },
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-operational-evidence/v0",
+      "document_digest": "5e25e98367706a495c010ae0375b9056c2dab21c0c4784b58765733937062392",
+      "document_id": "artifacts-2",
+      "kind": "artifact-reference-set",
+      "objective_id": "issue-124",
+      "observed_at": "2026-07-30T04:00:00Z",
+      "payload": {
+        "artifacts": [
+          {
+            "artifact_id": "review-2",
+            "artifact_kind": "review",
+            "content_sha256": "0000000000000000000000000000000000000000000000000000000000000066",
+            "locator": "docs/loops/issue-124/review-2.md",
+            "locator_kind": "repository-relative-path",
+            "media_type": "text/markdown"
+          },
+          {
+            "artifact_id": "verification-2",
+            "artifact_kind": "verification",
+            "content_sha256": "00000000000000000000000000000000000000000000000000000000000000ca",
+            "locator": "docs/loops/issue-124/verification-2.md",
+            "locator_kind": "repository-relative-path",
+            "media_type": "text/markdown"
+          }
+        ]
+      },
+      "producer": {
+        "id": "candidate-runner-2",
+        "kind": "agent"
+      },
+      "run_id": "run-2",
+      "source_revision": {
+        "commit_sha": "0000000000000000000000000000000000000002",
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    },
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-operational-evidence/v0",
+      "document_digest": "c2b0c2f8f2aa1c191b33984e57aaaf79e5e5f7f530d78fbe90d0e093a4def165",
+      "document_id": "receipt-3",
+      "kind": "run-receipt",
+      "objective_id": "issue-124",
+      "observed_at": "2026-07-30T04:00:00Z",
+      "payload": {
+        "artifact_reference_set": {
+          "document_digest": "9de069ccee3ddbbe0f79e995c55fc339207a1fea0cff89c3b802bb560c31db9b",
+          "document_id": "artifacts-3"
+        },
+        "ended_at": "2026-07-30T04:00:00Z",
+        "environment_fingerprint": {
+          "document_digest": "655e6d5e3b926d3a9a2b622ccabe81f71d28c69ca7d6ebf3c244a0aefe73317c",
+          "document_id": "environment-3"
+        },
+        "execution_mode": "current-session",
+        "failure_summaries": [
+          {
+            "document_digest": "1c6cbfc0813dc83bbba5c059b5b9ce71c89a12205b3a2fddc298d83123518bc3",
+            "document_id": "failure-3"
+          }
+        ],
+        "human_gate_observation": "not-required",
+        "iteration_summaries": [],
+        "outcome": "work-recorded",
+        "review_observation": "passed",
+        "started_at": "2026-07-30T03:00:00Z",
+        "verification_observation": "passed"
+      },
+      "producer": {
+        "id": "candidate-runner-3",
+        "kind": "agent"
+      },
+      "run_id": "run-3",
+      "source_revision": {
+        "commit_sha": "0000000000000000000000000000000000000003",
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    },
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-operational-evidence/v0",
+      "document_digest": "1c6cbfc0813dc83bbba5c059b5b9ce71c89a12205b3a2fddc298d83123518bc3",
+      "document_id": "failure-3",
+      "kind": "failure-summary",
+      "objective_id": "issue-124",
+      "observed_at": "2026-07-30T04:00:00Z",
+      "payload": {
+        "artifact_ids": [
+          "review-3"
+        ],
+        "category": "review",
+        "code": "review-incomplete",
+        "iteration_sequence": null,
+        "phase": "review",
+        "retry": "manual"
+      },
+      "producer": {
+        "id": "candidate-runner-3",
+        "kind": "agent"
+      },
+      "run_id": "run-3",
+      "source_revision": {
+        "commit_sha": "0000000000000000000000000000000000000003",
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    },
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-operational-evidence/v0",
+      "document_digest": "655e6d5e3b926d3a9a2b622ccabe81f71d28c69ca7d6ebf3c244a0aefe73317c",
+      "document_id": "environment-3",
+      "kind": "environment-fingerprint",
+      "objective_id": "issue-124",
+      "observed_at": "2026-07-30T04:00:00Z",
+      "payload": {
+        "architecture": "arm64",
+        "execution_mode": "current-session",
+        "os_family": "macos",
+        "prohibited_fields_present": false,
+        "python": {
+          "major": 3,
+          "minor": 12
+        },
+        "redaction_applied": true,
+        "runtime_surface": "codex-cli",
+        "sandbox_mode": "workspace-write"
+      },
+      "producer": {
+        "id": "candidate-runner-3",
+        "kind": "agent"
+      },
+      "run_id": "run-3",
+      "source_revision": {
+        "commit_sha": "0000000000000000000000000000000000000003",
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    },
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-operational-evidence/v0",
+      "document_digest": "9de069ccee3ddbbe0f79e995c55fc339207a1fea0cff89c3b802bb560c31db9b",
+      "document_id": "artifacts-3",
+      "kind": "artifact-reference-set",
+      "objective_id": "issue-124",
+      "observed_at": "2026-07-30T04:00:00Z",
+      "payload": {
+        "artifacts": [
+          {
+            "artifact_id": "review-3",
+            "artifact_kind": "review",
+            "content_sha256": "0000000000000000000000000000000000000000000000000000000000000067",
+            "locator": "docs/loops/issue-124/review-3.md",
+            "locator_kind": "repository-relative-path",
+            "media_type": "text/markdown"
+          },
+          {
+            "artifact_id": "verification-3",
+            "artifact_kind": "verification",
+            "content_sha256": "00000000000000000000000000000000000000000000000000000000000000cb",
+            "locator": "docs/loops/issue-124/verification-3.md",
+            "locator_kind": "repository-relative-path",
+            "media_type": "text/markdown"
+          }
+        ]
+      },
+      "producer": {
+        "id": "candidate-runner-3",
+        "kind": "agent"
+      },
+      "run_id": "run-3",
+      "source_revision": {
+        "commit_sha": "0000000000000000000000000000000000000003",
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    }
+  ],
+  "records": [
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-improvement-lineage/v0",
+      "improvement_id": "improvement-2",
+      "kind": "improvement-record",
+      "objective_id": "issue-124",
+      "payload": {
+        "baseline": {
+          "artifact_reference_set": {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "5e25e98367706a495c010ae0375b9056c2dab21c0c4784b58765733937062392",
+            "document_id": "artifacts-2",
+            "kind": "artifact-reference-set"
+          },
+          "environment_fingerprint": {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "ff328f63c0b6e0b293cd94ffa8a6d315d224cd4d1bd67ec9147be4f0c76c0272",
+            "document_id": "environment-2",
+            "kind": "environment-fingerprint"
+          },
+          "environment_key": "9298c16795e822862fc89961a63bab2c5c04081306c25c0f2296795adbd203d8",
+          "evidence_set_digest": "f5d56cf7d9981061194635b60524f487f94c0e83a644754b2768d3e179aab8bf",
+          "run_receipt": {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "5ac4493e429103103a34bce15a5f35ad2d377795f87f9904b32d5025ea10a26c",
+            "document_id": "receipt-2",
+            "kind": "run-receipt"
+          },
+          "snapshot_id": "baseline-2",
+          "source_revision": {
+            "commit_sha": "0000000000000000000000000000000000000002",
+            "repository_id": "github.com.jeffery777.codex-dev-skills"
+          }
+        },
+        "candidate": {
+          "artifact_reference_set": {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "9de069ccee3ddbbe0f79e995c55fc339207a1fea0cff89c3b802bb560c31db9b",
+            "document_id": "artifacts-3",
+            "kind": "artifact-reference-set"
+          },
+          "environment_fingerprint": {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "655e6d5e3b926d3a9a2b622ccabe81f71d28c69ca7d6ebf3c244a0aefe73317c",
+            "document_id": "environment-3",
+            "kind": "environment-fingerprint"
+          },
+          "environment_key": "9298c16795e822862fc89961a63bab2c5c04081306c25c0f2296795adbd203d8",
+          "evidence_set_digest": "d01a0863e7ec9d22d181e34f591114d3a56b611acd2cc652370b64efbb58faa1",
+          "run_receipt": {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "c2b0c2f8f2aa1c191b33984e57aaaf79e5e5f7f530d78fbe90d0e093a4def165",
+            "document_id": "receipt-3",
+            "kind": "run-receipt"
+          },
+          "snapshot_id": "candidate-2",
+          "source_revision": {
+            "commit_sha": "0000000000000000000000000000000000000003",
+            "repository_id": "github.com.jeffery777.codex-dev-skills"
+          }
+        },
+        "candidate_disposition": "verified",
+        "evaluation_artifacts": [
+          {
+            "artifact": {
+              "artifact_id": "review-3",
+              "artifact_kind": "review",
+              "content_sha256": "0000000000000000000000000000000000000000000000000000000000000067",
+              "locator": "docs/loops/issue-124/review-3.md",
+              "locator_kind": "repository-relative-path",
+              "media_type": "text/markdown"
+            },
+            "snapshot_role": "candidate"
+          },
+          {
+            "artifact": {
+              "artifact_id": "verification-3",
+              "artifact_kind": "verification",
+              "content_sha256": "00000000000000000000000000000000000000000000000000000000000000cb",
+              "locator": "docs/loops/issue-124/verification-3.md",
+              "locator_kind": "repository-relative-path",
+              "media_type": "text/markdown"
+            },
+            "snapshot_role": "candidate"
+          }
+        ],
+        "predecessor": {
+          "improvement_id": "improvement-1",
+          "record_digest": "09fb74e3e7adc1537abcc0a3990fe53b9483883b5d6f62e07e59b667636f1875",
+          "record_id": "record-1"
+        },
+        "role_assignments": {
+          "evaluator": {
+            "actor_id": "evaluator-2",
+            "actor_kind": "ci"
+          },
+          "independent_verifier": {
+            "actor_id": "verifier-2",
+            "actor_kind": "human"
+          },
+          "promoter": {
+            "actor_id": "promoter-2",
+            "actor_kind": "human"
+          },
+          "proposer": {
+            "actor_id": "proposer-2",
+            "actor_kind": "agent"
+          }
+        },
+        "source_failures": [
+          {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "1c6cbfc0813dc83bbba5c059b5b9ce71c89a12205b3a2fddc298d83123518bc3",
+            "document_id": "failure-3",
+            "kind": "failure-summary"
+          }
+        ]
+      },
+      "producer": {
+        "id": "proposer-2",
+        "kind": "agent"
+      },
+      "record_digest": "44d07d64b935bc54dbc23d055230623c6867ac5819365f758d3c1dabca7e1ae8",
+      "record_id": "record-2",
+      "recorded_at": "2026-07-30T04:02:00Z",
+      "repository": {
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    },
+    {
+      "authority_invariants": {
+        "external_write_authorized": false,
+        "promotion_authorized": false,
+        "used_as_authorization": false,
+        "used_as_completion_evidence": false
+      },
+      "contract_version": "loop-improvement-lineage/v0",
+      "improvement_id": "improvement-1",
+      "kind": "improvement-record",
+      "objective_id": "issue-124",
+      "payload": {
+        "baseline": {
+          "artifact_reference_set": {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "203880d0f4384d74a311255f2cf0e75955f945624a39567b7891f2e9e1a3222a",
+            "document_id": "artifacts-1",
+            "kind": "artifact-reference-set"
+          },
+          "environment_fingerprint": {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "c1781ba26b2d8b79a83befbb693c779e96b7e947bd0cc7d09b0f83501dc83f53",
+            "document_id": "environment-1",
+            "kind": "environment-fingerprint"
+          },
+          "environment_key": "9298c16795e822862fc89961a63bab2c5c04081306c25c0f2296795adbd203d8",
+          "evidence_set_digest": "22e2a334feeec2d285e5447b3281ec4da716f7ccf7c574cb663e736a3478c765",
+          "run_receipt": {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "7a7b8fcd0ee9c7ddea17b62d3f9e4441cae33e735462894454d260fb635e4960",
+            "document_id": "receipt-1",
+            "kind": "run-receipt"
+          },
+          "snapshot_id": "baseline-1",
+          "source_revision": {
+            "commit_sha": "0000000000000000000000000000000000000001",
+            "repository_id": "github.com.jeffery777.codex-dev-skills"
+          }
+        },
+        "candidate": {
+          "artifact_reference_set": {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "5e25e98367706a495c010ae0375b9056c2dab21c0c4784b58765733937062392",
+            "document_id": "artifacts-2",
+            "kind": "artifact-reference-set"
+          },
+          "environment_fingerprint": {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "ff328f63c0b6e0b293cd94ffa8a6d315d224cd4d1bd67ec9147be4f0c76c0272",
+            "document_id": "environment-2",
+            "kind": "environment-fingerprint"
+          },
+          "environment_key": "9298c16795e822862fc89961a63bab2c5c04081306c25c0f2296795adbd203d8",
+          "evidence_set_digest": "f5d56cf7d9981061194635b60524f487f94c0e83a644754b2768d3e179aab8bf",
+          "run_receipt": {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "5ac4493e429103103a34bce15a5f35ad2d377795f87f9904b32d5025ea10a26c",
+            "document_id": "receipt-2",
+            "kind": "run-receipt"
+          },
+          "snapshot_id": "candidate-1",
+          "source_revision": {
+            "commit_sha": "0000000000000000000000000000000000000002",
+            "repository_id": "github.com.jeffery777.codex-dev-skills"
+          }
+        },
+        "candidate_disposition": "verified",
+        "evaluation_artifacts": [
+          {
+            "artifact": {
+              "artifact_id": "review-2",
+              "artifact_kind": "review",
+              "content_sha256": "0000000000000000000000000000000000000000000000000000000000000066",
+              "locator": "docs/loops/issue-124/review-2.md",
+              "locator_kind": "repository-relative-path",
+              "media_type": "text/markdown"
+            },
+            "snapshot_role": "candidate"
+          },
+          {
+            "artifact": {
+              "artifact_id": "verification-2",
+              "artifact_kind": "verification",
+              "content_sha256": "00000000000000000000000000000000000000000000000000000000000000ca",
+              "locator": "docs/loops/issue-124/verification-2.md",
+              "locator_kind": "repository-relative-path",
+              "media_type": "text/markdown"
+            },
+            "snapshot_role": "candidate"
+          }
+        ],
+        "predecessor": null,
+        "role_assignments": {
+          "evaluator": {
+            "actor_id": "evaluator-1",
+            "actor_kind": "ci"
+          },
+          "independent_verifier": {
+            "actor_id": "verifier-1",
+            "actor_kind": "human"
+          },
+          "promoter": {
+            "actor_id": "promoter-1",
+            "actor_kind": "human"
+          },
+          "proposer": {
+            "actor_id": "proposer-1",
+            "actor_kind": "agent"
+          }
+        },
+        "source_failures": [
+          {
+            "contract_version": "loop-operational-evidence/v0",
+            "document_digest": "989bd94dca286be04de7937cb5005a7aec8751aec1fd1812d78077dc0c8bfdfd",
+            "document_id": "failure-2",
+            "kind": "failure-summary"
+          }
+        ]
+      },
+      "producer": {
+        "id": "proposer-1",
+        "kind": "agent"
+      },
+      "record_digest": "09fb74e3e7adc1537abcc0a3990fe53b9483883b5d6f62e07e59b667636f1875",
+      "record_id": "record-1",
+      "recorded_at": "2026-07-30T04:01:00Z",
+      "repository": {
+        "repository_id": "github.com.jeffery777.codex-dev-skills"
+      }
+    }
+  ]
+}

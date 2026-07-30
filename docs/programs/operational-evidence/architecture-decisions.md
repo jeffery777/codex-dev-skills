@@ -108,3 +108,16 @@ the operational-evidence schema by precedent.
 
 **Consequence:** V2d must still define strict, versioned schemas and validators
 instead of normalizing an ad hoc runtime report.
+
+## OE-011 — Compose V2d-B As Separate Contract Families
+
+**Decision:** Keep `loop-operational-evidence/v0` unchanged. Add
+`loop-improvement-lineage/v0` for improvement records and
+`loop-evidence-projection/v0` for deterministic human/graph manifests.
+
+**Rationale:** V2d-A explicitly has no extension surface, and run evidence,
+cross-run lineage, and regenerable views have different lifecycles.
+
+**Consequence:** V2d-B resolves V2d-A inputs by exact contract, kind, id, and
+digest. Existing V2d-A documents require no migration, and no projection
+dependency enters the operational-evidence validator.

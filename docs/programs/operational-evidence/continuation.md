@@ -5,12 +5,13 @@
 - Issues #107, #109, #111, #113, #115, #117, and #119 completed the v0.9.x
   alignment, guardrail, runtime-interface, CLI handoff, and Code Mode policy
   prerequisites.
-- Issue #121 implements V2d-A and owns v0.10.0 version metadata, release notes,
-  and release-readiness preparation on the same implementation branch.
-- Commit, push, PR creation, merge, tag `v0.10.0`, and GitHub Release
+- Issue #121 delivered V2d-A and v0.10.0. Issue #124 implements V2d-B and owns
+  v0.11.0 version metadata, release notes, and release-readiness preparation on
+  the same implementation branch.
+- Commit, push, PR creation, merge, tag `v0.11.0`, and GitHub Release
   publication remain separately authorized actions against reviewed state.
-- V2d-A operational evidence remains advisory and cannot authorize those
-  actions or prove Issue #121 complete.
+- V2d-A evidence and V2d-B records/projections remain advisory and cannot
+  authorize those actions or prove Issue #124 complete.
 
 ## Delivered V2d-A Boundary
 
@@ -35,24 +36,26 @@ It does not add improvement records, projections, private PoC data, automatic
 collection, hooks, plugins, schedulers, controllers, databases, graph
 execution, or automatic promotion.
 
-## Next Bounded Issue
+## Delivered V2d-B Boundary
 
-After v0.10.0 is merged and released, reassess and open a separate V2d-B issue:
+Issue #124 adds:
 
-> **Define V2d-B improvement lineage and tool-neutral projection contracts**
+- strict composed improvement-record and projection families;
+- baseline/candidate and predecessor lineage;
+- declared proposer/evaluator/verifier/promoter separation;
+- deterministic Markdown and typed graph manifests;
+- an optional dependency-free Obsidian reference profile;
+- strict validators, bounded CLI, synthetic fixtures, tests, and evals.
 
-The V2d-B issue may include:
+It excludes production Obsidian synchronization, private evidence stores,
+graph databases/execution, schedulers, controllers, and promotion.
 
-- `improvement-record` identity and baseline/candidate lineage;
-- proposer/evaluator/verifier/promoter role separation;
-- a tool-neutral human-readable projection manifest;
-- an optional Obsidian reference profile;
-- the minimum typed graph projection manifest;
-- deterministic projection fixtures and validators.
+## Next Bounded Stage
 
-It must continue to exclude production Obsidian synchronization, private
-evidence stores, graph databases or execution engines, schedulers,
-controllers, and automatic candidate promotion.
+After v0.11.0 is reviewed and released, run the private manual/CI proof of
+concept outside this public repository. Public follow-up is limited to generic
+contract fixes discovered by that PoC. V3-A must not begin until the program
+re-entry gate passes.
 
 ## New Task Bootstrap Checklist
 
@@ -60,12 +63,13 @@ A future Codex task should:
 
 1. Read `AGENTS.md`, `README.md`, `docs/roadmap.md`, this program directory,
    and `docs/operational-evidence-contract.md`.
-2. Confirm Issue #121, its PR, tag `v0.10.0`, and the GitHub Release are in the
+2. Confirm Issue #124, its PR, tag `v0.11.0`, and the GitHub Release are in the
    expected accepted state.
 3. Inspect current branch/status/upstream/diff, tags/releases, open issues, and
    the installed GitNexus index freshness.
-4. Search GitHub for an existing V2d-B issue before creating one.
-5. Reassess private PoC sequencing and public-contract lessons instead of
+4. Search GitHub for an existing private-PoC/public-fix issue. If none exists,
+   stop and obtain exact external-write authorization before creating one.
+5. Reassess private PoC sequencing and V2d-B contract lessons instead of
    trusting a chat summary.
 6. Keep V2d-B separate from V3 self-improvement execution and runtime services.
 7. Run GitNexus impact analysis before implementation and `detect_changes`
@@ -75,8 +79,9 @@ A future Codex task should:
 
 ## Handoff Summary
 
-- Delivered slice: V2d-A Operational Evidence V0 core for v0.10.0.
-- Next public slice: V2d-B improvement lineage and projection contracts.
+- Prerequisite slice: V2d-A Operational Evidence V0 core in v0.10.0.
+- Delivered public slice: V2d-B improvement lineage and projection contracts.
+- Next stage: private manual/CI proof of concept.
 - Public role: contracts, validators, synthetic fixtures, tests, and docs.
 - Private role: real operational records and the later manual/CI PoC.
 - Projection role: tool-neutral first; Obsidian remains an optional reference.

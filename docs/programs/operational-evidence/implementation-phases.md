@@ -61,6 +61,11 @@ formal readiness reviews have no unresolved MUST-FIX findings.
 
 ## Phase 2 — V2d-B Projection And Improvement Lineage
 
+**Target release:** v0.11.0
+
+**Status:** Implemented by Issue #124; release publication remains separately
+authorized.
+
 **Deliverables:**
 
 - `improvement-record` contract;
@@ -77,6 +82,12 @@ formal readiness reviews have no unresolved MUST-FIX findings.
 - private evidence store implementation;
 - graph execution engine or graph database;
 - automatic candidate promotion.
+
+**Exit criteria:** both composed contract families validate independently;
+lineage, role, privacy, authority, tamper, and deterministic projection
+fixtures/evals pass; existing V2d-A remains green; and deep code, docs,
+security/privacy, formal readiness, and exact-head merge reviews have no
+unresolved MUST-FIX findings.
 
 ## Phase 3 — Private Manual/CI Proof Of Concept
 

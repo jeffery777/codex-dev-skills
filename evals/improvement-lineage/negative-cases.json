@@ -1,0 +1,27 @@
+{
+  "cases": [
+    {"id": "duplicate-key", "expected_code": "duplicate-key"},
+    {"id": "tampered-record-digest", "expected_code": "digest-mismatch"},
+    {"id": "unknown-record-field", "expected_code": "invalid-structure"},
+    {"id": "unsupported-record-version", "expected_code": "unsupported-contract"},
+    {"id": "authority-escalation", "expected_code": "authority-violation"},
+    {"id": "duplicate-improvement-id", "expected_code": "identity-conflict"},
+    {"id": "missing-predecessor", "expected_code": "missing-predecessor"},
+    {"id": "cycle-attempt", "expected_code": "stale-baseline"},
+    {"id": "stale-baseline", "expected_code": "stale-baseline"},
+    {"id": "baseline-candidate-equality", "expected_code": "relationship-mismatch"},
+    {"id": "source-revision-mismatch", "expected_code": "relationship-mismatch"},
+    {"id": "environment-mismatch", "expected_code": "environment-mismatch"},
+    {"id": "role-collision", "expected_code": "role-conflict"},
+    {"id": "candidate-self-verification", "expected_code": "role-conflict"},
+    {"id": "verified-without-review", "expected_code": "role-conflict"},
+    {"id": "unsorted-artifacts", "expected_code": "relationship-mismatch"},
+    {"id": "artifact-source-mismatch", "expected_code": "relationship-mismatch"},
+    {"id": "private-path", "expected_code": "privacy-violation"},
+    {"id": "synthetic-token", "expected_code": "privacy-violation"},
+    {"id": "gitlab-token", "expected_code": "privacy-violation"},
+    {"id": "raw-log", "expected_code": "privacy-violation"},
+    {"id": "projection-source-mismatch", "expected_code": "projection-mismatch"},
+    {"id": "graph-edge-mismatch", "expected_code": "projection-mismatch"}
+  ]
+}

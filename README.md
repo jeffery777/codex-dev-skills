@@ -16,7 +16,7 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current Loop Engineering feature baseline is V2d-A, introduced in v0.10.0.
+The current Loop Engineering feature baseline is V2d-B, prepared for v0.11.0.
 V1 remains
 the production workflow/authority core, V2a adds heterogeneous subagent
 routing, V2b adds a backend-neutral external-memory safety contract, V2c-A
@@ -24,7 +24,11 @@ adds the qualified default-disabled GitNexus adapter/controller boundary, and
 V2c-B adds optional trusted lifecycle freshness hooks. V2d-A adds the strict
 offline `loop-operational-evidence/v0` envelope, run/iteration/failure/
 environment/artifact document family, bounded taxonomy, redaction boundary,
-typed relationships, synthetic fixtures, and deterministic evals. v0.9.1 aligned the
+typed relationships, synthetic fixtures, and deterministic evals. V2d-B adds
+the separate `loop-improvement-lineage/v0` and
+`loop-evidence-projection/v0` families, deterministic Markdown/typed-graph
+views, and an optional non-mutating Obsidian reference profile without
+changing V2d-A. v0.9.1 aligned the
 public handoff, recorded one bounded notify-only adoption, and added repository
 guardrails for index-only GitNexus analysis and ready-PR Issue linkage.
 v0.9.2 refreshes the independent Codex CLI and Desktop runtime interfaces,
@@ -41,10 +45,10 @@ protected authorization, accepted platform state, or completion truth. No
 production memory backend, scheduler, daemon, or automatic hook activation is
 included.
 
-The next bounded feature slice is V2d-B projection and improvement lineage.
-V2d-A's public, non-sensitive evidence contract remains a prerequisite; neither
-slice moves private runtime state into this repository or starts the later
-Evidence-Driven Self-Improvement milestone. See the
+V2d-A and V2d-B remain public, non-sensitive contract prerequisites. The next
+stage is a private manual/CI proof of concept outside this repository before
+the later Evidence-Driven Self-Improvement milestone. No slice moves private
+runtime state into public Git. See the
 [Operational Evidence program](docs/programs/operational-evidence/README.md).
 
 This is not a general prompt collection. It is a curated set of public, reusable workflow contracts for open source and team repositories.
@@ -490,6 +494,25 @@ does not dereference artifacts, and does not mutate a ledger or external
 system. See the
 [operational evidence contract](docs/operational-evidence-contract.md).
 
+V2d-B adds independently usable improvement lineage and deterministic
+projections without changing V2d-A:
+
+```bash
+python3 skills/loop-engineering/scripts/improvementctl.py --help
+python3 skills/loop-engineering/scripts/improvementctl.py validate-set \
+  <record.json>... --evidence <v2d-a-document.json>...
+python3 skills/loop-engineering/scripts/improvementctl.py project-human \
+  <record.json>... --evidence <v2d-a-document.json>...
+python3 skills/loop-engineering/scripts/improvementctl.py project-graph \
+  <record.json>... --evidence <v2d-a-document.json>...
+python3 scripts/eval-improvement-lineage.py
+```
+
+The human and typed graph outputs are source-derived, regenerable, and
+non-authoritative. The optional Obsidian profile is declarative only; no vault
+or graph runtime is installed or mutated. See the
+[improvement lineage contract](docs/improvement-lineage-contract.md).
+
 V2c-A adds a default-disabled, version-gated GitNexus driver boundary. The live
 macOS qualification covers GitNexus `1.6.9`, a runtime-produced qualification
 fingerprint, and metadata schema `5`. Human-oriented `status` and `list` output is never parsed.
@@ -927,7 +950,7 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Merge review and readiness](examples/merge-review.md)
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
-See `docs/roadmap.md` for the near-term public roadmap, `docs/release-notes-v0.10.0.md` for the current v0.10.0 release notes, and `docs/release-notes-v0.1.0.md` for the historical v0.1.0 release notes.
+See `docs/roadmap.md` for the near-term public roadmap, `docs/release-notes-v0.11.0.md` for the current v0.11.0 release notes draft (release preparation; release date TBD), and `docs/release-notes-v0.1.0.md` for the historical v0.1.0 release notes.
 
 ## Installation
 

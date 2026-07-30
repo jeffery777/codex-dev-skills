@@ -137,12 +137,16 @@ class AgentProfileInstallerTests(unittest.TestCase):
             "scripts/loopctl.py",
             "scripts/operational_evidence.py",
             "scripts/evidencectl.py",
+            "scripts/improvement_lineage.py",
+            "scripts/improvementctl.py",
             "scripts/memory_contract.py",
             "scripts/memoryctl.py",
             "scripts/profile_preflight.py",
             "references/agent-profile-registry.json",
             "references/memory-contract-v1.md",
             "references/operational-evidence-v0.md",
+            "references/improvement-lineage-v0.md",
+            "references/obsidian-reference-profile-v0.json",
         ):
             self.assertTrue((installed_skill / relative).is_file(), relative)
         deployed_validation = subprocess.run(
