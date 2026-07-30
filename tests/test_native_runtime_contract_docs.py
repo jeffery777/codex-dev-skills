@@ -88,7 +88,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
     def test_chatgpt_desktop_name_preserves_runtime_layers(self) -> None:
         readme = read("README.md")
         compatibility = read("docs/runtime-compatibility.md")
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-24.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-30.md")
         contract = read("docs/native-runtime-capabilities.md")
         combined = "\n".join((readme, compatibility, evidence, contract))
 
@@ -99,15 +99,15 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
 
     def test_latest_runtime_evidence_records_current_versions_and_counts(self) -> None:
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-24.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-30.md")
 
         for expected in (
-            "0.145.0",
-            "26.721.30844",
-            "5813",
+            "0.146.0",
+            "26.721.81911",
+            "5973",
             "com.openai.codex",
-            "234",
-            "89",
+            "236",
+            "90",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, evidence)
