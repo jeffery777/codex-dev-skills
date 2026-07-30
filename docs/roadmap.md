@@ -99,7 +99,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   synthetic adversarial fixtures, and deterministic evals. The contract
   preserves false authorization, completion, external-write, and promotion
   invariants and stores no real operational records in this public repository.
-- Loop Engineering V2d-B is delivered by issue #124 for v0.11.0 preparation.
+- Loop Engineering V2d-B is delivered by issue #124 in v0.11.0.
   It adds separate strict improvement-lineage and projection families,
   baseline/candidate lineage, declared role separation, deterministic
   tool-neutral Markdown and typed graph manifests, and an optional declarative
