@@ -1,7 +1,7 @@
 # Operational Evidence And Self-Improvement Program
 
 Status: V2d-A is released in v0.10.0; V2d-B improvement lineage and projection
-contracts are implemented by Issue #124 for v0.11.0 release preparation.
+contracts are released in v0.11.0 through Issue #124.
 
 ## Purpose
 

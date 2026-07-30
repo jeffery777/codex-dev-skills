@@ -5,13 +5,13 @@
 - Issues #107, #109, #111, #113, #115, #117, and #119 completed the v0.9.x
   alignment, guardrail, runtime-interface, CLI handoff, and Code Mode policy
   prerequisites.
-- Issue #121 delivered V2d-A and v0.10.0. Issue #124 implements V2d-B and owns
-  v0.11.0 version metadata, release notes, and release-readiness preparation on
-  the same implementation branch.
-- Commit, push, PR creation, merge, tag `v0.11.0`, and GitHub Release
-  publication remain separately authorized actions against reviewed state.
-- V2d-A evidence and V2d-B records/projections remain advisory and cannot
-  authorize those actions or prove Issue #124 complete.
+- Issue #121 delivered V2d-A in v0.10.0. Issue #124 and PR #126 delivered
+  V2d-B in v0.11.0; Issue #127 owns the final release closure.
+- Annotated tag `v0.11.0` and the GitHub Release are bound to the reviewed
+  release-closure merge commit.
+- V2d-A evidence and V2d-B records/projections remain advisory. Issue #124
+  completion and release publication depend on accepted repository/platform
+  state, not on those records or projections.
 
 ## Delivered V2d-A Boundary
 

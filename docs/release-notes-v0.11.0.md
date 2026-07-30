@@ -1,6 +1,6 @@
 # Release Notes: v0.11.0
 
-Release date: TBD
+Release date: 2026-07-30
 
 v0.11.0 introduces Loop Engineering V2d-B: strict improvement lineage and
 deterministic non-authoritative projections.
@@ -67,3 +67,7 @@ authorization for merge, tag, and GitHub Release.
 
 - V2d-B implementation issue:
   <https://github.com/jeffery777/codex-dev-skills/issues/124>
+- Release closure issue:
+  <https://github.com/jeffery777/codex-dev-skills/issues/127>
+- Compare:
+  <https://github.com/jeffery777/codex-dev-skills/compare/v0.10.0...v0.11.0>

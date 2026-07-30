@@ -16,7 +16,7 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current Loop Engineering feature baseline is V2d-B, prepared for v0.11.0.
+The current Loop Engineering feature baseline is V2d-B, released in v0.11.0.
 V1 remains
 the production workflow/authority core, V2a adds heterogeneous subagent
 routing, V2b adds a backend-neutral external-memory safety contract, V2c-A
@@ -950,7 +950,7 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Merge review and readiness](examples/merge-review.md)
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
-See `docs/roadmap.md` for the near-term public roadmap, `docs/release-notes-v0.11.0.md` for the current v0.11.0 release notes draft (release preparation; release date TBD), and `docs/release-notes-v0.1.0.md` for the historical v0.1.0 release notes.
+See `docs/roadmap.md` for the near-term public roadmap, `docs/release-notes-v0.11.0.md` for the current v0.11.0 release notes, and `docs/release-notes-v0.1.0.md` for the historical v0.1.0 release notes.
 
 ## Installation
 
