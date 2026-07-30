@@ -50,7 +50,7 @@ if sys.argv[1:] == ["--version"]:
         sys.stdout.write("x" * 8192)
         sys.stdout.flush()
         raise SystemExit(0)
-    print("codex-cli " + os.environ.get("FAKE_CODEX_VERSION", "0.145.0"))
+    print("codex-cli " + os.environ.get("FAKE_CODEX_VERSION", "9.8.7"))
     raise SystemExit(0)
 
 capture = os.environ.get("FAKE_CODEX_CAPTURE")
@@ -290,7 +290,7 @@ class CliSessionHandoffTests(unittest.TestCase):
         self.assertEqual("completed", response["status"])
         self.assertEqual(SESSION_ID, response["result"]["session_id"])
         self.assertEqual("turn.completed", response["result"]["terminal_event"])
-        self.assertEqual("0.145.0", response["capability"]["cli_version"])
+        self.assertEqual("9.8.7", response["capability"]["cli_version"])
         self.assertRegex(
             response["capability"]["executable_sha256"], r"^[0-9a-f]{64}$"
         )
