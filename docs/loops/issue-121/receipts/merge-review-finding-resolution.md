@@ -2,6 +2,12 @@
 
 Date: 2026-07-29
 
+P4 formal-gate result: PASS
+
+PR merge-gate result: PENDING renewed zero-findings review
+
+Authority: review evidence only
+
 ## Finding
 
 The initial PR #122 exact-head reviews found one blocker: the active ledger was
@@ -28,7 +34,49 @@ impossible self-referential HEAD binding.
 The historical authorization boundary in `review-disposition.md` is also
 clarified as point-in-time evidence.
 
-## Required Reverification
+## Evidence Semantics
+
+`P4-readiness` is the repository delivery formal gate. Its manifest scope
+explicitly excludes commit, push, PR creation, merge, tag, and release
+publication. Its protected completion records that the reviewed remediation
+candidate, verification, review closure, and human authorization needed to
+produce an exact-head PR are satisfied. It does not claim that the later
+platform PR merge gate has passed.
+
+The P4 completion event binds this finding-resolution receipt as its primary
+passed review artifact. `merge-review-exact-head-initial.md` is retained as
+historical counterevidence showing the original blocked state and the finding
+that this receipt closes; it is not treated as a passed review result.
+
+Likewise, terminal objective completion covers Issue #121's bounded
+implementation and release-preparation delivery objective. It does not
+authorize or prove PR merge, tag creation, or Release publication. The
+post-commit exact-head Merge Review remains a separate gate, and its result
+cannot be inferred from the protected completion events.
+
+## P4 Formal-Gate Evidence
+
+The P4 formal gate is PASS on terminal commit
+`30db237abb5eb8576e10d4b7f244639206225d95`:
+
+- `loopctl.py audit` reports 33 events, zero errors, and `status: valid`;
+- `scripts/validate-loop-ledger.py` validates all three project ledgers;
+- `scripts/validate-repo.sh` passes;
+- the focused operational-evidence suite passes 44 tests;
+- the operational-evidence eval passes 12/12 exact thresholds with zero false
+  authority or completion;
+- the full repository suite passes 796 tests;
+- renewed deep code review reports 0 MUST-FIX, 0 SHOULD-FIX, and 0 NIT;
+- renewed security/privacy review reports zero vulnerabilities and
+  0 MUST-FIX, 0 SHOULD-FIX, and 0 NIT;
+- the documentation artifact-disposition finding is closed by this receipt
+  and the companion composite receipt explicitly recording their current P4
+  PASS status while preserving the initial blocked history.
+
+This evidence, not the protected authorization itself, supports the
+machine-readable P4 `review: passed` state.
+
+## Post-Completion Merge Gate
 
 After the terminal-ledger commit:
 

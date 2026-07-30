@@ -2,6 +2,13 @@
 
 Date: 2026-07-29
 
+Current P4 formal-gate result: PASS
+
+Initial PR merge-review result: BLOCKED, resolved by the terminalization
+recorded below
+
+Authority: review evidence only
+
 ## Candidate
 
 - Pull request: <https://github.com/jeffery777/codex-dev-skills/pull/122>
@@ -44,3 +51,16 @@ contract's terminal ancestor rule: apply the independently authorized
 `P4-readiness` completion and terminal objective event, commit that ledger
 state, rerun production repository validation on the new exact head, and
 repeat every formal merge review before commenting or merging.
+
+The initial blocked result above remains immutable point-in-time history. Its
+finding is closed by `merge-review-finding-resolution.md` and the verified
+terminal commit `30db237abb5eb8576e10d4b7f244639206225d95`.
+
+For the P4 repository formal gate, this composite receipt's current disposition
+is PASS: the terminal ledger audit, ledger validator, repository validation,
+focused tests/eval, deep code review, and security/privacy review all pass on
+`30db237...`; the documentation inconsistency about artifact disposition is
+closed by making both bound artifacts state their current P4 result explicitly.
+
+This P4 PASS is not a PR merge approval. The later exact-head Merge Review must
+still return zero findings on the final pushed head before comment or merge.

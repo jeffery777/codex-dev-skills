@@ -1,6 +1,6 @@
 # Release Notes: v0.10.0
 
-Release date: 2026-07-29
+Release date: TBD
 
 v0.10.0 introduces Loop Engineering V2d-A: Operational Evidence Contract V0.
 It adds a strict, offline, public evidence document family for bounded run
