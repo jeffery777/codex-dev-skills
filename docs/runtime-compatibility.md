@@ -7,7 +7,7 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only. See the maintained
-[2026-07-30 compatibility evidence](codex-runtime-compatibility-evidence-2026-07-30.md).
+[2026-07-31 compatibility evidence](codex-runtime-compatibility-evidence-2026-07-31.md).
 
 ## `shared`
 
@@ -55,7 +55,7 @@ The canonical mapping is [Native Runtime Capability Contract](native-runtime-cap
 - Goal mode is shared but may be created only when explicitly requested.
 - Bounded subagents are shared; ownership must be disjoint and the main agent
   must verify and integrate their output.
-- CLI session start/resume is owned by the CLI adapter after shared
+- CLI session start/resume and manual interactive fork are owned by the CLI adapter after shared
   orchestration selects the handoff; it requires exact mutation authority and
   parent integration.
 - Custom-agent files are public local runtime configuration. Capability classes
@@ -160,6 +160,39 @@ Creating, forking, messaging, archiving, pinning, or otherwise mutating a
 user-owned Desktop task requires the authority specified by the active runtime
 and repository policy. A CLI fallback may prepare the same prompt or task brief
 but must not claim to control Desktop tasks.
+
+For the same Desktop task moving to a new conversation, a supported
+`fork_thread` same-directory action reuses the source checkout or existing
+worktree, copies completed history, and remains anchored to the source host.
+The fork request has no caller-supplied `hostId`, and its current response does
+not guarantee one. Preserve a known source host, then obtain the child
+`hostId` from supported registry evidence that explicitly exposes it before a
+host-sensitive follow-up; never assume an unresolved remote child is local. A
+fresh same-project task
+uses the exact `projectId` and its runtime-returned host identity with local
+execution; a new isolated Git worktree is a separate choice; `projectless` is
+reserved for intentionally non-project work. Cross-host continuation is a
+separately authorized handoff with `destinationHostId`, not a fork option.
+
+CLI `codex fork <SESSION_ID>` is the analogous CLI-only interactive control
+for a new chat from a saved session. Use an exact UUID and an explicit
+`tui.resume_cwd` current/session choice when directories differ. The
+repo-owned `codex exec` handoff executor remains non-interactive and does not
+automate this command.
+
+After a successful `create_thread`, the Desktop adapter must emit the
+runtime-provided created-task UI directive with the returned `threadId`, or
+with `clientThreadId` while worktree setup is queued. The identifier types are
+not interchangeable. Dispatch, the UI registration directive, exact-ID
+registry observation, navigation, sidebar rendering, and repository completion
+remain separate states.
+
+Use an exposed navigation callable only when the user explicitly asks to open
+or show the task. If it is unavailable or fails, provide the official chat
+search and sidebar filter/archive checks; a `codex://threads/<threadId>` deep
+link is limited to a local chat. Pinning changes sidebar placement rather than
+task registration, and a stale sidebar must never cause duplicate creation or
+private-state refresh attempts.
 
 `list_threads`, `read_thread`, and `wait_threads` are observation and
 coordination operations when the active callable schema classifies them that

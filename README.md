@@ -340,7 +340,8 @@ Use the smallest entry point that matches the request:
 - `project-delivery` when the objective is larger than one task but still bounded.
 - `milestone-continuation` when a bounded milestone should be checked and advanced across repeated invocations until complete or blocked by a human gate.
 - `cli-session-handoff` only after shared orchestration has selected a bounded
-  handoff and the user explicitly authorizes one new or resumed CLI session.
+  handoff and the user explicitly authorizes one new, resumed, or manually
+  forked CLI session.
 
 `loop-engineering` is a thin entrypoint over the existing phase skills. It should classify the current state, route to the smallest suitable workflow, verify evidence, and stop at human gates. It does not replace focused implementation, review primitives, formal gates, milestone continuation, task continuation, shared subagents, or Desktop user-owned task/thread/worktree controls.
 
@@ -368,6 +369,11 @@ bounded patch only after the original clean worktree is rechecked. It captures
 only a bounded receipt and replaces child-summary text with a fixed omission
 marker. It does not use Desktop identifiers, app-server,
 private session files, or child output as repository completion evidence.
+For a long-running interactive task that needs a new chat while preserving
+saved history and an existing checkout/worktree, the adapter may instead
+prepare the public `codex fork <SESSION_ID>` command with an exact UUID and an
+explicit `tui.resume_cwd` current/session choice. That is a manual interactive
+handoff; the private-clone executor does not automate it.
 
 Use `/app` in an interactive CLI session, or `codex app <path>` from the shell,
 when the user intentionally wants to continue in the ChatGPT desktop app. Once
@@ -799,6 +805,11 @@ The adapter uses prompt stdin so task text is not placed in process argv,
 parses bounded public JSONL events, and supports exact-UUID resume. A real
 start or resume is a runtime-state mutation and requires explicit authority;
 offline tests use controlled fake executables and create no Codex session.
+For same-task interactive continuation, it may prepare an exact-UUID
+`codex fork` command that reuses the selected existing directory without
+creating a Git worktree; executing that fork is also a runtime-state mutation,
+while merely preparing the command is not. This manual path is not sent through
+the executor.
 
 ### Merge Readiness
 
@@ -871,12 +882,25 @@ The main thread remains responsible for integrating returned work, checking the 
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-07-24)](docs/codex-runtime-compatibility-evidence-2026-07-24.md).
+[Codex runtime compatibility evidence (2026-07-31)](docs/codex-runtime-compatibility-evidence-2026-07-31.md).
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 `desktop_runtime_*` scripts and [historical V1 plan](docs/desktop-runtime-wrapper-v1-plan.md)
 remain regression and migration evidence only; active Loop Engineering skills
 must not import, execute, or recommend them.
+
+After an authorized Desktop `create_thread`, emit the current runtime's
+created-task UI directive with the returned ready `threadId` or queued
+`clientThreadId`. Keep dispatch, UI registration, exact-ID registry
+observation, explicit navigation, sidebar visibility, and repository completion
+separate. A stale sidebar is not authority to create a duplicate task, and
+pinning changes placement rather than registration.
+
+Choose the Desktop action from the handoff intent: use a same-directory
+`fork_thread` for the same task, completed history, and existing
+checkout/worktree; use `create_thread` with the exact project ID and `local`
+for a fresh task in the same saved checkout; use project `worktree` only for
+intentional isolation; and use `projectless` only for non-project work.
 
 ## Runtime Compatibility
 
@@ -898,7 +922,7 @@ at
 | Skill | Runtime | Purpose |
 | --- | --- | --- |
 | `loop-engineering` | shared | Explicit loop entrypoint for clear bounded objectives; routes through planning, implementation, verification, review, continuation, handoff, and gates until complete or stopped. |
-| `cli-session-handoff` | cli | Start or resume one explicitly authorized bounded CLI session after shared orchestration selects the handoff; returns non-authoritative redacted evidence. |
+| `cli-session-handoff` | cli | Start or resume one authorized bounded non-interactive CLI session, or prepare one exact manual interactive fork, after shared orchestration selects the handoff. |
 | `planning` | shared | Produce scoped implementation plans with assumptions, risks, DoD, and verification. |
 | `milestone-continuation` | shared | Continue a bounded milestone across repeated invocations by checking task completion, choosing the next ready task, and stopping at human gates. |
 | `project-delivery` | shared | Carry a bounded delivery objective through discovery, plan, implementation, review, docs sync, and PR readiness or the next human gate. |

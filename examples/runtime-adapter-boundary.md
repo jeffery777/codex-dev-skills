@@ -31,9 +31,14 @@ Preflight checklist:
 6. Record the minimal request shape and response shape the caller relies on.
 7. Record `last_verified` date and the wrapper version to underlying API or tool contract mapping.
 8. Summarize the prepared prompt, intended thread action, and recipient thread if one exists.
-9. State in-scope and out-of-scope files or categories.
-10. Ask for explicit human authorization for the exact thread action.
-11. Keep commit, push, PR creation, PR comments, review submissions, merge, deploy, destructive actions, and other platform-side mutation behind separate explicit authorization.
+9. Preserve placement intent: use same-directory fork for same-task
+   continuation, exact-project local creation for a fresh task in the existing
+   checkout, project worktree creation only for intentional isolation, and
+   projectless creation only for non-project work. Do not treat a
+   no-new-worktree constraint as projectless intent.
+10. State in-scope and out-of-scope files or categories.
+11. Ask for explicit human authorization for the exact thread action.
+12. Keep commit, push, PR creation, PR comments, review submissions, merge, deploy, destructive actions, and other platform-side mutation behind separate explicit authorization.
 
 Example evidence before calling a supported tool:
 
@@ -48,8 +53,15 @@ Thread action preflight:
 - Underlying contract version: version unavailable.
 - Capability source: active tool list in the current runtime.
 - Wrapper/API mapping: wrapper 0.2.0 -> create_thread version unavailable.
-- Request shape minimum: prompt required; title, repository, and branch used when exposed.
-- Response shape minimum: created thread identifier or pending worktree identifier, action status, and error message shape.
+- Request shape minimum: prompt and target required; project targets use
+  projectId plus local/worktree environment; title, model, thinking, and an
+  explicitly requested worktree startingState are optional.
+- Placement intent: fresh task in the exact saved project checkout, so use
+  project local rather than projectless or a new worktree. For same-task
+  continuation, use fork_thread same-directory instead.
+- Response shape minimum: threadId plus hostId for ready creation, or
+  clientThreadId for queued worktree setup. Preserve runtime-provided errors
+  because the callable does not expose a stable structured error union.
 - Last verified: YYYY-MM-DD.
 - Human authorization: maintainer explicitly authorized creating this thread only.
 - External writes still blocked: commit, push, PR creation, platform comments, review submissions, merge, deploy, destructive actions.
@@ -142,12 +154,18 @@ A non-state-changing helper may normalize metadata the caller already supplied, 
       "tool_or_api": "read_thread",
       "classification": "read-only",
       "request": {
-        "required": ["thread_id"],
-        "optional": ["include_metadata"]
+        "required": ["threadId"],
+        "optional": [
+          "hostId",
+          "turnLimit",
+          "cursor",
+          "includeOutputs",
+          "maxOutputCharsPerItem"
+        ]
       },
       "response": {
-        "required": ["status", "thread_id"],
-        "errors": ["message"]
+        "required": ["status", "threadId"],
+        "errors": ["runtime-provided error"]
       },
       "source": "runtime-reported schema",
       "contract_version": "version unavailable",
@@ -172,10 +190,16 @@ The planner may consume that normalized discovery output as caller-supplied `cap
         "action": "read-thread",
         "tool_or_api": "read_thread",
         "classification": "read-only",
-        "required_request_fields": ["thread_id"],
-        "optional_request_fields": ["include_metadata"],
-        "minimum_response_fields": ["status", "thread_id"],
-        "error_response_fields": ["message"],
+        "required_request_fields": ["threadId"],
+        "optional_request_fields": [
+          "hostId",
+          "turnLimit",
+          "cursor",
+          "includeOutputs",
+          "maxOutputCharsPerItem"
+        ],
+        "minimum_response_fields": ["status", "threadId"],
+        "error_response_fields": ["runtime-provided error"],
         "capability_source": "runtime-reported schema",
         "contract_version": "version unavailable",
         "last_verified": "YYYY-MM-DD",
@@ -219,8 +243,8 @@ Before relying on a runtime, connector, schema, or documentation change, compare
     "action": "read-thread",
     "tool_or_api": "read_thread",
     "classification": "read-only",
-    "required_request_fields": ["thread_id"],
-    "minimum_response_fields": ["status", "thread_id"],
+    "required_request_fields": ["threadId"],
+    "minimum_response_fields": ["status", "threadId"],
     "capability_source": "active tool list",
     "contract_version": "version unavailable",
     "last_verified": "YYYY-MM-DD"
@@ -232,10 +256,16 @@ Before relying on a runtime, connector, schema, or documentation change, compare
         "action": "read-thread",
         "tool_or_api": "read_thread",
         "classification": "read-only",
-        "required_request_fields": ["thread_id"],
-        "optional_request_fields": ["include_metadata"],
-        "minimum_response_fields": ["status", "thread_id"],
-        "error_response_fields": ["message"],
+        "required_request_fields": ["threadId"],
+        "optional_request_fields": [
+          "hostId",
+          "turnLimit",
+          "cursor",
+          "includeOutputs",
+          "maxOutputCharsPerItem"
+        ],
+        "minimum_response_fields": ["status", "threadId"],
+        "error_response_fields": ["runtime-provided error"],
         "capability_source": "runtime-reported schema",
         "contract_version": "version unavailable",
         "last_verified": "YYYY-MM-DD",
@@ -273,10 +303,17 @@ Before a future `create_thread` runtime call, a non-state-changing preflight hel
         "action": "create-thread",
         "tool_or_api": "create_thread",
         "classification": "state-changing",
-        "required_request_fields": ["prompt"],
-        "optional_request_fields": ["title", "repository", "branch"],
-        "minimum_response_fields": ["status", "thread_id"],
-        "error_response_fields": ["message"],
+        "required_request_fields": ["prompt", "target"],
+        "optional_request_fields": [
+          "title",
+          "model",
+          "thinking",
+          "target.environment.startingState"
+        ],
+        "minimum_response_fields": [
+          "threadId plus hostId, or clientThreadId"
+        ],
+        "error_response_fields": ["runtime-provided error"],
         "capability_source": "active tool list",
         "contract_version": "version unavailable",
         "last_verified": "YYYY-MM-DD",
@@ -330,7 +367,7 @@ Before a future read-only `read_thread` runtime call, a non-state-changing prefl
   },
   "read_request": {
     "summary": "Check read-only thread evidence readiness.",
-    "expected_fields": ["status", "thread_id"]
+    "expected_fields": ["status", "threadId"]
   },
   "capability_evidence": {
     "status": "available",
@@ -339,10 +376,16 @@ Before a future read-only `read_thread` runtime call, a non-state-changing prefl
         "action": "read-thread",
         "tool_or_api": "read_thread",
         "classification": "read-only",
-        "required_request_fields": ["thread_id"],
-        "optional_request_fields": ["include_metadata"],
-        "minimum_response_fields": ["status", "thread_id"],
-        "error_response_fields": ["message"],
+        "required_request_fields": ["threadId"],
+        "optional_request_fields": [
+          "hostId",
+          "turnLimit",
+          "cursor",
+          "includeOutputs",
+          "maxOutputCharsPerItem"
+        ],
+        "minimum_response_fields": ["status", "threadId"],
+        "error_response_fields": ["runtime-provided error"],
         "capability_source": "active tool list",
         "contract_version": "version unavailable",
         "last_verified": "YYYY-MM-DD",
@@ -432,7 +475,7 @@ The pipeline input keeps the same boundaries as the individual helpers:
   },
   "read_request": {
     "summary": "Read only documented thread result fields after separate approval.",
-    "expected_fields": ["status", "thread_id"]
+    "expected_fields": ["status", "threadId"]
   },
   "boundaries": {
     "in_scope": ["durable repo files or task scope"],
