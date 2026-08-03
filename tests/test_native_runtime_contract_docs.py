@@ -62,11 +62,16 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         readme = read("README.md")
         guide = read("docs/skill-selection-guide.md")
         thread_skill = read("skills/desktop-thread-delegation/SKILL.md")
-        combined = "\n".join((readme, guide, thread_skill))
+        example = read("examples/desktop-thread-delegation.md")
+        combined = "\n".join((readme, guide, thread_skill, example))
 
         self.assertIn("already selected by shared orchestration", combined)
         self.assertNotIn(
             "desktop-thread-delegation to choose the next safe task",
+            combined,
+        )
+        self.assertNotIn(
+            "Desktop should choose the next safe task",
             combined,
         )
         self.assertNotIn("- Candidate tasks and statuses", thread_skill)
@@ -85,10 +90,40 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("compact progress snapshots", combined)
         self.assertRegex(combined, re.compile(r"snapshot never proves\s+completion"))
 
+    def test_desktop_fork_preserves_remote_host_identity(self) -> None:
+        contract = read("docs/native-runtime-capabilities.md")
+        adapter = read("docs/runtime-adapter-v2.md")
+        thread_skill = read("skills/desktop-thread-delegation/SKILL.md")
+        example = read("examples/desktop-thread-delegation.md")
+        evidence = read(
+            "docs/codex-runtime-compatibility-evidence-2026-07-31.md"
+        )
+        combined = "\n".join(
+            (contract, adapter, thread_skill, example, evidence)
+        )
+
+        for expected in (
+            "source task anchors the host",
+            "no caller-supplied `hostId`",
+            "supported registry",
+            "destinationHostId",
+            "unresolved remote child",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, combined)
+
+        self.assertRegex(
+            combined,
+            re.compile(
+                r"(?:does not|doesn't)\s+guarantee\s+`hostId`",
+                re.IGNORECASE,
+            ),
+        )
+
     def test_chatgpt_desktop_name_preserves_runtime_layers(self) -> None:
         readme = read("README.md")
         compatibility = read("docs/runtime-compatibility.md")
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-30.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-31.md")
         contract = read("docs/native-runtime-capabilities.md")
         combined = "\n".join((readme, compatibility, evidence, contract))
 
@@ -99,18 +134,89 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
 
     def test_latest_runtime_evidence_records_current_versions_and_counts(self) -> None:
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-30.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-31.md")
 
         for expected in (
             "0.146.0",
-            "26.721.81911",
-            "5973",
+            "26.727.40816",
+            "6067",
             "com.openai.codex",
             "236",
             "90",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, evidence)
+
+        self.assertTrue(
+            (ROOT / "docs/codex-runtime-compatibility-evidence-2026-07-30.md").is_file()
+        )
+
+    def test_desktop_post_create_visibility_contract(self) -> None:
+        contract = read("docs/native-runtime-capabilities.md")
+        adapter = read("docs/runtime-adapter-v2.md")
+        thread_skill = read("skills/desktop-thread-delegation/SKILL.md")
+        example = read("examples/desktop-thread-delegation.md")
+        boundary_example = read("examples/runtime-adapter-boundary.md")
+        combined = "\n".join(
+            (contract, adapter, thread_skill, example, boundary_example)
+        )
+
+        for expected in (
+            '::created-thread{threadId="..."}',
+            '::created-thread{clientThreadId="..."}',
+            "navigate_to_codex_page",
+            "Registry presence does not prove sidebar rendering",
+            "must never trigger duplicate creation",
+            "Pinning changes placement only",
+            "codex://threads/<threadId>",
+            "Chronological",
+            "Archived chats",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, combined)
+
+        self.assertRegex(
+            thread_skill,
+            re.compile(r"Do not navigate automatically after creation"),
+        )
+        self.assertRegex(
+            combined,
+            re.compile(r"local chat", re.IGNORECASE),
+        )
+        self.assertIn(
+            '"required_request_fields": ["prompt", "target"]',
+            boundary_example,
+        )
+        self.assertNotIn(
+            '"required_request_fields": ["thread_id"]',
+            boundary_example,
+        )
+
+    def test_desktop_target_selection_preserves_project_and_worktree_intent(self) -> None:
+        contract = read("docs/native-runtime-capabilities.md")
+        adapter = read("docs/runtime-adapter-v2.md")
+        skill = read("skills/desktop-thread-delegation/SKILL.md")
+        example = read("examples/desktop-thread-delegation.md")
+        combined = "\n".join((contract, adapter, skill, example))
+
+        for expected in (
+            "same-directory",
+            '"type": "local"',
+            "projectless",
+            "existing worktree",
+            "Do not create a new worktree",
+            "source task must stop writing",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, combined)
+
+        self.assertRegex(
+            combined,
+            re.compile(
+                r"(?:does not|doesn't|never)\s+imply\s+`?projectless`?",
+                re.IGNORECASE,
+            ),
+        )
 
     def test_desktop_callable_contract_covers_new_boundaries(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
@@ -196,6 +302,39 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertNotIn("shell=True", implementation)
         self.assertNotIn("desktop_runtime_", implementation)
         self.assertNotIn("create_thread", implementation)
+
+    def test_cli_interactive_fork_is_manual_and_reuses_selected_directory(self) -> None:
+        contract = read("docs/native-runtime-capabilities.md")
+        adapter = read("docs/runtime-adapter-v2.md")
+        skill = read("skills/cli-session-handoff/SKILL.md")
+        example = read("examples/cli-session-handoff.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-31.md")
+        implementation = read(
+            "skills/cli-session-handoff/scripts/cli_session_handoff.py"
+        )
+        combined = "\n".join((contract, adapter, skill, example, evidence))
+
+        for expected in (
+            "codex fork <SESSION_ID>",
+            "tui.resume_cwd",
+            '"current"',
+            '"session"',
+            "exact UUID",
+            "manual interactive",
+            "existing worktree",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, combined)
+
+        self.assertRegex(
+            combined,
+            re.compile(r"does not create (?:a|another) Git worktree", re.IGNORECASE),
+        )
+        self.assertIn(
+            "A prepared interactive-fork command is a handoff artifact",
+            skill,
+        )
+        self.assertNotIn("codex fork", implementation)
 
     def test_cli_session_skill_group_separation(self) -> None:
         catalog = yaml.safe_load(read("catalog.yaml"))

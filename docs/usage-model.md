@@ -79,7 +79,11 @@ receipt. The child runs in a disposable private clone; authorized writes are
 transferred as a bounded patch after the original worktree is rechecked, and
 the untrusted child summary is replaced by a fixed omission marker. The receipt
 remains coordination evidence; the parent must inspect and verify repository
-state.
+state. For same-task interactive continuation in a new chat, the same CLI-only
+adapter may instead prepare a manual exact-UUID `codex fork` command and an
+explicit `tui.resume_cwd` current/session choice. That path can intentionally
+reuse an existing checkout/worktree but is not automated by the private-clone
+executor.
 
 `loop-engineering` is a shared entrypoint for repeated decision-making, routing,
 verification, review, and stopping behavior. It can prepare Desktop handoff

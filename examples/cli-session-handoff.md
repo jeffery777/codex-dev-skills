@@ -2,7 +2,7 @@
 
 Use `cli-session-handoff` only after shared orchestration has selected a
 bounded task and the user has explicitly authorized one CLI session start or
-resume. The CLI session control plane is independent from Desktop
+resume, or one manual interactive fork. The CLI session control plane is independent from Desktop
 `create_thread` and from shared subagent delegation.
 
 ## Prepared Handoff
@@ -51,3 +51,31 @@ The parent must still:
 
 If capability or authorization is unavailable, keep the prepared prompt as a
 manual continuation artifact or continue sequentially in the current session.
+
+## Interactive Same-Task Fork
+
+When the same interactive CLI task needs a new chat because the conversation
+is long, use the public interactive fork path rather than the non-interactive
+private-clone executor:
+
+```text
+Operation: interactive-fork
+Session: exact UUID from public CLI output
+Directory choice: session
+Command: codex fork <SESSION_ID>
+```
+
+`tui.resume_cwd = "session"` reuses the saved session directory;
+`tui.resume_cwd = "current"` uses the invocation directory; when unset and the
+two differ, Codex prompts. A public `-C <DIR>` may select the exact invocation
+directory. Do not use `--last`, a display name, or private session files.
+
+A dirty existing checkout/worktree may be reused only for exclusive
+continuation of the same task after the source session stops writing. This
+does not create a Git worktree. It is also not supported by the repo-owned
+non-interactive executor, whose clean-worktree and private-clone rules remain
+unchanged.
+
+Preparing the command does not prove that a fork occurred. After the user runs
+it, the public CLI result is session-dispatch evidence only; the parent still
+owns repository inspection, verification, review, and completion.

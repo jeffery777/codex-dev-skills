@@ -1,14 +1,18 @@
 # Desktop Thread Delegation Example
 
-Use `desktop-thread-delegation` when Codex Desktop should choose the next safe task, decide whether it belongs in the current thread or a new thread, and preserve main-thread review responsibility.
+Use `desktop-thread-delegation` after shared orchestration selects a bounded
+task and Codex Desktop only needs to decide whether it stays in the current
+thread or moves to a user-owned task, thread, or worktree.
 
 This is Desktop-only behavior. Desktop thread actions are runtime actions, not CLI guarantees. Shared workflows such as `task-continuation` can prepare a prompt, task brief, or continuation prompt, but they do not guarantee that a new Codex Desktop thread can be opened. If the runtime does not expose a documented thread creation capability, use the CLI-compatible prompt, task brief, continuation prompt, or sequential execution path instead.
 
 ## Maintainer Request
 
 ```text
-Use desktop-thread-delegation to choose the next safe roadmap task.
-Decide whether the task should continue in this thread or move to a separate Codex Desktop thread.
+Use project-orchestrator to choose the next safe roadmap task.
+After it selects the bounded task, use desktop-thread-delegation only to decide
+whether the selected task should continue here or move to a separate Codex
+Desktop task, thread, or worktree.
 If the current thread is suitable and repo policy or my authorization allows it, continue here.
 If a separate thread is better, prepare the prompt and ask before opening the new thread.
 Before any Desktop thread tool call, record the runtime tool/API contract name, exposed version or `version unavailable` plus capability source, minimal request/response compatibility summary, `last_verified`, and workflow, wrapper, or adapter mapping to the underlying contract.
@@ -19,14 +23,36 @@ Do not commit, push, create PRs, merge, deploy, post platform comments, submit r
 
 1. Read repo policy, roadmap or plan docs, relevant templates, review evidence, and current git state.
 2. Treat chat summaries as context only; verify them against repository files.
-3. Select the smallest safe task that does not cross a human gate.
-4. Decide whether the task should run in the current thread, move to a new thread, or stop for a human gate.
+3. Use shared orchestration to select the smallest safe task that does not
+   cross a human gate.
+4. Give the already selected task to the Desktop adapter to decide whether it
+   should run in the current thread, move to a new user-owned task or worktree,
+   or stop for a human gate.
 5. If the current thread is suitable, continue only when workflow rules allow it or the maintainer has authorized it.
 6. If a new thread is suitable, prepare a prompt, task brief, or continuation prompt from durable source-of-truth files.
 7. Stop before creating a new thread unless the maintainer explicitly authorizes that runtime action.
 8. Before any supported Desktop thread tool call, record the contract/version tracking fields from [docs/runtime-adapter-v2.md](../docs/runtime-adapter-v2.md).
-9. When authorized and supported by the runtime, create the new thread with the prepared prompt.
-10. Keep the main thread responsible for integrating the result, reviewing the diff, and enforcing human gates before any external write.
+9. Select the runtime action without conflating project placement and Git
+   worktree creation:
+   - same task, new conversation, same directory and completed history:
+     `fork_thread` with `same-directory`;
+   - fresh task, same saved project checkout: `create_thread` with the exact
+     project ID and `local`;
+   - fresh isolated parallel task: project `worktree`, only when a new Git
+     worktree is intended;
+   - intentionally non-project work: `projectless`.
+   “Do not create a new worktree” never implies `projectless`.
+10. When authorized and supported by the runtime, fork or create the new thread
+    with the prepared prompt.
+11. After `create_thread`, emit `::created-thread{threadId="..."}` for a ready task or
+    `::created-thread{clientThreadId="..."}` for queued worktree setup.
+12. If a ready `threadId` is available, verify the exact identifier through a
+    supported list, read, or bounded wait operation without treating registry
+    presence as sidebar rendering.
+13. If the maintainer explicitly asks to open or show the task, use the exposed
+    navigation capability. Do not navigate automatically after creation.
+14. Keep the main thread responsible for integrating the result, reviewing the
+    diff, and enforcing human gates before any external write.
 
 ## Prepared Prompt Shape
 
@@ -93,10 +119,33 @@ Desktop evidence:
 - Runtime contract: create_thread.
 - Underlying contract version: version unavailable.
 - Capability source: active tool list in the current runtime.
-- Request/response compatibility: prompt is required; title, repository, and branch are used when exposed; response must expose a created thread identifier or pending worktree identifier, action status, and error message shape.
+- Request/response compatibility: prompt and target are required; project
+  targets use projectId plus local/worktree environment, while title, model,
+  thinking, and an explicitly requested worktree startingState are optional.
+  Ready creation returns threadId plus hostId; queued worktree setup returns
+  clientThreadId, which is not a usable threadId. Preserve the runtime-provided
+  success or error result because no stable structured envelope is exposed here.
 - Wrapper/API mapping: no wrapper or adapter implementation; desktop-thread-delegation workflow at current repo revision -> create_thread version unavailable.
 - Last verified: YYYY-MM-DD.
 - Main thread retained responsibility for review, integration, and human gates.
+```
+
+For same-task continuation after a long conversation, prefer a same-directory
+fork instead of a fresh project or projectless creation:
+
+```text
+Desktop continuation evidence:
+- Intent: same task, new conversation, completed history, same existing directory.
+- Runtime contract: fork_thread.
+- Request: omit threadId to fork the calling task; environment is same-directory.
+- Expected result: child threadId, not clientThreadId.
+- Host routing: the source task anchors the host; fork_thread has no hostId
+  request field and does not guarantee hostId in its response. Retain a known
+  source host and resolve the child hostId from a supported registry result
+  that explicitly exposes it before a host-sensitive follow-up. Never assume
+  an unresolved remote child is local.
+- Git behavior: reuse the existing checkout/worktree; do not create another worktree.
+- Main thread stops writing before the child continues.
 ```
 
 If Desktop thread creation is unavailable, do not improvise with private Desktop runtime state, local runtime files, unpublished endpoints, UI scraping, daemons, background services, or unpublished Desktop internals. Return the prompt to the maintainer:
@@ -104,6 +153,44 @@ If Desktop thread creation is unavailable, do not improvise with private Desktop
 ```text
 Desktop thread creation is not available in this runtime.
 Use the prepared prompt above in a separate Codex session or in a Codex Desktop thread when Desktop is intentionally selected, then return the diff and verification notes here for integration review.
+```
+
+## Post-Create Visibility
+
+Report these states separately:
+
+```text
+Dispatch:
+- Ready: threadId plus hostId.
+- Queued worktree: clientThreadId only; do not use it as threadId.
+
+UI registration:
+- Ready: ::created-thread{threadId="..."}
+- Queued: ::created-thread{clientThreadId="..."}
+
+Registry observation:
+- Verify the exact ready threadId with list_threads, read_thread, or a bounded
+  wait_threads snapshot when supported.
+- Preserve and pass the runtime-returned hostId when known, especially for a
+  remote task. Cross-host movement uses a separately authorized
+  handoff_thread destinationHostId; it is not a fork option.
+- Registry presence does not prove sidebar rendering.
+
+Navigation:
+- Only when the user explicitly asks to open or show the task, call
+  navigate_to_codex_page with a ready threadId when exposed.
+- Do not navigate with clientThreadId and do not navigate automatically.
+
+Sidebar visibility:
+- Pinning changes placement only; it does not register a task.
+- A stale or unverified sidebar must not trigger duplicate creation.
+- Use chat search, the Chronological filter, and Archived chats as public
+  troubleshooting.
+- For a local chat only, provide codex://threads/<threadId> as a paste-ready
+  deep-link fallback. Do not claim it covers remote or ChatGPT-backed tasks.
+
+Completion:
+- None of the states above proves the repository task complete.
 ```
 
 ## Handoff Rules

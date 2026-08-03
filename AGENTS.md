@@ -19,6 +19,18 @@ This public repository contains Codex CLI and Codex Desktop software development
 
 When the user asks for review, stay read-only unless they explicitly ask for fixes. Findings should lead with risks, bugs, regressions, missing tests, or policy violations.
 
+## Python Verification Environment
+
+- Activate the repository's existing virtual environment, or otherwise ensure
+  the tracked `.python-version` is honored, before running Python verification.
+- Before installing a missing module, print the selected interpreter and verify
+  PyYAML with `python3 -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'`.
+- If bare `python3` cannot import `yaml`, inspect interpreter resolution before
+  treating PyYAML as absent. Do not install into a different Python environment
+  from the one used to run tests and repository scripts.
+- Use the same resolved Python interpreter for dependency checks, scripts,
+  evals, and unit tests throughout a verification run.
+
 ## Destructive Actions
 
 Destructive actions require explicit confirmation. This includes deletion, force updates, history rewrites, broad external mutation, direct trunk updates, and cleanup actions that cannot be previewed.

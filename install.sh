@@ -257,7 +257,7 @@ group_description() {
     shared-review-gates) echo "Shared review gates, closure triage, safety policies, and orchestration templates." ;;
     codex-review-workflow) echo "Routine and deep code, docs, and merge review workflows." ;;
     codex-delivery-workflow) echo "Shared loop engineering, planning, bounded implementation, docs update, and delegated delivery workflows." ;;
-    codex-cli-session-handoff) echo "CLI-only live session handoff adapter over the shared delivery workflow." ;;
+    codex-cli-session-handoff) echo "CLI-only non-interactive start/resume and manual interactive-fork handoff adapter over the shared delivery workflow." ;;
     desktop-delivery-workflow) echo "Two active Codex Desktop entry/control-plane adapters plus deprecated shared-gate compatibility aliases." ;;
     codex-agent-profiles) echo "Opt-in Loop Engineering V2a custom-agent runtime profiles." ;;
     codex-dev-skills) echo "Alias for all groups." ;;
