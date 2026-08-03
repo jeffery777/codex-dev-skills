@@ -51,16 +51,16 @@ class ImprovementLineageContractDocsTests(unittest.TestCase):
             all(value is False for value in profile["authority_invariants"].values())
         )
 
-    def test_v011_release_metadata_is_aligned(self):
-        self.assertIn('VERSION="0.11.0"', read("install.sh"))
-        self.assertIn('version: "0.11.0"', read("catalog.yaml"))
+    def test_v0111_release_metadata_is_aligned(self):
+        self.assertIn('VERSION="0.11.1"', read("install.sh"))
+        self.assertIn('version: "0.11.1"', read("catalog.yaml"))
         self.assertIn(
-            "docs/release-notes-v0.11.0.md",
+            "docs/release-notes-v0.11.1.md",
             read("README.md"),
         )
         self.assertIn(
-            "# Release Notes: v0.11.0",
-            read("docs/release-notes-v0.11.0.md"),
+            "# Release Notes: v0.11.1",
+            read("docs/release-notes-v0.11.1.md"),
         )
 
 

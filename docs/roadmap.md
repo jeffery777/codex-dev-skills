@@ -105,6 +105,12 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   tool-neutral Markdown and typed graph manifests, and an optional declarative
   Obsidian profile while preserving V2d-A. See
   [the Operational Evidence program](programs/operational-evidence/README.md).
+- The v0.11.1 compatibility patch release is tracked in issue #131. It
+  publishes the Issue #129 / PR #130 Codex Desktop task-registration,
+  project-placement, same-directory continuation, host-routing, and sidebar
+  compatibility refresh; adds the bounded CLI manual interactive-fork
+  guidance; and makes Python/PyYAML verification environment-aware without
+  changing the V2d-B feature baseline or shared workflow semantics.
 - A private manual/CI proof of concept must validate the completed V2d
   contracts before
   Loop Engineering V3-A begins. V3-A remains the reserved
