@@ -1088,8 +1088,10 @@ Plugin packaging is intentionally not added by the local installer. If this pack
 Run the repository hygiene check before proposing a release or PR:
 
 ```bash
+# Activate the repository's existing virtual environment first, or otherwise
+# ensure the tracked .python-version is honored.
 python3 --version
-python3 -m pip install -r requirements.txt
+python3 -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'
 ./scripts/validate-repo.sh
 python3 scripts/eval-loop-engineering.py
 python3 scripts/eval-agent-routing.py
@@ -1102,8 +1104,13 @@ This validates catalog/release consistency, required skill metadata, runtime
 labels, symlink safety, structured loop YAML, event/transition behavior,
 workflow eval thresholds, and public hygiene checks. PyYAML is the only Python
 runtime dependency and is required by the structured ledger commands.
-The repository pins Python 3.12.9 with `.python-version`; confirm the active
-runtime before installing dependencies.
+The repository pins Python 3.12.9 with `.python-version`. Use the same resolved
+interpreter for dependency checks, scripts, evals, and tests. If the PyYAML
+preflight fails, inspect `command -v python3` and `python3 -m pip --version`
+before installing anything: a bare `python3` may resolve outside the existing
+project environment even when that environment already contains PyYAML. Only
+after confirming that the selected project environment genuinely lacks the
+dependency, install it with `python3 -m pip install -r requirements.txt`.
 
 For tag, release notes, and PR readiness checks, see [docs/release-readiness.md](docs/release-readiness.md).
 
