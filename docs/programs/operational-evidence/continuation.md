@@ -12,6 +12,11 @@
 - V2d-A evidence and V2d-B records/projections remain advisory. Issue #124
   completion and release publication depend on accepted repository/platform
   state, not on those records or projections.
+- The private manual/CI qualification satisfied the ten V3-A re-entry
+  conditions without placing private identities or records in public Git.
+- Issue #133 prepares V3-A for v0.12.0 as proposal-only output. Draft-PR, eval,
+  CI, score, and validation results remain non-authoritative; merge, tag,
+  Release, activation, and promotion are separate human gates.
 
 ## Delivered V2d-A Boundary
 
@@ -50,12 +55,22 @@ Issue #124 adds:
 It excludes production Obsidian synchronization, private evidence stores,
 graph databases/execution, schedulers, controllers, and promotion.
 
+## Delivered V3-A Boundary
+
+Issue #133 adds strict deterministic evidence-to-proposal generation and
+validation, fixed scores, stable ties/deduplication, complete V2d-A/B source
+lineage, bounded hypothesis/output enums, proposal-only invariants, a pending
+independent promotion gate, synthetic adversarial evals, and a stdout-only CLI.
+It excludes external memory, candidate execution, runtime automation, and
+promotion.
+
 ## Next Bounded Stage
 
-After v0.11.0 is reviewed and released, run the private manual/CI proof of
-concept outside this public repository. Public follow-up is limited to generic
-contract fixes discovered by that PoC. V3-A must not begin until the program
-re-entry gate passes.
+After v0.12.0 is separately merged and released, reassess V3-B isolated
+baseline/candidate execution as a new Issue/spec. Do not infer V3-B authority
+from V3-A output. Require same-policy comparison, independent execution
+verification, privacy/security review, and a promotion packet that still
+cannot promote itself.
 
 ## New Task Bootstrap Checklist
 
@@ -63,15 +78,15 @@ A future Codex task should:
 
 1. Read `AGENTS.md`, `README.md`, `docs/roadmap.md`, this program directory,
    and `docs/operational-evidence-contract.md`.
-2. Confirm Issue #124, its PR, tag `v0.11.0`, and the GitHub Release are in the
-   expected accepted state.
+2. Confirm Issue #133, its draft PR, exact-head CI/reviews, and any later
+   v0.12.0 merge/tag/Release state from current platform evidence.
 3. Inspect current branch/status/upstream/diff, tags/releases, open issues, and
    the installed GitNexus index freshness.
-4. Search GitHub for an existing private-PoC/public-fix issue. If none exists,
+4. Search GitHub for an existing V3-B issue or collision. If none exists,
    stop and obtain exact external-write authorization before creating one.
-5. Reassess private PoC sequencing and V2d-B contract lessons instead of
-   trusting a chat summary.
-6. Keep V2d-B separate from V3 self-improvement execution and runtime services.
+5. Reassess V3-A evidence and V3-B authority/privacy boundaries instead of
+   trusting a chat summary or proposal score.
+6. Keep V3-A proposal output separate from V3-B execution and V3-C services.
 7. Run GitNexus impact analysis before implementation and `detect_changes`
    before commit.
 8. Stop at public-contract, privacy, authority, external-write, merge, tag, and
@@ -80,11 +95,12 @@ A future Codex task should:
 ## Handoff Summary
 
 - Prerequisite slice: V2d-A Operational Evidence V0 core in v0.10.0.
-- Delivered public slice: V2d-B improvement lineage and projection contracts.
-- Next stage: private manual/CI proof of concept.
+- Delivered public slice: V3-A manual/CI evidence-to-proposal contract.
+- Next stage: separately gated V3-B isolated candidate evaluation.
 - Public role: contracts, validators, synthetic fixtures, tests, and docs.
 - Private role: real operational records and the later manual/CI PoC.
 - Projection role: tool-neutral first; Obsidian remains an optional reference.
 - Graph role: typed projection only; no graph runtime or database.
 - Automation role: manual/CI first; controller deferred.
-- Candidate role: proposal-only until independent verification and promotion.
+- Candidate role: V3-A remains proposal-only; V3-B must independently execute
+  and verify before a separate human/platform promotion decision.

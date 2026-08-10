@@ -134,6 +134,21 @@ require evidence that:
 - no real records/projections, private store, vault sync, graph runtime,
   controller, or automatic promotion was added.
 
+When a change includes V3-A evidence-to-proposal, also require evidence that:
+
+- every proposal regenerates from complete validated V2d-A/B lineage;
+- score components, ties, ranks, and duplicate suppression are deterministic;
+- hypotheses and patch/branch/artifact/draft-PR intents are bounded
+  description-only enums;
+- proposal-only and false-authority/action fields remain exact;
+- the independent human/platform promotion gate remains required and pending;
+- the CLI performs no apply, Git, network, platform, artifact dereference, or
+  external write;
+- private evidence, host/user identity, credentials, PII, paths/config, and raw
+  logs remain outside public Git;
+- PlugMem, Mem0, external-memory adapters, V3-B execution, and V3-C automation
+  are absent.
+
 ## Suggested Verification
 
 Run the repository hygiene check:
@@ -164,6 +179,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
   tests.test_memory_contract tests.test_memoryctl tests.test_eval_memory_contract
 python3 scripts/eval-memory-contract.py
 python3 scripts/eval-operational-evidence.py
+python3 scripts/eval-improvement-lineage.py
+python3 scripts/eval-improvement-proposal.py
 ./scripts/validate-repo.sh
 git diff --check
 ```

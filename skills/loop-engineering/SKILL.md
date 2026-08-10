@@ -102,6 +102,19 @@ invocation or compare its UTF-8 bytes with `rendered_content_sha256`. Keep real
 improvement records and projections outside this public repository. See
 `references/improvement-lineage-v0.md`.
 
+When a loop uses V3-A `loop-improvement-proposal/v0`, rerun validation over
+the complete V2d-B records and V2d-A evidence through
+`scripts/proposalctl.py`. Accept only deterministic proposal-set output with
+fixed integer scoring, stable tie-breaking, duplicate suppression, complete
+source lineage, exact false-authority/action fields, and a required pending
+independent human/platform promotion gate. Treat hypotheses and patch, branch,
+artifact, or draft-PR intents as proposal-only descriptions. Never apply,
+approve, activate, promote, commit, push, create a PR, merge, release, or
+deploy from proposal output. Keep real/private evidence and proposals outside
+public Git. PlugMem, Mem0, and all external-memory backends remain excluded
+and disabled for V3-A. See
+`references/improvement-proposal-v0.md`.
+
 ### Protected Event Authorization
 
 Treat `task_acceptance`, `claim_revocation`, `gate_satisfaction`, and

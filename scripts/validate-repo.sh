@@ -286,6 +286,16 @@ check_improvement_lineage_contract() {
   ok "improvement lineage and deterministic projection contracts pass"
 }
 
+check_improvement_proposal_contract() {
+  python3 scripts/eval-improvement-proposal.py >"$TMP_DIR/improvement-proposal-eval.json"
+  python3 -m unittest \
+    tests.test_improvement_proposal \
+    tests.test_proposalctl \
+    tests.test_eval_improvement_proposal \
+    tests.test_improvement_proposal_contract_docs >/dev/null
+  ok "proposal-only evidence-to-proposal contracts pass"
+}
+
 check_loop_contract() {
   python3 -m unittest tests.test_loop_engineering_core tests.test_loopctl >/dev/null
   ok "loop engineering event, transition, migration, and CLI contracts pass"
@@ -328,6 +338,7 @@ main() {
   check_memory_contract
   check_operational_evidence_contract
   check_improvement_lineage_contract
+  check_improvement_proposal_contract
 }
 
 main "$@"

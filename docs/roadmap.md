@@ -111,13 +111,21 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   compatibility refresh; adds the bounded CLI manual interactive-fork
   guidance; and makes Python/PyYAML verification environment-aware without
   changing the V2d-B feature baseline or shared workflow semantics.
-- A private manual/CI proof of concept must validate the completed V2d
-  contracts before
-  Loop Engineering V3-A begins. V3-A remains the reserved
-  Evidence-Driven Self-Improvement milestone and starts with evidence-to-proposal
-  workflow only. Candidate output cannot self-approve, activate, merge, release,
-  or deploy. Resident hooks, schedulers, controllers, database services, and
-  graph execution remain deferred beyond that gate.
+- Loop Engineering V3-A evidence-to-proposal is tracked in issue #133 for
+  v0.12.0 preparation. It adds a separate strict proposal-set family,
+  complete V2d-A/B lineage, deterministic integer scoring, stable ties and
+  duplicate suppression, bounded hypotheses/output intents, synthetic
+  adversarial evals, and a stdout-only manual/CI CLI. All outputs remain
+  proposal-only behind a pending independent human/platform promotion gate.
+  PlugMem, Mem0, external-memory integration, V3-B candidate execution, V3-C
+  automation, approval, activation, merge, release, and deployment are not
+  included.
+- The private manual/CI proof of concept satisfied the durable V3-A re-entry
+  gate without placing private records or platform identity in this public
+  repository. Issue #133 now implements the evidence-to-proposal slice only.
+  Candidate output cannot self-approve, activate, merge, release, or deploy.
+  V3-B execution and V3-C hooks, schedulers, controllers, database services,
+  and graph execution remain deferred behind new gates.
 
 ## Non-Goals
 

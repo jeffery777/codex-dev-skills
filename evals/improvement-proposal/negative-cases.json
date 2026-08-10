@@ -1,0 +1,21 @@
+{
+  "cases": [
+    {"id": "duplicate-key", "expected_code": "duplicate-key"},
+    {"id": "tampered-record-digest", "expected_code": "digest-mismatch"},
+    {"id": "missing-evidence", "expected_code": "relationship-mismatch"},
+    {"id": "resealed-proposal-lineage-mismatch", "expected_code": "proposal-mismatch"},
+    {"id": "authority-escalation", "expected_code": "authority-violation"},
+    {"id": "false-complete", "expected_code": "proposal-mismatch"},
+    {"id": "unauthorized-action", "expected_code": "proposal-mismatch"},
+    {"id": "wrong-route", "expected_code": "proposal-mismatch"},
+    {"id": "source-revision-mismatch", "expected_code": "relationship-mismatch"},
+    {"id": "artifact-mismatch", "expected_code": "relationship-mismatch"},
+    {"id": "private-path", "expected_code": "privacy-violation"},
+    {"id": "hostname-field", "expected_code": "invalid-structure"},
+    {"id": "username-field", "expected_code": "invalid-structure"},
+    {"id": "synthetic-token", "expected_code": "privacy-violation"},
+    {"id": "pii-email", "expected_code": "privacy-violation"},
+    {"id": "raw-log", "expected_code": "privacy-violation"},
+    {"id": "unknown-proposal-field", "expected_code": "invalid-structure"}
+  ]
+}

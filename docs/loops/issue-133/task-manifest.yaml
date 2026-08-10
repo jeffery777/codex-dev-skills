@@ -1,0 +1,174 @@
+project:
+  schema_version: 2
+  name: "Loop Engineering V3-A Evidence-To-Proposal"
+  objective_id: "issue-133"
+  source_of_truth:
+    - "AGENTS.md"
+    - "https://github.com/jeffery777/codex-dev-skills/issues/133"
+    - "docs/loops/issue-133/loop-spec.md"
+    - "docs/loops/issue-133/implementation-plan.md"
+  contract_revision:
+    previous_manifest_sha256: ""
+    updated_at: "2026-08-10T01:00:00Z"
+
+tasks:
+  - id: "P0-contract"
+    title: "Freeze V3-A proposal-only contract and implementation plan"
+    initial_status: "ready"
+    priority: "high"
+    dependencies: []
+    risk: "high"
+    kind: "docs"
+    objective: "Resolve family, eligibility, lineage, scoring, duplicate, hypothesis, role, privacy, CLI, migration, packaging, release, and verification semantics."
+    scope:
+      in: ["Issue #133 spec", "implementation plan", "task manifest", "initial ledger"]
+      out: ["production code", "candidate execution", "external write"]
+    ownership:
+      expected_paths: ["docs/loops/issue-133"]
+      parallel_write_safe: false
+    dod:
+      - "Every public-contract, authority, privacy, score, duplicate, lineage, role, CLI, migration, and release semantic is exact."
+      - "Docs review and formal docs gate have no unresolved MUST-FIX findings."
+    verification:
+      - "python3 scripts/validate-loop-ledger.py"
+      - "git diff --check"
+    review: {required: true, mode: "docs-review"}
+    stop_conditions:
+      - "Any contract, authority, privacy, score, duplicate, lineage, role, or output-intent semantic remains ambiguous."
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P1-proposal-core"
+    title: "Implement strict proposal generation and validation"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P0-contract"]
+    risk: "high"
+    kind: "implementation"
+    objective: "Compose validated V2d-A/B sources into deterministic, traceable, proposal-only outputs."
+    scope:
+      in: ["improvement_proposal.py", "focused core tests"]
+      out: ["V2d-A/B semantic changes", "candidate execution", "promotion"]
+    ownership:
+      expected_paths: ["skills/loop-engineering/scripts", "tests"]
+      parallel_write_safe: false
+    dod:
+      - "Incomplete/tampered source lineage and true authority/action fields fail closed."
+      - "Score, duplicate winner, ties, rank, canonical output, and proposal digest are deterministic."
+      - "Every proposal regenerates exact V2d-A/B lineage and retains independent pending promotion gate."
+    verification:
+      - "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_improvement_proposal tests.test_operational_evidence tests.test_improvement_lineage"
+    review: {required: true, mode: "code-review-deep"}
+    stop_conditions:
+      - "Implementation requires changing or weakening V2d-A/B."
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P2-cli"
+    title: "Implement bounded manual/CI proposal CLI"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P1-proposal-core"]
+    risk: "high"
+    kind: "implementation"
+    objective: "Expose explicit-file generation/validation with stdout-only bounded behavior and no mutation."
+    scope:
+      in: ["proposalctl.py", "CLI tests"]
+      out: ["apply", "Git/platform/network operations", "hooks", "services"]
+    ownership:
+      expected_paths: ["skills/loop-engineering/scripts", "tests"]
+      parallel_write_safe: false
+    dod:
+      - "Manual and CI surfaces produce byte-identical canonical output."
+      - "Symlinks, unsafe files, path/count/size boundaries, wrong routes, and non-proposal operations fail closed."
+      - "Generation performs zero filesystem, Git, network, or platform mutation."
+    verification:
+      - "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_proposalctl"
+    review: {required: true, mode: "code-review-deep"}
+    stop_conditions:
+      - "A required CLI behavior needs an external write or runtime service."
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P3-fixtures-eval"
+    title: "Add adversarial fixtures, evals, and regression validation"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P2-cli"]
+    risk: "high"
+    kind: "implementation"
+    objective: "Prove all required decisions, completeness, recovery, equivalence, score, duplicate, lineage, privacy, and false-authority thresholds."
+    scope:
+      in: ["synthetic fixtures", "unit/CLI/docs tests", "eval suite", "repository validation"]
+      out: ["real/private evidence", "external-memory fixtures"]
+    ownership:
+      expected_paths: ["evals/improvement-proposal", "tests", "scripts"]
+      parallel_write_safe: false
+    dod:
+      - "The required adversarial inventory and exact 100%/zero-false thresholds pass."
+      - "V1 through V2d-B regressions remain green."
+    verification:
+      - "python3 scripts/eval-improvement-proposal.py"
+      - "python3 scripts/eval-operational-evidence.py"
+      - "python3 scripts/eval-improvement-lineage.py"
+      - "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'"
+    review: {required: true, mode: "code-review-deep"}
+    stop_conditions:
+      - "A required case cannot be represented with public synthetic data."
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P4-docs-release"
+    title: "Align public docs, packaging, and v0.12.0 preparation"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P3-fixtures-eval"]
+    risk: "medium"
+    kind: "docs"
+    objective: "Document and package V3-A consistently without publishing or activating it."
+    scope:
+      in: ["contract/reference docs", "README/roadmap/program", "installer/catalog", "release readiness/notes"]
+      out: ["tag", "GitHub Release", "deployment", "activation"]
+    ownership:
+      expected_paths: ["README.md", "docs", "skills/loop-engineering", "install.sh", "catalog.yaml"]
+      parallel_write_safe: false
+    dod:
+      - "Public usage, proposal-only boundaries, packaging, and v0.12.0 metadata agree."
+      - "PlugMem and all external-memory integration remain explicitly excluded and disabled."
+    verification:
+      - "./scripts/validate-repo.sh"
+      - "git diff --check"
+    review: {required: true, mode: "docs-review"}
+    stop_conditions:
+      - "Release preparation requires unrelated work or an external-memory integration."
+    human_gate: {required: false, gate: "", reason: ""}
+
+  - id: "P5-readiness"
+    title: "Close reviews and reach exact-head draft-PR readiness"
+    initial_status: "planned"
+    priority: "high"
+    dependencies: ["P4-docs-release"]
+    risk: "high"
+    kind: "review"
+    objective: "Close verification and deep/formal reviews, commit/push the exact scope, open a draft PR, and prove hosted CI on the exact head."
+    scope:
+      in: ["verification", "review receipts", "authorized commit/push", "draft PR", "hosted CI"]
+      out: ["ready-for-review", "merge", "tag", "Release", "deploy", "activation", "promotion"]
+    ownership:
+      expected_paths: ["docs/loops/issue-133"]
+      parallel_write_safe: false
+    dod:
+      - "No unresolved MUST-FIX finding remains."
+      - "Complete tracked/untracked content and exact committed head have verification/review evidence."
+      - "Hosted CI passes on the exact draft-PR head and the PR remains draft."
+    verification:
+      - "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'"
+      - "./scripts/validate-repo.sh"
+      - "gitnexus detect-changes"
+      - "git diff --check"
+      - "git status --short --branch"
+      - "git ls-files --others --exclude-standard"
+    review: {required: true, mode: "formal-gate"}
+    stop_conditions:
+      - "Any exact-head verification, hosted CI, review, or source binding is incomplete."
+      - "Any next action would publish, activate, or promote."
+    human_gate:
+      required: true
+      gate: "post-draft-publication"
+      reason: "Ready-for-review, merge, tag, GitHub Release, deployment, activation, and promotion require a new human decision."

@@ -1,7 +1,8 @@
 # Operational Evidence And Self-Improvement Program
 
-Status: V2d-A is released in v0.10.0; V2d-B improvement lineage and projection
-contracts are released in v0.11.0 through Issue #124.
+Status: V2d-A is released in v0.10.0; V2d-B is released in v0.11.0; V3-A
+proposal-only evidence-to-proposal is in v0.12.0 preparation through Issue
+#133.
 
 ## Purpose
 
@@ -10,13 +11,12 @@ maintenance releases. It records why Operational Evidence V0 must precede
 Evidence-Driven Self-Improvement, which public/private boundaries must remain
 intact, and how the work is divided into independently reviewable stages.
 
-The current feature milestone is:
+The current development feature milestone is:
 
-> **Loop Engineering V2d: Operational Evidence Contract V0**
+> **Loop Engineering V3-A: Manual/CI Evidence-To-Proposal**
 
-The repository release for V2d-A is v0.10.0. The later
-milestone name **Loop Engineering V3-A: Evidence-Driven Self-Improvement**
-remains reserved.
+V3-A is limited to deterministic proposal generation. V3-B candidate execution
+and V3-C automation remain deferred.
 
 ## Current Baseline
 
@@ -34,12 +34,16 @@ remains reserved.
   `loop-evidence-projection/v0` families, declared role separation,
   baseline/candidate lineage, deterministic Markdown/typed-graph projection,
   and an optional declarative Obsidian reference profile.
+- V3-A provides strict `loop-improvement-proposal/v0` proposal sets,
+  deterministic integer scoring, stable ties and duplicate suppression,
+  complete validated lineage, bounded hypothesis/output enums, and a
+  stdout-only manual/CI CLI. It cannot execute or promote a candidate.
 - Issue #109 adds an exact index-only GitNexus repository default and
   trusted-base, read-only ready-PR Issue-linkage guardrail. These controls are
   repository hygiene and traceability evidence, not completion or merge
   authority.
-- The repository does not store real operational/improvement records or run
-  the private proof of concept.
+- The repository does not store real operational/improvement/proposal records
+  or the private proof-of-concept evidence.
 
 Existing ledgers, route receipts, worker receipts, memory receipts, GitNexus
 qualification fingerprints, and iteration reports are useful inputs, but none
@@ -91,6 +95,9 @@ entry/exit criteria.
 - [../../improvement-lineage-contract.md](../../improvement-lineage-contract.md)
   — implemented V2d-B lineage, role, human projection, graph projection,
   optional Obsidian profile, CLI, and verification.
+- [../../improvement-proposal-contract.md](../../improvement-proposal-contract.md)
+  — implemented V3-A scoring, dedupe, lineage, proposal-only, CLI, privacy,
+  and verification contract.
 
 ## Research Input Disposition
 

@@ -1,0 +1,82 @@
+from __future__ import annotations
+
+import pathlib
+import unittest
+
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+
+
+def read(relative: str) -> str:
+    return (ROOT / relative).read_text(encoding="utf-8")
+
+
+class ImprovementProposalContractDocsTests(unittest.TestCase):
+    def test_public_and_portable_contracts_preserve_downstream_boundary(self):
+        public = read("docs/improvement-proposal-contract.md")
+        portable = read(
+            "skills/loop-engineering/references/improvement-proposal-v0.md"
+        )
+        for text in (public, portable):
+            self.assertIn("loop-improvement-proposal/v0", text)
+            self.assertIn("loop-improvement-lineage/v0", text)
+            self.assertIn("loop-operational-evidence/v0", text)
+            self.assertIn("proposal", text.lower())
+            self.assertIn("pending", text)
+            self.assertIn("external-memory", text)
+        self.assertIn("proposalctl.py", public)
+        self.assertIn("proposalctl.py", portable)
+
+    def test_skill_program_and_readme_expose_proposal_only_no_action_boundary(self):
+        required_boundaries = {
+            "skills/loop-engineering/SKILL.md": (
+                "proposal-only descriptions",
+                "Never apply,",
+                "independent human/platform promotion gate",
+            ),
+            "README.md": (
+                "proposal-only evidence-to-proposal",
+                "The CLI cannot apply, commit, push, create a PR, approve, activate,",
+                "human/platform promotion gate",
+            ),
+            "docs/programs/operational-evidence/README.md": (
+                "V3-A is limited to deterministic proposal generation.",
+                "It cannot execute or promote a candidate.",
+                "human/platform promotion",
+            ),
+            "docs/programs/operational-evidence/continuation.md": (
+                "proposal-only invariants",
+                "It excludes external memory, candidate execution, runtime automation, and",
+                "independent promotion gate",
+            ),
+            "docs/programs/operational-evidence/implementation-phases.md": (
+                "proposal-only fields",
+                "candidate execution, apply/commit/push/PR-create operations",
+                "promotion gate is always",
+            ),
+            "docs/programs/operational-evidence/architecture-decisions.md": (
+                "Downstream Proposal-Only Family",
+                "but cannot apply, commit, push, create a PR, approve, activate, promote, merge,",
+                "independent human/platform promotion gate",
+            ),
+        }
+        for relative, boundaries in required_boundaries.items():
+            text = read(relative)
+            self.assertIn("V3-A", text, relative)
+            for boundary in boundaries:
+                self.assertIn(boundary, text, relative)
+        skill = read("skills/loop-engineering/SKILL.md")
+        self.assertIn("scripts/proposalctl.py", skill)
+
+    def test_v0120_packaging_and_release_preparation_agree(self):
+        self.assertIn('VERSION="0.12.0"', read("install.sh"))
+        self.assertIn('version: "0.12.0"', read("catalog.yaml"))
+        self.assertIn("docs/release-notes-v0.12.0.md", read("README.md"))
+        notes = read("docs/release-notes-v0.12.0.md")
+        self.assertIn("# Release Notes: v0.12.0", notes)
+        self.assertIn("not released", notes)
+        self.assertIn("PlugMem", notes)
+
+
+if __name__ == "__main__":
+    unittest.main()
