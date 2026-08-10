@@ -1732,14 +1732,8 @@ class RefreshControllerTests(unittest.TestCase):
         legacy = index / "meta.json"
         primary.write_text("tracked primary\n", encoding="utf-8")
         legacy.write_text("tracked legacy\n", encoding="utf-8")
-        subprocess.run(
-            ["git", "-C", str(self.root), "add", "-f", ".gitnexus"],
-            check=True,
-        )
-        subprocess.run(
-            ["git", "-C", str(self.root), "commit", "-q", "-m", "track collision"],
-            check=True,
-        )
+        run_git(self.root, "add", "-f", ".gitnexus")
+        run_git(self.root, "commit", "-q", "-m", "track collision")
         self.repository = repository_state(self.root)
 
         with self.assertRaisesRegex(
