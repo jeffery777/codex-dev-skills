@@ -212,6 +212,7 @@ class PullRequestIssueLinkTests(unittest.TestCase):
         self.assertNotIn("contents: write", workflow)
         self.assertNotIn("if: ${{ github.event.pull_request.draft == false }}", workflow)
         self.assertIn("github.event.pull_request.head.sha", workflow)
+        self.assertIn("fetch-depth: 0", workflow)
         self.assertIn("persist-credentials: false", workflow)
         self.assertIn("python-version-file: .python-version", workflow)
         self.assertIn(
@@ -220,6 +221,10 @@ class PullRequestIssueLinkTests(unittest.TestCase):
         )
         self.assertIn("PYTHONDONTWRITEBYTECODE: \"1\"", workflow)
         self.assertIn("python -m unittest discover", workflow)
+        self.assertIn(
+            'git switch --create ci-validation "$EXPECTED_HEAD_SHA"',
+            workflow,
+        )
         self.assertIn("./scripts/validate-repo.sh", workflow)
 
         action_lines = [
