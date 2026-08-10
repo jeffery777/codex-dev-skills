@@ -201,6 +201,33 @@ class PullRequestIssueLinkTests(unittest.TestCase):
         self.assertNotIn("github.event.pull_request.head.sha", workflow)
         self.assertNotIn("write", "\n".join(line for line in workflow.splitlines() if ": " in line))
 
+    def test_draft_repository_validation_workflow_is_read_only(self) -> None:
+        workflow = (
+            ROOT / ".github" / "workflows" / "repository-validation.yml"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("pull_request:", workflow)
+        self.assertNotIn("pull_request_target:", workflow)
+        self.assertIn("contents: read", workflow)
+        self.assertNotIn("contents: write", workflow)
+        self.assertNotIn("if: ${{ github.event.pull_request.draft == false }}", workflow)
+        self.assertIn("github.event.pull_request.head.sha", workflow)
+        self.assertIn("persist-credentials: false", workflow)
+        self.assertIn("python-version-file: .python-version", workflow)
+        self.assertIn("PYTHONDONTWRITEBYTECODE: \"1\"", workflow)
+        self.assertIn("python -m unittest discover", workflow)
+        self.assertIn("./scripts/validate-repo.sh", workflow)
+
+        action_lines = [
+            line.strip()
+            for line in workflow.splitlines()
+            if line.strip().startswith("uses:")
+        ]
+        self.assertTrue(action_lines)
+        for line in action_lines:
+            with self.subTest(line=line):
+                self.assertRegex(line, r"^uses: [^@]+@[0-9a-f]{40}$")
+
 
 if __name__ == "__main__":
     unittest.main()
