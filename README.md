@@ -16,8 +16,9 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current Loop Engineering feature baseline is V2d-B, introduced in v0.11.0;
-the current maintenance release is v0.11.1.
+The current development feature baseline is V3-A, prepared for v0.12.0 through
+Issue #133; the latest published maintenance release remains v0.11.1 until a
+separately authorized merge, tag, and GitHub Release.
 V1 remains
 the production workflow/authority core, V2a adds heterogeneous subagent
 routing, V2b adds a backend-neutral external-memory safety contract, V2c-A
@@ -29,7 +30,12 @@ typed relationships, synthetic fixtures, and deterministic evals. V2d-B adds
 the separate `loop-improvement-lineage/v0` and
 `loop-evidence-projection/v0` families, deterministic Markdown/typed-graph
 views, and an optional non-mutating Obsidian reference profile without
-changing V2d-A. v0.9.1 aligned the
+changing V2d-A. V3-A adds the downstream
+`loop-improvement-proposal/v0` family, deterministic integer scoring, stable
+ties and duplicate suppression, complete evidence lineage, bounded structured
+hypotheses/intents, and a stdout-only manual/CI CLI. All output remains
+proposal-only behind an independent pending human/platform promotion gate.
+v0.9.1 aligned the
 public handoff, recorded one bounded notify-only adoption, and added repository
 guardrails for index-only GitNexus analysis and ready-PR Issue linkage.
 v0.9.2 refreshes the independent Codex CLI and Desktop runtime interfaces,
@@ -46,10 +52,10 @@ protected authorization, accepted platform state, or completion truth. No
 production memory backend, scheduler, daemon, or automatic hook activation is
 included.
 
-V2d-A and V2d-B remain public, non-sensitive contract prerequisites. The next
-stage is a private manual/CI proof of concept outside this repository before
-the later Evidence-Driven Self-Improvement milestone. No slice moves private
-runtime state into public Git. See the
+V2d-A and V2d-B remain public, non-sensitive contract prerequisites. The
+private manual/CI qualification and V3-A re-entry evidence remain outside this
+repository; Issue #133 implements only the public evidence-to-proposal slice.
+No slice moves private runtime state into public Git. See the
 [Operational Evidence program](docs/programs/operational-evidence/README.md).
 
 This is not a general prompt collection. It is a curated set of public, reusable workflow contracts for open source and team repositories.
@@ -520,6 +526,26 @@ non-authoritative. The optional Obsidian profile is declarative only; no vault
 or graph runtime is installed or mutated. See the
 [improvement lineage contract](docs/improvement-lineage-contract.md).
 
+V3-A adds a proposal-only evidence-to-proposal layer downstream of unchanged
+V2d-A/B:
+
+```bash
+python3 skills/loop-engineering/scripts/proposalctl.py --help
+python3 skills/loop-engineering/scripts/proposalctl.py generate \
+  --record <record.json> --evidence <v2d-a-document.json>
+python3 skills/loop-engineering/scripts/proposalctl.py validate \
+  <proposal-set.json> \
+  --record <record.json> --evidence <v2d-a-document.json>
+python3 scripts/eval-improvement-proposal.py
+```
+
+Generation reruns strict V2d validation, derives fixed integer scores,
+suppresses exact structured duplicates, and preserves full lineage and role
+separation. Output intents describe only patch, branch, artifact, or draft-PR
+suggestions. The CLI cannot apply, commit, push, create a PR, approve, activate,
+promote, merge, release, deploy, or write an external system. See the
+[improvement proposal contract](docs/improvement-proposal-contract.md).
+
 V2c-A adds a default-disabled, version-gated GitNexus driver boundary. The live
 macOS qualification covers GitNexus `1.6.9`, a runtime-produced qualification
 fingerprint, and metadata schema `5`. Human-oriented `status` and `list` output is never parsed.
@@ -975,7 +1001,10 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Merge review and readiness](examples/merge-review.md)
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
-See `docs/roadmap.md` for the near-term public roadmap, `docs/release-notes-v0.11.1.md` for the current v0.11.1 release notes, and `docs/release-notes-v0.1.0.md` for the historical v0.1.0 release notes.
+See `docs/roadmap.md` for the near-term public roadmap.
+`docs/release-notes-v0.12.0.md` contains the current v0.12.0 release notes
+draft; `docs/release-notes-v0.11.1.md` remains the latest published release
+notes, and `docs/release-notes-v0.1.0.md` is historical.
 
 ## Installation
 

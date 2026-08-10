@@ -111,6 +111,11 @@ and synthetic examples. Do not commit the private records produced by the PoC.
 
 ## Phase 4 — V3-A Manual/CI Evidence-To-Proposal
 
+**Target release:** v0.12.0
+
+**Status:** Implemented by Issue #133 through draft-PR readiness; merge, tag,
+GitHub Release, activation, and promotion remain separately authorized.
+
 **Retained work from the original V3-A direction:**
 
 - deterministic candidate scoring and duplicate suppression;
@@ -124,6 +129,22 @@ and synthetic examples. Do not commit the private records produced by the PoC.
 **New prerequisite:** Every proposal must link validated source run/failure
 records, environment fingerprint, artifact references, baseline evidence, and
 an improvement record.
+
+**Delivered boundary:** `loop-improvement-proposal/v0` reruns V2d-B/V2d-A
+validation, emits only deterministic proposal sets, uses fixed integer scoring,
+stable ties and duplicate suppression, and preserves exact false-authority and
+proposal-only fields. `proposalctl.py` reads explicit bounded files and writes
+only stdout/stderr. The independent human/platform promotion gate is always
+required and pending.
+
+**Explicit exclusions:** PlugMem, Mem0, external-memory adapters, private PoC
+records, candidate execution, apply/commit/push/PR-create operations, automatic
+approval/promotion, and all V3-B/V3-C runtime services.
+
+**Exit criteria:** focused/adversarial thresholds and V1-through-V2d
+regressions pass; packaging/docs agree; deep code/docs/security and formal
+exact-head gates have no unresolved MUST-FIX; hosted CI passes on the exact
+draft-PR head; the PR remains draft.
 
 ## Phase 5 — V3-B Isolated Candidate Evaluation
 

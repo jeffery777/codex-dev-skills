@@ -121,3 +121,20 @@ cross-run lineage, and regenerable views have different lifecycles.
 **Consequence:** V2d-B resolves V2d-A inputs by exact contract, kind, id, and
 digest. Existing V2d-A documents require no migration, and no projection
 dependency enters the operational-evidence validator.
+
+## OE-012 — Add V3-A As A Downstream Proposal-Only Family
+
+**Decision:** Keep V2d-A/B unchanged. Add
+`loop-improvement-proposal/v0` downstream of V2d-B, with exact regeneration
+validation, fixed integer scoring, stable ties, structured duplicate
+suppression, bounded hypothesis/output enums, and a permanently pending
+independent human/platform promotion gate.
+
+**Rationale:** Proposal selection has a different lifecycle and authority risk
+from evidence capture or lineage. Embedding it into V2d-A/B would create
+contract drift and could make derived scores appear authoritative.
+
+**Consequence:** V3-A may describe patch, branch, artifact, or draft-PR intent
+but cannot apply, commit, push, create a PR, approve, activate, promote, merge,
+release, or deploy. V3-B execution and V3-C automation require separate future
+decisions. PlugMem, Mem0, and all external-memory backends remain excluded.
