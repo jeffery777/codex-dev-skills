@@ -87,18 +87,35 @@ class ProposalCtlTests(unittest.TestCase):
             self.assertEqual("valid", receipt["status"])
             self.assertEqual(fixtures.AUTHORITY, receipt["authority_invariants"])
 
-    def test_wrong_route_is_generic_structured_rejection(self):
-        result = subprocess.run(
-            [sys.executable, str(CLI), "apply"],
-            cwd=ROOT,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        self.assertEqual(2, result.returncode)
-        self.assertEqual("", result.stdout)
-        self.assertEqual("wrong-route", json.loads(result.stderr)["code"])
-        self.assertNotIn("usage:", result.stderr)
+    def test_action_and_promotion_routes_are_generic_structured_rejections(self):
+        for route in (
+            "apply",
+            "artifact",
+            "branch",
+            "commit",
+            "push",
+            "draft-pr",
+            "approve",
+            "activate",
+            "promote",
+            "merge",
+            "release",
+            "deploy",
+        ):
+            with self.subTest(route=route):
+                result = subprocess.run(
+                    [sys.executable, str(CLI), route],
+                    cwd=ROOT,
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+                self.assertEqual(2, result.returncode)
+                self.assertEqual("", result.stdout)
+                rejection = json.loads(result.stderr)
+                self.assertEqual("rejected", rejection["status"])
+                self.assertEqual("wrong-route", rejection["code"])
+                self.assertNotIn("usage:", result.stderr)
 
     def test_symlink_and_count_bounds_fail_before_unsafe_reads(self):
         with tempfile.TemporaryDirectory() as temporary:
