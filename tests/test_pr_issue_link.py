@@ -214,6 +214,10 @@ class PullRequestIssueLinkTests(unittest.TestCase):
         self.assertIn("github.event.pull_request.head.sha", workflow)
         self.assertIn("persist-credentials: false", workflow)
         self.assertIn("python-version-file: .python-version", workflow)
+        self.assertIn(
+            "sudo apt-get install --no-install-recommends --yes ripgrep",
+            workflow,
+        )
         self.assertIn("PYTHONDONTWRITEBYTECODE: \"1\"", workflow)
         self.assertIn("python -m unittest discover", workflow)
         self.assertIn("./scripts/validate-repo.sh", workflow)
