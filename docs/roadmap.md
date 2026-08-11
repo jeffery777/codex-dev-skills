@@ -126,6 +126,19 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   Candidate output cannot self-approve, activate, merge, release, or deploy.
   V3-B execution and V3-C hooks, schedulers, controllers, database services,
   and graph execution remain deferred behind new gates.
+- Issue #135 owns a separate docs-only V3-B re-entry and Agent Memory roadmap.
+  It does not perform release closure, V3-B implementation, M0 qualification,
+  backend implementation, or automation. The accepted dependency order is:
+  separately close and publish v0.12.0; implement and qualify V3-B isolated
+  candidate evaluation; only then qualify a thin default-disabled
+  local/manual/CI SQLite/FTS5 Memory M1 reference adapter through a separate
+  Issue/spec/ADR/security review; and consider V3-C optional resident
+  automation only after another human decision. M0 defines the
+  contract-to-runtime, provider-neutral protocol, operation-authority,
+  execution-receipt, lifecycle, concurrency, security/privacy, and
+  memory-off/on qualification requirements without adding a backend. M2 may
+  consider a second provider or MCP adapter only after M1 passes. V3-B, M1,
+  M2, and V3-C release targets are TBD; PlugMem and Mem0 remain excluded.
 
 ## Non-Goals
 

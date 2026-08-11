@@ -58,6 +58,16 @@ repository; Issue #133 implements only the public evidence-to-proposal slice.
 No slice moves private runtime state into public Git. See the
 [Operational Evidence program](docs/programs/operational-evidence/README.md).
 
+Issue #135 defines the next docs-only re-entry roadmap without implementing
+it: separately close and publish v0.12.0, then qualify V3-B isolated candidate
+evaluation, then consider a default-disabled local Memory M1 reference
+backend, and only later consider V3-C resident automation. M0 records the
+backend-readiness questions and qualification plan; this documentation is not
+M0 qualification evidence. V3-B may expose a provider-neutral optional context
+seam for a future memory-off/on comparison, but neither V3-B nor the current
+roadmap embeds SQLite, enables a backend, or changes V2b authority. See the
+[V3-B and Agent Memory roadmap spec](docs/loops/issue-135/roadmap-spec.md).
+
 This is not a general prompt collection. It is a curated set of public, reusable workflow contracts for open source and team repositories.
 
 ## Who It Is For
@@ -489,6 +499,14 @@ control-plane evidence and must not be copied from the adapter transcript.
 With no adapter, or with an unavailable, partial, unsupported, incompatible, or
 untrusted adapter, the loop safely continues with V1/V2a and no memory. See the
 [external memory contract](docs/external-memory-contract.md).
+
+The future Agent Memory track is planning-only. M0 must close the
+contract-to-runtime, operation-authority, execution-receipt, data-placement,
+lifecycle, concurrency, security, privacy, and V3-B evaluation gaps. Only after
+V3-B evidence passes may a separate Issue/spec/ADR/security review qualify a
+thin, default-disabled, local/manual/CI-only SQLite/FTS5 M1 reference adapter.
+Missing or drifted FTS5 support fails closed to no memory. M2 and V3-C remain
+behind later evidence and human decisions; PlugMem and Mem0 remain excluded.
 
 V2d-A adds independently usable operational evidence without a backend:
 
