@@ -14,11 +14,11 @@
   state, not on those records or projections.
 - The private manual/CI qualification satisfied the ten V3-A re-entry
   conditions without placing private identities or records in public Git.
-- Issue #133 and PR #134 delivered and merged V3-A proposal-only output.
-  Draft-PR, eval, CI, score, validation, and merge state remain
-  non-authoritative for later actions; v0.12.0 tag, GitHub Release, activation,
-  and promotion are separate human gates. The latest published release remains
-  v0.11.1 until current platform evidence proves otherwise.
+- Issue #133 and PR #134 delivered and merged V3-A proposal-only output. Issue
+  #137 publishes that baseline as v0.12.0 through a separately reviewed release
+  merge, annotated tag, and GitHub Release. Draft-PR, eval, CI, score,
+  validation, merge, tag, and Release state remain non-authoritative for later
+  activation or promotion actions.
 - Issue #135 owns a docs-only V3-B re-entry and Agent Memory roadmap. It does
   not perform release closure, implement V3-B, complete M0 qualification, or
   implement/enable M1, M2, or V3-C.
@@ -71,8 +71,9 @@ promotion.
 
 ## Next Bounded Stage
 
-After v0.12.0 is separately tagged and released, reassess V3-B isolated
-baseline/candidate execution as a new Issue/spec using the Issue #135 brief.
+With v0.12.0 separately tagged and released through Issue #137, reassess V3-B
+isolated baseline/candidate execution as a new Issue/spec using the Issue #135
+brief.
 Do not infer V3-B authority from V3-A output. Require same-policy comparison,
 independent execution verification, privacy/security review, and a promotion
 packet that still cannot promote itself. V3-B may add only a provider-neutral,
@@ -94,8 +95,8 @@ A future Codex task should:
 
 1. Read `AGENTS.md`, `README.md`, `docs/roadmap.md`, this program directory,
    and `docs/operational-evidence-contract.md`.
-2. Confirm Issue #133, merged PR #134, exact-head CI/reviews, and any later
-   v0.12.0 tag/Release state from current platform evidence.
+2. Confirm Issue #133, merged PR #134, Issue #137, and the current v0.12.0
+   tag/Release state from current platform evidence.
 3. Inspect current branch/status/upstream/diff, tags/releases, open issues, and
    the installed GitNexus index freshness.
 4. Search GitHub for an existing V3-B issue or collision. If none exists,
@@ -115,8 +116,8 @@ A future Codex task should:
 - Prerequisite slice: V2d-A Operational Evidence V0 core in v0.10.0.
 - Delivered public slice: V3-A manual/CI evidence-to-proposal contract.
 - Next stage: separately gated V3-B isolated candidate evaluation.
-- Release interlock: v0.12.0 tag and GitHub Release must be separately closed
-  before V3-B implementation.
+- Release interlock: Issue #137 separately closes the v0.12.0 annotated-tag and
+  GitHub Release gate; future work must still verify current platform evidence.
 - Memory role: M0 readiness design first; M1 only after V3-B evidence; M2 only
   after M1 qualification. External memory remains optional context/cache.
 - Public role: contracts, validators, synthetic fixtures, tests, and docs.

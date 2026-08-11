@@ -111,8 +111,8 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   compatibility refresh; adds the bounded CLI manual interactive-fork
   guidance; and makes Python/PyYAML verification environment-aware without
   changing the V2d-B feature baseline or shared workflow semantics.
-- Loop Engineering V3-A evidence-to-proposal is tracked in issue #133 for
-  v0.12.0 preparation. It adds a separate strict proposal-set family,
+- Loop Engineering V3-A evidence-to-proposal is delivered by issue #133 and
+  PR #134 in v0.12.0. It adds a separate strict proposal-set family,
   complete V2d-A/B lineage, deterministic integer scoring, stable ties and
   duplicate suppression, bounded hypotheses/output intents, synthetic
   adversarial evals, and a stdout-only manual/CI CLI. All outputs remain
@@ -120,6 +120,10 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   PlugMem, Mem0, external-memory integration, V3-B candidate execution, V3-C
   automation, approval, activation, merge, release, and deployment are not
   included.
+- The v0.12.0 release closure is tracked in issue #137. It finalizes the V3-A
+  release record, preserves Issue #135 / PR #136 as planning-only
+  documentation, and binds the annotated tag and GitHub Release to the exact
+  reviewed release merge commit without implementing V3-B or Agent Memory.
 - The private manual/CI proof of concept satisfied the durable V3-A re-entry
   gate without placing private records or platform identity in this public
   repository. Issue #133 now implements the evidence-to-proposal slice only.
@@ -129,8 +133,8 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 - Issue #135 owns a separate docs-only V3-B re-entry and Agent Memory roadmap.
   It does not perform release closure, V3-B implementation, M0 qualification,
   backend implementation, or automation. The accepted dependency order is:
-  separately close and publish v0.12.0; implement and qualify V3-B isolated
-  candidate evaluation; only then qualify a thin default-disabled
+  after the separately published v0.12.0 baseline, implement and qualify V3-B
+  isolated candidate evaluation; only then qualify a thin default-disabled
   local/manual/CI SQLite/FTS5 Memory M1 reference adapter through a separate
   Issue/spec/ADR/security review; and consider V3-C optional resident
   automation only after another human decision. M0 defines the

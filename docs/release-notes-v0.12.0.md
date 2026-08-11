@@ -1,10 +1,11 @@
 # Release Notes: v0.12.0
 
-Status: draft release preparation; not released
+Release date: 2026-08-11
 
-v0.12.0 prepares Loop Engineering V3-A manual/CI evidence-to-proposal from
-Issue #133. Publication, tag, GitHub Release, deployment, activation, and
-promotion are not part of the feature branch or draft PR.
+v0.12.0 introduces Loop Engineering V3-A manual/CI evidence-to-proposal from
+Issue #133 / PR #134. It also publishes the Issue #135 / PR #136 planning-only
+roadmap that keeps V3-B isolated candidate evaluation, Agent Memory, and V3-C
+automation behind later evidence and human gates.
 
 ## Evidence-To-Proposal
 
@@ -32,6 +33,17 @@ promotion are not part of the feature branch or draft PR.
 - Real/private evidence and proposals remain outside public Git. PlugMem,
   Mem0, and every external-memory backend remain excluded and disabled.
 
+## Roadmap And Authority Boundary
+
+- V3-B remains unimplemented and must begin through a separate Issue/spec only
+  after current release evidence is independently reverified.
+- Memory M0 remains readiness design/qualification only. No SQLite/FTS5,
+  provider, MCP adapter, database, schema, migration, or runtime was added.
+- M1 remains default-disabled future qualification after V3-B evidence; M2 and
+  V3-C remain behind later decisions.
+- Proposal, evaluation, verification, merge, tag, and Release evidence cannot
+  activate, promote, deploy, or authorize later phases.
+
 ## Verification
 
 ```bash
@@ -44,8 +56,9 @@ python3 scripts/eval-improvement-lineage.py
 git diff --check
 ```
 
-The final release record must replace this draft status only after separately
-authorized merge, exact tag, and GitHub Release evidence.
+The annotated tag and GitHub Release are bound to the exact reviewed Issue
+#137 release-closure merge commit. Release publication does not activate or
+promote V3-A output and does not authorize V3-B or Agent Memory implementation.
 
 ## Rollback
 
@@ -58,5 +71,14 @@ runtime state, or external systems. V2d-A/B remain the functional fallback.
 
 - Feature issue:
   <https://github.com/jeffery777/codex-dev-skills/issues/133>
-- Draft pull request: pending
-- Compare: pending exact draft-PR head
+- Feature pull request:
+  <https://github.com/jeffery777/codex-dev-skills/pull/134>
+- Planning-only roadmap issue and pull request:
+  <https://github.com/jeffery777/codex-dev-skills/issues/135>
+  <https://github.com/jeffery777/codex-dev-skills/pull/136>
+- Release closure issue:
+  <https://github.com/jeffery777/codex-dev-skills/issues/137>
+- Release pull request:
+  <https://github.com/jeffery777/codex-dev-skills/pull/138>
+- Compare:
+  <https://github.com/jeffery777/codex-dev-skills/compare/v0.11.1...v0.12.0>

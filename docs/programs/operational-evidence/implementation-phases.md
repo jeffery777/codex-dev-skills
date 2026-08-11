@@ -113,8 +113,9 @@ and synthetic examples. Do not commit the private records produced by the PoC.
 
 **Target release:** v0.12.0
 
-**Status:** Implemented by Issue #133 and merged through PR #134. Tag, GitHub
-Release, activation, and promotion remain separately authorized.
+**Status:** Implemented by Issue #133 / PR #134 and released in v0.12.0 through
+the separately reviewed Issue #137 release closure. Activation and promotion
+remain separately authorized.
 
 **Retained work from the original V3-A direction:**
 
@@ -147,10 +148,10 @@ exact-head gates have no unresolved MUST-FIX; and hosted CI passes on the exact
 draft-PR head. At delivery readiness the PR remains draft; its later merge is a
 separate accepted platform event and does not authorize release or promotion.
 
-**Release interlock:** V3-A implementation and merge do not publish v0.12.0.
-A separate release-closure Issue, exact tag, and GitHub Release must complete
-before V3-B implementation begins. Issue #135 documents this order but does not
-perform release closure or change release metadata.
+**Release interlock:** V3-A implementation and merge alone did not publish
+v0.12.0. Issue #137 separately closes the exact annotated-tag and GitHub
+Release gate. Issue #135 documents the remaining order but does not implement
+V3-B, Agent Memory, or later automation.
 
 ## Phase 5 — V3-B Isolated Candidate Evaluation
 
