@@ -16,9 +16,8 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current development feature baseline is V3-A, prepared for v0.12.0 through
-Issue #133; the latest published maintenance release remains v0.11.1 until a
-separately authorized merge, tag, and GitHub Release.
+The current development feature baseline is V3-A, published in v0.12.0 through
+Issue #133 / PR #134 and the separately reviewed Issue #137 release closure.
 V1 remains
 the production workflow/authority core, V2a adds heterogeneous subagent
 routing, V2b adds a backend-neutral external-memory safety contract, V2c-A
@@ -59,9 +58,10 @@ No slice moves private runtime state into public Git. See the
 [Operational Evidence program](docs/programs/operational-evidence/README.md).
 
 Issue #135 defines the next docs-only re-entry roadmap without implementing
-it: separately close and publish v0.12.0, then qualify V3-B isolated candidate
-evaluation, then consider a default-disabled local Memory M1 reference
-backend, and only later consider V3-C resident automation. M0 records the
+it. Issue #137 closes the v0.12.0 publication prerequisite; the remaining
+order is V3-B isolated candidate evaluation, a default-disabled local Memory
+M1 reference-backend qualification, and only later V3-C resident automation.
+M0 records the
 backend-readiness questions and qualification plan; this documentation is not
 M0 qualification evidence. V3-B may expose a provider-neutral optional context
 seam for a future memory-off/on comparison, but neither V3-B nor the current
@@ -1020,9 +1020,9 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.12.0.md` contains the current v0.12.0 release notes
-draft; `docs/release-notes-v0.11.1.md` remains the latest published release
-notes, and `docs/release-notes-v0.1.0.md` is historical.
+`docs/release-notes-v0.12.0.md` contains the current v0.12.0 release notes;
+`docs/release-notes-v0.11.1.md` and `docs/release-notes-v0.1.0.md` remain
+historical point-in-time records.
 
 ## Installation
 

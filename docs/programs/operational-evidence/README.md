@@ -1,9 +1,9 @@
 # Operational Evidence And Self-Improvement Program
 
 Status: V2d-A is released in v0.10.0; V2d-B is released in v0.11.0; V3-A
-proposal-only evidence-to-proposal is merged through Issue #133 and PR #134,
-while v0.12.0 publication remains a separate release gate. Issue #135 defines
-the docs-only V3-B and Agent Memory roadmap without implementing it.
+proposal-only evidence-to-proposal is released in v0.12.0 through Issue #133 /
+PR #134 and the Issue #137 release closure. Issue #135 defines the docs-only
+V3-B and Agent Memory roadmap without implementing it.
 
 ## Purpose
 
@@ -12,7 +12,7 @@ maintenance releases. It records why Operational Evidence V0 must precede
 Evidence-Driven Self-Improvement, which public/private boundaries must remain
 intact, and how the work is divided into independently reviewable stages.
 
-The current development feature milestone is:
+The released development feature baseline is:
 
 > **Loop Engineering V3-A: Manual/CI Evidence-To-Proposal**
 
@@ -60,7 +60,7 @@ model.
 3. V2d-B — Projection boundary and improvement lineage (Issue #124, v0.11.0).
 4. Private manual/CI proof of concept against the public contracts.
 5. V3-A — Manual/CI evidence-to-proposal workflow.
-6. v0.12.0 release closure through a separate Issue and human gate.
+6. v0.12.0 release closure through Issue #137 and its separate human gate.
 7. V3-B — Isolated candidate evaluation workflow, with an optional
    provider-neutral advisory-context seam and memory-off as the default.
 8. Memory M1 — Thin default-disabled local/manual/CI reference backend
