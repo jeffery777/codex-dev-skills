@@ -83,7 +83,6 @@ git diff --check
 
 ## Pending Exact-Head Evidence
 
-- assigned release PR URL in the release notes;
 - committed and remote head equality;
 - hosted draft-PR and ready-for-review CI;
 - exact-head deep merge review and formal merge-readiness decision;

@@ -1,6 +1,6 @@
 # Issue #137 Formal Release Readiness Gate
 
-## Gate Result: PASS FOR INITIAL COMMIT AND DRAFT PR
+## Gate Result: PASS FOR FINAL LOCAL COMMIT AND DRAFT PR
 
 The bounded candidate is ready for its initial commit, push, and draft PR.
 This is not final merge or publication readiness.
@@ -22,7 +22,7 @@ This is not final merge or publication readiness.
 | Finding | Severity | Disposition |
 | --- | --- | --- |
 | DOC-137-001 | SHOULD-FIX | Fixed and reverified |
-| DOC-137-002 | NIT | Deferred with complete follow-up fields; blocks final readiness until PR URL is assigned |
+| DOC-137-002 | NIT | Fixed after GitHub assigned PR #138; affected checks rerun |
 | DOC-137-003 | NIT | Rejected with release-record rationale |
 | SEC-137-001 | SHOULD-FIX | Fixed in release-gate design |
 | SEC-137-002 | NIT | Deferred to exact merge/tag/Release gate with complete follow-up fields |
@@ -30,10 +30,8 @@ This is not final merge or publication readiness.
 
 ## Remaining Gates
 
-1. Create the draft PR and replace its traceability placeholder.
-2. Re-run affected verification and final docs review.
-3. Bind local, remote, hosted CI, and deep merge review to the exact final head.
-4. Stop for explicit human authorization before ready transition, merge,
+1. Bind local, remote, hosted CI, and deep merge review to the exact final head.
+2. Stop for explicit human authorization before ready transition, merge,
    annotated tag push, and GitHub Release publication.
 
 An Issue close event, passing CI, or this receipt cannot substitute for any of

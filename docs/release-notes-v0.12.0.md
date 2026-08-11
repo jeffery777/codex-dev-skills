@@ -78,6 +78,7 @@ runtime state, or external systems. V2d-A/B remain the functional fallback.
   <https://github.com/jeffery777/codex-dev-skills/pull/136>
 - Release closure issue:
   <https://github.com/jeffery777/codex-dev-skills/issues/137>
-- Release pull request: pending platform assignment
+- Release pull request:
+  <https://github.com/jeffery777/codex-dev-skills/pull/138>
 - Compare:
   <https://github.com/jeffery777/codex-dev-skills/compare/v0.11.1...v0.12.0>

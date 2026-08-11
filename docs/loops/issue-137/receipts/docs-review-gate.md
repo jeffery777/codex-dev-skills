@@ -7,8 +7,8 @@ state, V3-A proposal-only boundary, and Issue #135 / PR #136 planning-only
 scope. Final-state wording is protected by the release spec: it cannot merge
 unless the approved exact merge/tag/Release sequence can follow.
 
-No unresolved MUST-FIX or SHOULD-FIX finding remains. One NIT is deliberately
-deferred until GitHub assigns the release PR number.
+No unresolved MUST-FIX or SHOULD-FIX finding remains. GitHub assigned release
+PR #138, so the traceability NIT is fixed before final exact-head review.
 
 ## Findings And Dispositions
 
@@ -21,21 +21,14 @@ release metadata check.
 Disposition: **Fixed**. README now retains `current v0.12.0 release notes`;
 the focused release test and independent repository validator pass.
 
-### DOC-137-002 — NIT — Deferred
+### DOC-137-002 — NIT — Fixed
 
-The release notes contain `Release pull request: pending platform assignment`
-because no GitHub PR number exists before the first commit and push.
+The first commit necessarily used a platform-assignment placeholder because no
+GitHub PR number existed. GitHub then assigned PR #138.
 
-- Durable target: `docs/release-notes-v0.12.0.md` on the Issue #137 branch
-  immediately after draft PR creation.
-- Owner: Issue #137 delivery owner.
-- Reason: GitHub assigns the PR number only after the initial branch exists.
-- Remaining risk: merging without replacement would leave incomplete public
-  traceability.
-- Verification plan: replace the placeholder with the exact PR URL, run the
-  focused release test, repository validator, diff check, and final docs review.
-- Promotion trigger: final exact-head PR/merge readiness. The placeholder is a
-  blocker at that later gate.
+Disposition: **Fixed**. The release notes now link the exact PR URL. Focused
+release testing, repository validation, diff hygiene, and final docs review are
+rerun on the updated head.
 
 ### DOC-137-003 — NIT — Rejected
 
@@ -59,6 +52,6 @@ prevents merge unless publication can safely follow the same authorized gate.
 
 ## Required Follow-up
 
-Replace DOC-137-002 after draft PR creation, then rerun docs review over the
-complete final diff and exact PR metadata. This gate does not authorize ready
-transition, merge, tag creation, or Release publication.
+Rebind the final docs and merge review to the exact committed remote head and
+hosted CI result. This gate does not authorize ready transition, merge, tag
+creation, or Release publication.
