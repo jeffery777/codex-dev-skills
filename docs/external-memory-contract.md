@@ -80,6 +80,54 @@ capability requirements, explicit handshake maximum age, future clock skew/TTL,
 and deterministic
 secret/credential/PII indicators are checked before adoption.
 
+## Future Agent Memory Track — Planning Only
+
+Issue #135 defines a future M0/M1/M2 roadmap without changing
+`loop-memory/v1` or adding a backend.
+
+- **M0 Backend Readiness** defines the contract-to-runtime gap matrix,
+  provider-neutral protocol, caller-owned operation authority, adapter
+  execution receipt, data placement, lifecycle, retention, concurrency,
+  recovery, security/privacy threat model, and V3-B memory-off/on evaluation
+  design. This documentation is not M0 qualification evidence.
+- **M1** may begin only after V3-B evidence passes and a separate
+  Issue/spec/ADR/security review is approved. Its planned candidate is a thin,
+  deterministic, default-disabled, local/manual/CI-only SQLite/FTS5 reference
+  adapter. It must behavior-probe FTS5 in an isolated temporary database and
+  fail closed to no memory when the capability, SQLite/tokenizer fingerprint,
+  schema, identity, provenance, transaction, or integrity evidence is missing
+  or drifted. It isolates repository, principal, namespace, revision, and path
+  scope; accepts only bounded structured query fields through parameterized
+  SQL; disables extension loading; binds eligibility by digest; enforces
+  idempotency; atomically commits state and a non-authoritative execution
+  receipt; and implements only explicit lifecycle operations.
+- **M2** may consider a second provider or MCP adapter only after M1
+  qualification passes and a new human decision approves it.
+
+V3-B may expose a provider-neutral optional context/evaluation seam so later
+qualification can compare memory-off and memory-on under the same policy,
+inputs, environment class, authority invariants, and acceptance thresholds.
+Memory-off remains the default, and V3-B itself must not embed SQLite or
+implement M1.
+
+The V2b write-eligibility receipt and mutation candidate remain candidate-only.
+A future executed operation additionally requires caller-owned current
+authority bound to the exact operation, repository/principal/namespace,
+record/target digest, idempotency key, expiry, and accepted adapter capability
+fingerprint. A separate execution receipt binds that authority, the adapter and
+schema fingerprint, and deterministic pre/post state. State and a successful
+receipt must commit atomically; uncertainty or replay never produces a second
+success. Neither artifact satisfies verification, review, completion,
+promotion, merge, release, or deployment authority.
+
+Database files, journals, locks, backups, runtime configuration, credentials,
+and capability fingerprints remain machine-local and outside public Git. M1
+stores no secrets, credentials, PII, private paths, raw chats/sessions/logs, or
+unredacted machine configuration. Automatic recall/write, resident services,
+schedulers/controllers, queues, cross-host coordination, PlugMem, and Mem0
+remain excluded. See
+[`docs/loops/issue-135/roadmap-spec.md`](loops/issue-135/roadmap-spec.md).
+
 ## GitNexus V2c-A Baseline
 
 V2c-A adds a default-disabled local GitNexus driver and derived-index refresh

@@ -138,3 +138,43 @@ contract drift and could make derived scores appear authoritative.
 but cannot apply, commit, push, create a PR, approve, activate, promote, merge,
 release, or deploy. V3-B execution and V3-C automation require separate future
 decisions. PlugMem, Mem0, and all external-memory backends remain excluded.
+
+## OE-013 — Sequence Release Closure, V3-B, Memory M1, And V3-C
+
+**Decision:** Keep four separately owned deliveries in this order: v0.12.0
+release closure; V3-B isolated candidate evaluation; Memory M1 thin reference
+backend qualification; and V3-C optional resident automation.
+
+M0 is the cross-cutting backend-readiness design/qualification track. It may be
+planned alongside V3-B, but it neither implements a backend nor bypasses the
+release or V3-B evidence gates. M2 may consider a second provider or MCP
+adapter only after M1 qualification passes.
+
+**Consequence:** Issue #135 can align documents and define qualification
+requirements but cannot claim release, V3-B, M0, or M1 completion. V3-B, M1,
+M2, and V3-C target releases remain TBD until a human decision. V3-C automatic
+recall/write, scheduler/controller, persistent service, queue, or cross-host
+behavior requires a new architecture and security/privacy gate.
+
+## OE-014 — Separate Memory Eligibility, Operation Authority, And Execution
+
+**Decision:** Preserve `loop-memory/v1` as the backend-neutral advisory
+contract. A future adapter must keep the V2b eligibility receipt, caller-owned
+current operation authority, adapter execution receipt, independent
+acceptance, and promotion decision as distinct artifacts.
+
+V3-B may define a provider-neutral optional context/evaluation seam with
+memory-off as the default. It cannot embed SQLite or make a backend a V3-B
+dependency. A later M1 candidate may use deterministic SQLite/FTS5 only as a
+default-disabled local/manual/CI reference adapter. Missing or drifted FTS5,
+identity, schema, transaction, provenance, or capability evidence fails closed
+to no memory.
+
+**Consequence:** A mutation candidate never self-authorizes. A successful
+execution receipt must bind exact candidate, authority, repository/principal/
+namespace scope, adapter/schema/capability fingerprint, idempotency key, and
+pre/post state, with state and receipt committed atomically. The receipt
+remains context/audit evidence and cannot prove completion, satisfy a gate, or
+authorize promotion. PlugMem, Mem0, automatic recall/write, network service,
+MCP provider, and resident automation remain excluded until separately
+reviewed.

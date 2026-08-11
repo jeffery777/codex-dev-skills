@@ -1,8 +1,9 @@
 # Operational Evidence And Self-Improvement Program
 
 Status: V2d-A is released in v0.10.0; V2d-B is released in v0.11.0; V3-A
-proposal-only evidence-to-proposal is in v0.12.0 preparation through Issue
-#133.
+proposal-only evidence-to-proposal is merged through Issue #133 and PR #134,
+while v0.12.0 publication remains a separate release gate. Issue #135 defines
+the docs-only V3-B and Agent Memory roadmap without implementing it.
 
 ## Purpose
 
@@ -16,7 +17,8 @@ The current development feature milestone is:
 > **Loop Engineering V3-A: Manual/CI Evidence-To-Proposal**
 
 V3-A is limited to deterministic proposal generation. V3-B candidate execution
-and V3-C automation remain deferred.
+and V3-C automation remain deferred. Agent Memory remains disabled and has no
+backend; Issue #135 defines M0 readiness and the later M1/M2 gates only.
 
 ## Current Baseline
 
@@ -58,9 +60,22 @@ model.
 3. V2d-B — Projection boundary and improvement lineage (Issue #124, v0.11.0).
 4. Private manual/CI proof of concept against the public contracts.
 5. V3-A — Manual/CI evidence-to-proposal workflow.
-6. V3-B — Isolated candidate evaluation workflow.
-7. V3-C — Optional resident hooks/controller, only if operational evidence
+6. v0.12.0 release closure through a separate Issue and human gate.
+7. V3-B — Isolated candidate evaluation workflow, with an optional
+   provider-neutral advisory-context seam and memory-off as the default.
+8. Memory M1 — Thin default-disabled local/manual/CI reference backend
+   qualification, only after V3-B evidence and a separate
+   Issue/spec/ADR/security review.
+9. V3-C — Optional resident hooks/controller, only if operational evidence
    proves it is needed and the authority/control prerequisites exist.
+
+Memory M0 is a cross-cutting readiness track that may be planned alongside
+V3-B. It defines the provider-neutral protocol, operation authority, execution
+receipt, data placement, lifecycle, concurrency, security/privacy threat model,
+and memory-off/on evaluation design. This documentation does not complete M0
+qualification and M0 does not implement a backend. M2 may consider a second
+provider or MCP adapter only after M1 qualification passes. All later release
+targets are TBD / human decision.
 
 See [implementation-phases.md](implementation-phases.md) for deliverables and
 entry/exit criteria.
@@ -98,6 +113,9 @@ entry/exit criteria.
 - [../../improvement-proposal-contract.md](../../improvement-proposal-contract.md)
   — implemented V3-A scoring, dedupe, lineage, proposal-only, CLI, privacy,
   and verification contract.
+- [../../loops/issue-135/roadmap-spec.md](../../loops/issue-135/roadmap-spec.md)
+  — docs-only V3-B re-entry and M0/M1/M2 Agent Memory roadmap, gap matrix,
+  threat model, evaluation seam, and next Issue brief.
 
 ## Research Input Disposition
 

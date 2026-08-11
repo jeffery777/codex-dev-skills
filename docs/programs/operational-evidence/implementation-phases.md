@@ -113,8 +113,8 @@ and synthetic examples. Do not commit the private records produced by the PoC.
 
 **Target release:** v0.12.0
 
-**Status:** Implemented by Issue #133 through draft-PR readiness; merge, tag,
-GitHub Release, activation, and promotion remain separately authorized.
+**Status:** Implemented by Issue #133 and merged through PR #134. Tag, GitHub
+Release, activation, and promotion remain separately authorized.
 
 **Retained work from the original V3-A direction:**
 
@@ -143,10 +143,26 @@ approval/promotion, and all V3-B/V3-C runtime services.
 
 **Exit criteria:** focused/adversarial thresholds and V1-through-V2d
 regressions pass; packaging/docs agree; deep code/docs/security and formal
-exact-head gates have no unresolved MUST-FIX; hosted CI passes on the exact
-draft-PR head; the PR remains draft.
+exact-head gates have no unresolved MUST-FIX; and hosted CI passes on the exact
+draft-PR head. At delivery readiness the PR remains draft; its later merge is a
+separate accepted platform event and does not authorize release or promotion.
+
+**Release interlock:** V3-A implementation and merge do not publish v0.12.0.
+A separate release-closure Issue, exact tag, and GitHub Release must complete
+before V3-B implementation begins. Issue #135 documents this order but does not
+perform release closure or change release metadata.
 
 ## Phase 5 — V3-B Isolated Candidate Evaluation
+
+**Target release:** TBD / human decision
+
+**Status:** Planned only. Issue #135 defines the re-entry boundary; it does not
+implement or qualify V3-B.
+
+**Entry criteria:** v0.12.0 release closure is verified from current GitHub
+state; a new V3-B Issue/spec owns the exact execution, sandbox, authority,
+privacy, environment-equivalence, scenario, and acceptance rules; and no
+public-contract ambiguity remains.
 
 **Deliverables:**
 
@@ -155,7 +171,58 @@ draft-PR head; the PR remains draft.
 - environment-difference handling;
 - independent verification result;
 - regression and authority-invariant checks;
-- promotion packet preparation without promotion.
+- promotion packet preparation without promotion;
+- an optional provider-neutral context/evaluation seam that accepts only
+  explicit V2b-validated advisory context and keeps memory-off as the default.
+
+The V3-B memory seam records the exact mode and context/receipt digests while
+keeping proposal, evidence, execution policy, environment class, authority
+invariants, and acceptance thresholds identical. Missing, partial, stale,
+untrusted, sensitive, conflicting, or unsupported context fails closed to
+memory-off.
+
+**Explicit exclusions:** SQLite, FTS5, any backend/provider/MCP adapter,
+automatic recall/write, M1/M2 implementation, V2b weakening, resident hooks or
+services, promotion, merge, release, and deployment.
+
+**Exit criteria:** isolated execution, comparison, environment handling,
+independent verification, regressions, authority/privacy cases, deterministic
+manual/CI behavior, and the promotion-packet boundary pass on an exact reviewed
+head. V3-B output cannot promote itself.
+
+## Memory Track — M0, M1, And M2
+
+This track composes the program but does not change the numbered V3 authority
+phases.
+
+### M0 — Backend Readiness
+
+M0 defines and later qualifies the contract-to-runtime gap matrix,
+provider-neutral request/receipt protocol, current operation authority,
+execution receipts, data placement, lifecycle, retention, concurrency,
+recovery, security/privacy threat model, and V3-B memory-off/on evaluation
+design. M0 may be planned alongside V3-B, but Issue #135 does not complete M0
+qualification and M0 adds no backend.
+
+### M1 — Thin Reference Backend Qualification
+
+M1 may start only after V3-B evidence passes and a new
+Issue/spec/ADR/security review authorizes the exact scope. The candidate is a
+default-disabled, deterministic, local/manual/CI-only SQLite/FTS5 reference
+adapter. It must behavior-probe FTS5 and fail closed to no memory; isolate
+repository/principal/namespace/path scope; bind eligibility and provenance by
+digest; use only structured bounded query input and parameterized SQL; disable
+extension loading; enforce idempotency; atomically commit state and its
+execution receipt; implement explicit lifecycle operations; and remain
+context/cache rather than authority. It adds no daemon, network service,
+scheduler, controller, MCP server, automatic recall/write, or cross-host
+coordination.
+
+### M2 — Second Provider Or MCP Adapter
+
+M2 is considered only after M1 qualification passes and a new human decision
+approves it. It must prove the same provider-neutral contract and cannot weaken
+V2b or add compatibility exceptions for PlugMem or Mem0.
 
 ## Phase 6 — V3-C Optional Resident Automation
 
@@ -173,10 +240,11 @@ This phase is not automatically approved by completing earlier phases.
 - graph execution engine;
 - automatic promotion.
 
-**Entry criteria:** At least two material operational needs—such as repeated
-batch demand, multiple queued objectives, shared atomic claim/lease
-coordination, cross-host execution, or a demonstrated human bottleneck—must
-exist. Security/privacy review and a new architecture decision are required.
+**Entry criteria:** V3-B evidence and M1 qualification must pass first. At least
+two material operational needs—such as repeated batch demand, multiple queued
+objectives, shared atomic claim/lease coordination, cross-host execution, or a
+demonstrated human bottleneck—must exist. Security/privacy review and a new
+architecture decision are required.
 
 ## Original V3-A Work Mapping
 
@@ -193,6 +261,10 @@ exist. Security/privacy review and a new architecture decision are required.
 | Candidate scoring, duplicate suppression, and hypothesis generation | V3-A | Retain after the V3-A re-entry gate passes. |
 | Proposal, patch, branch, artifact, or draft-PR production | V3-A | Retain as proposal-only output with no self-promotion. |
 | Baseline/candidate execution and regression comparison | V3-B | Separate candidate production from independent evaluation. |
+| Provider-neutral memory-off/on context seam | V3-B | Keep memory optional, explicit, V2b-validated, and non-authoritative. |
+| Backend readiness, authority/receipt protocol, and threat model | Memory M0 | Define and qualify the boundary without implementing persistence. |
+| Default-disabled local SQLite/FTS5 reference adapter | Memory M1 | Qualify only after V3-B evidence and a separate security-reviewed Issue. |
+| Second provider or MCP adapter | Memory M2 | Consider only after M1 qualification and a new human decision. |
 | Scheduler, resident hooks, controller, shared queue, or database | V3-C or later | Defer until operational evidence proves a need and a new gate approves it. |
 | Automatic promotion, merge, release, or deployment | Not planned | Exclude from self-improvement authority. |
 
