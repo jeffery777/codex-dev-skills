@@ -96,7 +96,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         thread_skill = read("skills/desktop-thread-delegation/SKILL.md")
         example = read("examples/desktop-thread-delegation.md")
         evidence = read(
-            "docs/codex-runtime-compatibility-evidence-2026-07-31.md"
+            "docs/codex-runtime-compatibility-evidence-2026-08-12.md"
         )
         combined = "\n".join(
             (contract, adapter, thread_skill, example, evidence)
@@ -133,22 +133,22 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("thin adapters", evidence)
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
 
-    def test_latest_runtime_evidence_records_current_versions_and_counts(self) -> None:
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-31.md")
+    def test_latest_runtime_evidence_records_current_versions_and_schemas(self) -> None:
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-12.md")
 
         for expected in (
-            "0.146.0",
-            "26.727.40816",
-            "6067",
-            "com.openai.codex",
-            "236",
-            "90",
+            "0.147.0",
+            "schemaVersion: 2",
+            "schemaVersion: 4",
+            "pinnedThreads",
+            "pinnedIndex",
+            "version unavailable",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, evidence)
 
         self.assertTrue(
-            (ROOT / "docs/codex-runtime-compatibility-evidence-2026-07-30.md").is_file()
+            (ROOT / "docs/codex-runtime-compatibility-evidence-2026-07-31.md").is_file()
         )
 
     def test_desktop_post_create_visibility_contract(self) -> None:
@@ -202,10 +202,14 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         for expected in (
             "same-directory",
             '"type": "local"',
+            '"type": "worktree"',
             "projectless",
             "existing worktree",
             "Do not create a new worktree",
             "source task must stop writing",
+            "default to project",
+            "explicitly requests the saved project checkout",
+            "non-Git projects",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, combined)
@@ -217,6 +221,74 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
                 re.IGNORECASE,
             ),
         )
+
+    def test_desktop_create_title_and_project_association_are_distinct(self) -> None:
+        contract = read("docs/native-runtime-capabilities.md")
+        adapter = read("docs/runtime-adapter-v2.md")
+        skill = read("skills/desktop-thread-delegation/SKILL.md")
+        example = read("examples/desktop-thread-delegation.md")
+        boundary = read("examples/runtime-adapter-boundary.md")
+        combined = "\n".join((contract, adapter, skill, example, boundary))
+
+        for expected in (
+            "concise non-empty safe `title`",
+            "callable keeps `title` optional",
+            "maintainer-approved nonsensitive task identifier",
+            "never copy prompt text",
+            "`Project task`",
+            "preview",
+            "display evidence only",
+            "observed `projectId`",
+            "selected project",
+            "never create a duplicate",
+            '"adapter_required_fields": ["title"]',
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, combined)
+
+        self.assertIn(
+            '"required_request_fields": ["prompt", "target"]',
+            boundary,
+        )
+
+        pipeline_section = boundary.split(
+            "## End-To-End Evidence Pipeline Fixture", 1
+        )[1].split("## Session Compatibility Status", 1)[0]
+        self.assertNotIn(
+            "python3 scripts/desktop_runtime_evidence_pipeline.py",
+            pipeline_section,
+        )
+        self.assertEqual(
+            4,
+            pipeline_section.count(
+                "./scripts/project-python "
+                "scripts/desktop_runtime_evidence_pipeline.py"
+            ),
+        )
+
+    def test_worktree_python_environment_contract_covers_desktop_and_cli(self) -> None:
+        agents = read("AGENTS.md")
+        readme = read("README.md")
+        contract = read("docs/native-runtime-capabilities.md")
+        compatibility = read("docs/runtime-compatibility.md")
+        desktop = read("skills/desktop-thread-delegation/SKILL.md")
+        cli = read("skills/cli-session-handoff/SKILL.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-12.md")
+        combined = "\n".join(
+            (agents, readme, contract, compatibility, desktop, cli, evidence)
+        )
+
+        for expected in (
+            "scripts/project-python",
+            ".python-version",
+            "disposable private clone",
+            "bare system Python",
+            ".worktreeinclude",
+            "Do not copy `.venv`",
+            "shared, not Desktop-only",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, combined)
 
     def test_desktop_callable_contract_covers_new_boundaries(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")

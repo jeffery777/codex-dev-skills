@@ -33,7 +33,7 @@ CONTRACT = "codex-cli-session-handoff/v0"
 REQUEST_SCHEMA_VERSION = 1
 AUTHORIZATION_MARKER = "human-approved-single-cli-session-handoff"
 HANDOFF_DEPTH_ENV = "CODEX_CLI_HANDOFF_DEPTH"
-PROMPT_BOUNDARY_VERSION = "no-publication-no-recursion/v0"
+PROMPT_BOUNDARY_VERSION = "no-publication-no-recursion/v1"
 PROMPT_BOUNDARY_APPENDIX = """
 
 Runtime handoff boundaries:
@@ -43,6 +43,9 @@ Runtime handoff boundaries:
 - Do not merge.
 - Do not perform platform writes.
 - Do not dispatch another session.
+- Honor the repository's interpreter and environment instructions before verification.
+- If executable scripts/project-python exists, use it for Python dependency checks, scripts, evals, and tests; do not replace it with bare system Python.
+- If the pinned interpreter or required dependencies are unavailable, report verification as blocked; do not install into a different interpreter.
 - Return changed files, verification evidence, questions, and residual risk to the parent.
 """.strip()
 

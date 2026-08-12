@@ -18,6 +18,9 @@ handoff, and release-readiness workflows consistently.
 
 The current development feature baseline is V3-A, published in v0.12.0 through
 Issue #133 / PR #134 and the separately reviewed Issue #137 release closure.
+The v0.12.1 compatibility patch candidate is tracked in Issue #139; it updates
+Desktop/CLI runtime adapters and repository verification without changing the
+V3-A feature baseline or shared completion authority.
 V1 remains
 the production workflow/authority core, V2a adds heterogeneous subagent
 routing, V2b adds a backend-neutral external-memory safety contract, V2c-A
@@ -111,7 +114,7 @@ then install only when wanted:
 ```bash
 ./install.sh manifest | rg codex-agent-profiles
 sed -n '1,240p' skills/loop-engineering/references/agent-profile-registry.json
-python3 scripts/validate-agent-profiles.py
+./scripts/project-python scripts/validate-agent-profiles.py
 ```
 
 The profile group is excluded from `--all`. Set
@@ -160,7 +163,7 @@ other applicable configuration layer so an alias filename with the same agent
 `name` is still detected. For user-level adoption from a trusted project:
 
 ```bash
-python3 scripts/validate-agent-profiles.py preflight \
+./scripts/project-python scripts/validate-agent-profiles.py preflight \
   --role loop_v2a_balanced_worker \
   --runtime-facts /path/to/runtime-facts.json \
   --destination-root ~/.codex/agents \
@@ -172,7 +175,7 @@ For project-scoped adoption, scan the project destination and the user layer,
 then install with the same explicit target:
 
 ```bash
-python3 scripts/validate-agent-profiles.py preflight \
+./scripts/project-python scripts/validate-agent-profiles.py preflight \
   --role loop_v2a_balanced_worker \
   --runtime-facts /path/to/runtime-facts.json \
   --destination-root /trusted/project/.codex/agents \
@@ -477,17 +480,17 @@ External memory may be used only as cache or coordination unless this repo expli
 V2b makes that boundary executable without requiring a backend:
 
 ```bash
-python3 skills/loop-engineering/scripts/memoryctl.py --help
-python3 skills/loop-engineering/scripts/memoryctl.py validate <document.json>
-python3 skills/loop-engineering/scripts/memoryctl.py decide-retrieval <decision.json> \
+./scripts/project-python skills/loop-engineering/scripts/memoryctl.py --help
+./scripts/project-python skills/loop-engineering/scripts/memoryctl.py validate <document.json>
+./scripts/project-python skills/loop-engineering/scripts/memoryctl.py decide-retrieval <decision.json> \
   --trusted-conformance-receipts <current-session-trusted-receipts.json> \
   --trusted-source-digests <current-repository-source-digests.json>
-python3 skills/loop-engineering/scripts/memoryctl.py decide-write <candidate.json> \
+./scripts/project-python skills/loop-engineering/scripts/memoryctl.py decide-write <candidate.json> \
   --trusted-acceptance-receipt-digests <current-session-accepted-receipts.json>
-python3 skills/loop-engineering/scripts/memoryctl.py conformance <transcript.json> \
+./scripts/project-python skills/loop-engineering/scripts/memoryctl.py conformance <transcript.json> \
   --trusted-source-digests <current-repository-source-digests.json> \
   --trusted-acceptance-receipt-digests <current-session-accepted-receipts.json>
-python3 scripts/eval-memory-contract.py
+./scripts/project-python scripts/eval-memory-contract.py
 ```
 
 The caller-owned JSON inputs use exact shapes: trusted conformance receipts are
@@ -511,10 +514,10 @@ behind later evidence and human decisions; PlugMem and Mem0 remain excluded.
 V2d-A adds independently usable operational evidence without a backend:
 
 ```bash
-python3 skills/loop-engineering/scripts/evidencectl.py --help
-python3 skills/loop-engineering/scripts/evidencectl.py validate <document.json>
-python3 skills/loop-engineering/scripts/evidencectl.py validate-set <document.json>...
-python3 scripts/eval-operational-evidence.py
+./scripts/project-python skills/loop-engineering/scripts/evidencectl.py --help
+./scripts/project-python skills/loop-engineering/scripts/evidencectl.py validate <document.json>
+./scripts/project-python skills/loop-engineering/scripts/evidencectl.py validate-set <document.json>...
+./scripts/project-python scripts/eval-operational-evidence.py
 ```
 
 The validator accepts only strict `loop-operational-evidence/v0` JSON, checks
@@ -529,14 +532,14 @@ V2d-B adds independently usable improvement lineage and deterministic
 projections without changing V2d-A:
 
 ```bash
-python3 skills/loop-engineering/scripts/improvementctl.py --help
-python3 skills/loop-engineering/scripts/improvementctl.py validate-set \
+./scripts/project-python skills/loop-engineering/scripts/improvementctl.py --help
+./scripts/project-python skills/loop-engineering/scripts/improvementctl.py validate-set \
   <record.json>... --evidence <v2d-a-document.json>...
-python3 skills/loop-engineering/scripts/improvementctl.py project-human \
+./scripts/project-python skills/loop-engineering/scripts/improvementctl.py project-human \
   <record.json>... --evidence <v2d-a-document.json>...
-python3 skills/loop-engineering/scripts/improvementctl.py project-graph \
+./scripts/project-python skills/loop-engineering/scripts/improvementctl.py project-graph \
   <record.json>... --evidence <v2d-a-document.json>...
-python3 scripts/eval-improvement-lineage.py
+./scripts/project-python scripts/eval-improvement-lineage.py
 ```
 
 The human and typed graph outputs are source-derived, regenerable, and
@@ -548,13 +551,13 @@ V3-A adds a proposal-only evidence-to-proposal layer downstream of unchanged
 V2d-A/B:
 
 ```bash
-python3 skills/loop-engineering/scripts/proposalctl.py --help
-python3 skills/loop-engineering/scripts/proposalctl.py generate \
+./scripts/project-python skills/loop-engineering/scripts/proposalctl.py --help
+./scripts/project-python skills/loop-engineering/scripts/proposalctl.py generate \
   --record <record.json> --evidence <v2d-a-document.json>
-python3 skills/loop-engineering/scripts/proposalctl.py validate \
+./scripts/project-python skills/loop-engineering/scripts/proposalctl.py validate \
   <proposal-set.json> \
   --record <record.json> --evidence <v2d-a-document.json>
-python3 scripts/eval-improvement-proposal.py
+./scripts/project-python scripts/eval-improvement-proposal.py
 ```
 
 Generation reruns strict V2d validation, derives fixed integer scores,
@@ -614,7 +617,7 @@ configuration and redacts machine-local paths from JSON output:
 
 ```bash
 ADAPTER=skills/loop-engineering/scripts/gitnexus_adapter.py
-python3 "$ADAPTER" qualify \
+./scripts/project-python "$ADAPTER" qualify \
   --executable "$GITNEXUS_EXECUTABLE" --allow-symlink \
   --node-executable "$GITNEXUS_NODE_EXECUTABLE" --allow-node-symlink \
   --package-root "$GITNEXUS_PACKAGE_ROOT" \
@@ -622,7 +625,7 @@ python3 "$ADAPTER" qualify \
   --accepted-runtime-sha256 "$GITNEXUS_NODE_SHA256" \
   --accepted-package-sha256 "$GITNEXUS_PACKAGE_SHA256"
 
-python3 "$ADAPTER" status \
+./scripts/project-python "$ADAPTER" status \
   --executable "$GITNEXUS_EXECUTABLE" --allow-symlink \
   --node-executable "$GITNEXUS_NODE_EXECUTABLE" --allow-node-symlink \
   --package-root "$GITNEXUS_PACKAGE_ROOT" \
@@ -641,7 +644,7 @@ because `read_query` is unsupported. An explicit refresh additionally requires
 a new, empty, pre-created machine-local home and two independent opt-in flags:
 
 ```bash
-python3 "$ADAPTER" refresh \
+./scripts/project-python "$ADAPTER" refresh \
   --executable "$GITNEXUS_EXECUTABLE" --allow-symlink \
   --node-executable "$GITNEXUS_NODE_EXECUTABLE" --allow-node-symlink \
   --package-root "$GITNEXUS_PACKAGE_ROOT" \
@@ -657,7 +660,7 @@ python3 "$ADAPTER" refresh \
   --lock-directory "$MACHINE_LOCAL_LOCK_DIRECTORY" \
   --enabled --confirm-explicit-refresh
 
-python3 "$ADAPTER" disable
+./scripts/project-python "$ADAPTER" disable
 ```
 
 `--executable` and the caller-owned accepted entry/package digests are mandatory
@@ -736,7 +739,7 @@ HOOK_RUNNER=skills/loop-engineering/scripts/gitnexus_hook.py
 HOOK_TEMPLATE=templates/hooks/gitnexus-v2c-b/hooks.json.template
 CONFIG_TEMPLATE=templates/hooks/gitnexus-v2c-b/config.json.template
 
-python3 "$HOOK_RUNNER" \
+./scripts/project-python "$HOOK_RUNNER" \
   --config /absolute/machine-local/gitnexus-v2c-b.json \
   --validate-config
 ```
@@ -850,6 +853,11 @@ The adapter uses prompt stdin so task text is not placed in process argv,
 parses bounded public JSONL events, and supports exact-UUID resume. A real
 start or resume is a runtime-state mutation and requires explicit authority;
 offline tests use controlled fake executables and create no Codex session.
+The disposable private clone does not inherit a checkout's activated Python
+environment. When the repository provides `scripts/project-python`, the child
+must use it for Python dependency checks, scripts, evals, and tests; an
+unavailable pinned environment blocks verification rather than authorizing a
+fallback to bare system Python.
 For same-task interactive continuation, it may prepare an exact-UUID
 `codex fork` command that reuses the selected existing directory without
 creating a Git worktree; executing that fork is also a runtime-state mutation,
@@ -927,7 +935,7 @@ The main thread remains responsible for integrating returned work, checking the 
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-07-31)](docs/codex-runtime-compatibility-evidence-2026-07-31.md).
+[Codex runtime compatibility evidence (2026-08-12)](docs/codex-runtime-compatibility-evidence-2026-08-12.md).
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 `desktop_runtime_*` scripts and [historical V1 plan](docs/desktop-runtime-wrapper-v1-plan.md)
@@ -943,9 +951,16 @@ pinning changes placement rather than registration.
 
 Choose the Desktop action from the handoff intent: use a same-directory
 `fork_thread` for the same task, completed history, and existing
-checkout/worktree; use `create_thread` with the exact project ID and `local`
-for a fresh task in the same saved checkout; use project `worktree` only for
-intentional isolation; and use `projectless` only for non-project work.
+checkout/worktree; for a fresh task use `create_thread` with the exact project
+ID and a concise non-empty safe `title`. Use only approved nonsensitive task
+metadata and preview the exact title; never copy prompt text or sensitive
+details, and use the fixed `Project task` fallback when safety is uncertain. A
+Git project defaults to `worktree`; use `local` only when the user explicitly
+requests the saved project checkout.
+Non-Git projects default to `local`, and `projectless` remains limited to
+intentional non-project work. In a worktree, run repository verification
+through its tracked environment resolver (this repository uses
+`./scripts/project-python`) or stop when the pinned environment is unavailable.
 
 ## Runtime Compatibility
 
@@ -1020,9 +1035,9 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.12.0.md` contains the current v0.12.0 release notes;
-`docs/release-notes-v0.11.1.md` and `docs/release-notes-v0.1.0.md` remain
-historical point-in-time records.
+`docs/release-notes-v0.12.1.md` contains the current v0.12.1 release notes;
+`docs/release-notes-v0.12.0.md`, `docs/release-notes-v0.11.1.md`, and
+`docs/release-notes-v0.1.0.md` remain historical point-in-time records.
 
 ## Installation
 
@@ -1136,29 +1151,30 @@ Plugin packaging is intentionally not added by the local installer. If this pack
 Run the repository hygiene check before proposing a release or PR:
 
 ```bash
-# Activate the repository's existing virtual environment first, or otherwise
-# ensure the tracked .python-version is honored.
-python3 --version
-python3 -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'
+# The resolver fails closed unless the tracked .python-version is honored.
+./scripts/project-python --version
+./scripts/project-python -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'
 ./scripts/validate-repo.sh
-python3 scripts/eval-loop-engineering.py
-python3 scripts/eval-agent-routing.py
-python3 scripts/eval-memory-contract.py
-python3 scripts/eval-operational-evidence.py
-python3 -m unittest discover -s tests -p 'test_*.py'
+./scripts/project-python scripts/eval-loop-engineering.py
+./scripts/project-python scripts/eval-agent-routing.py
+./scripts/project-python scripts/eval-memory-contract.py
+./scripts/project-python scripts/eval-operational-evidence.py
+./scripts/project-python -m unittest discover -s tests -p 'test_*.py'
 ```
 
 This validates catalog/release consistency, required skill metadata, runtime
 labels, symlink safety, structured loop YAML, event/transition behavior,
 workflow eval thresholds, and public hygiene checks. PyYAML is the only Python
 runtime dependency and is required by the structured ledger commands.
-The repository pins Python 3.12.9 with `.python-version`. Use the same resolved
-interpreter for dependency checks, scripts, evals, and tests. If the PyYAML
-preflight fails, inspect `command -v python3` and `python3 -m pip --version`
-before installing anything: a bare `python3` may resolve outside the existing
-project environment even when that environment already contains PyYAML. Only
-after confirming that the selected project environment genuinely lacks the
-dependency, install it with `python3 -m pip install -r requirements.txt`.
+The repository pins Python 3.12.9 with `.python-version`.
+`scripts/project-python` selects `CODEX_PROJECT_PYTHON`, a repository `.venv`,
+`pyenv`, or an already-correct `python3`, in that order, and rejects a version
+mismatch. This makes saved checkouts, Desktop worktrees, CLI disposable clones,
+and CI use the same interpreter contract. If the PyYAML preflight fails, inspect
+the selected project environment before installing anything. Never copy a
+`.venv` into a worktree or install through a different interpreter; only after
+confirming the resolved environment genuinely lacks the dependency, use
+`./scripts/project-python -m pip install -r requirements.txt`.
 
 For tag, release notes, and PR readiness checks, see [docs/release-readiness.md](docs/release-readiness.md).
 

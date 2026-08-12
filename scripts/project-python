@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Resolve the repository's pinned Python interpreter consistently across
+# saved checkouts, Git worktrees, CI, and disposable CLI clones.
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+VERSION_FILE="$ROOT_DIR/.python-version"
+
+fail() {
+  printf 'project-python: %s\n' "$*" >&2
+  exit 1
+}
+
+[[ -f "$VERSION_FILE" ]] || fail "missing tracked .python-version"
+EXPECTED_VERSION="$(tr -d '[:space:]' < "$VERSION_FILE")"
+[[ "$EXPECTED_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+  || fail "unsupported .python-version value: $EXPECTED_VERSION"
+
+PYTHON_ARGS=("$@")
+
+exec_checked() {
+  local label="$1"
+  shift
+  local actual_version
+
+  if ! actual_version="$("$@" -c 'import sys; print(".".join(map(str, sys.version_info[:3])))' 2>/dev/null)"; then
+    fail "$label could not report a Python version"
+  fi
+  [[ "$actual_version" == "$EXPECTED_VERSION" ]] \
+    || fail "$label resolved Python $actual_version; expected $EXPECTED_VERSION"
+
+  cd "$ROOT_DIR"
+  exec "$@" "${PYTHON_ARGS[@]}"
+}
+
+cd "$ROOT_DIR"
+
+if [[ -n "${CODEX_PROJECT_PYTHON:-}" ]]; then
+  [[ -x "$CODEX_PROJECT_PYTHON" ]] \
+    || fail "CODEX_PROJECT_PYTHON is not executable: $CODEX_PROJECT_PYTHON"
+  exec_checked "CODEX_PROJECT_PYTHON" "$CODEX_PROJECT_PYTHON"
+fi
+
+if [[ -x "$ROOT_DIR/.venv/bin/python3" ]]; then
+  exec_checked ".venv/bin/python3" "$ROOT_DIR/.venv/bin/python3"
+fi
+if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
+  exec_checked ".venv/bin/python" "$ROOT_DIR/.venv/bin/python"
+fi
+
+if command -v pyenv >/dev/null 2>&1 && pyenv which python3 >/dev/null 2>&1; then
+  exec_checked "pyenv exec python3" pyenv exec python3
+fi
+
+command -v python3 >/dev/null 2>&1 || fail "python3 is unavailable"
+exec_checked "python3" python3

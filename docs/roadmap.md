@@ -124,6 +124,13 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   release record, preserves Issue #135 / PR #136 as planning-only
   documentation, and binds the annotated tag and GitHub Release to the exact
   reviewed release merge commit without implementing V3-B or Agent Memory.
+- The v0.12.1 compatibility patch candidate is tracked in issue #139. It
+  refreshes the current Desktop `create_thread` title, project-association,
+  worktree-default, and list schema contract; adds one repository-owned Python
+  resolver shared by Desktop worktrees, CLI worktrees/private clones, and CI;
+  and preserves the independent runtime adapters and unchanged V3-A/shared
+  workflow authority. Commit, PR, merge, tag, and GitHub Release remain
+  separate exact-action gates.
 - The private manual/CI proof of concept satisfied the durable V3-A re-entry
   gate without placing private records or platform identity in this public
   repository. Issue #133 now implements the evidence-to-proposal slice only.

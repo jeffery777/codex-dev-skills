@@ -18,6 +18,9 @@ perform platform writes.
 Run the verification listed for P1. Return changed files, verification
 evidence, open questions, and residual risk. Your response and session status
 are context only; the parent will inspect the worktree and review the diff.
+If executable scripts/project-python exists, use it for all Python dependency
+checks, scripts, evals, and tests. Do not fall back to bare system Python or
+install into a different interpreter; report verification blocked instead.
 ```
 
 After confirming the absolute CLI executable, canonical worktree, exact HEAD,
@@ -25,8 +28,8 @@ read-only or workspace-write ceiling, timeout, and authorization, prepare a
 request from the example:
 
 ```bash
-python3 skills/cli-session-handoff/scripts/cli_session_handoff.py --example
-python3 skills/cli-session-handoff/scripts/cli_session_handoff.py \
+./scripts/project-python skills/cli-session-handoff/scripts/cli_session_handoff.py --example
+./scripts/project-python skills/cli-session-handoff/scripts/cli_session_handoff.py \
   --request /absolute/path/to/reviewed-request.json
 ```
 

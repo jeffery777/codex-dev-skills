@@ -7,7 +7,7 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only. See the maintained
-[2026-07-31 compatibility evidence](codex-runtime-compatibility-evidence-2026-07-31.md).
+[2026-08-12 compatibility evidence](codex-runtime-compatibility-evidence-2026-08-12.md).
 
 ## `shared`
 
@@ -24,13 +24,18 @@ manually, but the skill must document the fallback.
 explicitly authorized `codex exec --json` start or exact-UUID resume. It is
 separate from shared task selection/subagents and from Desktop task/thread
 callables. Its redacted receipt is coordination evidence, not completion
-authority.
+authority. Its disposable private clone does not inherit the source checkout's
+activated Python environment, so it must follow the repository's tracked
+environment resolver when present and fail verification closed on a version or
+dependency mismatch.
 
 ## `desktop`
 
 Requires Codex Desktop user-owned task, thread, worktree, UI, or scheduling
 control. Shared main-agent reasoning and subagent delegation are not, by
-themselves, Desktop-only behavior.
+themselves, Desktop-only behavior. A worktree's interpreter selection is also
+not Desktop-only: the same repository-owned resolver contract applies to CLI
+worktrees and disposable clones.
 
 ## `plugin-dependent`
 
@@ -168,10 +173,11 @@ The fork request has no caller-supplied `hostId`, and its current response does
 not guarantee one. Preserve a known source host, then obtain the child
 `hostId` from supported registry evidence that explicitly exposes it before a
 host-sensitive follow-up; never assume an unresolved remote child is local. A
-fresh same-project task
-uses the exact `projectId` and its runtime-returned host identity with local
-execution; a new isolated Git worktree is a separate choice; `projectless` is
-reserved for intentionally non-project work. Cross-host continuation is a
+fresh same-project task uses the exact `projectId` and its runtime-returned host
+identity. Git projects default to worktree execution; non-Git projects use
+local, and a Git project's saved checkout uses local only when the user
+explicitly requests it. `projectless` is reserved for intentionally non-project
+work. Cross-host continuation is a
 separately authorized handoff with `destinationHostId`, not a fork option.
 
 CLI `codex fork <SESSION_ID>` is the analogous CLI-only interactive control

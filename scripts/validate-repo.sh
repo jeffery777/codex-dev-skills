@@ -4,6 +4,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_PYTHON="$ROOT_DIR/scripts/project-python"
 cd "$ROOT_DIR"
 
 fail() {
@@ -104,7 +105,7 @@ check_catalog_sources() {
 }
 
 check_catalog_skill_metadata() {
-  python3 - <<'PY'
+  "$PROJECT_PYTHON" - <<'PY'
 from pathlib import Path
 
 import yaml
@@ -157,8 +158,8 @@ check_installer_catalog_consistency() {
 }
 
 check_code_mode_tool_policy() {
-  python3 scripts/validate-code-mode-tool-policy.py
-  python3 -m unittest tests.test_code_mode_tool_policy >/dev/null
+  "$PROJECT_PYTHON" scripts/validate-code-mode-tool-policy.py
+  "$PROJECT_PYTHON" -m unittest tests.test_code_mode_tool_policy >/dev/null
   ok "Code Mode tool policy references and isolated packaging contracts pass"
 }
 
@@ -241,35 +242,35 @@ check_skill_metadata() {
 }
 
 check_loop_ledger() {
-  python3 scripts/validate-loop-ledger.py
+  "$PROJECT_PYTHON" scripts/validate-loop-ledger.py
 }
 
 check_loop_eval() {
-  python3 scripts/eval-loop-engineering.py >"$TMP_DIR/loop-eval.json"
+  "$PROJECT_PYTHON" scripts/eval-loop-engineering.py >"$TMP_DIR/loop-eval.json"
   ok "loop engineering workflow eval thresholds pass"
 }
 
 check_agent_profiles() {
-  python3 scripts/validate-agent-profiles.py >"$TMP_DIR/agent-profiles.json"
-  python3 -m unittest tests.test_agent_profiles tests.test_installer_agent_profiles >/dev/null
+  "$PROJECT_PYTHON" scripts/validate-agent-profiles.py >"$TMP_DIR/agent-profiles.json"
+  "$PROJECT_PYTHON" -m unittest tests.test_agent_profiles tests.test_installer_agent_profiles >/dev/null
   ok "custom-agent profiles and isolated installer contracts pass"
 }
 
 check_agent_routing_eval() {
-  python3 scripts/eval-agent-routing.py >"$TMP_DIR/agent-routing-eval.json"
-  python3 -m unittest tests.test_agent_routing tests.test_eval_agent_routing >/dev/null
+  "$PROJECT_PYTHON" scripts/eval-agent-routing.py >"$TMP_DIR/agent-routing-eval.json"
+  "$PROJECT_PYTHON" -m unittest tests.test_agent_routing tests.test_eval_agent_routing >/dev/null
   ok "heterogeneous agent routing eval thresholds pass"
 }
 
 check_memory_contract() {
-  python3 scripts/eval-memory-contract.py >"$TMP_DIR/memory-contract-eval.json"
-  python3 -m unittest tests.test_memory_contract tests.test_memoryctl tests.test_eval_memory_contract >/dev/null
+  "$PROJECT_PYTHON" scripts/eval-memory-contract.py >"$TMP_DIR/memory-contract-eval.json"
+  "$PROJECT_PYTHON" -m unittest tests.test_memory_contract tests.test_memoryctl tests.test_eval_memory_contract >/dev/null
   ok "external memory contract, CLI, and eval thresholds pass"
 }
 
 check_operational_evidence_contract() {
-  python3 scripts/eval-operational-evidence.py >"$TMP_DIR/operational-evidence-eval.json"
-  python3 -m unittest \
+  "$PROJECT_PYTHON" scripts/eval-operational-evidence.py >"$TMP_DIR/operational-evidence-eval.json"
+  "$PROJECT_PYTHON" -m unittest \
     tests.test_operational_evidence \
     tests.test_evidencectl \
     tests.test_eval_operational_evidence >/dev/null
@@ -277,8 +278,8 @@ check_operational_evidence_contract() {
 }
 
 check_improvement_lineage_contract() {
-  python3 scripts/eval-improvement-lineage.py >"$TMP_DIR/improvement-lineage-eval.json"
-  python3 -m unittest \
+  "$PROJECT_PYTHON" scripts/eval-improvement-lineage.py >"$TMP_DIR/improvement-lineage-eval.json"
+  "$PROJECT_PYTHON" -m unittest \
     tests.test_improvement_lineage \
     tests.test_improvementctl \
     tests.test_eval_improvement_lineage \
@@ -287,8 +288,8 @@ check_improvement_lineage_contract() {
 }
 
 check_improvement_proposal_contract() {
-  python3 scripts/eval-improvement-proposal.py >"$TMP_DIR/improvement-proposal-eval.json"
-  python3 -m unittest \
+  "$PROJECT_PYTHON" scripts/eval-improvement-proposal.py >"$TMP_DIR/improvement-proposal-eval.json"
+  "$PROJECT_PYTHON" -m unittest \
     tests.test_improvement_proposal \
     tests.test_proposalctl \
     tests.test_eval_improvement_proposal \
@@ -297,20 +298,21 @@ check_improvement_proposal_contract() {
 }
 
 check_loop_contract() {
-  python3 -m unittest tests.test_loop_engineering_core tests.test_loopctl >/dev/null
+  "$PROJECT_PYTHON" -m unittest tests.test_loop_engineering_core tests.test_loopctl >/dev/null
   ok "loop engineering event, transition, migration, and CLI contracts pass"
 }
 
 check_native_runtime_contract() {
-  python3 -m unittest \
+  "$PROJECT_PYTHON" -m unittest \
     tests.test_cli_session_handoff \
-    tests.test_native_runtime_contract_docs >/dev/null
+    tests.test_native_runtime_contract_docs \
+    tests.test_project_python >/dev/null
   ok "native CLI/Desktop runtime adapter contracts pass"
 }
 
 check_repository_guardrails() {
-  python3 scripts/validate-gitnexus-config.py >"$TMP_DIR/gitnexus-config.json"
-  python3 -m unittest \
+  "$PROJECT_PYTHON" scripts/validate-gitnexus-config.py >"$TMP_DIR/gitnexus-config.json"
+  "$PROJECT_PYTHON" -m unittest \
     tests.test_gitnexus_config_guard \
     tests.test_pr_issue_link >/dev/null
   ok "GitNexus and pull request linkage repository guardrails pass"

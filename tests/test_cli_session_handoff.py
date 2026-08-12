@@ -329,6 +329,10 @@ class CliSessionHandoffTests(unittest.TestCase):
             argv[10:],
         )
         delivered_prompt = self.prompt_capture.read_text(encoding="utf-8")
+        self.assertEqual(
+            "no-publication-no-recursion/v1",
+            handoff.PROMPT_BOUNDARY_VERSION,
+        )
         self.assertTrue(delivered_prompt.startswith(str(request["prompt"])))
         self.assertTrue(delivered_prompt.endswith(handoff.PROMPT_BOUNDARY_APPENDIX))
         for boundary in (
@@ -338,6 +342,9 @@ class CliSessionHandoffTests(unittest.TestCase):
             "Do not merge.",
             "Do not perform platform writes.",
             "Do not dispatch another session.",
+            "scripts/project-python",
+            "do not replace it with bare system Python",
+            "report verification as blocked",
         ):
             self.assertIn(boundary, delivered_prompt)
 

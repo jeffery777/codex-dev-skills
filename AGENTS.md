@@ -21,15 +21,21 @@ When the user asks for review, stay read-only unless they explicitly ask for fix
 
 ## Python Verification Environment
 
-- Activate the repository's existing virtual environment, or otherwise ensure
-  the tracked `.python-version` is honored, before running Python verification.
+- Use `./scripts/project-python` for this repository's dependency checks,
+  scripts, evals, and unit tests. It resolves a repository `.venv`, `pyenv`, or
+  an already-correct `python3` and fails closed unless the exact tracked
+  `.python-version` is selected.
 - Before installing a missing module, print the selected interpreter and verify
-  PyYAML with `python3 -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'`.
-- If bare `python3` cannot import `yaml`, inspect interpreter resolution before
-  treating PyYAML as absent. Do not install into a different Python environment
-  from the one used to run tests and repository scripts.
+  PyYAML with `./scripts/project-python -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'`.
+- If the resolver cannot select the pinned interpreter or import `yaml`, inspect
+  environment resolution before treating PyYAML as absent. Do not fall back to
+  bare system Python or install into a different Python environment.
 - Use the same resolved Python interpreter for dependency checks, scripts,
   evals, and unit tests throughout a verification run.
+- Git worktrees and disposable clones must run the tracked resolver too. Do not
+  copy `.venv` through `.worktreeinclude`; create or configure an environment
+  for the new checkout when the resolver reports that the pinned runtime is
+  unavailable.
 
 ## Destructive Actions
 
