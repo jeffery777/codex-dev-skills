@@ -1,7 +1,7 @@
 # Candidate Evaluation Contract
 
-Status: V3-B isolated candidate evaluation candidate implementation. Target
-release remains **TBD / human decision**.
+Status: V3-B isolated candidate evaluation, released in **v0.13.0** through
+Issue #141 / PR #142 and the Issue #143 release closure.
 
 `loop-candidate-evaluation/v0` is a strict offline family downstream of
 `loop-improvement-proposal/v0`, `loop-improvement-lineage/v0`, and

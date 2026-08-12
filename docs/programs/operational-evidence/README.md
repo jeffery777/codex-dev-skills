@@ -3,8 +3,8 @@
 Status: V2d-A is released in v0.10.0; V2d-B is released in v0.11.0; V3-A
 proposal-only evidence-to-proposal is released in v0.12.0 through Issue #133 /
 PR #134 and the Issue #137 release closure. Issue #135 defines the docs-only
-roadmap. Issue #141 implements the V3-B isolated candidate evaluation
-candidate; its target release remains TBD / human decision.
+roadmap. V3-B isolated candidate evaluation is released in v0.13.0 through
+Issue #141 / PR #142 and the Issue #143 release closure.
 
 ## Purpose
 
@@ -15,7 +15,7 @@ intact, and how the work is divided into independently reviewable stages.
 
 The released development feature baseline is:
 
-> **Loop Engineering V3-A: Manual/CI Evidence-To-Proposal**
+> **Loop Engineering V3-B: Isolated Candidate Evaluation**
 
 V3-A is limited to deterministic proposal generation. V3-B adds only a closed
 synthetic isolated candidate evaluator, deterministic replay, and a packet
@@ -70,10 +70,12 @@ model.
 6. v0.12.0 release closure through Issue #137 and its separate human gate.
 7. V3-B — Isolated candidate evaluation workflow, with an optional
    provider-neutral advisory-context seam and memory-off as the default.
-8. Memory M1 — Thin default-disabled local/manual/CI reference backend
+8. v0.13.0 release closure through Issue #143 and its separate publication
+   gate.
+9. Memory M1 — Thin default-disabled local/manual/CI reference backend
    qualification, only after V3-B evidence and a separate
    Issue/spec/ADR/security review.
-9. V3-C — Optional resident hooks/controller, only if operational evidence
+10. V3-C — Optional resident hooks/controller, only if operational evidence
    proves it is needed and the authority/control prerequisites exist.
 
 Memory M0 is a cross-cutting readiness track that may be planned alongside

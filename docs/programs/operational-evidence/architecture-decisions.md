@@ -141,9 +141,10 @@ decisions. PlugMem, Mem0, and all external-memory backends remain excluded.
 
 ## OE-013 — Sequence Release Closure, V3-B, Memory M1, And V3-C
 
-**Decision:** Keep four separately owned deliveries in this order: v0.12.0
-release closure; V3-B isolated candidate evaluation; Memory M1 thin reference
-backend qualification; and V3-C optional resident automation.
+**Decision:** Keep separately owned deliveries in this order: v0.12.0 release
+closure; V3-B isolated candidate evaluation; v0.13.0 V3-B release closure;
+Memory M1 thin reference backend qualification; and V3-C optional resident
+automation.
 
 M0 is the cross-cutting backend-readiness design/qualification track. It may be
 planned alongside V3-B, but it neither implements a backend nor bypasses the
@@ -151,8 +152,9 @@ release or V3-B evidence gates. M2 may consider a second provider or MCP
 adapter only after M1 qualification passes.
 
 **Consequence:** Issue #135 can align documents and define qualification
-requirements but cannot claim release, V3-B, M0, or M1 completion. V3-B, M1,
-M2, and V3-C target releases remain TBD until a human decision. V3-C automatic
+requirements but cannot claim release, V3-B, M0, or M1 completion. Issue #143
+selects v0.13.0 for the separately reviewed V3-B release; M1, M2, and V3-C
+target releases remain TBD until a human decision. V3-C automatic
 recall/write, scheduler/controller, persistent service, queue, or cross-host
 behavior requires a new architecture and security/privacy gate.
 
@@ -202,4 +204,5 @@ and lineage composition without granting runtime or promotion authority.
 commit, push, create a PR, merge, release, deploy, activate, or write
 externally. SQLite/FTS5, Memory M1/M2, PlugMem, Mem0, providers, MCP,
 automatic recall/write, and V3-C remain behind separate human decisions.
-Target release is TBD / human decision.
+Issue #143 selects v0.13.0 through a separate release-closure and publication
+gate. This does not grant the V3-B packet release or promotion authority.

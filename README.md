@@ -16,11 +16,11 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current development feature baseline is V3-A, published in v0.12.0 through
-Issue #133 / PR #134 and the separately reviewed Issue #137 release closure.
-The v0.12.1 compatibility patch candidate is tracked in Issue #139; it updates
-Desktop/CLI runtime adapters and repository verification without changing the
-V3-A feature baseline or shared completion authority.
+The current development feature baseline is V3-B, published in v0.13.0 through
+Issue #141 / PR #142 and the separately reviewed Issue #143 release closure.
+The v0.12.1 compatibility patch through Issue #139 updated Desktop/CLI runtime
+adapters and repository verification before V3-B without changing shared
+completion authority.
 V1 remains
 the production workflow/authority core, V2a adds heterogeneous subagent
 routing, V2b adds a backend-neutral external-memory safety contract, V2c-A
@@ -37,6 +37,11 @@ changing V2d-A. V3-A adds the downstream
 ties and duplicate suppression, complete evidence lineage, bounded structured
 hypotheses/intents, and a stdout-only manual/CI CLI. All output remains
 proposal-only behind an independent pending human/platform promotion gate.
+V3-B adds the downstream `loop-candidate-evaluation/v0` family, bounded
+same-policy synthetic baseline/candidate comparison, exact environment
+equivalence, deterministic independent replay, a memory-off default with an
+optional V2b-validated advisory-context seam, and a permanently
+non-promotional packet.
 v0.9.1 aligned the
 public handoff, recorded one bounded notify-only adoption, and added repository
 guardrails for index-only GitNexus analysis and ready-PR Issue linkage.
@@ -60,15 +65,14 @@ repository; Issue #133 implements only the public evidence-to-proposal slice.
 No slice moves private runtime state into public Git. See the
 [Operational Evidence program](docs/programs/operational-evidence/README.md).
 
-Issue #135 defines the next docs-only re-entry roadmap without implementing
-it. Issue #137 closes the v0.12.0 publication prerequisite; the remaining
-order is V3-B isolated candidate evaluation, a default-disabled local Memory
-M1 reference-backend qualification, and only later V3-C resident automation.
-M0 records the
-backend-readiness questions and qualification plan; this documentation is not
-M0 qualification evidence. V3-B may expose a provider-neutral optional context
-seam for a future memory-off/on comparison, but neither V3-B nor the current
-roadmap embeds SQLite, enables a backend, or changes V2b authority. See the
+Issue #135 defines the staged re-entry roadmap. Issue #137 closed the v0.12.0
+publication prerequisite, Issue #141 delivered V3-B, and Issue #143 publishes
+that reviewed baseline as v0.13.0. The remaining order is a default-disabled
+local Memory M1 reference-backend qualification and only later V3-C resident
+automation. M0 records the backend-readiness questions and qualification plan;
+this documentation is not M0 qualification evidence. V3-B exposes a
+provider-neutral optional context seam for a future memory-off/on comparison,
+but it does not embed SQLite, enable a backend, or change V2b authority. See the
 [V3-B and Agent Memory roadmap spec](docs/loops/issue-135/roadmap-spec.md).
 
 This is not a general prompt collection. It is a curated set of public, reusable workflow contracts for open source and team repositories.
@@ -568,7 +572,7 @@ promote, merge, release, deploy, or write an external system. See the
 [improvement proposal contract](docs/improvement-proposal-contract.md).
 
 V3-B adds isolated candidate evaluation downstream of unchanged V2d-A/B and
-V3-A. Target release remains **TBD / human decision**:
+V3-A and is released in **v0.13.0**:
 
 ```bash
 ./scripts/project-python skills/loop-engineering/scripts/evaluationctl.py --help
@@ -1062,8 +1066,8 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.12.1.md` contains the current v0.12.1 release notes;
-`docs/release-notes-v0.12.0.md`, `docs/release-notes-v0.11.1.md`, and
+`docs/release-notes-v0.13.0.md` contains the current v0.13.0 release notes;
+`docs/release-notes-v0.12.1.md`, `docs/release-notes-v0.12.0.md`, and
 `docs/release-notes-v0.1.0.md` remain historical point-in-time records.
 
 ## Installation
