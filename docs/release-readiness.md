@@ -170,8 +170,8 @@ evidence that:
   platform, artifact dereference, external write, approval, or promotion;
 - SQLite/FTS5, Memory M1/M2, PlugMem, Mem0, providers/MCP, automatic
   recall/write, V3-C, merge, release, deploy, and activation are absent;
-- target release remains TBD / human decision unless a separate accepted
-  source-of-truth decision changes it.
+- V3-B target release is v0.13.0 only through the separate accepted Issue #143
+  release-closure source of truth; M1/M2 and V3-C targets remain TBD.
 
 ## Suggested Verification
 

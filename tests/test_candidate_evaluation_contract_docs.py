@@ -27,7 +27,7 @@ class CandidateEvaluationContractDocsTests(unittest.TestCase):
 
     def test_repository_entrypoints_expose_v3b_without_release_or_backend_claims(self):
         required = {
-            "README.md": ("V3-B", "evaluationctl.py", "TBD / human decision"),
+            "README.md": ("V3-B", "evaluationctl.py", "v0.13.0"),
             "skills/loop-engineering/SKILL.md": (
                 "V3-B", "references/candidate-evaluation-v0.md", "memory-off"
             ),
@@ -35,7 +35,7 @@ class CandidateEvaluationContractDocsTests(unittest.TestCase):
                 "V3-B", "isolated candidate evaluation", "cannot promote"
             ),
             "docs/programs/operational-evidence/implementation-phases.md": (
-                "loop-candidate-evaluation/v0", "synthetic-advisory", "TBD / human decision"
+                "loop-candidate-evaluation/v0", "synthetic-advisory", "v0.13.0"
             ),
             "docs/programs/operational-evidence/continuation.md": (
                 "Issue #141", "memory-off", "M1"
@@ -48,8 +48,13 @@ class CandidateEvaluationContractDocsTests(unittest.TestCase):
             text = read(relative)
             for phrase in phrases:
                 self.assertIn(phrase, text, relative)
-        self.assertIn('VERSION="0.12.1"', read("install.sh"))
-        self.assertIn('version: "0.12.1"', read("catalog.yaml"))
+        self.assertIn('VERSION="0.13.0"', read("install.sh"))
+        self.assertIn('version: "0.13.0"', read("catalog.yaml"))
+        notes = read("docs/release-notes-v0.13.0.md")
+        self.assertIn("# Release Notes: v0.13.0", notes)
+        self.assertIn("loop-candidate-evaluation/v0", notes)
+        self.assertIn("issues/141", notes)
+        self.assertIn("pull/142", notes)
 
 
 if __name__ == "__main__":

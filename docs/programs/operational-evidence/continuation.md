@@ -25,6 +25,8 @@
 - Issue #141 owns the bounded V3-B `loop-candidate-evaluation/v0` candidate.
   Its memory-off default, optional V2b-validated advisory context, deterministic
   verifier, and non-promotional packet do not implement or enable M1 or V3-C.
+- Issue #143 publishes the reviewed Issue #141 / PR #142 V3-B baseline as
+  v0.13.0 through a separate exact merge/tag/GitHub Release gate.
 
 ## Delivered V2d-A Boundary
 
@@ -72,17 +74,18 @@ independent promotion gate, synthetic adversarial evals, and a stdout-only CLI.
 It excludes external memory, candidate execution, runtime automation, and
 promotion.
 
-## Current Bounded Stage
+## Released V3-B Boundary
 
-Issue #141 implements and qualifies V3-B isolated baseline/candidate synthetic
-evaluation using the Issue #135 brief and a fresh accepted-main branch.
+Issue #141 / PR #142 implement and qualify V3-B isolated baseline/candidate
+synthetic evaluation using the Issue #135 brief; Issue #143 publishes that
+reviewed baseline as v0.13.0.
 Do not infer V3-B authority from V3-A output. Require same-policy comparison,
 independent deterministic replay verification, privacy/security review, and a promotion
 packet that still cannot promote itself. V3-B may add only a provider-neutral,
 optional V2b-validated context seam with memory-off as the default; it must not
 embed SQLite or implement M1.
 
-After exact-head V3-B evidence passes, a separate Issue/spec/ADR/security
+After v0.13.0 publication is verified, a separate Issue/spec/ADR/security
 review may
 qualify the default-disabled local/manual/CI-only SQLite/FTS5 M1 reference
 adapter. M0 readiness defines the gap matrix, provider-neutral protocol,
@@ -98,12 +101,12 @@ A future M1-readiness task should:
 
 1. Read `AGENTS.md`, `README.md`, `docs/roadmap.md`, this program directory,
    and `docs/operational-evidence-contract.md`.
-2. Confirm Issue #133, merged PR #134, Issue #137, and the current v0.12.0
+2. Confirm Issue #141, merged PR #142, Issue #143, and the current v0.13.0
    tag/Release state from current platform evidence.
 3. Inspect current branch/status/upstream/diff, tags/releases, open issues, and
    the installed GitNexus index freshness.
-4. Verify Issue #141 and its exact-head draft-PR/CI/review evidence rather than
-   trusting a chat summary, packet, or proposal score.
+4. Verify Issue #141 / PR #142 and Issue #143 exact release evidence rather
+   than trusting a chat summary, packet, or proposal score.
 5. Treat memory-off as the accepted V3-B default and require a new
    Issue/spec/ADR/security decision before any M1 implementation.
 6. Keep V3-A proposal, V3-B evaluation, M1 backend qualification, and V3-C
@@ -119,10 +122,11 @@ A future M1-readiness task should:
 
 - Prerequisite slice: V2d-A Operational Evidence V0 core in v0.10.0.
 - Delivered public slice: V3-A manual/CI evidence-to-proposal contract.
-- Current candidate: Issue #141 V3-B isolated candidate evaluation.
-- Next stage after accepted V3-B evidence: separately gated M1 readiness and
+- Released candidate: Issue #141 / PR #142 V3-B isolated candidate evaluation
+  in v0.13.0 through Issue #143.
+- Next stage after verified v0.13.0 publication: separately gated M1 readiness and
   thin reference-backend qualification; this document does not authorize it.
-- Release interlock: Issue #137 separately closes the v0.12.0 annotated-tag and
+- Release interlock: Issue #143 separately closes the v0.13.0 annotated-tag and
   GitHub Release gate; future work must still verify current platform evidence.
 - Memory role: M0 readiness design first; M1 only after V3-B evidence; M2 only
   after M1 qualification. External memory remains optional context/cache.

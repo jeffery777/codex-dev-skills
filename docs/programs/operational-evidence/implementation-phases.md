@@ -155,11 +155,11 @@ V3-B, Agent Memory, or later automation.
 
 ## Phase 5 — V3-B Isolated Candidate Evaluation
 
-**Target release:** TBD / human decision
+**Target release:** v0.13.0
 
-**Status:** Issue #141 implements the `loop-candidate-evaluation/v0` candidate
-on an isolated Issue branch. Qualification, exact-head hosted CI, draft-PR
-review, and any future release decision remain separate gates.
+**Status:** Issue #141 / PR #142 implement and qualify
+`loop-candidate-evaluation/v0`; Issue #143 publishes the reviewed baseline in
+v0.13.0 through a separate exact tag/Release gate.
 
 **Entry criteria:** v0.12.0 release closure is verified from current GitHub
 state; a new V3-B Issue/spec owns the exact execution, sandbox, authority,
@@ -190,16 +190,16 @@ memory-off.
 
 **Explicit exclusions:** SQLite, FTS5, any backend/provider/MCP adapter,
 automatic recall/write, M1/M2 implementation, V2b weakening, resident hooks or
-services, promotion, merge, release, and deployment.
+services, promotion, runtime-driven merge/release, and deployment.
 
 **Exit criteria:** isolated synthetic-observation evaluation, comparison, environment handling,
 independent verification, regressions, authority/privacy cases, deterministic
 manual/CI behavior, and the promotion-packet boundary pass on an exact reviewed
 head. V3-B output cannot promote itself.
 
-**Release interlock:** target release is TBD / human decision. V3-B branch,
-tests, evals, reviews, draft PR, and CI do not authorize merge, release,
-deployment, activation, Memory M1, or V3-C.
+**Release interlock:** Issue #143 separately binds v0.13.0 to the exact reviewed
+release-closure merge commit. V3-B outputs, tests, evals, reviews, PRs, and CI
+do not authorize promotion, deployment, activation, Memory M1, or V3-C.
 
 ## Memory Track — M0, M1, And M2
 
