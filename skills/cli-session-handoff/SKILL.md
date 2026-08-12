@@ -52,8 +52,10 @@ session identifier is not a Desktop `threadId` or `clientThreadId`.
      another exact existing checkout/worktree.
 4. Prepare a self-contained prompt that requires the child to re-read
    source-of-truth files, stay within scope, avoid further session dispatch,
-   run verification, and return changed files, evidence, questions, and
-   residual risk.
+   run verification with the repository-selected environment, and return
+   changed files, evidence, questions, and residual risk. When an executable
+   `scripts/project-python` exists, require it for Python dependency checks,
+   scripts, evals, and tests; never substitute bare system Python.
 5. For `start` or `resume`, select the least sandbox required: `read-only` for inspection and
    `workspace-write` only when the user authorized implementation in the exact
    target worktree. The child runs in a private clone at the expected HEAD;
@@ -73,7 +75,7 @@ session identifier is not a Desktop `threadId` or `clientThreadId`.
    stdin:
 
    ```bash
-   python3 skills/cli-session-handoff/scripts/cli_session_handoff.py --request - < request.json
+   ./scripts/project-python skills/cli-session-handoff/scripts/cli_session_handoff.py --request - < request.json
    ```
 
    For `interactive-fork`, return a paste-ready
@@ -97,6 +99,10 @@ request shape. In addition:
 - `prompt_boundary_version` must select the supported canonical boundary
   appendix, which the executor appends after the task prompt;
 - the worktree must be clean before a new child process starts;
+- the private clone does not inherit the source checkout's activated virtual
+  environment; use the repository's tracked environment resolver when present,
+  and return verification blocked if its pinned interpreter or dependencies are
+  unavailable instead of installing through a different interpreter;
 - sparse-checkout worktrees and worktrees containing Git submodules are not
   qualified for the private-clone adapter and return a capability fallback;
 - only `read-only` and `workspace-write` are supported;

@@ -166,7 +166,8 @@ git diff --check
 When the changed scope includes Python helpers or tests, record the active Python runtime before running Python checks:
 
 ```bash
-python3 --version
+./scripts/project-python --version
+./scripts/project-python -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'
 ```
 
 This repository pins Python 3.12.9 with `.python-version`.
@@ -174,13 +175,13 @@ This repository pins Python 3.12.9 with `.python-version`.
 For the GitNexus adapter scope, run at least:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_gitnexus_adapter
-PYTHONDONTWRITEBYTECODE=1 python3 -m unittest \
+PYTHONDONTWRITEBYTECODE=1 ./scripts/project-python -m unittest tests.test_gitnexus_adapter
+PYTHONDONTWRITEBYTECODE=1 ./scripts/project-python -m unittest \
   tests.test_memory_contract tests.test_memoryctl tests.test_eval_memory_contract
-python3 scripts/eval-memory-contract.py
-python3 scripts/eval-operational-evidence.py
-python3 scripts/eval-improvement-lineage.py
-python3 scripts/eval-improvement-proposal.py
+./scripts/project-python scripts/eval-memory-contract.py
+./scripts/project-python scripts/eval-operational-evidence.py
+./scripts/project-python scripts/eval-improvement-lineage.py
+./scripts/project-python scripts/eval-improvement-proposal.py
 ./scripts/validate-repo.sh
 git diff --check
 ```

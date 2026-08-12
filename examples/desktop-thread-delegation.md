@@ -36,22 +36,36 @@ Do not commit, push, create PRs, merge, deploy, post platform comments, submit r
    worktree creation:
    - same task, new conversation, same directory and completed history:
      `fork_thread` with `same-directory`;
-   - fresh task, same saved project checkout: `create_thread` with the exact
-     project ID and `local`;
-   - fresh isolated parallel task: project `worktree`, only when a new Git
-     worktree is intended;
+   - fresh task in a Git project: `create_thread` with the exact project ID and
+     `worktree` by default;
+   - fresh task in a non-Git project: exact-project `local`;
+   - fresh task in a Git project's saved checkout: exact-project `local` only
+     when the maintainer explicitly requests that checkout;
    - intentionally non-project work: `projectless`.
    “Do not create a new worktree” never implies `projectless`.
-10. When authorized and supported by the runtime, fork or create the new thread
+10. For `create_thread`, supply and preview a concise non-empty safe title. Use
+    only a maintainer-approved nonsensitive task identifier plus a generic
+    objective label; never copy prompt text, credentials, customer or incident
+    details, repository paths, or untrusted registry text. If safety is
+    uncertain, use the fixed title `Project task`. The callable field remains
+    optional, but the adapter always fills it for stable display; project
+    association still depends on `projectId`, never title text.
+11. Before Git worktree creation, record the repository's environment setup and
+    tracked interpreter resolver. This repository requires
+    `./scripts/project-python`; do not copy `.venv`, use mismatched bare system
+    Python, or install into another interpreter.
+12. When authorized and supported by the runtime, fork or create the new thread
     with the prepared prompt.
-11. After `create_thread`, emit `::created-thread{threadId="..."}` for a ready task or
+13. After `create_thread`, emit `::created-thread{threadId="..."}` for a ready task or
     `::created-thread{clientThreadId="..."}` for queued worktree setup.
-12. If a ready `threadId` is available, verify the exact identifier through a
-    supported list, read, or bounded wait operation without treating registry
-    presence as sidebar rendering.
-13. If the maintainer explicitly asks to open or show the task, use the exposed
+14. If a ready `threadId` is available, verify the exact identifier and require
+    its observed `projectId` to match the selected project. For queued setup,
+    wait until the runtime exposes a ready task; never use `clientThreadId` as a
+    thread ID or create a duplicate because association is delayed. Report an
+    unavailable association as unverified, not successful grouping.
+15. If the maintainer explicitly asks to open or show the task, use the exposed
     navigation capability. Do not navigate automatically after creation.
-14. Keep the main thread responsible for integrating the result, reviewing the
+16. Keep the main thread responsible for integrating the result, reviewing the
     diff, and enforcing human gates before any external write.
 
 ## Prepared Prompt Shape
@@ -91,6 +105,12 @@ Verification:
 - `./scripts/validate-repo.sh`
 - `git diff --check`
 
+Worktree environment:
+- Use `./scripts/project-python` for Python dependency checks, scripts, evals,
+  and tests.
+- Report verification blocked if it cannot select `.python-version`; do not use
+  bare system Python or install into a different interpreter.
+
 Contract evidence to record before any Desktop thread tool call:
 - Runtime thread tool or API contract name, such as `create_thread`, `fork_thread`, `send_message_to_thread`, or the documented equivalent.
 - Underlying API or tool contract version when exposed.
@@ -120,13 +140,17 @@ Desktop evidence:
 - Underlying contract version: version unavailable.
 - Capability source: active tool list in the current runtime.
 - Request/response compatibility: prompt and target are required; project
-  targets use projectId plus local/worktree environment, while title, model,
-  thinking, and an explicitly requested worktree startingState are optional.
+  targets use projectId plus local/worktree environment. Title, model,
+  thinking, and an explicitly requested worktree startingState are callable
+  options; this adapter supplies a non-empty title on every create.
   Ready creation returns threadId plus hostId; queued worktree setup returns
   clientThreadId, which is not a usable threadId. Preserve the runtime-provided
   success or error result because no stable structured envelope is exposed here.
 - Wrapper/API mapping: no wrapper or adapter implementation; desktop-thread-delegation workflow at current repo revision -> create_thread version unavailable.
 - Last verified: YYYY-MM-DD.
+- Project association: selected projectId matched the ready task's observed
+  projectId; title was checked only as display metadata. If not observable,
+  record `unverified` instead.
 - Main thread retained responsibility for review, integration, and human gates.
 ```
 
@@ -169,8 +193,11 @@ UI registration:
 - Queued: ::created-thread{clientThreadId="..."}
 
 Registry observation:
-- Verify the exact ready threadId with list_threads, read_thread, or a bounded
-  wait_threads snapshot when supported.
+- Verify the exact ready threadId and, for project-scoped creation, require its
+  observed projectId to match the selected project. Title equality is display
+  evidence only.
+- Resolve queued worktree setup to a ready task before association checking;
+  never use clientThreadId as threadId or create a duplicate while waiting.
 - Preserve and pass the runtime-returned hostId when known, especially for a
   remote task. Cross-host movement uses a separately authorized
   handoff_thread destinationHostId; it is not a fork option.

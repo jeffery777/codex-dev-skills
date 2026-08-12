@@ -32,9 +32,10 @@ Preflight checklist:
 7. Record `last_verified` date and the wrapper version to underlying API or tool contract mapping.
 8. Summarize the prepared prompt, intended thread action, and recipient thread if one exists.
 9. Preserve placement intent: use same-directory fork for same-task
-   continuation, exact-project local creation for a fresh task in the existing
-   checkout, project worktree creation only for intentional isolation, and
-   projectless creation only for non-project work. Do not treat a
+   continuation, exact-project worktree creation by default for a fresh task in
+   a Git project, exact-project local creation for a non-Git project or an
+   explicitly requested saved checkout, and projectless creation only for
+   non-project work. Do not treat a
    no-new-worktree constraint as projectless intent.
 10. State in-scope and out-of-scope files or categories.
 11. Ask for explicit human authorization for the exact thread action.
@@ -55,13 +56,26 @@ Thread action preflight:
 - Wrapper/API mapping: wrapper 0.2.0 -> create_thread version unavailable.
 - Request shape minimum: prompt and target required; project targets use
   projectId plus local/worktree environment; title, model, thinking, and an
-  explicitly requested worktree startingState are optional.
-- Placement intent: fresh task in the exact saved project checkout, so use
-  project local rather than projectless or a new worktree. For same-task
-  continuation, use fork_thread same-directory instead.
+  explicitly requested worktree startingState are callable options. The
+  adapter supplies title on every create.
+- Adapter title: concise non-empty safe title using only a maintainer-approved
+  nonsensitive task identifier plus a generic objective label. Never copy
+  prompt text, credentials, customer or incident details, repository paths, or
+  untrusted registry text; use `Project task` when uncertain and preview the
+  exact title before the call. It is display metadata, not project identity.
+- Placement intent: fresh task in a Git project, so use project worktree by
+  default. Use project local only for an explicitly requested saved checkout;
+  for same-task continuation, use fork_thread same-directory instead.
+- Worktree environment: use the repository's tracked setup and interpreter
+  resolver; in this repository run `./scripts/project-python`, never a
+  mismatched bare system Python.
 - Response shape minimum: threadId plus hostId for ready creation, or
   clientThreadId for queued worktree setup. Preserve runtime-provided errors
   because the callable does not expose a stable structured error union.
+- Association verification: require the ready task's observed projectId to
+  match the selected projectId; title equality alone is insufficient. Treat a
+  delayed or unavailable association as unverified and do not create a
+  duplicate.
 - Last verified: YYYY-MM-DD.
 - Human authorization: maintainer explicitly authorized creating this thread only.
 - External writes still blocked: commit, push, PR creation, platform comments, review submissions, merge, deploy, destructive actions.
@@ -304,6 +318,7 @@ Before a future `create_thread` runtime call, a non-state-changing preflight hel
         "tool_or_api": "create_thread",
         "classification": "state-changing",
         "required_request_fields": ["prompt", "target"],
+        "adapter_required_fields": ["title"],
         "optional_request_fields": [
           "title",
           "model",
@@ -427,19 +442,19 @@ The preflight result may be `ready`, `fallback`, or `stopped`. `ready` means onl
 When maintainers want one reusable evidence fixture instead of running each helper separately, use the pipeline helper. It runs discovery, contract comparison, and create/read preflight in order from caller-supplied JSON only.
 
 ```bash
-python3 scripts/desktop_runtime_evidence_pipeline.py --example --pretty
+./scripts/project-python scripts/desktop_runtime_evidence_pipeline.py --example --pretty
 ```
 
 ```bash
-python3 scripts/desktop_runtime_evidence_pipeline.py --example --target-action read-thread --pretty
+./scripts/project-python scripts/desktop_runtime_evidence_pipeline.py --example --target-action read-thread --pretty
 ```
 
 ```bash
-python3 scripts/desktop_runtime_evidence_pipeline.py --pretty < desktop-runtime-evidence-pipeline.json
+./scripts/project-python scripts/desktop_runtime_evidence_pipeline.py --pretty < desktop-runtime-evidence-pipeline.json
 ```
 
 ```bash
-python3 scripts/desktop_runtime_evidence_pipeline.py --target-action create-thread --pretty < desktop-runtime-evidence-pipeline.json
+./scripts/project-python scripts/desktop_runtime_evidence_pipeline.py --target-action create-thread --pretty < desktop-runtime-evidence-pipeline.json
 ```
 
 The pipeline input keeps the same boundaries as the individual helpers:
