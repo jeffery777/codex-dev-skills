@@ -157,8 +157,9 @@ V3-B, Agent Memory, or later automation.
 
 **Target release:** TBD / human decision
 
-**Status:** Planned only. Issue #135 defines the re-entry boundary; it does not
-implement or qualify V3-B.
+**Status:** Issue #141 implements the `loop-candidate-evaluation/v0` candidate
+on an isolated Issue branch. Qualification, exact-head hosted CI, draft-PR
+review, and any future release decision remain separate gates.
 
 **Entry criteria:** v0.12.0 release closure is verified from current GitHub
 state; a new V3-B Issue/spec owns the exact execution, sandbox, authority,
@@ -167,7 +168,7 @@ public-contract ambiguity remains.
 
 **Deliverables:**
 
-- isolated baseline and candidate execution;
+- isolated baseline and candidate synthetic-observation evaluation;
 - same-policy comparison;
 - environment-difference handling;
 - independent verification result;
@@ -175,6 +176,11 @@ public-contract ambiguity remains.
 - promotion packet preparation without promotion;
 - an optional provider-neutral context/evaluation seam that accepts only
   explicit V2b-validated advisory context and keeps memory-off as the default.
+
+The delivered execution model is intentionally closed and synthetic: it
+evaluates bounded observation documents and never runs arbitrary candidate
+code or commands. Accepted optional context is labeled `synthetic-advisory`;
+`memory-on` is reserved for a separately qualified M1 adapter.
 
 The V3-B memory seam records the exact mode and context/receipt digests while
 keeping proposal, evidence, execution policy, environment class, authority
@@ -186,10 +192,14 @@ memory-off.
 automatic recall/write, M1/M2 implementation, V2b weakening, resident hooks or
 services, promotion, merge, release, and deployment.
 
-**Exit criteria:** isolated execution, comparison, environment handling,
+**Exit criteria:** isolated synthetic-observation evaluation, comparison, environment handling,
 independent verification, regressions, authority/privacy cases, deterministic
 manual/CI behavior, and the promotion-packet boundary pass on an exact reviewed
 head. V3-B output cannot promote itself.
+
+**Release interlock:** target release is TBD / human decision. V3-B branch,
+tests, evals, reviews, draft PR, and CI do not authorize merge, release,
+deployment, activation, Memory M1, or V3-C.
 
 ## Memory Track — M0, M1, And M2
 

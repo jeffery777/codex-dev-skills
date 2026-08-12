@@ -141,6 +141,8 @@ class AgentProfileInstallerTests(unittest.TestCase):
             "scripts/improvementctl.py",
             "scripts/improvement_proposal.py",
             "scripts/proposalctl.py",
+            "scripts/candidate_evaluation.py",
+            "scripts/evaluationctl.py",
             "scripts/memory_contract.py",
             "scripts/memoryctl.py",
             "scripts/profile_preflight.py",
@@ -149,6 +151,7 @@ class AgentProfileInstallerTests(unittest.TestCase):
             "references/operational-evidence-v0.md",
             "references/improvement-lineage-v0.md",
             "references/improvement-proposal-v0.md",
+            "references/candidate-evaluation-v0.md",
             "references/obsidian-reference-profile-v0.json",
         ):
             self.assertTrue((installed_skill / relative).is_file(), relative)

@@ -115,6 +115,21 @@ public Git. PlugMem, Mem0, and all external-memory backends remain excluded
 and disabled for V3-A. See
 `references/improvement-proposal-v0.md`.
 
+When a loop uses V3-B `loop-candidate-evaluation/v0`, validate the selected
+V3-A proposal against the complete V2d source set and use only
+`scripts/evaluationctl.py` in its closed synthetic manual/CI envelope. Require
+the fixed policy, exact public environment equivalence, deterministic replay
+by the structurally independent verifier role, exact false-authority/action
+fields, and a pending independent human/platform promotion gate. `memory-off`
+is the default complete path. Optional context must pass the existing V2b
+production retrieval decision and is retained only as digest-bound
+`synthetic-advisory` data; it cannot change policy, outcome, authority,
+completion, or promotion. Never run arbitrary candidate code or apply, approve,
+activate, promote, commit, push, create a PR, merge, release, or deploy from an
+evaluation result or promotion packet. SQLite/FTS5, Memory M1/M2, PlugMem,
+Mem0, providers, MCP, automatic recall/write, and V3-C remain excluded. See
+`references/candidate-evaluation-v0.md`.
+
 ### Protected Event Authorization
 
 Treat `task_acceptance`, `claim_revocation`, `gate_satisfaction`, and

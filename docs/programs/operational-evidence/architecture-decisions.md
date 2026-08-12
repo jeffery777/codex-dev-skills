@@ -178,3 +178,28 @@ remains context/audit evidence and cannot prove completion, satisfy a gate, or
 authorize promotion. PlugMem, Mem0, automatic recall/write, network service,
 MCP provider, and resident automation remain excluded until separately
 reviewed.
+
+## OE-015 — Add V3-B As A Closed Synthetic Evaluation Family
+
+**Decision:** Keep V2d-A, V2d-B, V3-A, and V2b unchanged. Add
+`loop-candidate-evaluation/v0` downstream of validated V3-A proposals. The
+manual/CI evaluator accepts only bounded synthetic observations, one fixed
+acceptance policy, exact public environment equivalence, deterministic replay,
+and a promotion packet whose human/platform gate remains pending.
+
+The provider-neutral context seam defaults to memory-off and calls the existing
+V2b production retrieval decision. Only a complete accepted inline record set
+becomes digest-only `synthetic-advisory` data. Missing, partial, stale,
+untrusted, sensitive, conflicting, unsupported, or invalid context falls back
+to memory-off without changing evaluation semantics.
+
+**Rationale:** Arbitrary candidate execution, caller-defined thresholds, or
+backend-dependent context would expand sandbox, authority, privacy, and
+reproducibility risk. A closed contract can qualify deterministic comparison
+and lineage composition without granting runtime or promotion authority.
+
+**Consequence:** The packet cannot promote itself and cannot apply, approve,
+commit, push, create a PR, merge, release, deploy, activate, or write
+externally. SQLite/FTS5, Memory M1/M2, PlugMem, Mem0, providers, MCP,
+automatic recall/write, and V3-C remain behind separate human decisions.
+Target release is TBD / human decision.
