@@ -149,6 +149,30 @@ When a change includes V3-A evidence-to-proposal, also require evidence that:
 - PlugMem, Mem0, external-memory adapters, V3-B execution, and V3-C automation
   are absent.
 
+When a change includes V3-B isolated candidate evaluation, also require
+evidence that:
+
+- every result regenerates the selected V3-A proposal from complete validated
+  V2d-A/B lineage;
+- baseline/candidate observations use one fixed policy, identical scenarios,
+  exact public environment equivalence, and bounded duration/resources;
+- timeout, resource-bound, interruption, uncertainty, invalid baseline,
+  mismatch, regression, and verifier failure cannot qualify;
+- manual/CI and input-permutation replay produce identical canonical results;
+- memory-off is complete by default and missing, partial, stale, untrusted,
+  sensitive, conflicting, unsupported, or invalid context fails closed;
+- optional accepted context comes only from the existing V2b production
+  decision and cannot change policy, outcome, authority, completion, or
+  promotion;
+- packet-only and false-authority/action fields remain exact and the independent
+  human/platform gate remains required and pending;
+- the CLI performs no arbitrary candidate execution, apply, Git, network,
+  platform, artifact dereference, external write, approval, or promotion;
+- SQLite/FTS5, Memory M1/M2, PlugMem, Mem0, providers/MCP, automatic
+  recall/write, V3-C, merge, release, deploy, and activation are absent;
+- target release remains TBD / human decision unless a separate accepted
+  source-of-truth decision changes it.
+
 ## Suggested Verification
 
 Run the repository hygiene check:
@@ -182,6 +206,7 @@ PYTHONDONTWRITEBYTECODE=1 ./scripts/project-python -m unittest \
 ./scripts/project-python scripts/eval-operational-evidence.py
 ./scripts/project-python scripts/eval-improvement-lineage.py
 ./scripts/project-python scripts/eval-improvement-proposal.py
+./scripts/project-python scripts/eval-candidate-evaluation.py
 ./scripts/validate-repo.sh
 git diff --check
 ```

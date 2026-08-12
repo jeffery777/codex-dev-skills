@@ -22,6 +22,9 @@
 - Issue #135 owns a docs-only V3-B re-entry and Agent Memory roadmap. It does
   not perform release closure, implement V3-B, complete M0 qualification, or
   implement/enable M1, M2, or V3-C.
+- Issue #141 owns the bounded V3-B `loop-candidate-evaluation/v0` candidate.
+  Its memory-off default, optional V2b-validated advisory context, deterministic
+  verifier, and non-promotional packet do not implement or enable M1 or V3-C.
 
 ## Delivered V2d-A Boundary
 
@@ -69,18 +72,18 @@ independent promotion gate, synthetic adversarial evals, and a stdout-only CLI.
 It excludes external memory, candidate execution, runtime automation, and
 promotion.
 
-## Next Bounded Stage
+## Current Bounded Stage
 
-With v0.12.0 separately tagged and released through Issue #137, reassess V3-B
-isolated baseline/candidate execution as a new Issue/spec using the Issue #135
-brief.
+Issue #141 implements and qualifies V3-B isolated baseline/candidate synthetic
+evaluation using the Issue #135 brief and a fresh accepted-main branch.
 Do not infer V3-B authority from V3-A output. Require same-policy comparison,
-independent execution verification, privacy/security review, and a promotion
+independent deterministic replay verification, privacy/security review, and a promotion
 packet that still cannot promote itself. V3-B may add only a provider-neutral,
 optional V2b-validated context seam with memory-off as the default; it must not
 embed SQLite or implement M1.
 
-After V3-B evidence passes, a separate Issue/spec/ADR/security review may
+After exact-head V3-B evidence passes, a separate Issue/spec/ADR/security
+review may
 qualify the default-disabled local/manual/CI-only SQLite/FTS5 M1 reference
 adapter. M0 readiness defines the gap matrix, provider-neutral protocol,
 operation authority, atomic execution receipt, lifecycle/concurrency, threat
@@ -89,9 +92,9 @@ M2 requires successful M1 qualification. V3-C automatic recall/write,
 persistent service, scheduler/controller, queue, or cross-host automation
 requires another human gate. Later release targets remain TBD.
 
-## New Task Bootstrap Checklist
+## Next Task Bootstrap Checklist
 
-A future Codex task should:
+A future M1-readiness task should:
 
 1. Read `AGENTS.md`, `README.md`, `docs/roadmap.md`, this program directory,
    and `docs/operational-evidence-contract.md`.
@@ -99,11 +102,12 @@ A future Codex task should:
    tag/Release state from current platform evidence.
 3. Inspect current branch/status/upstream/diff, tags/releases, open issues, and
    the installed GitNexus index freshness.
-4. Search GitHub for an existing V3-B issue or collision. If none exists,
-   stop and obtain exact external-write authorization before creating one.
-5. Reassess V3-A evidence and V3-B authority/privacy boundaries instead of
-   trusting a chat summary or proposal score.
-6. Keep V3-A proposal output separate from V3-B execution and V3-C services.
+4. Verify Issue #141 and its exact-head draft-PR/CI/review evidence rather than
+   trusting a chat summary, packet, or proposal score.
+5. Treat memory-off as the accepted V3-B default and require a new
+   Issue/spec/ADR/security decision before any M1 implementation.
+6. Keep V3-A proposal, V3-B evaluation, M1 backend qualification, and V3-C
+   services separate.
 7. Run GitNexus impact analysis before implementation and `detect_changes`
    before commit.
 8. Stop at public-contract, privacy, authority, external-write, merge, tag, and
@@ -115,7 +119,9 @@ A future Codex task should:
 
 - Prerequisite slice: V2d-A Operational Evidence V0 core in v0.10.0.
 - Delivered public slice: V3-A manual/CI evidence-to-proposal contract.
-- Next stage: separately gated V3-B isolated candidate evaluation.
+- Current candidate: Issue #141 V3-B isolated candidate evaluation.
+- Next stage after accepted V3-B evidence: separately gated M1 readiness and
+  thin reference-backend qualification; this document does not authorize it.
 - Release interlock: Issue #137 separately closes the v0.12.0 annotated-tag and
   GitHub Release gate; future work must still verify current platform evidence.
 - Memory role: M0 readiness design first; M1 only after V3-B evidence; M2 only
@@ -125,5 +131,6 @@ A future Codex task should:
 - Projection role: tool-neutral first; Obsidian remains an optional reference.
 - Graph role: typed projection only; no graph runtime or database.
 - Automation role: manual/CI first; controller deferred.
-- Candidate role: V3-A remains proposal-only; V3-B must independently execute
-  and verify before a separate human/platform promotion decision.
+- Candidate role: V3-A remains proposal-only; V3-B must independently evaluate
+  synthetic observations and replay-verify before a separate human/platform
+  promotion decision.

@@ -1,0 +1,80 @@
+# Immutable bootstrap snapshot bound by the spec/plan gate. Final delivery
+# evidence lives in receipts and exact Git/GitHub state; this file is not a live
+# continuation status view after sequence 0.
+ledger:
+  schema_version: 2
+  objective_id: issue-141
+  objective: Deliver V3-B isolated candidate evaluation through exact-head draft-PR readiness without promotion, merge, release, deployment, or activation.
+  loop_spec: docs/loops/issue-141/loop-spec.md
+  task_manifest: docs/loops/issue-141/task-manifest.yaml
+  source_revision:
+    branch: codex/141-v3b-isolated-evaluation
+    head_sha: b4671f5ea4188f64e75318fc99febf1711098cc0
+    spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+    task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+    previous_ledger_sha256: ""
+    updated_at: "2026-08-12T03:30:00Z"
+  state_revision:
+    sequence: 0
+    last_event_hash: ""
+
+status_model:
+  task_allowed: [planned, ready, in_progress, blocked, reviewing, done, accepted, cancelled]
+  claim_allowed: [active, released, expired, revoked]
+  done_means: Task DoD, verification, review, and required gate evidence are satisfied.
+  accepted_means: A bound receipt was applied through an independently authorized live write; consumers revalidate current external state before publication.
+
+current_loop:
+  lifecycle: active
+  classification: bounded-delivery-objective
+  execution_mode: current-session
+  selected_task_id: P0-contract
+  next_decision: continue
+  decision_reason: Bootstrap snapshot only; consult current receipts and exact Git/GitHub state for post-planning progress.
+
+tasks:
+  - id: P0-contract
+    status: ready
+    evidence: {}
+    blocker: {}
+    residual_risk: []
+  - id: P1-evaluation-core
+    status: planned
+    evidence: {}
+    blocker: {}
+    residual_risk: []
+  - id: P2-cli
+    status: planned
+    evidence: {}
+    blocker: {}
+    residual_risk: []
+  - id: P3-fixtures-eval
+    status: planned
+    evidence: {}
+    blocker: {}
+    residual_risk: []
+  - id: P4-docs-package
+    status: planned
+    evidence: {}
+    blocker: {}
+    residual_risk: []
+  - id: P5-readiness
+    status: planned
+    evidence: {}
+    blocker: {}
+    residual_risk: []
+
+claims: []
+events: []
+human_gates: []
+
+external_memory:
+  contract_version: loop-memory/v1
+  mode: disabled
+  backend_status: disabled
+  adapter: null
+  receipt_digests: []
+  authority: advisory-only
+  used_as_authorization: false
+  used_as_completion_evidence: false
+  notes: Memory-off is the complete default. Synthetic V2b-validated advisory context cannot alter policy, authority, completion, verification, or promotion.

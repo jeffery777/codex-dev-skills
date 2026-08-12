@@ -1,0 +1,85 @@
+{
+  "authority_invariants": {
+    "external_write_authorized": false,
+    "promotion_authorized": false,
+    "used_as_authorization": false,
+    "used_as_completion_evidence": false
+  },
+  "baseline": {
+    "authority_failures": 0,
+    "authority_invariants": {
+      "external_write_authorized": false,
+      "promotion_authorized": false,
+      "used_as_authorization": false,
+      "used_as_completion_evidence": false
+    },
+    "decision_failures": 0,
+    "determinism_failures": 0,
+    "duration_ms": 100,
+    "environment_fingerprint": {
+      "architecture": "x86_64",
+      "execution_mode": "ci",
+      "os_family": "linux",
+      "prohibited_fields_present": false,
+      "python": {"major": 3, "minor": 12},
+      "redaction_applied": true,
+      "runtime_surface": "ci",
+      "sandbox_mode": "workspace-write"
+    },
+    "evidence_set_digest": "f5d56cf7d9981061194635b60524f487f94c0e83a644754b2768d3e179aab8bf",
+    "observation_digest": "ef8939b875781201df47da08fde4adae99a5f610cb6e6809f7f3237a73e3525b",
+    "outcome": "passed",
+    "passed_scenarios": 4,
+    "privacy_failures": 0,
+    "recovery_failures": 0,
+    "resource_units": 100,
+    "scenario_count": 4,
+    "scenario_set_digest": "7777777777777777777777777777777777777777777777777777777777777777",
+    "snapshot_role": "baseline",
+    "source_revision": {
+      "commit_sha": "0000000000000000000000000000000000000002",
+      "repository_id": "github.com.jeffery777.codex-dev-skills"
+    }
+  },
+  "candidate": {
+    "authority_failures": 0,
+    "authority_invariants": {
+      "external_write_authorized": false,
+      "promotion_authorized": false,
+      "used_as_authorization": false,
+      "used_as_completion_evidence": false
+    },
+    "decision_failures": 0,
+    "determinism_failures": 0,
+    "duration_ms": 100,
+    "environment_fingerprint": {
+      "architecture": "x86_64",
+      "execution_mode": "ci",
+      "os_family": "linux",
+      "prohibited_fields_present": false,
+      "python": {"major": 3, "minor": 12},
+      "redaction_applied": true,
+      "runtime_surface": "ci",
+      "sandbox_mode": "workspace-write"
+    },
+    "evidence_set_digest": "d01a0863e7ec9d22d181e34f591114d3a56b611acd2cc652370b64efbb58faa1",
+    "observation_digest": "f9e7524a31b209d0d17d1556b7634cb9a440d4874c9407c0a136ededc73d1685",
+    "outcome": "passed",
+    "passed_scenarios": 4,
+    "privacy_failures": 0,
+    "recovery_failures": 0,
+    "resource_units": 100,
+    "scenario_count": 4,
+    "scenario_set_digest": "7777777777777777777777777777777777777777777777777777777777777777",
+    "snapshot_role": "candidate",
+    "source_revision": {
+      "commit_sha": "0000000000000000000000000000000000000003",
+      "repository_id": "github.com.jeffery777.codex-dev-skills"
+    }
+  },
+  "contract_version": "loop-candidate-evaluation/v0",
+  "evaluation_input_digest": "e18f605cb40de9c976d780a3e9ca49cf1acbfac5b9bd014f32b8cb2991c74fea",
+  "kind": "evaluation-input",
+  "proposal_id": "proposal:972f556c7b00ee214f1349cb4185132061de4d99072b5bcbc9de923f0aac802e",
+  "scenario_set_digest": "7777777777777777777777777777777777777777777777777777777777777777"
+}

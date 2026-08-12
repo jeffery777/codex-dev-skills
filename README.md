@@ -567,6 +567,33 @@ suggestions. The CLI cannot apply, commit, push, create a PR, approve, activate,
 promote, merge, release, deploy, or write an external system. See the
 [improvement proposal contract](docs/improvement-proposal-contract.md).
 
+V3-B adds isolated candidate evaluation downstream of unchanged V2d-A/B and
+V3-A. Target release remains **TBD / human decision**:
+
+```bash
+./scripts/project-python skills/loop-engineering/scripts/evaluationctl.py --help
+./scripts/project-python skills/loop-engineering/scripts/evaluationctl.py evaluate \
+  <evaluation-input.json> --proposal-set <proposal-set.json> \
+  --record <record.json> --evidence <v2d-a-document.json>
+./scripts/project-python skills/loop-engineering/scripts/evaluationctl.py verify \
+  <evaluation-result.json> <evaluation-input.json> \
+  --proposal-set <proposal-set.json> --record <record.json> \
+  --evidence <v2d-a-document.json>
+./scripts/project-python scripts/eval-candidate-evaluation.py
+```
+
+The closed evaluator compares bounded synthetic observations under one fixed
+policy and exact public environment equivalence; it never runs arbitrary
+candidate code. Independent replay must match exactly. A promotion packet can
+only report `qualified-awaiting-human-decision` or `not-qualified` and cannot
+apply, approve, commit, push, create a PR, promote, merge, release, deploy,
+activate, or write externally. `memory-off` is the default complete path.
+Optional V2b-validated `synthetic-advisory` context is digest-bound data only
+and cannot change policy, completion, authority, or promotion. No Memory M1/M2
+backend, SQLite/FTS5, PlugMem, Mem0, provider/MCP integration, or V3-C is
+included. See the
+[candidate evaluation contract](docs/candidate-evaluation-contract.md).
+
 V2c-A adds a default-disabled, version-gated GitNexus driver boundary. The live
 macOS qualification covers GitNexus `1.6.9`, a runtime-produced qualification
 fingerprint, and metadata schema `5`. Human-oriented `status` and `list` output is never parsed.

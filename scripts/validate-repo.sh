@@ -297,6 +297,16 @@ check_improvement_proposal_contract() {
   ok "proposal-only evidence-to-proposal contracts pass"
 }
 
+check_candidate_evaluation_contract() {
+  "$PROJECT_PYTHON" scripts/eval-candidate-evaluation.py >"$TMP_DIR/candidate-evaluation-eval.json"
+  "$PROJECT_PYTHON" -m unittest \
+    tests.test_candidate_evaluation \
+    tests.test_evaluationctl \
+    tests.test_eval_candidate_evaluation \
+    tests.test_candidate_evaluation_contract_docs >/dev/null
+  ok "isolated candidate evaluation, replay, context, packet, and eval contracts pass"
+}
+
 check_loop_contract() {
   "$PROJECT_PYTHON" -m unittest tests.test_loop_engineering_core tests.test_loopctl >/dev/null
   ok "loop engineering event, transition, migration, and CLI contracts pass"
@@ -341,6 +351,7 @@ main() {
   check_operational_evidence_contract
   check_improvement_lineage_contract
   check_improvement_proposal_contract
+  check_candidate_evaluation_contract
 }
 
 main "$@"

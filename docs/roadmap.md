@@ -150,6 +150,14 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   memory-off/on qualification requirements without adding a backend. M2 may
   consider a second provider or MCP adapter only after M1 passes. V3-B, M1,
   M2, and V3-C release targets are TBD; PlugMem and Mem0 remain excluded.
+- Issue #141 implements the bounded V3-B isolated candidate-evaluation
+  candidate as `loop-candidate-evaluation/v0`. It uses closed synthetic
+  manual/CI observations, one fixed policy, exact public environment matching,
+  deterministic independent replay, memory-off by default, and an optional
+  digest-only V2b-validated advisory-context seam. Its packet cannot promote,
+  merge, release, deploy, activate, or perform an external write. Target
+  release remains TBD / human decision; Memory M1/M2 and V3-C remain separate
+  future human gates.
 
 ## Non-Goals
 

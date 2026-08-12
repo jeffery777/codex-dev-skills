@@ -3,7 +3,8 @@
 Status: V2d-A is released in v0.10.0; V2d-B is released in v0.11.0; V3-A
 proposal-only evidence-to-proposal is released in v0.12.0 through Issue #133 /
 PR #134 and the Issue #137 release closure. Issue #135 defines the docs-only
-V3-B and Agent Memory roadmap without implementing it.
+roadmap. Issue #141 implements the V3-B isolated candidate evaluation
+candidate; its target release remains TBD / human decision.
 
 ## Purpose
 
@@ -16,9 +17,11 @@ The released development feature baseline is:
 
 > **Loop Engineering V3-A: Manual/CI Evidence-To-Proposal**
 
-V3-A is limited to deterministic proposal generation. V3-B candidate execution
-and V3-C automation remain deferred. Agent Memory remains disabled and has no
-backend; Issue #135 defines M0 readiness and the later M1/M2 gates only.
+V3-A is limited to deterministic proposal generation. V3-B adds only a closed
+synthetic isolated candidate evaluator, deterministic replay, and a packet
+that cannot promote itself. V3-C automation remains deferred. Agent Memory
+remains disabled and has no backend; Issue #135 defines M0 readiness and the
+later M1/M2 gates only.
 
 ## Current Baseline
 
@@ -40,6 +43,10 @@ backend; Issue #135 defines M0 readiness and the later M1/M2 gates only.
   deterministic integer scoring, stable ties and duplicate suppression,
   complete validated lineage, bounded hypothesis/output enums, and a
   stdout-only manual/CI CLI. It cannot execute or promote a candidate.
+- V3-B provides strict `loop-candidate-evaluation/v0` input, result,
+  independent-verification, and promotion-packet kinds. It compares bounded
+  synthetic observations under one fixed policy, defaults to memory-off, and
+  cannot run candidate code, perform an action, or promote a candidate.
 - Issue #109 adds an exact index-only GitNexus repository default and
   trusted-base, read-only ready-PR Issue-linkage guardrail. These controls are
   repository hygiene and traceability evidence, not completion or merge
@@ -113,6 +120,9 @@ entry/exit criteria.
 - [../../improvement-proposal-contract.md](../../improvement-proposal-contract.md)
   — implemented V3-A scoring, dedupe, lineage, proposal-only, CLI, privacy,
   and verification contract.
+- [../../candidate-evaluation-contract.md](../../candidate-evaluation-contract.md)
+  — V3-B isolated synthetic evaluation, deterministic replay,
+  V2b-validated advisory-context seam, and permanently non-promotional packet.
 - [../../loops/issue-135/roadmap-spec.md](../../loops/issue-135/roadmap-spec.md)
   — docs-only V3-B re-entry and M0/M1/M2 Agent Memory roadmap, gap matrix,
   threat model, evaluation seam, and next Issue brief.
