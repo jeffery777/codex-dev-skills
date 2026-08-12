@@ -1,73 +1,1185 @@
-# Immutable bootstrap snapshot bound by the spec/plan gate. Final delivery
-# evidence lives in receipts and exact Git/GitHub state; this file is not a live
-# continuation status view after sequence 0.
 ledger:
   schema_version: 2
   objective_id: issue-141
-  objective: Deliver V3-B isolated candidate evaluation through exact-head draft-PR readiness without promotion, merge, release, deployment, or activation.
+  objective: Deliver V3-B isolated candidate evaluation through exact-head draft-PR
+    readiness without promotion, merge, release, deployment, or activation.
   loop_spec: docs/loops/issue-141/loop-spec.md
   task_manifest: docs/loops/issue-141/task-manifest.yaml
   source_revision:
     branch: codex/141-v3b-isolated-evaluation
-    head_sha: b4671f5ea4188f64e75318fc99febf1711098cc0
+    head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
     spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
     task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
-    previous_ledger_sha256: ""
-    updated_at: "2026-08-12T03:30:00Z"
+    previous_ledger_sha256: 161048a38c531a6991a45787f45bd3a9499541fec8a480ddc40221b72a65b33a
+    updated_at: '2026-08-12T05:36:38Z'
   state_revision:
-    sequence: 0
-    last_event_hash: ""
-
+    sequence: 38
+    last_event_hash: ae79bf1f8b0d0895d3aa5754be9ce9dd3dc36a4a39a1bc7ea745ca8e437be477
 status_model:
-  task_allowed: [planned, ready, in_progress, blocked, reviewing, done, accepted, cancelled]
-  claim_allowed: [active, released, expired, revoked]
+  task_allowed:
+  - planned
+  - ready
+  - in_progress
+  - blocked
+  - reviewing
+  - done
+  - accepted
+  - cancelled
+  claim_allowed:
+  - active
+  - released
+  - expired
+  - revoked
   done_means: Task DoD, verification, review, and required gate evidence are satisfied.
-  accepted_means: A bound receipt was applied through an independently authorized live write; consumers revalidate current external state before publication.
-
+  accepted_means: A bound receipt was applied through an independently authorized
+    live write; consumers revalidate current external state before publication.
 current_loop:
-  lifecycle: active
-  classification: bounded-delivery-objective
+  lifecycle: complete
+  classification: complete
   execution_mode: current-session
-  selected_task_id: P0-contract
-  next_decision: continue
-  decision_reason: Bootstrap snapshot only; consult current receipts and exact Git/GitHub state for post-planning progress.
-
+  selected_task_id: ''
+  next_decision: complete
+  decision_reason: All local scope, verification, reviews, draft-PR publication, and
+    terminal evidence are complete; hosted exact-head CI remains platform acceptance
+    evidence. Ready transition, merge, release, deploy, activation, and promotion
+    remain separate human gates.
 tasks:
-  - id: P0-contract
-    status: ready
+- id: P0-contract
+  status: done
+  evidence:
+    acceptance:
+      artifact: ''
+      status: not_required
+    human_gate:
+      status: not_required
+    review:
+      artifacts:
+      - docs/loops/issue-141/receipts/spec-plan-docs-review-gate.md
+      mode: docs-review
+      status: passed
+    verification:
+      artifacts:
+      - docs/loops/issue-141/receipts/verification-report.md
+      status: passed
+  blocker: {}
+  residual_risk: []
+- id: P1-evaluation-core
+  status: done
+  evidence:
+    acceptance:
+      artifact: ''
+      status: not_required
+    human_gate:
+      status: not_required
+    review:
+      artifacts:
+      - docs/loops/issue-141/receipts/deep-code-review-final.md
+      mode: code-review-deep
+      status: passed
+    verification:
+      artifacts:
+      - docs/loops/issue-141/receipts/verification-report.md
+      status: passed
+  blocker: {}
+  residual_risk: []
+- id: P2-cli
+  status: done
+  evidence:
+    acceptance:
+      artifact: ''
+      status: not_required
+    human_gate:
+      status: not_required
+    review:
+      artifacts:
+      - docs/loops/issue-141/receipts/deep-code-review-final.md
+      mode: code-review-deep
+      status: passed
+    verification:
+      artifacts:
+      - docs/loops/issue-141/receipts/verification-report.md
+      status: passed
+  blocker: {}
+  residual_risk: []
+- id: P3-fixtures-eval
+  status: done
+  evidence:
+    acceptance:
+      artifact: ''
+      status: not_required
+    human_gate:
+      status: not_required
+    review:
+      artifacts:
+      - docs/loops/issue-141/receipts/deep-code-review-final.md
+      - docs/loops/issue-141/receipts/security-privacy-review-final.md
+      mode: code-review-deep
+      status: passed
+    verification:
+      artifacts:
+      - docs/loops/issue-141/receipts/verification-report.md
+      status: passed
+  blocker: {}
+  residual_risk: []
+- id: P4-docs-package
+  status: done
+  evidence:
+    acceptance:
+      artifact: ''
+      status: not_required
+    human_gate:
+      status: not_required
+    review:
+      artifacts:
+      - docs/loops/issue-141/receipts/docs-review-final.md
+      mode: docs-review
+      status: passed
+    verification:
+      artifacts:
+      - docs/loops/issue-141/receipts/verification-report.md
+      status: passed
+  blocker: {}
+  residual_risk: []
+- id: P5-readiness
+  status: done
+  evidence:
+    acceptance:
+      artifact: ''
+      status: not_required
+    human_gate:
+      status: satisfied
+    review:
+      artifacts:
+      - docs/loops/issue-141/receipts/formal-readiness-final.md
+      mode: formal-gate
+      status: passed
+    verification:
+      artifacts:
+      - docs/loops/issue-141/receipts/verification-report.md
+      status: passed
+  blocker: {}
+  residual_risk: []
+claims:
+- claimed_at: '2026-08-12T05:36:01Z'
+  expected_state_revision: 1
+  fencing_token:
+    generation: 1
+    nonce: issue-141-P0-contract-current-session
+  lease_expires_at: '2026-08-12T07:36:00Z'
+  owner:
+    id: codex-root
+    type: current_session
+  source_revision:
+    branch: codex/141-v3b-isolated-evaluation
+    head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+    spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+    task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+    previous_ledger_sha256: 7432022a8a0392bf0033f73eeb6b0ddcb54537c1fd64dd12da46305943cf1e26
+    updated_at: '2026-08-12T05:36:01Z'
+  status: released
+  task_id: P0-contract
+- claimed_at: '2026-08-12T05:36:07Z'
+  expected_state_revision: 7
+  fencing_token:
+    generation: 1
+    nonce: issue-141-P1-evaluation-core-current-session
+  lease_expires_at: '2026-08-12T07:36:00Z'
+  owner:
+    id: codex-root
+    type: current_session
+  source_revision:
+    branch: codex/141-v3b-isolated-evaluation
+    head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+    spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+    task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+    previous_ledger_sha256: c9edaa921d380a92cc93f0ddd20a444a3e57b45c28f73e13ace89c98ddc71293
+    updated_at: '2026-08-12T05:36:07Z'
+  status: released
+  task_id: P1-evaluation-core
+- claimed_at: '2026-08-12T05:36:13Z'
+  expected_state_revision: 13
+  fencing_token:
+    generation: 1
+    nonce: issue-141-P2-cli-current-session
+  lease_expires_at: '2026-08-12T07:36:00Z'
+  owner:
+    id: codex-root
+    type: current_session
+  source_revision:
+    branch: codex/141-v3b-isolated-evaluation
+    head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+    spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+    task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+    previous_ledger_sha256: 4635f51cdb4a42b2b092c8da6938829281877c9eaf526e1793a5bd573640701e
+    updated_at: '2026-08-12T05:36:13Z'
+  status: released
+  task_id: P2-cli
+- claimed_at: '2026-08-12T05:36:19Z'
+  expected_state_revision: 19
+  fencing_token:
+    generation: 1
+    nonce: issue-141-P3-fixtures-eval-current-session
+  lease_expires_at: '2026-08-12T07:36:00Z'
+  owner:
+    id: codex-root
+    type: current_session
+  source_revision:
+    branch: codex/141-v3b-isolated-evaluation
+    head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+    spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+    task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+    previous_ledger_sha256: a4f8e97a6e027c67bf0a76ec95dfb460068295c904907a4274ecf02f05c80413
+    updated_at: '2026-08-12T05:36:19Z'
+  status: released
+  task_id: P3-fixtures-eval
+- claimed_at: '2026-08-12T05:36:25Z'
+  expected_state_revision: 25
+  fencing_token:
+    generation: 1
+    nonce: issue-141-P4-docs-package-current-session
+  lease_expires_at: '2026-08-12T07:36:00Z'
+  owner:
+    id: codex-root
+    type: current_session
+  source_revision:
+    branch: codex/141-v3b-isolated-evaluation
+    head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+    spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+    task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+    previous_ledger_sha256: eb93e9ee2a58998229fdb814acf4ff2cf867b1f57d8d09596c9698b416a82bdb
+    updated_at: '2026-08-12T05:36:25Z'
+  status: released
+  task_id: P4-docs-package
+- claimed_at: '2026-08-12T05:36:31Z'
+  expected_state_revision: 31
+  fencing_token:
+    generation: 1
+    nonce: issue-141-P5-readiness-current-session
+  lease_expires_at: '2026-08-12T07:36:00Z'
+  owner:
+    id: codex-root
+    type: current_session
+  source_revision:
+    branch: codex/141-v3b-isolated-evaluation
+    head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+    spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+    task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+    previous_ledger_sha256: 70abe68d2baeabe49994154bb77fac9cf13c4888cdd0f7610875127ba6f36e65
+    updated_at: '2026-08-12T05:36:31Z'
+  status: released
+  task_id: P5-readiness
+events:
+- sequence: 1
+  event_id: issue-141-source-rebound-implementation-commit
+  occurred_at: '2026-08-12T05:36:01Z'
+  actor: codex-root
+  type: source_rebound
+  task_id: ''
+  idempotency_key: issue-141-source-rebound-implementation-commit
+  expected_state_revision: 0
+  previous_event_hash: ''
+  payload:
+    previous_source_revision:
+      branch: codex/141-v3b-isolated-evaluation
+      head_sha: b4671f5ea4188f64e75318fc99febf1711098cc0
+      spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+      task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+    target_source_revision:
+      branch: codex/141-v3b-isolated-evaluation
+      head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+      spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+      task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+    active_claim_task_ids: []
+    expired_claim_dispositions: {}
+    evidence:
+      artifact: docs/loops/issue-141/receipts/source-rebound-authorization.md
+    authorization:
+      action: source_rebound
+      artifact: docs/loops/issue-141/receipts/source-rebound-authorization.md
+      objective_id: issue-141
+      principal:
+        id: delegating-user
+        type: user
+      source_revision_sha256: 16d63f739a50684d367aa6c144fc849f5e3cf750a4349486ab64fbce9f360ae7
+      target_head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+      protected_payload_sha256: e770601f4ad987d88944cbb1f7b372918912ae16bcc9b807431c5e40f4ac4cdb
+  event_hash: f69ec3e64529082db0396c0369e2592809189a23c0a679ff47ad2aa85008af10
+- sequence: 2
+  event_id: issue-141-P0-contract-claim
+  occurred_at: '2026-08-12T05:36:02Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P0-contract
+  idempotency_key: issue-141-P0-contract-claim
+  expected_state_revision: 1
+  previous_event_hash: f69ec3e64529082db0396c0369e2592809189a23c0a679ff47ad2aa85008af10
+  payload:
+    claim:
+      claimed_at: '2026-08-12T05:36:01Z'
+      expected_state_revision: 1
+      fencing_token:
+        generation: 1
+        nonce: issue-141-P0-contract-current-session
+      lease_expires_at: '2026-08-12T07:36:00Z'
+      owner:
+        id: codex-root
+        type: current_session
+      source_revision:
+        branch: codex/141-v3b-isolated-evaluation
+        head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+        spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+        task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+        previous_ledger_sha256: 7432022a8a0392bf0033f73eeb6b0ddcb54537c1fd64dd12da46305943cf1e26
+        updated_at: '2026-08-12T05:36:01Z'
+      status: active
+      task_id: P0-contract
+  event_hash: ff7e56edf22baef12e3ac46be3ce532936c32ac2c7dbe4c8bd82a304c3ae8a09
+- sequence: 3
+  event_id: issue-141-P0-contract-in-progress
+  occurred_at: '2026-08-12T05:36:03Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P0-contract
+  idempotency_key: issue-141-P0-contract-in-progress
+  expected_state_revision: 2
+  previous_event_hash: ff7e56edf22baef12e3ac46be3ce532936c32ac2c7dbe4c8bd82a304c3ae8a09
+  payload:
     evidence: {}
-    blocker: {}
-    residual_risk: []
-  - id: P1-evaluation-core
-    status: planned
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P0-contract-current-session
+    target_status: in_progress
+  event_hash: 8e674ed5c8708ffb408f07c0b562c56d5c899066759fb19030c1a055785bd757
+- sequence: 4
+  event_id: issue-141-P0-contract-reviewing
+  occurred_at: '2026-08-12T05:36:04Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P0-contract
+  idempotency_key: issue-141-P0-contract-reviewing
+  expected_state_revision: 3
+  previous_event_hash: 8e674ed5c8708ffb408f07c0b562c56d5c899066759fb19030c1a055785bd757
+  payload:
+    evidence:
+      review:
+        artifacts: []
+        mode: docs-review
+        status: required
+      verification:
+        artifacts:
+        - docs/loops/issue-141/receipts/verification-report.md
+        status: passed
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P0-contract-current-session
+    target_status: reviewing
+  event_hash: 1539d1de7ba9435d4e0832a353e935be2e1183bb27d659d47ac16a6de78221b9
+- sequence: 5
+  event_id: issue-141-P0-contract-done
+  occurred_at: '2026-08-12T05:36:05Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P0-contract
+  idempotency_key: issue-141-P0-contract-done
+  expected_state_revision: 4
+  previous_event_hash: 1539d1de7ba9435d4e0832a353e935be2e1183bb27d659d47ac16a6de78221b9
+  payload:
+    evidence:
+      acceptance:
+        artifact: ''
+        status: not_required
+      human_gate:
+        status: not_required
+      review:
+        artifacts:
+        - docs/loops/issue-141/receipts/spec-plan-docs-review-gate.md
+        mode: docs-review
+        status: passed
+      verification:
+        artifacts:
+        - docs/loops/issue-141/receipts/verification-report.md
+        status: passed
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P0-contract-current-session
+    target_status: done
+    authorization:
+      action: task_completion
+      artifact: docs/loops/issue-141/receipts/spec-plan-docs-review-gate.md
+      objective_id: issue-141
+      principal:
+        id: delegating-user
+        type: user
+      source_revision_sha256: c321e4d47d10b0f1448c24b3b9f6dd59f22f2e5d973fe4193853a9830211daf8
+      task_id: P0-contract
+      protected_payload_sha256: c57b577ad5b4fa7766a23535ed95312b6580e7fda3380d6d9bd9f7f6551180f5
+  event_hash: 2dc3a7a0d3b50d72a9d6fd46e9c28dbc2d98988c08e87b8624c9a2fd7a80ad1d
+- sequence: 6
+  event_id: issue-141-P0-contract-claim-released
+  occurred_at: '2026-08-12T05:36:06Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P0-contract
+  idempotency_key: issue-141-P0-contract-claim-released
+  expected_state_revision: 5
+  previous_event_hash: 2dc3a7a0d3b50d72a9d6fd46e9c28dbc2d98988c08e87b8624c9a2fd7a80ad1d
+  payload:
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P0-contract-current-session
+  event_hash: 6b920cb6a06711c2f592daa3fa12691313fccb878bbc0cac3be5cd11a68b4f60
+- sequence: 7
+  event_id: issue-141-P1-evaluation-core-ready
+  occurred_at: '2026-08-12T05:36:07Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P1-evaluation-core
+  idempotency_key: issue-141-P1-evaluation-core-ready
+  expected_state_revision: 6
+  previous_event_hash: 6b920cb6a06711c2f592daa3fa12691313fccb878bbc0cac3be5cd11a68b4f60
+  payload:
     evidence: {}
-    blocker: {}
-    residual_risk: []
-  - id: P2-cli
-    status: planned
+    target_status: ready
+  event_hash: 05f3ef314edaa80be5c28e2e00e30fe7a2ad5849ff7aa4f805231be0808cc983
+- sequence: 8
+  event_id: issue-141-P1-evaluation-core-claim
+  occurred_at: '2026-08-12T05:36:08Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P1-evaluation-core
+  idempotency_key: issue-141-P1-evaluation-core-claim
+  expected_state_revision: 7
+  previous_event_hash: 05f3ef314edaa80be5c28e2e00e30fe7a2ad5849ff7aa4f805231be0808cc983
+  payload:
+    claim:
+      claimed_at: '2026-08-12T05:36:07Z'
+      expected_state_revision: 7
+      fencing_token:
+        generation: 1
+        nonce: issue-141-P1-evaluation-core-current-session
+      lease_expires_at: '2026-08-12T07:36:00Z'
+      owner:
+        id: codex-root
+        type: current_session
+      source_revision:
+        branch: codex/141-v3b-isolated-evaluation
+        head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+        spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+        task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+        previous_ledger_sha256: c9edaa921d380a92cc93f0ddd20a444a3e57b45c28f73e13ace89c98ddc71293
+        updated_at: '2026-08-12T05:36:07Z'
+      status: active
+      task_id: P1-evaluation-core
+  event_hash: 266805c596255ea09a1fff99bef565e835db423061bc8bc7dd80d6c868f6a7fa
+- sequence: 9
+  event_id: issue-141-P1-evaluation-core-in-progress
+  occurred_at: '2026-08-12T05:36:09Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P1-evaluation-core
+  idempotency_key: issue-141-P1-evaluation-core-in-progress
+  expected_state_revision: 8
+  previous_event_hash: 266805c596255ea09a1fff99bef565e835db423061bc8bc7dd80d6c868f6a7fa
+  payload:
     evidence: {}
-    blocker: {}
-    residual_risk: []
-  - id: P3-fixtures-eval
-    status: planned
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P1-evaluation-core-current-session
+    target_status: in_progress
+  event_hash: 37f5a583722e9a59f82e188e4d2d60c99c55ef76ef573b1b03831b689cd2b260
+- sequence: 10
+  event_id: issue-141-P1-evaluation-core-reviewing
+  occurred_at: '2026-08-12T05:36:10Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P1-evaluation-core
+  idempotency_key: issue-141-P1-evaluation-core-reviewing
+  expected_state_revision: 9
+  previous_event_hash: 37f5a583722e9a59f82e188e4d2d60c99c55ef76ef573b1b03831b689cd2b260
+  payload:
+    evidence:
+      review:
+        artifacts: []
+        mode: code-review-deep
+        status: required
+      verification:
+        artifacts:
+        - docs/loops/issue-141/receipts/verification-report.md
+        status: passed
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P1-evaluation-core-current-session
+    target_status: reviewing
+  event_hash: 457738b4e8eb0395dd8f22d3c5fb58a4393da3257ade5f8bcedc62682e25c078
+- sequence: 11
+  event_id: issue-141-P1-evaluation-core-done
+  occurred_at: '2026-08-12T05:36:11Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P1-evaluation-core
+  idempotency_key: issue-141-P1-evaluation-core-done
+  expected_state_revision: 10
+  previous_event_hash: 457738b4e8eb0395dd8f22d3c5fb58a4393da3257ade5f8bcedc62682e25c078
+  payload:
+    evidence:
+      acceptance:
+        artifact: ''
+        status: not_required
+      human_gate:
+        status: not_required
+      review:
+        artifacts:
+        - docs/loops/issue-141/receipts/deep-code-review-final.md
+        mode: code-review-deep
+        status: passed
+      verification:
+        artifacts:
+        - docs/loops/issue-141/receipts/verification-report.md
+        status: passed
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P1-evaluation-core-current-session
+    target_status: done
+    authorization:
+      action: task_completion
+      artifact: docs/loops/issue-141/receipts/deep-code-review-final.md
+      objective_id: issue-141
+      principal:
+        id: delegating-user
+        type: user
+      source_revision_sha256: c321e4d47d10b0f1448c24b3b9f6dd59f22f2e5d973fe4193853a9830211daf8
+      task_id: P1-evaluation-core
+      protected_payload_sha256: d1768a262ed110cb99096c24517de2d8d7817960e89c14bbd2a4daad0349cf39
+  event_hash: f0f061b3c1b79ece3d79ffbc813207c5f72ad9b086c00eef4e6a76ddf0ad06e3
+- sequence: 12
+  event_id: issue-141-P1-evaluation-core-claim-released
+  occurred_at: '2026-08-12T05:36:12Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P1-evaluation-core
+  idempotency_key: issue-141-P1-evaluation-core-claim-released
+  expected_state_revision: 11
+  previous_event_hash: f0f061b3c1b79ece3d79ffbc813207c5f72ad9b086c00eef4e6a76ddf0ad06e3
+  payload:
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P1-evaluation-core-current-session
+  event_hash: 1b9f736a50a36e1e77aa97a62a43a4f66d4109519788b3905976dd4eddb69973
+- sequence: 13
+  event_id: issue-141-P2-cli-ready
+  occurred_at: '2026-08-12T05:36:13Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P2-cli
+  idempotency_key: issue-141-P2-cli-ready
+  expected_state_revision: 12
+  previous_event_hash: 1b9f736a50a36e1e77aa97a62a43a4f66d4109519788b3905976dd4eddb69973
+  payload:
     evidence: {}
-    blocker: {}
-    residual_risk: []
-  - id: P4-docs-package
-    status: planned
+    target_status: ready
+  event_hash: b29bef44eb84354dd605cb2ff26d881e69c5e170bde8b3cb0a2bc626de7c79d7
+- sequence: 14
+  event_id: issue-141-P2-cli-claim
+  occurred_at: '2026-08-12T05:36:14Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P2-cli
+  idempotency_key: issue-141-P2-cli-claim
+  expected_state_revision: 13
+  previous_event_hash: b29bef44eb84354dd605cb2ff26d881e69c5e170bde8b3cb0a2bc626de7c79d7
+  payload:
+    claim:
+      claimed_at: '2026-08-12T05:36:13Z'
+      expected_state_revision: 13
+      fencing_token:
+        generation: 1
+        nonce: issue-141-P2-cli-current-session
+      lease_expires_at: '2026-08-12T07:36:00Z'
+      owner:
+        id: codex-root
+        type: current_session
+      source_revision:
+        branch: codex/141-v3b-isolated-evaluation
+        head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+        spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+        task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+        previous_ledger_sha256: 4635f51cdb4a42b2b092c8da6938829281877c9eaf526e1793a5bd573640701e
+        updated_at: '2026-08-12T05:36:13Z'
+      status: active
+      task_id: P2-cli
+  event_hash: 08d5185b47f82ec27f76ccc0f369ca6f381f97773b7daa2e48d580a814eeb69e
+- sequence: 15
+  event_id: issue-141-P2-cli-in-progress
+  occurred_at: '2026-08-12T05:36:15Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P2-cli
+  idempotency_key: issue-141-P2-cli-in-progress
+  expected_state_revision: 14
+  previous_event_hash: 08d5185b47f82ec27f76ccc0f369ca6f381f97773b7daa2e48d580a814eeb69e
+  payload:
     evidence: {}
-    blocker: {}
-    residual_risk: []
-  - id: P5-readiness
-    status: planned
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P2-cli-current-session
+    target_status: in_progress
+  event_hash: 4da8fbcbad64cb110529bb3251ec5e302383a9d01b1e51486d78eb1b94958f9a
+- sequence: 16
+  event_id: issue-141-P2-cli-reviewing
+  occurred_at: '2026-08-12T05:36:16Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P2-cli
+  idempotency_key: issue-141-P2-cli-reviewing
+  expected_state_revision: 15
+  previous_event_hash: 4da8fbcbad64cb110529bb3251ec5e302383a9d01b1e51486d78eb1b94958f9a
+  payload:
+    evidence:
+      review:
+        artifacts: []
+        mode: code-review-deep
+        status: required
+      verification:
+        artifacts:
+        - docs/loops/issue-141/receipts/verification-report.md
+        status: passed
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P2-cli-current-session
+    target_status: reviewing
+  event_hash: a52c59839e1a0c83627eb676d79922de9a730368b5abc2dcfa0452028ae9a722
+- sequence: 17
+  event_id: issue-141-P2-cli-done
+  occurred_at: '2026-08-12T05:36:17Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P2-cli
+  idempotency_key: issue-141-P2-cli-done
+  expected_state_revision: 16
+  previous_event_hash: a52c59839e1a0c83627eb676d79922de9a730368b5abc2dcfa0452028ae9a722
+  payload:
+    evidence:
+      acceptance:
+        artifact: ''
+        status: not_required
+      human_gate:
+        status: not_required
+      review:
+        artifacts:
+        - docs/loops/issue-141/receipts/deep-code-review-final.md
+        mode: code-review-deep
+        status: passed
+      verification:
+        artifacts:
+        - docs/loops/issue-141/receipts/verification-report.md
+        status: passed
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P2-cli-current-session
+    target_status: done
+    authorization:
+      action: task_completion
+      artifact: docs/loops/issue-141/receipts/deep-code-review-final.md
+      objective_id: issue-141
+      principal:
+        id: delegating-user
+        type: user
+      source_revision_sha256: c321e4d47d10b0f1448c24b3b9f6dd59f22f2e5d973fe4193853a9830211daf8
+      task_id: P2-cli
+      protected_payload_sha256: ff5fbf056b79a21c79040925da3def31a2d6fa75b3ee6f2f4d42a4abd134b7bf
+  event_hash: 03110cd97826227b0ae2be1534b11bf3708dacebfb60942553d24946f825802b
+- sequence: 18
+  event_id: issue-141-P2-cli-claim-released
+  occurred_at: '2026-08-12T05:36:18Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P2-cli
+  idempotency_key: issue-141-P2-cli-claim-released
+  expected_state_revision: 17
+  previous_event_hash: 03110cd97826227b0ae2be1534b11bf3708dacebfb60942553d24946f825802b
+  payload:
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P2-cli-current-session
+  event_hash: a5ff2141ca158ab07b955e91a06852f9f6f974d0550898e02434011ffdeaffa9
+- sequence: 19
+  event_id: issue-141-P3-fixtures-eval-ready
+  occurred_at: '2026-08-12T05:36:19Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P3-fixtures-eval
+  idempotency_key: issue-141-P3-fixtures-eval-ready
+  expected_state_revision: 18
+  previous_event_hash: a5ff2141ca158ab07b955e91a06852f9f6f974d0550898e02434011ffdeaffa9
+  payload:
     evidence: {}
-    blocker: {}
-    residual_risk: []
-
-claims: []
-events: []
-human_gates: []
-
+    target_status: ready
+  event_hash: f62c34b0419cb31d0760e661e5957532c92fdd65437273f00867c8230e6c7b3b
+- sequence: 20
+  event_id: issue-141-P3-fixtures-eval-claim
+  occurred_at: '2026-08-12T05:36:20Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P3-fixtures-eval
+  idempotency_key: issue-141-P3-fixtures-eval-claim
+  expected_state_revision: 19
+  previous_event_hash: f62c34b0419cb31d0760e661e5957532c92fdd65437273f00867c8230e6c7b3b
+  payload:
+    claim:
+      claimed_at: '2026-08-12T05:36:19Z'
+      expected_state_revision: 19
+      fencing_token:
+        generation: 1
+        nonce: issue-141-P3-fixtures-eval-current-session
+      lease_expires_at: '2026-08-12T07:36:00Z'
+      owner:
+        id: codex-root
+        type: current_session
+      source_revision:
+        branch: codex/141-v3b-isolated-evaluation
+        head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+        spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+        task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+        previous_ledger_sha256: a4f8e97a6e027c67bf0a76ec95dfb460068295c904907a4274ecf02f05c80413
+        updated_at: '2026-08-12T05:36:19Z'
+      status: active
+      task_id: P3-fixtures-eval
+  event_hash: 88d47754641cf396dcf780e479a8844770d203b75c806019a1126a61a21857e1
+- sequence: 21
+  event_id: issue-141-P3-fixtures-eval-in-progress
+  occurred_at: '2026-08-12T05:36:21Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P3-fixtures-eval
+  idempotency_key: issue-141-P3-fixtures-eval-in-progress
+  expected_state_revision: 20
+  previous_event_hash: 88d47754641cf396dcf780e479a8844770d203b75c806019a1126a61a21857e1
+  payload:
+    evidence: {}
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P3-fixtures-eval-current-session
+    target_status: in_progress
+  event_hash: 5c2d952b26834c58fee53dc5d5328c5f2bd3d0b7ddb2caa7dabf123aab349278
+- sequence: 22
+  event_id: issue-141-P3-fixtures-eval-reviewing
+  occurred_at: '2026-08-12T05:36:22Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P3-fixtures-eval
+  idempotency_key: issue-141-P3-fixtures-eval-reviewing
+  expected_state_revision: 21
+  previous_event_hash: 5c2d952b26834c58fee53dc5d5328c5f2bd3d0b7ddb2caa7dabf123aab349278
+  payload:
+    evidence:
+      review:
+        artifacts: []
+        mode: code-review-deep
+        status: required
+      verification:
+        artifacts:
+        - docs/loops/issue-141/receipts/verification-report.md
+        status: passed
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P3-fixtures-eval-current-session
+    target_status: reviewing
+  event_hash: eae9249b05775486da36f70837541f862ef70e82737f20f823b3602109ce2462
+- sequence: 23
+  event_id: issue-141-P3-fixtures-eval-done
+  occurred_at: '2026-08-12T05:36:23Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P3-fixtures-eval
+  idempotency_key: issue-141-P3-fixtures-eval-done
+  expected_state_revision: 22
+  previous_event_hash: eae9249b05775486da36f70837541f862ef70e82737f20f823b3602109ce2462
+  payload:
+    evidence:
+      acceptance:
+        artifact: ''
+        status: not_required
+      human_gate:
+        status: not_required
+      review:
+        artifacts:
+        - docs/loops/issue-141/receipts/deep-code-review-final.md
+        - docs/loops/issue-141/receipts/security-privacy-review-final.md
+        mode: code-review-deep
+        status: passed
+      verification:
+        artifacts:
+        - docs/loops/issue-141/receipts/verification-report.md
+        status: passed
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P3-fixtures-eval-current-session
+    target_status: done
+    authorization:
+      action: task_completion
+      artifact: docs/loops/issue-141/receipts/deep-code-review-final.md
+      objective_id: issue-141
+      principal:
+        id: delegating-user
+        type: user
+      source_revision_sha256: c321e4d47d10b0f1448c24b3b9f6dd59f22f2e5d973fe4193853a9830211daf8
+      task_id: P3-fixtures-eval
+      protected_payload_sha256: dfab140f1db8647ea572f45e607b6d903546c0a10ecbccfbdd1f4809e628febe
+  event_hash: e7f6dbb90c7d6043fee50e7170f7fc6e263e6679671289b70b2f7fc580038827
+- sequence: 24
+  event_id: issue-141-P3-fixtures-eval-claim-released
+  occurred_at: '2026-08-12T05:36:24Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P3-fixtures-eval
+  idempotency_key: issue-141-P3-fixtures-eval-claim-released
+  expected_state_revision: 23
+  previous_event_hash: e7f6dbb90c7d6043fee50e7170f7fc6e263e6679671289b70b2f7fc580038827
+  payload:
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P3-fixtures-eval-current-session
+  event_hash: ec1c32789353b517304a784c2a0d9951d655825bbd2dee28b3586aee12fe0436
+- sequence: 25
+  event_id: issue-141-P4-docs-package-ready
+  occurred_at: '2026-08-12T05:36:25Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P4-docs-package
+  idempotency_key: issue-141-P4-docs-package-ready
+  expected_state_revision: 24
+  previous_event_hash: ec1c32789353b517304a784c2a0d9951d655825bbd2dee28b3586aee12fe0436
+  payload:
+    evidence: {}
+    target_status: ready
+  event_hash: 80dea3aa6ea01785ebaf01f095e538ab4123bdfb48f6f69c07730c68a7f89e3c
+- sequence: 26
+  event_id: issue-141-P4-docs-package-claim
+  occurred_at: '2026-08-12T05:36:26Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P4-docs-package
+  idempotency_key: issue-141-P4-docs-package-claim
+  expected_state_revision: 25
+  previous_event_hash: 80dea3aa6ea01785ebaf01f095e538ab4123bdfb48f6f69c07730c68a7f89e3c
+  payload:
+    claim:
+      claimed_at: '2026-08-12T05:36:25Z'
+      expected_state_revision: 25
+      fencing_token:
+        generation: 1
+        nonce: issue-141-P4-docs-package-current-session
+      lease_expires_at: '2026-08-12T07:36:00Z'
+      owner:
+        id: codex-root
+        type: current_session
+      source_revision:
+        branch: codex/141-v3b-isolated-evaluation
+        head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+        spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+        task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+        previous_ledger_sha256: eb93e9ee2a58998229fdb814acf4ff2cf867b1f57d8d09596c9698b416a82bdb
+        updated_at: '2026-08-12T05:36:25Z'
+      status: active
+      task_id: P4-docs-package
+  event_hash: 1b884c2fd7b79a02230bd095fe9277499805fe8afcfbe33d88a803517f8923a7
+- sequence: 27
+  event_id: issue-141-P4-docs-package-in-progress
+  occurred_at: '2026-08-12T05:36:27Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P4-docs-package
+  idempotency_key: issue-141-P4-docs-package-in-progress
+  expected_state_revision: 26
+  previous_event_hash: 1b884c2fd7b79a02230bd095fe9277499805fe8afcfbe33d88a803517f8923a7
+  payload:
+    evidence: {}
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P4-docs-package-current-session
+    target_status: in_progress
+  event_hash: 53c658fcfca5709233d90738da440335d93a7b1ec2bee1074dd1f2173ce5c91e
+- sequence: 28
+  event_id: issue-141-P4-docs-package-reviewing
+  occurred_at: '2026-08-12T05:36:28Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P4-docs-package
+  idempotency_key: issue-141-P4-docs-package-reviewing
+  expected_state_revision: 27
+  previous_event_hash: 53c658fcfca5709233d90738da440335d93a7b1ec2bee1074dd1f2173ce5c91e
+  payload:
+    evidence:
+      review:
+        artifacts: []
+        mode: docs-review
+        status: required
+      verification:
+        artifacts:
+        - docs/loops/issue-141/receipts/verification-report.md
+        status: passed
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P4-docs-package-current-session
+    target_status: reviewing
+  event_hash: 5c2a5d65fc49e6301fe98160a3fc4156c33d7eac1fb84896069490d7038b662a
+- sequence: 29
+  event_id: issue-141-P4-docs-package-done
+  occurred_at: '2026-08-12T05:36:29Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P4-docs-package
+  idempotency_key: issue-141-P4-docs-package-done
+  expected_state_revision: 28
+  previous_event_hash: 5c2a5d65fc49e6301fe98160a3fc4156c33d7eac1fb84896069490d7038b662a
+  payload:
+    evidence:
+      acceptance:
+        artifact: ''
+        status: not_required
+      human_gate:
+        status: not_required
+      review:
+        artifacts:
+        - docs/loops/issue-141/receipts/docs-review-final.md
+        mode: docs-review
+        status: passed
+      verification:
+        artifacts:
+        - docs/loops/issue-141/receipts/verification-report.md
+        status: passed
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P4-docs-package-current-session
+    target_status: done
+    authorization:
+      action: task_completion
+      artifact: docs/loops/issue-141/receipts/docs-review-final.md
+      objective_id: issue-141
+      principal:
+        id: delegating-user
+        type: user
+      source_revision_sha256: c321e4d47d10b0f1448c24b3b9f6dd59f22f2e5d973fe4193853a9830211daf8
+      task_id: P4-docs-package
+      protected_payload_sha256: 4263838088600a485d1c6f77dc3b9c69292944c4ffa305e50d20d7f5e5a0738c
+  event_hash: 1af752e3b64ca8fc789f7cb6169eed695f55a16f31d0d80660f852cb1714fb5d
+- sequence: 30
+  event_id: issue-141-P4-docs-package-claim-released
+  occurred_at: '2026-08-12T05:36:30Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P4-docs-package
+  idempotency_key: issue-141-P4-docs-package-claim-released
+  expected_state_revision: 29
+  previous_event_hash: 1af752e3b64ca8fc789f7cb6169eed695f55a16f31d0d80660f852cb1714fb5d
+  payload:
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P4-docs-package-current-session
+  event_hash: cdc0f749d3b7681992d64f8ba90bd75d41fc754e8b5c80a36474bf75e785be1c
+- sequence: 31
+  event_id: issue-141-P5-readiness-ready
+  occurred_at: '2026-08-12T05:36:31Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P5-readiness
+  idempotency_key: issue-141-P5-readiness-ready
+  expected_state_revision: 30
+  previous_event_hash: cdc0f749d3b7681992d64f8ba90bd75d41fc754e8b5c80a36474bf75e785be1c
+  payload:
+    evidence: {}
+    target_status: ready
+  event_hash: 353fc69c933968bc96dbba2c7242641153ee3c3694edcc40ca58d9c3db1135b5
+- sequence: 32
+  event_id: issue-141-P5-readiness-claim
+  occurred_at: '2026-08-12T05:36:32Z'
+  actor: codex-root
+  type: claim_acquired
+  task_id: P5-readiness
+  idempotency_key: issue-141-P5-readiness-claim
+  expected_state_revision: 31
+  previous_event_hash: 353fc69c933968bc96dbba2c7242641153ee3c3694edcc40ca58d9c3db1135b5
+  payload:
+    claim:
+      claimed_at: '2026-08-12T05:36:31Z'
+      expected_state_revision: 31
+      fencing_token:
+        generation: 1
+        nonce: issue-141-P5-readiness-current-session
+      lease_expires_at: '2026-08-12T07:36:00Z'
+      owner:
+        id: codex-root
+        type: current_session
+      source_revision:
+        branch: codex/141-v3b-isolated-evaluation
+        head_sha: 63ef7962cbc571eb77d983e82f7f63b59bc97e1e
+        spec_sha256: caba9c15307b096d713d86e96406d005fcfcc010a74929a70b7b190f4312125a
+        task_manifest_sha256: 4843a207f6e541a0f3098e037544125d65a9c03143a21510cd3bf9eb7f35def8
+        previous_ledger_sha256: 70abe68d2baeabe49994154bb77fac9cf13c4888cdd0f7610875127ba6f36e65
+        updated_at: '2026-08-12T05:36:31Z'
+      status: active
+      task_id: P5-readiness
+  event_hash: 0ebd4879b34b34bad376c7f570dfec5bbdaad6cef10261ad406ecea2b37cd266
+- sequence: 33
+  event_id: issue-141-P5-readiness-in-progress
+  occurred_at: '2026-08-12T05:36:33Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P5-readiness
+  idempotency_key: issue-141-P5-readiness-in-progress
+  expected_state_revision: 32
+  previous_event_hash: 0ebd4879b34b34bad376c7f570dfec5bbdaad6cef10261ad406ecea2b37cd266
+  payload:
+    evidence: {}
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P5-readiness-current-session
+    target_status: in_progress
+  event_hash: b0f030ae4b7b085c81b3bcc5cbbf48090f3b2053d326afecaa8e3b12c6c37c94
+- sequence: 34
+  event_id: issue-141-P5-readiness-reviewing
+  occurred_at: '2026-08-12T05:36:34Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P5-readiness
+  idempotency_key: issue-141-P5-readiness-reviewing
+  expected_state_revision: 33
+  previous_event_hash: b0f030ae4b7b085c81b3bcc5cbbf48090f3b2053d326afecaa8e3b12c6c37c94
+  payload:
+    evidence:
+      review:
+        artifacts: []
+        mode: formal-gate
+        status: required
+      verification:
+        artifacts:
+        - docs/loops/issue-141/receipts/verification-report.md
+        status: passed
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P5-readiness-current-session
+    target_status: reviewing
+  event_hash: 76aff20d1cf16033d9156707e295cd088312e2452b88f3cab17774dea0393e11
+- sequence: 35
+  event_id: issue-141-post-draft-publication-gate-satisfied
+  occurred_at: '2026-08-12T05:36:35Z'
+  actor: delegating-user
+  type: gate_updated
+  task_id: ''
+  idempotency_key: issue-141-post-draft-publication-gate-satisfied
+  expected_state_revision: 34
+  previous_event_hash: 76aff20d1cf16033d9156707e295cd088312e2452b88f3cab17774dea0393e11
+  payload:
+    evidence:
+      artifact: docs/loops/issue-141/receipts/terminalization-authorization.md
+    gate: post-draft-publication
+    status: satisfied
+    authorization:
+      action: gate_satisfaction
+      artifact: docs/loops/issue-141/receipts/terminalization-authorization.md
+      objective_id: issue-141
+      principal:
+        id: delegating-user
+        type: user
+      source_revision_sha256: c321e4d47d10b0f1448c24b3b9f6dd59f22f2e5d973fe4193853a9830211daf8
+      gate: post-draft-publication
+      protected_payload_sha256: 5a3f607513700f0cb8f83f4940c26be2c68bc6da6fdbe14e11744485feaae287
+  event_hash: 2d320d5fe8c93a0ea24ba58d4e55c4e6264ff9450923e25de82a308107ca3ab5
+- sequence: 36
+  event_id: issue-141-P5-readiness-done
+  occurred_at: '2026-08-12T05:36:36Z'
+  actor: codex-root
+  type: task_transition
+  task_id: P5-readiness
+  idempotency_key: issue-141-P5-readiness-done
+  expected_state_revision: 35
+  previous_event_hash: 2d320d5fe8c93a0ea24ba58d4e55c4e6264ff9450923e25de82a308107ca3ab5
+  payload:
+    evidence:
+      acceptance:
+        artifact: ''
+        status: not_required
+      human_gate:
+        status: satisfied
+      review:
+        artifacts:
+        - docs/loops/issue-141/receipts/formal-readiness-final.md
+        mode: formal-gate
+        status: passed
+      verification:
+        artifacts:
+        - docs/loops/issue-141/receipts/verification-report.md
+        status: passed
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P5-readiness-current-session
+    target_status: done
+    human_gate: satisfied
+    authorization:
+      action: task_completion
+      artifact: docs/loops/issue-141/receipts/formal-readiness-final.md
+      objective_id: issue-141
+      principal:
+        id: delegating-user
+        type: user
+      source_revision_sha256: c321e4d47d10b0f1448c24b3b9f6dd59f22f2e5d973fe4193853a9830211daf8
+      task_id: P5-readiness
+      protected_payload_sha256: 1589d1887767aff7fffd49058f08093592a438d09031c998e08c7f34398126a7
+  event_hash: 0fddb2e7d590ad6ab29ee60769a7373c9dc4809c84ca788435fc3508a2c82fe8
+- sequence: 37
+  event_id: issue-141-P5-readiness-claim-released
+  occurred_at: '2026-08-12T05:36:37Z'
+  actor: codex-root
+  type: claim_released
+  task_id: P5-readiness
+  idempotency_key: issue-141-P5-readiness-claim-released
+  expected_state_revision: 36
+  previous_event_hash: 0fddb2e7d590ad6ab29ee60769a7373c9dc4809c84ca788435fc3508a2c82fe8
+  payload:
+    fencing_token:
+      generation: 1
+      nonce: issue-141-P5-readiness-current-session
+  event_hash: e3d83048420703916be17897d66ef156332e48d396d78561c6877f68e07adf3e
+- sequence: 38
+  event_id: issue-141-objective-completed
+  occurred_at: '2026-08-12T05:36:38Z'
+  actor: delegating-user
+  type: objective_completed
+  task_id: ''
+  idempotency_key: issue-141-objective-completed
+  expected_state_revision: 37
+  previous_event_hash: e3d83048420703916be17897d66ef156332e48d396d78561c6877f68e07adf3e
+  payload:
+    evidence:
+      artifact: docs/loops/issue-141/receipts/terminalization-authorization.md
+    human_gate: satisfied
+    review: passed
+    verification: passed
+    authorization:
+      action: objective_completion
+      artifact: docs/loops/issue-141/receipts/terminalization-authorization.md
+      objective_id: issue-141
+      principal:
+        id: delegating-user
+        type: user
+      source_revision_sha256: c321e4d47d10b0f1448c24b3b9f6dd59f22f2e5d973fe4193853a9830211daf8
+      protected_payload_sha256: d1a4e7255a18b1590cbdefad64c47132bc1d11eedf7906f4646861cba00bec21
+  event_hash: ae79bf1f8b0d0895d3aa5754be9ce9dd3dc36a4a39a1bc7ea745ca8e437be477
+human_gates:
+- evidence:
+    artifact: docs/loops/issue-141/receipts/terminalization-authorization.md
+  gate: post-draft-publication
+  status: satisfied
+  authorization:
+    action: gate_satisfaction
+    artifact: docs/loops/issue-141/receipts/terminalization-authorization.md
+    objective_id: issue-141
+    principal:
+      id: delegating-user
+      type: user
+    source_revision_sha256: c321e4d47d10b0f1448c24b3b9f6dd59f22f2e5d973fe4193853a9830211daf8
+    gate: post-draft-publication
+    protected_payload_sha256: 5a3f607513700f0cb8f83f4940c26be2c68bc6da6fdbe14e11744485feaae287
 external_memory:
   contract_version: loop-memory/v1
   mode: disabled
@@ -77,4 +1189,5 @@ external_memory:
   authority: advisory-only
   used_as_authorization: false
   used_as_completion_evidence: false
-  notes: Memory-off is the complete default. Synthetic V2b-validated advisory context cannot alter policy, authority, completion, verification, or promotion.
+  notes: Memory-off is the complete default. Synthetic V2b-validated advisory context
+    cannot alter policy, authority, completion, verification, or promotion.
