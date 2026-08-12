@@ -21,18 +21,17 @@ push, and draft PR. It is not yet final merge or publication evidence.
 | Finding | Severity | Disposition |
 | --- | --- | --- |
 | DOC-143-001 | SHOULD-FIX | Fixed and reverified |
-| DOC-143-002 | NIT | Deferred with complete follow-up to assigned PR |
+| DOC-143-002 | NIT | Fixed after GitHub assigned PR #144 |
 | SEC-143-001 | SHOULD-FIX | Fixed in release-gate design |
 | SEC-143-002 | NIT | Deferred with complete follow-up to publication gate |
 
 ## Remaining Gates
 
-1. Add the assigned PR URL and rerun affected checks.
-2. Bind local, remote, PR, hosted CI, and deep merge review to the exact final
+1. Bind local, remote, PR, hosted CI, and deep merge review to the exact final
    head.
-3. Confirm ready-triggered CI and expected-head merge.
-4. Reverify exact main and v0.13.0 tag/Release absence.
-5. Create and independently verify the annotated tag and public GitHub Release.
+2. Confirm ready-triggered CI and expected-head merge.
+3. Reverify exact main and v0.13.0 tag/Release absence.
+4. Create and independently verify the annotated tag and public GitHub Release.
 
 The user's Issue #143 release request authorizes those later actions only when
 their exact evidence remains green. No receipt, PR, CI result, or release

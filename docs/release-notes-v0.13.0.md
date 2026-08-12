@@ -90,6 +90,7 @@ released proposal-only fallback.
   <https://github.com/jeffery777/codex-dev-skills/pull/142>
 - Release closure issue:
   <https://github.com/jeffery777/codex-dev-skills/issues/143>
-- Release pull request: pending GitHub assignment
+- Release pull request:
+  <https://github.com/jeffery777/codex-dev-skills/pull/144>
 - Compare:
   <https://github.com/jeffery777/codex-dev-skills/compare/v0.12.1...v0.13.0>

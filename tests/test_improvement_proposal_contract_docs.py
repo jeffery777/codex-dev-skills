@@ -76,6 +76,7 @@ class ImprovementProposalContractDocsTests(unittest.TestCase):
         self.assertIn("# Release Notes: v0.13.0", notes)
         self.assertIn("Release date: 2026-08-12", notes)
         self.assertIn("issues/143", notes)
+        self.assertIn("pull/144", notes)
         self.assertIn("compare/v0.12.1...v0.13.0", notes)
         self.assertIn("scripts/project-python", notes)
 

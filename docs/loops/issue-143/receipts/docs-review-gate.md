@@ -17,17 +17,12 @@ V3-B contract and README even though Issue #143 selected v0.13.0.
 Disposition: **Fixed**. Both public entrypoints now identify v0.13.0; focused
 release tests and repository validation pass.
 
-### DOC-143-002 — NIT — Deferred To Draft PR Assignment
+### DOC-143-002 — NIT — Fixed
 
-The initial release notes cannot name the release PR before GitHub assigns it.
-
-- Durable target: Issue #143 R3 before final exact-head review.
-- Owner: Issue #143 delivery owner.
-- Reason: the PR identifier does not exist before the first push.
-- Remaining risk: incomplete final traceability if the placeholder survives.
-- Verification plan: replace the placeholder with the assigned PR URL, rerun
-  focused release tests, repository validation, and diff hygiene.
-- Promotion trigger: final commit, ready transition, merge, tag, or Release.
+The initial release notes could not name the release PR before GitHub assigned
+it. Disposition: **Fixed** after GitHub assigned PR #144. The final notes now
+link the exact PR; focused release tests, repository validation, and diff
+hygiene are rerun on the final candidate.
 
 ## Accuracy And Scope Checks
 
@@ -43,5 +38,5 @@ The initial release notes cannot name the release PR before GitHub assigns it.
 
 ## Required Follow-up
 
-Close DOC-143-002 after GitHub assigns the release PR, then rebind docs review,
-hosted CI, and merge readiness to the exact final head.
+Rebind hosted CI and merge readiness to the exact final head. No documentation
+finding remains open.

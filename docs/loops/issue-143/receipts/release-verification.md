@@ -70,7 +70,6 @@ git diff --check
 
 ## Pending Exact-Head Evidence
 
-- assigned PR URL in final release notes;
 - committed local/remote/PR head equality;
 - hosted draft and ready exact-head CI;
 - exact-head deep merge/readiness review;
