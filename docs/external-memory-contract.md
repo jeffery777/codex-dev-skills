@@ -85,6 +85,17 @@ secret/credential/PII indicators are checked before adoption.
 Issue #135 defines a future M0/M1/M2 roadmap without changing
 `loop-memory/v1` or adding a backend.
 
+Issue #145 owns the bounded M0-only qualification candidate. It adds separate
+offline `loop-memory-operation/v0` and `loop-memory-qualification/v0`
+families without changing this contract. Those families validate caller-owned
+exact operation authority, authorized-request composition, atomic receipt
+shapes, zero-touch memory-off, and safety/conformance-only pairing. They do not
+implement or authorize M1.
+The authority chain includes separately accepted trusted-time evidence and is
+reconstructed when requests or receipts are consumed. Qualification includes
+the verifier assignment and a strict M1 receipt bound to the exact
+qualification/fingerprint/V3-B/safety/execution tuple.
+
 - **M0 Backend Readiness** defines the contract-to-runtime gap matrix,
   provider-neutral protocol, caller-owned operation authority, adapter
   execution receipt, data placement, lifecycle, retention, concurrency,

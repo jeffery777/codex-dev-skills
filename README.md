@@ -598,6 +598,31 @@ backend, SQLite/FTS5, PlugMem, Mem0, provider/MCP integration, or V3-C is
 included. See the
 [candidate evaluation contract](docs/candidate-evaluation-contract.md).
 
+Memory M0 is an additive offline readiness layer owned by Issue #145. It keeps
+V2b and V3-B unchanged and adds no backend:
+
+```bash
+./scripts/project-python skills/loop-engineering/scripts/operationctl.py --help
+./scripts/project-python skills/loop-engineering/scripts/qualificationctl.py --help
+./scripts/project-python scripts/eval-memory-operation.py
+./scripts/project-python scripts/eval-memory-qualification.py
+```
+
+`loop-memory-operation/v0` separates V2b eligibility, caller-owned exact
+operation authority, authorized-request composition, future adapter execution,
+atomic execution receipt, and independent acceptance. Requests require
+caller-accepted trusted-time evidence and full-chain revalidation.
+`loop-memory-qualification/v0` is a safety/conformance-only paired wrapper
+around unchanged V3-B outputs because released V3-B cannot represent a
+memory-off/on pair; its exact tuple includes the verifier and a scope-bound M1
+receipt document. Memory-off remains complete, default, and zero backend/
+filesystem touch. Physical purge, automatic migration, efficacy claims,
+SQLite/FTS5 execution, schema/database creation, persistence, providers/MCP,
+PlugMem/Mem0, automatic recall/write, and V3-C remain excluded. M1 and the
+target release are **TBD / human decision**. See the
+[operation contract](docs/memory-operation-contract.md) and
+[qualification contract](docs/memory-qualification-contract.md).
+
 V2c-A adds a default-disabled, version-gated GitNexus driver boundary. The live
 macOS qualification covers GitNexus `1.6.9`, a runtime-produced qualification
 fingerprint, and metadata schema `5`. Human-oriented `status` and `list` output is never parsed.

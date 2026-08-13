@@ -1,0 +1,64 @@
+{
+  "authority_invariants": {
+    "activation_authorized": false,
+    "deploy_authorized": false,
+    "efficacy_claimed": false,
+    "external_write_authorized": false,
+    "merge_authorized": false,
+    "promotion_authorized": false,
+    "release_authorized": false,
+    "used_as_authorization": false,
+    "used_as_completion_evidence": false
+  },
+  "contract_version": "loop-memory-qualification/v0",
+  "efficacy_claimed": false,
+  "kind": "qualification-input",
+  "common_v3b_bindings": {
+    "comparison_digest": "b150061e8c6cc9f5023f6b818f13d7213dfe404a784dde0f6b2e5fa6e2f78e59",
+    "evaluation_input_digest": "e18f605cb40de9c976d780a3e9ca49cf1acbfac5b9bd014f32b8cb2991c74fea",
+    "policy_digest": "97d23229881c22abd8b2d0fbc0d0d3ec2bf9eaeea89dc558b2261bae2bcbe3c0",
+    "proposal": {
+      "proposal_id": "proposal:972f556c7b00ee214f1349cb4185132061de4d99072b5bcbc9de923f0aac802e",
+      "proposal_set_digest": "6202d07fe33b576cf93b2fb546dd23f6b85a86bd409f367ef4796705810457d8",
+      "source_record_set_digest": "f10ca8755a87bb93df643357ca1222cc4bb00d7c884adffe5df2cd2442f07981"
+    },
+    "source_lineage_digest": "b6e502ea36cafa4cc1e1d4ccaae873a3cedcdb9a7c8d4c334d0b5b32e0ca39ed",
+    "verifier_digest": "42c2da706288f8d63ac59d139a94a8905dfaf9849a0361a981a6f1cb15fbeec5"
+  },
+  "off_arm": {
+    "backend_touch_count": 0,
+    "evaluation_result_digest": "37f7514fa67a8eb222291ffe59a1c2ca29f2ce7276be9e0db95a64877f70e579",
+    "mode": "memory-off",
+    "verification_result_digest": "23b4bec7dbf0234b10b657e09539b5a51100cdd4ea6e73f610ee1ed829fc4277",
+    "zero_backend_filesystem_touch_verified": true
+  },
+  "on_arm": {
+    "adapter": {
+      "adapter_id": "future-adapter",
+      "adapter_version": "m1-candidate",
+      "capability_fingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "platform_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "schema_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "evaluation_result_digest": "37f7514fa67a8eb222291ffe59a1c2ca29f2ce7276be9e0db95a64877f70e579",
+    "m1_qualification_receipt_digest": "4afecbe5ec0ed29a00712a24d8abcf461590333d445418cf633f93d23895f6a1",
+    "mode": "memory-on",
+    "safety_observation": {
+      "atomicity_failures": 0,
+      "authority_failures": 0,
+      "backend_touch_count": 1,
+      "execution_receipt_digests": [
+        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      ],
+      "idempotency_failures": 0,
+      "identity_failures": 0,
+      "lifecycle_failures": 0,
+      "privacy_failures": 0,
+      "recovery_failures": 0,
+      "schema_drift_failures": 0
+    },
+    "verification_result_digest": "23b4bec7dbf0234b10b657e09539b5a51100cdd4ea6e73f610ee1ed829fc4277"
+  },
+  "qualification_id": "qualification-1",
+  "qualification_input_digest": "ae40596ac42a318aa5ec169e3f935a6c44887bcf8eca030edfbe0f648fbc8b03"
+}

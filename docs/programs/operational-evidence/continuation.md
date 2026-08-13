@@ -91,6 +91,10 @@ qualify the default-disabled local/manual/CI-only SQLite/FTS5 M1 reference
 adapter. M0 readiness defines the gap matrix, provider-neutral protocol,
 operation authority, atomic execution receipt, lifecycle/concurrency, threat
 model, and memory-off/on evaluation design but is not completed by Issue #135.
+Issue #145 owns the intervening M0-only offline qualification candidate. It
+keeps V2b/V3-B unchanged, treats delete as logical, proves zero-touch
+memory-off, and limits paired qualification to safety/conformance. It does not
+implement or authorize SQLite/FTS5 M1.
 M2 requires successful M1 qualification. V3-C automatic recall/write,
 persistent service, scheduler/controller, queue, or cross-host automation
 requires another human gate. Later release targets remain TBD.
@@ -124,8 +128,10 @@ A future M1-readiness task should:
 - Delivered public slice: V3-A manual/CI evidence-to-proposal contract.
 - Released candidate: Issue #141 / PR #142 V3-B isolated candidate evaluation
   in v0.13.0 through Issue #143.
-- Next stage after verified v0.13.0 publication: separately gated M1 readiness and
-  thin reference-backend qualification; this document does not authorize it.
+- Next stage after verified v0.13.0 publication: Issue #145 M0-only offline
+  qualification, followed only after independent acceptance by separately
+  gated M1 implementation/reference-backend qualification; this document does
+  not authorize M1.
 - Release interlock: Issue #143 separately closes the v0.13.0 annotated-tag and
   GitHub Release gate; future work must still verify current platform evidence.
 - Memory role: M0 readiness design first; M1 only after V3-B evidence; M2 only

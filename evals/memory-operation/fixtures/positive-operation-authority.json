@@ -1,0 +1,78 @@
+{
+  "authority_invariants": {
+    "acceptance_performed": false,
+    "activation_authorized": false,
+    "deploy_authorized": false,
+    "merge_authorized": false,
+    "promotion_authorized": false,
+    "release_authorized": false,
+    "review_performed": false,
+    "validator_runtime_action_performed": false,
+    "unrelated_external_write_authorized": false,
+    "used_as_completion_evidence": false,
+    "used_as_general_authorization": false,
+    "verification_performed": false
+  },
+  "contract_version": "loop-memory-operation/v0",
+  "document_digest": "bb22e604175e198493af3f589f93338a4d7d51d6ff5bb2b8ca8a76d570085458",
+  "document_id": "authority-1",
+  "kind": "operation-authority",
+  "namespace": "loop-engineering",
+  "payload": {
+    "adapter": {
+      "adapter_id": "future-adapter",
+      "adapter_version": "m1-candidate",
+      "capability_fingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "required_capabilities": [
+        "idempotency",
+        "write_upsert"
+      ],
+      "schema_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "authority_id": "authority-1",
+    "authority_receipt_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "candidate_record_digest": "7266e03d4a0ccb61c037abde5d1f22ccd40804ca86453fc79a4841589c1fcd2d",
+    "eligibility_receipt_digests": [
+      "d192ae6bde7fb0db8d0ee309e0a6d78581e1535d5a29bc68031ae0bca6eda3c4"
+    ],
+    "expires_at": "2026-08-13T01:00:00Z",
+    "idempotency_key": "mutation-key-1",
+    "issued_at": "2026-08-13T00:00:00Z",
+    "issuer_principal": {
+      "id": "maintainer-1",
+      "kind": "human"
+    },
+    "lifecycle_effect": "upsert",
+    "memory_operation_authorized": true,
+    "mutation_candidate_digest": "37ea254c7e6fd344513522ec2e45579472f4ee03f1d7e385cd50994d6011ed4f",
+    "nonce": "nonce-1",
+    "operation": "upsert",
+    "operation_id": "mutation-1",
+    "request_id": "mutation-request-1",
+    "state_root": {
+      "identity_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "state_root_class": "approved-machine-local"
+    },
+    "target_before_digest": null,
+    "target_record_id": "record-1"
+  },
+  "repository": {
+    "canonical_remote": "https://github.com/jeffery777/codex-dev-skills.git",
+    "canonical_repository_id": "github.com.jeffery777.codex-dev-skills",
+    "path_scope": [
+      "skills/loop-engineering"
+    ],
+    "principal_scope": {
+      "tenant": "not-applicable",
+      "user": "not-applicable",
+      "workspace": "not-applicable"
+    },
+    "repository_identity_digest": "bbc80816796694dbe9148d09f309e5e04c060d2d2b6c3ddf14c8709f70a682f7",
+    "source_revision": {
+      "branch": "main",
+      "commit_sha": "1111111111111111111111111111111111111111",
+      "kind": "git"
+    },
+    "worktree_id_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  }
+}

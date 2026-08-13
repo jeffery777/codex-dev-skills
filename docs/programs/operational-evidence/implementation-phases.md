@@ -208,12 +208,20 @@ phases.
 
 ### M0 — Backend Readiness
 
-M0 defines and later qualifies the contract-to-runtime gap matrix,
+**Status:** Issue #145 owns the additive offline qualification candidate.
+Target release remains TBD / human decision.
+
+M0 defines and qualifies the contract-to-runtime gap matrix,
 provider-neutral request/receipt protocol, current operation authority,
 execution receipts, data placement, lifecycle, retention, concurrency,
 recovery, security/privacy threat model, and V3-B memory-off/on evaluation
-design. M0 may be planned alongside V3-B, but Issue #135 does not complete M0
-qualification and M0 adds no backend.
+design. It uses separate `loop-memory-operation/v0` and
+`loop-memory-qualification/v0` families, keeps released contracts unchanged,
+and adds no backend. Wrapper memory-on is safety/conformance-only; memory-off
+is zero backend/filesystem touch. Issue #135 planning did not complete M0, and
+Issue #145 evidence cannot authorize M1 by itself.
+Exit evidence rejects forged requests, untrusted time, verifier mismatch, and
+cross-scope M1 receipt replay, with eval metrics derived from those outcomes.
 
 ### M1 — Thin Reference Backend Qualification
 

@@ -158,6 +158,16 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   digest-only V2b-validated advisory-context seam. Its packet cannot promote,
   merge, release, deploy, activate, or perform an external write. Memory M1/M2
   and V3-C remain separate future human gates with release targets TBD.
+- Issue #145 owns Memory M0 provider-neutral readiness. Its bounded candidate
+  adds separate `loop-memory-operation/v0` and
+  `loop-memory-qualification/v0` offline families, caller-owned exact
+  operation authority, authorized-request composition, atomic receipt
+  validation, logical-delete/idempotency/privacy/recovery boundaries, and a
+  safety/conformance-only paired wrapper over unchanged V3-B outputs. It adds
+  no SQLite/FTS5 import/probe/backend, schema/database, persistence, provider,
+  MCP, PlugMem/Mem0, automatic recall/write, or V3-C. Memory-off remains zero
+  backend/filesystem touch; physical purge and efficacy claims are deferred.
+  M1 and the target release remain **TBD / human decision**.
 
 ## Non-Goals
 

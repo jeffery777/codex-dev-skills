@@ -1,0 +1,17 @@
+{
+  "contract_version": "loop-memory-qualification-eval/v0",
+  "positive_fixture": "fixtures/positive-qualification-input.json",
+  "expected": {
+    "cases": 14,
+    "decision_accuracy": 1.0,
+    "pair_binding": 1.0,
+    "determinism": 1.0,
+    "zero_touch_off": 1.0,
+    "safety_conformance": 1.0,
+    "privacy_safe_rejection": 1.0,
+    "false_efficacy": 0,
+    "false_authority": 0,
+    "backend_execution": 0,
+    "promotion": 0
+  }
+}

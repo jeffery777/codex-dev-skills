@@ -1,0 +1,16 @@
+{
+  "contract_version": "loop-memory-operation-eval/v0",
+  "positive_fixture": "fixtures/positive-operation-authority.json",
+  "expected": {
+    "cases": 17,
+    "decision_accuracy": 1.0,
+    "binding_completeness": 1.0,
+    "determinism": 1.0,
+    "atomicity_boundary": 1.0,
+    "idempotency_boundary": 1.0,
+    "privacy_safe_rejection": 1.0,
+    "false_authority": 0,
+    "unauthorized_execution": 0,
+    "physical_purge": 0
+  }
+}
