@@ -162,8 +162,10 @@ behavior requires a new architecture and security/privacy gate.
 
 **Decision:** Preserve `loop-memory/v1` as the backend-neutral advisory
 contract. A future adapter must keep the V2b eligibility receipt, caller-owned
-current operation authority, adapter execution receipt, independent
-acceptance, and promotion decision as distinct artifacts.
+current operation authority and trusted-time receipt, adapter execution
+receipt, independent acceptance, and promotion decision as distinct artifacts.
+Request and receipt consumption reconstruct the complete authority/candidate/
+eligibility/time chain.
 
 V3-B may define a provider-neutral optional context/evaluation seam with
 memory-off as the default. It cannot embed SQLite or make a backend a V3-B
@@ -206,3 +208,26 @@ externally. SQLite/FTS5, Memory M1/M2, PlugMem, Mem0, providers, MCP,
 automatic recall/write, and V3-C remain behind separate human decisions.
 Issue #143 selects v0.13.0 through a separate release-closure and publication
 gate. This does not grant the V3-B packet release or promotion authority.
+
+## OE-016 — Qualify Memory M0 Through Separate Operation And Pair Families
+
+**Decision:** Keep V2b and V3-B unchanged. Add
+`loop-memory-operation/v0` for exact caller-owned operation authority,
+authorized-request composition, and atomic receipt validation, plus
+`loop-memory-qualification/v0` for a safety/conformance-only wrapper over
+unchanged V3-B result pairs.
+
+V2b `delete` has only a logical-delete effect in M0; physical purge is
+unsupported. Memory-off is complete and zero backend/filesystem touch.
+Wrapper memory-on requires a separately caller-accepted future M1
+qualification receipt and cannot claim that V3-B evaluated a backend or that
+memory is effective.
+The paired tuple includes the canonical verifier assignment. The strict M1
+receipt binds the exact qualification id, V3-B tuple, adapter fingerprints,
+safety observation, and execution receipts; eval security metrics come from
+executed adversarial outcomes.
+
+**Consequence:** M0 adds no SQLite/FTS5 import/probe/backend, schema/database,
+persistence, provider/MCP, automatic recall/write, service, or V3-C path.
+Passing M0 validators, evals, or reviews does not authorize M1, acceptance,
+promotion, activation, or a release target.

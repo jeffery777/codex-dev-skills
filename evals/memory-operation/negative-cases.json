@@ -1,0 +1,19 @@
+[
+  {"name":"valid-authority","expected":"valid"},
+  {"name":"valid-authorized-request","expected":"valid"},
+  {"name":"untrusted-authority","expected":"rejected"},
+  {"name":"expired-authority","expected":"rejected"},
+  {"name":"scope-mismatch","expected":"rejected"},
+  {"name":"candidate-tamper","expected":"rejected"},
+  {"name":"record-scope-mismatch","expected":"rejected"},
+  {"name":"receipt-pre-state-mismatch","expected":"rejected"},
+  {"name":"forged-request","expected":"rejected"},
+  {"name":"forged-request-receipt","expected":"rejected"},
+  {"name":"untrusted-time","expected":"rejected"},
+  {"name":"applied-receipt","expected":"applied"},
+  {"name":"replay-receipt","expected":"idempotent-replay"},
+  {"name":"failed-receipt","expected":"failed"},
+  {"name":"false-authority","expected":"rejected"},
+  {"name":"delete-is-logical","expected":"logical-delete"},
+  {"name":"execution-route","expected":"rejected"}
+]

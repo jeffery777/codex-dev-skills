@@ -1,0 +1,16 @@
+[
+  {"name":"memory-off-complete","expected":"memory-on-unavailable"},
+  {"name":"paired-conformant","expected":"conformant-awaiting-human-decision"},
+  {"name":"safety-failure","expected":"not-conformant"},
+  {"name":"untrusted-m1","expected":"rejected"},
+  {"name":"untrusted-v3b","expected":"rejected"},
+  {"name":"false-efficacy","expected":"rejected"},
+  {"name":"pair-mismatch","expected":"rejected"},
+  {"name":"verifier-mismatch","expected":"rejected"},
+  {"name":"m1-receipt-id-replay","expected":"rejected"},
+  {"name":"m1-receipt-fingerprint-replay","expected":"rejected"},
+  {"name":"memory-off-backend-touch","expected":"rejected"},
+  {"name":"memory-on-without-backend-touch","expected":"rejected"},
+  {"name":"backend-surface","expected":"closed"},
+  {"name":"promotion-route","expected":"rejected"}
+]

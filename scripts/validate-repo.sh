@@ -307,6 +307,20 @@ check_candidate_evaluation_contract() {
   ok "isolated candidate evaluation, replay, context, packet, and eval contracts pass"
 }
 
+check_memory_m0_contracts() {
+  "$PROJECT_PYTHON" scripts/eval-memory-operation.py >"$TMP_DIR/memory-operation-eval.json"
+  "$PROJECT_PYTHON" scripts/eval-memory-qualification.py >"$TMP_DIR/memory-qualification-eval.json"
+  "$PROJECT_PYTHON" -m unittest \
+    tests.test_memory_operation \
+    tests.test_operationctl \
+    tests.test_eval_memory_operation \
+    tests.test_memory_qualification \
+    tests.test_qualificationctl \
+    tests.test_eval_memory_qualification \
+    tests.test_memory_m0_contract_docs >/dev/null
+  ok "Memory M0 operation authority, atomic receipt, zero-touch, and qualification contracts pass"
+}
+
 check_loop_contract() {
   "$PROJECT_PYTHON" -m unittest tests.test_loop_engineering_core tests.test_loopctl >/dev/null
   ok "loop engineering event, transition, migration, and CLI contracts pass"
@@ -352,6 +366,7 @@ main() {
   check_improvement_lineage_contract
   check_improvement_proposal_contract
   check_candidate_evaluation_contract
+  check_memory_m0_contracts
 }
 
 main "$@"

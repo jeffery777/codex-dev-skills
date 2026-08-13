@@ -130,6 +130,26 @@ evaluation result or promotion packet. SQLite/FTS5, Memory M1/M2, PlugMem,
 Mem0, providers, MCP, automatic recall/write, and V3-C remain excluded. See
 `references/candidate-evaluation-v0.md`.
 
+When a loop uses Memory M0 `loop-memory-operation/v0`, validate only through
+`scripts/operationctl.py`. Keep V2b eligibility, caller-owned accepted
+operation authority, authorized-request composition, future adapter execution,
+atomic execution receipt, and independent acceptance separate. M0 performs no
+execution. Require caller-accepted trusted-time evidence and full authority/
+candidate/eligibility reconstruction for every request or receipt validation;
+never trust a standalone resealed request. V2b `delete` remains logical in M0;
+physical purge is unsupported.
+See `references/memory-operation-v0.md`.
+
+When a loop uses `loop-memory-qualification/v0`, treat `memory-on` as a
+wrapper-only safety/conformance label over unchanged V3-B results. Require
+exact V3-B source/policy/comparison/verifier bindings and a scope-bound,
+separately caller-accepted future M1 qualification receipt document. Digest
+membership alone is insufficient. Memory-off is complete and zero backend/
+filesystem touch. Never claim efficacy, activation, or promotion. SQLite/FTS5,
+schema/database creation, persistence, provider/MCP, PlugMem/Mem0, automatic
+recall/write, and V3-C remain excluded. See
+`references/memory-qualification-v0.md`.
+
 ### Protected Event Authorization
 
 Treat `task_acceptance`, `claim_revocation`, `gate_satisfaction`, and

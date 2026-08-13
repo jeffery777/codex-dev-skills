@@ -173,6 +173,29 @@ evidence that:
 - V3-B target release is v0.13.0 only through the separate accepted Issue #143
   release-closure source of truth; M1/M2 and V3-C targets remain TBD.
 
+When a change includes Memory M0, also require evidence that:
+
+- V2b/V2d/V3-A/V3-B production contracts and semantics are unchanged;
+- caller-owned authority, eligibility, and trusted-time admission are separate
+  from adapter/database/request/receipt data; standalone resealed requests and
+  backdated time fail full-chain revalidation;
+- applied/replay/failed receipts bind exact scope, idempotency, fingerprints,
+  pre/post state, and atomicity without proving real M1 execution;
+- V2b `delete` has only a logical-delete effect and physical purge is absent;
+- memory-off is complete, default, and zero backend/filesystem touch;
+- wrapper `memory-on` is not a new V3-B mode and compares safety/conformance
+  only, with exact verifier assignment and a receipt bound to qualification id,
+  fingerprints, V3-B tuple, safety, and execution evidence;
+- valid reseal and cross-scope receipt replay cases reject, and security eval
+  metrics are derived from observed outcomes rather than literals;
+- schema/capability drift fails closed and no automatic migration/repair path
+  exists;
+- public/internal-only privacy and explicit state-root placement boundaries are
+  preserved without encryption/shared-host claims;
+- SQLite/FTS5 import/probe/backend, schema/database creation, persistence,
+  providers/MCP, PlugMem/Mem0, automatic recall/write, and V3-C are absent;
+- M1 and target release remain TBD / human decision.
+
 ## Suggested Verification
 
 Run the repository hygiene check:
@@ -207,6 +230,8 @@ PYTHONDONTWRITEBYTECODE=1 ./scripts/project-python -m unittest \
 ./scripts/project-python scripts/eval-improvement-lineage.py
 ./scripts/project-python scripts/eval-improvement-proposal.py
 ./scripts/project-python scripts/eval-candidate-evaluation.py
+./scripts/project-python scripts/eval-memory-operation.py
+./scripts/project-python scripts/eval-memory-qualification.py
 ./scripts/validate-repo.sh
 git diff --check
 ```
