@@ -85,23 +85,25 @@ packet that still cannot promote itself. V3-B may add only a provider-neutral,
 optional V2b-validated context seam with memory-off as the default; it must not
 embed SQLite or implement M1.
 
-After v0.13.0 publication is verified, a separate Issue/spec/ADR/security
-review may
-qualify the default-disabled local/manual/CI-only SQLite/FTS5 M1 reference
-adapter. M0 readiness defines the gap matrix, provider-neutral protocol,
+After v0.13.0 publication and Memory M0 were verified, Issue #147 separately
+authorized the bounded implementation and safety/conformance qualification of
+the default-disabled local/manual/CI-only SQLite/FTS5 M1 reference adapter. M0
+readiness defines the gap matrix, provider-neutral protocol,
 operation authority, atomic execution receipt, lifecycle/concurrency, threat
 model, and memory-off/on evaluation design but is not completed by Issue #135.
 Issue #145 owns the intervening M0-only offline qualification candidate. It
 keeps V2b/V3-B unchanged, treats delete as logical, proves zero-touch
 memory-off, and limits paired qualification to safety/conformance. It does not
-implement or authorize SQLite/FTS5 M1.
+implement or authorize SQLite/FTS5 M1 by itself. Issue #147 / PR #148 publish
+the reviewed default-disabled M1 safety/conformance baseline in v0.14.0; this
+is not activation, promotion, or efficacy evidence.
 M2 requires successful M1 qualification. V3-C automatic recall/write,
 persistent service, scheduler/controller, queue, or cross-host automation
-requires another human gate. Later release targets remain TBD.
+requires another human gate. M2 and V3-C release targets remain TBD.
 
 ## Next Task Bootstrap Checklist
 
-A future M1-readiness task should:
+An Issue #147 M1 delivery or continuation task should:
 
 1. Read `AGENTS.md`, `README.md`, `docs/roadmap.md`, this program directory,
    and `docs/operational-evidence-contract.md`.
@@ -111,8 +113,8 @@ A future M1-readiness task should:
    the installed GitNexus index freshness.
 4. Verify Issue #141 / PR #142 and Issue #143 exact release evidence rather
    than trusting a chat summary, packet, or proposal score.
-5. Treat memory-off as the accepted V3-B default and require a new
-   Issue/spec/ADR/security decision before any M1 implementation.
+5. Treat memory-off as the accepted V3-B default and verify Issue #147's exact
+   bounded Issue/spec/ADR/security scope before any M1 implementation.
 6. Keep V3-A proposal, V3-B evaluation, M1 backend qualification, and V3-C
    services separate.
 7. Run GitNexus impact analysis before implementation and `detect_changes`
@@ -128,10 +130,9 @@ A future M1-readiness task should:
 - Delivered public slice: V3-A manual/CI evidence-to-proposal contract.
 - Released candidate: Issue #141 / PR #142 V3-B isolated candidate evaluation
   in v0.13.0 through Issue #143.
-- Next stage after verified v0.13.0 publication: Issue #145 M0-only offline
-  qualification, followed only after independent acceptance by separately
-  gated M1 implementation/reference-backend qualification; this document does
-  not authorize M1.
+- Delivered after v0.13.0 publication and Issue #145 M0: Issue #147 / PR #148
+  bounded M1 reference-adapter implementation and safety/conformance baseline
+  in v0.14.0. This publication does not activate or promote M1.
 - Release interlock: Issue #143 separately closes the v0.13.0 annotated-tag and
   GitHub Release gate; future work must still verify current platform evidence.
 - Memory role: M0 readiness design first; M1 only after V3-B evidence; M2 only

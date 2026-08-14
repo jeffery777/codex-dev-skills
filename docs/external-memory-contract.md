@@ -80,7 +80,7 @@ capability requirements, explicit handshake maximum age, future clock skew/TTL,
 and deterministic
 secret/credential/PII indicators are checked before adoption.
 
-## Future Agent Memory Track — Planning Only
+## Agent Memory Track
 
 Issue #135 defines a future M0/M1/M2 roadmap without changing
 `loop-memory/v1` or adding a backend.
@@ -96,13 +96,21 @@ reconstructed when requests or receipts are consumed. Qualification includes
 the verifier assignment and a strict M1 receipt bound to the exact
 qualification/fingerprint/V3-B/safety/execution tuple.
 
+Issue #147 owns the separately authorized bounded M1 SQLite/FTS5 reference
+candidate. It is implemented only as additive `loop-memory-sqlite/v0`, remains
+default-disabled and local/manual/CI-only, and does not alter this released
+V2b contract or any V3/M0 production contract. Candidate safety/conformance
+evidence does not accept, install, activate, or promote M1. Issue #147 / PR
+#148 bind the reviewed default-disabled safety/conformance baseline to
+**v0.14.0** without changing this V2b contract.
+
 - **M0 Backend Readiness** defines the contract-to-runtime gap matrix,
   provider-neutral protocol, caller-owned operation authority, adapter
   execution receipt, data placement, lifecycle, retention, concurrency,
   recovery, security/privacy threat model, and V3-B memory-off/on evaluation
   design. This documentation is not M0 qualification evidence.
-- **M1** may begin only after V3-B evidence passes and a separate
-  Issue/spec/ADR/security review is approved. Its planned candidate is a thin,
+- **M1** began under the separate Issue #147 scope after the V3-B baseline and
+  M0 evidence. Its candidate is a thin,
   deterministic, default-disabled, local/manual/CI-only SQLite/FTS5 reference
   adapter. It must behavior-probe FTS5 in an isolated temporary database and
   fail closed to no memory when the capability, SQLite/tokenizer fingerprint,

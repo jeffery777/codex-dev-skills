@@ -16,8 +16,9 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current development feature baseline is V3-B, published in v0.13.0 through
-Issue #141 / PR #142 and the separately reviewed Issue #143 release closure.
+The current development feature baseline is Memory M1, published in v0.14.0
+through Issue #147 / PR #148. V3-B remains the released evaluation baseline
+from v0.13.0.
 The v0.12.1 compatibility patch through Issue #139 updated Desktop/CLI runtime
 adapters and repository verification before V3-B without changing shared
 completion authority.
@@ -56,8 +57,8 @@ consistency. Runtime observations, handoff
 receipts, external memory, GitNexus metadata, hook output, and linkage CI
 remain advisory and never replace repository, Git, verification, review,
 protected authorization, accepted platform state, or completion truth. No
-production memory backend, scheduler, daemon, or automatic hook activation is
-included.
+activated production memory backend, scheduler, daemon, or automatic hook
+activation is included.
 
 V2d-A and V2d-B remain public, non-sensitive contract prerequisites. The
 private manual/CI qualification and V3-A re-entry evidence remain outside this
@@ -65,14 +66,12 @@ repository; Issue #133 implements only the public evidence-to-proposal slice.
 No slice moves private runtime state into public Git. See the
 [Operational Evidence program](docs/programs/operational-evidence/README.md).
 
-Issue #135 defines the staged re-entry roadmap. Issue #137 closed the v0.12.0
-publication prerequisite, Issue #141 delivered V3-B, and Issue #143 publishes
-that reviewed baseline as v0.13.0. The remaining order is a default-disabled
-local Memory M1 reference-backend qualification and only later V3-C resident
-automation. M0 records the backend-readiness questions and qualification plan;
-this documentation is not M0 qualification evidence. V3-B exposes a
-provider-neutral optional context seam for a future memory-off/on comparison,
-but it does not embed SQLite, enable a backend, or change V2b authority. See the
+Issue #135 defines the staged re-entry roadmap. Issue #143 published V3-B in
+v0.13.0, Issue #145 delivered Memory M0, and Issue #147 / PR #148 publish the
+default-disabled local Memory M1 reference adapter in v0.14.0. V3-C resident
+automation remains later and separately gated. V3-B exposes a provider-neutral
+optional context seam, while M0 and M1 add separate operation, qualification,
+and SQLite/FTS5 reference families without changing V2b or V3 authority. See the
 [V3-B and Agent Memory roadmap spec](docs/loops/issue-135/roadmap-spec.md).
 
 This is not a general prompt collection. It is a curated set of public, reusable workflow contracts for open source and team repositories.
@@ -618,10 +617,31 @@ memory-off/on pair; its exact tuple includes the verifier and a scope-bound M1
 receipt document. Memory-off remains complete, default, and zero backend/
 filesystem touch. Physical purge, automatic migration, efficacy claims,
 SQLite/FTS5 execution, schema/database creation, persistence, providers/MCP,
-PlugMem/Mem0, automatic recall/write, and V3-C remain excluded. M1 and the
-target release are **TBD / human decision**. See the
+PlugMem/Mem0, automatic recall/write, and V3-C remain excluded. M0 is included
+in **v0.14.0** and remains a non-backend authority and qualification layer. See the
 [operation contract](docs/memory-operation-contract.md) and
 [qualification contract](docs/memory-qualification-contract.md).
+
+Memory M1 is an additive reference-adapter candidate owned by Issue #147. It
+adds the explicit `loop-memory-sqlite/v0` local/manual/CI-only SQLite/FTS5
+adapter without importing it from memory-off or any released V2/V3/M0 module:
+
+```bash
+./scripts/project-python skills/loop-engineering/scripts/sqlitectl.py probe
+./scripts/project-python scripts/eval-memory-sqlite.py
+```
+
+The adapter requires an explicit approved machine-local state root, an exact
+isolated FTS5 behavior probe and platform/build/tokenizer/schema fingerprint,
+bounded structured query terms, parameterized SQL, complete M0 authority
+reconstruction, and atomic logical state plus receipt. Extension loading, raw
+SQL/FTS expressions, automatic migration/repair, physical purge, providers/
+MCP, services, network, automatic recall/write, cross-host use, private data,
+and efficacy claims remain excluded. The adapter is default-disabled and does
+not install, activate, or promote itself. The reviewed reference baseline is
+released in **v0.14.0**; publication does not establish efficacy or authorize
+activation. See the
+[M1 reference contract](docs/memory-sqlite-reference-contract.md).
 
 V2c-A adds a default-disabled, version-gated GitNexus driver boundary. The live
 macOS qualification covers GitNexus `1.6.9`, a runtime-produced qualification
@@ -1091,8 +1111,9 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.13.0.md` contains the current v0.13.0 release notes;
-`docs/release-notes-v0.12.1.md`, `docs/release-notes-v0.12.0.md`, and
+`docs/release-notes-v0.14.0.md` contains the current v0.14.0 release notes;
+`docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
+`docs/release-notes-v0.12.0.md`, and
 `docs/release-notes-v0.1.0.md` remain historical point-in-time records.
 
 ## Installation

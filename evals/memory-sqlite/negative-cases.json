@@ -1,0 +1,20 @@
+[
+  {"name":"probe-qualified","expected":"qualified"},
+  {"name":"initialize-exact-schema","expected":"initialized"},
+  {"name":"authorized-applied","expected":"applied"},
+  {"name":"structured-query","expected":"record-1"},
+  {"name":"exact-replay","expected":"idempotent-replay"},
+  {"name":"fault-rollback","expected":"failed-empty"},
+  {"name":"raw-fts-rejected","expected":"rejected"},
+  {"name":"scope-isolation","expected":"isolated"},
+  {"name":"logical-delete","expected":"retained-not-retrieved"},
+  {"name":"schema-drift","expected":"rejected-no-repair"},
+  {"name":"unsafe-root","expected":"rejected"},
+  {"name":"untrusted-authority","expected":"rejected"},
+  {"name":"privacy-record","expected":"rejected"},
+  {"name":"receipt-recovery","expected":"authorized-only"},
+  {"name":"qualification-receipt","expected":"passed"},
+  {"name":"memory-off-zero-touch","expected":"zero-touch"},
+  {"name":"manual-ci-equivalence","expected":"equivalent"},
+  {"name":"action-route","expected":"rejected"}
+]

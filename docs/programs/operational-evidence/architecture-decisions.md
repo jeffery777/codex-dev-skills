@@ -153,8 +153,9 @@ adapter only after M1 qualification passes.
 
 **Consequence:** Issue #135 can align documents and define qualification
 requirements but cannot claim release, V3-B, M0, or M1 completion. Issue #143
-selects v0.13.0 for the separately reviewed V3-B release; M1, M2, and V3-C
-target releases remain TBD until a human decision. V3-C automatic
+selects v0.13.0 for the separately reviewed V3-B release; Issue #147 / PR #148
+select v0.14.0 for M0 plus the M1 safety/conformance baseline. M2 and V3-C
+targets remain TBD until a human decision. V3-C automatic
 recall/write, scheduler/controller, persistent service, queue, or cross-host
 behavior requires a new architecture and security/privacy gate.
 
@@ -231,3 +232,28 @@ executed adversarial outcomes.
 persistence, provider/MCP, automatic recall/write, service, or V3-C path.
 Passing M0 validators, evals, or reviews does not authorize M1, acceptance,
 promotion, activation, or a release target.
+
+## OE-017 — Keep Memory M1 Additive, Exact-Tuple, And Non-Promotional
+
+**Decision:** Issue #147 adds `loop-memory-sqlite/v0` as a separate,
+default-disabled, local/manual/CI-only SQLite/FTS5 reference adapter. It
+inherits unchanged M0 authority and receipt contracts, requires an explicit
+approved machine-local state root, qualifies FTS5 through an isolated behavior
+probe, binds the exact SQLite build/tokenizer/platform/schema tuple, accepts
+only bounded structured query, and atomically stores logical state with the
+original applied receipt. Existing schema drift fails closed with no automatic
+migration or repair.
+
+**Rationale:** A single exact reference tuple can test the M0 boundary without
+turning a database, qualification receipt, or eval into authority. Structured
+input, parameterized SQL, disabled extension loading, exact scope isolation,
+and public/internal-only data keep the candidate within the reviewed local
+safety envelope.
+
+**Consequence:** Memory-off remains complete and zero-touch. Provider/MCP,
+network/service/daemon/scheduler/hook, automatic recall/write, cross-host or
+shared-host claims, encryption claims, physical purge, real/private data,
+efficacy, install, activation, promotion, and release selection remain absent.
+Passing Issue #147 evidence establishes safety/conformance only. Issue #147 /
+PR #148 bind that default-disabled reviewed baseline to **v0.14.0** without
+acceptance for activation, promotion, or efficacy.

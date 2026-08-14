@@ -170,8 +170,8 @@ evidence that:
   platform, artifact dereference, external write, approval, or promotion;
 - SQLite/FTS5, Memory M1/M2, PlugMem, Mem0, providers/MCP, automatic
   recall/write, V3-C, merge, release, deploy, and activation are absent;
-- V3-B target release is v0.13.0 only through the separate accepted Issue #143
-  release-closure source of truth; M1/M2 and V3-C targets remain TBD.
+- V3-B target release is v0.13.0 through Issue #143; Issue #147 / PR #148 bind
+  the reviewed M0/M1 baseline to v0.14.0. M2 and V3-C targets remain TBD.
 
 When a change includes Memory M0, also require evidence that:
 
@@ -194,7 +194,33 @@ When a change includes Memory M0, also require evidence that:
   preserved without encryption/shared-host claims;
 - SQLite/FTS5 import/probe/backend, schema/database creation, persistence,
   providers/MCP, PlugMem/Mem0, automatic recall/write, and V3-C are absent;
-- M1 and target release remain TBD / human decision.
+- M0 is included in v0.14.0 without becoming a backend or activation path.
+
+When a change includes the Issue #147 Memory M1 candidate, also require
+evidence that:
+
+- released V2b/V2d/V3/M0 production modules remain unchanged and memory-off
+  performs zero adapter and filesystem touch;
+- the only backend entrypoint is explicit local/manual/CI use and an explicit
+  approved state root disjoint from the repository is mandatory;
+- a fresh isolated temporary database proves the exact FTS5 tokenizer
+  behavior and binds SQLite source/build, platform, schema, and adapter
+  fingerprints before state adoption;
+- existing schema and metadata match exactly; missing/drifted state rejects
+  with no migration, repair, purge, backup, or restore route;
+- queries are structured and bounded, SQL is parameterized, extension loading
+  is disabled, and raw SQL/FTS/operator/tokenizer/ordering input rejects;
+- repository, principal, namespace, revision, path, state-root, authority,
+  eligibility, trusted time, idempotency, and receipt recovery are bound and
+  independently revalidated;
+- logical state and the original applied receipt commit atomically; exact
+  replay is non-mutating; lock/timeout/fault/uncertainty never claims success;
+- only public/internal non-sensitive synthetic data is used and no
+  encryption, shared-host confidentiality, cross-host, or efficacy claim is
+  made;
+- deterministic evals claim safety/conformance only; Issue #147 / PR #148 bind
+  the reviewed M1 baseline to v0.14.0 without authorizing activation or an
+  efficacy claim.
 
 ## Suggested Verification
 

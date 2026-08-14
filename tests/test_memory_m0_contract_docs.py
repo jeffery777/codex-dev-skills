@@ -30,11 +30,11 @@ class MemoryM0ContractDocsTests(unittest.TestCase):
                 self.assertIn(phrase.lower(), text.lower())
             self.assertIn("zero backend/filesystem touch", text.lower())
 
-    def test_repository_entrypoints_keep_m1_and_release_deferred(self):
+    def test_repository_entrypoints_keep_m1_default_disabled(self):
         required = {
-            "README.md": ("loop-memory-operation/v0", "loop-memory-qualification/v0", "TBD / human decision"),
+            "README.md": ("loop-memory-operation/v0", "loop-memory-qualification/v0", "v0.14.0"),
             "skills/loop-engineering/SKILL.md": ("memory-operation-v0.md", "memory-qualification-v0.md", "SQLite/FTS5"),
-            "docs/roadmap.md": ("Issue #145", "Memory M0", "TBD / human decision"),
+            "docs/roadmap.md": ("Issue #145", "Memory M0", "v0.14.0"),
             "docs/release-readiness.md": ("Memory M0", "zero backend/filesystem touch", "physical purge"),
             "docs/programs/operational-evidence/architecture-decisions.md": ("OE-016", "loop-memory-operation/v0", "loop-memory-qualification/v0"),
         }
@@ -42,8 +42,8 @@ class MemoryM0ContractDocsTests(unittest.TestCase):
             text = read(relative)
             for phrase in phrases:
                 self.assertIn(phrase, text, relative)
-        self.assertIn('VERSION="0.13.0"', read("install.sh"))
-        self.assertIn('version: "0.13.0"', read("catalog.yaml"))
+        self.assertIn('VERSION="0.14.0"', read("install.sh"))
+        self.assertIn('version: "0.14.0"', read("catalog.yaml"))
 
 
 if __name__ == "__main__":

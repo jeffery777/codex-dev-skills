@@ -82,5 +82,5 @@ PYTHONDONTWRITEBYTECODE=1 ./scripts/project-python -m unittest \
 ./scripts/project-python scripts/eval-memory-operation.py
 ```
 
-Passing is conformance evidence only. Target release is **TBD / human
-decision**.
+Passing is conformance evidence only. This contract is included in
+**v0.14.0** and does not authorize a backend or operation.
