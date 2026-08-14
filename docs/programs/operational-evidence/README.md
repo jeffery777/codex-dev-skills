@@ -4,11 +4,10 @@ Status: V2d-A is released in v0.10.0; V2d-B is released in v0.11.0; V3-A
 proposal-only evidence-to-proposal is released in v0.12.0 through Issue #133 /
 PR #134 and the Issue #137 release closure. Issue #135 defines the docs-only
 roadmap. V3-B isolated candidate evaluation is released in v0.13.0 through
-Issue #141 / PR #142 and the Issue #143 release closure. Issue #145 owns the
-M0-only provider-neutral operation-authority and qualification boundary; its
-target release remains TBD / human decision. Issue #147 owns the separate
-default-disabled local/manual/CI-only SQLite/FTS5 M1 reference-adapter
-candidate; acceptance and target release remain TBD / human decision.
+Issue #141 / PR #142 and the Issue #143 release closure. Issue #145 delivers
+the M0-only provider-neutral operation-authority and qualification boundary.
+Issue #147 / PR #148 publish M0 plus the separate default-disabled
+local/manual/CI-only SQLite/FTS5 M1 reference adapter in v0.14.0.
 
 ## Purpose
 
@@ -89,26 +88,24 @@ model.
    gate.
 9. Memory M0 — Issue #145 provider-neutral offline qualification, with no
    backend or release selection.
-10. Memory M1 — Thin default-disabled local/manual/CI reference backend
-   qualification, only after V3-B evidence and a separate
-   Issue/spec/ADR/security review.
+10. v0.14.0 — Memory M0 plus the thin default-disabled local/manual/CI M1
+   reference-backend safety/conformance baseline through Issue #147 / PR #148.
 11. V3-C — Optional resident hooks/controller, only if operational evidence
    proves it is needed and the authority/control prerequisites exist.
 
 Memory M0 is a cross-cutting readiness track that may be planned alongside
 V3-B. It defines the provider-neutral protocol, operation authority, execution
 receipt, data placement, lifecycle, concurrency, security/privacy threat model,
-and memory-off/on evaluation design. This documentation does not complete M0
-qualification and M0 does not implement a backend. M2 may consider a second
-provider or MCP adapter only after M1 qualification passes. All later release
-targets are TBD / human decision.
+and memory-off/on evaluation design. M0 does not implement a backend. M2 may
+consider a second provider or MCP adapter only after M1 qualification passes.
+M2 and V3-C release targets remain TBD / human decision.
 
 Issue #145 is the bounded M0 qualification candidate. Passing its validators,
 evals, or reviews still does not authorize M1 implementation or a release.
 
 Issue #147 is the separately authorized bounded M1 implementation and
-safety/conformance qualification candidate. Passing its validators, evals, or
-reviews still does not accept, activate, promote, or release it.
+safety/conformance qualification delivered in v0.14.0. Passing its validators,
+evals, or reviews still does not activate or promote it.
 
 See [implementation-phases.md](implementation-phases.md) for deliverables and
 entry/exit criteria.

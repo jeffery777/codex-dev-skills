@@ -48,8 +48,8 @@ class CandidateEvaluationContractDocsTests(unittest.TestCase):
             text = read(relative)
             for phrase in phrases:
                 self.assertIn(phrase, text, relative)
-        self.assertIn('VERSION="0.13.0"', read("install.sh"))
-        self.assertIn('version: "0.13.0"', read("catalog.yaml"))
+        self.assertIn('VERSION="0.14.0"', read("install.sh"))
+        self.assertIn('version: "0.14.0"', read("catalog.yaml"))
         notes = read("docs/release-notes-v0.13.0.md")
         self.assertIn("# Release Notes: v0.13.0", notes)
         self.assertIn("loop-candidate-evaluation/v0", notes)

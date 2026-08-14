@@ -18,7 +18,7 @@ class MemorySQLiteContractDocsTests(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
             for phrase in (
                 "loop-memory-sqlite/v0", "default-disabled", "FTS5", "parameter",
-                "logical", "no migration", "public/internal", "TBD / human decision",
+                "logical", "no migration", "public/internal", "v0.14.0",
             ):
                 self.assertIn(phrase.lower(), text.lower(), f"{path}: {phrase}")
 

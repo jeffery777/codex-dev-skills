@@ -56,14 +56,16 @@ The final deep code/docs rerun reports no unresolved finding. Codex Security
 diff scan `5caf2125-a619-4e3f-bf46-36dded0a13c5` sealed the exact candidate
 snapshot with complete coverage and zero findings. Implementation commit
 `2c4c609b12632eb3bbfe9a80b5c13b8a99134d8d` was pushed to the Issue branch.
-PR creation, acceptance, release selection, merge, tag, Release, install,
-activation, promotion, and deploy remain human gates.
+The maintainer later authorized PR review, selected v0.14.0, and conditionally
+authorized merge plus tag after exact-head CI, code review, and security diff
+scan report no findings. GitHub Release publication, install, activation,
+promotion, and deploy remain human gates.
 
 ## Definition Of Done
 
 Use the exact Definition of Done and acceptance matrix in `loop-spec.md` and
-GitHub Issue #147. Upstream production contracts stay byte-unchanged. Target
-release stays **TBD / human decision**.
+GitHub Issue #147. Upstream production contract semantics stay unchanged. The
+reviewed M0/M1 baseline target is **v0.14.0**.
 
 ## Stop Conditions
 

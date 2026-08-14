@@ -100,8 +100,9 @@ Issue #147 owns the separately authorized bounded M1 SQLite/FTS5 reference
 candidate. It is implemented only as additive `loop-memory-sqlite/v0`, remains
 default-disabled and local/manual/CI-only, and does not alter this released
 V2b contract or any V3/M0 production contract. Candidate safety/conformance
-evidence does not accept, install, activate, promote, or release M1; the target
-release remains TBD / human decision.
+evidence does not accept, install, activate, or promote M1. Issue #147 / PR
+#148 bind the reviewed default-disabled safety/conformance baseline to
+**v0.14.0** without changing this V2b contract.
 
 - **M0 Backend Readiness** defines the contract-to-runtime gap matrix,
   provider-neutral protocol, caller-owned operation authority, adapter

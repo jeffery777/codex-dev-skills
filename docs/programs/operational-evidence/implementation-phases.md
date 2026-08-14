@@ -208,8 +208,8 @@ phases.
 
 ### M0 — Backend Readiness
 
-**Status:** Issue #145 owns the additive offline qualification candidate.
-Target release remains TBD / human decision.
+**Status:** Issue #145 delivered the additive offline qualification layer,
+included in v0.14.0 without a backend or activation path.
 
 M0 defines and qualifies the contract-to-runtime gap matrix,
 provider-neutral request/receipt protocol, current operation authority,
@@ -225,8 +225,8 @@ cross-scope M1 receipt replay, with eval metrics derived from those outcomes.
 
 ### M1 — Thin Reference Backend Qualification
 
-**Status:** Issue #147 owns the exact bounded candidate. Acceptance and target
-release remain TBD / human decision.
+**Status:** Issue #147 / PR #148 deliver the exact bounded default-disabled
+safety/conformance baseline in v0.14.0.
 
 M1 started only after the V3-B baseline and a new Issue/spec/ADR/security
 review authorized the exact scope. The candidate is a
@@ -240,8 +240,9 @@ context/cache rather than authority. It adds no daemon, network service,
 scheduler, controller, MCP server, automatic recall/write, or cross-host
 coordination.
 
-Issue #147 qualification proves safety/conformance only. It cannot prove
-efficacy or authorize install, activation, promotion, release, or V3-C.
+Issue #147 qualification proves safety/conformance only. Publication in
+v0.14.0 cannot prove efficacy or authorize install, activation, promotion, or
+V3-C.
 
 ### M2 — Second Provider Or MCP Adapter
 

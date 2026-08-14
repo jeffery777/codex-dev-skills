@@ -176,7 +176,8 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   no SQLite/FTS5 import/probe/backend, schema/database, persistence, provider,
   MCP, PlugMem/Mem0, automatic recall/write, or V3-C. Memory-off remains zero
   backend/filesystem touch; physical purge and efficacy claims are deferred.
-  M1 and the target release remain **TBD / human decision**.
+  M0 is included in the v0.14.0 public baseline but remains a non-backend
+  authority and qualification layer.
 - Issue #147 owns the separate Memory M1 SQLite/FTS5 reference-adapter
   candidate. It is additive, default-disabled, and local/manual/CI-only; uses
   an explicit approved machine-local state root; behavior-probes an isolated
@@ -184,8 +185,8 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   schema, and capability fingerprints; accepts only bounded structured query;
   and carries M0 authority through atomic logical state plus receipt. It makes
   no efficacy, shared-host confidentiality, encryption, cross-host, physical
-  purge, migration/repair, activation, promotion, or release claim. Target
-  release remains **TBD / human decision**.
+  purge, migration/repair, activation, or promotion claim. Issue #147 / PR
+  #148 select **v0.14.0** for the reviewed M1 safety/conformance baseline.
 
 ## Non-Goals
 

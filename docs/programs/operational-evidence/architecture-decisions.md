@@ -153,8 +153,9 @@ adapter only after M1 qualification passes.
 
 **Consequence:** Issue #135 can align documents and define qualification
 requirements but cannot claim release, V3-B, M0, or M1 completion. Issue #143
-selects v0.13.0 for the separately reviewed V3-B release; M1, M2, and V3-C
-target releases remain TBD until a human decision. V3-C automatic
+selects v0.13.0 for the separately reviewed V3-B release; Issue #147 / PR #148
+select v0.14.0 for M0 plus the M1 safety/conformance baseline. M2 and V3-C
+targets remain TBD until a human decision. V3-C automatic
 recall/write, scheduler/controller, persistent service, queue, or cross-host
 behavior requires a new architecture and security/privacy gate.
 
@@ -253,5 +254,6 @@ safety envelope.
 network/service/daemon/scheduler/hook, automatic recall/write, cross-host or
 shared-host claims, encryption claims, physical purge, real/private data,
 efficacy, install, activation, promotion, and release selection remain absent.
-Passing Issue #147 evidence establishes safety/conformance only; acceptance
-and target release are **TBD / human decision**.
+Passing Issue #147 evidence establishes safety/conformance only. Issue #147 /
+PR #148 bind that default-disabled reviewed baseline to **v0.14.0** without
+acceptance for activation, promotion, or efficacy.

@@ -115,5 +115,5 @@ bundles. Each bundle reconstructs the complete M0 authority/eligibility/
 trusted-time request and validates an applied receipt against the live adapter
 and platform before its digest can enter qualification. Caller acceptance
 remains separate. Passing proves safety/conformance only; efficacy and the
-independent human/platform promotion gate remain unresolved. Target release is
-**TBD / human decision**.
+independent human/platform promotion gate remain unresolved. The reviewed
+default-disabled reference baseline is released in **v0.14.0**.

@@ -67,7 +67,8 @@ must not change.
 - recovery overclaim: named synthetic faults, uncertainty is failure;
 - privacy: public/internal only, generic errors, synthetic fixtures;
 - backend creep: no service/network/hooks/automatic path;
-- release creep: TBD and no version/release-note change.
+- release creep: version selection remains human-owned; the later maintainer
+  decision adds only v0.14.0 metadata and release-note closure.
 
 ## Review And Gates
 

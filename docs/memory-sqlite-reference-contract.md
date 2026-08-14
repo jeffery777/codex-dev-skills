@@ -90,9 +90,10 @@ tuple and zero-failure safety observation. Every referenced execution digest
 comes from an exact evidence bundle whose complete M0 authority, eligibility,
 trusted-time, authorized request, applied receipt, live adapter, and platform
 bindings are revalidated. The current caller must accept it separately. It
-cannot prove efficacy, completion, review, promotion, merge,
-release, deploy, activation, or another external write. Target release is
-**TBD / human decision**.
+cannot prove efficacy, completion, review, promotion, merge, deploy,
+activation, or another external write. The exact reviewed default-disabled
+reference baseline is released in **v0.14.0**; release does not qualify other
+platform tuples or authorize activation.
 
 ## Verification
 

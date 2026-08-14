@@ -5,10 +5,11 @@
 Issue #147 implements one additive, default-disabled, local/manual/CI-only
 SQLite/FTS5 reference adapter downstream of the released Memory M0 contracts.
 It qualifies safety and conformance for one exact adapter, schema, capability,
-and platform tuple. It does not enable memory, select a release, or change any
+and platform tuple. It does not enable memory or change any
 V1/V2/V3/M0 authority or completion contract.
 
-Target release: **TBD / human decision**.
+Target release: **v0.14.0**, selected by the maintainer after the initial
+implementation review. Release does not authorize activation or efficacy.
 
 ## Sources Of Truth
 
@@ -36,7 +37,8 @@ Verified facts:
 - Issue #145 is closed and PR #146 is merged at that commit;
 - there were no open Issue/PR collisions before Issue #147 was created;
 - the tracked resolver selects Python 3.12.9 and PyYAML 6.0.3;
-- latest tag/Release is `v0.13.0`; no M1 release is selected;
+- at task entry, the latest tag/Release was `v0.13.0`; the later maintainer
+  decision selected v0.14.0 for the reviewed M1 baseline;
 - the GitNexus saved-project `main` index is 15 commits stale and no exact-head
   index is accepted or rebuilt;
 - production M0 validates authority, requests, receipts, and qualification

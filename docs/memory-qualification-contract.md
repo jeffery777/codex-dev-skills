@@ -75,5 +75,5 @@ PYTHONDONTWRITEBYTECODE=1 ./scripts/project-python -m unittest \
 ./scripts/project-python scripts/eval-memory-qualification.py
 ```
 
-Passing does not implement or authorize SQLite/FTS5 M1. Target release is
-**TBD / human decision**.
+Passing does not implement or authorize SQLite/FTS5 M1. This contract is
+included in **v0.14.0** as the unchanged qualification authority boundary.

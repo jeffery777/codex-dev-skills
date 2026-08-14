@@ -68,20 +68,20 @@ class ImprovementProposalContractDocsTests(unittest.TestCase):
         skill = read("skills/loop-engineering/SKILL.md")
         self.assertIn("scripts/proposalctl.py", skill)
 
-    def test_v0130_packaging_and_release_metadata_agree(self):
-        self.assertIn('VERSION="0.13.0"', read("install.sh"))
-        self.assertIn('version: "0.13.0"', read("catalog.yaml"))
-        self.assertIn("docs/release-notes-v0.13.0.md", read("README.md"))
-        notes = read("docs/release-notes-v0.13.0.md")
-        self.assertIn("# Release Notes: v0.13.0", notes)
-        self.assertIn("Release date: 2026-08-12", notes)
-        self.assertIn("issues/143", notes)
-        self.assertIn("pull/144", notes)
-        self.assertIn("compare/v0.12.1...v0.13.0", notes)
+    def test_v0140_packaging_and_release_metadata_agree(self):
+        self.assertIn('VERSION="0.14.0"', read("install.sh"))
+        self.assertIn('version: "0.14.0"', read("catalog.yaml"))
+        self.assertIn("docs/release-notes-v0.14.0.md", read("README.md"))
+        notes = read("docs/release-notes-v0.14.0.md")
+        self.assertIn("# Release Notes: v0.14.0", notes)
+        self.assertIn("Release date: 2026-08-14", notes)
+        self.assertIn("issues/147", notes)
+        self.assertIn("pull/148", notes)
+        self.assertIn("compare/v0.13.0...v0.14.0", notes)
         self.assertIn("scripts/project-python", notes)
 
-        historical = read("docs/release-notes-v0.12.1.md")
-        self.assertIn("# Release Notes: v0.12.1", historical)
+        historical = read("docs/release-notes-v0.13.0.md")
+        self.assertIn("# Release Notes: v0.13.0", historical)
         self.assertIn("Release date: 2026-08-12", historical)
         self.assertIn("V3-B", historical)
 

@@ -60,5 +60,6 @@ promotion, or release readiness.
 
 ## M1-011 — Keep Release Selection Human-Owned
 
-Target release remains **TBD / human decision**. Passing tests, evals, or
-qualification cannot install, enable, commit, publish, or promote the adapter.
+The maintainer selected **v0.14.0** after the implementation review. Passing
+tests, evals, or qualification did not select the version and still cannot
+install, enable, publish, or promote the adapter by itself.
