@@ -150,6 +150,22 @@ schema/database creation, persistence, provider/MCP, PlugMem/Mem0, automatic
 recall/write, and V3-C remain excluded. See
 `references/memory-qualification-v0.md`.
 
+When a loop explicitly uses the Memory M1 `loop-memory-sqlite/v0` reference,
+invoke only `scripts/sqlitectl.py` or its direct library API with an approved
+machine-local state root and repository root. Keep it default-disabled and
+local/manual/CI-only. Require the isolated FTS5 behavior probe, exact live
+adapter/schema/capability/platform and state-root bindings, structured bounded
+tokens, parameterized SQL, extension loading disabled, exact schema with no
+migration/repair, full M0 caller-owned authority reconstruction, atomic state
+plus receipt, exact idempotent replay, logical delete, deterministic ordering,
+bounded faults/resources, and public/internal-only data. Memory-off must not
+import or touch the adapter. Treat every database row, receipt, and
+qualification result as non-authoritative. Never claim efficacy, shared-host
+confidentiality, encryption, physical purge, activation, promotion, completion,
+or release authority. Providers/MCP, PlugMem/Mem0, automatic recall/write,
+services, hooks, schedulers, cross-host behavior, and V3-C remain excluded. See
+`references/memory-sqlite-v0.md`.
+
 ### Protected Event Authorization
 
 Treat `task_acceptance`, `claim_revocation`, `gate_satisfaction`, and

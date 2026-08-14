@@ -225,8 +225,11 @@ cross-scope M1 receipt replay, with eval metrics derived from those outcomes.
 
 ### M1 — Thin Reference Backend Qualification
 
-M1 may start only after V3-B evidence passes and a new
-Issue/spec/ADR/security review authorizes the exact scope. The candidate is a
+**Status:** Issue #147 owns the exact bounded candidate. Acceptance and target
+release remain TBD / human decision.
+
+M1 started only after the V3-B baseline and a new Issue/spec/ADR/security
+review authorized the exact scope. The candidate is a
 default-disabled, deterministic, local/manual/CI-only SQLite/FTS5 reference
 adapter. It must behavior-probe FTS5 and fail closed to no memory; isolate
 repository/principal/namespace/path scope; bind eligibility and provenance by
@@ -236,6 +239,9 @@ execution receipt; implement explicit lifecycle operations; and remain
 context/cache rather than authority. It adds no daemon, network service,
 scheduler, controller, MCP server, automatic recall/write, or cross-host
 coordination.
+
+Issue #147 qualification proves safety/conformance only. It cannot prove
+efficacy or authorize install, activation, promotion, release, or V3-C.
 
 ### M2 — Second Provider Or MCP Adapter
 

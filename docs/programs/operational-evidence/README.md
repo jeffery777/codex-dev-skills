@@ -6,7 +6,9 @@ PR #134 and the Issue #137 release closure. Issue #135 defines the docs-only
 roadmap. V3-B isolated candidate evaluation is released in v0.13.0 through
 Issue #141 / PR #142 and the Issue #143 release closure. Issue #145 owns the
 M0-only provider-neutral operation-authority and qualification boundary; its
-target release remains TBD / human decision.
+target release remains TBD / human decision. Issue #147 owns the separate
+default-disabled local/manual/CI-only SQLite/FTS5 M1 reference-adapter
+candidate; acceptance and target release remain TBD / human decision.
 
 ## Purpose
 
@@ -55,6 +57,11 @@ later M1/M2 gates only.
   composition, atomic receipt validation, logical delete, zero-touch
   memory-off, and safety/conformance-only paired qualification. It adds no M1
   backend.
+- Memory M1 adds a separate `loop-memory-sqlite/v0` reference candidate. It
+  behavior-probes an isolated FTS5 database, binds the exact runtime tuple,
+  requires structured parameterized queries and complete M0 authority, and
+  commits logical state with its original receipt atomically. It is inert by
+  default and makes no efficacy, activation, promotion, or release claim.
 - Issue #109 adds an exact index-only GitNexus repository default and
   trusted-base, read-only ready-PR Issue-linkage guardrail. These controls are
   repository hygiene and traceability evidence, not completion or merge
@@ -98,6 +105,10 @@ targets are TBD / human decision.
 
 Issue #145 is the bounded M0 qualification candidate. Passing its validators,
 evals, or reviews still does not authorize M1 implementation or a release.
+
+Issue #147 is the separately authorized bounded M1 implementation and
+safety/conformance qualification candidate. Passing its validators, evals, or
+reviews still does not accept, activate, promote, or release it.
 
 See [implementation-phases.md](implementation-phases.md) for deliverables and
 entry/exit criteria.

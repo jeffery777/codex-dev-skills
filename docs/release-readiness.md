@@ -196,6 +196,31 @@ When a change includes Memory M0, also require evidence that:
   providers/MCP, PlugMem/Mem0, automatic recall/write, and V3-C are absent;
 - M1 and target release remain TBD / human decision.
 
+When a change includes the Issue #147 Memory M1 candidate, also require
+evidence that:
+
+- released V2b/V2d/V3/M0 production modules remain unchanged and memory-off
+  performs zero adapter and filesystem touch;
+- the only backend entrypoint is explicit local/manual/CI use and an explicit
+  approved state root disjoint from the repository is mandatory;
+- a fresh isolated temporary database proves the exact FTS5 tokenizer
+  behavior and binds SQLite source/build, platform, schema, and adapter
+  fingerprints before state adoption;
+- existing schema and metadata match exactly; missing/drifted state rejects
+  with no migration, repair, purge, backup, or restore route;
+- queries are structured and bounded, SQL is parameterized, extension loading
+  is disabled, and raw SQL/FTS/operator/tokenizer/ordering input rejects;
+- repository, principal, namespace, revision, path, state-root, authority,
+  eligibility, trusted time, idempotency, and receipt recovery are bound and
+  independently revalidated;
+- logical state and the original applied receipt commit atomically; exact
+  replay is non-mutating; lock/timeout/fault/uncertainty never claims success;
+- only public/internal non-sensitive synthetic data is used and no
+  encryption, shared-host confidentiality, cross-host, or efficacy claim is
+  made;
+- deterministic evals claim safety/conformance only, and M1 acceptance plus
+  target release remain TBD / human decision.
+
 ## Suggested Verification
 
 Run the repository hygiene check:

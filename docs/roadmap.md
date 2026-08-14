@@ -43,6 +43,15 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
+- High-priority GitNexus index-lifecycle follow-up: at the next suitable
+  maintenance window, open a dedicated Issue and branch to define distinct
+  `main`, issue-branch, linked-worktree, dirty-tree, and PR-review identities.
+  A commit-based "up-to-date" status does not prove dirty or untracked content
+  freshness;
+  exact evidence needs complete content binding and clean committed base/head
+  rules before automation or completion use. Issue #147 records the bounded
+  observation in `docs/loops/issue-147/follow-ups.md` without making it M1
+  release scope.
 - Historical wrapper cleanup: inventory tests and documents that still require
   `desktop_runtime_*`, define a compatibility sunset, then archive or remove
   them without connecting them to the active native path.
@@ -168,6 +177,15 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   MCP, PlugMem/Mem0, automatic recall/write, or V3-C. Memory-off remains zero
   backend/filesystem touch; physical purge and efficacy claims are deferred.
   M1 and the target release remain **TBD / human decision**.
+- Issue #147 owns the separate Memory M1 SQLite/FTS5 reference-adapter
+  candidate. It is additive, default-disabled, and local/manual/CI-only; uses
+  an explicit approved machine-local state root; behavior-probes an isolated
+  temporary FTS5 database; binds exact SQLite build, tokenizer, platform,
+  schema, and capability fingerprints; accepts only bounded structured query;
+  and carries M0 authority through atomic logical state plus receipt. It makes
+  no efficacy, shared-host confidentiality, encryption, cross-host, physical
+  purge, migration/repair, activation, promotion, or release claim. Target
+  release remains **TBD / human decision**.
 
 ## Non-Goals
 

@@ -1,0 +1,18 @@
+{
+  "contract_version": "loop-memory-sqlite-eval/v0",
+  "expected": {
+    "atomicity_failures": 0,
+    "authority_failures": 0,
+    "cases": 18,
+    "decision_accuracy": 1.0,
+    "efficacy_claims": 0,
+    "idempotency_failures": 0,
+    "identity_failures": 0,
+    "lifecycle_failures": 0,
+    "privacy_failures": 0,
+    "recovery_failures": 0,
+    "schema_drift_failures": 0,
+    "unauthorized_routes": 0
+  },
+  "negative_cases": "negative-cases.json"
+}

@@ -56,8 +56,8 @@ consistency. Runtime observations, handoff
 receipts, external memory, GitNexus metadata, hook output, and linkage CI
 remain advisory and never replace repository, Git, verification, review,
 protected authorization, accepted platform state, or completion truth. No
-production memory backend, scheduler, daemon, or automatic hook activation is
-included.
+activated production memory backend, scheduler, daemon, or automatic hook
+activation is included.
 
 V2d-A and V2d-B remain public, non-sensitive contract prerequisites. The
 private manual/CI qualification and V3-A re-entry evidence remain outside this
@@ -622,6 +622,26 @@ PlugMem/Mem0, automatic recall/write, and V3-C remain excluded. M1 and the
 target release are **TBD / human decision**. See the
 [operation contract](docs/memory-operation-contract.md) and
 [qualification contract](docs/memory-qualification-contract.md).
+
+Memory M1 is an additive reference-adapter candidate owned by Issue #147. It
+adds the explicit `loop-memory-sqlite/v0` local/manual/CI-only SQLite/FTS5
+adapter without importing it from memory-off or any released V2/V3/M0 module:
+
+```bash
+./scripts/project-python skills/loop-engineering/scripts/sqlitectl.py probe
+./scripts/project-python scripts/eval-memory-sqlite.py
+```
+
+The adapter requires an explicit approved machine-local state root, an exact
+isolated FTS5 behavior probe and platform/build/tokenizer/schema fingerprint,
+bounded structured query terms, parameterized SQL, complete M0 authority
+reconstruction, and atomic logical state plus receipt. Extension loading, raw
+SQL/FTS expressions, automatic migration/repair, physical purge, providers/
+MCP, services, network, automatic recall/write, cross-host use, private data,
+and efficacy claims remain excluded. The candidate is default-disabled and
+does not install, activate, promote, or select a release. M1 acceptance and
+target release remain **TBD / human decision**. See the
+[M1 reference contract](docs/memory-sqlite-reference-contract.md).
 
 V2c-A adds a default-disabled, version-gated GitNexus driver boundary. The live
 macOS qualification covers GitNexus `1.6.9`, a runtime-produced qualification

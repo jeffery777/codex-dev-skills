@@ -321,6 +321,16 @@ check_memory_m0_contracts() {
   ok "Memory M0 operation authority, atomic receipt, zero-touch, and qualification contracts pass"
 }
 
+check_memory_m1_contracts() {
+  "$PROJECT_PYTHON" scripts/eval-memory-sqlite.py >"$TMP_DIR/memory-sqlite-eval.json"
+  "$PROJECT_PYTHON" -m unittest \
+    tests.test_memory_sqlite \
+    tests.test_sqlitectl \
+    tests.test_eval_memory_sqlite \
+    tests.test_memory_sqlite_contract_docs >/dev/null
+  ok "Memory M1 SQLite/FTS5 reference adapter safety and conformance contracts pass"
+}
+
 check_loop_contract() {
   "$PROJECT_PYTHON" -m unittest tests.test_loop_engineering_core tests.test_loopctl >/dev/null
   ok "loop engineering event, transition, migration, and CLI contracts pass"
@@ -367,6 +377,7 @@ main() {
   check_improvement_proposal_contract
   check_candidate_evaluation_contract
   check_memory_m0_contracts
+  check_memory_m1_contracts
 }
 
 main "$@"
