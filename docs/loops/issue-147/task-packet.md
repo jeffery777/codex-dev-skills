@@ -16,7 +16,7 @@ authorized commit/push gate and stop before PR.
 - [x] package/repository/public-doc alignment;
 - [x] focused/full verification and static impact evidence;
 - [x] deep quality/security/privacy review and MUST-FIX closure;
-- [ ] final code/security review with no findings, commit/push evidence, and PR
+- [x] final code/security review with no findings, commit/push evidence, and PR
   human gate.
 
 ## Verification Evidence
@@ -52,8 +52,12 @@ authorized commit/push gate and stop before PR.
   **Deferred**, high priority. Owner, target, reason, remaining risk,
   verification plan, and promotion trigger are complete in `follow-ups.md`.
 
-The final deep code/docs rerun reports no unresolved finding. The separate
-final security diff scan and commit/push condition remain pending.
+The final deep code/docs rerun reports no unresolved finding. Codex Security
+diff scan `5caf2125-a619-4e3f-bf46-36dded0a13c5` sealed the exact candidate
+snapshot with complete coverage and zero findings. Implementation commit
+`2c4c609b12632eb3bbfe9a80b5c13b8a99134d8d` was pushed to the Issue branch.
+PR creation, acceptance, release selection, merge, tag, Release, install,
+activation, promotion, and deploy remain human gates.
 
 ## Definition Of Done
 
