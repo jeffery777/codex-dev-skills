@@ -215,10 +215,24 @@ class PullRequestIssueLinkTests(unittest.TestCase):
         self.assertIn("fetch-depth: 0", workflow)
         self.assertIn("persist-credentials: false", workflow)
         self.assertIn("python-version-file: .python-version", workflow)
+        self.assertIn("if command -v rg >/dev/null 2>&1; then", workflow)
+        self.assertIn("            exit 0", workflow)
+        self.assertIn("Acquire::ForceIPv4=true", workflow)
+        self.assertIn("Acquire::Retries=1", workflow)
+        self.assertIn("Acquire::http::Timeout=30", workflow)
+        self.assertIn("Acquire::https::Timeout=30", workflow)
         self.assertIn(
-            "sudo apt-get install --no-install-recommends --yes ripgrep",
+            'sudo env DEBIAN_FRONTEND=noninteractive timeout --kill-after=10s '
+            '90s apt-get "${apt_options[@]}" update',
             workflow,
         )
+        self.assertIn(
+            'sudo env DEBIAN_FRONTEND=noninteractive timeout --kill-after=10s '
+            '90s apt-get "${apt_options[@]}" install '
+            '--no-install-recommends --yes ripgrep',
+            workflow,
+        )
+        self.assertGreaterEqual(workflow.count("rg --version"), 2)
         self.assertIn("PYTHONDONTWRITEBYTECODE: \"1\"", workflow)
         self.assertIn("python -m unittest discover", workflow)
         self.assertIn(
