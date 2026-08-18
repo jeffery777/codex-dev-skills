@@ -14,7 +14,7 @@ DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
-VERSION="0.14.0"
+VERSION="0.14.1"
 
 case "$CODEX_DEV_SKILLS_TARGET" in
   legacy) DEFAULT_CODEX_SKILLS_DIR="$DEFAULT_CODEX_LEGACY_SKILLS_DIR" ;;
@@ -63,6 +63,9 @@ Custom CODEX_SKILLS_DIR / CODEX_TEMPLATES_DIR / CODEX_CUSTOM_AGENTS_DIR values r
 Existing installs are never moved or removed automatically.
 If the same skill exists in both standard discovery paths, resolve the duplicate
 or use CODEX_DEV_SKILLS_TARGET=legacy to maintain an existing legacy install.
+If the codex-dev-skills plugin is installed, remove either the plugin or the
+filesystem installation before using install/update. The installer checks the
+documented `codex plugin list --json` surface when the active CLI supports it.
 The codex-agent-profiles group is never installed by --all or codex-dev-skills.
 USAGE
 }
@@ -103,23 +106,30 @@ reject_symlink_components() {
   return 0
 }
 
-canonicalize_root() {
+validate_root_without_create() {
   local raw="$1" default_raw="$2" label="$3" abs default_abs real_abs
   abs="$(absolute_path "$raw")"
   default_abs="$(absolute_path "$default_raw")"
-  if [[ "$abs" != "$default_abs" ]]; then
+  reject_symlink_components "$abs"
+  real_abs="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$abs")" || return 1
+  default_abs="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$default_abs")" || return 1
+  if [[ "$real_abs" != "$default_abs" ]]; then
     if [[ "${CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS:-}" != "YES" ]]; then
       die "$label override requires CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES: $raw"
     fi
     reject_suspicious_root_path "$raw" "$label"
-    reject_custom_root "$abs" "$label"
-  fi
-  reject_symlink_components "$abs"
-  mkdir -p "$abs"
-  real_abs="$(cd "$abs" && pwd -P)"
-  if [[ "$abs" != "$default_abs" ]]; then
     reject_custom_root "$real_abs" "$label"
   fi
+  if [[ -e "$real_abs" && ! -d "$real_abs" ]]; then
+    die "$label target root is not a directory: $real_abs"
+  fi
+  printf '%s\n' "$real_abs"
+}
+
+canonicalize_root() {
+  local raw="$1" default_raw="$2" label="$3" real_abs
+  real_abs="$(validate_root_without_create "$raw" "$default_raw" "$label")" || return 1
+  mkdir -p "$real_abs"
   printf '%s\n' "$real_abs"
 }
 
@@ -158,8 +168,18 @@ init_targets() {
   CODEX_TEMPLATES_DIR="$(canonicalize_root "$CODEX_TEMPLATES_DIR" "$DEFAULT_CODEX_TEMPLATES_DIR" "CODEX_TEMPLATES_DIR")" || return 1
 }
 
+preflight_targets() {
+  CODEX_SKILLS_DIR="$(validate_root_without_create "$CODEX_SKILLS_DIR" "$DEFAULT_CODEX_SKILLS_DIR" "CODEX_SKILLS_DIR")" || return 1
+  CODEX_TEMPLATES_DIR="$(validate_root_without_create "$CODEX_TEMPLATES_DIR" "$DEFAULT_CODEX_TEMPLATES_DIR" "CODEX_TEMPLATES_DIR")" || return 1
+}
+
 init_agent_target() {
   CODEX_CUSTOM_AGENTS_DIR="$(canonicalize_root "$CODEX_CUSTOM_AGENTS_DIR" "$DEFAULT_CODEX_CUSTOM_AGENTS_DIR" "CODEX_CUSTOM_AGENTS_DIR")" || return 1
+  PROFILE_STATE_FILE="$STATE_DIR/agent-profile-$(python3 -c 'import hashlib, sys; print(hashlib.sha256(sys.argv[1].encode()).hexdigest())' "$CODEX_CUSTOM_AGENTS_DIR").tsv"
+}
+
+preflight_agent_target() {
+  CODEX_CUSTOM_AGENTS_DIR="$(validate_root_without_create "$CODEX_CUSTOM_AGENTS_DIR" "$DEFAULT_CODEX_CUSTOM_AGENTS_DIR" "CODEX_CUSTOM_AGENTS_DIR")" || return 1
   PROFILE_STATE_FILE="$STATE_DIR/agent-profile-$(python3 -c 'import hashlib, sys; print(hashlib.sha256(sys.argv[1].encode()).hexdigest())' "$CODEX_CUSTOM_AGENTS_DIR").tsv"
 }
 
@@ -184,6 +204,62 @@ preflight_cross_root_skill_collisions() {
   done
   if [[ "$collision" -eq 1 ]]; then
     die "Refusing to create duplicate skill discovery entries across ~/.agents/skills and ~/.codex/skills. Existing installs are not moved or removed automatically."
+  fi
+}
+
+resolve_codex_cli() {
+  local candidate="${CODEX_CLI:-}" resolved
+  if [[ -z "$candidate" ]]; then
+    candidate="$(command -v codex 2>/dev/null || true)"
+  fi
+  [[ -n "$candidate" ]] || return 1
+  case "$candidate" in
+    /*) ;;
+    *) warn "Ignoring non-absolute CODEX_CLI path: $candidate"; return 1 ;;
+  esac
+  resolved="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$candidate")" || return 1
+  [[ "$resolved" == /* && -f "$resolved" && -x "$resolved" ]] || {
+    warn "Ignoring unsafe or unavailable Codex CLI executable: $candidate"
+    return 1
+  }
+  printf '%s\n' "$resolved"
+}
+
+preflight_plugin_distribution_collision() {
+  local codex_cli payload parse_status
+  codex_cli="$(resolve_codex_cli)" || {
+    warn "Codex CLI unavailable; plugin-install collision could not be checked. Use only one distribution path."
+    return 0
+  }
+  if ! payload="$("$codex_cli" plugin list --json 2>/dev/null)"; then
+    warn "Active Codex CLI does not expose a readable plugin list; use only one distribution path."
+    return 0
+  fi
+  if printf '%s' "$payload" | python3 -c '
+import json
+import sys
+
+try:
+    payload = json.load(sys.stdin)
+except (json.JSONDecodeError, OSError):
+    raise SystemExit(2)
+installed = payload.get("installed") if isinstance(payload, dict) else None
+if not isinstance(installed, list):
+    raise SystemExit(2)
+collision = any(
+    isinstance(item, dict)
+    and item.get("name") == "codex-dev-skills"
+    and item.get("installed", True) is not False
+    for item in installed
+)
+raise SystemExit(0 if collision else 1)
+'; then
+    die "Refusing filesystem installation while the codex-dev-skills plugin is installed. Remove one distribution path first."
+  else
+    parse_status=$?
+    if [[ "$parse_status" -ne 1 ]]; then
+      warn "Codex plugin list returned an unsupported JSON shape; use only one distribution path."
+    fi
   fi
 }
 
@@ -223,6 +299,53 @@ safe_backup_path() {
   reject_symlink_components "$backup"
   [[ ! -e "$backup" ]] || die "Refusing to overwrite existing backup path: $backup"
   printf '%s\n' "$backup"
+}
+
+preflight_filesystem_sync() {
+  local action="$1" requested="$2" force="$3"
+  local group skill rel target_rel src dst collision=0 backup
+  for group in $(expand_groups "$requested"); do
+    for skill in $(group_skills "$group"); do
+      src="$ROOT_DIR/skills/$skill"
+      [[ -d "$src" && ! -L "$src" ]] || die "Missing or unsafe skill source: skills/$skill"
+      dst="$(safe_path_under_root "$CODEX_SKILLS_DIR" "$skill")" || return 1
+      if [[ -e "$dst" || -L "$dst" ]]; then
+        if [[ ! -d "$dst" || -L "$dst" ]] ||
+           ! diff -rq -x '__pycache__' -x '*.pyc' -x '.DS_Store' "$src" "$dst" >/dev/null 2>&1; then
+          warn "existing skill differs from repository source: $dst"
+          collision=1
+          if [[ "$action" == "update" && "$force" -eq 1 ]]; then
+            backup="$(safe_backup_path "$dst")" || return 1
+            [[ ! -e "$backup" && ! -L "$backup" ]] || die "Refusing to overwrite existing backup path: $backup"
+          fi
+        fi
+      fi
+    done
+    for rel in $(group_templates "$group"); do
+      target_rel="$(template_target "$rel")"
+      src="$ROOT_DIR/$rel"
+      [[ -f "$src" && ! -L "$src" ]] || die "Missing or unsafe template source: $rel"
+      dst="$(safe_path_under_root "$CODEX_TEMPLATES_DIR" "$target_rel")" || return 1
+      if [[ -e "$dst" || -L "$dst" ]]; then
+        if [[ ! -f "$dst" || -L "$dst" ]] || ! diff -q "$src" "$dst" >/dev/null 2>&1; then
+          warn "existing template differs from repository source: $dst"
+          collision=1
+          if [[ "$action" == "update" && "$force" -eq 1 ]]; then
+            backup="$(safe_backup_path "$dst")" || return 1
+            [[ ! -e "$backup" && ! -L "$backup" ]] || die "Refusing to overwrite existing backup path: $backup"
+          fi
+        fi
+      fi
+    done
+  done
+  if [[ "$collision" -eq 1 ]]; then
+    if [[ "$action" == "install" ]]; then
+      die "Refusing to overwrite differing installed or imported artifacts. Review the source, then use update --force only for a managed filesystem installation."
+    fi
+    if [[ "$force" -ne 1 ]]; then
+      die "Refusing a partial update while installed artifacts differ. Review the source, then use update --force only for a managed filesystem installation."
+    fi
+  fi
 }
 
 all_groups() {
@@ -516,10 +639,7 @@ install_skill() {
   src="$ROOT_DIR/skills/$skill"
   dst="$(safe_path_under_root "$CODEX_SKILLS_DIR" "$skill")" || return 1
   [[ -d "$src" ]] || die "Missing skill source: skills/$skill"
-  mkdir -p "$dst"
-  cp -R "$src"/. "$dst"/
-  remove_transient_skill_files "$dst"
-  ok "skill $skill"
+  sync_dir "$src" "$dst" "skill $skill" 0
 }
 
 install_template() {
@@ -528,9 +648,7 @@ install_template() {
   src="$ROOT_DIR/$rel"
   dst="$(safe_path_under_root "$CODEX_TEMPLATES_DIR" "$target_rel")" || return 1
   [[ -f "$src" ]] || die "Missing template source: $rel"
-  mkdir -p "$(dirname "$dst")"
-  cp "$src" "$dst"
-  ok "template $target_rel"
+  sync_file "$src" "$dst" "template $target_rel" 0
 }
 
 profile_target() {
@@ -603,10 +721,20 @@ report_loop_cli_dependency() {
 }
 
 sync_file() {
-  local src="$1" dst="$2" label="$3" force="$4"
+  local src="$1" dst="$2" label="$3" force="$4" staging staged backup
   if [[ ! -e "$dst" ]]; then
     mkdir -p "$(dirname "$dst")"
-    cp "$src" "$dst"
+    staging="$(mktemp -d "$(dirname "$dst")/.codex-dev-skills.$(basename "$dst").tmp.XXXXXX")"
+    staged="$staging/value"
+    if ! cp "$src" "$staged"; then
+      rm -rf "$staging"
+      return 1
+    fi
+    if ! mv "$staged" "$dst"; then
+      rm -rf "$staging"
+      return 1
+    fi
+    rmdir "$staging"
     ok "new $label"
     return 0
   fi
@@ -615,10 +743,30 @@ sync_file() {
     return 0
   fi
   if [[ "$force" -eq 1 ]]; then
-    local backup
     backup="$(safe_backup_path "$dst")" || return 1
-    cp "$dst" "$backup"
-    cp "$src" "$dst"
+    mkdir -p "$(dirname "$dst")"
+    staging="$(mktemp -d "$(dirname "$dst")/.codex-dev-skills.$(basename "$dst").tmp.XXXXXX")"
+    staged="$staging/value"
+    if ! cp "$src" "$staged"; then
+      rm -rf "$staging"
+      return 1
+    fi
+    if ! mv "$dst" "$backup"; then
+      warn "failed to create backup for $label: $backup"
+      rm -rf "$staging"
+      return 1
+    fi
+    if ! mv "$staged" "$dst"; then
+      warn "failed to replace $label; restoring original from $backup"
+      if ! mv "$backup" "$dst"; then
+        warn "CRITICAL: failed to restore $label; original remains at $backup"
+        rm -rf "$staging"
+        return 1
+      fi
+      rm -rf "$staging"
+      return 1
+    fi
+    rmdir "$staging"
     ok "updated $label (backup: $backup)"
     return 0
   fi
@@ -628,11 +776,22 @@ sync_file() {
 }
 
 sync_dir() {
-  local src="$1" dst="$2" label="$3" force="$4"
+  local src="$1" dst="$2" label="$3" force="$4" staging staged backup
   if [[ ! -e "$dst" ]]; then
-    mkdir -p "$dst"
-    cp -R "$src"/. "$dst"/
-    remove_transient_skill_files "$dst"
+    mkdir -p "$(dirname "$dst")"
+    staging="$(mktemp -d "$(dirname "$dst")/.codex-dev-skills.$(basename "$dst").tmp.XXXXXX")"
+    staged="$staging/value"
+    mkdir "$staged"
+    if ! cp -R "$src"/. "$staged"/; then
+      rm -rf "$staging"
+      return 1
+    fi
+    remove_transient_skill_files "$staged"
+    if ! mv "$staged" "$dst"; then
+      rm -rf "$staging"
+      return 1
+    fi
+    rmdir "$staging"
     ok "new $label"
     return 0
   fi
@@ -641,14 +800,32 @@ sync_dir() {
     return 0
   fi
   if [[ "$force" -eq 1 ]]; then
-    local backup
     backup="$(safe_backup_path "$dst")" || return 1
     mkdir -p "$(dirname "$dst")"
-    [[ -e "$dst" ]] && cp -R "$dst" "$backup"
-    rm -rf "$dst"
-    mkdir -p "$dst"
-    cp -R "$src"/. "$dst"/
-    remove_transient_skill_files "$dst"
+    staging="$(mktemp -d "$(dirname "$dst")/.codex-dev-skills.$(basename "$dst").tmp.XXXXXX")"
+    staged="$staging/value"
+    mkdir "$staged"
+    if ! cp -R "$src"/. "$staged"/; then
+      rm -rf "$staging"
+      return 1
+    fi
+    remove_transient_skill_files "$staged"
+    if ! mv "$dst" "$backup"; then
+      warn "failed to create backup for $label: $backup"
+      rm -rf "$staging"
+      return 1
+    fi
+    if ! mv "$staged" "$dst"; then
+      warn "failed to replace $label; restoring original from $backup"
+      if ! mv "$backup" "$dst"; then
+        warn "CRITICAL: failed to restore $label; original remains at $backup"
+        rm -rf "$staging"
+        return 1
+      fi
+      rm -rf "$staging"
+      return 1
+    fi
+    rmdir "$staging"
     ok "updated $label (backup: $backup)"
     return 0
   fi
@@ -878,7 +1055,6 @@ run_for_groups() {
   done
   if [[ "$has_agent_profiles" -eq 1 && ( "$action" == "install" || "$action" == "update" ) ]]; then
     init_agent_target
-    preflight_agent_profile_sync "$action" "$force"
   fi
   for group in $expanded; do
     case "$action" in
@@ -960,12 +1136,32 @@ main() {
 
   case "$cmd" in
     install)
+      preflight_plugin_distribution_collision
+      preflight_targets
       preflight_cross_root_skill_collisions "$requested"
+      preflight_filesystem_sync install "$requested" 0
+      for group in $(expand_groups "$requested"); do
+        if [[ "$group" == "codex-agent-profiles" ]]; then
+          preflight_agent_target
+          preflight_agent_profile_sync install 0
+          break
+        fi
+      done
       init_targets
       run_for_groups install "$requested"
       ;;
     update)
+      preflight_plugin_distribution_collision
+      preflight_targets
       preflight_cross_root_skill_collisions "$requested"
+      preflight_filesystem_sync update "$requested" "$force"
+      for group in $(expand_groups "$requested"); do
+        if [[ "$group" == "codex-agent-profiles" ]]; then
+          preflight_agent_target
+          preflight_agent_profile_sync update "$force"
+          break
+        fi
+      done
       init_targets
       run_for_groups update "$requested" "$force"
       ;;

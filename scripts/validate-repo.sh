@@ -344,6 +344,11 @@ check_native_runtime_contract() {
   ok "native CLI/Desktop runtime adapter contracts pass"
 }
 
+check_plugin_package() {
+  "$PROJECT_PYTHON" scripts/sync-plugin-package.py >/dev/null
+  ok "plugin package exact inventory and canonical parity are valid"
+}
+
 check_repository_guardrails() {
   "$PROJECT_PYTHON" scripts/validate-gitnexus-config.py >"$TMP_DIR/gitnexus-config.json"
   "$PROJECT_PYTHON" -m unittest \
@@ -362,6 +367,7 @@ main() {
   check_catalog_skill_metadata
   check_installer_catalog_consistency
   check_code_mode_tool_policy
+  check_plugin_package
   check_installer_target_modes
   check_installer_version
   check_skill_metadata

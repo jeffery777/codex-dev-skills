@@ -1,0 +1,38 @@
+# Shared claim record for Loop Engineering V1 ledger schema v2.
+# A file in an isolated worktree is not a shared lock. Use concurrency=1 unless
+# the coordinator can provide atomic acquire and fencing in a shared store.
+
+schema_version: 2
+task_id: "<task-id>"
+status: "<active | released | expired | revoked>"
+lease_id: "<unique-lease-id>"
+owner:
+  type: "<current_session | subagent | codex_thread | maintainer>"
+  id: "<owner-id>"
+  assigned_by: "<coordinator-id>"
+fencing_token:
+  generation: 1
+  nonce: "<unique-nonce>"
+expected_state_revision: 0
+claimed_at: "<iso-8601>"
+lease_expires_at: "<iso-8601>"
+last_observed_at: "<iso-8601>"
+last_known_state: "<running | waiting | blocked | done | failed | unknown>"
+source_revision:
+  branch: "<branch>"
+  head_sha: "<git-sha>"
+  spec_sha256: "<sha256>"
+  task_manifest_sha256: "<sha256>"
+  updated_at: "<iso-8601>"
+handoff:
+  branch: "<branch-or-empty>"
+  commit: "<sha-or-empty>"
+  pull_request: "<url-or-empty>"
+  diff_summary: "<summary-or-empty>"
+  verification:
+    - "<immutable-artifact-reference-or-empty>"
+recovery:
+  stale_after: "<iso-8601>"
+  recovery_rule: "<observe-owner | inspect-durable-artifacts | ask-human | revoke-and-reacquire>"
+  recovery_evidence_required:
+    - "<artifact-or-command>"

@@ -187,6 +187,14 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   no efficacy, shared-host confidentiality, encryption, cross-host, physical
   purge, migration/repair, activation, or promotion claim. Issue #147 / PR
   #148 select **v0.14.0** for the reviewed M1 safety/conformance baseline.
+- Issue #149 owns the v0.14.1 compatibility and packaging patch. It refreshes
+  current Desktop automation/thread/panel/terminal and Linux-preview contracts,
+  keeps CLI `/plugins` and `/import` outside `cli-session-handoff`, packages
+  the canonical repository skill tree as one universal plugin, makes the
+  filesystem installer fail closed on imported/plugin duplicates, and
+  separates Codex/ChatGPT memories and Computer History from Memory M1. It
+  does not change the v0.14.0 M0/M1 feature baseline, activate M1, or authorize
+  tag/release publication before the reviewed merge gate.
 
 ## Non-Goals
 

@@ -1,0 +1,95 @@
+id: "<decision-id>"
+input:
+  request:
+    kind: "<implementation | docs | review | delivery | continuation>"
+    risk: "<routine | high>"
+    requires_external_write: false
+    scheduled: false
+    desktop_thread: false
+    goal_required: false
+  objective:
+    clear: true
+    complete: false
+  state:
+    source_conflict: false
+    verification: "<not_run | passed | failed | skipped>"
+    review: "<not_required | required | passed | blocked>"
+    human_gate: "<not_required | pending | satisfied | blocked>"
+    task_status: "<canonical-task-status>"
+    protected_history_sha256: "<none-or-audit-reported-digest>"
+    goal_status: "<inactive | active | blocked | complete>"
+    security_scan:
+      status: "<not_started | running | complete | failed | cancelled>"
+      phase: "<none | preflight | threat_model | discovery | validation | attack_path | reporting>"
+      worker_failure_kind: "<none | safety_refused | transient | unrecoverable>"
+      worker_retry_count: 0
+  runtime:
+    surface: "<cli | desktop | ide>"
+    capabilities:
+      goal: false
+      subagents: false
+      scheduler: false
+      threads: false
+  work:
+    parallelizable: false
+    ownership_disjoint: true
+expect: {}
+
+# `loopctl.py agent-route <this-file> --runtime-facts <current-facts.json>`
+# consumes this separate V2a contract and emits a content-bound `route_receipt`.
+# Version 1 remains accepted for compatibility and omits `workload_kind`; use
+# version 2 for cost-aware class/tier selection.
+# Runtime/model facts are trusted current-session CLI evidence and must not be
+# embedded in this repository-controlled document.
+agent_route:
+  contract_version: 2
+  task:
+    id: "<task-id>"
+    workload_kind: "<mechanical | exploration | implementation | review | security-review | research-orchestration>"
+    factors:
+      ambiguity: "<low | moderate | high>"
+      reasoning_depth: "<shallow | balanced | deep>"
+      code_context_volume: "<small | medium | large>"
+      security_data_migration_public_contract_risk: "<none | routine | high | security | data | migration | public-contract>"
+      write_blast_radius: "<none | bounded | broad>"
+      latency_sensitivity: "<low | medium | high>"
+      cost_token_sensitivity: "<low | medium | high>"
+      independence_parallelizability: "<coupled | bounded | independent>"
+      verification_burden: "<low | medium | high>"
+  profile_preflight:
+    profile_dir: "<repo-or-installed-agent-profile-directory>"
+    registry: "<installed-skill>/references/agent-profile-registry.json"
+    role: "<loop_v2a_role>"
+    agent_roots: ["<other-applicable-agent-root>"]
+    destination_root: "<adoption-target-agent-root>"
+  assignment:
+    scope: ["<owned-path>"]
+    ownership:
+      owner: "<worker-id>"
+      disjoint: true
+    source_revision:
+      branch: "<exact-git-branch>"
+      head_sha: "<immutable-source-revision>"
+    authority_contract:
+      mutation_scope: "<none | bounded>"
+      external_write_authorized: false
+      human_gates: ["<required-gate>"]
+      completion_criteria: ["<repository-verifiable-criterion>"]
+
+# Trusted authority is intentionally absent. Supply current-session authority
+# only through loopctl flags such as --external-write-authorized or
+# --parent-security-scan-fallback-authorized after exact user authorization.
+# The scan-wide parent fallback flag applies to every scan phase. The legacy
+# --parent-security-report-fallback-authorized spelling is accepted only as a
+# reporting-phase compatibility alias and cannot authorize any other phase.
+# `reporting_retry_count` is likewise a reporting-only legacy input;
+# non-reporting phases use `worker_retry_count` and ignore the legacy field.
+# Event trusted current time is not repository input: loopctl obtains it from the
+# CLI clock, while direct live library callers inject it at their write boundary.
+# Durable lease semantics remain event-time based, but live claim acquisition,
+# active-claim transitions, and source rebound also reject leases stale at that
+# trusted current time.
+# Every decide call must pass an independently verified value through
+# --protected-history-sha256. Use the exact audit-reported digest, or the literal
+# `none` only after the trusted caller verifies that no protected history exists;
+# never infer either value as trusted from this file.

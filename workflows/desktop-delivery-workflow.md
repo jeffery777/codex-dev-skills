@@ -17,6 +17,19 @@ Use this workflow in Codex Desktop when the user delegates a bounded project obj
 8. Main agent prepares PR or merge readiness evidence.
 9. Main agent stops for human approval before external writes, including commit, push, PR creation, platform comments, review submissions, or final merge/deploy actions.
 
+Desktop automation is a thin wakeup adapter. Use the active
+`automation_update` surface, default a recurring request in the current local
+task to a heartbeat, and reserve cron for explicitly standalone project work
+resolved through `list_projects`. Preserve existing fields on update, avoid
+duplicates, keep notification policy outside the prompt, and do not emit raw
+directives or RRULEs.
+
+Desktop task creation is also capability-detected. Omit worktree
+`startingState` for the project default branch; use `working-tree`, exact
+`branchName`, or `create-branch` only with matching explicit user intent. The
+Linux Desktop preview may lack macOS/Windows features, so use the same
+CLI/manual/sequential fallback when a callable is unavailable.
+
 CLI fallback: use `project-delivery` and `project-orchestrator` with prompts, task briefs, continuation prompts, or a sequential execution path. Run review primitives after the fallback produces changed files or evidence, and use formal gates only at commit readiness, PR readiness, merge readiness, or explicit repo-policy gates.
 
 `desktop-project-delivery` and `desktop-thread-delegation` are the active

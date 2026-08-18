@@ -134,21 +134,27 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
 
     def test_latest_runtime_evidence_records_current_versions_and_schemas(self) -> None:
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-12.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-18.md")
 
         for expected in (
             "0.147.0",
-            "schemaVersion: 2",
-            "schemaVersion: 4",
-            "pinnedThreads",
-            "pinnedIndex",
-            "version unavailable",
+            "26.813.12317",
+            "automation_update",
+            "working-tree",
+            "create-branch",
+            "list_archived_threads",
+            "open_in_codex",
+            "read_thread_terminal",
+            "Linux",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, evidence)
 
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-07-31.md").is_file()
+        )
+        self.assertTrue(
+            (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-12.md").is_file()
         )
 
     def test_desktop_post_create_visibility_contract(self) -> None:
@@ -305,6 +311,14 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "Cloud handoff is unsupported",
             "heartbeat",
             "cron automation",
+            "automation_update",
+            "notificationPolicy",
+            "startingState",
+            "branchName",
+            "create-branch",
+            "list_archived_threads",
+            "open_in_codex",
+            "read_thread_terminal",
             "untrusted",
         ):
             with self.subTest(expected=expected):
@@ -327,6 +341,32 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
                 r"cross-host\s+handoff requires\s+additional explicit authorization",
                 re.IGNORECASE,
             ),
+        )
+
+    def test_plugins_imports_and_runtime_memories_keep_separate_authority(self) -> None:
+        readme = read("README.md")
+        compatibility = read("docs/runtime-compatibility.md")
+        contract = read("docs/native-runtime-capabilities.md")
+        policy = read("policies/runtime-compatibility-policy.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-18.md")
+        combined = "\n".join((readme, compatibility, contract, policy, evidence))
+
+        for expected in (
+            "/plugins",
+            "/import",
+            "/memories",
+            "universal plugin",
+            "Computer History",
+            "loop-memory-sqlite/v0",
+            "advisory context",
+            "not `cli-session-handoff` operations",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, combined)
+
+        self.assertRegex(
+            combined,
+            re.compile(r"(?:never|not).*completion authority", re.IGNORECASE),
         )
 
     def test_cli_and_desktop_entry_paths_remain_distinct(self) -> None:

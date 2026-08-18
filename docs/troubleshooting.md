@@ -24,6 +24,10 @@ Installer writes normally target:
 
 Use one skills target per Codex profile for this pack. Before install or update, the installer refuses skill-name collisions between `~/.agents/skills` and `~/.codex/skills`. It never moves or deletes an existing installation automatically. Use `./install.sh status` to inspect cross-target collisions; use `CODEX_DEV_SKILLS_TARGET=legacy` when intentionally maintaining an existing legacy installation.
 
+The universal `codex-dev-skills` plugin is a separate distribution path. Check
+it with `codex plugin list --json`. Do not keep the plugin active beside a
+filesystem installation of the same skills.
+
 Custom `CODEX_SKILLS_DIR` or `CODEX_TEMPLATES_DIR` values require `CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES`.
 
 ## Install
@@ -49,6 +53,22 @@ Use it only when that broader scope is intentional.
 If install fails with an unknown group error, re-run `./install.sh list` and choose one of the listed group names.
 If an existing installation is intentionally maintained under `~/.codex/skills`, re-run the intended command with `CODEX_DEV_SKILLS_TARGET=legacy` instead of creating a duplicate under the default target.
 If install fails because custom target paths are rejected, remove the custom target override or set `CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES` only after confirming the target is narrow and intentional.
+
+If install reports that the `codex-dev-skills` plugin is installed, choose one
+distribution path. Remove the plugin through the normal Codex plugin control
+plane before installing files, or keep the plugin and do not run this
+installer. The installer does not mutate plugin state.
+
+If install reports a differing existing or imported artifact, inspect it with
+ordinary filesystem diff tools. A byte-identical target is accepted as an
+idempotent install; different content is never overwritten by `install`.
+Only use `update --force` after establishing that the target is a managed
+filesystem installation and reviewing its backup behavior.
+
+When the active CLI is missing or too old for `codex plugin list --json`, the
+installer warns and retains the filesystem fallback. This warning does not
+prove that no plugin or imported copy exists; review the Desktop Plugins tab,
+CLI `/plugins`, and both standard skill roots.
 
 Risk: install is an external write. It copies skills and templates into the configured Codex target directories and records installer state.
 
@@ -94,6 +114,10 @@ Use force only after reviewing the diff and confirming the installed local chang
 ```
 
 Risk: update is an external write. With `--force`, the installer backs up the existing target and overwrites installed skills or templates from this repository.
+
+Update also refuses when the universal plugin is installed. Updating one
+distribution path while leaving the other active would recreate the duplicate
+discovery condition even if their current bytes match.
 
 ## CLI Session Handoff
 

@@ -1,0 +1,20 @@
+{
+  "name": "codex-dev-skills-local",
+  "interface": {
+    "displayName": "codex-dev-skills (repository)"
+  },
+  "plugins": [
+    {
+      "name": "codex-dev-skills",
+      "source": {
+        "source": "local",
+        "path": "./plugin/codex-dev-skills"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

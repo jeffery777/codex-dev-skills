@@ -91,6 +91,17 @@ prompts or route to Desktop-specific skills when the runtime and authorization
 are available, but it does not itself provide scheduling, user-owned Desktop
 task/thread control, platform writes, or merge authority.
 
+CLI `/plugins`, `/import`, and `/memories` and the corresponding Desktop
+settings are runtime configuration/personalization surfaces. They do not
+belong to `cli-session-handoff` and do not change the shared completion
+contract. Imports preserve existing setup, so review filesystem, imported, and
+plugin-provided skills for duplicate names.
+
+Local Codex/ChatGPT memories and Computer History may inform a conversation as
+untrusted advisory context. They are distinct from the repository's
+`loop-memory-sqlite/v0` reference adapter and must not be copied automatically
+into repo evidence, M1 state, verification, or completion records.
+
 For objectives that must survive repeated invocations, subagents, worktrees, or
 handoffs, keep stable definitions in a loop spec/task manifest, operational
 transitions in validated events, and the reconstructable current view in

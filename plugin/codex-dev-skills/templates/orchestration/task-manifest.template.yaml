@@ -1,0 +1,48 @@
+# Stable task definitions for Loop Engineering V1 ledger schema v2.
+# Mutable task status belongs to validated loop events/materialized state.
+
+project:
+  schema_version: 2
+  name: "<project-name>"
+  objective_id: "<objective-id>"
+  source_of_truth:
+    - "AGENTS.md"
+    - "<loop-spec-path>"
+  contract_revision:
+    previous_manifest_sha256: "<sha256-or-empty>"
+    updated_at: "<iso-8601>"
+
+tasks:
+  - id: "<task-id>"
+    title: "<task-title>"
+    # A blocked task must start planned and acquire its blocker through a
+    # canonical planned -> blocked event so the reason is replayable.
+    initial_status: "<planned | ready | cancelled>"
+    priority: "<high | medium | low>"
+    dependencies:
+      - "<task-id>"
+    risk: "<low | medium | high>"
+    kind: "<implementation | docs | review | delivery | continuation>"
+    objective: "<bounded-objective>"
+    scope:
+      in:
+        - "<item>"
+      out:
+        - "<item>"
+    ownership:
+      expected_paths:
+        - "<path>"
+      parallel_write_safe: false
+    dod:
+      - "<done-criterion>"
+    verification:
+      - "<command>"
+    review:
+      required: false
+      mode: "<none | code-review | code-review-deep | docs-review | formal-gate>"
+    stop_conditions:
+      - "<condition>"
+    human_gate:
+      required: false
+      gate: "<gate-name-if-required>"
+      reason: "<reason-if-required>"
