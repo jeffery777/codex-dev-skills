@@ -40,10 +40,22 @@ Check these items before asking a maintainer to approve external writes:
 - Roadmap is current: completed public roadmap items are removed or updated without unrelated rewriting.
 - Release notes match their role: historical release notes remain a point-in-time record, while current release notes drafts match the intended release scope.
 - Installer state is aligned: `catalog.yaml`, `install.sh`, skills, templates, workflows, and README install groups agree.
+- Plugin state is aligned when present: the package-local
+  `plugin/codex-dev-skills/.codex-plugin/plugin.json`, the
+  repo-scoped marketplace, catalog, installer version, and README agree; the
+  marketplace resolves only to the narrow generated package; exact inventory,
+  package parity, cache exclusion of checkout-local state, skill-relative shared-resource
+  resolution, and filesystem/plugin duplicate prevention are tested.
 - Runtime compatibility is labeled: shared, CLI, Desktop, and plugin-dependent behavior is not blurred.
 - Human gates are explicit: commit, push, PR creation, tag, publish, merge, release, deploy, platform comments, and review submissions require exact approval.
 - Review evidence exists: ordinary review primitives or formal gates were run at the stage that needs them.
 - Verification is re-runnable: commands and skipped checks are listed with enough context for another maintainer.
+
+For the v0.14.1 candidate, also require the dated 2026-08-18 runtime evidence,
+focused automation/thread/plugin/installer contract tests, plugin-validator
+output, and confirmation that local Codex/ChatGPT memories or Computer History
+were not adopted as repository evidence or Memory M1 state. Tag and GitHub
+Release creation remain blocked until the exact reviewed merge commit is known.
 
 When a change includes the GitNexus adapter, also require evidence that:
 

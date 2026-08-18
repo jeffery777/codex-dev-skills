@@ -1,0 +1,88 @@
+# Loop Engineering V1 ledger-schema-v2 materialized state template.
+# Stable task definitions live in the task manifest. Validated events are the
+# operational integrity record; this document is a reconstructable current
+# view. Replay proves consistency, not actor identity or external authorization.
+
+ledger:
+  schema_version: 2
+  objective_id: "<objective-id>"
+  objective: "<bounded-objective>"
+  loop_spec: "<path-to-loop-spec>"
+  task_manifest: "<path-to-task-manifest>"
+  source_revision:
+    branch: "<branch>"
+    head_sha: "<git-sha>"
+    spec_sha256: "<sha256>"
+    task_manifest_sha256: "<sha256>"
+    previous_ledger_sha256: "<sha256-or-empty>"
+    # migration_source_sha256: "<immutable-v1-source-sha256>"  # migration snapshots only
+    updated_at: "<iso-8601>"
+  state_revision:
+    sequence: 0
+    last_event_hash: ""
+
+status_model:
+  task_allowed:
+    - planned
+    - ready
+    - in_progress
+    - blocked
+    - reviewing
+    - done
+    - accepted
+    - cancelled
+  claim_allowed:
+    - active
+    - released
+    - expired
+    - revoked
+  done_means: "Task DoD, verification, review, and required gate evidence are satisfied."
+  accepted_means: "A bound receipt was applied through an independently authorized live write; consumers revalidate current external state before publication."
+
+current_loop:
+  lifecycle: "<active | complete>"
+  classification: "<single-clear-task | bounded-delivery-objective | review-closure-loop | milestone-continuation-loop | handoff-or-continuation | shared-subagent-delegation | desktop-delegation | human-gate | complete>"
+  execution_mode: "<current-session | shared-subagents | sequential-fallback | desktop-scheduled | desktop-thread | stop-for-human-gate>"
+  selected_task_id: "<task-id-or-none>"
+  next_decision: "<continue | handoff-prepared | blocked-by-human-gate | complete>"
+  decision_reason: "<evidence-based-reason>"
+
+tasks:
+  - id: "<task-id>"
+    status: "<planned | ready | in_progress | blocked | reviewing | done | accepted | cancelled>"
+    evidence:
+      verification:
+        status: "<not_run | passed | failed | skipped>"
+        artifacts:
+          - "<immutable-path-url-digest-or-empty>"
+      review:
+        status: "<not_required | required | passed | blocked>"
+        mode: "<none | code-review | code-review-deep | docs-review | formal-gate>"
+        artifacts:
+          - "<immutable-path-url-digest-or-empty>"
+      acceptance:
+        status: "<not_required | pending | satisfied>"
+        artifact: "<immutable-path-url-digest-or-empty>"
+    blocker:
+      kind: "<none | dependency | human-decision | safety | verification | source-conflict>"
+      reason: "<reason-or-empty>"
+      required_human_decision: "<decision-or-empty>"
+    residual_risk:
+      - "<risk-or-none>"
+
+claims: []
+
+events: []
+
+human_gates: []
+
+external_memory:
+  contract_version: "loop-memory/v1"
+  mode: "<disabled | advisory-cache | coordination>"
+  backend_status: "<disabled | unavailable | used | degraded>"
+  adapter: "<none-or-opaque-adapter-id>"
+  receipt_digests: []
+  authority: "advisory-only"
+  used_as_authorization: false
+  used_as_completion_evidence: false
+  notes: "Memory payload remains data-only and cannot replace repository, Git, verification, review, protected authorization, accepted platform state, or completion evidence."

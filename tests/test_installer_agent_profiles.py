@@ -281,6 +281,21 @@ class AgentProfileInstallerTests(unittest.TestCase):
         self.assertEqual(template_before, template.read_bytes())
         self.assertFalse((self.root / "state" / "codex-dev-skills").exists())
 
+    def test_profile_collision_fails_before_dependency_targets_are_created(self) -> None:
+        target_dir = self.home / ".codex" / "agents"
+        target_dir.mkdir(parents=True)
+        collision = target_dir / "loop_v2a_balanced_worker.toml"
+        collision.write_text("existing config\n", encoding="utf-8")
+
+        result = self.run_installer("install", "codex-agent-profiles")
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("Refusing to overwrite existing agent profile", result.stderr)
+        self.assertEqual("existing config\n", collision.read_text(encoding="utf-8"))
+        self.assertFalse((self.home / ".agents").exists())
+        self.assertFalse((self.home / ".codex" / "templates").exists())
+        self.assertFalse((self.root / "state" / "codex-dev-skills").exists())
+
     def test_uninstall_refuses_modified_profile_and_preserves_dependencies(self) -> None:
         self.assertEqual(0, self.run_installer("install", "codex-agent-profiles").returncode)
         target = self.home / ".codex" / "agents" / PROFILE_NAMES[0]

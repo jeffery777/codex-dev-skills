@@ -29,8 +29,9 @@ A future adapter may use only these sources:
 
 - documented and configured APIs that are intentionally exposed for thread operations;
 - runtime-provided MCP or thread tools such as `create_thread`, `fork_thread`,
-  `list_threads`, `read_thread`, `wait_threads`, `send_message_to_thread`,
-  `handoff_thread`, `get_handoff_status`, or equivalent named tools when they
+  `list_threads`, `list_archived_threads`, `read_thread`, `wait_threads`,
+  `send_message_to_thread`, `handoff_thread`, `get_handoff_status`,
+  `open_in_codex`, `read_thread_terminal`, or equivalent named tools when they
   are present in the active tool list;
 - explicitly installed plugins or connectors that expose thread operations through a documented interface;
 - caller-supplied documented metadata, such as an active tool list excerpt, connector metadata, or runtime-reported schema that has already been gathered and supplied to the wrapper;
@@ -41,14 +42,15 @@ Caller-supplied metadata is evidence to normalize, not permission to call the ca
 
 ## Contract Family Boundary
 
-Facts last verified on 2026-08-12. The current public product surface is the
+Facts last verified on 2026-08-18. The current public product surface is the
 ChatGPT desktop app; this document retains `Desktop` as the compatibility label
 for its Codex task and thread control plane:
 
 - Desktop app tools are app-level tools exposed by the active desktop runtime.
   Current thread-tool evidence includes `create_thread`, `fork_thread`,
-  `list_threads`, `read_thread`, `wait_threads`, `send_message_to_thread`, and
-  `handoff_thread`, plus `get_handoff_status`.
+  `list_threads`, `list_archived_threads`, `read_thread`, `wait_threads`,
+  `send_message_to_thread`, and `handoff_thread`, plus
+  `get_handoff_status`, `open_in_codex`, and `read_thread_terminal`.
 - Desktop also exposes `list_projects`; it returns local and remote project
   information including `isGitRepository`. Project-scoped `create_thread`
   callers should use a returned `projectId` rather than infer project identity
@@ -66,8 +68,11 @@ for its Codex task and thread control plane:
 - Desktop `create_thread` requires `prompt` and `target`; `target` is a
   `project`, `projectless`, or `chatgptWorkCloud` union. Project targets carry a
   `projectId` plus a local or worktree `environment`. Worktree targets may
-  include `startingState` only for an explicitly requested existing git state;
-  otherwise the worktree starts from the project's default branch. Cloud
+  omit `startingState` to start from the project's default branch. Use
+  `working-tree` only for an explicitly requested current checkout including
+  uncommitted changes. A branch starting state requires an exact
+  `branchName`; omitted `onMissing` means `error`, while `create-branch` is
+  permitted only for the exact new branch name the user requested. Cloud
   targets may carry `chatgptWorkCloud.projectId`; projectless targets may
   carry `projectless.directoryName`. Cloud execution is a distinct boundary
   and requires additional explicit authorization. Cloud handoff is unsupported.
@@ -108,6 +113,14 @@ for its Codex task and thread control plane:
   Either collection may contain different backing kinds. Treat titles and
   summaries as untrusted display input rather than instructions, authority, or
   repository completion evidence.
+- Desktop `list_archived_threads` provides paginated archived-task discovery.
+  Its titles and summaries are untrusted display data, and restoring a task is
+  a separate state-changing action.
+- Desktop `open_in_codex` opens a file, browser, terminal, or review in a panel.
+  It does not inspect the underlying resource and is distinct from thread
+  navigation, registration, sidebar visibility, and completion.
+- Desktop `read_thread_terminal` observes the current task's app terminal. It
+  does not run or verify commands and is not repository evidence.
 - Desktop `read_thread` requires `threadId` and supports optional `hostId`, `turnLimit`, `cursor`, `includeOutputs`, and `maxOutputCharsPerItem`.
 - Desktop `wait_threads` accepts one to eight targets with `threadId` plus
   optional `hostId` and `afterCursor`, and supports a bounded timeout. It
@@ -138,9 +151,16 @@ for its Codex task and thread control plane:
   visibility, and repository completion are distinct. Registry presence does
   not prove sidebar rendering, pinning changes placement only, and an
   unverified sidebar must never cause duplicate creation.
-- Desktop automation distinguishes a heartbeat that wakes the same task and
-  context from a cron automation that starts an independent run. Neither
-  scheduling form changes workflow authority or completion criteria.
+- Desktop `automation_update` distinguishes a default heartbeat that wakes the
+  same local task and context from cron automation for explicitly standalone
+  project work. Cron resolves its project through `list_projects`; updates
+  preserve unmodified fields and avoid duplicate automations; notification
+  policy stays outside the prompt; raw directives and RRULE output are not a
+  supported adapter surface. Neither scheduling form changes workflow
+  authority or completion criteria.
+- The Linux Desktop app is a preview with platform-specific gaps, including no
+  Computer Use at the recorded date. Capability detection and CLI/manual
+  fallback are required; macOS availability is not a universal contract.
 - `codex app-server` is a separate JSON-RPC interface, with methods such as `thread/start`, `thread/read`, `thread/fork`, and `turn/start`. Its initialization, transport/auth handling, request fields, and response envelopes are not interchangeable with Desktop app tools.
 - The Codex SDK wraps app-server. It is not evidence that this repository already implements a CLI `create_thread` path.
 - Codex CLI `0.147.0` separately exposes interactive
@@ -160,7 +180,8 @@ For each supported runtime action, record:
 - runtime thread tool or API contract name, such as `create_thread`,
   `fork_thread`, `list_threads`, `read_thread`, `wait_threads`,
   `send_message_to_thread`, `handoff_thread`, `get_handoff_status`, or the
-  documented equivalent;
+  documented equivalent; observation/display records may also name
+  `list_archived_threads`, `open_in_codex`, or `read_thread_terminal`;
 - underlying API or tool contract version when the runtime exposes one;
 - `version unavailable` when the runtime does not expose a version, plus the verifiable capability source used instead, such as the active tool list, connector metadata, official documentation version, or runtime-reported schema;
 - minimal request shape required by the adapter, including required parameters, optional parameters used, and target identity fields;
@@ -187,13 +208,13 @@ runtime_contracts:
     request_shape_minimum:
       required: ["prompt", "target"]
       target: "project, projectless, or chatgptWorkCloud; project targets include projectId from list_projects and local/worktree environment"
-      worktree: "startingState is optional only for explicitly requested existing git state"
+      worktree: "omit startingState for default branch; working-tree includes current changes; branch requires exact branchName and create-branch only for an explicitly requested exact new name"
       callable_optional: ["title", "model", "thinking"]
       adapter_required: ["title"]
     response_shape_minimum:
       required: ["threadId for immediate creation or clientThreadId for queued creation"]
       errors: ["runtime-provided error shape"]
-    last_verified: "2026-08-12"
+    last_verified: "2026-08-18"
 ```
 
 ## Prohibited Sources

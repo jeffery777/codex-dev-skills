@@ -17,8 +17,10 @@ gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
 The current development feature baseline is Memory M1, published in v0.14.0
-through Issue #147 / PR #148. V3-B remains the released evaluation baseline
-from v0.13.0.
+through Issue #147 / PR #148. The v0.14.1 release candidate through Issue #149
+is a runtime-compatibility, universal-plugin, installer-safety, and
+documentation patch; it does not change the M0/M1 feature or authority
+baseline. V3-B remains the released evaluation baseline from v0.13.0.
 The v0.12.1 compatibility patch through Issue #139 updated Desktop/CLI runtime
 adapters and repository verification before V3-B without changing shared
 completion authority.
@@ -380,6 +382,13 @@ primitives. CLI `/agent` and `/subagents` expose shared subagent threads.
 User-facing CLI session controls such as `/new`, `/fork`, `/resume`, and
 `/archive` manage saved CLI sessions; they are not aliases for Desktop
 `create_thread` callables.
+
+CLI `/plugins` opens the universal plugin browser, `/import` imports supported
+setup from another agent, and `/memories` controls local memory use for the
+current chat. These are runtime configuration or personalization controls, not
+`cli-session-handoff` operations. Imports leave existing setup in place, so
+review imported skills/plugins for duplicate names before adding this pack
+through another distribution path.
 
 After shared orchestration selects a bounded handoff,
 `cli-session-handoff` may use the documented stable
@@ -1011,7 +1020,7 @@ The main thread remains responsible for integrating returned work, checking the 
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-08-12)](docs/codex-runtime-compatibility-evidence-2026-08-12.md).
+[Codex runtime compatibility evidence (2026-08-18)](docs/codex-runtime-compatibility-evidence-2026-08-18.md).
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 `desktop_runtime_*` scripts and [historical V1 plan](docs/desktop-runtime-wrapper-v1-plan.md)
@@ -1037,6 +1046,11 @@ Non-Git projects default to `local`, and `projectless` remains limited to
 intentional non-project work. In a worktree, run repository verification
 through its tracked environment resolver (this repository uses
 `./scripts/project-python`) or stop when the pinned environment is unavailable.
+Omit worktree `startingState` for the project default branch. Use
+`working-tree` only for an explicitly requested current checkout including
+uncommitted changes; a branch state requires the exact requested `branchName`,
+and `create-branch` is allowed only for that exact explicitly requested new
+name.
 
 ## Runtime Compatibility
 
@@ -1111,12 +1125,42 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.14.0.md` contains the current v0.14.0 release notes;
-`docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
+`docs/release-notes-v0.14.1.md` contains the current v0.14.1 release notes
+draft; `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and
 `docs/release-notes-v0.1.0.md` remain historical point-in-time records.
 
 ## Installation
+
+Choose exactly one distribution path for a Codex profile.
+
+### Universal plugin
+
+The repo-scoped marketplace at `.agents/plugins/marketplace.json` points to the
+narrow generated package at `plugin/codex-dev-skills/`, not the checkout root.
+That package contains only the manifest, tracked skills, and allowlisted shared
+policy/template/runtime-contract resources. Canonical sources remain under the
+top-level `skills/`, `policies/`, `templates/`, and `docs/` trees; run
+`./scripts/project-python scripts/sync-plugin-package.py --write` after changing
+packaged sources and verify parity without `--write`. This prevents ignored or
+untracked checkout state from entering the Codex plugin cache: verification
+rejects every extra file, directory, symlink, or special entry anywhere under
+the package root, in addition to checking canonical bytes and file modes. In
+the ChatGPT desktop app, use the repository marketplace source.
+In Codex CLI, configure this checked-out marketplace and install the plugin:
+
+```bash
+codex plugin marketplace add .
+codex plugin add codex-dev-skills@codex-dev-skills-local
+codex plugin list --json
+```
+
+Start a new chat/session after installation. Do not also run the filesystem
+installer for the same profile. `/plugins` is the interactive CLI browser;
+plugin installation remains runtime configuration and does not expand workflow
+authority.
+
+### Filesystem installer
 
 Use the Codex-only installer:
 
@@ -1215,13 +1259,22 @@ Installer scope:
 - Codex templates are installed to `~/.codex/templates/...`.
 - Custom `CODEX_SKILLS_DIR` or `CODEX_TEMPLATES_DIR` overrides require `CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES`.
 - The installer refuses symlink target roots and symlink target paths before install, update, diff, or uninstall.
+- Install preflight treats byte-identical existing skills/templates as
+  idempotent and refuses any differing existing or imported artifact before
+  changing an expanded group.
+- Install/update uses `codex plugin list --json` when available and refuses a
+  detected installed `codex-dev-skills` plugin. If the CLI is unavailable or
+  too old to provide JSON plugin state, it warns and retains the filesystem
+  fallback; the operator must still use only one distribution path.
 - Installer state is stored under `~/.local/state/codex-dev-skills` unless `XDG_STATE_HOME` changes it.
 - State records only non-sensitive metadata such as repository name, version, action, group, and timestamp.
 - The installer never overwrites `~/.codex/AGENTS.md`.
 
-Use only one skill installation target for this pack in a given Codex profile. Installing the same skill names into both `~/.codex/skills` and `~/.agents/skills`, or later through a plugin package, can make duplicate skills appear in selectors.
-
-Plugin packaging is intentionally not added by the local installer. If this pack later ships a `.codex-plugin/plugin.json` and repo marketplace entry, treat that as a separate distribution path and avoid installing the same skill names through both the plugin and the filesystem installer.
+Use only one skill installation target for this pack in a given Codex profile.
+Installing the same skill names into both `~/.codex/skills` and
+`~/.agents/skills`, importing another copy, or activating the universal plugin
+beside a filesystem install can produce duplicate selectors. The installer
+does not remove, migrate, or rewrite imported/plugin state automatically.
 
 ## Verification
 

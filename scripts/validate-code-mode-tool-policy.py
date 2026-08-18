@@ -15,10 +15,11 @@ import yaml
 
 VALIDATOR_REPO_ROOT = Path(__file__).resolve().parents[1]
 POLICY_SOURCE = Path("policies/code-mode-tool-orchestration-policy.md")
+GENERATED_PLUGIN_ROOT = Path("plugin/codex-dev-skills")
 INSTALLED_POLICY = Path(
     "orchestration/policies/code-mode-tool-orchestration-policy.md"
 )
-SOURCE_REFERENCE = "`policies/code-mode-tool-orchestration-policy.md`"
+SOURCE_REFERENCE = "`../../policies/code-mode-tool-orchestration-policy.md`"
 INSTALLED_REFERENCE = (
     "`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/"
     "code-mode-tool-orchestration-policy.md`"
@@ -201,7 +202,11 @@ def validate_source(repo_root: Path) -> list[str]:
     duplicated_title = []
     markdown_paths: list[Path] = []
     for markdown in repo_root.rglob("*.md"):
-        if markdown == policy_path or ".git" in markdown.parts:
+        if (
+            markdown == policy_path
+            or ".git" in markdown.parts
+            or markdown.is_relative_to(repo_root / GENERATED_PLUGIN_ROOT)
+        ):
             continue
         markdown_paths.append(markdown)
         if len(markdown_paths) > SOURCE_MAX_MARKDOWN_FILES:

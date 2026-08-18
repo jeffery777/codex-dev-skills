@@ -48,9 +48,18 @@ sequential fallback capabilities follow
 Runtime availability changes the execution adapter, not source-of-truth or
 completion authority.
 
-Desktop automation must distinguish a heartbeat that wakes the same task from a
-cron automation that starts an independent run. Neither scheduling form
+Desktop automation uses the active `automation_update` control plane. It must
+default a recurring current-local-task request to a heartbeat, reserve cron for
+explicitly standalone project work or a requested new task per run, resolve
+cron projects through `list_projects`, update rather than duplicate existing
+automations, preserve unmodified fields, keep `notificationPolicy` outside the
+prompt, and never emit raw directives or RRULEs. Neither scheduling form
 changes workflow authority, permission, or completion criteria.
+
+Local Codex/ChatGPT memories and Computer History are advisory runtime context,
+not repository evidence, Memory M1 state, or completion authority. Imported
+skills and universal-plugin skills are separate discovery sources; installers
+must not knowingly create same-name filesystem/plugin duplicates.
 
 Hooks are optional guardrails and must not be described as complete enforcement.
 Legacy `desktop_runtime_*` helpers are compatibility evidence only; the native

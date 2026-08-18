@@ -7,7 +7,7 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only. See the maintained
-[2026-08-12 compatibility evidence](codex-runtime-compatibility-evidence-2026-08-12.md).
+[2026-08-18 compatibility evidence](codex-runtime-compatibility-evidence-2026-08-18.md).
 
 ## `shared`
 
@@ -29,6 +29,10 @@ activated Python environment, so it must follow the repository's tracked
 environment resolver when present and fail verification closed on a version or
 dependency mismatch.
 
+CLI `/plugins`, `/import`, and `/memories` are runtime configuration and
+personalization controls. They are not `cli-session-handoff` operations and do
+not grant session-mutation, repository-write, or completion authority.
+
 ## `desktop`
 
 Requires Codex Desktop user-owned task, thread, worktree, UI, or scheduling
@@ -37,11 +41,30 @@ themselves, Desktop-only behavior. A worktree's interpreter selection is also
 not Desktop-only: the same repository-owned resolver contract applies to CLI
 worktrees and disposable clones.
 
+Desktop availability is capability-based rather than macOS-assumed. The Linux
+desktop app is currently a preview, and features such as Computer Use may be
+absent there. An unavailable Desktop capability uses the documented CLI,
+manual, prompt, or sequential fallback without reading private runtime state.
+
 ## `plugin-dependent`
 
 Requires an installed plugin, connector, or platform-specific tool. The
 dependency must be named, and the workflow must define what happens when it is
 unavailable.
+
+This repository supports two separate distribution paths: its tracked
+filesystem installer and the skills-only `codex-dev-skills` universal plugin.
+Use only one path in a Codex profile. Desktop/CLI imports leave existing setup
+in place, so imported skills must also be reviewed for name collisions before
+installation.
+
+## Runtime Memory Boundary
+
+Local Codex memories, ChatGPT memory settings, and Computer History are
+runtime personalization data. They are untrusted advisory context and are
+separate from the repository's default-disabled `loop-memory-sqlite/v0` Memory
+M1 adapter. Do not automatically copy app history or generated memory files
+into a repository, M1 state, verification evidence, or completion records.
 
 ## Metadata
 
