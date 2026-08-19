@@ -51,11 +51,39 @@ Check these items before asking a maintainer to approve external writes:
 - Review evidence exists: ordinary review primitives or formal gates were run at the stage that needs them.
 - Verification is re-runnable: commands and skipped checks are listed with enough context for another maintainer.
 
-For the v0.14.1 candidate, also require the dated 2026-08-18 runtime evidence,
+v0.14.1 was published through PR #150. Its dated 2026-08-18 runtime evidence,
 focused automation/thread/plugin/installer contract tests, plugin-validator
 output, and confirmation that local Codex/ChatGPT memories or Computer History
-were not adopted as repository evidence or Memory M1 state. Tag and GitHub
-Release creation remain blocked until the exact reviewed merge commit is known.
+were not adopted as repository evidence or Memory M1 state remain historical
+release evidence.
+
+For the v0.14.2 installer-backup isolation candidate, also require focused
+isolated-root tests for skills, templates, and agent profiles; collision,
+backup/replacement/restore failure, symlink/special-file/path-boundary, and
+same-device fail-closed coverage; and evidence that no test touched an actual
+user profile. Confirm that legacy discovery-root `*.bak` guidance is
+dry-run-first and does not delete, move, or claim unknown data. The release
+notes must remain a candidate until the exact PR head has passed review,
+security-diff, and merge-readiness gates. Require evidence that successful
+rollback restores the prior state, while restore-failure paths retain reported
+recoverable locations instead of claiming unconditional atomicity or no partial
+mutation. Require isolated tests showing that `install` and non-force `update`
+validate their installer state/receipt boundary before changing selected
+discovery targets, and that an unsafe boundary leaves those selected targets
+unchanged. This must not be documented as a guarantee against disk-full,
+hostile same-UID interference, or every runtime failure. Require the
+fresh/forced permission contract and its custom-project readability impact to
+be documented, plus verification that cooperating updates
+share a canonical managed-state namespace; different state roots for one custom
+target are not represented as lock isolation. Merge, tag, GitHub Release, and
+deployment remain separate explicit human gates.
+Require isolated tests for multiply-linked regular target files and receipts,
+plus force-transaction sources and staged payloads, and read-only, immutable,
+or append-only receipt preflight failure. The evidence must show selected
+targets remain unchanged and must document only read-only link-count/flag
+inspection with an explicit human remediation gate. Linux coverage must include
+filesystem-flag ioctl failure (including unsupported-filesystem or special-ABI
+cases) as fail closed, not an open/fstat-only fallback.
 
 When a change includes the GitNexus adapter, also require evidence that:
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import os
 import hashlib
+import os
 import pathlib
 import shutil
 import subprocess
@@ -13,6 +13,26 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "install.sh"
 SOURCE_PROFILES = ROOT / "agent-profiles"
 PROFILE_NAMES = sorted(path.name for path in SOURCE_PROFILES.glob("*.toml"))
+
+
+def managed_backup_path(
+    state_root: pathlib.Path,
+    target_root: pathlib.Path,
+    artifact_kind: str,
+    relative_target: str,
+) -> pathlib.Path:
+    root_digest = hashlib.sha256(
+        str(target_root.resolve()).encode("utf-8")
+    ).hexdigest()
+    return (
+        state_root
+        / "codex-dev-skills"
+        / "backups"
+        / "v1"
+        / root_digest
+        / artifact_kind
+        / f"{relative_target}.bak"
+    )
 
 
 class AgentProfileInstallerTests(unittest.TestCase):
@@ -205,6 +225,40 @@ class AgentProfileInstallerTests(unittest.TestCase):
         self.assertEqual(0, self.run_installer("uninstall", "codex-agent-profiles", "--yes").returncode)
         self.assertEqual(0, self.run_installer("uninstall", "codex-agent-profiles", "--yes", env=project_env).returncode)
 
+    def test_default_and_custom_profile_roots_receive_distinct_managed_backup_slots(self) -> None:
+        self.assertEqual(0, self.run_installer("install", "codex-agent-profiles").returncode)
+        default_target = self.home / ".codex" / "agents" / PROFILE_NAMES[0]
+        default_target.write_text("default root edit\n", encoding="utf-8")
+        self.assertEqual(
+            0,
+            self.run_installer("update", "codex-agent-profiles", "--force").returncode,
+        )
+
+        custom_root = self.root / "project" / ".codex" / "agents"
+        custom_env = {
+            **self.env,
+            "CODEX_CUSTOM_AGENTS_DIR": str(custom_root),
+            "CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS": "YES",
+        }
+        self.assertEqual(
+            0,
+            self.run_installer("install", "codex-agent-profiles", env=custom_env).returncode,
+        )
+        custom_target = custom_root / PROFILE_NAMES[0]
+        custom_target.write_text("custom root edit\n", encoding="utf-8")
+        updated = self.run_installer("update", "codex-agent-profiles", "--force", env=custom_env)
+        self.assertEqual(0, updated.returncode, updated.stderr)
+
+        default_backup = managed_backup_path(
+            self.root / "state", self.home / ".codex" / "agents", "agent-profiles", PROFILE_NAMES[0]
+        )
+        custom_backup = managed_backup_path(
+            self.root / "state", custom_root, "agent-profiles", PROFILE_NAMES[0]
+        )
+        self.assertNotEqual(default_backup, custom_backup)
+        self.assertEqual("default root edit\n", default_backup.read_text(encoding="utf-8"))
+        self.assertEqual("custom root edit\n", custom_backup.read_text(encoding="utf-8"))
+
     def test_existing_difference_refuses_then_force_update_backs_up(self) -> None:
         self.assertEqual(0, self.run_installer("install", "codex-agent-profiles").returncode)
         target = self.home / ".codex" / "agents" / PROFILE_NAMES[0]
@@ -215,8 +269,162 @@ class AgentProfileInstallerTests(unittest.TestCase):
 
         forced = self.run_installer("update", "codex-agent-profiles", "--force")
         self.assertEqual(0, forced.returncode, forced.stderr)
-        self.assertEqual("user modification\n", target.with_suffix(".toml.bak").read_text(encoding="utf-8"))
+        backup = managed_backup_path(
+            self.root / "state",
+            self.home / ".codex" / "agents",
+            "agent-profiles",
+            PROFILE_NAMES[0],
+        )
+        self.assertEqual("user modification\n", backup.read_text(encoding="utf-8"))
+        self.assertFalse(target.with_suffix(".toml.bak").exists())
         self.assertEqual((SOURCE_PROFILES / PROFILE_NAMES[0]).read_bytes(), target.read_bytes())
+
+    def test_force_update_isolates_all_artifact_backups_and_preserves_legacy_skill_backup(
+        self,
+    ) -> None:
+        installed = self.run_installer("install", "codex-agent-profiles")
+        self.assertEqual(0, installed.returncode, installed.stderr)
+
+        skills_root = self.home / ".agents" / "skills"
+        templates_root = self.home / ".codex" / "templates"
+        profiles_root = self.home / ".codex" / "agents"
+        skill = skills_root / "closure-triage"
+        template = templates_root / "orchestration" / "policies" / "agent-delegation-policy.md"
+        profile = profiles_root / PROFILE_NAMES[0]
+        (skill / "SKILL.md").write_text("local skill edit\n", encoding="utf-8")
+        template.write_text("local template edit\n", encoding="utf-8")
+        profile.write_text("local profile edit\n", encoding="utf-8")
+
+        legacy_backup = skills_root / "closure-triage.bak"
+        legacy_backup.mkdir()
+        legacy_marker = legacy_backup / "SKILL.md"
+        legacy_marker.write_text("unknown legacy backup\n", encoding="utf-8")
+
+        updated = self.run_installer("update", "codex-agent-profiles", "--force")
+        self.assertEqual(0, updated.returncode, updated.stderr)
+
+        backups = {
+            "skill": managed_backup_path(
+                self.root / "state", skills_root, "skills", "closure-triage"
+            ),
+            "template": managed_backup_path(
+                self.root / "state",
+                templates_root,
+                "templates",
+                "orchestration/policies/agent-delegation-policy.md",
+            ),
+            "profile": managed_backup_path(
+                self.root / "state", profiles_root, "agent-profiles", profile.name
+            ),
+        }
+        self.assertEqual("local skill edit\n", (backups["skill"] / "SKILL.md").read_text(encoding="utf-8"))
+        self.assertEqual("local template edit\n", backups["template"].read_text(encoding="utf-8"))
+        self.assertEqual("local profile edit\n", backups["profile"].read_text(encoding="utf-8"))
+        self.assertEqual("unknown legacy backup\n", legacy_marker.read_text(encoding="utf-8"))
+        self.assertEqual(
+            ["closure-triage.bak"],
+            sorted(path.name for path in skills_root.glob("*.bak")),
+        )
+
+    def test_checked_validator_turns_internal_die_into_rollback_path(self) -> None:
+        fixture = self.copy_installer_fixture("validator-exit-fixture")
+        installer = fixture / "install.sh"
+        installed = subprocess.run(
+            [str(installer), "install", "shared-review-gates"],
+            cwd=fixture,
+            env=self.env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(0, installed.returncode, installed.stderr)
+        skills_root = self.home / ".agents" / "skills"
+        first = skills_root / "closure-triage" / "SKILL.md"
+        second = skills_root / "task-continuation" / "SKILL.md"
+        first.write_text("first local edit\n", encoding="utf-8")
+        second.write_text("second local edit\n", encoding="utf-8")
+        state_file = self.root / "state" / "codex-dev-skills" / "installed.jsonl"
+        state_before = state_file.read_bytes()
+
+        script = installer.read_text(encoding="utf-8")
+        needle = '    if ! checked_validator validate_source_artifact "$staged" "$expected" "staged $label"; then\n'
+        replacement = (
+            '    if [[ "${TEST_UNSAFE_STAGED_LABEL:-}" == "$label" ]]; then\n'
+            '      rm -rf "$staged"\n'
+            '      ln -s "$ROOT_DIR" "$staged"\n'
+            '    fi\n'
+            + needle
+        )
+        self.assertEqual(1, script.count(needle))
+        installer.write_text(script.replace(needle, replacement), encoding="utf-8")
+        env = {**self.env, "TEST_UNSAFE_STAGED_LABEL": "skill task-continuation"}
+
+        refused = subprocess.run(
+            [str(installer), "update", "shared-review-gates", "--force"],
+            cwd=fixture,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertNotEqual(0, refused.returncode)
+        self.assertIn("Source is a symlink for staged skill task-continuation", refused.stderr)
+        self.assertIn("Staged artifact became unsafe", refused.stderr)
+        self.assertEqual("first local edit\n", first.read_text(encoding="utf-8"))
+        self.assertEqual("second local edit\n", second.read_text(encoding="utf-8"))
+        self.assertEqual(state_before, state_file.read_bytes())
+        self.assertFalse(
+            managed_backup_path(
+                self.root / "state", skills_root, "skills", "closure-triage"
+            ).exists()
+        )
+
+    def test_profile_receipt_digest_uses_staged_bytes_when_source_drifts(self) -> None:
+        fixture = self.copy_installer_fixture("profile-source-drift-fixture")
+        installer = fixture / "install.sh"
+        installed = subprocess.run(
+            [str(installer), "install", "codex-agent-profiles"],
+            cwd=fixture,
+            env=self.env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(0, installed.returncode, installed.stderr)
+        name = "loop_v2a_fast_explorer.toml"
+        source = fixture / "agent-profiles" / name
+        staged_source_bytes = source.read_bytes()
+        target = self.home / ".codex" / "agents" / name
+        target.write_text("local profile edit\n", encoding="utf-8")
+
+        script = installer.read_text(encoding="utf-8")
+        needle = 'stage_force_update_receipts() {\n  local expanded="$1" group has_profiles=0\n'
+        replacement = (
+            needle
+            + '  if [[ -n "${TEST_DRIFT_PROFILE_SOURCE:-}" ]]; then\n'
+            + '    printf "source drift after staging\\n" > "$ROOT_DIR/agent-profiles/$TEST_DRIFT_PROFILE_SOURCE"\n'
+            + '  fi\n'
+        )
+        self.assertEqual(1, script.count(needle))
+        installer.write_text(script.replace(needle, replacement), encoding="utf-8")
+        env = {**self.env, "TEST_DRIFT_PROFILE_SOURCE": name}
+
+        updated = subprocess.run(
+            [str(installer), "update", "codex-agent-profiles", "--force"],
+            cwd=fixture,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(0, updated.returncode, updated.stderr)
+        self.assertEqual(staged_source_bytes, target.read_bytes())
+        self.assertNotEqual(source.read_bytes(), target.read_bytes())
+        digest = hashlib.sha256(target.read_bytes()).hexdigest()
+        receipt = next((self.root / "state" / "codex-dev-skills").glob("agent-profile-*.tsv"))
+        self.assertIn(f"{name}\t{digest}\n", receipt.read_text(encoding="utf-8"))
 
     def test_force_update_backup_collision_is_preflighted_for_whole_group(self) -> None:
         self.assertEqual(0, self.run_installer("install", "codex-agent-profiles").returncode)
@@ -225,13 +433,60 @@ class AgentProfileInstallerTests(unittest.TestCase):
         second = target_dir / "loop_v2a_balanced_worker.toml"
         first.write_text("first local edit\n", encoding="utf-8")
         second.write_text("second local edit\n", encoding="utf-8")
-        second.with_suffix(".toml.bak").write_text("existing backup\n", encoding="utf-8")
+        backup = managed_backup_path(
+            self.root / "state",
+            target_dir,
+            "agent-profiles",
+            second.name,
+        )
+        backup.parent.mkdir(parents=True)
+        backup.write_text("existing backup\n", encoding="utf-8")
 
         result = self.run_installer("update", "codex-agent-profiles", "--force")
         self.assertNotEqual(0, result.returncode)
         self.assertEqual("first local edit\n", first.read_text(encoding="utf-8"))
         self.assertEqual("second local edit\n", second.read_text(encoding="utf-8"))
+        self.assertFalse(
+            managed_backup_path(
+                self.root / "state",
+                target_dir,
+                "agent-profiles",
+                first.name,
+            ).exists()
+        )
         self.assertFalse(first.with_suffix(".toml.bak").exists())
+
+    def test_managed_backup_slot_rejects_symlink_and_special_file_before_update(self) -> None:
+        for kind in ("symlink", "fifo"):
+            with self.subTest(kind=kind):
+                case_root = self.root / kind
+                case_home = case_root / "home"
+                case_state = case_root / "state"
+                case_home.mkdir(parents=True)
+                env = {**self.env, "HOME": str(case_home), "XDG_STATE_HOME": str(case_state)}
+                installed = self.run_installer("install", "codex-agent-profiles", env=env)
+                self.assertEqual(0, installed.returncode, installed.stderr)
+                target_root = case_home / ".codex" / "agents"
+                target = target_root / PROFILE_NAMES[0]
+                target.write_text("local profile edit\n", encoding="utf-8")
+                backup = managed_backup_path(
+                    case_state, target_root, "agent-profiles", target.name
+                )
+                backup.parent.mkdir(parents=True)
+                if kind == "symlink":
+                    external = case_root / "external-backup"
+                    external.write_text("outside\n", encoding="utf-8")
+                    backup.symlink_to(external)
+                else:
+                    if not hasattr(os, "mkfifo"):
+                        self.skipTest("mkfifo is unavailable")
+                    os.mkfifo(backup)
+
+                refused = self.run_installer(
+                    "update", "codex-agent-profiles", "--force", env=env
+                )
+                self.assertNotEqual(0, refused.returncode)
+                self.assertEqual("local profile edit\n", target.read_text(encoding="utf-8"))
 
     def test_tampered_sources_fail_before_any_target_mutation(self) -> None:
         cases = {

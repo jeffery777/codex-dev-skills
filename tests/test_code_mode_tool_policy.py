@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import hashlib
 import pathlib
 import shutil
 import subprocess
@@ -32,6 +33,26 @@ INSTALLER_ENV_OVERRIDES = (
     "CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS",
     "CODEX_DEV_SKILLS_TARGET",
 )
+
+
+def managed_backup_path(
+    state_root: pathlib.Path,
+    target_root: pathlib.Path,
+    artifact_kind: str,
+    relative_target: str,
+) -> pathlib.Path:
+    root_digest = hashlib.sha256(
+        str(target_root.resolve()).encode("utf-8")
+    ).hexdigest()
+    return (
+        state_root
+        / "codex-dev-skills"
+        / "backups"
+        / "v1"
+        / root_digest
+        / artifact_kind
+        / f"{relative_target}.bak"
+    )
 
 
 class CodeModeToolPolicyTests(unittest.TestCase):
@@ -167,7 +188,14 @@ class CodeModeToolPolicyTests(unittest.TestCase):
         )
         self.assertEqual(0, updated.returncode, updated.stderr)
         self.assertEqual(source.read_bytes(), target.read_bytes())
-        self.assertEqual(original, target.with_suffix(".md.bak").read_bytes())
+        backup = managed_backup_path(
+            self.root / "update-home-state",
+            home / ".codex" / "templates",
+            "templates",
+            INSTALLED_POLICY.as_posix(),
+        )
+        self.assertEqual(original, backup.read_bytes())
+        self.assertFalse(target.with_suffix(".md.bak").exists())
 
     def test_consistency_check_rejects_missing_policy(self) -> None:
         fixture = self.copy_fixture("missing-policy-fixture")

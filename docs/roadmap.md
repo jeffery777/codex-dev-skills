@@ -55,7 +55,6 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 - Historical wrapper cleanup: inventory tests and documents that still require
   `desktop_runtime_*`, define a compatibility sunset, then archive or remove
   them without connecting them to the active native path.
-- Plugin packaging follow-up: if maintainers want Codex plugin distribution, add a minimal `.codex-plugin/plugin.json` and repo marketplace entry in a separate slice. Keep it distinct from the filesystem installer and document duplicate-skill risks for users who install the same pack through both paths.
 - Global profile synchronization follows the accepted Loop Engineering V1
   authority, goal, subagent, and human-gate contract. The separate global
   profile repository should not be edited in issue #81.
@@ -187,14 +186,25 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   no efficacy, shared-host confidentiality, encryption, cross-host, physical
   purge, migration/repair, activation, or promotion claim. Issue #147 / PR
   #148 select **v0.14.0** for the reviewed M1 safety/conformance baseline.
-- Issue #149 owns the v0.14.1 compatibility and packaging patch. It refreshes
+- Issue #149 / PR #150 published the v0.14.1 compatibility and packaging patch.
+  It refreshed
   current Desktop automation/thread/panel/terminal and Linux-preview contracts,
   keeps CLI `/plugins` and `/import` outside `cli-session-handoff`, packages
   the canonical repository skill tree as one universal plugin, makes the
   filesystem installer fail closed on imported/plugin duplicates, and
   separates Codex/ChatGPT memories and Computer History from Memory M1. It
-  does not change the v0.14.0 M0/M1 feature baseline, activate M1, or authorize
-  tag/release publication before the reviewed merge gate.
+  did not change the v0.14.0 M0/M1 feature baseline or activate M1.
+- Issue #151 owns the v0.14.2 installer-backup isolation hotfix. It moves
+  forced-update backups for filesystem skills, templates, and agent profiles
+  into a deterministic managed state-root hierarchy outside Codex discovery
+  roots; existing slots, unsafe boundaries, and cross-device rename conditions
+  fail closed before mutation in the supported cooperating-installer model.
+  Cooperating updates share a canonical managed-state namespace; distinct state
+  roots targeting one custom path do not share its lock and rely on apply-time
+  drift detection rather than process isolation. Legacy adjacent `*.bak`
+  remains user-owned and receives dry-run-first guidance only. This does not implement GN-FU-01,
+  change the M0/M1 feature baseline, or authorize merge, tag, Release, or
+  deployment.
 
 ## Non-Goals
 
