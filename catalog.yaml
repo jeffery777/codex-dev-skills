@@ -4,7 +4,7 @@
 # skill. routes_to is always a list and is required only for deprecated aliases.
 
 name: codex-dev-skills
-version: "0.14.2"
+version: "0.15.0"
 platforms:
   - codex
   - codex-desktop
@@ -132,6 +132,7 @@ groups:
       - source: agent-profiles/loop_v2a_mechanical_reader.toml
       - source: agent-profiles/loop_v2a_fast_explorer.toml
       - source: agent-profiles/loop_v2a_balanced_worker.toml
+      - source: agent-profiles/loop_v2a_senior_worker.toml
       - source: agent-profiles/loop_v2a_advanced_worker.toml
       - source: agent-profiles/loop_v2a_deep_reviewer.toml
       - source: agent-profiles/loop_v2a_exceptional_researcher.toml

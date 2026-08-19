@@ -153,6 +153,12 @@ requires an explicit workload kind, chooses the lowest sufficient same-class
 tier, records higher-tier cost degradation, and never silently substitutes a
 lower tier for high-risk or exceptional work.
 
+The ordered implementation path is Terra medium for routine work, Terra high
+for complex bounded work, and Sol medium only for multi-trigger advanced work.
+Terra xhigh and Luna max are eval-only candidates rather than default
+profiles. The `loop_v2a_` namespace names this routing contract generation,
+not the repository release or V3 improvement-program version.
+
 External memory is optional advisory/cache/coordination input. V2b validates a
 versioned backend-neutral contract, repository/principal identity, provenance,
 freshness, digest, lifecycle, sensitivity, capability, replay, conflict, and

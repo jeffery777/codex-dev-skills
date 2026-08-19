@@ -40,7 +40,7 @@ completion criteria unchanged.
 
 Route contract version 2 keeps those workflow classes stable and adds a
 separate ordered capability tier: `mechanical`, `efficient`, `everyday`,
-`advanced`, `deep`, and `exceptional`. The class owns sandbox and allowed work;
+`senior`, `advanced`, `deep`, and `exceptional`. The class owns sandbox and allowed work;
 the tier owns the minimum model/reasoning requirement. Use an explicit workload
 kind instead of inferring mechanical, exploration, implementation, review,
 security-review, or research/orchestration work from a task title.
@@ -49,8 +49,13 @@ Select the lowest verified profile in the required class whose tier meets or
 exceeds the requirement. A higher tier is a recorded cost-degraded fallback;
 a lower tier cannot silently satisfy a higher-tier route. Reserve
 `exceptional` for explicit quality-first research or orchestration with
-multiple documented triggers. Do not create default Luna high/xhigh or Terra
-xhigh routes without representative eval evidence.
+multiple documented triggers. Use Terra-high `senior` for complex bounded work
+that exceeds the routine Terra-medium profile, and retain Sol-medium
+`advanced` for multi-trigger advanced work. Terra-xhigh and Luna-max are
+eval-first candidates, not defaults: compare them against the adjacent
+published profiles on representative quality, correction, latency, and usage
+evidence before adding a permanent route. Do not build a complete
+model-by-effort profile matrix.
 
 ## Runtime Mapping And Fallback
 

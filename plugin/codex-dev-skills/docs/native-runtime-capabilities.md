@@ -111,7 +111,9 @@ parent permission controls and managed requirements continue to apply.
 Cost-aware route contract version 2 keeps capability class separate from
 capability tier. Class continues to bind sandbox and workflow scope; tier
 records the minimum model/reasoning need. The ordered tiers are `mechanical`,
-`efficient`, `everyday`, `advanced`, `deep`, and `exceptional`. Selection uses
+`efficient`, `everyday`, `senior`, `advanced`, `deep`, and `exceptional`.
+`senior` maps the published Terra-high profile for complex bounded work;
+Terra-xhigh and Luna-max remain eval-only candidates. Selection uses
 registry tier rank rather than profile filename order and may choose a higher
 tier only as an explicit cost-degraded same-class fallback. Parent/default and
 sequential fallbacks require current-session evidence for both class and tier.
@@ -124,6 +126,10 @@ and reports an unresolved mapping instead of guessing. Project-scoped `.codex/`
 layers are ignored for untrusted projects. See official
 [Config basics](https://learn.chatgpt.com/docs/config-file/config-basic#configuration-precedence)
 for general precedence and trust behavior.
+
+The `loop_v2a_` role namespace is a routing-protocol identifier, not a release
+or V3 program identifier. Treat any future rename as an installer and receipt
+compatibility migration rather than a cosmetic file change.
 
 The repository keeps reviewable profile sources under `agent-profiles/` so a
 checkout does not auto-activate them. The `codex-agent-profiles` installer group

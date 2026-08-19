@@ -237,6 +237,15 @@ class ClassificationTests(unittest.TestCase):
             (
                 "implementation",
                 factors(reasoning_depth="deep"),
+                ("balanced-worker", "senior"),
+            ),
+            (
+                "implementation",
+                factors(
+                    reasoning_depth="deep",
+                    code_context_volume="large",
+                    verification_burden="high",
+                ),
                 ("balanced-worker", "advanced"),
             ),
             (

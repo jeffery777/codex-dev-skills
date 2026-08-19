@@ -38,6 +38,7 @@ class AgentProfileValidationTests(unittest.TestCase):
                 "loop_v2a_fast_explorer",
                 "loop_v2a_mechanical_reader",
                 "loop_v2a_balanced_worker",
+                "loop_v2a_senior_worker",
                 "loop_v2a_advanced_worker",
                 "loop_v2a_deep_reviewer",
                 "loop_v2a_exceptional_researcher",
@@ -64,6 +65,16 @@ class AgentProfileValidationTests(unittest.TestCase):
                 )
                 self.assertNotIn("mcp_servers", profile)
                 self.assertNotIn("skills", profile)
+
+        senior = entries["loop_v2a_senior_worker"]["runtime_mapping"]
+        self.assertEqual("gpt-5.6-terra", senior["model"])
+        self.assertEqual("high", senior["reasoning_effort"])
+        published = {
+            (entry["runtime_mapping"]["model"], entry["runtime_mapping"]["reasoning_effort"])
+            for entry in entries.values()
+        }
+        self.assertNotIn(("gpt-5.6-terra", "xhigh"), published)
+        self.assertNotIn(("gpt-5.6-luna", "max"), published)
 
     def test_cli_default_validation_is_dependency_free(self) -> None:
         result = subprocess.run(
@@ -152,7 +163,7 @@ class AgentProfileValidationTests(unittest.TestCase):
             shutil.copytree(PROFILE_DIR, destination)
             report = VALIDATOR.detect_collisions(PROFILE_DIR, [destination], destination)
             self.assertEqual([], report["conflicts"])
-            self.assertEqual(7, len(report["expected_instances"]))
+            self.assertEqual(8, len(report["expected_instances"]))
 
     def test_destination_modified_instance_and_cross_root_match_are_conflicts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -232,7 +243,7 @@ class AgentProfileValidationTests(unittest.TestCase):
                 encoding="utf-8",
             )
             _, entries = VALIDATOR.validate(destination, REGISTRY)
-            self.assertEqual(7, len(entries))
+            self.assertEqual(8, len(entries))
             changed = destination / "loop_v2a_balanced_worker.toml"
             changed.write_text(
                 changed.read_text(encoding="utf-8").replace(

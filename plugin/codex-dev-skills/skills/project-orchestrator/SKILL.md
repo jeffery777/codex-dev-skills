@@ -35,6 +35,21 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
 - If the next unit should move to another session or worker, prepare a bounded continuation prompt or task brief.
 - Stop when a human gate is required.
 
+## Delegation Economy
+
+Delegate by disjoint ownership and useful parallelism, not by one worker per
+discipline. Keep implementation, focused tests, and directly related docs with
+one owner unless they form independently verifiable artifacts; keep author and
+reviewer separate, and add an independent security reviewer only when the risk
+or selected workflow requires it.
+
+After dispatching a bounded independent set, continue parent-owned work and
+then use one supported wait-for-any or mailbox wait for the active set. Do not
+poll unchanged status. Workers report only decision-blocking questions and one
+final structured receipt. Integrate completed results while other workers run,
+and reuse the original worker for bounded follow-up when its ownership and
+source revision remain valid.
+
 ## Workflow
 
 1. Discover source-of-truth files and current state.

@@ -68,17 +68,22 @@ class ImprovementProposalContractDocsTests(unittest.TestCase):
         skill = read("skills/loop-engineering/SKILL.md")
         self.assertIn("scripts/proposalctl.py", skill)
 
-    def test_v0142_candidate_packaging_and_release_metadata_agree(self):
-        self.assertIn('VERSION="0.14.2"', read("install.sh"))
-        self.assertIn('version: "0.14.2"', read("catalog.yaml"))
-        self.assertIn("docs/release-notes-v0.14.2.md", read("README.md"))
-        notes = read("docs/release-notes-v0.14.2.md")
-        self.assertIn("# Release Notes: v0.14.2", notes)
+    def test_current_candidate_packaging_and_release_metadata_agree(self):
+        self.assertIn('VERSION="0.15.0"', read("install.sh"))
+        self.assertIn('version: "0.15.0"', read("catalog.yaml"))
+        self.assertIn("docs/release-notes-v0.15.0.md", read("README.md"))
+        notes = read("docs/release-notes-v0.15.0.md")
+        self.assertIn("# Release Notes: v0.15.0", notes)
         self.assertIn("Status: release candidate", notes)
-        self.assertIn("issues/151", notes)
-        self.assertIn("compare/v0.14.1...v0.14.2", notes)
+        self.assertIn("issues/153", notes)
+        self.assertIn("compare/v0.14.2...v0.15.0", notes)
         self.assertIn("scripts/project-python", notes)
         self.assertIn("tag and GitHub Release", notes)
+
+        v0142 = read("docs/release-notes-v0.14.2.md")
+        self.assertIn("# Release Notes: v0.14.2", v0142)
+        self.assertIn("issues/151", v0142)
+        self.assertIn("compare/v0.14.1...v0.14.2", v0142)
 
         historical = read("docs/release-notes-v0.13.0.md")
         self.assertIn("# Release Notes: v0.13.0", historical)

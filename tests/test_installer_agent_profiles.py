@@ -196,6 +196,47 @@ class AgentProfileInstallerTests(unittest.TestCase):
         target.joinpath(PROFILE_NAMES[-1]).write_text("changed\n", encoding="utf-8")
         self.assertNotEqual(0, self.run_installer("diff", "codex-agent-profiles").returncode)
 
+    def test_update_adds_new_profile_to_prior_managed_profile_set(self) -> None:
+        installed = self.run_installer("install", "codex-agent-profiles")
+        self.assertEqual(0, installed.returncode, installed.stderr)
+        target = self.home / ".codex" / "agents"
+        senior_name = "loop_v2a_senior_worker.toml"
+        target.joinpath(senior_name).unlink()
+
+        state_dir = self.root / "state" / "codex-dev-skills"
+        receipt = next(state_dir.glob("agent-profile-*.tsv"))
+        receipt.write_text(
+            "".join(
+                line
+                for line in receipt.read_text(encoding="utf-8").splitlines(keepends=True)
+                if not line.startswith(f"{senior_name}\t")
+            ),
+            encoding="utf-8",
+        )
+        installed_state = state_dir / "installed.jsonl"
+        installed_state.write_text(
+            installed_state.read_text(encoding="utf-8").replace(
+                '"version":"0.15.0"', '"version":"0.14.2"'
+            ),
+            encoding="utf-8",
+        )
+
+        updated = self.run_installer("update", "codex-agent-profiles", "--force")
+
+        self.assertEqual(0, updated.returncode, updated.stderr)
+        self.assertEqual(PROFILE_NAMES, sorted(path.name for path in target.glob("*.toml")))
+        expected_digest = hashlib.sha256(
+            SOURCE_PROFILES.joinpath(senior_name).read_bytes()
+        ).hexdigest()
+        self.assertIn(
+            f"{senior_name}\t{expected_digest}\n",
+            receipt.read_text(encoding="utf-8"),
+        )
+        self.assertIn(
+            '"version":"0.15.0","action":"update"',
+            installed_state.read_text(encoding="utf-8"),
+        )
+
     def test_project_target_requires_explicit_opt_in(self) -> None:
         target = self.root / "project" / ".codex" / "agents"
         denied_env = {**self.env, "CODEX_CUSTOM_AGENTS_DIR": str(target)}

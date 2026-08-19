@@ -47,6 +47,7 @@ CAPABILITY_TIERS = (
     "mechanical",
     "efficient",
     "everyday",
+    "senior",
     "advanced",
     "deep",
     "exceptional",
@@ -71,6 +72,7 @@ TIER_ROLES = {
     ("fast-read-explorer", "mechanical"): "loop_v2a_mechanical_reader",
     ("fast-read-explorer", "efficient"): "loop_v2a_fast_explorer",
     ("balanced-worker", "everyday"): "loop_v2a_balanced_worker",
+    ("balanced-worker", "senior"): "loop_v2a_senior_worker",
     ("balanced-worker", "advanced"): "loop_v2a_advanced_worker",
     ("deep-reviewer", "deep"): "loop_v2a_deep_reviewer",
     ("deep-reviewer", "exceptional"): "loop_v2a_exceptional_researcher",
@@ -331,13 +333,16 @@ def _classify_v2(factors: dict[str, str], workload_kind: str) -> dict[str, Any]:
             raise AgentRoutingContractError(
                 "version 2 implementation workload requires bounded write_blast_radius"
             )
-        if (
+        if quality_triggers >= 3:
+            tier = "advanced"
+            reasons.append("multi-trigger-advanced-bounded-implementation")
+        elif (
             factors["ambiguity"] == "high"
             or factors["reasoning_depth"] == "deep"
             or factors["verification_burden"] == "high"
         ):
-            tier = "advanced"
-            reasons.append("advanced-bounded-implementation")
+            tier = "senior"
+            reasons.append("complex-bounded-implementation")
         else:
             tier = "everyday"
             reasons.append("routine-bounded-implementation")

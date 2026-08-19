@@ -31,6 +31,11 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   low/medium for exploration and routine work, Sol medium/high for advanced
   and deep/security work, and a narrow Sol xhigh exceptional tier. It preserves
   version 1 compatibility and V1/V2b authority.
+- Issue #153 evolves that same V2a routing contract with event-driven
+  coordination guidance and a Terra-high `senior` tier between routine
+  Terra-medium and multi-trigger Sol-medium implementation. Terra-xhigh and
+  Luna-max remain eval-first candidates. The `loop_v2a_` namespace remains a
+  protocol identifier independent of the V3 improvement program.
 - Milestone continuation adds a shared upper-layer workflow for checking bounded milestone task state across repeated invocations, selecting the next ready task, routing through existing delivery and continuation workflows, and keeping runtime scheduling outside the skill.
 - Keep any later Desktop runtime wrapper slices behind separate review and human approval, especially before adding remediation, broader runtime thread-tool invocation, platform writes, or any other state-changing path.
 
@@ -205,6 +210,13 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   remains user-owned and receives dry-run-first guidance only. This does not implement GN-FU-01,
   change the M0/M1 feature baseline, or authorize merge, tag, Release, or
   deployment.
+- Issue #153 owns the v0.15.0 agent-orchestration and routing candidate. It
+  reduces unchanged-state polling and worker progress chatter, prefers
+  ownership-based packets over one-agent-per-discipline fan-out, and inserts a
+  Terra-high `senior` tier before multi-trigger Sol-medium implementation.
+  Terra-xhigh and Luna-max remain eval-only; existing `loop_v2a_` identities
+  remain stable because that namespace names the routing protocol rather than
+  the repository or V3 program version.
 
 ## Non-Goals
 

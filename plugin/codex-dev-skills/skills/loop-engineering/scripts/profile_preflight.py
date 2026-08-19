@@ -39,16 +39,17 @@ REGISTRY_PROFILE_KEYS = {"name", "file", "profile_sha256", "capability_class", "
 MAPPING_KEYS = {"model", "reasoning_effort", "availability", "last_verified", "replaceable"}
 FALLBACK_KEYS = {"same_capability_first", "allow_parent_default", "allow_sequential", "human_gate_if_unresolved"}
 COMPATIBLE_PROFILE_KEYS = {"name", "profile_path", "capability_class", "capability_tier", "config_valid", "model_available", "reasoning_available", "sandbox", "allowed_workflow_scope", "profile_digest"}
-CAPABILITY_TIERS = ("mechanical", "efficient", "everyday", "advanced", "deep", "exceptional")
+CAPABILITY_TIERS = ("mechanical", "efficient", "everyday", "senior", "advanced", "deep", "exceptional")
 TIER_RANK = {tier: index for index, tier in enumerate(CAPABILITY_TIERS)}
 ROLE_CONTRACTS = {
     "loop_v2a_mechanical_reader": ("fast-read-explorer", "mechanical", 0, "read-only", {"read", "search", "summarize", "report-receipt"}),
     "loop_v2a_fast_explorer": ("fast-read-explorer", "efficient", 1, "read-only", {"read", "search", "summarize", "report-receipt"}),
     "loop_v2a_balanced_worker": ("balanced-worker", "everyday", 2, "workspace-write", {"read", "search", "bounded-edit", "focused-verify", "report-receipt"}),
-    "loop_v2a_advanced_worker": ("balanced-worker", "advanced", 3, "workspace-write", {"read", "search", "bounded-edit", "focused-verify", "report-receipt"}),
-    "loop_v2a_deep_reviewer": ("deep-reviewer", "deep", 4, "read-only", {"read", "search", "verify", "report-findings", "report-receipt"}),
-    "loop_v2a_exceptional_researcher": ("deep-reviewer", "exceptional", 5, "read-only", {"read", "search", "verify", "report-findings", "report-receipt"}),
-    "loop_v2a_security_reviewer": ("security-reviewer", "deep", 4, "read-only", {"read", "search", "validate", "defensive-control-analysis", "report-findings", "report-receipt"}),
+    "loop_v2a_senior_worker": ("balanced-worker", "senior", 3, "workspace-write", {"read", "search", "bounded-edit", "focused-verify", "report-receipt"}),
+    "loop_v2a_advanced_worker": ("balanced-worker", "advanced", 4, "workspace-write", {"read", "search", "bounded-edit", "focused-verify", "report-receipt"}),
+    "loop_v2a_deep_reviewer": ("deep-reviewer", "deep", 5, "read-only", {"read", "search", "verify", "report-findings", "report-receipt"}),
+    "loop_v2a_exceptional_researcher": ("deep-reviewer", "exceptional", 6, "read-only", {"read", "search", "verify", "report-findings", "report-receipt"}),
+    "loop_v2a_security_reviewer": ("security-reviewer", "deep", 5, "read-only", {"read", "search", "validate", "defensive-control-analysis", "report-findings", "report-receipt"}),
 }
 
 
