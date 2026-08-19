@@ -1,6 +1,6 @@
 ---
 name: cli-session-handoff
-description: Thin Codex CLI session control adapter for one bounded start, resume, or interactive fork handoff already selected by shared orchestration.
+description: Thin Codex CLI session control adapter for one bounded non-interactive start, resume, or fork, or one manual interactive fork, already selected by shared orchestration.
 ---
 
 # cli-session-handoff
@@ -11,8 +11,7 @@ Runtime compatibility: cli
 
 Use this skill only after `loop-engineering`, `project-orchestrator`,
 `project-delivery`, or `task-continuation` has selected a bounded handoff and
-the user explicitly wants a separate, resumed, or interactively forked Codex
-CLI session.
+the user explicitly wants a separate, resumed, or forked Codex CLI session.
 
 This is a thin CLI control-plane adapter. It does not select the task, redefine
 completion, replace shared subagents, or control Desktop tasks. The originating
@@ -24,7 +23,9 @@ completion.
 The automated adapter uses only the documented stable non-interactive CLI:
 
 - `codex exec --json` for a new saved CLI session;
-- `codex exec resume <SESSION_ID> --json` for a known saved CLI session.
+- `codex exec resume <SESSION_ID> --json` for a known saved CLI session;
+- `codex exec fork <SESSION_ID> --json` for a new saved session that copies the
+  completed history of an exact known source session.
 
 The documented interactive CLI separately exposes
 `codex fork <SESSION_ID>` for a new chat from a saved interactive session.
@@ -47,6 +48,9 @@ session identifier is not a Desktop `threadId` or `clientThreadId`.
      executor's private clone;
    - `resume` only for an exact known UUID returned by a prior public CLI
      event and executed through the same non-interactive private-clone path;
+   - `fork` for a new non-interactive session from an exact known source UUID,
+     executed through the private-clone path and expected to return a different
+     public session UUID;
    - `interactive-fork` when the same interactive task needs a new chat that
      keeps saved history and intentionally reuses the session directory or
      another exact existing checkout/worktree.
@@ -56,7 +60,7 @@ session identifier is not a Desktop `threadId` or `clientThreadId`.
    changed files, evidence, questions, and residual risk. When an executable
    `scripts/project-python` exists, require it for Python dependency checks,
    scripts, evals, and tests; never substitute bare system Python.
-5. For `start` or `resume`, select the least sandbox required: `read-only` for inspection and
+5. For `start`, `resume`, or `fork`, select the least sandbox required: `read-only` for inspection and
    `workspace-write` only when the user authorized implementation in the exact
    target worktree. The child runs in a private clone at the expected HEAD;
    read-only changes are discarded, while a bounded binary patch is applied to
@@ -71,7 +75,7 @@ session identifier is not a Desktop `threadId` or `clientThreadId`.
    name, private session state, or a newly created worktree as a substitute.
 7. Confirm explicit authorization for one CLI session mutation. The adapter's
    marker records the decision but cannot create authority by itself.
-8. For `start` or `resume`, run the repo-owned executor with a JSON request on
+8. For `start`, `resume`, or `fork`, run the repo-owned executor with a JSON request on
    stdin:
 
    ```bash
@@ -114,7 +118,9 @@ request shape. In addition:
   process-tree cleanup, time limit, and streaming output bounds;
 - arbitrary flags, model overrides, extra writable roots, environment
   overrides, approval bypasses, and `danger-full-access` are unsupported;
-- a `resume` target must be an exact UUID, never `--last` or a display name;
+- a `resume` or `fork` target must be an exact UUID, never `--last` or a
+  display name; `resume` must emit the same UUID, while `fork` must emit the
+  newly created session UUID;
 - normal tests must use fake executables and must not create a live session.
 
 ## Interactive Fork Policy
@@ -130,8 +136,8 @@ request shape. In addition:
   automated private-clone executor.
 - Do not create or select a new Git worktree when the intent is to reuse the
   existing one.
-- Do not claim the repo-owned executor supports `codex fork`; it remains a
-  manual interactive handoff.
+- Do not confuse automated `codex exec fork` with interactive `codex fork`;
+  only the latter remains a manual interactive handoff.
 
 ## Output
 
@@ -151,9 +157,9 @@ request shape. In addition:
 Stop before execution when:
 
 - exact user authority for the one session mutation is absent;
-- workspace, expected head, executable, sandbox, or resume identifier is
+- workspace, expected head, executable, sandbox, or resume/fork identifier is
   ambiguous;
-- the worktree is dirty for an automated `start` or `resume`, or a dirty
+- the worktree is dirty for an automated `start`, `resume`, or `fork`, or a dirty
   interactive-fork target lacks exclusive same-task ownership;
 - the task could overlap another active writer;
 - the prompt asks for destructive, publication, credential, private-state,

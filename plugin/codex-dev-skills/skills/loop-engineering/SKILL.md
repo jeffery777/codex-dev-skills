@@ -398,13 +398,23 @@ remain safe and correct when hooks are disabled, unavailable, or unable to
 intercept an equivalent tool path.
 
 The optional V2c-B GitNexus runner uses only documented `SessionStart` and
-`PostToolUse` `Bash` events. It is notify-only by default, never parses the
-shell command or transcript, and treats the Bash event as an incomplete
-commit/HEAD-change signal. Auto-on-demand requires separate machine-local
-opt-in and delegates only a clean eligible revision to the qualified V2c-A
-controller. Controller failure installs a durable repository-bound circuit
-breaker so later hook events cannot retry automatically without operator
-clearance. Installing its templates does not activate hooks or grant trust.
+`PostToolUse` events for `Bash` and `apply_patch`. It is notify-only by default,
+never parses the shell command, patch, tool response, or transcript, and
+treats those events as incomplete repository-change signals. Auto-on-demand
+requires separate machine-local opt-in and delegates only a clean eligible
+revision in the exact configured checkout to the qualified V2c-A controller.
+Each primary checkout or linked worktree requires its own exact machine-local
+root and worktree-bound index identity; a config for one checkout must reject
+events from another. Linked-worktree automatic refresh remains unqualified and
+fails closed without updating the primary checkout's index. After a merge, the
+primary checkout must first advance locally; its next `SessionStart` or
+completed `Bash`-matched shell/unified-exec event can then refresh that clean
+HEAD. A remote PR/MR result
+alone cannot update a local index. Controller failure installs a durable
+repository-bound circuit breaker so later hook events cannot retry
+automatically without operator clearance. Installing its templates does not
+activate hooks or grant trust. The shipped runner stays synchronous because
+background hook invocations may overlap and finish out of order.
 
 In Codex CLI or any runtime without a scheduler or Desktop task-control
 capability, use the current session, manual invocation, a paste-ready prompt, a

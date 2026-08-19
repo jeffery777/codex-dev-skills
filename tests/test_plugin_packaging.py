@@ -33,7 +33,7 @@ class PluginPackagingTests(unittest.TestCase):
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual("codex-dev-skills", manifest["name"])
-        self.assertEqual("0.15.0", manifest["version"])
+        self.assertEqual("0.15.1", manifest["version"])
         self.assertEqual("./skills/", manifest["skills"])
         self.assertTrue((PACKAGE_ROOT / "skills" / "project-delivery" / "SKILL.md").is_file())
         self.assertFalse((ROOT / ".codex-plugin" / "plugin.json").exists())
@@ -72,6 +72,15 @@ class PluginPackagingTests(unittest.TestCase):
             pathlib.PurePosixPath(path).parts[0] for path in packaged_paths
         }
         self.assertFalse({".git", ".gitnexus", ".work"} & top_level_parts)
+
+    def test_packaged_policy_resources_are_git_tracked(self) -> None:
+        tracked = subprocess.run(
+            ["git", "ls-files", "-z", "--", "policies", "docs"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+        ).stdout.decode("utf-8").split("\0")
+        self.assertIn("policies/github-control-plane-policy.md", tracked)
 
     def test_generator_rejects_every_extra_package_entry_kind(self) -> None:
         cases = ("ignored-tree", "empty-directory", "symlink", "special")
@@ -151,6 +160,25 @@ class PluginPackagingTests(unittest.TestCase):
                     skill_text.count(filesystem_reference),
                     f"{skill}: {filename}",
                 )
+
+    def test_policy_references_pair_source_plugin_and_filesystem_paths(self) -> None:
+        source_pattern = re.compile(r"`../../policies/([^`]+)`")
+        references = 0
+        for skill in sorted((ROOT / "skills").glob("*/SKILL.md")):
+            skill_text = skill.read_text(encoding="utf-8")
+            filenames = source_pattern.findall(skill_text)
+            references += len(filenames)
+            for filename in set(filenames):
+                filesystem_reference = (
+                    "`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/"
+                    f"orchestration/policies/{filename}`"
+                )
+                self.assertEqual(
+                    filenames.count(filename),
+                    skill_text.count(filesystem_reference),
+                    f"{skill}: {filename}",
+                )
+        self.assertGreater(references, 10)
 
     def _assert_isolated_filesystem_install_resolves_templates(
         self, custom_templates: bool

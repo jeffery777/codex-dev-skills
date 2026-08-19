@@ -36,6 +36,9 @@ Do not commit, push, create PRs, merge, deploy, post platform comments, submit r
    worktree creation:
    - same task, new conversation, same directory and completed history:
      `fork_thread` with `same-directory`;
+   - same task, new conversation, completed history, new isolated checkout:
+     `fork_thread` with `worktree`; treat a returned `clientThreadId` as queued
+     setup and wait for a usable `threadId` before follow-up;
    - fresh task in a Git project: `create_thread` with the exact project ID and
      `worktree` by default;
      omit `startingState` for the default branch; use `working-tree` only for
@@ -177,6 +180,21 @@ Desktop continuation evidence:
   an unresolved remote child is local.
 - Git behavior: reuse the existing checkout/worktree; do not create another worktree.
 - Main thread stops writing before the child continues.
+```
+
+When the same task needs conversation lineage plus checkout isolation, use the
+worktree fork form rather than fresh task creation:
+
+```text
+Desktop worktree-fork evidence:
+- Intent: same task, new conversation, completed history, new isolated checkout.
+- Runtime contract: fork_thread.
+- Request: omit threadId to fork the calling task; environment is worktree.
+- Expected result: queued clientThreadId or a runtime-supported ready child identifier.
+- Lifecycle: clientThreadId is not threadId; wait for registry resolution before follow-up.
+- History: only completed source history is copied.
+- Host routing: the source task anchors the host; resolve the ready child's hostId before host-sensitive follow-up.
+- Completion: dispatch and worktree readiness are not repository completion evidence.
 ```
 
 If Desktop thread creation is unavailable, do not improvise with private Desktop runtime state, local runtime files, unpublished endpoints, UI scraping, daemons, background services, or unpublished Desktop internals. Return the prompt to the maintainer:

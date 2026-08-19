@@ -395,6 +395,43 @@ class CliSessionHandoffTests(unittest.TestCase):
         self.assertEqual("failed", mismatched["status"])
         self.assertEqual("session_id_mismatch", mismatched["failure_class"])
 
+    def test_fork_requires_source_uuid_and_accepts_new_session_id(self) -> None:
+        response = self.execute(
+            mode="different-session",
+            request=self.request(operation="fork", session_id=SESSION_ID),
+        )
+
+        self.assertEqual("completed", response["status"])
+        self.assertNotEqual(SESSION_ID, response["result"]["session_id"])
+        argv = json.loads(self.capture.read_text(encoding="utf-8"))
+        self.assertEqual(
+            [
+                "exec",
+                "fork",
+                "--ignore-user-config",
+                "--json",
+                SESSION_ID,
+                "-",
+            ],
+            argv[10:],
+        )
+
+        missing = self.execute(request=self.request(operation="fork"))
+        self.assertEqual("stopped", missing["status"])
+        self.assertEqual("validation_error", missing["failure_class"])
+
+        invalid = self.execute(
+            request=self.request(operation="fork", session_id="--last")
+        )
+        self.assertEqual("stopped", invalid["status"])
+        self.assertEqual("target_mismatch", invalid["failure_class"])
+
+        unchanged = self.execute(
+            request=self.request(operation="fork", session_id=SESSION_ID)
+        )
+        self.assertEqual("failed", unchanged["status"])
+        self.assertEqual("session_id_mismatch", unchanged["failure_class"])
+
     def test_workspace_write_requires_matching_authorized_ceiling(self) -> None:
         denied = self.execute(request=self.request(sandbox="workspace-write"))
         self.assertEqual("stopped", denied["status"])

@@ -166,11 +166,15 @@ absolute machine-local config outside the repository, validates it with
 `notify-only` or `auto-on-demand`.
 
 `SessionStart` checks all documented start sources. Because Codex has no native
-`post-commit` event, `PostToolUse` for `Bash` performs a compensating freshness
-check after shell actions without parsing the command string. It suppresses
+`post-commit` event, `PostToolUse` for `Bash` and `apply_patch` performs a
+compensating freshness check after repository actions without parsing the
+command, patch, or response. It suppresses
 ordinary uncommitted-worktree noise when the indexed revision still equals
 HEAD, but reports a changed HEAD. This does not cover Git mutations from other
 tools, processes, or clients; the next `SessionStart` still rechecks live state.
+Each exact checkout uses a separate machine-local config and worktree-bound
+index identity. Linked-worktree automatic refresh is not qualified; after a
+remote merge, advance the primary checkout locally before refreshing its index.
 
 Auto-on-demand is narrower than general automation. It requires a clean
 eligible state, exact configured identity and qualification, a secure

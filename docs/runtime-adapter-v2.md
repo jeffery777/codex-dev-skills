@@ -42,7 +42,7 @@ Caller-supplied metadata is evidence to normalize, not permission to call the ca
 
 ## Contract Family Boundary
 
-Facts last verified on 2026-08-18. The current public product surface is the
+Facts last verified on 2026-08-19. The current public product surface is the
 ChatGPT desktop app; this document retains `Desktop` as the compatibility label
 for its Codex task and thread control plane:
 
@@ -55,7 +55,9 @@ for its Codex task and thread control plane:
   information including `isGitRepository`. Project-scoped `create_thread`
   callers should use a returned `projectId` rather than infer project identity
   from private Desktop runtime state. Use a same-directory fork when the same
-  task needs a new conversation in its existing checkout/worktree; use project
+  task needs a new conversation in its existing checkout/worktree, or a
+  worktree fork when the same task needs completed history plus a newly
+  isolated checkout; use project
   worktree creation by default for a fresh task in a Git project; use project
   local creation for a non-Git project or when the user explicitly requests a
   Git project's saved checkout; and use `projectless` only for intentionally
@@ -130,10 +132,13 @@ for its Codex task and thread control plane:
 - Desktop `fork_thread` accepts optional `threadId` and optional `environment`.
   `same-directory` reuses the source checkout or existing worktree and copies
   completed history; it does not create another Git worktree. The source task
-  must stop writing before the child continues in that shared directory. The
+  must stop writing before the child continues in that shared directory.
+  `worktree` copies completed history while queuing a new isolated checkout and
+  may return `clientThreadId`; that identifier must resolve to a usable
+  `threadId` before follow-up. The
   source task anchors the host because `fork_thread` accepts no caller-supplied
-  `hostId`; its current response guarantees a child `threadId`, not a
-  `hostId`. Retain a known source host and resolve the child's runtime-returned
+  `hostId`; its response does not guarantee a `hostId`. Retain a known source
+  host and resolve the child's runtime-returned
   `hostId` through a supported registry result that explicitly exposes it
   before host-sensitive follow-up. Do not default an unresolved remote child
   to `local`.
@@ -163,11 +168,13 @@ for its Codex task and thread control plane:
   fallback are required; macOS availability is not a universal contract.
 - `codex app-server` is a separate JSON-RPC interface, with methods such as `thread/start`, `thread/read`, `thread/fork`, and `turn/start`. Its initialization, transport/auth handling, request fields, and response envelopes are not interchangeable with Desktop app tools.
 - The Codex SDK wraps app-server. It is not evidence that this repository already implements a CLI `create_thread` path.
-- Codex CLI `0.147.0` separately exposes interactive
+- Codex CLI `0.148.0` exposes non-interactive
+  `codex exec fork <SESSION_ID> [PROMPT]` and separately exposes interactive
   `codex fork <SESSION_ID>`. Its `tui.resume_cwd = "current" | "session"`
   behavior selects the invocation or saved session directory when they differ.
   This CLI-only manual handoff is not a Desktop task action and is not
-  implemented by the repo-owned non-interactive private-clone executor.
+  remains the manual interactive path; the repo-owned private-clone executor
+  implements only the non-interactive `codex exec fork` form.
 
 This V2 boundary remains documentation only. It does not introduce an app-server client, SDK wrapper, daemon, sidecar, MCP server, broad runtime adapter, UI scraping path, Desktop private runtime-state access, or a CLI/default live thread call.
 

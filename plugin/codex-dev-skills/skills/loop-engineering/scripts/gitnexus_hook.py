@@ -28,6 +28,7 @@ MAX_CONFIG_BYTES = 64 * 1024
 MAX_PATH_LENGTH = 4096
 SESSION_SOURCES = frozenset({"startup", "resume", "clear", "compact"})
 HOOK_EVENTS = frozenset({"SessionStart", "PostToolUse"})
+POST_TOOL_NAMES = frozenset({"Bash", "apply_patch"})
 MODES = frozenset({"notify-only", "auto-on-demand"})
 
 
@@ -316,7 +317,7 @@ def _read_hook_input(stream: Any) -> dict[str, Any]:
             optional=common
             | frozenset({"turn_id", "tool_use_id", "tool_input", "tool_response"}),
         )
-        if document["tool_name"] != "Bash":
+        if document["tool_name"] not in POST_TOOL_NAMES:
             raise GitNexusHookError("post-tool-name-unsupported")
     _expect_string(document["cwd"], label="hook-cwd", maximum=MAX_PATH_LENGTH)
     return document
@@ -336,17 +337,45 @@ def _qualify(config: HookConfig) -> gitnexus_adapter.ExecutableQualification:
     )
 
 
-def _validate_cwd(document: Mapping[str, Any], root: pathlib.Path) -> None:
+def _validate_cwd(
+    document: Mapping[str, Any],
+    root: pathlib.Path,
+    *,
+    git_executable: str | os.PathLike[str] | None = None,
+) -> None:
     try:
         cwd = pathlib.Path(document["cwd"])
         if not cwd.is_absolute():
             raise GitNexusHookError("hook-cwd-absolute-required")
         resolved = cwd.resolve(strict=True)
-        resolved.relative_to(root.resolve(strict=True))
+        configured_root = root.resolve(strict=True)
+        resolved.relative_to(configured_root)
     except GitNexusHookError:
         raise
     except (OSError, ValueError) as exc:
         raise GitNexusHookError("hook-cwd-outside-repository") from exc
+    try:
+        owning_root = gitnexus_adapter.resolve_checkout_root(
+            resolved, git_executable=git_executable
+        )
+    except gitnexus_adapter.GitNexusAdapterError as exc:
+        raise GitNexusHookError("hook-cwd-checkout-unverified") from exc
+    if owning_root != configured_root:
+        raise GitNexusHookError("hook-cwd-checkout-mismatch")
+
+
+def _is_linked_worktree(root: pathlib.Path) -> bool:
+    try:
+        marker = (root / ".git").lstat()
+    except OSError as exc:
+        raise GitNexusHookError("repository-git-marker-unavailable") from exc
+    if stat.S_ISLNK(marker.st_mode):
+        raise GitNexusHookError("repository-git-marker-unsafe")
+    if stat.S_ISDIR(marker.st_mode):
+        return False
+    if stat.S_ISREG(marker.st_mode):
+        return True
+    raise GitNexusHookError("repository-git-marker-unsupported")
 
 
 def _validate_control_directory(
@@ -516,7 +545,11 @@ def _adapter_error_code(error: BaseException) -> str:
 
 def evaluate_hook(config: HookConfig, document: Mapping[str, Any]) -> dict[str, Any] | None:
     event = document["hook_event_name"]
-    _validate_cwd(document, config.repository_root)
+    _validate_cwd(
+        document,
+        config.repository_root,
+        git_executable=config.git_executable,
+    )
     qualification = _qualify(config)
     repository = gitnexus_adapter.collect_repository_state(
         config.repository_root,
@@ -548,6 +581,13 @@ def evaluate_hook(config: HookConfig, document: Mapping[str, Any]) -> dict[str, 
         and (revision_changed or metadata.state == "missing")
     )
     if refresh_eligible:
+        if _is_linked_worktree(repository.root):
+            return _additional_context(
+                event,
+                "GitNexus automatic refresh is not qualified for this linked worktree. "
+                "Keep its advisory index separate from the primary checkout, and refresh "
+                "the updated primary checkout after merge instead of writing its index from here.",
+            )
         assert config.refresh is not None
         marker = _failure_marker(
             config.refresh["gitnexus_home_parent"],

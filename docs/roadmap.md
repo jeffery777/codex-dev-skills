@@ -210,13 +210,20 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   remains user-owned and receives dry-run-first guidance only. This does not implement GN-FU-01,
   change the M0/M1 feature baseline, or authorize merge, tag, Release, or
   deployment.
-- Issue #153 owns the v0.15.0 agent-orchestration and routing candidate. It
+- Issue #153 / PR #154 published the v0.15.0 agent-orchestration and routing
+  release. It
   reduces unchanged-state polling and worker progress chatter, prefers
   ownership-based packets over one-agent-per-discipline fan-out, and inserts a
   Terra-high `senior` tier before multi-trigger Sol-medium implementation.
   Terra-xhigh and Luna-max remain eval-only; existing `loop_v2a_` identities
   remain stable because that namespace names the routing protocol rather than
   the repository or V3 program version.
+- Issue #155 owns the v0.15.1 runtime compatibility patch. It preserves the
+  shared-layer/CLI-adapter/Desktop-adapter architecture while adding CLI
+  `codex exec fork`, Desktop worktree-fork lifecycle semantics, a shared
+  GitHub connector-first control-plane policy, and checkout-aware GitNexus hook
+  guidance. Linked-worktree automatic refresh remains fail-closed; post-merge
+  refresh applies only after the primary checkout advances locally.
 
 ## Non-Goals
 

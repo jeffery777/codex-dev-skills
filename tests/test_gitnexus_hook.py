@@ -116,12 +116,17 @@ def tracked_snapshot(*, dirty: bool = False) -> adapter.TrackedSnapshot:
     )
 
 
-def event(root: pathlib.Path, name: str = "SessionStart") -> dict:
+def event(
+    root: pathlib.Path,
+    name: str = "SessionStart",
+    *,
+    tool_name: str = "Bash",
+) -> dict:
     base = {"cwd": str(root), "hook_event_name": name}
     if name == "SessionStart":
         base["source"] = "startup"
     else:
-        base["tool_name"] = "Bash"
+        base["tool_name"] = tool_name
     return base
 
 
@@ -232,6 +237,7 @@ class ConfigTests(unittest.TestCase):
         self.directory = pathlib.Path(self.temporary.name).resolve()
         self.root = self.directory / "repo"
         self.root.mkdir()
+        (self.root / ".git").mkdir()
         self.machine = self.directory / "machine"
         self.machine.mkdir()
 
@@ -329,11 +335,20 @@ class InputTests(unittest.TestCase):
         parsed = hook._read_hook_input(io.BytesIO(json.dumps(value).encode()))
         self.assertEqual("resume", parsed["source"])
 
-    def test_post_tool_use_rejects_non_bash_tool(self) -> None:
+    def test_post_tool_use_accepts_file_edit_tool(self) -> None:
         value = {
             "cwd": "/tmp/repo",
             "hook_event_name": "PostToolUse",
             "tool_name": "apply_patch",
+        }
+        parsed = hook._read_hook_input(io.BytesIO(json.dumps(value).encode()))
+        self.assertEqual("apply_patch", parsed["tool_name"])
+
+    def test_post_tool_use_rejects_unselected_tool(self) -> None:
+        value = {
+            "cwd": "/tmp/repo",
+            "hook_event_name": "PostToolUse",
+            "tool_name": "WebSearch",
         }
         with self.assertRaisesRegex(hook.GitNexusHookError, "post-tool-name-unsupported"):
             hook._read_hook_input(io.BytesIO(json.dumps(value).encode()))
@@ -359,10 +374,20 @@ class EvaluationTests(unittest.TestCase):
         self.directory = pathlib.Path(self.temporary.name).resolve()
         self.root = self.directory / "repo"
         self.root.mkdir()
+        (self.root / ".git").mkdir()
         self.repo = repository_state(self.root)
         self.qualification = mock.Mock(fingerprint="6" * 64)
+        self.checkout_root = mock.patch.object(
+            adapter,
+            "resolve_checkout_root",
+            side_effect=lambda path, **_: self.root
+            if pathlib.Path(path).resolve().is_relative_to(self.root)
+            else pathlib.Path(path).resolve(),
+        )
+        self.checkout_root.start()
 
     def tearDown(self) -> None:
+        self.checkout_root.stop()
         self.temporary.cleanup()
 
     def evaluate(
@@ -405,6 +430,26 @@ class EvaluationTests(unittest.TestCase):
         )
         self.assertIsNone(result)
 
+    def test_apply_patch_event_uses_same_dirty_advisory_boundary(self) -> None:
+        metadata = adapter.MetadataResult(
+            "stale", "working-tree-dirty", HEAD, "f" * 64, {}
+        )
+        with (
+            mock.patch.object(hook, "_qualify", return_value=self.qualification),
+            mock.patch.object(adapter, "collect_repository_state", return_value=self.repo),
+            mock.patch.object(
+                adapter,
+                "collect_tracked_snapshot",
+                return_value=tracked_snapshot(dirty=True),
+            ),
+            mock.patch.object(adapter, "assess_metadata", return_value=metadata),
+        ):
+            result = hook.evaluate_hook(
+                hook_config(self.root),
+                event(self.root, "PostToolUse", tool_name="apply_patch"),
+            )
+        self.assertIsNone(result)
+
     def test_post_tool_use_reports_revision_change_even_if_dirty(self) -> None:
         result = self.evaluate(
             adapter.MetadataResult("stale", "working-tree-dirty", INDEXED, "f" * 64, {}),
@@ -431,6 +476,24 @@ class EvaluationTests(unittest.TestCase):
         controller.assert_not_called()
         assert result is not None
         self.assertIn("not safe", result["hookSpecificOutput"]["additionalContext"])
+
+    def test_linked_worktree_auto_refresh_stays_separate(self) -> None:
+        (self.root / ".git").rmdir()
+        (self.root / ".git").write_text(
+            "gitdir: /machine-local/worktrees/example\n", encoding="utf-8"
+        )
+        with mock.patch.object(adapter, "RefreshController") as controller:
+            result = self.evaluate(
+                adapter.MetadataResult(
+                    "stale", "indexed-revision-stale", INDEXED, "f" * 64, {}
+                ),
+                mode="auto-on-demand",
+            )
+        assert result is not None
+        message = result["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("not qualified for this linked worktree", message)
+        self.assertIn("separate from the primary checkout", message)
+        controller.assert_not_called()
 
     def test_auto_on_demand_delegates_to_v2c_a_controller(self) -> None:
         refreshed = adapter.RefreshResult(
@@ -533,7 +596,10 @@ class TemplateTests(unittest.TestCase):
         path = ROOT / "templates" / "hooks" / "gitnexus-v2c-b" / "hooks.json.template"
         document = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual({"SessionStart", "PostToolUse"}, set(document["hooks"]))
-        self.assertEqual("^Bash$", document["hooks"]["PostToolUse"][0]["matcher"])
+        self.assertEqual(
+            "^(Bash|apply_patch)$",
+            document["hooks"]["PostToolUse"][0]["matcher"],
+        )
         for groups in document["hooks"].values():
             for group in groups:
                 for handler in group["hooks"]:
@@ -554,6 +620,66 @@ class TemplateTests(unittest.TestCase):
             "__64_HEX_CALLER_ACCEPTED_RUNTIME_DIGEST__",
             document["qualification"]["accepted_runtime_sha256"],
         )
+
+
+class WorktreeRoutingTests(unittest.TestCase):
+    def test_each_checkout_requires_its_own_root_and_index_identity(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            directory = pathlib.Path(raw).resolve()
+            primary = make_repository(directory)
+            linked = directory / "linked-worktree"
+            run_git(primary, "worktree", "add", "-b", "linked", str(linked))
+
+            hook._validate_cwd(event(primary), primary)
+            hook._validate_cwd(event(linked), linked)
+            with self.assertRaisesRegex(
+                hook.GitNexusHookError, "hook-cwd-outside-repository"
+            ):
+                hook._validate_cwd(event(linked), primary)
+
+            primary_state = adapter.collect_repository_state(
+                primary,
+                canonical_repository_id="github.com.Owner.Repository",
+                expected_remote="https://github.com/Owner/Repository.git",
+            )
+            linked_state = adapter.collect_repository_state(
+                linked,
+                canonical_repository_id="github.com.Owner.Repository",
+                expected_remote="https://github.com/Owner/Repository.git",
+            )
+            self.assertEqual(
+                primary_state.canonical_remote, linked_state.canonical_remote
+            )
+            self.assertNotEqual(
+                primary_state.identity["worktree_id_digest"],
+                linked_state.identity["worktree_id_digest"],
+            )
+
+    def test_subdirectory_belongs_to_same_checkout(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            primary = make_repository(pathlib.Path(raw).resolve())
+            subdirectory = primary / "nested" / "source"
+            subdirectory.mkdir(parents=True)
+
+            hook._validate_cwd(event(subdirectory), primary)
+
+    def test_nested_linked_worktree_is_rejected_before_qualification(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            primary = make_repository(pathlib.Path(raw).resolve())
+            nested = primary / ".nested-worktree"
+            exclude = primary / ".git" / "info" / "exclude"
+            exclude.write_text(
+                f"{exclude.read_text(encoding='utf-8')}\n.nested-worktree/\n",
+                encoding="utf-8",
+            )
+            run_git(primary, "worktree", "add", "-b", "nested", str(nested))
+
+            with mock.patch.object(hook, "_qualify") as qualify:
+                with self.assertRaisesRegex(
+                    hook.GitNexusHookError, "hook-cwd-checkout-mismatch"
+                ):
+                    hook.evaluate_hook(hook_config(primary), event(nested))
+            qualify.assert_not_called()
 
 
 class LiveBoundaryIntegrationTests(unittest.TestCase):

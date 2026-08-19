@@ -17,6 +17,7 @@ PACKAGE_ROOT = ROOT / "plugin" / "codex-dev-skills"
 MANIFEST_PATH = ".codex-plugin/plugin.json"
 SHARED_FILES = {
     "policies/code-mode-tool-orchestration-policy.md",
+    "policies/github-control-plane-policy.md",
     "docs/native-runtime-capabilities.md",
 }
 SHARED_PREFIXES = ("templates/orchestration/",)
@@ -39,8 +40,8 @@ def package_sources() -> set[str]:
         path
         for path in tracked
         if path.startswith("skills/")
-        or path in SHARED_FILES
         or path.startswith(SHARED_PREFIXES)
+        or path in SHARED_FILES
     }
     missing = SHARED_FILES - selected
     if missing:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run one bounded Codex CLI start or resume handoff.
+"""Run one bounded Codex CLI start, resume, or fork handoff.
 
 The executor consumes a versioned JSON request and emits one redacted JSON
 receipt. It relies only on the documented stable ``codex exec --json`` surface.
@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from typing import Any, BinaryIO, Callable
 
 
-ADAPTER_VERSION = "0.1.0"
+ADAPTER_VERSION = "0.2.0"
 CONTRACT = "codex-cli-session-handoff/v0"
 REQUEST_SCHEMA_VERSION = 1
 AUTHORIZATION_MARKER = "human-approved-single-cli-session-handoff"
@@ -49,7 +49,7 @@ Runtime handoff boundaries:
 - Return changed files, verification evidence, questions, and residual risk to the parent.
 """.strip()
 
-ALLOWED_OPERATIONS = {"start", "resume"}
+ALLOWED_OPERATIONS = {"start", "resume", "fork"}
 ALLOWED_SANDBOXES = {"read-only", "workspace-write"}
 ALLOWED_REQUEST_FIELDS = {
     "schema_version",
@@ -864,7 +864,7 @@ def _validate_session_id(operation: str, raw: Any) -> str | None:
     if operation == "start":
         if raw not in (None, ""):
             raise HandoffValidationError(
-                "validation_error", "session_id is allowed only for resume."
+                "validation_error", "session_id is allowed only for resume or fork."
             )
         return None
     value = _require_string(raw, "session_id")
@@ -872,12 +872,13 @@ def _validate_session_id(operation: str, raw: Any) -> str | None:
         parsed = uuid.UUID(value)
     except ValueError as exc:
         raise HandoffValidationError(
-            "target_mismatch", "resume session_id must be an exact UUID."
+            "target_mismatch", f"{operation} session_id must be an exact UUID."
         ) from exc
     canonical = str(parsed)
     if value.lower() != canonical:
         raise HandoffValidationError(
-            "target_mismatch", "resume session_id must use canonical UUID form."
+            "target_mismatch",
+            f"{operation} session_id must use canonical UUID form.",
         )
     return canonical
 
@@ -1037,7 +1038,7 @@ def validate_request(request: dict[str, Any]) -> ValidatedRequest:
     operation = _require_string(request.get("operation"), "operation")
     if operation not in ALLOWED_OPERATIONS:
         raise HandoffValidationError(
-            "validation_error", "operation must be start or resume."
+            "validation_error", "operation must be start, resume, or fork."
         )
     workspace = _canonical_workspace(request.get("workspace"))
     observed_head, workspace_label = _workspace_identity(
@@ -1121,7 +1122,7 @@ def build_argv(
     assert request.session_id is not None
     return [
         *prefix,
-        "resume",
+        request.operation,
         "--ignore-user-config",
         "--json",
         request.session_id,
@@ -1613,6 +1614,15 @@ def _parse_jsonl(
         raise HandoffValidationError(
             "session_id_mismatch",
             "Resumed Codex session did not emit the requested session UUID.",
+        )
+    if (
+        request.operation == "fork"
+        and request.session_id is not None
+        and session_ids[0] == request.session_id
+    ):
+        raise HandoffValidationError(
+            "session_id_mismatch",
+            "Forked Codex session did not emit a new session UUID.",
         )
     return session_ids[0], terminal_events[0], OMITTED_FINAL_SUMMARY
 

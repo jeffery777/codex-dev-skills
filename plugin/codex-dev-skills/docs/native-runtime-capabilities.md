@@ -148,8 +148,10 @@ repository-controlled receipt assertions.
 
 Codex CLI has its own session control plane, distinct from shared subagents and
 Desktop tasks. The documented stable non-interactive surface supports
-`codex exec --json` for a new saved session and
-`codex exec resume <SESSION_ID> --json` for a known session. Public JSONL events
+`codex exec --json` for a new saved session,
+`codex exec resume <SESSION_ID> --json` for a known session, and
+`codex exec fork <SESSION_ID> --json` for a new saved session copied from the
+completed history of an exact known source session. Public JSONL events
 include `thread.started`, terminal turn events, item events, and errors.
 The documented interactive surface separately supports
 `codex fork <SESSION_ID>` to create a new chat from a saved interactive
@@ -194,15 +196,17 @@ session mutation. It:
 - never reads CLI private session files or treats child output as completion
   evidence.
 
-`start`, `resume`, and an executed interactive `fork` are runtime-state
-mutations. A paste-ready fork command is only a handoff artifact. A successful
+`start`, `resume`, non-interactive `fork`, and an executed interactive `fork`
+are runtime-state mutations. A paste-ready interactive fork command is only a
+handoff artifact. A successful
 non-interactive process and `turn.completed` event prove only that the bounded
 child run reached its CLI terminal event; a public interactive-fork result
 proves only session dispatch. The originating session must inspect Git state,
 integrate the result, run verification, and apply review and human gates.
 
-The repo-owned executor does not automate interactive `/new` or `/fork`, use
-`--last`, or implement an app-server client. The CLI adapter may return a
+The repo-owned executor automates `codex exec fork`, but it does not automate
+interactive `/new` or `/fork`, use `--last`, or implement an app-server client.
+The CLI adapter may return a
 paste-ready `codex fork <SESSION_ID>` manual handoff with an exact UUID and
 explicit `current` or `session` directory choice. An existing dirty
 checkout/worktree is eligible only for exclusive continuation of the same task
@@ -320,12 +324,15 @@ Current callable semantics include:
   for queued worktree setup. The directive is neither navigation nor proof
   that the sidebar rendered the task.
 - `fork_thread` may return a child thread identifier immediately for a
-  same-directory fork or a client thread identifier while worktree setup is
+  same-directory fork or a client thread identifier while a worktree fork is
   queued. A same-directory fork reuses the source checkout or existing
-  worktree without creating another Git worktree. It is a sequential ownership
+  worktree without creating another Git worktree and is a sequential ownership
   transfer: the source task must stop writing before the child continues. A
-  fork copies completed history only; send a follow-up only when work must
-  continue in the child. The current callable accepts no caller-supplied
+  worktree fork preserves the same task's completed conversation lineage while
+  preparing a new isolated checkout; its `clientThreadId` must resolve to a
+  usable `threadId` before follow-up. Both forms copy completed history only;
+  send a follow-up only when work must continue in the child. The current
+  callable accepts no caller-supplied
   `hostId` and does not guarantee `hostId` in its response: the source task
   anchors the fork host. Retain a known source host, then obtain the child
   task's `hostId` from a supported registry result that explicitly exposes it
@@ -394,7 +401,9 @@ must still behave correctly when hooks are disabled, unsupported, or absent.
 Hooks are not a complete enforcement boundary:
 
 - current command hooks do not intercept every tool or equivalent action path;
-- some parsed handler types and asynchronous behavior may be unsupported;
+- background command hooks are supported, but may overlap, finish out of
+  order, and be cancelled when the session ends; some parsed non-command
+  handler types remain unsupported;
 - a `SubagentStart` hook cannot be assumed to stop a subagent;
 - hook output cannot replace sandboxing, approval policy, call-site target
   validation, integration review, or the completion audit.
@@ -404,14 +413,22 @@ separately packaged plugin. The Loop Engineering V1 native core must not depend
 on a hook to remain safe or correct.
 
 The optional V2c-B GitNexus hook follows this boundary. `SessionStart` checks
-live index freshness, while `PostToolUse` for `Bash` compensates for the absence
-of a native commit lifecycle event. It never parses the shell command and must
-not claim to observe Git changes made through uncovered tools or other
-processes. Notify-only is the default; auto-on-demand delegates only to the
-qualified V2c-A controller for an exact clean HEAD. Installed templates are
-inactive and do not grant hook trust or mutate project/global configuration.
-Controller failure persists a machine-local circuit breaker; later hook events
-notify but do not retry until explicit operator clearance.
+live index freshness, while `PostToolUse` for `Bash` and `apply_patch`
+compensates for the absence of a native commit lifecycle event. It never parses
+the shell command, patch, response, or transcript and must not claim to observe
+Git changes made through uncovered tools or other processes. Notify-only is the
+default; auto-on-demand delegates only to the qualified V2c-A controller for
+an exact clean HEAD in the configured primary checkout. The runner remains
+synchronous to avoid overlapping refreshes. Each checkout config is bound to
+one exact primary checkout or linked worktree and their index identities remain
+separate; linked-worktree automatic refresh is not yet qualified and cannot
+rewrite the primary checkout's index. A remote PR/MR merge does not mutate a
+local checkout: the primary checkout must first advance locally, after which
+`SessionStart` or a completed `Bash`-matched shell/unified-exec event can
+refresh its clean HEAD. Installed
+templates are inactive and do not grant hook trust or mutate project/global
+configuration. Controller failure persists a machine-local circuit breaker;
+later hook events notify but do not retry until explicit operator clearance.
 
 ### Security scan workbench
 
