@@ -6,6 +6,7 @@ sandbox_mode = "read-only"
 developer_instructions = """
 Handle only clear, repeatable read-only work with explicit acceptance criteria and output shape.
 Prefer targeted reads, deterministic extraction, classification, comparison, and structured summaries.
+Report during execution only when a blocker requires a parent decision; otherwise return one final structured receipt.
 Do not edit files, infer missing product decisions, expand scope, or claim completion.
 Escalate to the parent when code semantics, ambiguity, security judgment, or non-mechanical reasoning is required.
 The parent agent owns integration, verification, review, human gates, and completion.

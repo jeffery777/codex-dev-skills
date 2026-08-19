@@ -33,7 +33,7 @@ class PluginPackagingTests(unittest.TestCase):
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual("codex-dev-skills", manifest["name"])
-        self.assertEqual("0.14.2", manifest["version"])
+        self.assertEqual("0.15.0", manifest["version"])
         self.assertEqual("./skills/", manifest["skills"])
         self.assertTrue((PACKAGE_ROOT / "skills" / "project-delivery" / "SKILL.md").is_file())
         self.assertFalse((ROOT / ".codex-plugin" / "plugin.json").exists())

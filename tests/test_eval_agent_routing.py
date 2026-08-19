@@ -19,7 +19,7 @@ class AgentRoutingEvalTests(unittest.TestCase):
     def test_production_backed_matrix_passes(self) -> None:
         report = runner.evaluate()
         self.assertEqual("passed", report["status"])
-        self.assertEqual(24, report["metrics"]["total_cases"])
+        self.assertEqual(25, report["metrics"]["total_cases"])
         self.assertEqual(1.0, report["metrics"]["route_correctness_rate"])
         self.assertEqual(0, report["metrics"]["false_completion_count"])
         self.assertEqual(1.0, report["metrics"]["evidence_completeness_rate"])
@@ -34,6 +34,13 @@ class AgentRoutingEvalTests(unittest.TestCase):
         )
         self.assertEqual(
             "exceptional", cases["v2-exceptional-sol-xhigh"]["actual"]["tier"]
+        )
+        self.assertEqual(
+            "senior", cases["v2-complex-terra-high"]["actual"]["tier"]
+        )
+        self.assertEqual(
+            "loop_v2a_senior_worker",
+            cases["v2-complex-terra-high"]["actual"]["mapping"],
         )
         self.assertEqual(
             "stop-for-human-gate",

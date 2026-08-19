@@ -3285,6 +3285,8 @@ class CliTests(unittest.TestCase):
             payload["contract_version"] = 2
             payload["task"]["workload_kind"] = "implementation"
             payload["task"]["factors"]["reasoning_depth"] = "deep"
+            payload["task"]["factors"]["code_context_volume"] = "large"
+            payload["task"]["factors"]["verification_burden"] = "high"
             payload["profile_preflight"]["role"] = "loop_v2a_advanced_worker"
             path = root / "route-v2.json"
             facts = root / "facts-v2.json"

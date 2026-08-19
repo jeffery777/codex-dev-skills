@@ -224,6 +224,10 @@ binds the minimum model/reasoning need. Select the lowest verified same-class
 profile that meets the tier. Record a higher-tier selection as cost degraded
 and never silently substitute a lower tier. Reserve exceptional/xhigh routing
 for explicit quality-first research or orchestration with multiple triggers.
+Use `senior` Terra-high for complex but bounded implementation before
+escalating multi-trigger advanced work to Sol-medium. Terra-xhigh and Luna-max
+remain eval-only candidates, not installed default profiles; add either only
+after representative comparisons show a distinct quality/usage advantage.
 
 Custom-agent `sandbox_mode` is a technical runtime constraint distinct from
 workflow authorization. Preflight must compare it with current-session
@@ -238,6 +242,12 @@ evidence.
 Stop at a human gate when a security or high-risk class cannot safely degrade.
 Record worker and main-agent integration receipts; worker self-report remains
 coordination evidence.
+
+The `loop_v2a_` profile namespace names the V2a heterogeneous-agent routing
+contract, not the repository release or V3 improvement-program version. Do not
+rename installed profiles as a cosmetic version sync; a namespace migration
+requires aliases, collision handling, installer migration, and an explicit
+compatibility window.
 
 Security review stays defensive and local-first. Prefer static analysis, local
 fixtures, negative tests, synthetic inputs, and minimal non-invasive

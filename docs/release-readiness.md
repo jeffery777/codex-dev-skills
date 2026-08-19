@@ -57,6 +57,19 @@ output, and confirmation that local Codex/ChatGPT memories or Computer History
 were not adopted as repository evidence or Memory M1 state remain historical
 release evidence.
 
+For the v0.15.0 agent-orchestration and routing candidate, require profile
+registry/digest validation for all eight opt-in profiles; deterministic cases
+for routine Terra-medium, complex Terra-high, multi-trigger Sol-medium,
+deep/security, and exceptional routing; installer and plugin parity; and
+evidence that Terra-xhigh and Luna-max are not published defaults. Review the
+delegation prompts for event-driven wait-for-any coordination, no unchanged
+status polling, blocker-plus-final receipt reporting, ownership-based packet
+boundaries, coupled implementation/test/docs ownership, and independent
+code/security review. Confirm that existing `loop_v2a_` identities remain
+stable and are documented as a routing-protocol namespace. Because `senior` is
+an additive public tier and profile, treat v0.15.0 as a minor release. Merge,
+tag, GitHub Release, and deployment remain separate explicit human gates.
+
 For the v0.14.2 installer-backup isolation candidate, also require focused
 isolated-root tests for skills, templates, and agent profiles; collision,
 backup/replacement/restore failure, symlink/special-file/path-boundary, and

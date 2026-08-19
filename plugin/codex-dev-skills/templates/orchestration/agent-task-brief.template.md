@@ -23,3 +23,5 @@
 - Changed files
 - Verification evidence
 - Risks and questions
+- During execution, report only blockers that require a parent decision.
+- Otherwise, return one final structured receipt and do not send routine progress updates.

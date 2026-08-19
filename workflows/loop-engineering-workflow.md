@@ -52,6 +52,15 @@ class/tier evidence; stop when the risk or tier cannot safely degrade.
 The current parent sandbox is part of preflight evidence: never activate a
 profile whose `sandbox_mode` would widen it. Technical sandbox capability does
 not grant workflow mutation authority.
+
+Delegate by disjoint ownership and useful parallelism, not by one worker per
+discipline. Keep implementation, focused tests, and directly related docs with
+one owner by default; preserve independent code review and risk-triggered
+security review. Dispatch a fixed independent set once, continue parent-owned
+work, then use one supported wait-for-any/mailbox wait. Do not poll unchanged
+worker status. Workers report only decision blockers and one final receipt;
+integrate completed receipts while unrelated workers continue and reuse the
+original worker for bounded follow-up when its assignment remains fresh.
 The executable contract is `loopctl.py agent-route <decision-input.yaml>
 --runtime-facts <current-runtime-facts.json>` using the `agent_route` section of
 the installed decision-input template. Runtime facts are current-session CLI

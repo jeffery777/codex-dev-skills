@@ -32,9 +32,10 @@ TIER_PROXY = {
     "mechanical": {"latency": 1, "token_cost": 1},
     "efficient": {"latency": 2, "token_cost": 2},
     "everyday": {"latency": 3, "token_cost": 3},
-    "advanced": {"latency": 4, "token_cost": 4},
-    "deep": {"latency": 5, "token_cost": 5},
-    "exceptional": {"latency": 6, "token_cost": 6},
+    "senior": {"latency": 4, "token_cost": 4},
+    "advanced": {"latency": 5, "token_cost": 5},
+    "deep": {"latency": 6, "token_cost": 6},
+    "exceptional": {"latency": 7, "token_cost": 7},
 }
 
 

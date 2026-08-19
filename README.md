@@ -17,11 +17,11 @@ gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
 The current development feature baseline is Memory M1, published in v0.14.0
-through Issue #147 / PR #148. The v0.14.2 release candidate through Issue #151
-is an installer-backup isolation hotfix over v0.14.1: it keeps forced-update
-backups outside Codex skill discovery roots without changing the M0/M1 feature
-or authority baseline. V3-B remains the released evaluation baseline from
-v0.13.0.
+through Issue #147 / PR #148. v0.14.2 published the installer-backup isolation
+hotfix through Issue #151 / PR #152. The v0.15.0 release candidate through
+Issue #153 adds lower-overhead agent coordination guidance and a Terra-high
+`senior` routing tier without changing the M0/M1 feature or authority baseline.
+V3-B remains the released evaluation baseline from v0.13.0.
 The v0.12.1 compatibility patch through Issue #139 updated Desktop/CLI runtime
 adapters and repository verification before V3-B without changing shared
 completion authority.
@@ -194,7 +194,7 @@ CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES \
 The collision preflight checks TOML `name` identities across those roots. For
 install and update, the installer first validates the repository profile
 sources against the canonical installed-skill registry, then preflights all
-seven profile destinations before changing any dependency skill, template, or
+eight profile destinations before changing any dependency skill, template, or
 profile. Dependency installation retains the existing installer sync behavior;
 the all-profile preflight prevents a profile collision from causing a partial
 expanded-group update. It also protects profile paths from overwrite, symlink
@@ -263,12 +263,20 @@ self-attested current-state fields in the receipt document.
 
 Route contract version 2 preserves the four workflow capability classes and
 adds ordered cost-aware tiers: Luna low for mechanical read-only work, Terra
-low for exploration, Terra medium for routine implementation, Sol medium for
-advanced bounded implementation, Sol high for deep/security review, and Sol
-xhigh for narrowly selected exceptional research. Exact model and reasoning
+low for exploration, Terra medium for routine implementation, Terra high for
+complex bounded implementation, Sol medium for multi-trigger advanced bounded
+implementation, Sol high for deep/security review, and Sol xhigh for narrowly
+selected exceptional research. Terra xhigh and Luna max remain eval-only
+candidates rather than installed defaults. Exact model and reasoning
 availability remains current-session runtime evidence. Selection uses the
 lowest sufficient same-class tier, never alphabetical profile order, and never
 allows a lower tier to satisfy a higher-tier route silently.
+
+The `loop_v2a_` filename and role namespace identifies the V2a heterogeneous
+agent-routing contract; it is not the current repository release or V3 program
+version. Renaming installed profiles requires a separately reviewed migration
+with aliases, collision handling, installer state migration, and a documented
+compatibility window.
 
 Rollback user-level adoption only after reviewing local differences:
 
@@ -1159,8 +1167,8 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.14.2.md` contains the current v0.14.2 release notes (release candidate);
-`docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
+`docs/release-notes-v0.15.0.md` contains the current v0.15.0 release notes (release candidate);
+`docs/release-notes-v0.14.2.md`, `docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and
 `docs/release-notes-v0.1.0.md` remain historical point-in-time records.
 
