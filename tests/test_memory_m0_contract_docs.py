@@ -42,8 +42,8 @@ class MemoryM0ContractDocsTests(unittest.TestCase):
             text = read(relative)
             for phrase in phrases:
                 self.assertIn(phrase, text, relative)
-        self.assertIn('VERSION="0.15.0"', read("install.sh"))
-        self.assertIn('version: "0.15.0"', read("catalog.yaml"))
+        self.assertIn('VERSION="0.15.1"', read("install.sh"))
+        self.assertIn('version: "0.15.1"', read("catalog.yaml"))
 
 
 if __name__ == "__main__":

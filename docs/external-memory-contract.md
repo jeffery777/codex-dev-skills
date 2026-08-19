@@ -279,15 +279,17 @@ and adapter-specific conformance evidence.
 V2c-B adds an optional hook runner without changing V2b authority or the V2c-A
 refresh controller. The runner consumes at most 64 KiB of strict UTF-8 JSON,
 rejects duplicate or unknown fields, ignores transcripts, and accepts only
-documented `SessionStart` or `PostToolUse` `Bash` events. Its machine-local
+documented `SessionStart` or `PostToolUse` events for `Bash` and `apply_patch`.
+Its machine-local
 configuration is an absolute current-user-owned regular file outside the
 repository with no group/world write permission. Repository identity,
 qualification digests, executable paths, isolated-home parent, and lock path
 remain control-plane input and are not committed.
 
 Codex does not currently expose a native `post-commit` lifecycle event.
-`PostToolUse` therefore rechecks the configured repository after Bash tool
-calls but does not parse or trust `tool_input.command`. It reports HEAD/index
+`PostToolUse` therefore rechecks the configured repository after Bash or
+apply-patch tool calls but does not parse or trust `tool_input.command` or
+`tool_response`. It reports HEAD/index
 revision drift and suppresses ordinary uncommitted-only noise. This is a useful
 signal, not complete interception: other tools, processes, clients, and
 unsupported hook paths can change Git state. `SessionStart` rechecks live state
@@ -301,6 +303,14 @@ HEAD and explicit opt-in. The controller remains solely responsible for argv,
 environment, locking, qualification, repository preconditions, mutation
 detection, and metadata postconditions. Dirty, partial, incompatible, corrupt,
 unknown, identity-conflicted, or unsafe states never reach refresh.
+
+The configured repository root is one exact checkout. Primary-directory and
+linked-worktree configs therefore produce separate worktree identity digests
+and index aliases; an event from another checkout is rejected. Automatic
+refresh in a linked worktree is not qualified and cannot rewrite the primary
+checkout's index. A remote PR/MR merge alone is not a local lifecycle event:
+the primary checkout must advance before `SessionStart` or a completed
+`Bash`-matched shell/unified-exec event can refresh its clean merged HEAD.
 
 The runner does not automatically delete hook-created isolated homes. This
 preserves failure evidence and avoids an implicit cleanup authority; later

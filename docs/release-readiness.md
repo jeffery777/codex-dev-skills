@@ -57,6 +57,18 @@ output, and confirmation that local Codex/ChatGPT memories or Computer History
 were not adopted as repository evidence or Memory M1 state remain historical
 release evidence.
 
+For the v0.15.1 runtime-compatibility candidate, require point-in-time CLI
+0.148.0 and Desktop callable evidence; focused non-interactive fork and Desktop
+worktree-fork contract tests; connector-first GitHub policy tests; and
+GitNexus hook coverage for `Bash`, `apply_patch`, exact checkout-root rejection,
+separate worktree identity, and linked-worktree auto-refresh fail-closed
+behavior. Confirm that a remote PR/MR merge is not described as a local index
+mutation: the primary checkout must advance before its clean merged HEAD can be
+refreshed. Treat this as a patch release because it is backward-compatible and
+corrects or adds runtime adapter behavior without migration. Merge, annotated
+tag `v0.15.1`, GitHub Release, and deployment remain separate explicit human
+gates.
+
 For the v0.15.0 agent-orchestration and routing candidate, require profile
 registry/digest validation for all eight opt-in profiles; deterministic cases
 for routine Terra-medium, complex Terra-high, multi-trigger Sol-medium,
@@ -130,8 +142,9 @@ When a change includes the GitNexus adapter, also require evidence that:
 
 When a change includes V2c-B hooks, additionally require evidence that:
 
-- only documented bounded `SessionStart` and `PostToolUse` `Bash` input is
-  consumed; transcripts and shell command strings are not parsed;
+- only documented bounded `SessionStart` and `PostToolUse` input for `Bash` and
+  `apply_patch` is consumed; transcripts, shell command strings, patches, and
+  tool responses are not parsed;
 - notify-only is the default and template installation performs no activation
   or config mutation;
 - changed-HEAD notification remains honest about incomplete hook/tool coverage;

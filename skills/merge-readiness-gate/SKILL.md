@@ -7,6 +7,12 @@ description: Thin formal branch readiness gate after implementation, verificatio
 
 Runtime compatibility: shared
 
+GitHub control plane: follow
+`../../policies/github-control-plane-policy.md` relative to this skill in
+source or plugin checkouts, or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/github-control-plane-policy.md`
+after filesystem installation, when GitHub metadata or mutations are involved.
+
 ## Purpose
 
 Use this skill only when a workflow needs a formal branch readiness gate before PR handoff, merge readiness, or final human approval.

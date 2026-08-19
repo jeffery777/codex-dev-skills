@@ -19,7 +19,7 @@ DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
-VERSION="0.15.0"
+VERSION="0.15.1"
 
 case "$CODEX_DEV_SKILLS_TARGET" in
   legacy) DEFAULT_CODEX_SKILLS_DIR="$DEFAULT_CODEX_LEGACY_SKILLS_DIR" ;;
@@ -794,7 +794,7 @@ group_description() {
     shared-review-gates) echo "Shared review gates, closure triage, safety policies, and orchestration templates." ;;
     codex-review-workflow) echo "Routine and deep code, docs, and merge review workflows." ;;
     codex-delivery-workflow) echo "Shared loop engineering, planning, bounded implementation, docs update, and delegated delivery workflows." ;;
-    codex-cli-session-handoff) echo "CLI-only non-interactive start/resume and manual interactive-fork handoff adapter over the shared delivery workflow." ;;
+    codex-cli-session-handoff) echo "CLI-only non-interactive start/resume/fork and manual interactive-fork handoff adapter over the shared delivery workflow." ;;
     desktop-delivery-workflow) echo "Two active Codex Desktop entry/control-plane adapters plus deprecated shared-gate compatibility aliases." ;;
     codex-agent-profiles) echo "Opt-in Loop Engineering V2a custom-agent runtime profiles." ;;
     codex-dev-skills) echo "Alias for all groups." ;;
@@ -851,6 +851,7 @@ group_templates() {
         policies/agent-delegation-policy.md \
         policies/code-mode-tool-orchestration-policy.md \
         policies/delivery-drift-control-policy.md \
+        policies/github-control-plane-policy.md \
         policies/human-gate-policy.md \
         policies/model-selection-policy.md \
         policies/multi-agent-integration-policy.md \

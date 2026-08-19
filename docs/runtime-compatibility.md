@@ -83,7 +83,7 @@ The canonical mapping is [Native Runtime Capability Contract](native-runtime-cap
 - Goal mode is shared but may be created only when explicitly requested.
 - Bounded subagents are shared; ownership must be disjoint and the main agent
   must verify and integrate their output.
-- CLI session start/resume and manual interactive fork are owned by the CLI adapter after shared
+- CLI session start/resume/non-interactive fork and manual interactive fork are owned by the CLI adapter after shared
   orchestration selects the handoff; it requires exact mutation authority and
   parent integration.
 - Custom-agent files are public local runtime configuration. Capability classes
@@ -151,10 +151,12 @@ whether the executable exposes additional unqualified surfaces.
 
 The V2c-B hook runner is shared Python code intended for the current Codex CLI
 and desktop hook contract on POSIX hosts. It uses only documented
-`SessionStart` and `PostToolUse` `Bash` JSON fields. The current live evidence
-does not provide a native `post-commit` event, asynchronous command hooks, or
-complete tool interception, so the Bash path is a best-effort freshness signal
-and `SessionStart` is the compensating check.
+`SessionStart` and `PostToolUse` JSON fields for `Bash` and `apply_patch`. The
+current live evidence does not provide a native `post-commit` event or complete
+tool interception, so these paths are best-effort freshness signals and
+`SessionStart` is the compensating check. Codex supports background command
+hooks, but this runner remains synchronous because background invocations may
+overlap, finish out of order, or be cancelled with the session.
 
 Project hooks load only for trusted projects and non-managed command hooks must
 be reviewed and trusted. Templates are installed inertly; neither CLI nor

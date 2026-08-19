@@ -268,10 +268,11 @@ that authorizes GitNexus query or mutation capabilities.
 
 ## Optional GitNexus V2c-B Freshness Hooks
 
-V2c-B may observe documented Codex `SessionStart` and `PostToolUse` `Bash`
-events through the repo-owned `gitnexus_hook.py` runner. The current runtime has
-no native commit lifecycle event, so `PostToolUse` is only a best-effort signal
-after shell activity. It must not parse the command, claim complete
+V2c-B may observe documented Codex `SessionStart` and `PostToolUse` events for
+`Bash` and `apply_patch` through the repo-owned `gitnexus_hook.py` runner. The
+current runtime has no native commit lifecycle event, so `PostToolUse` is only
+a best-effort signal after repository activity. It must not parse the command,
+patch, or response, claim complete
 interception, or replace the next `SessionStart` freshness check.
 
 The hook is `notify-only` unless machine-local control-plane config explicitly

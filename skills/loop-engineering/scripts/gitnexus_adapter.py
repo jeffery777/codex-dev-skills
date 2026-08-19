@@ -1309,6 +1309,40 @@ def _strict_root(
     return resolved
 
 
+def resolve_checkout_root(
+    path: str | os.PathLike[str],
+    *,
+    deadline: float | None = None,
+    git_executable: str | os.PathLike[str] | None = None,
+) -> pathlib.Path:
+    """Resolve a directory to its exact, independently verified Git checkout root."""
+    lexical = pathlib.Path(path)
+    if not lexical.is_absolute():
+        raise GitNexusAdapterError("checkout path must be absolute")
+    try:
+        resolved = lexical.resolve(strict=True)
+    except OSError as exc:
+        raise GitNexusAdapterError("checkout path cannot be resolved") from exc
+    if not resolved.is_dir():
+        raise GitNexusAdapterError("checkout path must be a directory")
+    try:
+        reported = pathlib.Path(
+            _run_git(
+                resolved,
+                ["rev-parse", "--show-toplevel"],
+                deadline=deadline,
+                git_executable=git_executable,
+            ).decode("utf-8", "strict").strip()
+        )
+        if not reported.is_absolute():
+            raise GitNexusAdapterError("Git reported a non-absolute checkout root")
+        return _strict_root(
+            reported, deadline=deadline, git_executable=git_executable
+        )
+    except (OSError, UnicodeError) as exc:
+        raise GitNexusAdapterError("checkout root cannot be verified") from exc
+
+
 def collect_repository_state(
     root: str | os.PathLike[str],
     *,

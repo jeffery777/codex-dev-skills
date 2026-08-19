@@ -7,6 +7,12 @@ description: Shared project orchestration layer that routes bounded work across 
 
 Runtime compatibility: shared
 
+GitHub control plane: follow
+`../../policies/github-control-plane-policy.md` relative to this skill in
+source or plugin checkouts, or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/github-control-plane-policy.md`
+after filesystem installation, when the target repository is hosted on GitHub.
+
 Code Mode tool orchestration: follow
 `../../policies/code-mode-tool-orchestration-policy.md` relative to this skill in source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`

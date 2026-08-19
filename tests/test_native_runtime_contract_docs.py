@@ -134,18 +134,17 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
 
     def test_latest_runtime_evidence_records_current_versions_and_schemas(self) -> None:
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-18.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-19.md")
 
         for expected in (
-            "0.147.0",
-            "26.813.12317",
-            "automation_update",
-            "working-tree",
-            "create-branch",
-            "list_archived_threads",
+            "0.148.0",
+            "26.818.11542",
+            "codex exec fork",
+            "fork_thread",
+            "clientThreadId",
+            "apply_patch",
             "open_in_codex",
-            "read_thread_terminal",
-            "Linux",
+            "GitHub plugin first",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, evidence)
@@ -155,6 +154,9 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         )
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-12.md").is_file()
+        )
+        self.assertTrue(
+            (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-18.md").is_file()
         )
 
     def test_desktop_post_create_visibility_contract(self) -> None:
@@ -396,6 +398,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         for expected in (
             "codex exec --json",
             "codex exec resume",
+            "codex exec fork",
             "parent integration",
             "permission widening",
             "private session",
@@ -410,6 +413,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("_prepare_isolated_workspace", implementation)
         self.assertIn("_apply_isolated_patch", implementation)
         self.assertIn("OMITTED_FINAL_SUMMARY", implementation)
+        self.assertIn('ALLOWED_OPERATIONS = {"start", "resume", "fork"}', implementation)
         self.assertIn("private clone", combined)
         self.assertNotIn("shell=True", implementation)
         self.assertNotIn("desktop_runtime_", implementation)
@@ -447,6 +451,24 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             skill,
         )
         self.assertNotIn("codex fork", implementation)
+
+    def test_desktop_worktree_fork_preserves_lineage_and_queued_identity(self) -> None:
+        contract = read("docs/native-runtime-capabilities.md")
+        adapter = read("docs/runtime-adapter-v2.md")
+        skill = read("skills/desktop-thread-delegation/SKILL.md")
+        example = read("examples/desktop-thread-delegation.md")
+        combined = "\n".join((contract, adapter, skill, example))
+
+        for expected in (
+            "desktop-worktree-fork",
+            '`environment: {"type": "worktree"}`',
+            "completed history",
+            "clientThreadId",
+            "conversation lineage",
+            "usable `threadId`",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, combined)
 
     def test_cli_session_skill_group_separation(self) -> None:
         catalog = yaml.safe_load(read("catalog.yaml"))

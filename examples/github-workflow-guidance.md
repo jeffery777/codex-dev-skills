@@ -2,7 +2,7 @@
 
 Use this example when a maintainer wants Codex to inspect or prepare GitHub issue, pull request, review, or check-run work while keeping platform writes explicit.
 
-Runtime compatibility: plugin-dependent. This guidance requires an installed GitHub plugin, connector, or authenticated platform tool such as `gh`. Prefer the GitHub plugin or connector for PR metadata, issue comments, review threads, changed files, checks, and platform-side mutations. Use `gh` only when the plugin does not expose the needed read or the repository workflow already relies on it.
+Runtime compatibility: plugin-dependent. This guidance requires an installed GitHub plugin or connector, with authenticated `gh` available only as a qualified fallback. Prefer the GitHub plugin or connector for PR metadata, issue comments, review threads, changed files, checks, and platform-side mutations. Use `gh` only when the plugin does not expose the exact needed operation or reports insufficient permission for it; record which condition required the fallback.
 
 ## Maintainer Request
 
@@ -56,7 +56,11 @@ Before an authorized write, restate:
 
 ## Dependency Unavailable
 
-If the GitHub plugin, connector, or authenticated platform tool is unavailable, do not scrape browser state or local app internals as a substitute. Report the missing dependency and choose the safest fallback:
+If the GitHub plugin or connector is unavailable or lacks the exact operation,
+classify that condition before considering authenticated `gh`. If neither path
+is available, do not scrape browser state or local app internals as a
+substitute. Report the missing dependency and choose the safest remaining
+local-only path:
 
 ```text
 GitHub platform metadata is unavailable in this runtime.

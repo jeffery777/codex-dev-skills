@@ -18,9 +18,12 @@ handoff, and release-readiness workflows consistently.
 
 The current development feature baseline is Memory M1, published in v0.14.0
 through Issue #147 / PR #148. v0.14.2 published the installer-backup isolation
-hotfix through Issue #151 / PR #152. The v0.15.0 release candidate through
-Issue #153 adds lower-overhead agent coordination guidance and a Terra-high
-`senior` routing tier without changing the M0/M1 feature or authority baseline.
+hotfix through Issue #151 / PR #152. v0.15.0 published lower-overhead agent
+coordination guidance and a Terra-high `senior` routing tier through Issue #153
+/ PR #154. The v0.15.1 compatibility candidate through Issue #155 aligns CLI
+0.148.0, current Desktop thread forking, GitHub connector-first control, and
+the optional GitNexus hook lifecycle without changing the M0/M1 feature or
+authority baseline.
 V3-B remains the released evaluation baseline from v0.13.0.
 The v0.12.1 compatibility patch through Issue #139 updated Desktop/CLI runtime
 adapters and repository verification before V3-B without changing shared
@@ -420,7 +423,7 @@ For automated review closure, let `project-orchestrator` or `project-delivery` c
 
 Codex CLI enters the shared layer directly through skills such as
 `loop-engineering`, `project-delivery`, `project-orchestrator`, and the review
-primitives. CLI `/agent` and `/subagents` expose shared subagent threads.
+primitives. CLI `/agent` exposes shared subagent threads.
 User-facing CLI session controls such as `/new`, `/fork`, `/resume`, and
 `/archive` manage saved CLI sessions; they are not aliases for Desktop
 `create_thread` callables.
@@ -434,7 +437,8 @@ through another distribution path.
 
 After shared orchestration selects a bounded handoff,
 `cli-session-handoff` may use the documented stable
-`codex exec --json` or `codex exec resume <SESSION_ID> --json` surface. The
+`codex exec --json`, `codex exec resume <SESSION_ID> --json`, or
+`codex exec fork <SESSION_ID> --json` surface. The
 adapter requires one exact authorization, a clean canonical Git worktree,
 matching expected HEAD, an explicit read-only or workspace-write sandbox, and
 a fixed no-publication/no-recursion prompt boundary. The child runs in a
@@ -846,16 +850,26 @@ compensating checks:
 
 - `SessionStart` checks freshness for `startup`, `resume`, `clear`, and
   `compact` sources;
-- `PostToolUse` for `Bash` rechecks live Git state after shell activity and
-  reports a commit/HEAD change without parsing or trusting the shell command.
+- `PostToolUse` for `Bash` and `apply_patch` rechecks live Git state after
+  repository activity and reports a commit/HEAD change without parsing or
+  trusting the shell command, patch, or response.
 
-The Bash hook is not complete interception. A Git mutation performed through an
+The tool hook is not complete interception. A Git mutation performed through an
 uncovered tool, another process, or another client may not trigger it;
 `SessionStart` is the compensating check. Notify-only mode is the default. In
 auto-on-demand mode, a clean stale or missing index may be refreshed only
 through `RefreshController` with exact expected HEAD and all V2c-A checks.
 Dirty worktrees, identity conflicts, corrupt metadata, failed qualification,
 and unsafe paths remain notification-only or fail safe.
+
+Bind each machine-local hook config to one exact checkout root. A branch in the
+primary project directory and a linked worktree have separate worktree identity
+digests and must not share or overwrite one index alias. Linked-worktree
+automatic refresh remains unqualified and reports that boundary without
+touching the primary checkout's index. A remote PR/MR merge does not advance a
+local checkout; update the primary checkout first, then let its next
+`SessionStart` or completed `Bash`-matched shell/unified-exec event refresh the
+clean merged HEAD.
 
 The installer copies inactive examples to
 `~/.codex/templates/hooks/gitnexus-v2c-b/`; it does not create or enable a
@@ -977,8 +991,9 @@ Return the bounded handoff receipt; I will verify the worktree and child result 
 ```
 
 The adapter uses prompt stdin so task text is not placed in process argv,
-parses bounded public JSONL events, and supports exact-UUID resume. A real
-start or resume is a runtime-state mutation and requires explicit authority;
+parses bounded public JSONL events, and supports exact-UUID resume and
+non-interactive fork. A real start, resume, or fork is a runtime-state mutation
+and requires explicit authority;
 offline tests use controlled fake executables and create no Codex session.
 The disposable private clone does not inherit a checkout's activated Python
 environment. When the repository provides `scripts/project-python`, the child
@@ -1078,7 +1093,9 @@ pinning changes placement rather than registration.
 
 Choose the Desktop action from the handoff intent: use a same-directory
 `fork_thread` for the same task, completed history, and existing
-checkout/worktree; for a fresh task use `create_thread` with the exact project
+checkout/worktree; use a worktree `fork_thread` for the same task and completed
+history when a newly isolated checkout is required; for a fresh task use
+`create_thread` with the exact project
 ID and a concise non-empty safe `title`. Use only approved nonsensitive task
 metadata and preview the exact title; never copy prompt text or sensitive
 details, and use the fixed `Project task` fallback when safety is uncertain. A
@@ -1114,7 +1131,7 @@ at
 | Skill | Runtime | Purpose |
 | --- | --- | --- |
 | `loop-engineering` | shared | Explicit loop entrypoint for clear bounded objectives; routes through planning, implementation, verification, review, continuation, handoff, and gates until complete or stopped. |
-| `cli-session-handoff` | cli | Start or resume one authorized bounded non-interactive CLI session, or prepare one exact manual interactive fork, after shared orchestration selects the handoff. |
+| `cli-session-handoff` | cli | Start, resume, or fork one authorized bounded non-interactive CLI session, or prepare one exact manual interactive fork, after shared orchestration selects the handoff. |
 | `planning` | shared | Produce scoped implementation plans with assumptions, risks, DoD, and verification. |
 | `milestone-continuation` | shared | Continue a bounded milestone across repeated invocations by checking task completion, choosing the next ready task, and stopping at human gates. |
 | `project-delivery` | shared | Carry a bounded delivery objective through discovery, plan, implementation, review, docs sync, and PR readiness or the next human gate. |
@@ -1167,7 +1184,8 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.15.0.md` contains the current v0.15.0 release notes (release candidate);
+`docs/release-notes-v0.15.1.md` contains the current v0.15.1 release notes (release candidate);
+`docs/release-notes-v0.15.0.md` records the published v0.15.0 release;
 `docs/release-notes-v0.14.2.md`, `docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and
 `docs/release-notes-v0.1.0.md` remain historical point-in-time records.

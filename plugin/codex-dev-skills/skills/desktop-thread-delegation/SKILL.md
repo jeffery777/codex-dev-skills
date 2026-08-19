@@ -38,6 +38,8 @@ continuation prompt. Do not claim that CLI holds Desktop app task/thread tools.
    - `continue-current-thread` when the task is small, state is already loaded, ownership is clear, and workflow rules or user authorization allow the current thread to do the work.
    - `desktop-thread-fork` when the same task needs a new conversation with
      completed history in the same checkout or existing worktree.
+   - `desktop-worktree-fork` when the same task needs completed history but the
+     continuation must be isolated in a newly prepared worktree.
    - `desktop-thread-create` when a fresh task should start in a Git worktree,
      an explicitly requested saved checkout, a non-Git project, or a
      deliberately projectless context.
@@ -61,6 +63,12 @@ continuation prompt. Do not claim that CLI holds Desktop app task/thread tools.
      is a sequential ownership transfer, so the source task must stop writing
      before the child continues; the source task also anchors the current host,
      because the callable has no caller-supplied `hostId`;
+   - when the same-task continuation needs checkout isolation, use
+     `fork_thread` with `environment: {"type": "worktree"}`. This copies only
+     completed history, queues a new worktree, and may return a
+     `clientThreadId` rather than an immediately usable child `threadId`; do
+     not replace this with fresh `create_thread`, because that would discard
+     the fork's conversation lineage;
    - for a fresh task, call the documented project-list operation, such as
      `list_projects`, and pass its exact `projectId`; when `isGitRepository` is
      true, default to project `environment: {"type": "worktree"}`;
@@ -96,7 +104,8 @@ continuation prompt. Do not claim that CLI holds Desktop app task/thread tools.
    site. Treat a ready
    `create_thread` result's `threadId` plus `hostId` as dispatch and routing
    evidence, a same-directory fork's child `threadId` as fork dispatch
-   evidence, and `clientThreadId` as queued worktree dispatch evidence; none
+   evidence, and `clientThreadId` from creation or worktree fork as queued
+   worktree dispatch evidence; none
    proves task completion. Never pass a `clientThreadId` to an operation that
    requires `threadId`. The current `fork_thread` contract does not guarantee
    `hostId` in its response. Do not invent one or assume `local`: retain the
@@ -107,8 +116,10 @@ continuation prompt. Do not claim that CLI holds Desktop app task/thread tools.
    local.
 7. If the runtime provides a supported create or fork operation, call it only
    after the exact task action is authorized. A same-directory fork copies
-   completed history and reuses the source directory; it does not create a Git
-   worktree. Send a follow-up only when the child must continue working. After
+   completed history and reuses the source directory; a worktree fork copies
+   completed history but queues a new isolated checkout. Send a follow-up only
+   when the child must continue working, and only after a queued worktree fork
+   has resolved to a usable `threadId`. After
    a successful `create_thread`, emit
    `::created-thread{threadId="..."}` for a ready task or
    `::created-thread{clientThreadId="..."}` for queued worktree setup. Do not

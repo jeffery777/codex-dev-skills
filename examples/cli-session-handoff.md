@@ -1,8 +1,8 @@
 # CLI Session Handoff Example
 
 Use `cli-session-handoff` only after shared orchestration has selected a
-bounded task and the user has explicitly authorized one CLI session start or
-resume, or one manual interactive fork. The CLI session control plane is independent from Desktop
+bounded task and the user has explicitly authorized one CLI session start,
+resume, or non-interactive fork, or one manual interactive fork. The CLI session control plane is independent from Desktop
 `create_thread` and from shared subagent delegation.
 
 ## Prepared Handoff
@@ -33,9 +33,16 @@ request from the example:
   --request /absolute/path/to/reviewed-request.json
 ```
 
-The first command performs no runtime call. The second starts or resumes a live
+The first command performs no runtime call. The second starts, resumes, or
+forks a live
 CLI session and therefore requires explicit authority for that exact request.
 Do not commit the request when it contains machine-local paths.
+
+For a non-interactive fork, set `operation` to `fork` and `session_id` to the
+canonical UUID of the source session. The executor invokes
+`codex exec fork`, keeps the clean private-clone boundary, and records the new
+session UUID emitted by `thread.started`; it does not require that UUID to equal
+the source. This is distinct from the manual TUI command below.
 
 ## Parent Integration
 
@@ -57,9 +64,9 @@ manual continuation artifact or continue sequentially in the current session.
 
 ## Interactive Same-Task Fork
 
-When the same interactive CLI task needs a new chat because the conversation
-is long, use the public interactive fork path rather than the non-interactive
-private-clone executor:
+When the same interactive CLI task needs a new chat in an existing possibly
+dirty directory because the conversation is long, use the public interactive
+fork path rather than the non-interactive private-clone executor:
 
 ```text
 Operation: interactive-fork
