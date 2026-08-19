@@ -68,15 +68,15 @@ class ImprovementProposalContractDocsTests(unittest.TestCase):
         skill = read("skills/loop-engineering/SKILL.md")
         self.assertIn("scripts/proposalctl.py", skill)
 
-    def test_v0141_candidate_packaging_and_release_metadata_agree(self):
-        self.assertIn('VERSION="0.14.1"', read("install.sh"))
-        self.assertIn('version: "0.14.1"', read("catalog.yaml"))
-        self.assertIn("docs/release-notes-v0.14.1.md", read("README.md"))
-        notes = read("docs/release-notes-v0.14.1.md")
-        self.assertIn("# Release Notes: v0.14.1", notes)
+    def test_v0142_candidate_packaging_and_release_metadata_agree(self):
+        self.assertIn('VERSION="0.14.2"', read("install.sh"))
+        self.assertIn('version: "0.14.2"', read("catalog.yaml"))
+        self.assertIn("docs/release-notes-v0.14.2.md", read("README.md"))
+        notes = read("docs/release-notes-v0.14.2.md")
+        self.assertIn("# Release Notes: v0.14.2", notes)
         self.assertIn("Status: release candidate", notes)
-        self.assertIn("issues/149", notes)
-        self.assertIn("compare/v0.14.0...v0.14.1", notes)
+        self.assertIn("issues/151", notes)
+        self.assertIn("compare/v0.14.1...v0.14.2", notes)
         self.assertIn("scripts/project-python", notes)
         self.assertIn("tag and GitHub Release", notes)
 
@@ -87,6 +87,31 @@ class ImprovementProposalContractDocsTests(unittest.TestCase):
 
         v0120 = read("docs/release-notes-v0.12.0.md")
         self.assertIn("PlugMem", v0120)
+
+    def test_v0142_permission_remediation_is_exact_and_nonrecursive(self):
+        troubleshooting = read("docs/troubleshooting.md")
+        self.assertIn(
+            'chmod go-w -- "$SKILLS_DIR" "$TEMPLATES_DIR" "$PROFILES_DIR"',
+            troubleshooting,
+        )
+        for boundary in (
+            "Include only roots that exist and were individually inspected.",
+            "exact, current-user-owned",
+            "Do not infer ownership of neighbouring or unknown artifacts.",
+            "never use a recursive `chmod`",
+            "home-directory target",
+            "broader parent",
+            "wildcard",
+        ):
+            self.assertIn(boundary, troubleshooting)
+
+        notes = read("docs/release-notes-v0.14.2.md")
+        self.assertIn(
+            "Older v0.14.1 state\nchains, selected target roots, or installer-managed artifacts",
+            notes,
+        )
+        self.assertIn("dry-run, exact-path, manually approved `chmod go-w`", notes)
+        self.assertIn("neither\nrecurses through a home directory nor mutates unknown legacy backups", notes)
 
 
 if __name__ == "__main__":

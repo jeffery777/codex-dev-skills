@@ -17,10 +17,11 @@ gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
 The current development feature baseline is Memory M1, published in v0.14.0
-through Issue #147 / PR #148. The v0.14.1 release candidate through Issue #149
-is a runtime-compatibility, universal-plugin, installer-safety, and
-documentation patch; it does not change the M0/M1 feature or authority
-baseline. V3-B remains the released evaluation baseline from v0.13.0.
+through Issue #147 / PR #148. The v0.14.2 release candidate through Issue #151
+is an installer-backup isolation hotfix over v0.14.1: it keeps forced-update
+backups outside Codex skill discovery roots without changing the M0/M1 feature
+or authority baseline. V3-B remains the released evaluation baseline from
+v0.13.0.
 The v0.12.1 compatibility patch through Issue #139 updated Desktop/CLI runtime
 adapters and repository verification before V3-B without changing shared
 completion authority.
@@ -289,13 +290,46 @@ CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES \
 
 Uninstall refuses modified profiles and removes nothing from the group until
 all installed profile files pass its pre-delete check. Preserve and reconcile
-local edits before retrying. A forced update writes each replaced profile to
-the adjacent `<profile>.toml.bak` first and refuses the whole profile update
-before mutation if a required backup already exists. To restore, stop using the
-new profile, review the `.bak`, move it back to the original `.toml` path, and
-rerun profile validation. Remove backups only after confirming the intended
-configuration. Removing the profiles leaves V1 shared/sequential semantics
-available.
+local edits before retrying. A forced update stores each replaced skill,
+template, or profile in a deterministic managed backup slot under
+`${XDG_STATE_HOME:-$HOME/.local/state}/codex-dev-skills/backups/v1/`, outside
+both Codex skill discovery roots. Slots are separated by a digest of the
+canonical target root and by artifact kind; an existing slot blocks the whole
+forced update before mutation rather than being overwritten. The installer
+also fails closed when a backup or destination boundary is unsafe or when a
+same-device rename cannot be guaranteed. To restore after a failed replacement,
+use the reported managed backup location only after reviewing it and the target.
+When rollback succeeds, the original is restored; if any restoration step emits
+`CRITICAL`, preserve all reported locations for manual recovery rather than
+assuming a no-partial-mutation outcome.
+
+Before an `install` or non-force `update` mutates a selected discovery target,
+the installer validates its state and receipt boundary. If that boundary is
+unsafe, selected skills, templates, and agent profiles remain unchanged. This
+is a bounded preflight guarantee, not unconditional atomicity for disk-full,
+hostile same-UID interference, or every other runtime failure.
+It rejects multiply linked regular target-tree files and receipts in the
+relevant preflight. A force transaction additionally rejects multiply linked
+sources and staged payloads. For an existing receipt it also performs a no-write append open
+(with final-symlink protection where the platform provides it) and verifies the
+opened descriptor's identity. Read-only, immutable, or append-only receipts
+therefore fail closed. It never silently repairs a link count, file flag, or
+receipt permission.
+On Linux, immutable/append-only inspection uses the filesystem flag ioctl; an
+inspection error, including an unsupported filesystem or special ABI, also
+fails closed rather than degrading to open/fstat-only validation.
+
+The managed transaction lock coordinates only cooperating installer processes
+that resolve to the same canonical `XDG_STATE_HOME` managed-state namespace.
+For a forced update, it is acquired only after complete filesystem and profile
+input preflight; the locked apply phase rechecks affected identities and backup
+slots before replacement.
+Different state roots targeting the same authorized custom destination do not
+share that lock; apply-time identity checks fail closed on ordinary detected
+drift, but do not provide process isolation. Use OS/account isolation for a
+hostile same-UID process. Within the supported cooperating model, a managed
+backup slot is never silently overwritten.
+Removing the profiles leaves V1 shared/sequential semantics available.
 
 `codex-review-workflow`, `codex-delivery-workflow`, and
 `codex-cli-session-handoff` install their shared dependencies automatically.
@@ -1125,8 +1159,8 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.14.1.md` contains the current v0.14.1 release notes
-draft; `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
+`docs/release-notes-v0.14.2.md` contains the current v0.14.2 release notes (release candidate);
+`docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and
 `docs/release-notes-v0.1.0.md` remain historical point-in-time records.
 
@@ -1266,6 +1300,11 @@ Installer scope:
   detected installed `codex-dev-skills` plugin. If the CLI is unavailable or
   too old to provide JSON plugin state, it warns and retains the filesystem
   fallback; the operator must still use only one distribution path.
+- Fresh installs and forced replacements normalize installed skill directories
+  to `0700`, regular files to `0600`, and source-executable files to `0700`.
+  This applies to custom/project targets too and can remove other local
+  accounts' read access. Existing unsafe paths fail closed; the installer does
+  not silently repair them with `chmod`.
 - Installer state is stored under `~/.local/state/codex-dev-skills` unless `XDG_STATE_HOME` changes it.
 - State records only non-sensitive metadata such as repository name, version, action, group, and timestamp.
 - The installer never overwrites `~/.codex/AGENTS.md`.
