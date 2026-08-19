@@ -1553,6 +1553,7 @@ stage_receipt_file() {
   ensure_owned_safe_directory "$parent" "$label parent" || return 1
   if [[ -e "$path" || -L "$path" ]]; then
     checked_validator validate_existing_artifact "$path" file "$label" || return 1
+    checked_validator validate_receipt_writable "$path" "$label" || return 1
   fi
   index="${#RX_PATHS[@]}"
   staging="$(mktemp -d "$parent/.codex-dev-skills.$(basename "$path").receipt.XXXXXX")" || return 1

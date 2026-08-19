@@ -152,6 +152,15 @@ class RuntimeGroupInstallerTests(unittest.TestCase):
             "      *.bak) echo 'injected EXDEV backup rename failure' >&2; exit 18 ;;\n"
             "    esac\n"
             "    ;;\n"
+            "  fail-artifact-apply)\n"
+            "    case \"$1\" in\n"
+            "      *.tmp.*/value)\n"
+            "        : > \"$FAKE_MV_ARTIFACT_MARKER\"\n"
+            "        echo 'injected artifact apply seam reached' >&2\n"
+            "        exit 80\n"
+            "        ;;\n"
+            "    esac\n"
+            "    ;;\n"
             "  hold-after-lock)\n"
             "    case \"$2\" in\n"
             "      *.bak) sleep 2 ;;\n"
@@ -224,6 +233,14 @@ class RuntimeGroupInstallerTests(unittest.TestCase):
             "FAKE_MV_MODE": mode,
             "PATH": f"{fake_bin}{os.pathsep}{os.environ['PATH']}",
         }
+
+    def artifact_apply_seam_overrides(
+        self, name: str
+    ) -> tuple[dict[str, str], pathlib.Path]:
+        marker = self.root / f"{name}-artifact-apply-fired"
+        overrides = self.fake_mv_overrides(name, "fail-artifact-apply")
+        overrides["FAKE_MV_ARTIFACT_MARKER"] = str(marker)
+        return overrides, marker
 
     def signal_mv_overrides(
         self, name: str, signal: str, target: str
@@ -708,7 +725,137 @@ class RuntimeGroupInstallerTests(unittest.TestCase):
             self.skipTest("chflags is unavailable")
         enabled = subprocess.run([chflags, flag, str(path)], text=True, capture_output=True, check=False)
         self.assertEqual(0, enabled.returncode, enabled.stderr)
-        self.addCleanup(subprocess.run, [chflags, "nouchg", str(path)], text=True, capture_output=True, check=False)
+        self.addCleanup(subprocess.run, [chflags, f"no{flag}", str(path)], text=True, capture_output=True, check=False)
+
+    def assert_force_receipt_boundary_refusal_before_artifact_apply(
+        self, *, receipt_kind: str, protection: str
+    ) -> None:
+        """A known-unreplaceable receipt must stop force update before apply."""
+        home_name = f"force-receipt-{receipt_kind}-{protection}"
+        overrides = {"CODEX_CLI": str(self.root / "missing-codex")}
+        home, installed = self.run_installer(
+            "install", "codex-agent-profiles", home_name=home_name,
+            env_overrides=overrides,
+        )
+        self.assertEqual(0, installed.returncode, installed.stderr)
+        skills_root = home / ".agents" / "skills"
+        templates_root = home / ".codex" / "templates"
+        profiles_root = home / ".codex" / "agents"
+        skill = skills_root / "closure-triage" / "SKILL.md"
+        template = templates_root / "orchestration" / "policies" / "agent-delegation-policy.md"
+        profile = profiles_root / "loop_v2a_fast_explorer.toml"
+        skill.write_text("force receipt local skill\n", encoding="utf-8")
+        template.write_text("force receipt local template\n", encoding="utf-8")
+        profile.write_text("force receipt local profile\n", encoding="utf-8")
+        state_dir = self.root / f"{home_name}-state" / "codex-dev-skills"
+        installed_receipt = state_dir / "installed.jsonl"
+        profile_receipt = next(state_dir.glob("agent-profile-*.tsv"))
+        receipt = installed_receipt if receipt_kind == "installed" else profile_receipt
+        if protection == "readonly":
+            receipt.chmod(0o400)
+        else:
+            self.set_macos_file_flag_for_test(receipt, protection)
+
+        targets_before = tree_snapshot(home / ".agents", home / ".codex")
+        receipts_before = {
+            path: (path.read_bytes(), stat.S_IMODE(path.stat().st_mode))
+            for path in (installed_receipt, profile_receipt)
+        }
+        backups = (
+            managed_backup_path(
+                self.root / f"{home_name}-state", skills_root, "skills", "closure-triage"
+            ),
+            managed_backup_path(
+                self.root / f"{home_name}-state", templates_root, "templates",
+                "orchestration/policies/agent-delegation-policy.md",
+            ),
+            managed_backup_path(
+                self.root / f"{home_name}-state", profiles_root, "agent-profiles",
+                "loop_v2a_fast_explorer.toml",
+            ),
+        )
+        self.assertTrue(all(not backup.exists() for backup in backups))
+        seam_overrides, artifact_apply_marker = self.artifact_apply_seam_overrides(home_name)
+        overrides.update(seam_overrides)
+
+        _, refused = self.run_installer(
+            "update", "codex-agent-profiles", "--force", home_name=home_name,
+            env_overrides=overrides,
+        )
+
+        self.assertNotEqual(0, refused.returncode)
+        self.assertIn(str(receipt), refused.stderr)
+        self.assertNotIn("injected artifact apply seam reached", refused.stderr)
+        self.assertFalse(artifact_apply_marker.exists())
+        self.assertEqual(targets_before, tree_snapshot(home / ".agents", home / ".codex"))
+        self.assertEqual(
+            receipts_before,
+            {
+                path: (path.read_bytes(), stat.S_IMODE(path.stat().st_mode))
+                for path in receipts_before
+            },
+        )
+        self.assertTrue(all(not backup.exists() for backup in backups))
+        lock = state_dir / "backups" / "v1" / ".transaction.lock"
+        self.assertFalse(lock.exists(), lock)
+        self.assertEqual([], list(state_dir.glob(".codex-dev-skills.*.receipt.*")))
+        for root in (skills_root, templates_root, profiles_root):
+            self.assertEqual([], list(root.rglob(".codex-dev-skills.*.tmp.*")))
+
+    def test_force_update_refuses_readonly_installed_and_profile_receipts_before_artifact_apply(self) -> None:
+        for receipt_kind in ("installed", "profile"):
+            with self.subTest(receipt_kind=receipt_kind):
+                self.assert_force_receipt_boundary_refusal_before_artifact_apply(
+                    receipt_kind=receipt_kind, protection="readonly"
+                )
+
+    def test_macos_force_update_refuses_protected_receipts_before_artifact_apply(self) -> None:
+        for receipt_kind in ("installed", "profile"):
+            for protection in ("uchg", "uappnd"):
+                with self.subTest(receipt_kind=receipt_kind, protection=protection):
+                    self.assert_force_receipt_boundary_refusal_before_artifact_apply(
+                        receipt_kind=receipt_kind, protection=protection
+                    )
+
+    def test_force_update_with_safe_receipts_still_updates_artifacts_and_receipts(self) -> None:
+        home_name = "force-receipt-safe-control"
+        overrides = {"CODEX_CLI": str(self.root / "missing-codex")}
+        home, installed = self.run_installer(
+            "install", "codex-agent-profiles", home_name=home_name,
+            env_overrides=overrides,
+        )
+        self.assertEqual(0, installed.returncode, installed.stderr)
+        skills_root = home / ".agents" / "skills"
+        templates_root = home / ".codex" / "templates"
+        profiles_root = home / ".codex" / "agents"
+        skill = skills_root / "closure-triage" / "SKILL.md"
+        template = templates_root / "orchestration" / "policies" / "agent-delegation-policy.md"
+        profile = profiles_root / "loop_v2a_fast_explorer.toml"
+        skill.write_text("safe force local skill\n", encoding="utf-8")
+        template.write_text("safe force local template\n", encoding="utf-8")
+        profile.write_text("safe force local profile\n", encoding="utf-8")
+        state_dir = self.root / f"{home_name}-state" / "codex-dev-skills"
+        receipts_before = {
+            path: path.read_bytes()
+            for path in [state_dir / "installed.jsonl", *state_dir.glob("agent-profile-*.tsv")]
+        }
+
+        _, updated = self.run_installer(
+            "update", "codex-agent-profiles", "--force", home_name=home_name,
+            env_overrides=overrides,
+        )
+
+        self.assertEqual(0, updated.returncode, updated.stderr)
+        self.assertNotEqual("safe force local skill\n", skill.read_text(encoding="utf-8"))
+        self.assertNotEqual("safe force local template\n", template.read_text(encoding="utf-8"))
+        self.assertNotEqual("safe force local profile\n", profile.read_text(encoding="utf-8"))
+        for path, before in receipts_before.items():
+            if path.name == "installed.jsonl":
+                self.assertNotEqual(before, path.read_bytes())
+            else:
+                self.assertEqual(before, path.read_bytes())
+            self.assertEqual(0o600, stat.S_IMODE(path.stat().st_mode))
+        self.assertFalse((state_dir / "backups" / "v1" / ".transaction.lock").exists())
 
     def test_macos_immutable_installed_receipt_refuses_nonforce_install_and_update_before_targets(self) -> None:
         for action in ("install", "update"):
