@@ -128,6 +128,16 @@ revision, and freshness, but parses neither human status/list output nor query
 content into memory records. `read_query` and all backend mutation operations
 are unsupported, so the effective retrieval behavior remains no memory.
 
+GN-FU-01 adds a separate `gitnexus-index-identity/v1` evidence layer. Exact
+status now requires a clean committed checkout plus a Codex-owned sidecar that
+matches repository, worktree, branch, HEAD, complete relevant content (including
+untracked and ignored paths), tool qualification, analyze configuration, and
+freshness times. Old/missing sidecars and dirty, untracked, mixed, detached, or
+content-drifted states are advisory. Clean primary `main`, issue-branch,
+linked-worktree, and PR base/head identities use distinct aliases; linked
+automatic refresh remains unsupported. The identity is still local advisory
+evidence and never satisfies review, a gate, or completion.
+
 An explicit refresh is a local derived-index operation, not a memory operation.
 It requires `analyze --index-only`, exact expected HEAD, a clean direct
 worktree, pre-existing local `.git/info/exclude` protection, an isolated alias
@@ -156,6 +166,16 @@ entry, interpreter-when-applicable, and complete package-tree digests plus an
 explicit canonical machine-local package root; those values are checked before
 tool execution and remain outside repository files. Omitting `--enabled` or
 running `disable` is the rollback path.
+
+PR base/head pairing intentionally has no operator command. The library-only
+`build_pr_review_identity()` builder returns
+`gitnexus-pr-review-identity/v1` only when both snapshots are clean, committed,
+distinctly aliased, and belong to the same canonical repository. It binds each
+role's HEAD, branch, alias, worktree identity, complete relevant-content digest,
+and index-identity digest. Consumers may use it as an advisory review trace only
+after recomputing it from live qualified inputs and matching
+`pr_review_identity_digest`; there is no qualified path that adopts a supplied
+document or turns it into review, gate, or completion authority.
 
 V2c-B optionally adds `gitnexus_hook.py` as a thin Codex hook runner. The
 repository ships inactive templates under `templates/hooks/gitnexus-v2c-b/`;

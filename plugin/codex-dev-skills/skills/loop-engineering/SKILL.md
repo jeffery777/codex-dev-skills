@@ -416,6 +416,15 @@ automatically without operator clearance. Installing its templates does not
 activate hooks or grant trust. The shipped runner stays synchronous because
 background hook invocations may overlap and finish out of order.
 
+The GN-FU-01 `gitnexus-index-identity/v1` sidecar makes exactness content-bound,
+not HEAD-only. A qualified refresh writes it only after metadata postconditions;
+later status/hook checks require an exact repository, checkout/worktree,
+branch/HEAD, complete relevant content, tool/configuration, and freshness match.
+Missing/old evidence plus dirty tracked, untracked, mixed, detached, ignored-
+content-drifted, or cross-worktree state is advisory. PR base/head pair identity
+binds two clean committed contents but proves no review or gate. These documents
+remain non-authoritative and do not enable linked automatic refresh.
+
 In Codex CLI or any runtime without a scheduler or Desktop task-control
 capability, use the current session, manual invocation, a paste-ready prompt, a
 task brief, a continuation prompt, or a sequential execution path. The fallback

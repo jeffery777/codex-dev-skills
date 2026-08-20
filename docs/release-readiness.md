@@ -69,6 +69,19 @@ corrects or adds runtime adapter behavior without migration. Merge, annotated
 tag `v0.15.1`, GitHub Release, and deployment remain separate explicit human
 gates.
 
+For the v0.16.0 GN-FU-01 candidate, require exact
+`gitnexus-index-identity/v1` evidence for a clean qualified index and prove
+that missing/old/malformed evidence, dirty tracked changes, untracked files,
+ignored-content drift, detached state, wrong checkout/worktree, wrong branch or
+HEAD, and tool/configuration drift cannot report exact freshness. Require
+distinct primary-main, primary-branch, linked-worktree, and PR base/head aliases;
+linked-worktree automatic refresh must remain unsupported. Confirm that a
+remote merge alone does not advance local primary evidence. Run the focused
+adapter/hook suites and `scripts/eval-gitnexus-index-lifecycle.py`, then align
+catalog, installer, generated plugin package, v0.16.0 release notes, and version
+contract tests. Merge, annotated tag `v0.16.0`, GitHub Release, and deployment
+remain separate explicit human gates.
+
 For the v0.15.0 agent-orchestration and routing candidate, require profile
 registry/digest validation for all eight opt-in profiles; deterministic cases
 for routine Terra-medium, complex Terra-high, multi-trigger Sol-medium,
@@ -125,6 +138,12 @@ When a change includes the GitNexus adapter, also require evidence that:
 - stale, dirty, missing, partial, unsupported, incompatible, corrupt, unknown, wrong-repo,
   unsafe-path, symlink, timeout, lock, and capability/version drift cases fail
   closed;
+- clean exact freshness requires a strictly validated Codex-owned v1 identity
+  sidecar binding repository/worktree/ref/HEAD, complete relevant content,
+  GitNexus qualification, analyze configuration, metadata digest, and times;
+- legacy metadata without that sidecar is advisory/stale, and dirty tracked,
+  untracked, mixed, detached, ignored-content-drifted, or cross-worktree state
+  cannot become exact from HEAD equality;
 - fixture refresh uses only `analyze --index-only`, isolated `GITNEXUS_HOME`,
   offline environment, expected HEAD, and a pre-existing local-exclude guard;
 - every refresh first acquires the deterministic fixed-OS-temp per-user lock

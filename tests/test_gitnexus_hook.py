@@ -105,6 +105,7 @@ def repository_state(root: pathlib.Path) -> adapter.RepositoryState:
 def tracked_snapshot(*, dirty: bool = False) -> adapter.TrackedSnapshot:
     return adapter.TrackedSnapshot(
         head=HEAD,
+        branch="main",
         tracked_dirty=dirty,
         tracked_derived_present=False,
         outside_derived_dirty=dirty,
@@ -695,6 +696,26 @@ class LiveBoundaryIntegrationTests(unittest.TestCase):
             document["qualification"] = qualification_values(executable)
             config = hook.load_config(write_config(machine, document))
 
+            qualification = hook._qualify(config)
+            repository = adapter.collect_repository_state(
+                root,
+                canonical_repository_id=config.repository_id,
+                expected_remote=config.expected_remote,
+            )
+            snapshot = adapter.collect_tracked_snapshot(root)
+            metadata = json.loads(
+                (root / ".gitnexus" / "gitnexus.json").read_text(encoding="utf-8")
+            )
+            identity = adapter.build_index_identity(
+                repository,
+                snapshot,
+                qualification,
+                metadata_digest=adapter._canonical_digest(metadata),
+                indexed_at=metadata["indexedAt"],
+                observed_at="2026-08-20T00:00:00Z",
+            )
+            adapter._write_index_identity(root / ".gitnexus", identity)
+
             self.assertIsNone(hook.evaluate_hook(config, event(root)))
 
             (root / "code.py").write_text("print('second')\n", encoding="utf-8")
@@ -706,6 +727,57 @@ class LiveBoundaryIntegrationTests(unittest.TestCase):
             message = result["hookSpecificOutput"]["additionalContext"]
             self.assertIn("indexed-revision-stale", message)
             self.assertIn("must not be used", message)
+
+    def test_remote_tracking_ref_alone_does_not_advance_local_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            directory = pathlib.Path(raw).resolve()
+            root = make_repository(directory)
+            executable = make_cli(directory)
+            write_valid_metadata(root)
+            machine = directory / "machine"
+            machine.mkdir()
+            document = config_document(root)
+            document["qualification"] = qualification_values(executable)
+            config = hook.load_config(write_config(machine, document))
+
+            qualification = hook._qualify(config)
+            repository = adapter.collect_repository_state(
+                root,
+                canonical_repository_id=config.repository_id,
+                expected_remote=config.expected_remote,
+            )
+            metadata = json.loads(
+                (root / ".gitnexus" / "gitnexus.json").read_text(encoding="utf-8")
+            )
+            identity = adapter.build_index_identity(
+                repository,
+                adapter.collect_tracked_snapshot(root),
+                qualification,
+                metadata_digest=adapter._canonical_digest(metadata),
+                indexed_at=metadata["indexedAt"],
+                observed_at="2026-08-20T00:00:00Z",
+            )
+            adapter._write_index_identity(root / ".gitnexus", identity)
+
+            tree = run_git(root, "rev-parse", "HEAD^{tree}").stdout.decode().strip()
+            remote_head = run_git(
+                root,
+                "commit-tree",
+                tree,
+                "-p",
+                repository.head,
+                "-m",
+                "remote-only commit",
+            ).stdout.decode().strip()
+            run_git(root, "update-ref", "refs/remotes/origin/main", remote_head)
+
+            current = adapter.collect_repository_state(
+                root,
+                canonical_repository_id=config.repository_id,
+                expected_remote=config.expected_remote,
+            )
+            self.assertEqual(repository.head, current.head)
+            self.assertIsNone(hook.evaluate_hook(config, event(root)))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,16 @@
+{
+  "contract_version": "gitnexus-index-lifecycle-eval/v1",
+  "expected": {
+    "clean_exact": 1,
+    "dirty_advisory": 1,
+    "dirty_mixed_advisory": 1,
+    "false_authority": 0,
+    "malformed_rejection": 1,
+    "pr_pair_binding": 1,
+    "primary_branch_isolation": 1,
+    "replay_rejection": 1,
+    "tamper_rejection": 1,
+    "untracked_advisory": 1,
+    "worktree_isolation": 1
+  }
+}

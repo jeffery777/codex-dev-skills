@@ -173,6 +173,26 @@ def write_metadata(root: pathlib.Path, value: dict) -> None:
         (directory / filename).write_text(json.dumps(value), encoding="utf-8")
 
 
+def write_exact_identity(
+    root: pathlib.Path,
+    state: adapter.RepositoryState,
+    qualification: adapter.ExecutableQualification,
+) -> dict:
+    metadata = json.loads(
+        (root / ".gitnexus" / "gitnexus.json").read_text(encoding="utf-8")
+    )
+    identity = adapter.build_index_identity(
+        state,
+        adapter.collect_tracked_snapshot(root),
+        qualification,
+        metadata_digest=adapter._canonical_digest(metadata),
+        indexed_at=metadata["indexedAt"],
+        observed_at="2026-08-20T00:00:00Z",
+    )
+    adapter._write_index_identity(root / ".gitnexus", identity)
+    return identity
+
+
 class QualificationTests(unittest.TestCase):
     def test_gitnexus_executable_path_is_explicit_and_ambient_path_is_rejected(self):
         with tempfile.TemporaryDirectory() as raw:
@@ -801,6 +821,277 @@ class IdentitySnapshotMetadataTests(unittest.TestCase):
         self.assertNotEqual(clean.tracked_state_digest, dirty.tracked_state_digest)
         self.assertNotEqual(clean.protected_state_digest, dirty.protected_state_digest)
 
+    def test_index_identity_requires_sidecar_and_binds_dirty_untracked_and_ignored_content(self):
+        write_metadata(self.root, valid_metadata(self.repository))
+        missing = self.assess()
+        self.assertEqual(
+            ("stale", "index-identity-evidence-missing"),
+            (missing.state, missing.reason),
+        )
+        clean_identity = write_exact_identity(
+            self.root, self.repository, self.qualification
+        )
+        exact = self.assess()
+        self.assertEqual(("fresh", "exact-clean-content"), (exact.state, exact.reason))
+        self.assertEqual(
+            clean_identity["index_identity_digest"],
+            exact.index_identity["index_identity_digest"],
+        )
+
+        (self.root / "code.py").write_text("dirty\n", encoding="utf-8")
+        dirty_snapshot = adapter.collect_tracked_snapshot(self.root)
+        dirty_identity = adapter.build_index_identity(
+            self.repository,
+            dirty_snapshot,
+            self.qualification,
+            metadata_digest=exact.metadata_digest,
+            indexed_at=exact.metadata["indexedAt"],
+            observed_at="2026-08-20T00:00:01Z",
+        )
+        self.assertEqual("dirty-tracked", dirty_identity["content"]["state"])
+        self.assertEqual("advisory", dirty_identity["freshness"]["status"])
+        self.assertFalse(dirty_identity["lifecycle"]["exact_eligible"])
+        (self.root / "code.py").write_text("print('safe')\n", encoding="utf-8")
+
+        (self.root / "untracked.py").write_text("new\n", encoding="utf-8")
+        untracked_snapshot = adapter.collect_tracked_snapshot(self.root)
+        self.assertTrue(untracked_snapshot.untracked_dirty)
+        untracked_identity = adapter.build_index_identity(
+            self.repository,
+            untracked_snapshot,
+            self.qualification,
+            metadata_digest=exact.metadata_digest,
+            indexed_at=exact.metadata["indexedAt"],
+            observed_at="2026-08-20T00:00:02Z",
+        )
+        self.assertEqual("dirty-untracked", untracked_identity["content"]["state"])
+        self.assertNotEqual(
+            clean_identity["content"]["relevant_content_digest"],
+            untracked_identity["content"]["relevant_content_digest"],
+        )
+        (self.root / "code.py").write_text("mixed\n", encoding="utf-8")
+        mixed_snapshot = adapter.collect_tracked_snapshot(self.root)
+        mixed_identity = adapter.build_index_identity(
+            self.repository,
+            mixed_snapshot,
+            self.qualification,
+            metadata_digest=exact.metadata_digest,
+            indexed_at=exact.metadata["indexedAt"],
+            observed_at="2026-08-20T00:00:03Z",
+        )
+        self.assertEqual("dirty-mixed", mixed_identity["content"]["state"])
+        self.assertEqual("advisory", mixed_identity["freshness"]["status"])
+        self.assertFalse(mixed_identity["lifecycle"]["exact_eligible"])
+        (self.root / "code.py").write_text("print('safe')\n", encoding="utf-8")
+        (self.root / "untracked.py").unlink()
+
+        exclude = self.root / ".git" / "info" / "exclude"
+        exclude.write_text(
+            f"{exclude.read_text(encoding='utf-8')}\nignored.local\n",
+            encoding="utf-8",
+        )
+        (self.root / "ignored.local").write_text("ignored but relevant\n", encoding="utf-8")
+        ignored = self.assess()
+        self.assertEqual(
+            ("stale", "index-identity-content-mismatch"),
+            (ignored.state, ignored.reason),
+        )
+
+    def test_primary_linked_detached_and_pr_review_identities_are_distinct(self):
+        primary_snapshot = adapter.collect_tracked_snapshot(self.root)
+        common = {
+            "metadata_digest": "1" * 64,
+            "indexed_at": "2026-08-20T00:00:00Z",
+            "observed_at": "2026-08-20T00:00:00Z",
+        }
+        primary_identity = adapter.build_index_identity(
+            self.repository, primary_snapshot, self.qualification, **common
+        )
+        self.assertEqual("primary-main", primary_identity["lifecycle"]["context"])
+
+        run_git(self.root, "switch", "-q", "-c", "primary-issue")
+        issue_repository = repository_state(self.root)
+        issue_identity = adapter.build_index_identity(
+            issue_repository,
+            adapter.collect_tracked_snapshot(self.root),
+            self.qualification,
+            **common,
+        )
+        self.assertEqual("primary-branch", issue_identity["lifecycle"]["context"])
+        self.assertNotEqual(
+            primary_identity["lifecycle"]["alias"],
+            issue_identity["lifecycle"]["alias"],
+        )
+        run_git(self.root, "switch", "-q", "main")
+
+        linked = self.directory / "linked"
+        run_git(self.root, "worktree", "add", "-b", "issue-157", str(linked))
+        (linked / "code.py").write_text("print('head')\n", encoding="utf-8")
+        run_git(linked, "add", "code.py")
+        run_git(linked, "commit", "-m", "head")
+        linked_repository = repository_state(linked)
+        linked_snapshot = adapter.collect_tracked_snapshot(linked)
+        linked_identity = adapter.build_index_identity(
+            linked_repository, linked_snapshot, self.qualification, **common
+        )
+        self.assertEqual("linked-worktree", linked_identity["lifecycle"]["context"])
+        self.assertFalse(linked_identity["lifecycle"]["automatic_refresh_eligible"])
+        self.assertNotEqual(
+            primary_identity["lifecycle"]["alias"],
+            linked_identity["lifecycle"]["alias"],
+        )
+
+        detached = self.directory / "detached"
+        run_git(self.root, "worktree", "add", "--detach", str(detached), self.repository.head)
+        detached_repository = repository_state(detached)
+        detached_identity = adapter.build_index_identity(
+            detached_repository,
+            adapter.collect_tracked_snapshot(detached),
+            self.qualification,
+            **common,
+        )
+        self.assertEqual("detached", detached_identity["lifecycle"]["context"])
+        self.assertFalse(detached_identity["lifecycle"]["exact_eligible"])
+
+        review = adapter.build_pr_review_identity(
+            self.repository,
+            primary_snapshot,
+            linked_repository,
+            linked_snapshot,
+            self.qualification,
+            observed_at="2026-08-20T00:00:00Z",
+        )
+        self.assertEqual(["base", "head"], [item["role"] for item in review["identities"]])
+        self.assertNotEqual(
+            review["identities"][0]["alias"], review["identities"][1]["alias"]
+        )
+        self.assertFalse(review["authority_invariants"]["review_satisfied"])
+
+    def test_index_identity_tamper_and_old_driver_evidence_fail_closed(self):
+        write_metadata(self.root, valid_metadata(self.repository))
+        identity = write_exact_identity(self.root, self.repository, self.qualification)
+        identity["tool"]["driver_version"] = "gitnexus-v2c-a/2"
+        (self.root / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME).write_text(
+            json.dumps(identity), encoding="utf-8"
+        )
+        assessed = self.assess()
+        self.assertEqual(
+            ("stale", "index-identity-evidence-mismatch"),
+            (assessed.state, assessed.reason),
+        )
+
+    def test_malformed_partial_duplicate_tool_and_config_sidecars_fail_closed(self):
+        write_metadata(self.root, valid_metadata(self.repository))
+        identity = write_exact_identity(self.root, self.repository, self.qualification)
+        sidecar = self.root / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME
+        cases = {
+            "malformed": ("{not-json", "index-identity-evidence-invalid"),
+            "duplicate": (
+                '{"freshness":{},"freshness":{}}',
+                "index-identity-evidence-invalid",
+            ),
+            "partial": (
+                json.dumps({"freshness": {"observed_at": "2026-08-20T00:00:00Z"}}),
+                "index-identity-evidence-mismatch",
+            ),
+        }
+        for label, (raw, expected_reason) in cases.items():
+            with self.subTest(label=label):
+                sidecar.write_text(raw, encoding="utf-8")
+                assessed = self.assess()
+                self.assertEqual(("stale", expected_reason), (assessed.state, assessed.reason))
+
+        tool_drift = copy.deepcopy(identity)
+        tool_drift["tool"]["qualification_fingerprint"] = "0" * 64
+        sidecar.write_text(json.dumps(tool_drift), encoding="utf-8")
+        assessed = self.assess()
+        self.assertEqual(
+            ("stale", "index-identity-tool-mismatch"),
+            (assessed.state, assessed.reason),
+        )
+
+        config_drift = copy.deepcopy(identity)
+        config_drift["configuration"]["analyze_config_digest"] = "0" * 64
+        sidecar.write_text(json.dumps(config_drift), encoding="utf-8")
+        assessed = self.assess()
+        self.assertEqual(
+            ("stale", "index-identity-evidence-mismatch"),
+            (assessed.state, assessed.reason),
+        )
+
+    def test_sidecar_replay_across_worktree_branch_and_head_fails_closed(self):
+        write_metadata(self.root, valid_metadata(self.repository))
+        identity = write_exact_identity(self.root, self.repository, self.qualification)
+        raw_identity = json.dumps(identity)
+
+        linked = self.directory / "replay-linked"
+        run_git(self.root, "worktree", "add", "-b", "replay-linked", str(linked))
+        linked_repository = repository_state(linked)
+        linked_metadata = valid_metadata(linked_repository)
+        linked_metadata["branch"] = linked_repository.branch
+        write_metadata(linked, linked_metadata)
+        (linked / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME).write_text(
+            raw_identity, encoding="utf-8"
+        )
+        linked_assessed = adapter.assess_metadata(
+            linked_repository,
+            adapter.collect_tracked_snapshot(linked),
+            self.qualification,
+        )
+        self.assertEqual(
+            ("stale", "index-identity-worktree-mismatch"),
+            (linked_assessed.state, linked_assessed.reason),
+        )
+
+        run_git(self.root, "switch", "-q", "-c", "replay-branch")
+        branch_repository = repository_state(self.root)
+        branch_metadata = valid_metadata(branch_repository)
+        branch_metadata["branch"] = branch_repository.branch
+        write_metadata(self.root, branch_metadata)
+        (self.root / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME).write_text(
+            raw_identity, encoding="utf-8"
+        )
+        branch_assessed = adapter.assess_metadata(
+            branch_repository,
+            adapter.collect_tracked_snapshot(self.root),
+            self.qualification,
+        )
+        self.assertEqual("stale", branch_assessed.state)
+
+        run_git(self.root, "switch", "-q", "main")
+        run_git(self.root, "commit", "--allow-empty", "-m", "advance without content")
+        head_repository = repository_state(self.root)
+        write_metadata(self.root, valid_metadata(head_repository))
+        (self.root / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME).write_text(
+            raw_identity, encoding="utf-8"
+        )
+        head_assessed = adapter.assess_metadata(
+            head_repository,
+            adapter.collect_tracked_snapshot(self.root),
+            self.qualification,
+        )
+        self.assertEqual(
+            ("stale", "index-identity-head-mismatch"),
+            (head_assessed.state, head_assessed.reason),
+        )
+
+    def test_same_head_branch_replay_fails_closed(self):
+        write_metadata(self.root, valid_metadata(self.repository))
+        write_exact_identity(self.root, self.repository, self.qualification)
+        run_git(self.root, "switch", "-q", "-c", "other")
+        live_snapshot = adapter.collect_tracked_snapshot(self.root)
+        self.assertEqual(self.repository.head, live_snapshot.head)
+        self.assertEqual("other", live_snapshot.branch)
+
+        assessed = adapter.assess_metadata(
+            self.repository, live_snapshot, self.qualification
+        )
+
+        self.assertEqual(
+            ("unknown", "caller-snapshot-branch-conflict"),
+            (assessed.state, assessed.reason),
+        )
+
     def test_remote_normalization_rejects_unsafe_or_ambiguous_forms(self):
         self.assertEqual(
             "https://github.com/Owner/Repository.git",
@@ -830,6 +1121,7 @@ class IdentitySnapshotMetadataTests(unittest.TestCase):
 
     def test_metadata_fresh_stale_dirty_missing_partial_unsupported_incompatible_corrupt_unknown(self):
         write_metadata(self.root, valid_metadata(self.repository))
+        write_exact_identity(self.root, self.repository, self.qualification)
         self.assertEqual("fresh", self.assess().state)
 
         value = valid_metadata(self.repository)
@@ -838,6 +1130,7 @@ class IdentitySnapshotMetadataTests(unittest.TestCase):
         self.assertEqual("stale", self.assess().state)
 
         write_metadata(self.root, valid_metadata(self.repository))
+        write_exact_identity(self.root, self.repository, self.qualification)
         (self.root / "code.py").write_text("dirty\n", encoding="utf-8")
         self.assertEqual(("stale", "working-tree-dirty"), (self.assess().state, self.assess().reason))
         (self.root / "code.py").write_text("print('safe')\n", encoding="utf-8")
@@ -907,6 +1200,7 @@ class IdentitySnapshotMetadataTests(unittest.TestCase):
     def test_primary_legacy_selection_is_fail_closed_and_schema_one_is_incompatible(self):
         value = valid_metadata(self.repository)
         write_metadata(self.root, value)
+        write_exact_identity(self.root, self.repository, self.qualification)
         primary = self.root / ".gitnexus" / "gitnexus.json"
         legacy = self.root / ".gitnexus" / "meta.json"
 
@@ -942,6 +1236,7 @@ class IdentitySnapshotMetadataTests(unittest.TestCase):
 
         metadata.unlink()
         (self.root / ".gitnexus" / "meta.json").unlink()
+        (self.root / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME).unlink()
         (self.root / ".gitnexus").rmdir()
         outside_directory = self.directory / "outside-index"
         outside_directory.mkdir()
@@ -1024,6 +1319,7 @@ class V2bIntegrationTests(unittest.TestCase):
             qualification = fake_qualification(executable)
             repository = repository_state(root)
             write_metadata(root, valid_metadata(repository))
+            write_exact_identity(root, repository, qualification)
             metadata = adapter.assess_metadata(repository, adapter.collect_tracked_snapshot(root), qualification)
             disabled = adapter.build_handshake(qualification, metadata, observed_at="2026-07-16T00:00:00Z")
             self.assertEqual("disabled", disabled["status"])
@@ -1048,6 +1344,7 @@ class V2bIntegrationTests(unittest.TestCase):
             qualification = fake_qualification(executable)
             repository = repository_state(root)
             write_metadata(root, valid_metadata(repository))
+            write_exact_identity(root, repository, qualification)
             metadata = adapter.assess_metadata(
                 repository, adapter.collect_tracked_snapshot(root), qualification
             )
@@ -1287,6 +1584,62 @@ class RefreshControllerTests(unittest.TestCase):
         self.assertEqual(str(self.gitnexus_home.resolve()), kwargs["env"]["TEMP"])
         self.assertFalse(result.receipt["authority_invariants"]["automatic_refresh_enabled"])
         self.assertNotIn(str(self.root), json.dumps(result.receipt))
+
+    def test_sidecar_write_races_cannot_return_refreshed(self):
+        original_writer = adapter._write_index_identity
+        tracked = self.root / "code.py"
+        original_tracked = tracked.read_text(encoding="utf-8")
+        untracked = self.root / "raced-untracked.py"
+        ignored = self.root / "raced-ignored.local"
+        exclude = self.root / ".git" / "info" / "exclude"
+        original_exclude = exclude.read_text(encoding="utf-8")
+
+        def runner(argv, **kwargs):
+            write_metadata(self.root, valid_metadata(repository_state(self.root)))
+            return subprocess.CompletedProcess(argv, 0, "indexed", "")
+
+        mutations = {
+            "tracked": lambda: tracked.write_text("raced\n", encoding="utf-8"),
+            "untracked": lambda: untracked.write_text("raced\n", encoding="utf-8"),
+            "ignored": lambda: ignored.write_text("raced\n", encoding="utf-8"),
+        }
+        try:
+            for label, mutate in mutations.items():
+                with self.subTest(label=label):
+                    tracked.write_text(original_tracked, encoding="utf-8")
+                    untracked.unlink(missing_ok=True)
+                    ignored.unlink(missing_ok=True)
+                    exclude.write_text(original_exclude, encoding="utf-8")
+                    if label == "ignored":
+                        exclude.write_text(
+                            f"{original_exclude}\nraced-ignored.local\n",
+                            encoding="utf-8",
+                        )
+                        ignored.write_text("before\n", encoding="utf-8")
+
+                    def write_then_mutate(index_directory, identity):
+                        original_writer(index_directory, identity)
+                        mutate()
+
+                    with mock.patch.object(
+                        adapter,
+                        "_write_index_identity",
+                        side_effect=write_then_mutate,
+                    ):
+                        result = self.controller(runner).refresh(
+                            self.repository,
+                            expected_head=self.repository.head,
+                            explicit_opt_in=True,
+                        )
+                    self.assertEqual(
+                        ("failed", "unexpected-repository-mutation"),
+                        (result.status, result.reason),
+                    )
+        finally:
+            tracked.write_text(original_tracked, encoding="utf-8")
+            untracked.unlink(missing_ok=True)
+            ignored.unlink(missing_ok=True)
+            exclude.write_text(original_exclude, encoding="utf-8")
 
     def test_isolated_home_requires_private_mode_and_effective_user_owner(self):
         self.gitnexus_home.chmod(0o777)
@@ -2054,6 +2407,13 @@ class ProcessAndOperatorTests(unittest.TestCase):
             root = make_repo(directory)
             repository = repository_state(root)
             write_metadata(root, valid_metadata(repository))
+            write_exact_identity(
+                root,
+                repository,
+                adapter.qualify_executable(
+                    executable, **provenance_kwargs(executable)
+                ),
+            )
             trusted_arguments = provenance_cli_args(executable)
             with mock.patch("builtins.print") as printer:
                 self.assertEqual(

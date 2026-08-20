@@ -21,7 +21,7 @@ from typing import Any, Mapping, Sequence
 import gitnexus_adapter
 
 
-HOOK_DRIVER_VERSION = "gitnexus-v2c-b-hook/1"
+HOOK_DRIVER_VERSION = "gitnexus-v2c-b-hook/2"
 CONFIG_SCHEMA_VERSION = 1
 MAX_INPUT_BYTES = 64 * 1024
 MAX_CONFIG_BYTES = 64 * 1024

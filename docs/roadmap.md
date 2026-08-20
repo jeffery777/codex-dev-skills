@@ -48,15 +48,12 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- High-priority GitNexus index-lifecycle follow-up: at the next suitable
-  maintenance window, open a dedicated Issue and branch to define distinct
-  `main`, issue-branch, linked-worktree, dirty-tree, and PR-review identities.
-  A commit-based "up-to-date" status does not prove dirty or untracked content
-  freshness;
-  exact evidence needs complete content binding and clean committed base/head
-  rules before automation or completion use. Issue #147 records the bounded
-  observation in `docs/loops/issue-147/follow-ups.md` without making it M1
-  release scope.
+- Issue #157 owns GN-FU-01 and the v0.16.0 additive candidate. It defines
+  distinct primary-main, primary-branch, linked-worktree, detached, dirty, and
+  PR base/head identities; binds exact evidence to complete relevant content,
+  tool/configuration, and freshness; and makes old or missing sidecars
+  explicitly advisory. Linked-worktree automatic refresh and remote-only merge
+  advancement remain fail-closed. GitNexus remains non-authoritative.
 - Historical wrapper cleanup: inventory tests and documents that still require
   `desktop_runtime_*`, define a compatibility sunset, then archive or remove
   them without connecting them to the active native path.
@@ -224,6 +221,11 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   GitHub connector-first control-plane policy, and checkout-aware GitNexus hook
   guidance. Linked-worktree automatic refresh remains fail-closed; post-merge
   refresh applies only after the primary checkout advances locally.
+- Issue #157 owns the v0.16.0 GitNexus index-lifecycle candidate. Its
+  `gitnexus-index-identity/v1` sidecar prevents clean-HEAD metadata from
+  impersonating dirty, untracked, ignored-content, cross-worktree, or
+  cross-branch state and adds clean PR base/head pair identities. It does not
+  activate query adoption, shared indexes, scheduling, or completion authority.
 
 ## Non-Goals
 
