@@ -20,10 +20,10 @@ The current development feature baseline is Memory M1, published in v0.14.0
 through Issue #147 / PR #148. v0.14.2 published the installer-backup isolation
 hotfix through Issue #151 / PR #152. v0.15.0 published lower-overhead agent
 coordination guidance and a Terra-high `senior` routing tier through Issue #153
-/ PR #154. The v0.15.1 compatibility candidate through Issue #155 aligns CLI
-0.148.0, current Desktop thread forking, GitHub connector-first control, and
-the optional GitNexus hook lifecycle without changing the M0/M1 feature or
-authority baseline.
+/ PR #154. v0.15.1 published the CLI/Desktop/GitHub control-plane compatibility
+patch through Issue #155. The v0.16.0 candidate through Issue #157 adds the
+exact GitNexus index lifecycle and content-bound evidence identity without
+changing the M0/M1 feature or authority baseline.
 V3-B remains the released evaluation baseline from v0.13.0.
 The v0.12.1 compatibility patch through Issue #139 updated Desktop/CLI runtime
 adapters and repository verification before V3-B without changing shared
@@ -718,7 +718,11 @@ The runtime control-plane flow is:
    linked-worktree binding) and a verified commit-object HEAD;
    repository-local `core.worktree` cannot substitute an enclosing repository
    identity,
-   a complete tracked snapshot, and strict version-gated metadata. Treat stale,
+   a complete tracked snapshot, strict version-gated metadata, and the
+   `gitnexus-index-identity/v1` sidecar. The sidecar binds the exact checkout,
+   branch/detached state, HEAD, complete relevant content digest, dirty state,
+   tool qualification, analyze configuration, indexed time, and observation
+   time. Treat stale,
    dirty, missing, partial, unsupported, incompatible, corrupt, or unknown state
    as no memory.
 3. **Enable:** opt in through machine-local runtime configuration. Executable
@@ -745,6 +749,15 @@ defaults.
 
 The supported operator entrypoint is the repo-owned module. It persists no
 configuration and redacts machine-local paths from JSON output:
+
+PR base/head evidence is a separate library-only artifact:
+`gitnexus-pr-review-identity/v1`, produced by
+`build_pr_review_identity()` from two clean committed snapshots in the same
+canonical repository. It is not an operator command and has no persistence or
+adoption path. A consumer must recompute it from live qualified inputs and
+compare `pr_review_identity_digest`; a supplied serialized document alone is
+never trusted and its authority invariants never satisfy review, gates, or
+completion.
 
 ```bash
 ADAPTER=skills/loop-engineering/scripts/gitnexus_adapter.py
@@ -861,6 +874,18 @@ auto-on-demand mode, a clean stale or missing index may be refreshed only
 through `RefreshController` with exact expected HEAD and all V2c-A checks.
 Dirty worktrees, identity conflicts, corrupt metadata, failed qualification,
 and unsafe paths remain notification-only or fail safe.
+
+GN-FU-01 makes exactness stricter than commit equality. A clean qualified
+refresh atomically writes `codex-index-identity.json` below the ignored
+`.gitnexus/` derived-index root only after metadata postconditions pass. Later
+status and hook checks recompute complete content, including untracked and
+ignored paths, and require an exact sidecar match. Missing v1 evidence is
+explicitly stale/advisory; dirty tracked, untracked, mixed, detached, or
+content-drifted state cannot be reported as exact. Primary `main`, primary
+issue branches, linked worktrees, and PR base/head pairs use distinct aliases
+bound to checkout, HEAD, and content. Linked-worktree automatic refresh remains
+unsupported, and a remote merge still has no local effect until primary
+`main` advances locally.
 
 Bind each machine-local hook config to one exact checkout root. A branch in the
 primary project directory and a linked worktree have separate worktree identity
@@ -1184,8 +1209,8 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.15.1.md` contains the current v0.15.1 release notes (release candidate);
-`docs/release-notes-v0.15.0.md` records the published v0.15.0 release;
+`docs/release-notes-v0.16.0.md` contains the current v0.16.0 release notes (release candidate);
+`docs/release-notes-v0.15.1.md` and `docs/release-notes-v0.15.0.md` record published releases;
 `docs/release-notes-v0.14.2.md`, `docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and
 `docs/release-notes-v0.1.0.md` remain historical point-in-time records.

@@ -430,6 +430,16 @@ templates are inactive and do not grant hook trust or mutate project/global
 configuration. Controller failure persists a machine-local circuit breaker;
 later hook events notify but do not retry until explicit operator clearance.
 
+GN-FU-01 tightens this check with `gitnexus-index-identity/v1`. A clean HEAD is
+not exact by itself: status and hooks require qualified metadata plus a
+Codex-owned sidecar that matches exact checkout/worktree, branch or detached
+state, HEAD, complete relevant content including untracked and ignored paths,
+tool/configuration identity, and freshness times. Old, missing, dirty,
+untracked, detached, content-drifted, or cross-worktree evidence is advisory.
+PR base/head pair identities are clean and content-bound but remain review
+inputs only. This does not add a scheduler, daemon, eager refresh, query
+adoption, or any completion/authorization authority.
+
 ### Security scan workbench
 
 A Codex Security workbench is a plugin-dependent workflow with its own durable

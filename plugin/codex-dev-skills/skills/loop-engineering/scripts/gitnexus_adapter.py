@@ -35,7 +35,10 @@ import git_source
 import memory_contract
 
 
-DRIVER_VERSION = "gitnexus-v2c-a/2"
+DRIVER_VERSION = "gitnexus-v2c-a/3"
+INDEX_IDENTITY_CONTRACT_VERSION = "gitnexus-index-identity/v1"
+PR_REVIEW_IDENTITY_CONTRACT_VERSION = "gitnexus-pr-review-identity/v1"
+INDEX_IDENTITY_FILENAME = "codex-index-identity.json"
 QUALIFIED_GITNEXUS_VERSION = "1.6.9"
 REQUIRED_ANALYZE_FLAGS = frozenset(
     {"--index-only", "--skip-agents-md", "--skip-skills", "--branch", "--name"}
@@ -51,6 +54,7 @@ META_OPTIONAL_FIELDS = frozenset({"incrementalInProgress", "pdg"})
 META_FIELDS = META_REQUIRED_FIELDS | META_OPTIONAL_FIELDS
 META_SCHEMA_VERSION = 5
 MAX_METADATA_BYTES = 4 * 1024 * 1024
+MAX_INDEX_IDENTITY_BYTES = 256 * 1024
 MAX_SNAPSHOT_ENTRIES = 250_000
 MAX_SNAPSHOT_FILE_BYTES = 512 * 1024 * 1024
 MAX_SNAPSHOT_DEPTH = 256
@@ -129,6 +133,7 @@ class RepositoryState:
 @dataclass(frozen=True)
 class TrackedSnapshot:
     head: str
+    branch: str | None
     tracked_dirty: bool
     tracked_derived_present: bool
     outside_derived_dirty: bool
@@ -137,6 +142,8 @@ class TrackedSnapshot:
     outside_derived_status_digest: str
     complete_status_digest: str
     worktree_state_digest: str
+    untracked_dirty: bool = False
+    relevant_content_digest: str = ""
 
 
 @dataclass(frozen=True)
@@ -146,6 +153,7 @@ class MetadataResult:
     indexed_revision: str | None
     metadata_digest: str | None
     metadata: dict[str, Any] | None
+    index_identity: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -1636,16 +1644,17 @@ def _snapshot_integer(value: int, *, signed: bool = False) -> str:
     return str(value)
 
 
-def _filesystem_tree_digest(
+def _filesystem_tree_digests(
     root: pathlib.Path,
     *,
     excluded_top_level: frozenset[str] = frozenset(),
     deadline: float | None = None,
-) -> str:
-    """Hash one complete local tree without following links or special files."""
+) -> tuple[str, str]:
+    """Hash one complete tree as local state and portable relevant content."""
 
     root_fd = _open_directory_nofollow(root)
     records: list[dict[str, Any]] = []
+    content_records: list[dict[str, Any]] = []
     count = 0
 
     def walk(directory_fd: int, prefix: str, depth: int) -> None:
@@ -1685,27 +1694,34 @@ def _filesystem_tree_digest(
                         raise GitNexusAdapterError(
                             "snapshot directory changed while it was opened"
                         )
-                    records.append(
-                        {
-                            "path": relative,
-                            "kind": "directory",
-                            "device": _snapshot_integer(opened.st_dev),
-                            "inode": _snapshot_integer(opened.st_ino),
-                            "mode": stat.S_IMODE(opened.st_mode),
-                        }
+                    record = {
+                        "path": relative,
+                        "kind": "directory",
+                        "device": _snapshot_integer(opened.st_dev),
+                        "inode": _snapshot_integer(opened.st_ino),
+                        "mode": stat.S_IMODE(opened.st_mode),
+                    }
+                    records.append(record)
+                    content_records.append(
+                        {key: record[key] for key in ("path", "kind", "mode")}
                     )
                     walk(child_fd, relative, depth + 1)
                 finally:
                     os.close(child_fd)
             elif stat.S_ISREG(info.st_mode):
-                records.append(
-                    _regular_file_entry_at(
-                        directory_fd,
-                        entry.name,
-                        relative,
-                        info,
-                        deadline=deadline,
-                    )
+                record = _regular_file_entry_at(
+                    directory_fd,
+                    entry.name,
+                    relative,
+                    info,
+                    deadline=deadline,
+                )
+                records.append(record)
+                content_records.append(
+                    {
+                        key: record[key]
+                        for key in ("path", "kind", "mode", "size", "sha256")
+                    }
                 )
             elif stat.S_ISLNK(info.st_mode):
                 try:
@@ -1719,35 +1735,59 @@ def _filesystem_tree_digest(
                     info.st_mode,
                 ):
                     raise GitNexusAdapterError("snapshot symlink changed during inspection")
-                records.append(
+                record = {
+                    "path": relative,
+                    "kind": "symlink",
+                    "device": _snapshot_integer(info.st_dev),
+                    "inode": _snapshot_integer(info.st_ino),
+                    "mode": stat.S_IMODE(info.st_mode),
+                    "target_sha256": hashlib.sha256(
+                        target.encode("utf-8", "surrogateescape")
+                    ).hexdigest(),
+                }
+                records.append(record)
+                content_records.append(
                     {
-                        "path": relative,
-                        "kind": "symlink",
-                        "device": _snapshot_integer(info.st_dev),
-                        "inode": _snapshot_integer(info.st_ino),
-                        "mode": stat.S_IMODE(info.st_mode),
-                        "target_sha256": hashlib.sha256(
-                            target.encode("utf-8", "surrogateescape")
-                        ).hexdigest(),
+                        key: record[key]
+                        for key in ("path", "kind", "mode", "target_sha256")
                     }
                 )
             else:
-                records.append(
+                record = {
+                    "path": relative,
+                    "kind": "special",
+                    "device": _snapshot_integer(info.st_dev),
+                    "inode": _snapshot_integer(info.st_ino),
+                    "mode": stat.S_IMODE(info.st_mode),
+                    "size": _snapshot_integer(info.st_size),
+                }
+                records.append(record)
+                content_records.append(
                     {
-                        "path": relative,
-                        "kind": "special",
-                        "device": _snapshot_integer(info.st_dev),
-                        "inode": _snapshot_integer(info.st_ino),
-                        "mode": stat.S_IMODE(info.st_mode),
-                        "size": _snapshot_integer(info.st_size),
+                        key: record[key]
+                        for key in ("path", "kind", "mode", "size")
                     }
                 )
 
     try:
         walk(root_fd, "", 0)
-        return _canonical_digest(records)
+        return _canonical_digest(records), _canonical_digest(content_records)
     finally:
         os.close(root_fd)
+
+
+def _filesystem_tree_digest(
+    root: pathlib.Path,
+    *,
+    excluded_top_level: frozenset[str] = frozenset(),
+    deadline: float | None = None,
+) -> str:
+    """Compatibility wrapper for callers that need local-state identity only."""
+    return _filesystem_tree_digests(
+        root,
+        excluded_top_level=excluded_top_level,
+        deadline=deadline,
+    )[0]
 
 
 def _is_protected(relative: str) -> bool:
@@ -1854,7 +1894,7 @@ def collect_tracked_snapshot(
         "index_sha256": hashlib.sha256(index_state).hexdigest(),
         "entries": entries,
     }
-    worktree_state_digest = _filesystem_tree_digest(
+    worktree_state_digest, relevant_content_digest = _filesystem_tree_digests(
         root_path,
         excluded_top_level=frozenset({".git", ".gitnexus"}),
         deadline=deadline,
@@ -1881,6 +1921,7 @@ def collect_tracked_snapshot(
     _check_deadline(deadline)
     return TrackedSnapshot(
         head=head,
+        branch=branch,
         tracked_dirty=bool(tracked_status),
         tracked_derived_present=tracked_derived_present,
         outside_derived_dirty=bool(outside_derived),
@@ -1889,7 +1930,228 @@ def collect_tracked_snapshot(
         outside_derived_status_digest=_canonical_digest(outside_derived),
         complete_status_digest=hashlib.sha256(complete_status).hexdigest(),
         worktree_state_digest=worktree_state_digest,
+        untracked_dirty=any(code == "??" for code, _path in _status_paths(complete_status)),
+        relevant_content_digest=relevant_content_digest,
     )
+
+
+def _checkout_kind(root: pathlib.Path) -> str:
+    try:
+        marker = (root / ".git").lstat()
+    except OSError as exc:
+        raise GitNexusAdapterError("repository Git marker cannot classify checkout") from exc
+    if stat.S_ISDIR(marker.st_mode):
+        return "primary"
+    if stat.S_ISREG(marker.st_mode) and not stat.S_ISLNK(marker.st_mode):
+        return "linked-worktree"
+    raise GitNexusAdapterError("repository Git marker cannot classify checkout")
+
+
+def _dirty_classification(snapshot: TrackedSnapshot) -> str:
+    if snapshot.tracked_dirty and snapshot.untracked_dirty:
+        return "dirty-mixed"
+    if snapshot.tracked_dirty:
+        return "dirty-tracked"
+    if snapshot.untracked_dirty or snapshot.outside_derived_dirty:
+        return "dirty-untracked"
+    return "clean"
+
+
+def _lifecycle_context(repository: RepositoryState, checkout_kind: str) -> str:
+    if repository.branch is None:
+        return "detached"
+    if checkout_kind == "linked-worktree":
+        return "linked-worktree"
+    if repository.branch == "main":
+        return "primary-main"
+    return "primary-branch"
+
+
+def _index_alias(
+    repository: RepositoryState,
+    snapshot: TrackedSnapshot,
+    lifecycle: str,
+) -> str:
+    return "-".join(
+        (
+            "codex-gn1",
+            lifecycle,
+            repository.identity["worktree_id_digest"][:12],
+            repository.head[:12],
+            snapshot.relevant_content_digest[:12],
+        )
+    )
+
+
+def build_index_identity(
+    repository: RepositoryState,
+    snapshot: TrackedSnapshot,
+    qualification: ExecutableQualification,
+    *,
+    metadata_digest: str,
+    indexed_at: str,
+    observed_at: str,
+    deadline: float | None = None,
+) -> dict[str, Any]:
+    """Build one versioned, non-authoritative exact/advisory index identity."""
+    _validated_repository_state_identity(repository)
+    verify_qualification(qualification, deadline=deadline)
+    if snapshot.head != repository.head:
+        raise GitNexusAdapterError("index identity snapshot HEAD conflicts with repository")
+    if snapshot.branch != repository.branch:
+        raise GitNexusAdapterError(
+            "index identity snapshot branch conflicts with repository"
+        )
+    for label, digest in (
+        ("metadata", metadata_digest),
+        ("tracked state", snapshot.tracked_state_digest),
+        ("complete status", snapshot.complete_status_digest),
+        ("worktree state", snapshot.worktree_state_digest),
+        ("relevant content", snapshot.relevant_content_digest),
+    ):
+        if not SHA256_RE.fullmatch(digest):
+            raise GitNexusAdapterError(f"index identity {label} digest is invalid")
+    try:
+        indexed_time = dt.datetime.fromisoformat(indexed_at.replace("Z", "+00:00"))
+        observed_time = dt.datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+        if indexed_time.tzinfo is None or observed_time.tzinfo is None:
+            raise ValueError
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise GitNexusAdapterError("index identity freshness time is invalid") from exc
+    checkout_kind = _checkout_kind(repository.root)
+    lifecycle = _lifecycle_context(repository, checkout_kind)
+    content_state = _dirty_classification(snapshot)
+    exact_eligible = (
+        content_state == "clean"
+        and repository.branch is not None
+        and not snapshot.tracked_derived_present
+    )
+    alias = _index_alias(repository, snapshot, lifecycle)
+    config_digest = _canonical_digest(
+        {
+            "argv": ["analyze", "--index-only", "--name", alias, str(repository.root)],
+            "required_flags": sorted(REQUIRED_ANALYZE_FLAGS),
+            "metadata_schema": META_SCHEMA_VERSION,
+        }
+    )
+    body = {
+        "contract_version": INDEX_IDENTITY_CONTRACT_VERSION,
+        "kind": "gitnexus-index-identity",
+        "repository": {
+            "canonical_repository_id": repository.canonical_repository_id,
+            "canonical_remote": repository.canonical_remote,
+            "repository_identity_digest": repository.identity["repository_identity_digest"],
+        },
+        "checkout": {
+            "checkout_kind": checkout_kind,
+            "checkout_root_sha256": hashlib.sha256(
+                str(repository.root).encode("utf-8", "surrogateescape")
+            ).hexdigest(),
+            "worktree_id_digest": repository.identity["worktree_id_digest"],
+        },
+        "source": {
+            "head": repository.head,
+            "branch_state": "branch" if repository.branch is not None else "detached",
+            "branch": repository.branch,
+        },
+        "content": {
+            "state": content_state,
+            "tracked_state_digest": snapshot.tracked_state_digest,
+            "complete_status_digest": snapshot.complete_status_digest,
+            "worktree_state_digest": snapshot.worktree_state_digest,
+            "relevant_content_digest": snapshot.relevant_content_digest,
+        },
+        "lifecycle": {
+            "context": lifecycle,
+            "alias": alias,
+            "exact_eligible": exact_eligible,
+            "automatic_refresh_eligible": exact_eligible
+            and checkout_kind == "primary",
+        },
+        "tool": {
+            "driver_version": DRIVER_VERSION,
+            "gitnexus_version": qualification.version,
+            "qualification_fingerprint": qualification.fingerprint,
+            "metadata_schema": META_SCHEMA_VERSION,
+        },
+        "configuration": {"analyze_config_digest": config_digest},
+        "freshness": {
+            "status": "exact" if exact_eligible else "advisory",
+            "metadata_digest": metadata_digest,
+            "indexed_at": indexed_at,
+            "observed_at": observed_at,
+        },
+        "authority_invariants": {
+            "advisory_only": True,
+            "authorization_granted": False,
+            "review_satisfied": False,
+            "gate_satisfied": False,
+            "completion_proven": False,
+        },
+    }
+    return {**body, "index_identity_digest": _canonical_digest(body)}
+
+
+def build_pr_review_identity(
+    base_repository: RepositoryState,
+    base_snapshot: TrackedSnapshot,
+    head_repository: RepositoryState,
+    head_snapshot: TrackedSnapshot,
+    qualification: ExecutableQualification,
+    *,
+    observed_at: str,
+    deadline: float | None = None,
+) -> dict[str, Any]:
+    """Bind a clean committed PR base/head pair without granting review authority."""
+    if (
+        base_repository.canonical_repository_id != head_repository.canonical_repository_id
+        or base_repository.canonical_remote != head_repository.canonical_remote
+    ):
+        raise GitNexusAdapterError("PR review identities must use one canonical repository")
+    identities = []
+    for role, repository, snapshot in (
+        ("base", base_repository, base_snapshot),
+        ("head", head_repository, head_snapshot),
+    ):
+        identity = build_index_identity(
+            repository,
+            snapshot,
+            qualification,
+            metadata_digest="0" * 64,
+            indexed_at=observed_at,
+            observed_at=observed_at,
+            deadline=deadline,
+        )
+        if not identity["lifecycle"]["exact_eligible"]:
+            raise GitNexusAdapterError(f"PR review {role} identity must be clean and committed")
+        identities.append(
+            {
+                "role": role,
+                "head": repository.head,
+                "branch": repository.branch,
+                "alias": identity["lifecycle"]["alias"],
+                "worktree_id_digest": repository.identity["worktree_id_digest"],
+                "relevant_content_digest": snapshot.relevant_content_digest,
+                "index_identity_digest": identity["index_identity_digest"],
+            }
+        )
+    if identities[0]["alias"] == identities[1]["alias"]:
+        raise GitNexusAdapterError("PR review base and head aliases must be distinct")
+    body = {
+        "contract_version": PR_REVIEW_IDENTITY_CONTRACT_VERSION,
+        "kind": "gitnexus-pr-review-identity",
+        "canonical_repository_id": base_repository.canonical_repository_id,
+        "canonical_remote": base_repository.canonical_remote,
+        "observed_at": observed_at,
+        "identities": identities,
+        "authority_invariants": {
+            "advisory_only": True,
+            "review_satisfied": False,
+            "gate_satisfied": False,
+            "completion_proven": False,
+        },
+    }
+    return {**body, "pr_review_identity_digest": _canonical_digest(body)}
 
 
 def _open_directory_nofollow(path: pathlib.Path) -> int:
@@ -1942,6 +2204,155 @@ def _read_regular_at(
         return result
     finally:
         os.close(descriptor)
+
+
+def _load_index_identity_at(
+    directory_fd: int,
+    *,
+    deadline: float | None = None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    try:
+        raw = _read_regular_at(
+            directory_fd,
+            INDEX_IDENTITY_FILENAME,
+            maximum_bytes=MAX_INDEX_IDENTITY_BYTES,
+            deadline=deadline,
+        )
+    except FileNotFoundError:
+        return None, "index-identity-evidence-missing"
+    except ProbeDeadlineError:
+        raise
+    except (GitNexusAdapterError, OSError):
+        return None, "index-identity-evidence-unreadable"
+
+    def reject_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate key")
+            result[key] = value
+        return result
+
+    try:
+        value = json.loads(
+            raw.decode("utf-8"), object_pairs_hook=reject_duplicates
+        )
+    except (UnicodeError, json.JSONDecodeError, ValueError, RecursionError):
+        return None, "index-identity-evidence-invalid"
+    if not isinstance(value, dict):
+        return None, "index-identity-evidence-invalid"
+    return value, None
+
+
+def _validate_index_identity(
+    value: Mapping[str, Any],
+    repository: RepositoryState,
+    snapshot: TrackedSnapshot,
+    qualification: ExecutableQualification,
+    *,
+    metadata_digest: str,
+    indexed_at: str,
+    deadline: float | None = None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    try:
+        freshness = value.get("freshness")
+        if not isinstance(freshness, dict):
+            raise GitNexusAdapterError("index identity freshness is missing")
+        observed_at = freshness.get("observed_at")
+        if not isinstance(observed_at, str):
+            raise GitNexusAdapterError("index identity observed time is missing")
+        expected = build_index_identity(
+            repository,
+            snapshot,
+            qualification,
+            metadata_digest=metadata_digest,
+            indexed_at=indexed_at,
+            observed_at=observed_at,
+            deadline=deadline,
+        )
+    except (GitNexusAdapterError, OSError, TypeError, ValueError):
+        return None, "index-identity-evidence-invalid"
+    if dict(value) != expected:
+        try:
+            content = value.get("content")
+            if (
+                isinstance(content, dict)
+                and content.get("relevant_content_digest")
+                != snapshot.relevant_content_digest
+            ):
+                return None, "index-identity-content-mismatch"
+            source = value.get("source")
+            if isinstance(source, dict) and source.get("head") != repository.head:
+                return None, "index-identity-head-mismatch"
+            checkout = value.get("checkout")
+            if (
+                isinstance(checkout, dict)
+                and checkout.get("worktree_id_digest")
+                != repository.identity["worktree_id_digest"]
+            ):
+                return None, "index-identity-worktree-mismatch"
+            tool = value.get("tool")
+            if (
+                isinstance(tool, dict)
+                and tool.get("qualification_fingerprint")
+                != qualification.fingerprint
+            ):
+                return None, "index-identity-tool-mismatch"
+        except (KeyError, TypeError):
+            pass
+        return None, "index-identity-evidence-mismatch"
+    if expected["freshness"]["status"] != "exact":
+        return None, "index-identity-not-exact"
+    return expected, None
+
+
+def _write_index_identity(
+    index_directory: pathlib.Path,
+    identity: Mapping[str, Any],
+) -> None:
+    raw = json.dumps(
+        dict(identity), sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    if len(raw) > MAX_INDEX_IDENTITY_BYTES:
+        raise GitNexusAdapterError("index identity evidence exceeds its safety bound")
+    directory_fd = _open_directory_nofollow(index_directory)
+    temporary = f".{INDEX_IDENTITY_FILENAME}.tmp-{os.getpid()}-{threading.get_ident()}"
+    descriptor: int | None = None
+    created = False
+    try:
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_CLOEXEC", 0)
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        descriptor = os.open(temporary, flags, 0o600, dir_fd=directory_fd)
+        created = True
+        written = 0
+        while written < len(raw):
+            count = os.write(descriptor, raw[written:])
+            if count <= 0:
+                raise OSError(errno.EIO, "short write")
+            written += count
+        os.fsync(descriptor)
+        os.close(descriptor)
+        descriptor = None
+        os.replace(
+            temporary,
+            INDEX_IDENTITY_FILENAME,
+            src_dir_fd=directory_fd,
+            dst_dir_fd=directory_fd,
+        )
+        created = False
+        os.fsync(directory_fd)
+    except OSError as exc:
+        raise GitNexusAdapterError("index identity evidence cannot be written safely") from exc
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+        if created:
+            try:
+                os.unlink(temporary, dir_fd=directory_fd)
+            except OSError:
+                pass
+        os.close(directory_fd)
 
 
 def _load_metadata_at(
@@ -2210,12 +2621,71 @@ def assess_metadata(
     _check_deadline(deadline)
     if snapshot.head != repository.head:
         return MetadataResult("unknown", "caller-snapshot-head-conflict", indexed, digest, metadata)
+    if snapshot.branch != repository.branch:
+        return MetadataResult(
+            "unknown", "caller-snapshot-branch-conflict", indexed, digest, metadata
+        )
     if snapshot.tracked_dirty or snapshot.outside_derived_dirty:
         return MetadataResult("stale", "working-tree-dirty", indexed, digest, metadata)
     if indexed != repository.head:
         return MetadataResult("stale", "indexed-revision-stale", indexed, digest, metadata)
+    try:
+        directory_fd = _open_directory_nofollow(index_directory)
+    except OSError:
+        return MetadataResult(
+            "unknown", "index-identity-directory-unavailable", indexed, digest, metadata
+        )
+    try:
+        identity, identity_reason = _load_index_identity_at(
+            directory_fd, deadline=deadline
+        )
+    finally:
+        os.close(directory_fd)
+    if identity_reason is not None or identity is None:
+        return MetadataResult(
+            "stale", identity_reason or "index-identity-evidence-missing", indexed, digest, metadata
+        )
+    validated_identity, identity_reason = _validate_index_identity(
+        identity,
+        repository,
+        snapshot,
+        qualification,
+        metadata_digest=digest,
+        indexed_at=metadata["indexedAt"],
+        deadline=deadline,
+    )
+    if identity_reason is not None or validated_identity is None:
+        return MetadataResult(
+            "stale", identity_reason or "index-identity-evidence-invalid", indexed, digest, metadata
+        )
     _check_deadline(deadline)
-    return MetadataResult("fresh", "exact-clean-revision", indexed, digest, metadata)
+    return MetadataResult(
+        "fresh", "exact-clean-content", indexed, digest, metadata, validated_identity
+    )
+
+
+def _assess_metadata_before_identity_write(
+    repository: RepositoryState,
+    snapshot: TrackedSnapshot,
+    qualification: ExecutableQualification,
+    *,
+    deadline: float | None = None,
+) -> MetadataResult:
+    """Accept only a fully valid clean revision whose Codex sidecar is absent/stale."""
+    result = assess_metadata(
+        repository, snapshot, qualification, deadline=deadline
+    )
+    if result.state == "fresh":
+        return result
+    if result.state == "stale" and result.reason.startswith("index-identity-"):
+        return MetadataResult(
+            "fresh",
+            "qualified-metadata-clean-revision",
+            result.indexed_revision,
+            result.metadata_digest,
+            result.metadata,
+        )
+    return result
 
 
 def build_handshake(
@@ -3014,7 +3484,8 @@ class RefreshController:
                 raise GitNexusAdapterError(
                     "refresh repository state changed during preflight"
                 )
-            alias = f"codex-v2c-{repository.identity['repository_identity_digest'][:12]}-{repository.identity['worktree_id_digest'][:12]}"
+            lifecycle = _lifecycle_context(repository, _checkout_kind(root))
+            alias = _index_alias(repository, before, lifecycle)
             argv = [
                 *_qualified_argv(
                     self.qualification.executable,
@@ -3130,7 +3601,7 @@ class RefreshController:
                     before_git_control_digest=before_git_control_digest,
                     after_git_control_digest=after_git_control_digest,
                 )
-            metadata = assess_metadata(
+            metadata = _assess_metadata_before_identity_write(
                 after_repository, after, self.qualification, deadline=deadline
             )
             if (
@@ -3144,6 +3615,89 @@ class RefreshController:
                 return self._receipt(
                     "failed", f"post-refresh-metadata-{metadata.state}", repository, before, after, argv,
                     metadata, before_git_control_digest, after_git_control_digest,
+                )
+            assert metadata.metadata_digest is not None and metadata.metadata is not None
+            try:
+                observed_at = dt.datetime.now(dt.timezone.utc).isoformat().replace(
+                    "+00:00", "Z"
+                )
+                index_identity = build_index_identity(
+                    after_repository,
+                    after,
+                    self.qualification,
+                    metadata_digest=metadata.metadata_digest,
+                    indexed_at=metadata.metadata["indexedAt"],
+                    observed_at=observed_at,
+                    deadline=deadline,
+                )
+                _write_index_identity(root / ".gitnexus", index_identity)
+            except (GitNexusAdapterError, OSError, KeyError, TypeError):
+                self.auto_capability_enabled = False
+                return self._receipt(
+                    "failed", "post-refresh-index-identity-invalid", repository,
+                    before, after, argv, metadata, before_git_control_digest,
+                    after_git_control_digest,
+                )
+            try:
+                _validate_derived_index_tree(root, deadline=deadline)
+                final_repository = collect_repository_state(
+                    root,
+                    canonical_repository_id=repository.canonical_repository_id,
+                    expected_remote=repository.canonical_remote,
+                    principal_scope=repository.identity["principal_scope"],
+                    path_scope=repository.identity["path_scope"],
+                    deadline=deadline,
+                    git_executable=self.git_executable,
+                )
+                final_snapshot = collect_tracked_snapshot(
+                    root, deadline=deadline, git_executable=self.git_executable
+                )
+                final_git_control_digest = _git_control_snapshot(
+                    root,
+                    require_exclusion=True,
+                    deadline=deadline,
+                    git_executable=self.git_executable,
+                )
+                _validate_derived_index_tree(root, deadline=deadline)
+                verify_qualification(self.qualification, deadline=deadline)
+            except (GitNexusAdapterError, OSError):
+                self.auto_capability_enabled = False
+                return self._receipt(
+                    "failed", "postcondition-unknown:final-index-identity-check",
+                    repository, before, None, argv, metadata,
+                    before_git_control_digest, after_git_control_digest,
+                )
+            if (
+                not _repository_state_matches(after_repository, final_repository)
+                or final_snapshot != after
+                or final_git_control_digest != after_git_control_digest
+            ):
+                self.auto_capability_enabled = False
+                return self._receipt(
+                    "failed", "unexpected-repository-mutation", repository,
+                    before, final_snapshot, argv, metadata,
+                    before_git_control_digest, final_git_control_digest,
+                )
+            after_repository = final_repository
+            after = final_snapshot
+            after_git_control_digest = final_git_control_digest
+            try:
+                metadata = assess_metadata(
+                    after_repository, after, self.qualification, deadline=deadline
+                )
+            except (GitNexusAdapterError, OSError, KeyError, TypeError):
+                self.auto_capability_enabled = False
+                return self._receipt(
+                    "failed", "post-refresh-index-identity-invalid", repository,
+                    before, after, argv, metadata, before_git_control_digest,
+                    after_git_control_digest,
+                )
+            if metadata.state != "fresh" or metadata.index_identity is None:
+                self.auto_capability_enabled = False
+                return self._receipt(
+                    "failed", f"post-refresh-metadata-{metadata.state}", repository,
+                    before, after, argv, metadata, before_git_control_digest,
+                    after_git_control_digest,
                 )
             return self._receipt(
                 "refreshed", "qualified-index-adoptable", repository, before, after, argv,
@@ -3182,6 +3736,10 @@ class RefreshController:
             "before_git_control_digest": before_git_control_digest,
             "after_git_control_digest": after_git_control_digest,
             "indexed_revision": metadata.indexed_revision if metadata else None,
+            "index_identity_digest": (
+                metadata.index_identity["index_identity_digest"]
+                if metadata and metadata.index_identity else None
+            ),
             "authority_invariants": {
                 "derived_local_operation_only": True,
                 "memory_payload_authorized_refresh": False,
@@ -3369,6 +3927,14 @@ def operator_main(argv: Sequence[str] | None = None) -> int:
                         "branch": repository.branch,
                         "indexed_revision": metadata.indexed_revision,
                         "metadata_digest": metadata.metadata_digest,
+                        "index_identity_digest": (
+                            metadata.index_identity["index_identity_digest"]
+                            if metadata.index_identity else None
+                        ),
+                        "index_lifecycle": (
+                            metadata.index_identity["lifecycle"]
+                            if metadata.index_identity else None
+                        ),
                         "handshake": build_handshake(
                             qualification,
                             metadata,

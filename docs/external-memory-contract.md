@@ -185,6 +185,34 @@ and classified as `fresh`, `stale`, `missing`, `partial`, `unsupported`,
 `incompatible`, `corrupt`, or `unknown`. Every state other than an exact clean
 fresh match fails closed to no memory.
 
+### Exact Index Identity v1
+
+GN-FU-01 adds `gitnexus-index-identity/v1` beside, rather than inside,
+GitNexus schema-5 metadata. The Codex-owned sidecar is written below the ignored
+derived-index root only after a qualified refresh passes native metadata and
+repository postconditions. Its canonical digest binds canonical repository and
+remote, repository/worktree identity digests, checkout-root digest, primary or
+linked kind, branch/detached state, HEAD, tracked/status/worktree and portable
+relevant-content digests, clean/dirty classification, lifecycle context and
+alias, driver/GitNexus/schema/qualification identity, exact analyze
+configuration, metadata digest, indexed time, and observation time.
+
+Normal status and hooks require the complete sidecar to match recomputed live
+evidence before returning `fresh/exact-clean-content`. Metadata with no v1
+sidecar is explicitly stale/advisory. Dirty tracked, untracked, mixed, detached,
+ignored-content-drifted, cross-worktree, cross-branch/HEAD, tool-drifted, or
+configuration-drifted evidence is never exact. Primary `main`, primary issue
+branches, linked worktrees, and clean PR base/head pairs use distinct aliases.
+The library-only `build_pr_review_identity()` builder emits the separately
+versioned `gitnexus-pr-review-identity/v1` document. It accepts two clean,
+committed snapshots from the same canonical repository and binds each role's
+HEAD, branch, alias, worktree identity, relevant-content digest, and derived
+index-identity digest. There is no operator, persistence, or supplied-document
+adoption path: a consumer must recompute the pair from live qualified inputs
+and compare `pr_review_identity_digest`. The document does not prove that
+review occurred. Every identity retains false authority invariants for
+authorization, review, gates, and completion.
+
 ## Safe Derived-Index Refresh
 
 Refresh is a separate, explicit local operation. It is disabled by default,
