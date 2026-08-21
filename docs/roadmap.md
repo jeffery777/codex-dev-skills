@@ -65,9 +65,11 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   tool/configuration, and freshness; and makes old or missing sidecars
   explicitly advisory. Linked-worktree automatic refresh and remote-only merge
   advancement remain fail-closed. GitNexus remains non-authoritative.
-- Historical wrapper cleanup: inventory tests and documents that still require
-  `desktop_runtime_*`, define a compatibility sunset, then archive or remove
-  them without connecting them to the active native path.
+- Issue #163 owns the v0.16.3 patch that freezes and quarantines the historical
+  compatibility evidence: the `desktop_runtime_*` wrapper V1 surface remains behind a strict machine-readable
+  inventory, active-consumer guardrail, and explicit sunset criteria. Physical
+  archive or deletion remains a later separately reviewed and explicitly
+  authorized destructive slice.
 - Global profile synchronization follows the accepted Loop Engineering V1
   authority, goal, subagent, and human-gate contract. The separate global
   profile repository should not be edited in issue #81.

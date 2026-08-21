@@ -259,13 +259,15 @@ review, and accepted platform state where applicable.
 
 ## Historical Wrapper Evidence
 
-The `desktop_runtime_*` scripts and
+The historical `desktop_runtime_*` scripts and
 [Desktop runtime wrapper V1 plan](desktop-runtime-wrapper-v1-plan.md) are
 retained for regression and migration analysis only. They are not the active
 Loop Engineering path and active skills must not import, execute, or recommend
 them. If a future maintainer studies them, their recorded `thread_id` or
 `pendingWorktreeId` response shapes must not override the active callable
-schema.
+schema. The [V1 deprecation contract](desktop-runtime-wrapper-v1-deprecation.md)
+owns the strict inventory, active-reference quarantine, and separately
+authorized sunset gate.
 
 ## Safety Boundary
 

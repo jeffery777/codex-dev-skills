@@ -548,7 +548,11 @@ implement a native capability call.
 The native loop core and its adapters must not import or execute legacy Desktop
 wrapper helpers. Current callable schemas and call-site validation govern native
 operations. Historical tests may remain isolated until a separately reviewed
-cleanup removes or archives them.
+cleanup removes or archives them. The canonical source repository's V1
+deprecation contract and machine-readable inventory prevent new active
+consumers and define the exact evidence required before that destructive
+cleanup can be proposed; those maintainer-only guardrails are not plugin
+entrypoints.
 
 ## References
 

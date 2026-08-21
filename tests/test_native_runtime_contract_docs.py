@@ -305,12 +305,10 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "python3 scripts/desktop_runtime_evidence_pipeline.py",
             pipeline_section,
         )
-        self.assertEqual(
-            4,
-            pipeline_section.count(
-                "./scripts/project-python "
-                "scripts/desktop_runtime_evidence_pipeline.py"
-            ),
+        self.assertNotIn(
+            "./scripts/project-python "
+            "scripts/desktop_runtime_evidence_pipeline.py",
+            pipeline_section,
         )
 
     def test_worktree_python_environment_contract_covers_desktop_and_cli(self) -> None:
