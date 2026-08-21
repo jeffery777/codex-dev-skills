@@ -1389,7 +1389,7 @@ class RuntimeGroupInstallerTests(unittest.TestCase):
                 self.assertEqual(local_edit, backup_marker.read_text(encoding="utf-8"))
                 state_dir = self.root / f"{home_name}-state" / "codex-dev-skills"
                 self.assertIn(
-                    '"version":"0.16.0","action":"update"',
+                    '"version":"0.16.1","action":"update"',
                     (state_dir / "installed.jsonl").read_text(encoding="utf-8"),
                 )
                 if target_kind.startswith("profile-receipt"):
@@ -1679,7 +1679,7 @@ class RuntimeGroupInstallerTests(unittest.TestCase):
         )
         self.assertFalse(backup_b.exists())
         self.assertIn(
-            '"version":"0.16.0","action":"update"',
+            '"version":"0.16.1","action":"update"',
             (self.root / "cross-state-A" / "codex-dev-skills" / "installed.jsonl").read_text(encoding="utf-8"),
         )
         self.assertFalse(

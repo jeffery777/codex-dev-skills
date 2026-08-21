@@ -21,9 +21,10 @@ through Issue #147 / PR #148. v0.14.2 published the installer-backup isolation
 hotfix through Issue #151 / PR #152. v0.15.0 published lower-overhead agent
 coordination guidance and a Terra-high `senior` routing tier through Issue #153
 / PR #154. v0.15.1 published the CLI/Desktop/GitHub control-plane compatibility
-patch through Issue #155. The v0.16.0 candidate through Issue #157 adds the
-exact GitNexus index lifecycle and content-bound evidence identity without
-changing the M0/M1 feature or authority baseline.
+patch through Issue #155. v0.16.0 published the exact GitNexus index lifecycle
+and content-bound evidence identity through Issue #157. The v0.16.1 candidate
+through Issue #159 makes qualification and refresh share one configured,
+bounded deadline without changing the M0/M1 feature or authority baseline.
 V3-B remains the released evaluation baseline from v0.13.0.
 The v0.12.1 compatibility patch through Issue #139 updated Desktop/CLI runtime
 adapters and repository verification before V3-B without changing shared
@@ -807,6 +808,18 @@ a new, empty, pre-created machine-local home and two independent opt-in flags:
 ./scripts/project-python "$ADAPTER" disable
 ```
 
+Standalone `qualify` and `status` qualification retain the 10-second default
+and `1..300` standalone limit. A `refresh` first validates its existing
+`--timeout-seconds` value (`1..3600`, 120 by default), creates one monotonic
+deadline, and charges executable qualification, repository preflight,
+controller execution, and postconditions to that same budget. The deadline is
+never reset between phases; detected absolute-budget expiry is
+`probe-deadline-expired` and no index is adopted. The analyze runner receives a
+bounded slice that reserves time for postconditions; exhausting that slice
+before the absolute deadline remains `refresh-timeout` and is also fail closed.
+Auto-on-demand hooks use the configured refresh deadline in
+the same way, while notify-only hooks retain standalone qualification limits.
+
 `--executable` and the caller-owned accepted entry/package digests are mandatory
 and never fall back to ambient `PATH` or tool self-report. `--package-root`
 must be a canonical machine-local directory containing the resolved entry; its
@@ -954,7 +967,10 @@ ignore system/global Git configuration, and use `GIT_NO_LAZY_FETCH=1` to
 prevent implicit promisor remote/helper access. Probe output and time are
 bounded. macOS arm64
 has live qualification evidence;
-Linux coverage is fixture-based portability evidence, not a live qualification.
+Linux coverage in the repository remains deterministic fixture-based
+portability evidence. The v0.16.1 release gate separately requires a bounded
+released-artifact requalification on Rocky Linux 9.8; that external run does
+not grant GitNexus authority or replace repository verification.
 
 The complete-snapshot safety envelope supports at most 250,000 filesystem
 entries, directory depth 256, and 512 MiB per regular file, all within the
@@ -1209,8 +1225,8 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.16.0.md` contains the current v0.16.0 release notes (release candidate);
-`docs/release-notes-v0.15.1.md` and `docs/release-notes-v0.15.0.md` record published releases;
+`docs/release-notes-v0.16.1.md` contains the current v0.16.1 release notes (release candidate);
+`docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
 `docs/release-notes-v0.14.2.md`, `docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and
 `docs/release-notes-v0.1.0.md` remain historical point-in-time records.

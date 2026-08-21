@@ -216,7 +216,7 @@ class AgentProfileInstallerTests(unittest.TestCase):
         installed_state = state_dir / "installed.jsonl"
         installed_state.write_text(
             installed_state.read_text(encoding="utf-8").replace(
-                '"version":"0.16.0"', '"version":"0.14.2"'
+                '"version":"0.16.1"', '"version":"0.14.2"'
             ),
             encoding="utf-8",
         )
@@ -233,7 +233,7 @@ class AgentProfileInstallerTests(unittest.TestCase):
             receipt.read_text(encoding="utf-8"),
         )
         self.assertIn(
-            '"version":"0.16.0","action":"update"',
+            '"version":"0.16.1","action":"update"',
             installed_state.read_text(encoding="utf-8"),
         )
 

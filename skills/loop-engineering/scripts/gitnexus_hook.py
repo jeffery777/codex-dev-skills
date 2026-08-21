@@ -21,7 +21,7 @@ from typing import Any, Mapping, Sequence
 import gitnexus_adapter
 
 
-HOOK_DRIVER_VERSION = "gitnexus-v2c-b-hook/2"
+HOOK_DRIVER_VERSION = "gitnexus-v2c-b-hook/3"
 CONFIG_SCHEMA_VERSION = 1
 MAX_INPUT_BYTES = 64 * 1024
 MAX_CONFIG_BYTES = 64 * 1024
@@ -323,10 +323,21 @@ def _read_hook_input(stream: Any) -> dict[str, Any]:
     return document
 
 
-def _qualify(config: HookConfig) -> gitnexus_adapter.ExecutableQualification:
+def _qualify(
+    config: HookConfig,
+    *,
+    deadline: float | None = None,
+) -> gitnexus_adapter.ExecutableQualification:
     values = config.qualification
-    return gitnexus_adapter.qualify_executable(
+    qualify = (
+        gitnexus_adapter.qualify_executable
+        if deadline is None
+        else gitnexus_adapter._qualify_executable_until
+    )
+    deadline_arguments = {} if deadline is None else {"deadline": deadline}
+    return qualify(
         values["executable"],
+        **deadline_arguments,
         allow_symlink=values["allow_symlink"],
         runtime_path=values["node_executable"],
         allow_runtime_symlink=values["allow_node_symlink"],
@@ -341,8 +352,10 @@ def _validate_cwd(
     document: Mapping[str, Any],
     root: pathlib.Path,
     *,
+    deadline: float | None = None,
     git_executable: str | os.PathLike[str] | None = None,
 ) -> None:
+    gitnexus_adapter._check_deadline(deadline)
     try:
         cwd = pathlib.Path(document["cwd"])
         if not cwd.is_absolute():
@@ -356,8 +369,10 @@ def _validate_cwd(
         raise GitNexusHookError("hook-cwd-outside-repository") from exc
     try:
         owning_root = gitnexus_adapter.resolve_checkout_root(
-            resolved, git_executable=git_executable
+            resolved, deadline=deadline, git_executable=git_executable
         )
+    except gitnexus_adapter.ProbeDeadlineError:
+        raise
     except gitnexus_adapter.GitNexusAdapterError as exc:
         raise GitNexusHookError("hook-cwd-checkout-unverified") from exc
     if owning_root != configured_root:
@@ -379,8 +394,13 @@ def _is_linked_worktree(root: pathlib.Path) -> bool:
 
 
 def _validate_control_directory(
-    path: pathlib.Path, *, root: pathlib.Path, label: str
+    path: pathlib.Path,
+    *,
+    root: pathlib.Path,
+    label: str,
+    deadline: float | None = None,
 ) -> pathlib.Path:
+    gitnexus_adapter._check_deadline(deadline)
     _reject_symlink_components(path, label=label)
     try:
         inspected = path.stat()
@@ -398,18 +418,23 @@ def _validate_control_directory(
         raise GitNexusHookError(f"{label}-permissions-unsafe")
     if hasattr(os, "geteuid") and inspected.st_uid != os.geteuid():
         raise GitNexusHookError(f"{label}-owner-mismatch")
+    gitnexus_adapter._check_deadline(deadline)
     return resolved
 
 
-def _create_isolated_home(parent: pathlib.Path, *, root: pathlib.Path) -> pathlib.Path:
+def _create_isolated_home(
+    parent: pathlib.Path, *, root: pathlib.Path, deadline: float | None = None
+) -> pathlib.Path:
     safe_parent = _validate_control_directory(
-        parent, root=root, label="refresh-home-parent"
+        parent, root=root, label="refresh-home-parent", deadline=deadline
     )
     try:
+        gitnexus_adapter._check_deadline(deadline)
         created = pathlib.Path(
             tempfile.mkdtemp(prefix="gitnexus-v2c-b-", dir=safe_parent)
         )
         created.chmod(0o700)
+        gitnexus_adapter._check_deadline(deadline)
         return created
     except OSError as exc:
         raise GitNexusHookError("refresh-home-create-failed") from exc
@@ -420,11 +445,12 @@ def _failure_marker(
     *,
     root: pathlib.Path,
     repository_identity_digest: str,
+    deadline: float | None = None,
 ) -> pathlib.Path:
     if not gitnexus_adapter.SHA256_RE.fullmatch(repository_identity_digest):
         raise GitNexusHookError("repository-identity-digest-invalid")
     safe_parent = _validate_control_directory(
-        parent, root=root, label="refresh-home-parent"
+        parent, root=root, label="refresh-home-parent", deadline=deadline
     )
     return safe_parent / f".codex-v2c-b-auto-disabled-{repository_identity_digest}.json"
 
@@ -545,22 +571,34 @@ def _adapter_error_code(error: BaseException) -> str:
 
 def evaluate_hook(config: HookConfig, document: Mapping[str, Any]) -> dict[str, Any] | None:
     event = document["hook_event_name"]
+    refresh_deadline = (
+        gitnexus_adapter._refresh_deadline(config.refresh["timeout_seconds"])
+        if config.mode == "auto-on-demand" and config.refresh is not None
+        else None
+    )
     _validate_cwd(
         document,
         config.repository_root,
+        deadline=refresh_deadline,
         git_executable=config.git_executable,
     )
-    qualification = _qualify(config)
+    qualification = _qualify(config, deadline=refresh_deadline)
+    gitnexus_adapter._check_deadline(refresh_deadline)
     repository = gitnexus_adapter.collect_repository_state(
         config.repository_root,
         canonical_repository_id=config.repository_id,
         expected_remote=config.expected_remote,
+        deadline=refresh_deadline,
         git_executable=config.git_executable,
     )
     snapshot = gitnexus_adapter.collect_tracked_snapshot(
-        repository.root, git_executable=config.git_executable
+        repository.root,
+        deadline=refresh_deadline,
+        git_executable=config.git_executable,
     )
-    metadata = gitnexus_adapter.assess_metadata(repository, snapshot, qualification)
+    metadata = gitnexus_adapter.assess_metadata(
+        repository, snapshot, qualification, deadline=refresh_deadline
+    )
     if metadata.state == "fresh":
         return None
 
@@ -581,6 +619,7 @@ def evaluate_hook(config: HookConfig, document: Mapping[str, Any]) -> dict[str, 
         and (revision_changed or metadata.state == "missing")
     )
     if refresh_eligible:
+        gitnexus_adapter._check_deadline(refresh_deadline)
         if _is_linked_worktree(repository.root):
             return _additional_context(
                 event,
@@ -588,21 +627,36 @@ def evaluate_hook(config: HookConfig, document: Mapping[str, Any]) -> dict[str, 
                 "Keep its advisory index separate from the primary checkout, and refresh "
                 "the updated primary checkout after merge instead of writing its index from here.",
             )
+        gitnexus_adapter._check_deadline(refresh_deadline)
         assert config.refresh is not None
         marker = _failure_marker(
             config.refresh["gitnexus_home_parent"],
             root=repository.root,
             repository_identity_digest=repository.identity["repository_identity_digest"],
+            deadline=refresh_deadline,
         )
+        gitnexus_adapter._check_deadline(refresh_deadline)
         if _failure_marker_exists(marker):
             return _additional_context(
                 event,
                 "GitNexus automatic refresh remains disabled after a prior failure. "
                 "The stale index must not be used; operator inspection and explicit circuit-breaker clearance are required.",
             )
-        isolated_home = _create_isolated_home(
-            config.refresh["gitnexus_home_parent"], root=repository.root
-        )
+        gitnexus_adapter._check_deadline(refresh_deadline)
+        try:
+            isolated_home = _create_isolated_home(
+                config.refresh["gitnexus_home_parent"],
+                root=repository.root,
+                deadline=refresh_deadline,
+            )
+        except gitnexus_adapter.ProbeDeadlineError as exc:
+            _record_failure_marker(
+                marker,
+                repository=repository,
+                qualification=qualification,
+                reason=f"adapter-{_adapter_error_code(exc)}",
+            )
+            raise
         controller = gitnexus_adapter.RefreshController(
             qualification,
             enabled=True,
@@ -616,6 +670,7 @@ def evaluate_hook(config: HookConfig, document: Mapping[str, Any]) -> dict[str, 
                 repository,
                 expected_head=repository.head,
                 explicit_opt_in=True,
+                deadline=refresh_deadline,
             )
         except (gitnexus_adapter.GitNexusAdapterError, OSError) as exc:
             _record_failure_marker(

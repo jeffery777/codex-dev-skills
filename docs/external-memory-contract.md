@@ -263,6 +263,17 @@ case folding before filesystem identity checks, so an alias that is absent
 from the worktree cannot bypass preflight merely because `samefile()` has no
 existing object to compare.
 
+The standalone qualification interface retains its 10-second default and
+`1..300` validation. A refresh instead validates its existing `1..3600`
+timeout before contacting GitNexus and creates one absolute monotonic deadline.
+Executable/package/runtime qualification, repository preflight, the analyze
+runner, and all postconditions consume that same budget; the controller caps
+it again to its configured timeout and cannot reset or extend an earlier
+caller deadline. Detected absolute-budget expiry remains
+`probe-deadline-expired` and never adopts a partial index. The analyze runner's
+bounded slice reserves time for postconditions; slice exhaustion before the
+absolute deadline remains the distinct fail-closed `refresh-timeout` result.
+
 After execution, it rechecks the executable qualification, HEAD, repository
 identity, the complete worktree including untracked and ignored paths,
 protected paths, the complete local `.git` administrative tree, metadata
@@ -331,6 +342,11 @@ HEAD and explicit opt-in. The controller remains solely responsible for argv,
 environment, locking, qualification, repository preconditions, mutation
 detection, and metadata postconditions. Dirty, partial, incompatible, corrupt,
 unknown, identity-conflicted, or unsafe states never reach refresh.
+
+Auto-on-demand derives the shared deadline from its validated refresh config
+before qualification and passes the same value into `RefreshController`.
+Notify-only keeps standalone qualification timing. This timing contract does
+not weaken the circuit breaker or authorize retries after a failure.
 
 The configured repository root is one exact checkout. Primary-directory and
 linked-worktree configs therefore produce separate worktree identity digests

@@ -14,6 +14,7 @@ import datetime as dt
 import errno
 import hashlib
 import json
+import math
 import os
 import pathlib
 import re
@@ -35,7 +36,7 @@ import git_source
 import memory_contract
 
 
-DRIVER_VERSION = "gitnexus-v2c-a/3"
+DRIVER_VERSION = "gitnexus-v2c-a/4"
 INDEX_IDENTITY_CONTRACT_VERSION = "gitnexus-index-identity/v1"
 PR_REVIEW_IDENTITY_CONTRACT_VERSION = "gitnexus-pr-review-identity/v1"
 INDEX_IDENTITY_FILENAME = "codex-index-identity.json"
@@ -179,9 +180,45 @@ def _canonical_digest(value: Any) -> str:
     return memory_contract.canonical_digest(value)
 
 
+def _validated_deadline(deadline: float) -> float:
+    if (
+        isinstance(deadline, bool)
+        or not isinstance(deadline, (int, float))
+        or not math.isfinite(deadline)
+    ):
+        raise GitNexusAdapterError(
+            "deadline must be a finite monotonic timestamp"
+        )
+    return float(deadline)
+
+
 def _check_deadline(deadline: float | None) -> None:
-    if deadline is not None and time.monotonic() >= deadline:
-        raise ProbeDeadlineError()
+    if deadline is not None:
+        validated = _validated_deadline(deadline)
+        if time.monotonic() >= validated:
+            raise ProbeDeadlineError()
+
+
+def _validate_timeout_seconds(
+    timeout_seconds: int, *, label: str, maximum: int
+) -> None:
+    if (
+        isinstance(timeout_seconds, bool)
+        or not isinstance(timeout_seconds, int)
+        or not 1 <= timeout_seconds <= maximum
+    ):
+        raise GitNexusAdapterError(
+            f"{label} timeout must be an integer from 1 through {maximum} seconds"
+        )
+
+
+def _timeout_deadline(timeout_seconds: int, *, label: str, maximum: int) -> float:
+    _validate_timeout_seconds(timeout_seconds, label=label, maximum=maximum)
+    return time.monotonic() + timeout_seconds
+
+
+def _refresh_deadline(timeout_seconds: int) -> float:
+    return _timeout_deadline(timeout_seconds, label="refresh", maximum=3_600)
 
 
 def _sha256_file(path: pathlib.Path, *, deadline: float | None = None) -> str:
@@ -776,24 +813,22 @@ def _qualified_argv(
     return [*prefix, *arguments]
 
 
-def qualify_executable(
+def _qualify_executable_until(
     configured_path: str | os.PathLike[str] | None,
     *,
+    deadline: float,
     allow_symlink: bool = False,
     runtime_path: str | os.PathLike[str] | None = None,
     allow_runtime_symlink: bool = False,
     runner: Runner | None = None,
     environment: Mapping[str, str] | None = None,
-    timeout_seconds: int = 10,
     package_root: str | os.PathLike[str] | None = None,
     accepted_executable_sha256: str | None = None,
     accepted_package_sha256: str | None = None,
     accepted_runtime_sha256: str | None = None,
 ) -> ExecutableQualification:
-    """Bind exact executable bytes, version, observed flags, and driver schema."""
-    if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, int) or not 1 <= timeout_seconds <= 300:
-        raise GitNexusAdapterError("qualification timeout must be an integer from 1 through 300 seconds")
-    deadline = time.monotonic() + timeout_seconds
+    """Bind qualification under a caller-owned, already bounded deadline."""
+    _check_deadline(deadline)
     run_process = runner or _run_adapter_subprocess
     executable, symlink_policy = discover_executable(configured_path, allow_symlink=allow_symlink)
     before_digest, before_identity = _executable_identity(executable, deadline=deadline)
@@ -903,6 +938,39 @@ def qualify_executable(
         package_tree_sha256=after_package_digest,
         package_stat_identity=after_package_identity,
         trusted_provenance_digest=trusted_provenance_digest,
+    )
+
+
+def qualify_executable(
+    configured_path: str | os.PathLike[str] | None,
+    *,
+    allow_symlink: bool = False,
+    runtime_path: str | os.PathLike[str] | None = None,
+    allow_runtime_symlink: bool = False,
+    runner: Runner | None = None,
+    environment: Mapping[str, str] | None = None,
+    timeout_seconds: int = 10,
+    package_root: str | os.PathLike[str] | None = None,
+    accepted_executable_sha256: str | None = None,
+    accepted_package_sha256: str | None = None,
+    accepted_runtime_sha256: str | None = None,
+) -> ExecutableQualification:
+    """Bind exact executable bytes under the standalone qualification limit."""
+    deadline = _timeout_deadline(
+        timeout_seconds, label="qualification", maximum=300
+    )
+    return _qualify_executable_until(
+        configured_path,
+        deadline=deadline,
+        allow_symlink=allow_symlink,
+        runtime_path=runtime_path,
+        allow_runtime_symlink=allow_runtime_symlink,
+        runner=runner,
+        environment=environment,
+        package_root=package_root,
+        accepted_executable_sha256=accepted_executable_sha256,
+        accepted_package_sha256=accepted_package_sha256,
+        accepted_runtime_sha256=accepted_runtime_sha256,
     )
 
 
@@ -1041,7 +1109,7 @@ def _git_environment() -> dict[str, str]:
 def _remaining_timeout(deadline: float | None, *, default: float = 30.0) -> float:
     if deadline is None:
         return default
-    remaining = deadline - time.monotonic()
+    remaining = _validated_deadline(deadline) - time.monotonic()
     if remaining <= 0:
         raise ProbeDeadlineError()
     return remaining
@@ -2309,17 +2377,22 @@ def _validate_index_identity(
 def _write_index_identity(
     index_directory: pathlib.Path,
     identity: Mapping[str, Any],
+    *,
+    deadline: float | None = None,
 ) -> None:
+    _check_deadline(deadline)
     raw = json.dumps(
         dict(identity), sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
     if len(raw) > MAX_INDEX_IDENTITY_BYTES:
         raise GitNexusAdapterError("index identity evidence exceeds its safety bound")
+    _check_deadline(deadline)
     directory_fd = _open_directory_nofollow(index_directory)
     temporary = f".{INDEX_IDENTITY_FILENAME}.tmp-{os.getpid()}-{threading.get_ident()}"
     descriptor: int | None = None
     created = False
     try:
+        _check_deadline(deadline)
         flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_CLOEXEC", 0)
         if hasattr(os, "O_NOFOLLOW"):
             flags |= os.O_NOFOLLOW
@@ -2327,13 +2400,17 @@ def _write_index_identity(
         created = True
         written = 0
         while written < len(raw):
+            _check_deadline(deadline)
             count = os.write(descriptor, raw[written:])
             if count <= 0:
                 raise OSError(errno.EIO, "short write")
             written += count
+        _check_deadline(deadline)
         os.fsync(descriptor)
+        _check_deadline(deadline)
         os.close(descriptor)
         descriptor = None
+        _check_deadline(deadline)
         os.replace(
             temporary,
             INDEX_IDENTITY_FILENAME,
@@ -2491,12 +2568,15 @@ def assess_metadata(
     deadline: float | None = None,
 ) -> MetadataResult:
     """Strictly validate the qualified 1.6.9 meta schema and classify freshness."""
+    _check_deadline(deadline)
     try:
         _validated_repository_state_identity(repository)
     except GitNexusAdapterError:
         return MetadataResult("incompatible", "caller-repository-identity-invalid", None, None, None)
     try:
         verify_qualification(qualification, deadline=deadline)
+    except ProbeDeadlineError:
+        raise
     except (GitNexusAdapterError, OSError):
         return MetadataResult("incompatible", "executable-or-capability-drift", None, None, None)
     path = pathlib.Path(metadata_path) if metadata_path is not None else repository.root / ".gitnexus" / "gitnexus.json"
@@ -3380,8 +3460,9 @@ class RefreshController:
         git_executable: str | os.PathLike[str] | None = None,
         runner: Runner = _run_refresh_subprocess,
     ) -> None:
-        if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, int) or not 1 <= timeout_seconds <= 3_600:
-            raise GitNexusAdapterError("refresh timeout must be an integer from 1 through 3600 seconds")
+        _validate_timeout_seconds(
+            timeout_seconds, label="refresh", maximum=3_600
+        )
         self.qualification = qualification
         self.enabled = enabled
         self.auto_capability_enabled = False
@@ -3398,8 +3479,14 @@ class RefreshController:
         *,
         expected_head: str,
         explicit_opt_in: bool = False,
+        deadline: float | None = None,
     ) -> RefreshResult:
-        deadline = time.monotonic() + self.timeout_seconds
+        controller_deadline = _refresh_deadline(self.timeout_seconds)
+        if deadline is None:
+            deadline = controller_deadline
+        else:
+            deadline = min(_validated_deadline(deadline), controller_deadline)
+        _check_deadline(deadline)
         if not self.enabled or not explicit_opt_in:
             raise GitNexusAdapterError("refresh is disabled unless explicitly opted in")
         if not COMMIT_RE.fullmatch(expected_head):
@@ -3525,13 +3612,17 @@ class RefreshController:
                     argv,
                     cwd=root,
                     env=process_environment,
-                    timeout=max(0.1, _remaining_timeout(deadline) * 0.7),
+                    timeout=_remaining_timeout(deadline) * 0.7,
                 )
             except subprocess.TimeoutExpired:
                 process_failure = "refresh-timeout"
                 process = None
             except ProcessBoundaryError as exc:
-                process_failure = f"refresh-{exc.error_code}"
+                process_failure = (
+                    "refresh-timeout"
+                    if exc.error_code == "process-timeout"
+                    else f"refresh-{exc.error_code}"
+                )
                 process = None
             try:
                 _recheck_isolated_home_identity(
@@ -3557,6 +3648,13 @@ class RefreshController:
                 )
                 _validate_derived_index_tree(root, deadline=deadline)
                 verify_qualification(self.qualification, deadline=deadline)
+            except ProbeDeadlineError:
+                self.auto_capability_enabled = False
+                return self._receipt(
+                    "failed", "probe-deadline-expired", repository,
+                    before, None, argv,
+                    before_git_control_digest=before_git_control_digest,
+                )
             except (GitNexusAdapterError, OSError) as exc:
                 self.auto_capability_enabled = False
                 return self._receipt(
@@ -3630,7 +3728,16 @@ class RefreshController:
                     observed_at=observed_at,
                     deadline=deadline,
                 )
-                _write_index_identity(root / ".gitnexus", index_identity)
+                _write_index_identity(
+                    root / ".gitnexus", index_identity, deadline=deadline
+                )
+            except ProbeDeadlineError:
+                self.auto_capability_enabled = False
+                return self._receipt(
+                    "failed", "probe-deadline-expired", repository,
+                    before, after, argv, metadata,
+                    before_git_control_digest, after_git_control_digest,
+                )
             except (GitNexusAdapterError, OSError, KeyError, TypeError):
                 self.auto_capability_enabled = False
                 return self._receipt(
@@ -3660,6 +3767,13 @@ class RefreshController:
                 )
                 _validate_derived_index_tree(root, deadline=deadline)
                 verify_qualification(self.qualification, deadline=deadline)
+            except ProbeDeadlineError:
+                self.auto_capability_enabled = False
+                return self._receipt(
+                    "failed", "probe-deadline-expired", repository,
+                    before, None, argv, metadata,
+                    before_git_control_digest, after_git_control_digest,
+                )
             except (GitNexusAdapterError, OSError):
                 self.auto_capability_enabled = False
                 return self._receipt(
@@ -3684,6 +3798,13 @@ class RefreshController:
             try:
                 metadata = assess_metadata(
                     after_repository, after, self.qualification, deadline=deadline
+                )
+            except ProbeDeadlineError:
+                self.auto_capability_enabled = False
+                return self._receipt(
+                    "failed", "probe-deadline-expired", repository,
+                    before, after, argv, metadata,
+                    before_git_control_digest, after_git_control_digest,
                 )
             except (GitNexusAdapterError, OSError, KeyError, TypeError):
                 self.auto_capability_enabled = False
@@ -3839,9 +3960,16 @@ def _operator_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _qualification_from_arguments(arguments: argparse.Namespace) -> ExecutableQualification:
-    return qualify_executable(
+def _qualification_from_arguments(
+    arguments: argparse.Namespace,
+    *,
+    deadline: float | None = None,
+) -> ExecutableQualification:
+    qualify = qualify_executable if deadline is None else _qualify_executable_until
+    deadline_arguments = {} if deadline is None else {"deadline": deadline}
+    return qualify(
         arguments.executable,
+        **deadline_arguments,
         allow_symlink=arguments.allow_symlink,
         runtime_path=arguments.node_executable,
         allow_runtime_symlink=arguments.allow_node_symlink,
@@ -3852,11 +3980,14 @@ def _qualification_from_arguments(arguments: argparse.Namespace) -> ExecutableQu
     )
 
 
-def _repository_from_arguments(arguments: argparse.Namespace) -> RepositoryState:
+def _repository_from_arguments(
+    arguments: argparse.Namespace, *, deadline: float | None = None
+) -> RepositoryState:
     return collect_repository_state(
         arguments.repo_root,
         canonical_repository_id=arguments.repository_id,
         expected_remote=arguments.expected_remote,
+        deadline=deadline,
         git_executable=arguments.git_executable,
     )
 
@@ -3896,7 +4027,15 @@ def operator_main(argv: Sequence[str] | None = None) -> int:
             result = _disable_disposition()
             exit_status = 0
         else:
-            qualification = _qualification_from_arguments(arguments)
+            refresh_deadline = (
+                _refresh_deadline(arguments.timeout_seconds)
+                if arguments.command == "refresh"
+                else None
+            )
+            qualification = _qualification_from_arguments(
+                arguments, deadline=refresh_deadline
+            )
+            _check_deadline(refresh_deadline)
             if arguments.command == "qualify":
                 result = {
                     "kind": "gitnexus-qualification-status",
@@ -3911,13 +4050,19 @@ def operator_main(argv: Sequence[str] | None = None) -> int:
                 }
                 exit_status = 0
             else:
-                repository = _repository_from_arguments(arguments)
+                repository = _repository_from_arguments(
+                    arguments, deadline=refresh_deadline
+                )
                 snapshot = collect_tracked_snapshot(
                     repository.root,
+                    deadline=refresh_deadline,
                     git_executable=arguments.git_executable,
                 )
                 if arguments.command == "status":
-                    metadata = assess_metadata(repository, snapshot, qualification)
+                    metadata = assess_metadata(
+                        repository, snapshot, qualification,
+                        deadline=refresh_deadline,
+                    )
                     result = {
                         "kind": "gitnexus-adapter-status",
                         "status": metadata.state,
@@ -3955,6 +4100,7 @@ def operator_main(argv: Sequence[str] | None = None) -> int:
                         repository,
                         expected_head=arguments.expected_head,
                         explicit_opt_in=arguments.confirm_explicit_refresh,
+                        deadline=refresh_deadline,
                     )
                     result = refreshed.receipt
                     exit_status = 0 if refreshed.status == "refreshed" else 1

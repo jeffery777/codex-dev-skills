@@ -48,7 +48,12 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Issue #157 owns GN-FU-01 and the v0.16.0 additive candidate. It defines
+- Issue #159 owns the v0.16.1 Linux qualification-timeout follow-up. Refresh
+  entrypoints validate the existing bounded refresh timeout before contacting
+  GitNexus and share one monotonic deadline across qualification, preflight,
+  controller execution, and postconditions. Standalone qualification limits,
+  fail-closed expiry, and all v0.16.0 identity/authority boundaries remain.
+- Issue #157 completed GN-FU-01 in v0.16.0. It defines
   distinct primary-main, primary-branch, linked-worktree, detached, dirty, and
   PR base/head identities; binds exact evidence to complete relevant content,
   tool/configuration, and freshness; and makes old or missing sidecars
@@ -221,7 +226,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   GitHub connector-first control-plane policy, and checkout-aware GitNexus hook
   guidance. Linked-worktree automatic refresh remains fail-closed; post-merge
   refresh applies only after the primary checkout advances locally.
-- Issue #157 owns the v0.16.0 GitNexus index-lifecycle candidate. Its
+- Issue #157 delivered the v0.16.0 GitNexus index-lifecycle release. Its
   `gitnexus-index-identity/v1` sidecar prevents clean-HEAD metadata from
   impersonating dirty, untracked, ignored-content, cross-worktree, or
   cross-branch state and adds clean PR base/head pair identities. It does not

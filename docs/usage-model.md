@@ -157,6 +157,15 @@ changes unexpectedly, reject the index and preserve the evidence without
 resetting, restoring, stashing, staging, or committing. Disabling the adapter
 does not require deleting local indexes or changing repository documents.
 
+Standalone qualification keeps its 10-second default and `1..300` validation.
+For refresh, the validated `1..3600` configured timeout creates one monotonic
+deadline before qualification. Qualification, repository preflight, controller
+execution, and postconditions share that budget; no phase resets it. An expired
+budget fails closed before adoption with `probe-deadline-expired` where
+applicable. The analyze runner keeps a shorter bounded slice so postconditions
+retain budget; exhausting that slice first reports `refresh-timeout` and also
+cannot adopt an index.
+
 Use the supported repo-owned operator entrypoint documented in README:
 `gitnexus_adapter.py qualify`, `status`, `refresh`, and `disable`. `status`
 persists no opt-in; `--enabled` applies to one invocation. `refresh` additionally
@@ -206,6 +215,8 @@ for operator inspection and explicit cleanup; the runner does not auto-delete
 them. Controller failure persists a repository-bound `0600` circuit-breaker
 marker in the same parent. Subsequent hooks refuse automatic retry until an
 operator inspects the evidence and explicitly clears that exact marker.
+Auto-on-demand qualification consumes the same configured refresh deadline;
+notify-only qualification retains the standalone limit.
 
 ## Global Guidance, Repo Instructions, And Rules
 
