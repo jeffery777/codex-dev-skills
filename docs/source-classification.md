@@ -59,7 +59,7 @@ Public outputs:
 - runtime compatibility and Desktop adapter-boundary guidance;
 - maintained Loop Engineering and Desktop handoff examples.
 
-The `desktop_runtime_*` scripts and the Desktop runtime wrapper V1 plan remain
+The historical `desktop_runtime_*` scripts and the Desktop runtime wrapper V1 plan remain
 historical compatibility evidence only. They are not an active runtime path,
 must not be imported or executed by Loop Engineering, and their old response
 shapes cannot override the current callable schema.

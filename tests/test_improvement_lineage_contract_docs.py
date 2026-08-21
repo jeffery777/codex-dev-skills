@@ -52,8 +52,8 @@ class ImprovementLineageContractDocsTests(unittest.TestCase):
         )
 
     def test_current_release_metadata_is_aligned(self):
-        self.assertIn('VERSION="0.16.2"', read("install.sh"))
-        self.assertIn('version: "0.16.2"', read("catalog.yaml"))
+        self.assertIn('VERSION="0.16.3"', read("install.sh"))
+        self.assertIn('version: "0.16.3"', read("catalog.yaml"))
         self.assertIn(
             "docs/release-notes-v0.15.0.md",
             read("README.md"),

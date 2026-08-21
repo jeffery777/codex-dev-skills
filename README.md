@@ -25,9 +25,12 @@ patch through Issue #155. v0.16.0 published the exact GitNexus index lifecycle
 and content-bound evidence identity through Issue #157. v0.16.1, published
 through Issue #159, makes qualification and refresh share one configured,
 bounded deadline without changing the M0/M1 feature or authority baseline.
-The v0.16.2 candidate through Issue #161 refreshes the independent CLI and
-Desktop adapters for CLI 0.149 session dashboard/queue behavior and immutable
-Desktop thread sharing without changing shared completion authority.
+v0.16.2, published through Issue #161 / PR #162, refreshes the independent CLI
+and Desktop adapters for CLI 0.149 session dashboard/queue behavior and
+immutable Desktop thread sharing without changing shared completion authority.
+The v0.16.3 candidate through Issue #163 freezes the historical Desktop runtime
+wrapper V1 family behind a strict inventory, active-consumer quarantine, and
+explicit sunset gate without deleting the retained compatibility fixtures.
 V3-B remains the released evaluation baseline from v0.13.0.
 The v0.12.1 compatibility patch through Issue #139 updated Desktop/CLI runtime
 adapters and repository verification before V3-B without changing shared
@@ -1135,7 +1138,9 @@ Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 `desktop_runtime_*` scripts and [historical V1 plan](docs/desktop-runtime-wrapper-v1-plan.md)
 remain regression and migration evidence only; active Loop Engineering skills
-must not import, execute, or recommend them.
+must not import, execute, or recommend them. Their complete retained surface,
+machine validation, and destructive sunset gate are defined by the
+[V1 deprecation contract](docs/desktop-runtime-wrapper-v1-deprecation.md).
 
 After an authorized Desktop `create_thread`, emit the current runtime's
 created-task UI directive with the returned ready `threadId` or queued
@@ -1247,8 +1252,8 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.16.2.md` contains the current v0.16.2 release notes (release candidate);
-`docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
+`docs/release-notes-v0.16.3.md` contains the current v0.16.3 release notes (release candidate);
+`docs/release-notes-v0.16.2.md`, `docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
 `docs/release-notes-v0.14.2.md`, `docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and
 `docs/release-notes-v0.1.0.md` remain historical point-in-time records.

@@ -439,75 +439,13 @@ The preflight result may be `ready`, `fallback`, or `stopped`. `ready` means onl
 
 ## End-To-End Evidence Pipeline Fixture
 
-When maintainers want one reusable evidence fixture instead of running each helper separately, use the pipeline helper. It runs discovery, contract comparison, and create/read preflight in order from caller-supplied JSON only.
-
-```bash
-./scripts/project-python scripts/desktop_runtime_evidence_pipeline.py --example --pretty
-```
-
-```bash
-./scripts/project-python scripts/desktop_runtime_evidence_pipeline.py --example --target-action read-thread --pretty
-```
-
-```bash
-./scripts/project-python scripts/desktop_runtime_evidence_pipeline.py --pretty < desktop-runtime-evidence-pipeline.json
-```
-
-```bash
-./scripts/project-python scripts/desktop_runtime_evidence_pipeline.py --target-action create-thread --pretty < desktop-runtime-evidence-pipeline.json
-```
-
-The pipeline input keeps the same boundaries as the individual helpers:
-
-```json
-{
-  "requested_action": "build-desktop-runtime-wrapper-v1-evidence-pipeline",
-  "target_actions": ["create-thread", "read-thread"],
-  "metadata_request": {
-    "requested_action": "normalize-runtime-capability-metadata",
-    "metadata_source": {
-      "source": "runtime-reported schema",
-      "contract_version": "version unavailable",
-      "last_verified": "YYYY-MM-DD",
-      "available": true
-    },
-    "capabilities": ["caller-supplied documented capability metadata"]
-  },
-  "old_contracts": {
-    "create-thread": "old create-thread wrapper contract evidence",
-    "read-thread": "old read-thread wrapper contract evidence"
-  },
-  "target": {
-    "repo": "owner/name",
-    "remote": "origin URL",
-    "branch": "branch-name",
-    "expected_head": "commit SHA expected by the caller",
-    "thread_id": "thread identifier supplied by the caller"
-  },
-  "prompt": {
-    "summary": "Prepare a bounded Desktop thread handoff.",
-    "body": "Read repo files first, do the scoped task, run verification, and report evidence."
-  },
-  "read_request": {
-    "summary": "Read only documented thread result fields after separate approval.",
-    "expected_fields": ["status", "threadId"]
-  },
-  "boundaries": {
-    "in_scope": ["durable repo files or task scope"],
-    "out_of_scope": [".work/", "Desktop private runtime state"],
-    "external_writes_blocked": true
-  },
-  "authorization": {
-    "thread_action_authorized": {
-      "create-thread": true,
-      "read-thread": false
-    },
-    "external_write_authorized": false
-  }
-}
-```
-
-The pipeline output is an aggregate `ready`, `fallback`, or `stopped` evidence record with `runtime_calls_performed: false`. The top-level `summary` includes readiness counts, per-target comparison/preflight status, the primary reason, and the recommended next step so review gates and maintainers can scan the result before opening the detailed `steps`. A `ready` result means the requested preflight evidence is internally consistent only; it does not call or authorize `create_thread`, `read_thread`, commit, push, PR creation, merge, or other external writes.
+The V1 pipeline and its component helpers are frozen historical compatibility
+fixtures. Active examples do not provide runnable commands for them. Use the
+[native capability contract](../docs/native-runtime-capabilities.md) and the
+current runtime's documented callable instead. Maintainers studying the old
+fixtures should start from the
+[legacy inventory and sunset contract](../docs/desktop-runtime-wrapper-v1-deprecation.md),
+which does not authorize executing or reactivating the helpers.
 
 ## Scenario 3: Stop Instead Of Adapting
 
