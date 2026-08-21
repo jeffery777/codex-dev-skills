@@ -43,6 +43,9 @@ continuation prompt. Do not claim that CLI holds Desktop app task/thread tools.
    - `desktop-thread-create` when a fresh task should start in a Git worktree,
      an explicitly requested saved checkout, a non-Git project, or a
      deliberately projectless context.
+   - `desktop-thread-share` only when the user explicitly asks to create an
+     immutable read-only share link for the current or another exact accessible
+     thread. Sharing is a privacy-sensitive disclosure action, not delegation.
    - `new-thread-prompt` when the handoff is ready but a supported Desktop
      create or fork action is unavailable or not yet authorized.
    - `stop-for-human-gate` when the next action involves product ambiguity, scope expansion, destructive action, external write, security/privacy/data/deployment risk, or unclear source of truth.
@@ -177,7 +180,23 @@ continuation prompt. Do not claim that CLI holds Desktop app task/thread tools.
    list metadata.
 12. If the capability is unavailable or fails, return the prepared prompt as a
    paste-ready handoff or continue through the shared sequential fallback.
-13. Keep the originating task responsible for integration, verification, review
+13. For an explicitly requested share, inspect the active `share_thread`
+    callable, identify the exact `threadId` and preferred `hostId` when supplied,
+    and preview the account/workspace audience before the call only from
+    current public product context; if the audience is unknown, stop. Require
+    the user to confirm review of the complete thread through the public UI or
+    another complete exposed view. An agent read of only recent, truncated, or
+    paginated turns is not complete review. Also inspect the available content
+    for credentials, private paths, customer/incident data, unpublished
+    vulnerability details, and other sensitive material even when the runtime
+    redacts known secret patterns. If complete review cannot be established,
+    stop before link creation. The returned link is an
+    immutable snapshot that does not follow later thread changes. Treat link
+    creation, link delivery, revocation, and repository completion as separate
+    states. The current callable creates a link but exposes no revoke operation;
+    direct the user to ChatGPT data controls for review or revocation and never
+    claim automatic rollback.
+14. Keep the originating task responsible for integration, verification, review
     evidence, commit readiness, PR readiness, and merge gates. Goal state,
     thread state, and scheduled-run state remain coordination context rather
     than completion proof.
@@ -193,6 +212,8 @@ Allowed tool use:
 - paginated `list_archived_threads`, display-only `open_in_codex`, and current
   task `read_thread_terminal` only for their documented observation/display
   purposes;
+- `share_thread` only after explicit user intent, exact-target validation,
+  audience preview, and sensitive-content review;
 - a supported handoff-status operation, such as `get_handoff_status`, for
   read-only observation of an authorized handoff.
 
@@ -258,6 +279,9 @@ A new-thread prompt should include:
 - Public search, local deep-link, and sidebar troubleshooting fallback when
   explicitly requested navigation is unavailable
 - Handoff status and interruption risk, when applicable
+- For sharing, exact target, audience classification and source, complete-review
+  confirmation/coverage, immutable snapshot result, link-creation status, and
+  separate data-controls revocation guidance
 - CLI fallback, if no thread tool is available
 - Integration and review responsibilities retained by the main thread
 - Human gate
@@ -269,4 +293,6 @@ the selected task is ambiguous or no longer ready, the work expands scope,
 ownership overlaps, verification would be insufficient for the risk, the next
 step lacks required authority, current callable request or response semantics
 are unclear, or the only available path depends on unpublished Desktop
-internals or legacy wrapper execution.
+internals or legacy wrapper execution. Also stop before sharing when the target
+or audience is ambiguous, sensitive content may remain, or no safe bounded
+preview can be established.

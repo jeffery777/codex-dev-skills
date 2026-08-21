@@ -17,6 +17,8 @@ A second-version adapter may expose a narrow, documented control surface for Des
 - create a new Desktop thread from a prepared prompt;
 - fork or continue from an existing Desktop thread when the runtime explicitly supports it;
 - send a prepared message to a selected thread;
+- create an immutable share link for an exact thread only after a separate
+  privacy-sensitive disclosure gate;
 - list tasks or wait for bounded, compact progress snapshots when the active
   runtime explicitly exposes those observation operations;
 - read thread metadata needed to verify delegation state, such as thread identifier, title, branch or worktree label when exposed, created time, and current lifecycle state.
@@ -31,7 +33,7 @@ A future adapter may use only these sources:
 - runtime-provided MCP or thread tools such as `create_thread`, `fork_thread`,
   `list_threads`, `list_archived_threads`, `read_thread`, `wait_threads`,
   `send_message_to_thread`, `handoff_thread`, `get_handoff_status`,
-  `open_in_codex`, `read_thread_terminal`, or equivalent named tools when they
+  `share_thread`, `open_in_codex`, `read_thread_terminal`, or equivalent named tools when they
   are present in the active tool list;
 - explicitly installed plugins or connectors that expose thread operations through a documented interface;
 - caller-supplied documented metadata, such as an active tool list excerpt, connector metadata, or runtime-reported schema that has already been gathered and supplied to the wrapper;
@@ -42,7 +44,7 @@ Caller-supplied metadata is evidence to normalize, not permission to call the ca
 
 ## Contract Family Boundary
 
-Facts last verified on 2026-08-19. The current public product surface is the
+Facts last verified on 2026-08-21. The current public product surface is the
 ChatGPT desktop app; this document retains `Desktop` as the compatibility label
 for its Codex task and thread control plane:
 
@@ -50,7 +52,8 @@ for its Codex task and thread control plane:
   Current thread-tool evidence includes `create_thread`, `fork_thread`,
   `list_threads`, `list_archived_threads`, `read_thread`, `wait_threads`,
   `send_message_to_thread`, and `handoff_thread`, plus
-  `get_handoff_status`, `open_in_codex`, and `read_thread_terminal`.
+  `get_handoff_status`, `share_thread`, `open_in_codex`, and
+  `read_thread_terminal`.
 - Desktop also exposes `list_projects`; it returns local and remote project
   information including `isGitRepository`. Project-scoped `create_thread`
   callers should use a returned `projectId` rather than infer project identity
@@ -129,6 +132,13 @@ for its Codex task and thread control plane:
   returns compact progress snapshots, wakes on completion or attention rather
   than ordinary commentary, and does not prove repository completion.
 - Desktop `send_message_to_thread` requires `threadId` and `prompt`; `hostId`, `model`, and `thinking` are optional.
+- Desktop `share_thread` accepts optional `threadId` and preferred `hostId` and
+  creates an immutable read-only snapshot link. It is a privacy-sensitive
+  mutation requiring exact target/audience preview from public product context
+  and user-confirmed review of the complete thread. Recent, truncated, or
+  paginated reads are insufficient by themselves. The current callable exposes
+  no revoke operation; review or revoke
+  the link separately through ChatGPT data controls.
 - Desktop `fork_thread` accepts optional `threadId` and optional `environment`.
   `same-directory` reuses the source checkout or existing worktree and copies
   completed history; it does not create another Git worktree. The source task
@@ -168,13 +178,19 @@ for its Codex task and thread control plane:
   fallback are required; macOS availability is not a universal contract.
 - `codex app-server` is a separate JSON-RPC interface, with methods such as `thread/start`, `thread/read`, `thread/fork`, and `turn/start`. Its initialization, transport/auth handling, request fields, and response envelopes are not interchangeable with Desktop app tools.
 - The Codex SDK wraps app-server. It is not evidence that this repository already implements a CLI `create_thread` path.
-- Codex CLI `0.148.0` exposes non-interactive
+- Codex CLI `0.149.0` exposes non-interactive
   `codex exec fork <SESSION_ID> [PROMPT]` and separately exposes interactive
   `codex fork <SESSION_ID>`. Its `tui.resume_cwd = "current" | "session"`
   behavior selects the invocation or saved session directory when they differ.
-  This CLI-only manual handoff is not a Desktop task action and is not
-  remains the manual interactive path; the repo-owned private-clone executor
+  This CLI-only manual handoff is not a Desktop task action and remains the
+  manual interactive path; the repo-owned private-clone executor
   implements only the non-interactive `codex exec fork` form.
+- Codex CLI `0.149.0` also exposes the interactive `codex agents` dashboard,
+  manual `codex queue`, and redacted `codex doctor --json` diagnostics. Queue
+  guidance represents the complete message as one argv token and never
+  interpolates arbitrary message text into a shell command. These operations
+  remain CLI control-plane or diagnostic operations and do not identify
+  Desktop callables or change shared completion authority.
 
 This V2 boundary remains documentation only. It does not introduce an app-server client, SDK wrapper, daemon, sidecar, MCP server, broad runtime adapter, UI scraping path, Desktop private runtime-state access, or a CLI/default live thread call.
 
@@ -187,7 +203,8 @@ For each supported runtime action, record:
 - runtime thread tool or API contract name, such as `create_thread`,
   `fork_thread`, `list_threads`, `read_thread`, `wait_threads`,
   `send_message_to_thread`, `handoff_thread`, `get_handoff_status`, or the
-  documented equivalent; observation/display records may also name
+  documented equivalent; privacy-sensitive records may name `share_thread`,
+  and observation/display records may also name
   `list_archived_threads`, `open_in_codex`, or `read_thread_terminal`;
 - underlying API or tool contract version when the runtime exposes one;
 - `version unavailable` when the runtime does not expose a version, plus the verifiable capability source used instead, such as the active tool list, connector metadata, official documentation version, or runtime-reported schema;
@@ -221,7 +238,7 @@ runtime_contracts:
     response_shape_minimum:
       required: ["threadId for immediate creation or clientThreadId for queued creation"]
       errors: ["runtime-provided error shape"]
-    last_verified: "2026-08-18"
+    last_verified: "2026-08-21"
 ```
 
 ## Prohibited Sources
@@ -254,7 +271,11 @@ Before a state-changing thread action, the caller must verify and record:
 - external write boundary, including commit, push, PR creation, PR comments, review submissions, merge, deploy, destructive actions, and platform-side mutation;
 - audit evidence showing which tool or documented API was used and the result returned.
 
-Opening, forking, or messaging a thread is a Desktop runtime action. It is not permission to edit unrelated files, commit, push, create PRs, publish changes, post platform comments, submit reviews, merge, deploy, or resolve review threads.
+Opening, forking, messaging, or sharing a thread is a Desktop runtime action.
+Sharing additionally requires privacy-sensitive disclosure review. None is
+permission to edit unrelated files, commit, push, create PRs, publish changes,
+post platform comments, submit reviews, merge, deploy, or resolve review
+threads.
 
 ## CLI Fallback
 

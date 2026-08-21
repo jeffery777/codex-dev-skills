@@ -4,7 +4,7 @@
 # skill. routes_to is always a list and is required only for deprecated aliases.
 
 name: codex-dev-skills
-version: "0.16.1"
+version: "0.16.2"
 platforms:
   - codex
   - codex-desktop
@@ -91,7 +91,7 @@ groups:
       - source: workflows/loop-engineering-workflow.md
 
   codex-cli-session-handoff:
-    description: CLI-only non-interactive start/resume/fork and manual interactive-fork handoff adapter over the shared delivery workflow.
+    description: CLI-only non-interactive start/resume/fork plus manual interactive-fork, agents-dashboard, and argv-safe UUID queue guidance over the shared delivery workflow.
     runtime: cli
     depends_on: [shared-review-gates, codex-delivery-workflow]
     skills:

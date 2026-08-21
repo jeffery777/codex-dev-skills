@@ -22,9 +22,12 @@ hotfix through Issue #151 / PR #152. v0.15.0 published lower-overhead agent
 coordination guidance and a Terra-high `senior` routing tier through Issue #153
 / PR #154. v0.15.1 published the CLI/Desktop/GitHub control-plane compatibility
 patch through Issue #155. v0.16.0 published the exact GitNexus index lifecycle
-and content-bound evidence identity through Issue #157. The v0.16.1 candidate
-through Issue #159 makes qualification and refresh share one configured,
+and content-bound evidence identity through Issue #157. v0.16.1, published
+through Issue #159, makes qualification and refresh share one configured,
 bounded deadline without changing the M0/M1 feature or authority baseline.
+The v0.16.2 candidate through Issue #161 refreshes the independent CLI and
+Desktop adapters for CLI 0.149 session dashboard/queue behavior and immutable
+Desktop thread sharing without changing shared completion authority.
 V3-B remains the released evaluation baseline from v0.13.0.
 The v0.12.1 compatibility patch through Issue #139 updated Desktop/CLI runtime
 adapters and repository verification before V3-B without changing shared
@@ -411,8 +414,8 @@ Use the smallest entry point that matches the request:
 - `project-delivery` when the objective is larger than one task but still bounded.
 - `milestone-continuation` when a bounded milestone should be checked and advanced across repeated invocations until complete or blocked by a human gate.
 - `cli-session-handoff` only after shared orchestration has selected a bounded
-  handoff and the user explicitly authorizes one new, resumed, or manually
-  forked CLI session.
+  handoff and the user explicitly authorizes one new, resumed, forked,
+  dashboard, or queued-message CLI session action.
 
 `loop-engineering` is a thin entrypoint over the existing phase skills. It should classify the current state, route to the smallest suitable workflow, verify evidence, and stop at human gates. It does not replace focused implementation, review primitives, formal gates, milestone continuation, task continuation, shared subagents, or Desktop user-owned task/thread/worktree controls.
 
@@ -453,6 +456,15 @@ saved history and an existing checkout/worktree, the adapter may instead
 prepare the public `codex fork <SESSION_ID>` command with an exact UUID and an
 explicit `tui.resume_cwd` current/session choice. That is a manual interactive
 handoff; the private-clone executor does not automate it.
+
+CLI 0.149 also exposes `codex agents` and `codex queue`. Treat `codex agents`
+as an interactive CLI control plane: observation is coordination evidence, and
+start/open/rename/stop actions each require exact mutation authority. Prepare
+`codex queue` manually only with a canonical session UUID and one bounded,
+nonsensitive message represented as one argv token without shell interpolation;
+queue acceptance proves dispatch/wakeup only. Neither
+command enters the private-clone executor or becomes shared completion
+authority. `codex doctor --json` is redacted diagnostic evidence only.
 
 Use `/app` in an interactive CLI session, or `codex app <path>` from the shell,
 when the user intentionally wants to continue in the ChatGPT desktop app. Once
@@ -1118,7 +1130,7 @@ The main thread remains responsible for integrating returned work, checking the 
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-08-18)](docs/codex-runtime-compatibility-evidence-2026-08-18.md).
+[Codex runtime compatibility evidence (2026-08-21)](docs/codex-runtime-compatibility-evidence-2026-08-21.md).
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 `desktop_runtime_*` scripts and [historical V1 plan](docs/desktop-runtime-wrapper-v1-plan.md)
@@ -1151,6 +1163,16 @@ Omit worktree `startingState` for the project default branch. Use
 uncommitted changes; a branch state requires the exact requested `branchName`,
 and `create-branch` is allowed only for that exact explicitly requested new
 name.
+
+When the user explicitly requests a thread share, the Desktop adapter may use
+the exposed `share_thread` callable only after previewing the exact thread,
+deriving the account/workspace audience from public product context, and asking
+the user to confirm review of the complete thread for sensitive material.
+Recent, truncated, or paginated reads are insufficient by themselves. The link
+is an immutable read-only snapshot and does not follow later
+thread changes. Link creation, delivery, revocation through ChatGPT data
+controls, and repository completion are separate states; the adapter must not
+claim automatic rollback when the callable exposes creation only.
 
 ## Runtime Compatibility
 
@@ -1225,7 +1247,7 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.16.1.md` contains the current v0.16.1 release notes (release candidate);
+`docs/release-notes-v0.16.2.md` contains the current v0.16.2 release notes (release candidate);
 `docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
 `docs/release-notes-v0.14.2.md`, `docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and

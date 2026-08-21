@@ -3,7 +3,9 @@
 Human approval is required before:
 
 - destructive actions
-- external writes such as commit, push, PR creation, publication, merge, deploy, platform comments, or review submissions
+- external writes or disclosures such as commit, push, PR creation,
+  publication, immutable thread-share links, merge, deploy, platform comments,
+  or review submissions
 - public contract changes when behavior is ambiguous
 - data model, migration, payment, permission, or privacy-sensitive changes
 - broad scope expansion

@@ -6,9 +6,9 @@ shared contract owns objective, task, evidence, review, and completion
 semantics. Runtime capabilities may start, coordinate, observe, or wake work,
 but they do not become completion authority.
 
-Facts in the current capability table were last verified on 2026-08-18 from
+Facts in the current capability table were last verified on 2026-08-21 from
 the active callable schemas, the public Codex documentation, and the maintained
-[compatibility evidence](codex-runtime-compatibility-evidence-2026-08-18.md). Every adapter
+[compatibility evidence](codex-runtime-compatibility-evidence-2026-08-21.md). Every adapter
 must still inspect the capability exposed by its active runtime instead of
 assuming that a recorded schema is permanently available.
 
@@ -214,6 +214,29 @@ after the source session stops writing; it remains ineligible for the
 non-interactive private-clone executor. The fork does not create a new Git
 worktree.
 
+Codex CLI 0.149.0 adds two public session-control entrypoints that remain
+outside the private-clone executor:
+
+- `codex agents` is an interactive dashboard over the runtime's shared local
+  app-server daemon. Observation in the dashboard is coordination evidence;
+  starting, opening, renaming, or stopping a task is an exact runtime-state
+  mutation. Using the public dashboard does not authorize direct app-server or
+  remote-control daemon management.
+- `codex queue --thread <THREAD> --message <TEXT>` requests delivery of a
+  message to an existing local or remote session. Repository guidance uses a
+  canonical UUID rather than a session display name and accepts no model,
+  sandbox, approval, profile, remote, directory, or bypass overrides. Queue
+  guidance represents the message as one argv token and does not interpolate
+  arbitrary text into a shell command. Queue acceptance is dispatch/wakeup
+  evidence only and cannot prove processing, repository mutation, verification,
+  or completion.
+
+`codex doctor --json` may provide redacted installation, configuration,
+authentication, network, Desktop-state, and update diagnostics. It remains
+diagnostic evidence, not a substitute for active command/callable inspection,
+authorization, repository verification, or a reason to execute the historical
+Desktop wrapper chain.
+
 The same interpreter risk exists when ordinary Codex CLI operates in a Git
 worktree: a new checkout does not imply that a shell has activated the source
 checkout's environment. Repository-owned environment selection is therefore a
@@ -362,6 +385,16 @@ Current callable semantics include:
 - `send_message_to_thread`, `handoff_thread`, create, fork, archive, pin, and
   rename mutate runtime state and require the authority applicable to that
   exact action.
+- `share_thread` creates an immutable read-only snapshot link for the current
+  or another exact accessible thread. Link creation is a privacy-sensitive
+  disclosure mutation requiring explicit user intent, exact target and audience
+  preview from public product context, and user-confirmed review of the complete
+  thread even when the runtime redacts known secret patterns. Recent, truncated,
+  or paginated reads are insufficient by themselves. A snapshot does not update
+  with later thread changes. The
+  current callable exposes creation but no revocation action; link review or
+  revocation remains a separate ChatGPT data-controls operation. Link creation,
+  delivery, revocation, and repository completion are distinct states.
 - Cross-host movement is a separate `handoff_thread` action with an explicit
   `destinationHostId`; a fork is not a cross-host routing request.
 - Registry observation, UI registration, navigation, sidebar visibility, and

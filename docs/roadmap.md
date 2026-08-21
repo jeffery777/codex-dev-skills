@@ -53,6 +53,12 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   GitNexus and share one monotonic deadline across qualification, preflight,
   controller execution, and postconditions. Standalone qualification limits,
   fail-closed expiry, and all v0.16.0 identity/authority boundaries remain.
+- Issue #161 owns the v0.16.2 Codex CLI/Desktop runtime-compatibility patch.
+  It records CLI 0.149.0, keeps `codex agents` and UUID-only `codex queue` in
+  the independent CLI control-plane adapter, adds privacy-gated immutable
+  Desktop `share_thread` guidance, and preserves shared orchestration,
+  completion authority, opt-in custom-agent profiles, and the inactive
+  historical wrapper boundary.
 - Issue #157 completed GN-FU-01 in v0.16.0. It defines
   distinct primary-main, primary-branch, linked-worktree, detached, dirty, and
   PR base/head identities; binds exact evidence to complete relevant content,

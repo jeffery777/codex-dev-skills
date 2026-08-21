@@ -97,6 +97,23 @@ before one bounded Rocky Linux 9.8 requalification. Repository tests remain
 fixture evidence; the external run is separate operational qualification
 evidence and never completion or authorization authority.
 
+For the v0.16.2 Issue #161 runtime-compatibility candidate, require dated CLI
+0.149.0 and Desktop 26.818.22352 point-in-time evidence plus active callable
+schema inspection. Prove that `codex agents` dashboard mutations retain exact
+authorization, manual `codex queue` guidance accepts only a canonical UUID and
+bounded nonsensitive message, and queue acceptance never becomes processing or
+completion evidence. Keep the private-clone executor limited to `codex exec`
+start/resume/fork and `codex doctor --json` diagnostic-only. For Desktop
+`share_thread`, require explicit user intent, exact target and account/workspace
+audience preview from public product context, user-confirmed complete-thread
+review rather than recent/truncated/paginated reads alone, immutable snapshot
+semantics, and separate ChatGPT data-controls revocation guidance. Confirm that removed skill
+model delegation does not alter opt-in custom-agent profiles and that shared,
+CLI, and Desktop layers remain independent. Align source/plugin package,
+catalog, installer, README, roadmap, tests, and v0.16.2 release notes. Treat
+v0.16.2 as a patch because it adds backward-compatible adapter and safety
+guidance without migration or shared workflow contract changes.
+
 For the v0.15.0 agent-orchestration and routing candidate, require profile
 registry/digest validation for all eight opt-in profiles; deterministic cases
 for routine Terra-medium, complex Terra-high, multi-trigger Sol-medium,

@@ -89,3 +89,35 @@ unchanged.
 Preparing the command does not prove that a fork occurred. After the user runs
 it, the public CLI result is session-dispatch evidence only; the parent still
 owns repository inspection, verification, review, and completion.
+
+## Interactive Dashboard And Manual Queue
+
+Use the public dashboard only when the maintainer explicitly asks to inspect or
+control existing sessions:
+
+```text
+Operation: agents-dashboard
+Command: codex agents
+Boundary: searching/viewing is observation; start/open/rename/stop requires
+separate exact authorization at selection time.
+```
+
+Prepare one queue command only for an exact canonical UUID and a reviewed,
+bounded, nonsensitive message:
+
+```text
+Operation: manual-queue
+Session: exact UUID from public CLI output
+Message preview: Continue the already selected bounded task and return current
+status or the decision-blocking question. Do not expand scope.
+Argv: ["codex", "queue", "--thread", "<SESSION_ID>", "--message", "<TEXT>"]
+```
+
+Do not use a session display name, `--last`, private runtime files, model or
+sandbox overrides, remote endpoints, approval bypasses, or extra writable
+directories. Keep the complete message as one argv token; do not interpolate it
+into a paste-ready shell command. Generate a shell command only for a known
+shell with verified literal quoting for every message byte. A prepared argv
+list proves nothing occurred. Successful queue acceptance proves only
+dispatch/wakeup; it does not prove that the destination processed the message
+or that repository work completed.

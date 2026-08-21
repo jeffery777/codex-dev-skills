@@ -612,6 +612,17 @@ class CliSessionHandoffTests(unittest.TestCase):
         self.assertEqual("stopped", invalid_key["status"])
         self.assertEqual("validation_error", invalid_key["failure_class"])
 
+    def test_dashboard_and_queue_remain_outside_private_clone_executor(self) -> None:
+        for operation in ("agents-dashboard", "manual-queue", "queue"):
+            with self.subTest(operation=operation):
+                response = self.execute(
+                    request=self.request(operation=operation, session_id=SESSION_ID)
+                )
+                self.assertEqual("stopped", response["status"])
+                self.assertEqual("validation_error", response["failure_class"])
+                self.assertFalse(response["boundaries"]["session_call_performed"])
+                self.assertFalse(self.capture.exists())
+
     def test_untrusted_version_text_is_not_returned(self) -> None:
         marker = "api_key-should-not-echo"
         with mock.patch.dict(
