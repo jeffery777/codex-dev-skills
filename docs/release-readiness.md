@@ -82,6 +82,21 @@ catalog, installer, generated plugin package, v0.16.0 release notes, and version
 contract tests. Merge, annotated tag `v0.16.0`, GitHub Release, and deployment
 remain separate explicit human gates.
 
+For the v0.16.1 Issue #159 patch candidate, require one validated `1..3600`
+refresh budget to produce a single monotonic deadline before GitNexus
+qualification. Prove deterministically that slow-but-valid qualification may
+exceed the standalone 10-second default when it remains inside that refresh
+budget, that qualification time reduces the controller's remaining budget,
+and that no phase resets or extends the deadline. Reject invalid timeout values
+before qualification; preserve the standalone qualification `1..300` limit,
+stable `probe-deadline-expired` for detected absolute-budget expiry, the
+distinct bounded-slice `refresh-timeout`, no-runner-on-preflight-expiry, circuit breaking,
+and every v0.16.0 exact-identity/worktree/dirty/primary-main boundary. Align the
+v0.16.1 package and release artifacts, then prove the released exact artifact
+before one bounded Rocky Linux 9.8 requalification. Repository tests remain
+fixture evidence; the external run is separate operational qualification
+evidence and never completion or authorization authority.
+
 For the v0.15.0 agent-orchestration and routing candidate, require profile
 registry/digest validation for all eight opt-in profiles; deterministic cases
 for routine Terra-medium, complex Terra-high, multi-trigger Sol-medium,
@@ -156,6 +171,9 @@ When a change includes the GitNexus adapter, also require evidence that:
   use isolated system/global configuration, disable hooks/fsmonitor/untracked
   cache, and enforce timeout/output bounds;
 - macOS arm64 live qualification and Linux portability-only evidence are labeled accurately;
+- refresh entrypoints share one validated configured deadline across
+  qualification, preflight, runner, and postconditions without changing the
+  standalone qualification limit;
 - rollback keeps the V2b no-backend path usable and does not delete or rewrite
   user repository state.
 
@@ -177,6 +195,8 @@ When a change includes V2c-B hooks, additionally require evidence that:
 - hook-created machine-local homes are not committed or automatically deleted,
   and rollback only disables/removes the hook definition;
 - CLI/Desktop shared behavior and POSIX-only qualification limits are labeled.
+- auto-on-demand qualification shares the configured refresh deadline, while
+  notify-only qualification keeps the standalone limit.
 
 When a change includes V2d-A operational evidence, additionally require
 evidence that:

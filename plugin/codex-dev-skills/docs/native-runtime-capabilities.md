@@ -430,6 +430,16 @@ templates are inactive and do not grant hook trust or mutate project/global
 configuration. Controller failure persists a machine-local circuit breaker;
 later hook events notify but do not retry until explicit operator clearance.
 
+Issue #159 adds one timing contract without widening hook authority. In
+auto-on-demand mode the validated configured refresh timeout creates one
+monotonic deadline before qualification; qualification, repository checks,
+the V2c-A controller, and postconditions consume the same budget. Notify-only
+qualification retains the standalone 10-second default and `1..300` limit.
+Detected absolute-budget expiry remains fail closed as
+`probe-deadline-expired` and cannot be retried by resetting the controller
+deadline. The analyze runner's bounded slice continues to reserve time for
+postconditions and reports `refresh-timeout` if that slice expires first.
+
 GN-FU-01 tightens this check with `gitnexus-index-identity/v1`. A clean HEAD is
 not exact by itself: status and hooks require qualified metadata plus a
 Codex-owned sidecar that matches exact checkout/worktree, branch or detached

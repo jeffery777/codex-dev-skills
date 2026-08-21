@@ -259,6 +259,23 @@ class ConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(hook.GitNexusHookError, "refresh-object-required"):
             hook.load_config(path)
 
+    def test_refresh_timeout_linux_boundaries_are_validated_without_wall_clock(self) -> None:
+        for value in (1, 3600):
+            with self.subTest(value=value):
+                document = config_document(self.root, mode="auto-on-demand")
+                document["refresh"]["timeout_seconds"] = value
+                parsed = hook.load_config(write_config(self.machine, document))
+                assert parsed.refresh is not None
+                self.assertEqual(value, parsed.refresh["timeout_seconds"])
+        for value in (0, 3601, True):
+            with self.subTest(value=value):
+                document = config_document(self.root, mode="auto-on-demand")
+                document["refresh"]["timeout_seconds"] = value
+                with self.assertRaisesRegex(
+                    hook.GitNexusHookError, "refresh-timeout-invalid"
+                ):
+                    hook.load_config(write_config(self.machine, document))
+
     def test_nul_in_path_is_rejected(self) -> None:
         document = config_document(self.root)
         document["repository"]["root"] = "/tmp/repo\x00other"
@@ -413,6 +430,26 @@ class EvaluationTests(unittest.TestCase):
         result = self.evaluate(adapter.MetadataResult("fresh", "exact-clean-revision", HEAD, "f" * 64, {}))
         self.assertIsNone(result)
 
+    def test_notify_only_qualification_uses_standalone_deadline_contract(self) -> None:
+        config = hook_config(self.root)
+        metadata = adapter.MetadataResult(
+            "fresh", "exact-clean-revision", HEAD, "f" * 64, {}
+        )
+        with (
+            mock.patch.object(
+                hook, "_qualify", return_value=self.qualification
+            ) as qualify,
+            mock.patch.object(
+                adapter, "collect_repository_state", return_value=self.repo
+            ),
+            mock.patch.object(
+                adapter, "collect_tracked_snapshot", return_value=tracked_snapshot()
+            ),
+            mock.patch.object(adapter, "assess_metadata", return_value=metadata),
+        ):
+            self.assertIsNone(hook.evaluate_hook(config, event(self.root)))
+        qualify.assert_called_once_with(config, deadline=None)
+
     def test_notify_only_reports_stale_revision(self) -> None:
         result = self.evaluate(
             adapter.MetadataResult("stale", "indexed-revision-stale", INDEXED, "f" * 64, {})
@@ -503,16 +540,23 @@ class EvaluationTests(unittest.TestCase):
         controller = mock.Mock()
         controller.refresh.return_value = refreshed
         with (
-            mock.patch.object(hook, "_qualify", return_value=self.qualification),
-            mock.patch.object(adapter, "collect_repository_state", return_value=self.repo),
-            mock.patch.object(adapter, "collect_tracked_snapshot", return_value=tracked_snapshot()),
+            mock.patch.object(adapter.time, "monotonic", return_value=100.0),
+            mock.patch.object(
+                hook, "_qualify", return_value=self.qualification
+            ) as qualify,
+            mock.patch.object(
+                adapter, "collect_repository_state", return_value=self.repo
+            ) as repository_state,
+            mock.patch.object(
+                adapter, "collect_tracked_snapshot", return_value=tracked_snapshot()
+            ) as snapshot,
             mock.patch.object(
                 adapter,
                 "assess_metadata",
                 return_value=adapter.MetadataResult(
                     "stale", "indexed-revision-stale", INDEXED, "f" * 64, {}
                 ),
-            ),
+            ) as assess,
             mock.patch.object(adapter, "RefreshController", return_value=controller) as constructor,
         ):
             result = hook.evaluate_hook(
@@ -531,10 +575,108 @@ class EvaluationTests(unittest.TestCase):
         self.assertTrue(isolated_home.name.startswith("gitnexus-v2c-b-"))
         self.assertEqual(0o700, stat.S_IMODE(isolated_home.stat().st_mode))
         controller.refresh.assert_called_once_with(
-            self.repo, expected_head=HEAD, explicit_opt_in=True
+            self.repo, expected_head=HEAD, explicit_opt_in=True, deadline=220.0
         )
+        self.assertEqual(220.0, qualify.call_args.kwargs["deadline"])
+        self.assertEqual(220.0, repository_state.call_args.kwargs["deadline"])
+        self.assertEqual(220.0, snapshot.call_args.kwargs["deadline"])
+        self.assertEqual(220.0, assess.call_args.kwargs["deadline"])
         assert result is not None
         self.assertIn("refreshed and verified", result["hookSpecificOutput"]["additionalContext"])
+
+    def test_auto_on_demand_expiry_before_repository_preflight_creates_no_home(self) -> None:
+        config = hook_config(self.root, mode="auto-on-demand")
+        assert config.refresh is not None
+        now = {"value": 100.0}
+
+        def qualify_then_expire(*_args, **_kwargs):
+            now["value"] = 220.0
+            return self.qualification
+
+        with (
+            mock.patch.object(
+                adapter.time, "monotonic", side_effect=lambda: now["value"]
+            ),
+            mock.patch.object(
+                hook, "_qualify", side_effect=qualify_then_expire
+            ),
+            mock.patch.object(adapter, "collect_repository_state") as repository,
+            mock.patch.object(adapter, "RefreshController") as controller,
+            self.assertRaisesRegex(
+                adapter.ProbeDeadlineError, "probe-deadline-expired"
+            ),
+        ):
+            hook.evaluate_hook(config, event(self.root))
+        repository.assert_not_called()
+        controller.assert_not_called()
+        self.assertEqual([], list(config.refresh["gitnexus_home_parent"].iterdir()))
+
+    def test_post_home_creation_expiry_sets_breaker_and_prevents_repeat(self) -> None:
+        config = hook_config(self.root, mode="auto-on-demand")
+        assert config.refresh is not None
+        parent = config.refresh["gitnexus_home_parent"]
+        metadata = adapter.MetadataResult(
+            "stale", "indexed-revision-stale", INDEXED, "f" * 64, {}
+        )
+        now = {"value": 100.0}
+        real_mkdtemp = hook.tempfile.mkdtemp
+
+        def create_then_expire(*args, **kwargs):
+            created = real_mkdtemp(*args, **kwargs)
+            now["value"] = 220.0
+            return created
+
+        with (
+            mock.patch.object(
+                adapter.time, "monotonic", side_effect=lambda: now["value"]
+            ),
+            mock.patch.object(hook, "_qualify", return_value=self.qualification),
+            mock.patch.object(
+                adapter, "collect_repository_state", return_value=self.repo
+            ),
+            mock.patch.object(
+                adapter, "collect_tracked_snapshot", return_value=tracked_snapshot()
+            ),
+            mock.patch.object(adapter, "assess_metadata", return_value=metadata),
+            mock.patch.object(
+                hook.tempfile, "mkdtemp", side_effect=create_then_expire
+            ),
+            mock.patch.object(adapter, "RefreshController") as controller,
+            self.assertRaisesRegex(
+                adapter.ProbeDeadlineError, "probe-deadline-expired"
+            ),
+        ):
+            hook.evaluate_hook(config, event(self.root))
+
+        homes = [path for path in parent.iterdir() if path.is_dir()]
+        markers = list(parent.glob(".codex-v2c-b-auto-disabled-*.json"))
+        self.assertEqual(1, len(homes))
+        self.assertEqual(1, len(markers))
+        controller.assert_not_called()
+
+        now["value"] = 100.0
+        with (
+            mock.patch.object(
+                adapter.time, "monotonic", side_effect=lambda: now["value"]
+            ),
+            mock.patch.object(hook, "_qualify", return_value=self.qualification),
+            mock.patch.object(
+                adapter, "collect_repository_state", return_value=self.repo
+            ),
+            mock.patch.object(
+                adapter, "collect_tracked_snapshot", return_value=tracked_snapshot()
+            ),
+            mock.patch.object(adapter, "assess_metadata", return_value=metadata),
+            mock.patch.object(adapter, "RefreshController") as second_controller,
+        ):
+            repeated = hook.evaluate_hook(config, event(self.root))
+        self.assertEqual(1, len([path for path in parent.iterdir() if path.is_dir()]))
+        second_controller.assert_not_called()
+        assert repeated is not None
+        self.assertIn(
+            "remains disabled",
+            repeated["hookSpecificOutput"]["additionalContext"],
+        )
 
     def test_refresh_failure_persists_circuit_breaker_and_prevents_retry(self) -> None:
         failed = adapter.RefreshResult(

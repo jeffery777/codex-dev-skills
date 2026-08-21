@@ -230,6 +230,55 @@ class QualificationTests(unittest.TestCase):
             self.assertEqual({"HOME": raw}, calls[0][1]["env"])
             self.assertNotIn("shell", calls[0][1])
 
+    def test_refresh_deadline_allows_slow_valid_qualification_without_changing_standalone_limit(self):
+        with tempfile.TemporaryDirectory() as raw:
+            executable = make_executable(pathlib.Path(raw).resolve())
+            now = {"value": 0.0}
+
+            def runner(argv, **kwargs):
+                if argv[-1] == "--version":
+                    now["value"] = 12.0
+                    output = "GitNexus 1.6.9"
+                else:
+                    output = " ".join(adapter.REQUIRED_ANALYZE_FLAGS)
+                return subprocess.CompletedProcess(argv, 0, output, "")
+
+            trusted = provenance_kwargs(executable)
+            with mock.patch.object(
+                adapter.time, "monotonic", side_effect=lambda: now["value"]
+            ):
+                qualified = adapter._qualify_executable_until(
+                    executable, deadline=20.0, runner=runner, **trusted
+                )
+            self.assertEqual("1.6.9", qualified.version)
+
+            now["value"] = 0.0
+            with (
+                mock.patch.object(
+                    adapter.time, "monotonic", side_effect=lambda: now["value"]
+                ),
+                self.assertRaisesRegex(
+                    adapter.ProbeDeadlineError, "probe-deadline-expired"
+                ),
+            ):
+                adapter.qualify_executable(executable, runner=runner, **trusted)
+
+    def test_standalone_qualification_timeout_validation_is_unchanged(self):
+        for value in (0, 301, True):
+            with self.subTest(value=value), self.assertRaisesRegex(
+                adapter.GitNexusAdapterError,
+                "qualification timeout must be an integer from 1 through 300 seconds",
+            ):
+                adapter.qualify_executable(None, timeout_seconds=value)
+
+    def test_private_qualification_rejects_invalid_caller_deadlines(self):
+        for value in (float("nan"), float("inf"), True, "10"):
+            with self.subTest(value=value), self.assertRaisesRegex(
+                adapter.GitNexusAdapterError,
+                "deadline must be a finite monotonic timestamp",
+            ):
+                adapter._qualify_executable_until(None, deadline=value)
+
     def test_caller_owned_package_provenance_is_required_before_execution_and_rechecked(self):
         with tempfile.TemporaryDirectory() as raw:
             directory = pathlib.Path(raw).resolve()
@@ -1448,6 +1497,50 @@ class RefreshControllerTests(unittest.TestCase):
             )
         self.assertEqual([], calls)
 
+    def test_caller_deadline_exhaustion_prevents_preflight_and_runner(self):
+        calls = []
+
+        def runner(argv, **kwargs):
+            calls.append(argv)
+            return subprocess.CompletedProcess(argv, 0, "", "")
+
+        with (
+            mock.patch.object(adapter.time, "monotonic", return_value=50.0),
+            self.assertRaisesRegex(
+                adapter.ProbeDeadlineError, "probe-deadline-expired"
+            ),
+        ):
+            self.controller(runner, timeout=120).refresh(
+                self.repository,
+                expected_head=self.repository.head,
+                explicit_opt_in=True,
+                deadline=50.0,
+            )
+        self.assertEqual([], calls)
+
+    def test_refresh_deadline_boundaries_and_invalid_values(self):
+        with mock.patch.object(adapter.time, "monotonic", return_value=10.0):
+            self.assertEqual(11.0, adapter._refresh_deadline(1))
+            self.assertEqual(3610.0, adapter._refresh_deadline(3600))
+        for value in (0, 3601, True):
+            with self.subTest(value=value), self.assertRaisesRegex(
+                adapter.GitNexusAdapterError,
+                "refresh timeout must be an integer from 1 through 3600 seconds",
+            ):
+                adapter._refresh_deadline(value)
+
+        for value in (float("nan"), float("inf"), True, "10"):
+            with self.subTest(deadline=value), self.assertRaisesRegex(
+                adapter.GitNexusAdapterError,
+                "deadline must be a finite monotonic timestamp",
+            ):
+                self.controller(mock.Mock(), timeout=120).refresh(
+                    self.repository,
+                    expected_head=self.repository.head,
+                    explicit_opt_in=True,
+                    deadline=value,
+                )
+
     def test_refresh_rejects_snapshot_head_branch_race_before_runner(self):
         run_git(self.root, "switch", "-q", "-c", "other")
         (self.root / "code.py").write_text("print('other')\n", encoding="utf-8")
@@ -1617,8 +1710,10 @@ class RefreshControllerTests(unittest.TestCase):
                         )
                         ignored.write_text("before\n", encoding="utf-8")
 
-                    def write_then_mutate(index_directory, identity):
-                        original_writer(index_directory, identity)
+                    def write_then_mutate(index_directory, identity, *, deadline=None):
+                        original_writer(
+                            index_directory, identity, deadline=deadline
+                        )
                         mutate()
 
                     with mock.patch.object(
@@ -1871,6 +1966,21 @@ class RefreshControllerTests(unittest.TestCase):
         )
         self.assertEqual(("failed", "refresh-timeout"), (timed.status, timed.reason))
 
+        def production_boundary_timeout_runner(argv, **kwargs):
+            raise adapter.ProcessBoundaryError("process-timeout")
+
+        boundary_timed = self.controller(
+            production_boundary_timeout_runner
+        ).refresh(
+            self.repository,
+            expected_head=self.repository.head,
+            explicit_opt_in=True,
+        )
+        self.assertEqual(
+            ("failed", "refresh-timeout"),
+            (boundary_timed.status, boundary_timed.reason),
+        )
+
         def recovery_runner(argv, **kwargs):
             write_metadata(self.root, valid_metadata(repository_state(self.root)))
             return subprocess.CompletedProcess(argv, 0, "indexed", "")
@@ -1887,6 +1997,40 @@ class RefreshControllerTests(unittest.TestCase):
             self.repository, expected_head=self.repository.head, explicit_opt_in=True
         )
         self.assertEqual(("failed", "refresh-exit-9"), (failed.status, failed.reason))
+
+    def test_near_expiry_runner_slice_never_extends_absolute_deadline(self):
+        now = {"value": 0.0}
+        captured = {}
+        original_empty_check = adapter._require_empty_isolated_home_descriptor
+
+        def enter_near_expiry(descriptor):
+            original_empty_check(descriptor)
+            now["value"] = 0.99
+
+        def runner(argv, **kwargs):
+            captured["timeout"] = kwargs["timeout"]
+            now["value"] = 0.0
+            raise subprocess.TimeoutExpired(argv, kwargs["timeout"])
+
+        with (
+            mock.patch.object(
+                adapter.time, "monotonic", side_effect=lambda: now["value"]
+            ),
+            mock.patch.object(
+                adapter,
+                "_require_empty_isolated_home_descriptor",
+                side_effect=enter_near_expiry,
+            ),
+        ):
+            result = self.controller(runner, timeout=10).refresh(
+                self.repository,
+                expected_head=self.repository.head,
+                explicit_opt_in=True,
+                deadline=1.0,
+            )
+        self.assertEqual(("failed", "refresh-timeout"), (result.status, result.reason))
+        self.assertGreater(captured["timeout"], 0.0)
+        self.assertLess(captured["timeout"], 0.01)
 
     def test_refresh_preflight_qualification_hash_obeys_total_deadline(self):
         self.executable.write_bytes(b"#!/bin/sh\nexit 0\n" + b"#" * (2 * 1024 * 1024))
@@ -1926,10 +2070,50 @@ class RefreshControllerTests(unittest.TestCase):
             )
         self.assertTrue(ran["value"])
         self.assertEqual(
-            ("failed", "postcondition-unknown:ProbeDeadlineError"),
+            ("failed", "probe-deadline-expired"),
             (result.status, result.reason),
         )
         self.assertFalse(result.receipt["authority_invariants"]["automatic_refresh_enabled"])
+
+    def test_index_identity_deadline_expiry_before_replace_publishes_nothing(self):
+        metadata = valid_metadata(self.repository)
+        write_metadata(self.root, metadata)
+        snapshot = adapter.collect_tracked_snapshot(self.root)
+        identity = adapter.build_index_identity(
+            self.repository,
+            snapshot,
+            self.qualification,
+            metadata_digest=adapter._canonical_digest(metadata),
+            indexed_at=metadata["indexedAt"],
+            observed_at="2026-08-20T00:00:00Z",
+        )
+        now = {"value": 0.0}
+
+        def expire_after_file_sync(_descriptor):
+            now["value"] = 10.0
+
+        with (
+            mock.patch.object(
+                adapter.time, "monotonic", side_effect=lambda: now["value"]
+            ),
+            mock.patch.object(adapter.os, "fsync", side_effect=expire_after_file_sync),
+            mock.patch.object(adapter.os, "replace") as replace,
+            self.assertRaisesRegex(
+                adapter.ProbeDeadlineError, "probe-deadline-expired"
+            ),
+        ):
+            adapter._write_index_identity(
+                self.root / ".gitnexus", identity, deadline=10.0
+            )
+        replace.assert_not_called()
+        self.assertFalse(
+            (self.root / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME).exists()
+        )
+        assessed = adapter.assess_metadata(
+            self.repository, snapshot, self.qualification
+        )
+        self.assertNotEqual("fresh", assessed.state)
+        self.assertEqual("index-identity-evidence-missing", assessed.reason)
 
     def test_unexpected_tracked_and_protected_mutation_is_preserved_and_rejected(self):
         def mutating_runner(argv, **kwargs):
@@ -2456,6 +2640,101 @@ class ProcessAndOperatorTests(unittest.TestCase):
                 disabled = json.loads(printer.call_args.args[0])
             self.assertEqual("disabled", disabled["status"])
             self.assertFalse(disabled["repository_write_performed"])
+
+    def test_operator_refresh_validates_and_shares_one_deadline(self):
+        arguments = [
+            "refresh",
+            "--executable", str(self.executable),
+            "--repo-root", str(self.root),
+            "--repository-id", "github.com.Owner.Repository",
+            "--expected-remote", "https://github.com/Owner/Repository.git",
+            "--expected-head", self.repository.head,
+            "--gitnexus-home", str(self.gitnexus_home),
+            "--lock-directory", str(self.directory / "locks"),
+            "--timeout-seconds", "30",
+            "--enabled",
+            "--confirm-explicit-refresh",
+        ]
+        controller = mock.Mock()
+        controller.refresh.return_value = adapter.RefreshResult(
+            "refreshed", "qualified-index-adoptable", {"status": "refreshed"}
+        )
+        with (
+            mock.patch.object(adapter.time, "monotonic", return_value=100.0),
+            mock.patch.object(
+                adapter,
+                "_qualification_from_arguments",
+                return_value=self.qualification,
+            ) as qualify,
+            mock.patch.object(
+                adapter, "_repository_from_arguments", return_value=self.repository
+            ) as repository_from_arguments,
+            mock.patch.object(adapter, "collect_tracked_snapshot") as snapshot,
+            mock.patch.object(
+                adapter, "RefreshController", return_value=controller
+            ),
+            mock.patch("builtins.print"),
+        ):
+            self.assertEqual(0, adapter.operator_main(arguments))
+        self.assertEqual(130.0, qualify.call_args.kwargs["deadline"])
+        self.assertEqual(
+            130.0, repository_from_arguments.call_args.kwargs["deadline"]
+        )
+        self.assertEqual(130.0, snapshot.call_args.kwargs["deadline"])
+        self.assertEqual(130.0, controller.refresh.call_args.kwargs["deadline"])
+
+        for value in ("0", "3601"):
+            invalid = list(arguments)
+            invalid[invalid.index("30")] = value
+            with (
+                mock.patch.object(
+                    adapter, "_qualification_from_arguments"
+                ) as qualify_invalid,
+                mock.patch("builtins.print") as printer,
+            ):
+                self.assertEqual(2, adapter.operator_main(invalid))
+            qualify_invalid.assert_not_called()
+            result = json.loads(printer.call_args.args[0])
+            self.assertEqual("adapter-rejected", result["error_code"])
+
+    def test_operator_refresh_deadline_expires_before_repository_preflight(self):
+        arguments = [
+            "refresh",
+            "--executable", str(self.executable),
+            "--repo-root", str(self.root),
+            "--repository-id", "github.com.Owner.Repository",
+            "--expected-remote", "https://github.com/Owner/Repository.git",
+            "--expected-head", self.repository.head,
+            "--gitnexus-home", str(self.gitnexus_home),
+            "--lock-directory", str(self.directory / "locks"),
+            "--timeout-seconds", "30",
+            "--enabled",
+            "--confirm-explicit-refresh",
+        ]
+        now = {"value": 100.0}
+
+        def qualify_then_expire(*_args, **_kwargs):
+            now["value"] = 130.0
+            return self.qualification
+
+        with (
+            mock.patch.object(
+                adapter.time, "monotonic", side_effect=lambda: now["value"]
+            ),
+            mock.patch.object(
+                adapter,
+                "_qualification_from_arguments",
+                side_effect=qualify_then_expire,
+            ),
+            mock.patch.object(adapter, "_repository_from_arguments") as repository,
+            mock.patch.object(adapter, "RefreshController") as controller,
+            mock.patch("builtins.print") as printer,
+        ):
+            self.assertEqual(2, adapter.operator_main(arguments))
+        repository.assert_not_called()
+        controller.assert_not_called()
+        result = json.loads(printer.call_args.args[0])
+        self.assertEqual("probe-deadline-expired", result["error_code"])
 
     def test_operator_status_rejects_explicit_git_script_wrapper(self):
         with tempfile.TemporaryDirectory() as raw:
