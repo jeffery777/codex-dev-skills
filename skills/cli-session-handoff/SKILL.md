@@ -1,6 +1,6 @@
 ---
 name: cli-session-handoff
-description: Thin Codex CLI session control adapter for one bounded non-interactive start, resume, or fork, or one manual interactive fork, already selected by shared orchestration.
+description: Thin Codex CLI session control adapter for one bounded non-interactive start, resume, or fork, or one manual interactive fork, dashboard, or queued message, already selected by shared orchestration.
 ---
 
 # cli-session-handoff
@@ -11,7 +11,8 @@ Runtime compatibility: cli
 
 Use this skill only after `loop-engineering`, `project-orchestrator`,
 `project-delivery`, or `task-continuation` has selected a bounded handoff and
-the user explicitly wants a separate, resumed, or forked Codex CLI session.
+the user explicitly wants a separate, resumed, forked, inspected, or queued
+Codex CLI session action.
 
 This is a thin CLI control-plane adapter. It does not select the task, redefine
 completion, replace shared subagents, or control Desktop tasks. The originating
@@ -33,9 +34,28 @@ This skill may prepare that exact paste-ready command and working-directory
 choice as a manual handoff, but the repo-owned executor does not automate the
 TUI or implement interactive fork.
 
-Neither path uses interactive UI automation, Desktop `create_thread`, private
-session files, app-server, remote-control, a daemon, or a sidecar. A CLI
-session identifier is not a Desktop `threadId` or `clientThreadId`.
+Codex CLI 0.149.0 also exposes `codex agents` as an interactive session
+dashboard and `codex queue --thread <THREAD> --message <TEXT>` as a public
+message-delivery command. This skill may prepare those manual operations only
+after the exact dashboard mutation or queued message is authorized. Use a
+canonical session UUID for queue guidance even though the CLI accepts an exact
+session name; a display name is not stable identity. The private-clone executor
+does not automate either command because they do not share the isolated
+`codex exec --json` terminal-turn contract.
+
+`codex doctor --json` is a read-only, redacted diagnostic fallback. It does not
+prove that a specific session operation is supported, replace active public
+CLI help/schema inspection, or authorize app-server, remote-control, private
+runtime-state, or historical Desktop wrapper access.
+
+The automated `codex exec` and manual interactive-fork paths do not use
+interactive UI automation, Desktop `create_thread`, private session files,
+direct app-server or remote-control APIs, a caller-started daemon, or a
+sidecar. The public `codex agents` command is the explicit exception: it owns
+its documented connection to the runtime-managed shared local app-server
+daemon without authorizing this adapter to start or control that daemon
+directly. A CLI session identifier is not a Desktop `threadId` or
+`clientThreadId`.
 
 ## Workflow
 
@@ -54,6 +74,15 @@ session identifier is not a Desktop `threadId` or `clientThreadId`.
    - `interactive-fork` when the same interactive task needs a new chat that
      keeps saved history and intentionally reuses the session directory or
      another exact existing checkout/worktree.
+   - `agents-dashboard` when the user explicitly wants to browse or control
+     sessions interactively; searching or viewing is observation, while start,
+     open, rename, and stop actions retain the authority required for the exact
+     selected mutation.
+   - `manual-queue` when the user explicitly wants to deliver one bounded
+     nonsensitive message to an exact canonical session UUID. Queue acceptance
+     is dispatch/wakeup evidence only, not processing or completion evidence.
+   - `doctor` only for requested runtime diagnosis through the redacted public
+     output; never as a substitute for operation capability checks.
 4. Prepare a self-contained prompt that requires the child to re-read
    source-of-truth files, stay within scope, avoid further session dispatch,
    run verification with the repository-selected environment, and return
@@ -84,12 +113,23 @@ session identifier is not a Desktop `threadId` or `clientThreadId`.
 
    For `interactive-fork`, return a paste-ready
    `codex fork <SESSION_ID>` command and the chosen directory policy for the
-   user to run interactively; do not send it through the executor.
+   user to run interactively. For `agents-dashboard`, return `codex agents` and
+   identify which later dashboard actions require a separate mutation gate. For
+   `manual-queue`, preview the exact UUID and complete message, recheck that the
+   message contains no credentials, private paths, customer/incident details,
+   shell-control text, or further-dispatch request, then return an exact argv
+   token list for `codex queue`, with the complete message as one token. Do not
+   interpolate arbitrary message text into a paste-ready shell command. Provide
+   a shell command only when the user's exact shell is known and every message
+   byte is encoded with that shell's verified literal-quoting rules. Do not send
+   any of these manual operations through the executor.
 9. Treat non-interactive `completed` as process/session handoff evidence only.
    A prepared interactive-fork command is a handoff artifact, not evidence that
-   a fork occurred. After the user runs it, treat only the public CLI result as
-   session dispatch evidence. Re-read the target worktree and verify the diff
-   independently before accepting any child result.
+   a fork occurred. A prepared dashboard or queue command is likewise not
+   execution evidence. After the user runs one, treat only the public CLI
+   result as observation, mutation, or queue-dispatch evidence as applicable.
+   Re-read the target worktree and verify the diff independently before
+   accepting any destination result.
 10. If capability or validation fails, keep the prepared prompt as a manual
    continuation artifact or continue in the current session.
 
@@ -139,10 +179,35 @@ request shape. In addition:
 - Do not confuse automated `codex exec fork` with interactive `codex fork`;
   only the latter remains a manual interactive handoff.
 
+## Dashboard And Queue Policy
+
+- `codex agents` is an interactive CLI control plane over the runtime's shared
+  local app-server daemon. Using the public command does not authorize starting
+  an app-server or remote-control daemon directly.
+- Dashboard discovery or viewing is observation. Starting, opening, renaming,
+  or stopping a task is a distinct runtime-state action and requires exact
+  authority at selection time.
+- Prepare `codex queue` only with a canonical UUID. Do not use a session name,
+  `--last`, private state, or dashboard display text as identity authority.
+- Preview and validate the full queued message. It must be bounded,
+  nonsensitive, non-destructive, free of shell-control text, and within the
+  already selected task scope.
+- Represent the queue invocation as an argv token list. Never concatenate or
+  interpolate the message into a shell command. If an executable shell command
+  is explicitly requested, require a known shell and verified literal quoting
+  for the complete message; otherwise keep the argv-only boundary.
+- Queue acceptance proves only that delivery was requested. It does not prove
+  the destination woke, processed the message, changed files, passed checks, or
+  completed repository work.
+- Do not pass model, sandbox, approval, remote endpoint, profile, extra
+  directory, or bypass flags unless a separately reviewed future adapter
+  defines and verifies those semantics.
+
 ## Output
 
 - Operation and result classification
-- For an interactive fork, exact UUID command, selected directory policy, and
+- For an interactive fork or dashboard, a paste-ready command; for queue, the
+  exact UUID, reviewed message, argv token list, quoting classification, and
   explicit manual-execution boundary
 - Observed CLI version and executable digest, without a machine-local path
 - Canonical target Git head and a redacted workspace label
@@ -164,6 +229,10 @@ Stop before execution when:
 - the task could overlap another active writer;
 - the prompt asks for destructive, publication, credential, private-state,
   permission-widening, or further session-dispatch behavior;
+- a queued message contains sensitive or shell-control content, lacks an exact
+  UUID, expands the selected task, requires unreviewed
+  model/sandbox/approval/remote flags, or cannot be represented without unsafe
+  shell interpolation;
 - only experimental or private runtime interfaces could satisfy the request;
 - a live smoke, commit, push, PR, merge, release, or deployment lacks its own
   required human gate.

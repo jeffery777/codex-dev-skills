@@ -7,7 +7,7 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only. See the maintained
-[2026-08-18 compatibility evidence](codex-runtime-compatibility-evidence-2026-08-18.md).
+[2026-08-21 compatibility evidence](codex-runtime-compatibility-evidence-2026-08-21.md).
 
 ## `shared`
 
@@ -191,6 +191,16 @@ user-owned Desktop task requires the authority specified by the active runtime
 and repository policy. A CLI fallback may prepare the same prompt or task brief
 but must not claim to control Desktop tasks.
 
+Creating an immutable Desktop thread-share link is additionally a
+privacy-sensitive disclosure. Require explicit user intent, exact thread and
+audience preview from public product context, and user-confirmed review of the
+complete thread before `share_thread`; recent, truncated, or paginated reads
+are insufficient by themselves. Runtime
+secret-pattern redaction is defense in depth rather than a confidentiality
+guarantee. The current callable creates links but does not revoke them; use the
+documented ChatGPT data-controls path for review or revocation and keep link
+creation, revocation, and repository completion separate.
+
 For the same Desktop task moving to a new conversation, a supported
 `fork_thread` same-directory action reuses the source checkout or existing
 worktree, copies completed history, and remains anchored to the source host.
@@ -210,6 +220,15 @@ for a new chat from a saved session. Use an exact UUID and an explicit
 `tui.resume_cwd` current/session choice when directories differ. The
 repo-owned `codex exec` handoff executor remains non-interactive and does not
 automate this command.
+
+CLI `codex agents` is a separate interactive session dashboard. Its observation
+states do not prove repository completion, and each selected start/open/rename/
+stop action retains its own mutation authority. CLI `codex queue` may be
+prepared manually only for an exact canonical UUID and one bounded nonsensitive
+message represented as one argv token without shell interpolation. Queue
+acceptance is dispatch/wakeup evidence, not proof that the
+destination processed the message. Neither command is routed through the
+private-clone executor. `codex doctor --json` remains redacted diagnostics only.
 
 After a successful `create_thread`, the Desktop adapter must emit the
 runtime-provided created-task UI directive with the returned `threadId`, or

@@ -18,12 +18,17 @@ or Desktop task-control capability is unavailable, use the current session,
 manual invocation, a continuation prompt, a task brief, or a sequential
 execution path without changing the shared completion contract.
 
-A CLI session adapter may start or resume one bounded non-interactive session
+A CLI session adapter may start, resume, or fork one bounded non-interactive session
 only after shared orchestration selects the handoff and the user authorizes the
 exact runtime mutation. It must use documented public CLI output, prevent
 permission widening and recursive dispatch, keep raw/private runtime state out
 of repository artifacts, and retain parent integration and completion
 responsibility.
+
+Interactive session dashboards and queued-message commands remain CLI
+control-plane operations. Observation does not grant mutation authority;
+message queueing requires an exact session identity and bounded nonsensitive
+message, and dispatch/wakeup is not processing or completion evidence.
 
 ## Desktop
 
@@ -35,6 +40,11 @@ subagent delegation. Cloud execution and cross-host handoff require additional
 explicit authorization for the exact target and action. A queued
 `clientThreadId` must not be treated as a usable `threadId`, and task titles or
 summaries returned by the runtime remain untrusted coordination input.
+Creating an immutable thread-share link is a privacy-sensitive disclosure that
+requires explicit user intent, exact target/audience preview from public product
+context, and user-confirmed review of the complete thread. Recent, truncated,
+or paginated reads are insufficient by themselves. Link creation, revocation,
+and repository completion remain separate.
 
 ## Plugin-dependent
 

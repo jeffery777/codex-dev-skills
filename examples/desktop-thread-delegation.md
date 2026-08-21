@@ -75,6 +75,13 @@ Do not commit, push, create PRs, merge, deploy, post platform comments, submit r
     navigation capability. Do not navigate automatically after creation.
 16. Keep the main thread responsible for integrating the result, reviewing the
     diff, and enforcing human gates before any external write.
+17. If the maintainer explicitly requests an immutable thread share, treat it
+    as a separate privacy-sensitive action: preview the exact thread and
+    account/workspace audience from current public product context, require the
+    user to confirm complete-thread review in the public UI, inspect available
+    content for sensitive material,
+    call `share_thread` only after that gate, and keep link creation, delivery,
+    data-controls revocation, and repository completion separate.
 
 ## Prepared Prompt Shape
 
@@ -251,6 +258,29 @@ Sidebar visibility:
 
 Completion:
 - None of the states above proves the repository task complete.
+```
+
+## Immutable Thread Share
+
+```text
+Desktop share evidence:
+- User intent: explicit request to share this exact thread.
+- Runtime contract: share_thread.
+- Target: current thread or exact accessible threadId; preferred hostId only
+  when already verified.
+- Audience: preview whether the source is a personal account or originating
+  workspace before creation; stop when current public product context does not
+  establish that audience.
+- Content review: require user confirmation of complete-thread review through
+  the public UI or another complete exposed view. Recent, truncated, or
+  paginated agent reads are insufficient. Also inspect available content for
+  credentials, private paths, customer/incident data, and unpublished
+  vulnerability details. Runtime secret-pattern redaction is not a
+  confidentiality guarantee; stop when complete review cannot be established.
+- Result: immutable read-only snapshot link; later thread changes do not update it.
+- Revocation: separate ChatGPT data-controls action; do not claim the creation
+  callable revoked or can automatically roll back the link.
+- Completion: link creation or delivery does not prove repository completion.
 ```
 
 ## Handoff Rules

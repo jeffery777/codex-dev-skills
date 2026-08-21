@@ -134,17 +134,17 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
 
     def test_latest_runtime_evidence_records_current_versions_and_schemas(self) -> None:
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-19.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-21.md")
 
         for expected in (
-            "0.148.0",
-            "26.818.11542",
-            "codex exec fork",
-            "fork_thread",
-            "clientThreadId",
-            "apply_patch",
-            "open_in_codex",
-            "GitHub plugin first",
+            "0.149.0",
+            "26.818.22352",
+            "codex agents",
+            "codex queue",
+            "codex doctor --json",
+            "share_thread",
+            "skill model delegation",
+            "ChatGPT data controls",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, evidence)
@@ -158,6 +158,45 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-18.md").is_file()
         )
+        self.assertTrue(
+            (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-19.md").is_file()
+        )
+
+    def test_cli_queue_and_desktop_share_preserve_runtime_layers(self) -> None:
+        contract = read("docs/native-runtime-capabilities.md")
+        compatibility = read("docs/runtime-compatibility.md")
+        cli_skill = read("skills/cli-session-handoff/SKILL.md")
+        desktop_skill = read("skills/desktop-thread-delegation/SKILL.md")
+        human_gate = read("policies/human-gate-policy.md")
+        combined = "\n".join(
+            (contract, compatibility, cli_skill, desktop_skill, human_gate)
+        )
+
+        for expected in (
+            "codex agents",
+            "codex queue",
+            "canonical UUID",
+            "argv token",
+            "dispatch/wakeup evidence",
+            "share_thread",
+            "immutable",
+            "sensitive-content review",
+            "data controls",
+            "completion authority",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, combined)
+
+        self.assertRegex(
+            cli_skill,
+            re.compile(r"private-clone executor\s+does not automate"),
+        )
+        self.assertIn("exposes no revoke operation", desktop_skill)
+        self.assertIn(
+            "user to confirm review of the complete thread",
+            desktop_skill,
+        )
+        self.assertNotIn("CLI `share_thread`", combined)
 
     def test_desktop_post_create_visibility_contract(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")

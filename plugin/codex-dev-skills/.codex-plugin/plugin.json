@@ -1,6 +1,6 @@
 {
   "name": "codex-dev-skills",
-  "version": "0.16.1",
+  "version": "0.16.2",
   "description": "Reusable software-delivery, review, and runtime-adapter workflows for Codex.",
   "author": {
     "name": "codex-dev-skills maintainers",
