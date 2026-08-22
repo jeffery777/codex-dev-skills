@@ -48,9 +48,7 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
         self.assertIn("v0.16.3, published", read("README.md"))
         self.assertIn("Issue #163 owns the v0.16.3", read("docs/roadmap.md"))
 
-    def test_v0170_candidate_metadata_and_traceability_align(self) -> None:
-        self.assertEqual("0.17.0", yaml.safe_load(read("catalog.yaml"))["version"])
-        self.assertIn('VERSION="0.17.0"', read("install.sh"))
+    def test_v0170_historical_notes_and_traceability_remain(self) -> None:
         notes = read("docs/release-notes-v0.17.0.md")
         for expected in (
             "# Release Notes: v0.17.0",
@@ -61,8 +59,23 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, notes)
-        self.assertIn("v0.17.0 candidate", read("README.md"))
-        self.assertIn("Issue #165 owns the v0.17.0", read("docs/roadmap.md"))
+        self.assertIn("v0.17.0, published", read("README.md"))
+        self.assertIn("Issue #165 delivered the v0.17.0", read("docs/roadmap.md"))
+
+    def test_v0171_candidate_metadata_and_traceability_align(self) -> None:
+        self.assertEqual("0.17.1", yaml.safe_load(read("catalog.yaml"))["version"])
+        self.assertIn('VERSION="0.17.1"', read("install.sh"))
+        notes = read("docs/release-notes-v0.17.1.md")
+        for expected in (
+            "# Release Notes: v0.17.1",
+            "Issue #167",
+            "documentation coherence patch",
+            "compare/v0.17.0...v0.17.1",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, notes)
+        self.assertIn("v0.17.1 documentation-coherence", read("README.md"))
+        self.assertIn("Issue #167 owns the v0.17.1", read("docs/roadmap.md"))
 
     def test_v0170_paired_run_release_evidence_is_durable_and_consistent(self) -> None:
         evidence_path = "docs/loops/issue-165/paired-run-evidence.md"
@@ -128,7 +141,7 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
         manifest = json.loads(
             read("plugin/codex-dev-skills/.codex-plugin/plugin.json")
         )
-        self.assertEqual("0.17.0", manifest["version"])
+        self.assertEqual("0.17.1", manifest["version"])
 
 
 if __name__ == "__main__":

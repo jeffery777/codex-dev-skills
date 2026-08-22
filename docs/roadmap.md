@@ -48,7 +48,14 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Issue #165 owns the v0.17.0 context-continuity and fresh-rollover feature.
+- Issue #167 owns the v0.17.1 public-documentation coherence patch. It aligns
+  README and the durable Operational Evidence continuation handoff with the
+  released v0.14.0 M0/M1 baseline, removes stale routing to completed Issue
+  #147 and v0.13.0, and adds regression coverage without activating M1 or
+  changing shared, CLI, or Desktop runtime contracts. M2 and V3-C remain
+  separately gated with release targets TBD.
+
+- Issue #165 delivered the v0.17.0 context-continuity and fresh-rollover feature.
   Two unfinished review/fix rounds trigger a configurable assessment rather
   than automatic task replacement. The shared contract separates current-
   context regrounding, parallel bounded subagents, history-preserving fork, and
@@ -56,9 +63,8 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   lineage, idempotency, and anti-recursion; provides Desktop/CLI/IDE capability
   and fallback semantics; and keeps graph lineage advisory. CLI phase one is
   clean and non-interactive only. The bounded same-objective cost/quality pair
-  is recorded in `docs/loops/issue-165/paired-run-evidence.md`; publication
-  still requires CI, exact-head security/review readiness, and separate human
-  authorization for platform and release writes.
+  is recorded in `docs/loops/issue-165/paired-run-evidence.md`; PR #166, the
+  annotated tag, and the GitHub Release published that reviewed baseline.
 
 - Issue #159 owns the v0.16.1 Linux qualification-timeout follow-up. Refresh
   entrypoints validate the existing bounded refresh timeout before contacting
@@ -183,8 +189,9 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   contract-to-runtime, provider-neutral protocol, operation-authority,
   execution-receipt, lifecycle, concurrency, security/privacy, and
   memory-off/on qualification requirements without adding a backend. M2 may
-  consider a second provider or MCP adapter only after M1 passes. V3-B, M1,
-  M2, and V3-C release targets are TBD; PlugMem and Mem0 remain excluded.
+  consider a second provider or MCP adapter only after M1 passes. V3-B and M1
+  were later published through their separately authorized Issues; M2 and
+  V3-C release targets remain TBD. PlugMem and Mem0 remain excluded.
 - Issue #141 / PR #142 deliver the bounded V3-B isolated
   candidate-evaluation family as `loop-candidate-evaluation/v0`; Issue #143
   publishes that reviewed baseline in v0.13.0. V3-B uses closed synthetic

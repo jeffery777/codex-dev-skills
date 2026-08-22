@@ -103,18 +103,20 @@ requires another human gate. M2 and V3-C release targets remain TBD.
 
 ## Next Task Bootstrap Checklist
 
-An Issue #147 M1 delivery or continuation task should:
+No post-v0.17.0 implementation Issue is implicitly authorized by this program
+handoff. A future task should:
 
 1. Read `AGENTS.md`, `README.md`, `docs/roadmap.md`, this program directory,
    and `docs/operational-evidence-contract.md`.
-2. Confirm Issue #141, merged PR #142, Issue #143, and the current v0.13.0
-   tag/Release state from current platform evidence.
+2. Confirm the current release, open Issues, milestones, and accepted platform
+   state rather than assuming the next task from this document.
 3. Inspect current branch/status/upstream/diff, tags/releases, open issues, and
    the installed GitNexus index freshness.
-4. Verify Issue #141 / PR #142 and Issue #143 exact release evidence rather
-   than trusting a chat summary, packet, or proposal score.
-5. Treat memory-off as the accepted V3-B default and verify Issue #147's exact
-   bounded Issue/spec/ADR/security scope before any M1 implementation.
+4. Verify the v0.13.0 V3-B and v0.14.0 M0/M1 release evidence rather than
+   trusting a chat summary, packet, proposal score, or stale bootstrap.
+5. Treat memory-off as the accepted V3-B default and M1 as default-disabled,
+   local/manual/CI-only safety/conformance evidence, not activation,
+   promotion, efficacy evidence, or authority for new backend work.
 6. Keep V3-A proposal, V3-B evaluation, M1 backend qualification, and V3-C
    services separate.
 7. Run GitNexus impact analysis before implementation and `detect_changes`
@@ -122,7 +124,8 @@ An Issue #147 M1 delivery or continuation task should:
 8. Stop at public-contract, privacy, authority, external-write, merge, tag, and
    release gates required by current policy.
 9. Read Issue #135 and `docs/loops/issue-135/roadmap-spec.md`; keep V3-B, M0,
-   M1, M2, and V3-C claims and deliveries separate.
+   M1, M2, and V3-C claims and deliveries separate, and require a new
+   authorized Issue before M2, V3-C, or another provider/backend slice.
 
 ## Handoff Summary
 
@@ -133,10 +136,12 @@ An Issue #147 M1 delivery or continuation task should:
 - Delivered after v0.13.0 publication and Issue #145 M0: Issue #147 / PR #148
   bounded M1 reference-adapter implementation and safety/conformance baseline
   in v0.14.0. This publication does not activate or promote M1.
-- Release interlock: Issue #143 separately closes the v0.13.0 annotated-tag and
-  GitHub Release gate; future work must still verify current platform evidence.
-- Memory role: M0 readiness design first; M1 only after V3-B evidence; M2 only
-  after M1 qualification. External memory remains optional context/cache.
+- Release interlock: Issues #143 and #147 closed the v0.13.0 V3-B and v0.14.0
+  M0/M1 publication gates; future work must still verify current platform
+  evidence rather than treating this handoff as release authority.
+- Memory role: M0 readiness preceded the published default-disabled M1
+  safety/conformance baseline; M2 requires new evidence and authorization.
+  External memory remains optional context/cache.
 - Public role: contracts, validators, synthetic fixtures, tests, and docs.
 - Private role: real operational records and the later manual/CI PoC.
 - Projection role: tool-neutral first; Obsidian remains an optional reference.
