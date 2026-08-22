@@ -16,8 +16,8 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current development feature candidate is the v0.17.0 context-continuity
-contract through Issue #165. Memory M1 was published in v0.14.0 through Issue
+The current development candidate is the v0.17.1 documentation-coherence
+patch through Issue #167. Memory M1 was published in v0.14.0 through Issue
 #147 / PR #148. v0.14.2 published the installer-backup isolation
 hotfix through Issue #151 / PR #152. v0.15.0 published lower-overhead agent
 coordination guidance and a Terra-high `senior` routing tier through Issue #153
@@ -32,7 +32,7 @@ immutable Desktop thread sharing without changing shared completion authority.
 v0.16.3, published through Issue #163 / PR #164, freezes the historical Desktop runtime
 wrapper V1 family behind a strict inventory, active-consumer quarantine, and
 explicit sunset gate without deleting the retained compatibility fixtures.
-The v0.17.0 candidate through Issue #165 adds a shared context-continuity
+v0.17.0, published through Issue #165 / PR #166, adds a shared context-continuity
 assessment, durable fresh-rollover checkpoint, single-writer transfer,
 lineage/idempotency/anti-recursion, Desktop/CLI/IDE capability matrix, and a
 clean non-interactive CLI fresh-continuation path. Two unfinished review/fix
@@ -570,8 +570,8 @@ empirical A/B claim. The bounded v0.17.0 same-objective empirical pair is
 recorded in
 [`docs/loops/issue-165/paired-run-evidence.md`](docs/loops/issue-165/paired-run-evidence.md)
 with raw-result fields, artifact digests, a predeclared rubric, and explicit
-order/cache/generalization limits. It supports this release candidate without
-turning one pair into a universal performance claim.
+order/cache/generalization limits. It supported the v0.17.0 release candidate
+without turning one pair into a universal performance claim.
 
 When a loop needs durable memory across repeated invocations, workers, worktrees,
 or handoffs, add a repo-owned loop ledger:
@@ -611,13 +611,12 @@ With no adapter, or with an unavailable, partial, unsupported, incompatible, or
 untrusted adapter, the loop safely continues with V1/V2a and no memory. See the
 [external memory contract](docs/external-memory-contract.md).
 
-The future Agent Memory track is planning-only. M0 must close the
-contract-to-runtime, operation-authority, execution-receipt, data-placement,
-lifecycle, concurrency, security, privacy, and V3-B evaluation gaps. Only after
-V3-B evidence passes may a separate Issue/spec/ADR/security review qualify a
-thin, default-disabled, local/manual/CI-only SQLite/FTS5 M1 reference adapter.
-Missing or drifted FTS5 support fails closed to no memory. M2 and V3-C remain
-behind later evidence and human decisions; PlugMem and Mem0 remain excluded.
+The Agent Memory M0 readiness contract and the thin, default-disabled,
+local/manual/CI-only SQLite/FTS5 M1 safety/conformance baseline were published
+in v0.14.0 through Issues #145 and #147. M1 remains optional and inactive: its
+publication is not activation, promotion, or efficacy evidence, and missing or
+drifted FTS5 support fails closed to no memory. M2 and V3-C remain behind new
+evidence and explicit human decisions; PlugMem and Mem0 remain excluded.
 
 V2d-A adds independently usable operational evidence without a backend:
 
@@ -1286,8 +1285,8 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.17.0.md` contains the current v0.17.0 release notes (release candidate);
-`docs/release-notes-v0.16.3.md`, `docs/release-notes-v0.16.2.md`, `docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
+`docs/release-notes-v0.17.1.md` contains the current v0.17.1 release notes (release candidate);
+`docs/release-notes-v0.17.0.md`, `docs/release-notes-v0.16.3.md`, `docs/release-notes-v0.16.2.md`, `docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
 `docs/release-notes-v0.14.2.md`, `docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and
 `docs/release-notes-v0.1.0.md` remain historical point-in-time records.

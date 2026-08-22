@@ -159,6 +159,21 @@ a public cross-runtime workflow contract and CLI operation. Require independent
 review, fresh security diff scan, CI, and exact-head merge readiness before any
 merge, annotated tag, or GitHub Release.
 
+For the v0.17.1 Issue #167 documentation-coherence patch, require README and
+the durable Operational Evidence continuation handoff to agree that V3-B,
+Memory M0, and the default-disabled local/manual/CI-only SQLite/FTS5 M1
+safety/conformance baseline are released. Prove that active next-task guidance
+does not route work to completed Issue #147 or treat v0.13.0 as the current
+baseline. Keep M1 explicitly inactive and non-promotional with no efficacy
+claim; keep M2 and V3-C behind new evidence and explicit human decisions.
+Historical release notes and completed Issue receipts remain point-in-time
+records. Align catalog, installer, generated plugin manifest, README, roadmap,
+tests, and v0.17.1 release notes. Treat this as a patch because it corrects
+published guidance and durable continuation semantics without changing shared,
+CLI, Desktop, Memory, or completion behavior. Require independent documentation
+review, exact-head CI, and merge readiness before merge, annotated tag, or
+GitHub Release.
+
 For the v0.15.0 agent-orchestration and routing candidate, require profile
 registry/digest validation for all eight opt-in profiles; deterministic cases
 for routine Terra-medium, complex Terra-high, multi-trigger Sol-medium,

@@ -16,15 +16,17 @@ maintenance releases. It records why Operational Evidence V0 must precede
 Evidence-Driven Self-Improvement, which public/private boundaries must remain
 intact, and how the work is divided into independently reviewable stages.
 
-The released development feature baseline is:
+The released candidate-evaluation baseline is:
 
 > **Loop Engineering V3-B: Isolated Candidate Evaluation**
 
 V3-A is limited to deterministic proposal generation. V3-B adds only a closed
 synthetic isolated candidate evaluator, deterministic replay, and a packet
-that cannot promote itself. V3-C automation remains deferred. Agent Memory
-remains disabled and has no backend; Issue #135 defines M0 readiness and the
-later M1/M2 gates only.
+that cannot promote itself. V3-C automation remains deferred. Memory M0 and
+the default-disabled local/manual/CI-only SQLite/FTS5 M1 reference adapter are
+released safety/conformance boundaries; M1 remains inactive, non-promotional,
+and unsupported by efficacy evidence. Issue #135 continues to define the
+separate M2 and V3-C gates.
 
 ## Current Baseline
 

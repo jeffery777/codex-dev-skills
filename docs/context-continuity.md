@@ -119,6 +119,7 @@ unknown comparison input, and same-context versus fresh-rollover metric routing.
 The fresh token total includes bootstrap overhead; a shifted cost or quality
 regression fails qualification and selects regrounding instead. These values
 are explicitly provenance-labelled synthetic fixtures, not empirical release
-evidence. Before release, maintainers must attach paired runs of the same
-objective with raw results, measurement method, quality rubric, and all listed
-metrics; until then the v0.17.0 release gate remains open.
+evidence. The v0.17.0 release attached a bounded same-objective paired run with
+raw results, measurement method, quality rubric, and all listed metrics in
+`docs/loops/issue-165/paired-run-evidence.md`; its stated limits remain part of
+that historical release evidence.
