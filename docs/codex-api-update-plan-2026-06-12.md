@@ -103,8 +103,8 @@ Does not need immediate behavioral expansion:
 
 5. Verification
    - Run `./scripts/validate-repo.sh`.
-   - Run the focused Desktop runtime wrapper test set:
-     - `python -m unittest discover -s tests -p 'test_desktop_runtime_*.py'`
+   - Review the recorded focused Desktop runtime wrapper test result without
+     retaining or recommending its retired runnable command.
    - Regenerate app-server schema to `/private/tmp` and record only command/output summary, not generated schema files.
 
 ## Definition Of Done

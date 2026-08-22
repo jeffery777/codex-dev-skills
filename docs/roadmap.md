@@ -48,6 +48,13 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
+- Issue #169 owns the non-destructive Desktop Runtime Wrapper V1 sunset
+  preparation. It classifies retained behavior against native adapters,
+  extracts wrapper-independent security invariants, removes executable legacy
+  documentation guidance, and prepares an exact future removal/recovery plan.
+  It does not delete or execute the wrappers and does not authorize a later
+  destructive slice.
+
 - Issue #167 owns the v0.17.1 public-documentation coherence patch. It aligns
   README and the durable Operational Evidence continuation handoff with the
   released v0.14.0 M0/M1 baseline, removes stale routing to completed Issue

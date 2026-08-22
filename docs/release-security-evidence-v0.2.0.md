@@ -42,16 +42,9 @@ Suppressed / non-issue areas:
 
 ## Verification Evidence
 
-Commands run from the repository root:
-
-```bash
-python3 --version
-python3 -m unittest tests.test_desktop_runtime_create_thread_live_smoke
-python3 -B -m unittest discover -s tests
-env PYTHONPYCACHEPREFIX=/tmp/codex-dev-skills-pycache python3 -B -m py_compile scripts/*.py
-./scripts/validate-repo.sh
-git diff --check
-```
+The original runnable verification transcript is intentionally omitted because
+it included the retired wrapper test entrypoint. The observations below remain
+point-in-time release evidence, not current operator guidance.
 
 Observed results:
 

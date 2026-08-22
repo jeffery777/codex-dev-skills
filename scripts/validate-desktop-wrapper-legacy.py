@@ -74,6 +74,7 @@ EXPECTED_SUNSET_REQUIREMENTS = [
     "explicit-destructive-action-authorization",
 ]
 SCANNED_SUFFIXES = {".md", ".py", ".sh", ".yaml", ".yml"}
+GUIDANCE_SUFFIXES = {".md", ".yaml", ".yml"}
 IGNORED_SOURCE_DIRECTORIES = {"__pycache__"}
 EXPLICIT_ACTIVE_FILES = (
     ".agents/plugins/marketplace.json",
@@ -86,13 +87,51 @@ ALLOWED_ACTIVE_REFERENCE_MARKERS = (
     "legacy",
 )
 FORBIDDEN_ACTIVE_IMPORT_PATTERNS = (
-    re.compile(r"^\s*import\s+(?:scripts\.)?desktop_runtime_", re.MULTILINE),
-    re.compile(r"^\s*from\s+scripts(?:\.desktop_runtime_|\s+import\s+desktop_runtime_)", re.MULTILINE),
+    re.compile(
+        r"^\s*import\s+(?:scripts\.)?desktop_runtime_",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    re.compile(
+        r"^\s*from\s+scripts(?:\.desktop_runtime_|\s+import\s+desktop_runtime_)",
+        re.IGNORECASE | re.MULTILINE,
+    ),
 )
 FORBIDDEN_ACTIVE_REFERENCE_PATTERNS = (
-    re.compile(r"desktop_runtime_[A-Za-z0-9_*-]*\.py"),
-    re.compile(r"scripts\.desktop_runtime_"),
+    re.compile(r"desktop_runtime_[A-Za-z0-9_*-]*\.py", re.IGNORECASE),
+    re.compile(r"scripts\.desktop_runtime_", re.IGNORECASE),
     *FORBIDDEN_ACTIVE_IMPORT_PATTERNS,
+)
+EXECUTABLE_LEGACY_GUIDANCE_PATTERNS = (
+    re.compile(
+        r"(?:(?:uv\s+run\s+)?"
+        r"(?:python(?:3)?|\./scripts/project-python|pytest))\b[^\n]*"
+        r"(?:scripts[/.]desktop_runtime_|test_desktop_runtime_)",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    re.compile(
+        r"^\s*(?:[-*]\s*|\d+\.\s*)?(?:`+\s*)?(?:\$\s*)?"
+        r"(?:\./)?scripts/desktop_runtime_[A-Za-z0-9_-]*\.py\b"
+        r"(?:(?:`+\s*)?$|\s+--?\S)",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    re.compile(
+        r"\buv\s+run\s+(?:\./)?scripts/desktop_runtime_[A-Za-z0-9_-]*\.py\b",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    re.compile(
+        r"^\s*(?:[-*]\s*|\d+\.\s*)?"
+        r"(?:to\s+[^,\n]+,\s*)?(?:run|execute|invoke|inject)\b[^\n]*"
+        r"desktop_runtime_",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    re.compile(
+        r"^\s*\d+\.[^\n]*\b(?:run|execute|invoke|inject)\b[^\n]*desktop_runtime_",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    re.compile(
+        r"\bexecute_create_thread_with_injected_adapter\s*\(",
+        re.IGNORECASE | re.MULTILINE,
+    ),
 )
 
 
@@ -215,6 +254,13 @@ def _is_under(relative: str, roots: list[str]) -> bool:
     return any(path == PurePosixPath(root) or PurePosixPath(root) in path.parents for root in roots)
 
 
+def _is_guidance_file(path: Path) -> bool:
+    return (
+        path.name.casefold() in {"readme", "readme.md"}
+        or path.suffix.casefold() in GUIDANCE_SUFFIXES
+    )
+
+
 def _candidate_source_files(repo_root: Path, generated_roots: list[str]) -> list[Path]:
     candidates: list[Path] = []
 
@@ -242,7 +288,10 @@ def _candidate_source_files(repo_root: Path, generated_roots: list[str]) -> list
             relative_text = path.relative_to(repo_root).as_posix()
             if _is_under(relative_text, generated_roots):
                 continue
-            if name not in {"README", "README.md"} and path.suffix not in SCANNED_SUFFIXES:
+            if (
+                name.casefold() not in {"readme", "readme.md"}
+                and path.suffix.casefold() not in SCANNED_SUFFIXES
+            ):
                 continue
             candidates.append(path)
             if len(candidates) > MAX_SCANNED_FILES:
@@ -256,13 +305,66 @@ def _candidate_source_files(repo_root: Path, generated_roots: list[str]) -> list
     return sorted(candidates)
 
 
+def _candidate_generated_documentation_files(
+    repo_root: Path, generated_roots: list[str]
+) -> list[Path]:
+    candidates: list[Path] = []
+
+    def fail_walk(error: OSError) -> None:
+        raise LegacyInventoryError(f"cannot scan generated documentation: {error}")
+
+    for relative_root in generated_roots:
+        root = repo_root / relative_root
+        if not root.exists():
+            raise LegacyInventoryError(
+                f"generated documentation root is missing: {relative_root}"
+            )
+        try:
+            root_status = root.lstat()
+        except OSError as error:
+            raise LegacyInventoryError(
+                f"cannot inspect generated documentation root {relative_root}: {error}"
+            ) from error
+        if stat.S_ISLNK(root_status.st_mode) or not stat.S_ISDIR(root_status.st_mode):
+            raise LegacyInventoryError(
+                f"generated documentation root must be a non-symlink directory: {relative_root}"
+            )
+        for directory, child_directories, filenames in os.walk(
+            root, topdown=True, onerror=fail_walk, followlinks=False
+        ):
+            directory_path = Path(directory)
+            retained_directories: list[str] = []
+            for name in sorted(child_directories):
+                child = directory_path / name
+                if child.is_symlink():
+                    relative = child.relative_to(repo_root).as_posix()
+                    raise LegacyInventoryError(
+                        "generated documentation directory must not be a symlink: "
+                        f"{relative}"
+                    )
+                retained_directories.append(name)
+            child_directories[:] = retained_directories
+            for name in sorted(filenames):
+                path = directory_path / name
+                if not _is_guidance_file(path):
+                    continue
+                candidates.append(path)
+                if len(candidates) > MAX_SCANNED_FILES:
+                    raise LegacyInventoryError(
+                        f"generated documentation scan exceeds {MAX_SCANNED_FILES} files"
+                    )
+    return sorted(candidates)
+
+
 def _validate_active_reference(relative: str, text: str, runnable: str) -> None:
-    if runnable in text or any(pattern.search(text) for pattern in FORBIDDEN_ACTIVE_REFERENCE_PATTERNS):
+    if runnable.casefold() in text.casefold() or any(
+        pattern.search(text) for pattern in FORBIDDEN_ACTIVE_REFERENCE_PATTERNS
+    ):
         raise LegacyInventoryError(
             f"active surface contains runnable legacy wrapper reference: {relative}"
         )
     for line_number, line in enumerate(text.splitlines(), start=1):
-        if REFERENCE_TOKEN not in line:
+        if REFERENCE_TOKEN.casefold() not in line.casefold():
             continue
         normalized = line.casefold()
         if not any(marker in normalized for marker in ALLOWED_ACTIVE_REFERENCE_MARKERS):
@@ -276,6 +378,17 @@ def _validate_test_import(relative: str, text: str) -> None:
     if any(pattern.search(text) for pattern in FORBIDDEN_ACTIVE_IMPORT_PATTERNS):
         raise LegacyInventoryError(
             f"active test contains legacy wrapper import: {relative}"
+        )
+
+
+def _validate_no_executable_legacy_guidance(relative: str, text: str) -> None:
+    normalized = re.sub(r"\\\s*\n\s*", " ", text)
+    if any(
+        pattern.search(normalized)
+        for pattern in EXECUTABLE_LEGACY_GUIDANCE_PATTERNS
+    ):
+        raise LegacyInventoryError(
+            f"documentation contains executable legacy wrapper guidance: {relative}"
         )
 
 
@@ -357,27 +470,40 @@ def validate(repo_root: Path) -> dict[str, Any]:
                 "aggregate canonical source scan exceeds "
                 f"{MAX_SCANNED_SOURCE_BYTES} bytes"
             )
-        if REFERENCE_TOKEN not in text:
-            continue
-        if relative not in artifact_set:
-            actual_references.add(relative)
-        is_inventory_artifact = relative in artifact_set
-        if _is_under(relative, prohibited_roots) or (
-            _is_under(relative, ["scripts"]) and not is_inventory_artifact
-        ):
-            _validate_active_reference(
-                relative,
-                text,
-                document["prohibited_runnable_reference"],
-            )
-        elif _is_under(relative, ["tests"]) and not is_inventory_artifact:
-            _validate_test_import(relative, text)
-
+        has_reference = REFERENCE_TOKEN.casefold() in text.casefold()
+        if has_reference:
+            if relative not in artifact_set:
+                actual_references.add(relative)
+            is_inventory_artifact = relative in artifact_set
+            if _is_under(relative, prohibited_roots) or (
+                _is_under(relative, ["scripts"]) and not is_inventory_artifact
+            ):
+                _validate_active_reference(
+                    relative,
+                    text,
+                    document["prohibited_runnable_reference"],
+                )
+            elif _is_under(relative, ["tests"]) and not is_inventory_artifact:
+                _validate_test_import(relative, text)
+        if _is_guidance_file(path):
+            _validate_no_executable_legacy_guidance(relative, text)
     if classified != sorted(actual_references):
         raise LegacyInventoryError(
             "classified reference inventory mismatch; "
             f"expected={sorted(actual_references)}, actual={classified}"
         )
+
+    generated_documentation_bytes = 0
+    for path in _candidate_generated_documentation_files(root, generated_roots):
+        relative = path.relative_to(root).as_posix()
+        text = _read_regular_text(path, relative, MAX_SOURCE_FILE_BYTES)
+        generated_documentation_bytes += len(text.encode("utf-8"))
+        if generated_documentation_bytes > MAX_SCANNED_SOURCE_BYTES:
+            raise LegacyInventoryError(
+                "aggregate generated documentation scan exceeds "
+                f"{MAX_SCANNED_SOURCE_BYTES} bytes"
+            )
+        _validate_no_executable_legacy_guidance(relative, text)
 
     return {
         "artifact_count": len(artifact_set),
