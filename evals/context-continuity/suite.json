@@ -1,0 +1,88 @@
+{
+  "contract_version": "loop-context-continuity-eval/v1",
+  "measurement_provenance": {
+    "evidence_kind": "synthetic-contract-fixture",
+    "paired_objective_id": "continuity-routing-fixture-v1",
+    "measurement_method": "deterministic pre-recorded values used only to test routing and metric accounting",
+    "quality_rubric": "0-100 synthetic acceptance score; not a measured model-quality claim",
+    "raw_results_location": "inline baseline.comparison",
+    "release_evidence_qualified": false
+  },
+  "baseline": {
+    "contract_version": "loop-context-continuity/v1",
+    "assessment_id": "eval-assessment",
+    "objective_id": "issue-165",
+    "repository_id": "github.com/example/repository",
+    "review_fix": {"completed_rounds": 2, "assessment_trigger_rounds": 2},
+    "signals": {
+      "stale_findings": 1,
+      "repeated_reads": 2,
+      "phase_boundary": true,
+      "compaction_or_token_pressure": false,
+      "independent_high_noise_packet": false,
+      "current_context_can_reground": true,
+      "human_gate_required": false
+    },
+    "runtime": {"surface": "cli", "control_surface": "cli-exec", "mode": "non-interactive"},
+    "worktree": {"state": "clean"},
+    "ownership": {"source_writer": "source", "exclusive_transfer_ready": true, "parallel_packet_disjoint": false},
+    "checkpoint": {
+      "checkpoint_id": "checkpoint-1",
+      "objective_id": "issue-165",
+      "repository_id": "github.com/example/repository",
+      "branch": "feature",
+      "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "worktree_state": "clean",
+      "completed": ["implementation"],
+      "remaining": ["review"],
+      "verification": ["focused tests passed"],
+      "risks": [],
+      "next_packet": "review",
+      "source_writer": "source",
+      "destination_writer": "destination",
+      "source_stop_writing_confirmed": true
+    },
+    "lineage": {
+      "rollover_id": "rollover-1",
+      "prior_rollover_id": null,
+      "prior_checkpoint_sha256": null,
+      "progress_since_prior_rollover": true,
+      "progress_evidence": ["implementation changed since prior checkpoint"],
+      "seen_rollovers": [],
+      "graph_projection": "absent"
+    },
+    "comparison": {
+      "same_context": {
+        "objective_total_tokens": 1400,
+        "wall_time_seconds": 120,
+        "repeated_reads": 4,
+        "review_fix_rounds": 3,
+        "stale_context_errors": 2,
+        "blockers": 1,
+        "handoff_bootstrap_tokens": 0,
+        "quality_score": 90
+      },
+      "fresh_rollover": {
+        "objective_total_tokens": 1100,
+        "wall_time_seconds": 105,
+        "repeated_reads": 1,
+        "review_fix_rounds": 2,
+        "stale_context_errors": 0,
+        "blockers": 0,
+        "handoff_bootstrap_tokens": 150,
+        "quality_score": 92
+      }
+    }
+  },
+  "cases": [
+    {"id": "clean-noninteractive-fresh", "overrides": {}, "expect": {"decision": "prepare-fresh-rollover", "comparison_qualified": true}},
+    {"id": "dirty-worktree", "overrides": {"worktree": {"state": "dirty"}, "checkpoint": {"worktree_state": "dirty"}}, "expect": {"decision": "reground-current-context"}},
+    {"id": "interactive-cli", "overrides": {"runtime": {"mode": "interactive"}}, "expect": {"decision": "reground-current-context"}},
+    {"id": "missing-control-surface", "overrides": {"runtime": {"control_surface": "none"}}, "expect": {"decision": "reground-current-context"}},
+    {"id": "threshold-only", "overrides": {"signals": {"stale_findings": 0, "repeated_reads": 0, "phase_boundary": false}}, "expect": {"decision": "continue-current-context"}},
+    {"id": "parallel-delegation", "overrides": {"signals": {"independent_high_noise_packet": true}, "ownership": {"parallel_packet_disjoint": true}}, "expect": {"decision": "delegate-bounded-subagent"}},
+    {"id": "repeat-without-progress", "overrides": {"lineage": {"prior_rollover_id": "rollover-0", "prior_checkpoint_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "progress_since_prior_rollover": false, "seen_rollovers": [{"rollover_id": "rollover-0", "checkpoint_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}]}}, "expect": {"decision": "stop-for-human-gate"}},
+    {"id": "unknown-comparison", "overrides": {"comparison": {"fresh_rollover": {"objective_total_tokens": null}}}, "expect": {"decision": "reground-current-context", "comparison_qualified": false}},
+    {"id": "token-shift-or-quality-regression", "overrides": {"comparison": {"fresh_rollover": {"objective_total_tokens": 1600, "quality_score": 85}}}, "expect": {"decision": "reground-current-context", "comparison_qualified": false}}
+  ]
+}

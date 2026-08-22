@@ -90,6 +90,24 @@ Preparing the command does not prove that a fork occurred. After the user runs
 it, the public CLI result is session-dispatch evidence only; the parent still
 owns repository inspection, verification, review, and completion.
 
+## Fresh Non-Interactive Continuation
+
+`fresh-continuation` is distinct from both non-interactive and interactive
+fork. It starts a new `codex exec --json` session without copied conversation
+history and appends the validated durable checkpoint to the prompt.
+
+```text
+Operation: fresh-continuation
+Eligibility: clean exact worktree, non-interactive cli-exec capability,
+prepare-fresh-rollover decision, source stopped, one destination writer,
+material progress evidence, unseen rollover ID, origin matching repository ID,
+and a checkpoint digest that includes clean worktree state. The executor claims
+a durable at-most-once record below the Git control directory before dispatch.
+Fallback: dirty or interactive worktree, missing capability, incomplete
+checkpoint, or exact replay performs no CLI call and returns a manual/current-
+session continuation path.
+```
+
 ## Interactive Dashboard And Manual Queue
 
 Use the public dashboard only when the maintainer explicitly asks to inspect or

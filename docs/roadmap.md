@@ -48,6 +48,16 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
+- Issue #165 owns the v0.17.0 context-continuity and fresh-rollover feature.
+  Two unfinished review/fix rounds trigger a configurable assessment rather
+  than automatic task replacement. The shared contract separates current-
+  context regrounding, parallel bounded subagents, history-preserving fork, and
+  checkpoint-only fresh rollover; binds single-writer stop/start ownership,
+  lineage, idempotency, and anti-recursion; provides Desktop/CLI/IDE capability
+  and fallback semantics; and keeps graph lineage advisory. CLI phase one is
+  clean and non-interactive only. Publication requires end-to-end cost/quality
+  evaluation, independent review, CI, and exact-head readiness.
+
 - Issue #159 owns the v0.16.1 Linux qualification-timeout follow-up. Refresh
   entrypoints validate the existing bounded refresh timeout before contacting
   GitNexus and share one monotonic deadline across qualification, preflight,

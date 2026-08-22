@@ -450,7 +450,13 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("_prepare_isolated_workspace", implementation)
         self.assertIn("_apply_isolated_patch", implementation)
         self.assertIn("OMITTED_FINAL_SUMMARY", implementation)
-        self.assertIn('ALLOWED_OPERATIONS = {"start", "resume", "fork"}', implementation)
+        self.assertIn(
+            'ALLOWED_OPERATIONS = {"start", "resume", "fork", "fresh-continuation"}',
+            implementation,
+        )
+        self.assertIn("loop-context-continuity/v1", combined)
+        self.assertIn("clean", combined)
+        self.assertIn("non-interactive", combined)
         self.assertIn("private clone", combined)
         self.assertNotIn("shell=True", implementation)
         self.assertNotIn("desktop_runtime_", implementation)

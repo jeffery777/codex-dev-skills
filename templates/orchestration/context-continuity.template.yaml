@@ -1,0 +1,76 @@
+contract_version: "loop-context-continuity/v1"
+assessment_id: "<stable-assessment-id>"
+objective_id: "<same-objective-id>"
+repository_id: "<canonical-host/owner/repository>"
+review_fix:
+  completed_rounds: 2
+  assessment_trigger_rounds: 2
+signals:
+  stale_findings: 0
+  repeated_reads: 0
+  phase_boundary: false
+  compaction_or_token_pressure: false
+  independent_high_noise_packet: false
+  current_context_can_reground: true
+  human_gate_required: false
+runtime:
+  surface: "<desktop | cli | ide>"
+  control_surface: "<desktop-thread | cli-exec | none>"
+  mode: "<interactive | non-interactive>"
+worktree:
+  state: "<clean | dirty>"
+ownership:
+  source_writer: "<current-delivery-owner>"
+  exclusive_transfer_ready: false
+  parallel_packet_disjoint: false
+checkpoint: null
+# Before a fresh rollover, replace null with every field below. The source must
+# stop writing before the destination becomes the single active writer.
+# checkpoint:
+#   checkpoint_id: "<stable-checkpoint-id>"
+#   objective_id: "<same-objective-id>"
+#   repository_id: "<canonical-host/owner/repository>"
+#   branch: "<exact-branch>"
+#   head_sha: "<exact-40-hex-head>"
+#   worktree_state: "<clean | dirty>"
+#   completed: ["<verified-completed-item>"]
+#   remaining: ["<remaining-item>"]
+#   verification: ["<command-and-result>"]
+#   risks: ["<residual-risk>"]
+#   next_packet: "<smallest-next-packet>"
+#   source_writer: "<current-delivery-owner>"
+#   destination_writer: "<new-delivery-owner>"
+#   source_stop_writing_confirmed: true
+lineage:
+  rollover_id: "<stable-rollover-id>"
+  prior_rollover_id: null
+  prior_checkpoint_sha256: null
+  progress_since_prior_rollover: true
+  progress_evidence: ["<durable change since prior checkpoint>"]
+  seen_rollovers: []
+  graph_projection: "absent"
+comparison:
+  # Counts are end-to-end objective totals. Fresh-rollover totals include
+  # handoff/bootstrap overhead; null means the required measurement is absent.
+  same_context:
+    objective_total_tokens: null
+    wall_time_seconds: null
+    repeated_reads: 0
+    review_fix_rounds: 0
+    stale_context_errors: 0
+    blockers: 0
+    handoff_bootstrap_tokens: 0
+    quality_score: null
+  fresh_rollover:
+    objective_total_tokens: null
+    wall_time_seconds: null
+    repeated_reads: 0
+    review_fix_rounds: 0
+    stale_context_errors: 0
+    blockers: 0
+    handoff_bootstrap_tokens: 0
+    quality_score: null
+
+# `loopctl.py context-health` is read-only. A two-round threshold triggers this
+# assessment only; it cannot create a task or authorize rollover. Graph output
+# is advisory and never controls task creation, writer ownership, or completion.

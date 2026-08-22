@@ -1,5 +1,23 @@
 # Desktop Thread Delegation Example
 
+## Fresh Rollover Versus Fork
+
+```text
+Fresh rollover evidence:
+- Shared decision: prepare-fresh-rollover.
+- Checkpoint: complete, canonical, digest-bound, same repository/objective.
+- Ownership: source stop-writing confirmed; one destination writer.
+- Runtime action: authorized create_thread with exact project, checkpoint branch startingState/onMissing:error, and checkpoint-only prompt.
+- Writer activation: destination reports exact branch/HEAD before becoming active.
+- History: not copied. Do not use fork_thread as a fallback.
+- Replay: an already seen rollover/checkpoint pair creates no duplicate.
+- Completion: dispatch is coordination evidence only.
+```
+
+When the Desktop callable or project association is unavailable, return the
+prompt and keep work in the current task. Do not inspect or mutate private
+Desktop state.
+
 Use `desktop-thread-delegation` after shared orchestration selects a bounded
 task and Codex Desktop only needs to decide whether it stays in the current
 thread or moves to a user-owned task, thread, or worktree.

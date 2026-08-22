@@ -16,8 +16,9 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current development feature baseline is Memory M1, published in v0.14.0
-through Issue #147 / PR #148. v0.14.2 published the installer-backup isolation
+The current development feature candidate is the v0.17.0 context-continuity
+contract through Issue #165. Memory M1 was published in v0.14.0 through Issue
+#147 / PR #148. v0.14.2 published the installer-backup isolation
 hotfix through Issue #151 / PR #152. v0.15.0 published lower-overhead agent
 coordination guidance and a Terra-high `senior` routing tier through Issue #153
 / PR #154. v0.15.1 published the CLI/Desktop/GitHub control-plane compatibility
@@ -28,9 +29,14 @@ bounded deadline without changing the M0/M1 feature or authority baseline.
 v0.16.2, published through Issue #161 / PR #162, refreshes the independent CLI
 and Desktop adapters for CLI 0.149 session dashboard/queue behavior and
 immutable Desktop thread sharing without changing shared completion authority.
-The v0.16.3 candidate through Issue #163 freezes the historical Desktop runtime
+v0.16.3, published through Issue #163 / PR #164, freezes the historical Desktop runtime
 wrapper V1 family behind a strict inventory, active-consumer quarantine, and
 explicit sunset gate without deleting the retained compatibility fixtures.
+The v0.17.0 candidate through Issue #165 adds a shared context-continuity
+assessment, durable fresh-rollover checkpoint, single-writer transfer,
+lineage/idempotency/anti-recursion, Desktop/CLI/IDE capability matrix, and a
+clean non-interactive CLI fresh-continuation path. Two unfinished review/fix
+rounds trigger assessment only; no task is created automatically.
 V3-B remains the released evaluation baseline from v0.13.0.
 The v0.12.1 compatibility patch through Issue #139 updated Desktop/CLI runtime
 adapters and repository verification before V3-B without changing shared
@@ -425,6 +431,9 @@ Use the smallest entry point that matches the request:
 If `project-orchestrator` receives a single clear implementation task, it should route to `implementation-slice` semantics and avoid unnecessary project-level planning.
 
 For automated review closure, let `project-orchestrator` or `project-delivery` compose the primitive shared workflows dynamically. A user or repo policy may set the maximum number of review/fix rounds; the default is 2.
+When work is still incomplete at that threshold, run context-health assessment;
+do not automatically replace the task. See
+[Context Continuity And Fresh-Context Rollover](docs/context-continuity.md).
 
 ### CLI And Desktop Entry Paths
 
@@ -538,6 +547,27 @@ The active skill invokes `loopctl.py decide` with a structured decision input
 and an explicit trusted `--protected-history-sha256 <verified-digest-or-none>`;
 the prose route table explains the result but does not replace the executable
 routing function.
+
+For long review/fix loops, use the separate read-only continuity assessment:
+
+```bash
+./scripts/project-python skills/loop-engineering/scripts/loopctl.py \
+  context-health /path/to/context-health.yaml
+./scripts/project-python scripts/eval-context-continuity.py
+```
+
+The five outcomes are continue, reground, parallel bounded subagent delegation,
+fresh rollover preparation, and a human gate. Fork keeps completed conversation
+history; fresh rollover starts only from the durable checkpoint. The source
+stops writing before the destination becomes the sole delivery owner. Stable
+lineage makes exact replay a no-op and rejects recursive rollover without
+material progress. Graph lineage remains advisory and cannot create a task,
+choose a writer, or prove completion.
+
+The bundled comparison suite is provenance-labelled synthetic contract data:
+it verifies fail-closed routing and bootstrap-inclusive accounting, not an
+empirical A/B claim. A v0.17.0 release remains gated on paired runs of the same
+objective with raw results and a declared quality rubric.
 
 When a loop needs durable memory across repeated invocations, workers, worktrees,
 or handoffs, add a repo-owned loop ledger:
@@ -1199,7 +1229,7 @@ at
 | Skill | Runtime | Purpose |
 | --- | --- | --- |
 | `loop-engineering` | shared | Explicit loop entrypoint for clear bounded objectives; routes through planning, implementation, verification, review, continuation, handoff, and gates until complete or stopped. |
-| `cli-session-handoff` | cli | Start, resume, or fork one authorized bounded non-interactive CLI session, or prepare one exact manual interactive fork, after shared orchestration selects the handoff. |
+| `cli-session-handoff` | cli | Start, resume, fork, or clean non-interactive fresh-continue one authorized bounded CLI session, or prepare one exact manual interactive fork, after shared orchestration selects the handoff. |
 | `planning` | shared | Produce scoped implementation plans with assumptions, risks, DoD, and verification. |
 | `milestone-continuation` | shared | Continue a bounded milestone across repeated invocations by checking task completion, choosing the next ready task, and stopping at human gates. |
 | `project-delivery` | shared | Carry a bounded delivery objective through discovery, plan, implementation, review, docs sync, and PR readiness or the next human gate. |
@@ -1252,8 +1282,8 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.16.3.md` contains the current v0.16.3 release notes (release candidate);
-`docs/release-notes-v0.16.2.md`, `docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
+`docs/release-notes-v0.17.0.md` contains the current v0.17.0 release notes (release candidate);
+`docs/release-notes-v0.16.3.md`, `docs/release-notes-v0.16.2.md`, `docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
 `docs/release-notes-v0.14.2.md`, `docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and
 `docs/release-notes-v0.1.0.md` remain historical point-in-time records.
@@ -1419,6 +1449,7 @@ Run the repository hygiene check before proposing a release or PR:
 ./scripts/project-python -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'
 ./scripts/validate-repo.sh
 ./scripts/project-python scripts/eval-loop-engineering.py
+./scripts/project-python scripts/eval-context-continuity.py
 ./scripts/project-python scripts/eval-agent-routing.py
 ./scripts/project-python scripts/eval-memory-contract.py
 ./scripts/project-python scripts/eval-operational-evidence.py

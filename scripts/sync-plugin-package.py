@@ -17,6 +17,7 @@ PACKAGE_ROOT = ROOT / "plugin" / "codex-dev-skills"
 MANIFEST_PATH = ".codex-plugin/plugin.json"
 SHARED_FILES = {
     "policies/code-mode-tool-orchestration-policy.md",
+    "policies/context-continuity-policy.md",
     "policies/github-control-plane-policy.md",
     "docs/native-runtime-capabilities.md",
 }

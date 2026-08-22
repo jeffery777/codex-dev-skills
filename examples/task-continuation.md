@@ -1,5 +1,17 @@
 # Task Continuation Example
 
+## Fresh Rollover Prompt
+
+Use a fresh prompt only after `loop-context-continuity/v1` selects
+`prepare-fresh-rollover`. Include the checkpoint digest and exact objective,
+repository, branch/HEAD, completed/remaining work, verification, risks, next
+packet, and destination writer. State that the source stopped writing and that
+the destination must not dispatch another rollover without material progress.
+
+If the worktree is dirty, the runtime has no qualified fresh control surface,
+or writer transfer is incomplete, return a paste-ready prompt or reground in
+the current session. Do not claim that a task was created or ownership moved.
+
 Use `task-continuation` when a bounded project needs Codex to choose the next safe task from durable repository context and prepare a continuation prompt or task brief:
 
 ```text

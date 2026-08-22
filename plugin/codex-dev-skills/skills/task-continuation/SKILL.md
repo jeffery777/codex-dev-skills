@@ -12,6 +12,12 @@ Code Mode tool orchestration: follow
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
 after filesystem installation.
 
+Context continuity: follow
+`../../policies/context-continuity-policy.md` relative to this skill in source
+or plugin checkouts, or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/context-continuity-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when a larger bounded project is underway and Codex needs to continue safely by choosing the next task, preparing a continuation prompt or task brief for another session, worker, or sequential execution path, and preserving enough verified handoff context without treating chat memory as source of truth.
@@ -19,6 +25,10 @@ Use this skill when a larger bounded project is underway and Codex needs to cont
 This shared skill prepares continuation artifacts and may route disjoint bounded
 packets to shared subagents when supported. It does not guarantee opening a new
 user-owned Codex task or conversation; that is a runtime control-plane action.
+
+Context continuity follows the shared policy above.
+Parallel subagent delegation, history-preserving fork, and fresh rollover are
+distinct operations and must never be substituted silently.
 
 ## Workflow
 
@@ -34,6 +44,7 @@ user-owned Codex task or conversation; that is a runtime control-plane action.
    - `shared-subagent`
    - `cli-session-handoff`
    - `desktop-task-handoff`
+   - `fresh-rollover-prompt`
    - `stop-for-human-gate`
 6. Prepare a continuation prompt or task brief when continuation is safe.
 7. Route `cli-session-handoff` only when the user explicitly authorized one
@@ -41,6 +52,11 @@ user-owned Codex task or conversation; that is a runtime control-plane action.
    exact executable, worktree, Git head, sandbox, and session identifier.
 8. Require the next session or worker to re-read source-of-truth files before editing.
 9. Stop for a human decision when continuation would cross a gate.
+10. For a fresh rollover, include a digest-bound checkpoint with objective,
+    completed/remaining work, exact Git state, verification, risk, next packet,
+    writers, source stop-writing, lineage, and idempotency. If those facts or a
+    safe runtime control surface are unavailable, select current-session
+    regrounding or a paste-ready prompt and do not report rollover success.
 
 ## Stop Conditions
 

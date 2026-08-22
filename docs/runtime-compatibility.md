@@ -21,13 +21,18 @@ Designed primarily for Codex CLI. A Desktop user may still follow the workflow
 manually, but the skill must document the fallback.
 
 `cli-session-handoff` is the thin CLI control-plane adapter for one bounded,
-explicitly authorized `codex exec --json` start or exact-UUID resume. It is
+explicitly authorized `codex exec --json` start, exact-UUID resume/fork, or
+clean non-interactive fresh continuation. It is
 separate from shared task selection/subagents and from Desktop task/thread
 callables. Its redacted receipt is coordination evidence, not completion
 authority. Its disposable private clone does not inherit the source checkout's
 activated Python environment, so it must follow the repository's tracked
 environment resolver when present and fail verification closed on a version or
 dependency mismatch.
+
+Fresh continuation is not a fork: it starts without copied conversation
+history and requires the shared durable checkpoint. Interactive or dirty CLI
+rollover degrades to a manual/current-session prompt without claiming success.
 
 CLI `/plugins`, `/import`, and `/memories` are runtime configuration and
 personalization controls. They are not `cli-session-handoff` operations and do
@@ -93,6 +98,10 @@ The canonical mapping is [Native Runtime Capability Contract](native-runtime-cap
   lower tier cannot silently satisfy a higher-tier route.
 - Desktop user-owned task/thread/worktree actions and Desktop scheduling are
   thin runtime adapters over shared workflow semantics.
+- Context-health assessment is shared across Desktop, CLI, and IDE. Desktop may
+  use an authorized fresh `create_thread`; CLI phase one may use clean
+  non-interactive `fresh-continuation`; IDE assumes no independent task control
+  plane and uses current-session or prompt fallback.
 - Hooks are optional guardrails, not complete enforcement.
 - Goal, subagent, scheduler, hook, and thread state are coordination evidence;
   they do not prove repository completion.
@@ -100,6 +109,10 @@ The canonical mapping is [Native Runtime Capability Contract](native-runtime-cap
 When a capability is unavailable, preserve the same objective, authority,
 verification, review, and human-gate rules through the current session,
 sequential execution, a task brief, or a paste-ready continuation prompt.
+
+The complete five-outcome contract, capability matrix, migration notes, and
+cost/quality comparison are in
+[Context Continuity And Fresh-Context Rollover](context-continuity.md).
 
 Absence of the custom-agent surface preserves V1 sequential/shared semantics.
 It must not be reported as task completion or as a permanent Goal failure.
