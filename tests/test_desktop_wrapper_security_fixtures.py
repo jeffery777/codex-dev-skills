@@ -28,6 +28,56 @@ EXPECTED_CASE_IDS = {
     "destructive-approval-cannot-replace-exact-action-authorization",
 }
 
+EXPECTED_CASE_OUTCOMES = {
+    "auth-or-permission-failure-stops": {
+        "status": "stopped",
+        "failure_classes": [
+            "adapter_auth_failure",
+            "adapter_permission_failure",
+            "adapter_permission_or_auth_failure",
+        ],
+    },
+    "malformed-or-absent-response-stops": {
+        "status": "stopped",
+        "failure_classes": [
+            "runtime_response_shape_invalid",
+            "returned_thread_id_invalid",
+        ],
+    },
+    "missing-or-invalid-identity-stops": {
+        "status": "stopped",
+        "failure_classes": [
+            "returned_thread_id_invalid",
+            "returned_thread_or_pending_worktree_id_invalid",
+            "returned_status_invalid",
+        ],
+    },
+    "known-host-identity-requires-registry-verification": {
+        "status": "unverified",
+        "required_identity": "threadId plus hostId from a supported registry result",
+        "prohibited_identity": "clientThreadId as a usable threadId",
+    },
+    "cache-or-status-cannot-replace-exact-authorization": {
+        "status": "stopped",
+        "failure_classes": [
+            "validation_error",
+            "permission_handling_substituted",
+            "response_validation_substituted",
+        ],
+    },
+    "stale-or-session-mismatched-cache-stops": {
+        "status": "stopped",
+        "failure_classes": [
+            "stale_or_expired_cache",
+            "session_marker_mismatch",
+        ],
+    },
+    "destructive-approval-cannot-replace-exact-action-authorization": {
+        "status": "stopped",
+        "failure_classes": ["destructive_action_approval_present"],
+    },
+}
+
 EXPECTED_SOURCE_PATHS = {
     "native-capability-contract": "docs/native-runtime-capabilities.md",
     "native-runtime-adapter": "docs/runtime-adapter-v2.md",
@@ -119,6 +169,10 @@ class DesktopWrapperSecurityFixtureTests(unittest.TestCase):
             self.assertNotIn(case["id"], case_ids)
             case_ids.add(case["id"])
             expected_outcomes = case["expected_outcomes"]
+            self.assertEqual(
+                expected_outcomes,
+                EXPECTED_CASE_OUTCOMES[case["id"]],
+            )
             self.assertIn(expected_outcomes["status"], {"stopped", "unverified"})
             if expected_outcomes["status"] == "stopped":
                 self.assertEqual(set(expected_outcomes), {"status", "failure_classes"})
@@ -149,6 +203,7 @@ class DesktopWrapperSecurityFixtureTests(unittest.TestCase):
                 self.assertTrue(case["native_tests"])
 
         self.assertEqual(case_ids, EXPECTED_CASE_IDS)
+        self.assertEqual(set(EXPECTED_CASE_OUTCOMES), EXPECTED_CASE_IDS)
 
     def test_fixture_evidence_is_present_in_current_native_sources(self) -> None:
         source_text = {}

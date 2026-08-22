@@ -74,6 +74,7 @@ EXPECTED_SUNSET_REQUIREMENTS = [
     "explicit-destructive-action-authorization",
 ]
 SCANNED_SUFFIXES = {".md", ".py", ".sh", ".yaml", ".yml"}
+GUIDANCE_SUFFIXES = {".md", ".yaml", ".yml"}
 IGNORED_SOURCE_DIRECTORIES = {"__pycache__"}
 EXPLICIT_ACTIVE_FILES = (
     ".agents/plugins/marketplace.json",
@@ -96,15 +97,18 @@ FORBIDDEN_ACTIVE_REFERENCE_PATTERNS = (
 )
 EXECUTABLE_LEGACY_GUIDANCE_PATTERNS = (
     re.compile(
-        r"^\s*(?:[-*]\s*|\d+\.\s*)?(?:\$\s*)?"
-        r"(?:(?:env\b[^\n]*\s+|uv\s+run\s+)?"
+        r"^\s*(?:[-*]\s*|\d+\.\s*)?(?:`+\s*)?(?:\$\s*)?"
+        r"(?:[A-Za-z_][A-Za-z0-9_-]*:\s*[\"']?)?"
+        r"(?:(?:(?:command|env)\s+)|"
+        r"(?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+))*"
+        r"(?:(?:uv\s+run\s+)?"
         r"(?:python(?:3)?|\./scripts/project-python|pytest))\b[^\n]*"
-        r"(?:scripts/desktop_runtime_|test_desktop_runtime_)",
+        r"(?:scripts[/.]desktop_runtime_|test_desktop_runtime_)",
         re.IGNORECASE | re.MULTILINE,
     ),
     re.compile(
-        r"^\s*(?:[-*]\s*|\d+\.\s*)?(?:\$\s*)?"
-        r"(?:\./)?scripts/desktop_runtime_[A-Za-z0-9_*-]*\.py\b",
+        r"^\s*(?:[-*]\s*|\d+\.\s*)?(?:`+\s*)?(?:\$\s*)?"
+        r"\./scripts/desktop_runtime_[A-Za-z0-9_-]*\.py\b",
         re.IGNORECASE | re.MULTILINE,
     ),
     re.compile(
@@ -325,7 +329,7 @@ def _candidate_generated_documentation_files(
             child_directories[:] = retained_directories
             for name in sorted(filenames):
                 path = directory_path / name
-                if path.suffix != ".md":
+                if path.suffix not in GUIDANCE_SUFFIXES:
                     continue
                 candidates.append(path)
                 if len(candidates) > MAX_SCANNED_FILES:
@@ -447,24 +451,23 @@ def validate(repo_root: Path) -> dict[str, Any]:
                 "aggregate canonical source scan exceeds "
                 f"{MAX_SCANNED_SOURCE_BYTES} bytes"
             )
-        if REFERENCE_TOKEN not in text:
-            continue
-        if relative not in artifact_set:
-            actual_references.add(relative)
-        is_inventory_artifact = relative in artifact_set
-        if _is_under(relative, prohibited_roots) or (
-            _is_under(relative, ["scripts"]) and not is_inventory_artifact
-        ):
-            _validate_active_reference(
-                relative,
-                text,
-                document["prohibited_runnable_reference"],
-            )
-        elif _is_under(relative, ["tests"]) and not is_inventory_artifact:
-            _validate_test_import(relative, text)
-        if path.suffix == ".md":
+        has_reference = REFERENCE_TOKEN in text
+        if has_reference:
+            if relative not in artifact_set:
+                actual_references.add(relative)
+            is_inventory_artifact = relative in artifact_set
+            if _is_under(relative, prohibited_roots) or (
+                _is_under(relative, ["scripts"]) and not is_inventory_artifact
+            ):
+                _validate_active_reference(
+                    relative,
+                    text,
+                    document["prohibited_runnable_reference"],
+                )
+            elif _is_under(relative, ["tests"]) and not is_inventory_artifact:
+                _validate_test_import(relative, text)
+        if path.suffix in GUIDANCE_SUFFIXES:
             _validate_no_executable_legacy_guidance(relative, text)
-
     if classified != sorted(actual_references):
         raise LegacyInventoryError(
             "classified reference inventory mismatch; "

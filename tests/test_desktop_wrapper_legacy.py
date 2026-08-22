@@ -324,6 +324,95 @@ class DesktopWrapperLegacyTests(unittest.TestCase):
         ):
             legacy.validate(self.root)
 
+    def test_historical_python_call_expression_needs_no_reference_token(self) -> None:
+        relative = "docs/desktop-runtime-wrapper-v1-plan.md"
+        self._write(
+            relative,
+            "execute_create_thread_with_injected_adapter(request, runner=...)\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_dotted_module_wrapper_command_is_rejected(self) -> None:
+        relative = "docs/desktop-runtime-wrapper-v1-plan.md"
+        self._write(
+            relative,
+            "python -m scripts.desktop_runtime_wrapper_planner --example\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_environment_prefixed_module_wrapper_command_is_rejected(self) -> None:
+        relative = "docs/desktop-runtime-wrapper-v1-plan.md"
+        self._write(
+            relative,
+            "env PYTHONPATH=. python3 -m "
+            "scripts.desktop_runtime_create_thread_live_smoke\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_assignment_prefixed_wrapper_command_is_rejected(self) -> None:
+        relative = "docs/desktop-runtime-wrapper-v1-plan.md"
+        self._write(
+            relative,
+            "PYTHONPATH=. python3 "
+            "scripts/desktop_runtime_wrapper_planner.py --example\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_command_prefixed_wrapper_command_is_rejected(self) -> None:
+        relative = "docs/desktop-runtime-wrapper-v1-plan.md"
+        self._write(
+            relative,
+            "command python3 scripts/desktop_runtime_wrapper_planner.py\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_backtick_prefixed_wrapper_command_is_rejected(self) -> None:
+        relative = "docs/desktop-runtime-wrapper-v1-plan.md"
+        self._write(
+            relative,
+            "`python3 scripts/desktop_runtime_wrapper_planner.py --example`\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_canonical_yaml_wrapper_command_is_rejected(self) -> None:
+        relative = "templates/orchestration/example.template.yaml"
+        self._write(
+            relative,
+            "command: python3 scripts/desktop_runtime_wrapper_planner.py\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_generated_yaml_wrapper_command_is_rejected(self) -> None:
+        self._write(
+            "plugin/codex-dev-skills/templates/orchestration/example.template.yaml",
+            "python3 scripts/desktop_runtime_wrapper_planner.py\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
     def test_symlinked_generated_documentation_root_is_rejected(self) -> None:
         generated_root = self.root / "plugin/codex-dev-skills"
         generated_file = generated_root / "skills/generated/SKILL.md"
