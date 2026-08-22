@@ -1,10 +1,10 @@
 # Desktop Runtime Wrapper V1 Feasibility And Implementation Plan
 
-This document answers whether the repository can move from the accepted Desktop runtime adapter boundary toward first implementation slices. The completed V1 slices now exist as bounded helpers: a request planner and fallback generator, a capability metadata normalization helper, a contract comparison helper, a create-thread runtime-call preflight helper, a read-thread runtime-call preflight helper, an end-to-end evidence pipeline example, a session compatibility status validator, a first-use session compatibility handshake helper, a session-scoped compatibility cache helper, a create-thread authorization/evidence boundary gate, a create-thread executor boundary proposal helper, a create-thread executor shell implementation-surface helper, a single documented create-thread callable executor helper, a single documented create-thread callable wiring-boundary helper, a single documented create-thread callable wiring evidence bundle / executor-request assembly helper, and a single documented create-thread live smoke helper. The executor helper can execute only a caller-injected documented callable adapter after call-site validation; the CLI default remains non-live and falls back when no runner is injected. The wiring-boundary helper can convert one caller-supplied documented `create_thread` descriptor or explicit non-live adapter wiring contract into the executor helper's injected adapter contract shape; it does not invoke Desktop runtime. The bundle helper accepts ready callable wiring evidence plus caller-supplied target, prompt, authorization, and executor-shell evidence to assemble a complete non-live executor request preview / handoff bundle for the executor helper; it does not execute an injected runner or call Desktop runtime. The live smoke helper can call one caller-injected runtime-provided documented `create_thread` callable only after exact human approval and actual call-site validation; CLI/default/tests remain non-live without that injected callable. These helpers do not implement a daemon, MCP server, app-server client, background service, Desktop runtime integration, catalog entry, installer entry, skill, broad runtime-call path, or any live Desktop action other than the single approved `create_thread` smoke.
+This is a frozen historical design record. It documents the former V1 helper family and its safety boundaries; it is not current integration guidance, and all runnable invocations have been removed. Current runtime behavior is owned by the native adapter contracts referenced from `docs/loops/issue-169/readiness-crosswalk.md`.
 
-## Decision
+## Historical Decision
 
-Implementation is conditionally feasible for a V1 Desktop runtime wrapper, but only as a narrow convenience layer over runtime thread tools or documented APIs that are already exposed by the active runtime.
+The accepted historical decision was that V1 implementation was conditionally feasible only as a narrow convenience layer over runtime thread tools or documented APIs exposed by the active runtime at that time.
 
 The first implementation slice is complete as a non-state-changing request planner and fallback generator. It validates a prepared thread-action request, records the minimum contract evidence needed for a future runtime call, can consume normalized capability evidence supplied by the discovery helper, and produces either structured dry-run evidence or a CLI-compatible paste-ready fallback. It does not create, fork, continue, message, or read a Desktop thread.
 
@@ -300,17 +300,13 @@ The initial non-state-changing helper is `scripts/desktop_runtime_wrapper_planne
 It accepts a prepared JSON request that follows the minimum schema above, validates required fields and contract evidence, classifies the result as `dry-run`, `fallback`, or `stopped`, and emits structured JSON evidence.
 Callers may set optional `runtime_contract.available: false` when a documented runtime capability is known to be unavailable; the planner then emits a CLI-compatible fallback instead of treating private runtime state as a substitute.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_wrapper_planner.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_wrapper_planner.py --pretty < prepared-request.json
-```
+The former stdin invocation is intentionally omitted.
 
-The stdin request must be JSON and should follow the minimum schema above. Use `--example` to print a complete example request when preparing or updating a caller fixture.
+The historical stdin request used the minimum JSON schema above. Its former example-output mode is retained only as design context.
 
 Callers may also pass normalized discovery output under `capability_evidence`. In that path, the planner selects the capability matching `target_action`, copies the tool/API name, capability source, contract version, and `last_verified` into runtime contract evidence, and records the selected normalized capability in dry-run output. The planner returns fallback when the target action is missing or unavailable, and stopped when classification, request shape, response shape, or source evidence is unclear.
 
@@ -318,11 +314,9 @@ The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread
 
 The CLI-compatible fallback prompt must state that no Desktop thread was opened, forked, continued, messaged, or read. It must rely only on durable request fields supplied to the planner and preserve the external-write gate.
 
-Focused tests live in `tests/test_desktop_runtime_wrapper_planner.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_wrapper_planner.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Read-Only Capability Discovery Slice
 
@@ -343,17 +337,13 @@ The normalized discovery output is also the current planner input path for capab
 The read-only metadata helper is `scripts/desktop_runtime_capability_discovery.py`.
 It accepts a prepared JSON request containing caller-supplied documented metadata, normalizes each capability, and emits structured JSON evidence.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_capability_discovery.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_capability_discovery.py --pretty < capability-metadata.json
-```
+The former stdin invocation is intentionally omitted.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "normalize-runtime-capability-metadata"
@@ -391,28 +381,22 @@ The helper output includes:
 
 The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not collect active tool lists itself, scan the filesystem, read Desktop private runtime state, use unpublished endpoints, inspect UI state, run daemons, use sidecars, start background services, or add a public skill, catalog item, installer entry, or workflow alias.
 
-Focused tests live in `tests/test_desktop_runtime_capability_discovery.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_capability_discovery.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Contract Comparison Implementation Artifact
 
 The compatibility re-check helper is `scripts/desktop_runtime_contract_compare.py`.
 It accepts a prepared JSON request containing old wrapper contract evidence and newer normalized capability evidence, then compares only the documented fields the wrapper relies on.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_contract_compare.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_contract_compare.py --pretty < contract-comparison.json
-```
+The former stdin invocation is intentionally omitted.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "compare-runtime-contract-evidence"
@@ -448,28 +432,22 @@ The helper output includes:
 
 The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, authorize state-changing thread actions, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
 
-Focused tests live in `tests/test_desktop_runtime_contract_compare.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_contract_compare.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Create-Thread Preflight Implementation Artifact
 
 The create-thread runtime-call preflight helper is `scripts/desktop_runtime_create_thread_preflight.py`.
 It accepts a prepared JSON request containing target repo evidence, a prepared prompt, normalized `create-thread` capability evidence, compatible contract comparison output, safety boundaries, and exact thread-action authorization.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_create_thread_preflight.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_create_thread_preflight.py --pretty < create-thread-preflight.json
-```
+The former stdin invocation is intentionally omitted.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "preflight-create-thread-runtime-call"
@@ -527,28 +505,22 @@ The helper returns `stopped` when contract comparison stopped or is not compatib
 
 The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, authorize external writes, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
 
-Focused tests live in `tests/test_desktop_runtime_create_thread_preflight.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_create_thread_preflight.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Create-Thread Authorization Gate Implementation Artifact
 
 The create-thread authorization/evidence boundary helper is `scripts/desktop_runtime_create_thread_authorization_gate.py`.
 It accepts a prepared JSON envelope containing caller-supplied target evidence, prompt evidence, create-thread preflight evidence, same-session compatibility status/cache evidence, explicit authorization intent, target validation evidence, permission/auth failure handling placeholders, runtime response validation placeholders, and safety boundary fields.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_create_thread_authorization_gate.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_create_thread_authorization_gate.py --pretty < create-thread-authorization-envelope.json
-```
+The former stdin invocation is intentionally omitted.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "authorize-create-thread-runtime-call-envelope"
@@ -611,28 +583,22 @@ The helper returns `fallback` when the human approval marker for the next implem
 
 The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, authorize external writes, validate a real runtime response, handle real auth failures, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, background service, or runtime-call executor.
 
-Focused tests live in `tests/test_desktop_runtime_create_thread_authorization_gate.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_create_thread_authorization_gate.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Create-Thread Executor Boundary Proposal Artifact
 
 The create-thread executor boundary proposal helper is `scripts/desktop_runtime_create_thread_executor_boundary.py`.
 It accepts a prepared JSON envelope containing ready authorization gate evidence, target evidence, prompt evidence, proposal-only human approval evidence, safety boundaries, and a single-tool executor contract proposal.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_create_thread_executor_boundary.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_create_thread_executor_boundary.py --pretty < create-thread-executor-boundary.json
-```
+The former stdin invocation is intentionally omitted.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "propose-create-thread-runtime-call-executor-boundary"
@@ -700,28 +666,22 @@ The helper returns `fallback` when the exact proposal-only human approval marker
 
 The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, authorize external writes, validate a real runtime response, handle real auth failures, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, background service, or runtime-call executor.
 
-Focused tests live in `tests/test_desktop_runtime_create_thread_executor_boundary.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_create_thread_executor_boundary.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Create-Thread Executor Shell Implementation-Surface Artifact
 
 The create-thread executor shell helper is `scripts/desktop_runtime_create_thread_executor_shell.py`.
 It accepts a prepared JSON envelope containing ready executor boundary proposal evidence, target evidence, prompt evidence, executor-shell-only human approval evidence, safety boundaries, an explicit non-executed callable descriptor or injected-adapter placeholder, and the single call-site contract a future true executor must satisfy.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_create_thread_executor_shell.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_create_thread_executor_shell.py --pretty < create-thread-executor-shell.json
-```
+The former stdin invocation is intentionally omitted.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "validate-create-thread-executor-shell-surface"
@@ -787,30 +747,24 @@ The helper returns `fallback` when the exact executor-shell implementation marke
 
 The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, authorize external writes, validate a real runtime response, handle real auth failures, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, background service, or live runtime-call executor.
 
-Focused tests live in `tests/test_desktop_runtime_create_thread_executor_shell.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_create_thread_executor_shell.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Create-Thread Documented Callable Executor Implementation Artifact
 
 The create-thread documented callable executor helper is `scripts/desktop_runtime_create_thread_executor.py`.
 It accepts a prepared JSON envelope containing ready executor shell evidence, target evidence, prompt evidence, executor implementation human approval evidence, explicit call-site target and authorization rechecks, safety boundaries, and one caller-supplied documented callable adapter contract.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_create_thread_executor.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_create_thread_executor.py --pretty < create-thread-executor.json
-```
+The former stdin invocation is intentionally omitted.
 
-The CLI default is non-live. The second command validates the envelope but returns `fallback` because the CLI path does not inject a runner and the helper must not locate, import, or discover a Desktop runtime callable by itself. Tests and future controlled integrations call `execute_create_thread_with_injected_adapter(request, runner=...)` from Python when they need explicit injected adapter execution.
+The historical CLI default was non-live. Its former stdin path validated the envelope but returned `fallback` because the CLI path did not inject a runner and the helper could not locate, import, or discover a Desktop runtime callable by itself. The former injected-adapter test seam is intentionally not reproduced here and is not a supported current integration path.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "execute-create-thread-documented-callable-adapter"
@@ -870,30 +824,24 @@ The helper returns `ready` only when a caller-injected adapter completes and ret
 
 The helper does not call `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, authorize external writes, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, background service, or live Desktop runtime executor.
 
-Focused tests live in `tests/test_desktop_runtime_create_thread_executor.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_create_thread_executor.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Create-Thread Callable Wiring Boundary Artifact
 
 The create-thread callable wiring-boundary helper is `scripts/desktop_runtime_create_thread_callable_wiring.py`.
 It accepts a prepared JSON envelope containing ready executor helper evidence, target evidence, prompt evidence, callable-wiring human approval evidence, safety boundaries, explicit executor call-site requirements, and one caller-supplied documented `create_thread` callable descriptor or explicit non-live adapter wiring contract.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_create_thread_callable_wiring.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_create_thread_callable_wiring.py --pretty < create-thread-callable-wiring.json
-```
+The former stdin invocation is intentionally omitted.
 
-The CLI default is non-live. The second command validates the envelope but returns `fallback` when no caller-supplied descriptor is present. The helper must not locate, import, discover, obtain, or invoke a Desktop runtime callable by itself.
+The historical CLI default was non-live. Its former stdin path validated the envelope but returned `fallback` when no caller-supplied descriptor was present. The helper was prohibited from locating, importing, discovering, obtaining, or invoking a Desktop runtime callable by itself.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "wire-create-thread-runtime-provided-callable-adapter"
@@ -967,30 +915,24 @@ The helper returns `ready` only when a caller-supplied documented descriptor or 
 
 The helper does not call `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, authorize external writes, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, background service, or live Desktop runtime executor.
 
-Focused tests live in `tests/test_desktop_runtime_create_thread_callable_wiring.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_create_thread_callable_wiring.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Create-Thread Callable Bundle / Executor-Request Assembly Artifact
 
 The create-thread callable wiring evidence bundle / executor-request assembly helper is `scripts/desktop_runtime_create_thread_callable_bundle.py`.
 It accepts a prepared JSON envelope containing ready callable wiring evidence, ready executor-shell evidence, target evidence, prompt evidence, a bundle-only human approval marker, the executor implementation marker expected by the executor helper, safety boundaries, and explicit executor call-site requirement evidence.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_create_thread_callable_bundle.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_create_thread_callable_bundle.py --pretty < create-thread-callable-bundle.json
-```
+The former stdin invocation is intentionally omitted.
 
-The CLI default is non-live. The second command validates the envelope but returns `fallback` when no ready callable wiring evidence is present. The helper must not locate, import, discover, obtain, or invoke a Desktop runtime callable, and it must not execute an injected runner.
+The historical CLI default was non-live. Its former stdin path validated the envelope but returned `fallback` when no ready callable wiring evidence was present. The helper was prohibited from locating, importing, discovering, obtaining, or invoking a Desktop runtime callable, and from executing an injected runner.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "assemble-create-thread-callable-executor-request-preview"
@@ -1050,28 +992,22 @@ The helper returns `ready` only when ready callable wiring evidence and ready ex
 
 The helper does not call `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, execute an injected runner, authorize external writes, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, background service, or live Desktop runtime executor.
 
-Focused tests live in `tests/test_desktop_runtime_create_thread_callable_bundle.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_create_thread_callable_bundle.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Read-Thread Preflight Implementation Artifact
 
 The read-thread runtime-call preflight helper is `scripts/desktop_runtime_read_thread_preflight.py`.
 It accepts a prepared JSON request containing target repo and thread-id evidence, read-request purpose evidence, normalized `read-thread` capability evidence, compatible contract comparison output, and safety boundaries.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_read_thread_preflight.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_read_thread_preflight.py --pretty < read-thread-preflight.json
-```
+The former stdin invocation is intentionally omitted.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "preflight-read-thread-runtime-call"
@@ -1128,11 +1064,9 @@ The helper returns `stopped` when contract comparison stopped or is not compatib
 
 The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, collect metadata, infer runtime availability, authorize runtime calls, authorize external writes, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
 
-Focused tests live in `tests/test_desktop_runtime_read_thread_preflight.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_read_thread_preflight.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## End-To-End Evidence Pipeline Example
 
@@ -1144,29 +1078,21 @@ It accepts a prepared JSON request containing caller-supplied capability metadat
 3. run create-thread and/or read-thread preflight using the comparison output;
 4. emit one aggregate `ready`, `fallback`, or `stopped` evidence record.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_evidence_pipeline.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-Print a single target action fixture:
+The historical record also included a single-target action fixture:
 
-```bash
-python3 scripts/desktop_runtime_evidence_pipeline.py --example --target-action read-thread --pretty
-```
+The former read-thread example invocation is intentionally omitted.
 
-```bash
-python3 scripts/desktop_runtime_evidence_pipeline.py --pretty < desktop-runtime-evidence-pipeline.json
-```
+The former stdin invocation is intentionally omitted.
 
-Run only one target action from a prepared fixture:
+The historical record included a prepared single-target action fixture:
 
-```bash
-python3 scripts/desktop_runtime_evidence_pipeline.py --target-action create-thread --pretty < desktop-runtime-evidence-pipeline.json
-```
+The former create-thread invocation is intentionally omitted.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "build-desktop-runtime-wrapper-v1-evidence-pipeline"
@@ -1207,28 +1133,22 @@ authorization:
 
 The pipeline output includes a top-level `summary` with `readiness_counts`, per-target comparison/preflight status, the primary reason, and the recommended next step. The detailed `steps` array remains the evidence ledger for reviewers who need the helper-by-helper output. The pipeline helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not collect metadata, inspect Desktop private runtime state, infer runtime availability, authorize runtime calls, authorize external writes, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service. A `ready` aggregate result means every requested preflight returned evidence readiness only; it is not approval to perform a runtime call or external write.
 
-Focused tests live in `tests/test_desktop_runtime_evidence_pipeline.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_evidence_pipeline.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Session Compatibility Status Validation Artifact
 
 The session compatibility status validator is `scripts/desktop_runtime_session_compatibility_status.py`.
 It accepts a prepared JSON request containing the expected wrapper/package/repo identity and explicit caller-supplied compatibility status, then validates that the status can be referenced by a later preflight as contract compatibility evidence.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_session_compatibility_status.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_session_compatibility_status.py --pretty < session-compatibility-status.json
-```
+The former stdin invocation is intentionally omitted.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "validate-session-compatibility-status"
@@ -1267,11 +1187,9 @@ The helper returns `ready` only for a caller-supplied `compatible` status whose 
 
 The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, perform a first-use handshake, write a compatibility cache, read a compatibility cache, authorize runtime calls, authorize external writes, validate targets or permissions, validate runtime responses, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
 
-Focused tests live in `tests/test_desktop_runtime_session_compatibility_status.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_session_compatibility_status.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## First-Use Session Compatibility Handshake Artifact
 
@@ -1284,17 +1202,13 @@ It accepts a prepared JSON request containing caller-supplied documented capabil
 4. validate that status with `scripts/desktop_runtime_session_compatibility_status.py`;
 5. emit one `ready`, `fallback`, or `stopped` evidence record.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_session_compatibility_handshake.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_session_compatibility_handshake.py --pretty < session-compatibility-handshake.json
-```
+The former stdin invocation is intentionally omitted.
 
-The stdin request must be JSON and should use this minimal shape:
+The historical stdin request used this minimal JSON shape:
 
 ```yaml
 requested_action: "build-session-compatibility-handshake"
@@ -1345,26 +1259,20 @@ The helper returns `ready` only when caller-supplied metadata compares as compat
 
 The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, write a compatibility cache, read a compatibility cache, authorize runtime calls, authorize external writes, validate targets or permissions, validate runtime responses, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
 
-Focused tests live in `tests/test_desktop_runtime_session_compatibility_handshake.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_session_compatibility_handshake.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Session-Scoped Compatibility Cache Artifact
 
 The session-scoped compatibility cache helper is `scripts/desktop_runtime_session_compatibility_cache.py`.
 It accepts prepared JSON requests to write or read a caller-explicit cache file. The cache envelope stores contract compatibility evidence only and is scoped to the current process/session.
 
-Usage examples:
+Historical invocation record (commands removed):
 
-```bash
-python3 scripts/desktop_runtime_session_compatibility_cache.py --example --pretty
-```
+Executable legacy invocation removed; this historical helper must not be run.
 
-```bash
-python3 scripts/desktop_runtime_session_compatibility_cache.py --pretty < session-compatibility-cache.json
-```
+The former stdin invocation is intentionally omitted.
 
 The write request should use this minimal shape:
 
@@ -1419,11 +1327,9 @@ The helper returns `ready` only when the cache envelope is compatible, matches e
 
 The helper does not call `create_thread`, `fork_thread`, `send_message_to_thread`, `read_thread`, or any documented equivalent. It does not inspect Desktop private runtime state, perform a first-use handshake, authorize runtime calls, authorize external writes, validate targets or permissions, validate runtime responses, or add a public skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
 
-Focused tests live in `tests/test_desktop_runtime_session_compatibility_cache.py` and can be rerun with:
+Focused historical tests are recorded in `tests/test_desktop_runtime_session_compatibility_cache.py`.
 
-```bash
-python3 -B -m unittest discover -s tests
-```
+Historical focused-test evidence is retained without a runnable legacy command.
 
 ## Later Slice Candidates
 
@@ -1433,25 +1339,12 @@ Later slices require separate review and human approval:
 
 Each later slice must keep private runtime state prohibited. Runtime-call slices may rely on a compatible session status, same-session cache evidence, preflight evidence, authorization gate evidence, executor boundary proposal evidence, executor shell evidence, injected executor helper evidence, callable wiring evidence, callable bundle evidence, or live smoke evidence for their documented purpose only, but must still re-check authorization intent, target identity, permission/auth failure result, runtime response shape, returned thread id or queued-worktree id, and returned status at the point of use.
 
-## Next-Session Handoff
+## Superseded Handoff
 
-Recommended next Desktop runtime wrapper V1 step:
-
-1. If maintainers approve executing the smoke in Codex Desktop, inject one runtime-provided documented `create_thread` callable into `desktop_runtime_create_thread_live_smoke.py` with the exact live-smoke human marker.
-2. Treat `ready` as new-thread creation plus prompt delivery only; the read-only audit does not need to complete for the smoke to pass.
-3. Keep cache/status/preflight/gate/proposal/shell/injected-executor/wiring/bundle/live-smoke evidence scoped to evidence only; exact runtime action authorization, external-write authorization, destructive-action approval, target repo/branch/expected-head validation, auth/permission failure handling, and runtime response validation must still happen at the point of use.
-4. Do not introduce a daemon, MCP server, app-server client, sidecar, background service, Desktop private runtime state reader, skill, catalog item, installer entry, or additional thread tool path.
-
-Definition of done for that slice:
-
-- It has separate human approval for the exact live smoke action before use.
-- It calls at most one documented `create_thread` runtime callable path.
-- It verifies thread creation or queued creation plus prompt delivery only.
-- It reports the audit task as not completed / not required.
-- It does not read Desktop private runtime state.
-- It accepts raw Desktop responses that omit `private_runtime_state_read` and `external_write_performed`, while still rejecting those fields if they are present and not boolean `false`.
-- It does not add a skill, catalog item, installer entry, daemon, MCP server, app-server client, sidecar, or background service.
-- It documents and tests that prior evidence is not call-site target validation, permission/auth handling, or runtime response validation.
+The former next-session live-smoke handoff is withdrawn. There is no runnable
+or recommended V1 follow-up: the helper family is frozen historical evidence,
+and current Desktop operations use the native runtime adapter and active
+callable schema instead.
 
 ## Verification Strategy
 

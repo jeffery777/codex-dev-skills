@@ -69,17 +69,13 @@ This evidence repair does not retroactively convert missing or late platform-sid
 
 ## Verification
 
-Run from the repository root:
-
-```bash
-python -m unittest discover -s tests -p 'test_desktop_runtime_*.py'
-./scripts/validate-repo.sh
-git diff --check
-```
+The original runnable verification transcript is intentionally omitted because
+it included the retired wrapper suite. The recorded results below remain
+point-in-time release evidence only.
 
 Verification used for the v0.2.1 candidate:
 
-- `python -m unittest discover -s tests -p 'test_desktop_runtime_*.py'` passed with 261 tests.
+- The historical wrapper-focused suite passed with 261 tests.
 - `./scripts/validate-repo.sh` passed; sensitive-term review emitted policy-only hits, and all hard checks passed.
 - `git diff --check` passed with no output.
 

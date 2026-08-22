@@ -94,6 +94,34 @@ FORBIDDEN_ACTIVE_REFERENCE_PATTERNS = (
     re.compile(r"scripts\.desktop_runtime_"),
     *FORBIDDEN_ACTIVE_IMPORT_PATTERNS,
 )
+EXECUTABLE_LEGACY_GUIDANCE_PATTERNS = (
+    re.compile(
+        r"^\s*(?:[-*]\s*|\d+\.\s*)?(?:\$\s*)?"
+        r"(?:(?:env\b[^\n]*\s+|uv\s+run\s+)?"
+        r"(?:python(?:3)?|\./scripts/project-python|pytest))\b[^\n]*"
+        r"(?:scripts/desktop_runtime_|test_desktop_runtime_)",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    re.compile(
+        r"^\s*(?:[-*]\s*|\d+\.\s*)?(?:\$\s*)?"
+        r"(?:\./)?scripts/desktop_runtime_[A-Za-z0-9_*-]*\.py\b",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    re.compile(
+        r"^\s*(?:[-*]\s*|\d+\.\s*)?"
+        r"(?:to\s+[^,\n]+,\s*)?(?:run|execute|invoke|inject)\b[^\n]*"
+        r"desktop_runtime_",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    re.compile(
+        r"^\s*\d+\.[^\n]*\b(?:run|execute|invoke|inject)\b[^\n]*desktop_runtime_",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    re.compile(
+        r"\bexecute_create_thread_with_injected_adapter\s*\(",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+)
 
 
 class LegacyInventoryError(ValueError):
@@ -256,6 +284,57 @@ def _candidate_source_files(repo_root: Path, generated_roots: list[str]) -> list
     return sorted(candidates)
 
 
+def _candidate_generated_documentation_files(
+    repo_root: Path, generated_roots: list[str]
+) -> list[Path]:
+    candidates: list[Path] = []
+
+    def fail_walk(error: OSError) -> None:
+        raise LegacyInventoryError(f"cannot scan generated documentation: {error}")
+
+    for relative_root in generated_roots:
+        root = repo_root / relative_root
+        if not root.exists():
+            raise LegacyInventoryError(
+                f"generated documentation root is missing: {relative_root}"
+            )
+        try:
+            root_status = root.lstat()
+        except OSError as error:
+            raise LegacyInventoryError(
+                f"cannot inspect generated documentation root {relative_root}: {error}"
+            ) from error
+        if stat.S_ISLNK(root_status.st_mode) or not stat.S_ISDIR(root_status.st_mode):
+            raise LegacyInventoryError(
+                f"generated documentation root must be a non-symlink directory: {relative_root}"
+            )
+        for directory, child_directories, filenames in os.walk(
+            root, topdown=True, onerror=fail_walk, followlinks=False
+        ):
+            directory_path = Path(directory)
+            retained_directories: list[str] = []
+            for name in sorted(child_directories):
+                child = directory_path / name
+                if child.is_symlink():
+                    relative = child.relative_to(repo_root).as_posix()
+                    raise LegacyInventoryError(
+                        "generated documentation directory must not be a symlink: "
+                        f"{relative}"
+                    )
+                retained_directories.append(name)
+            child_directories[:] = retained_directories
+            for name in sorted(filenames):
+                path = directory_path / name
+                if path.suffix != ".md":
+                    continue
+                candidates.append(path)
+                if len(candidates) > MAX_SCANNED_FILES:
+                    raise LegacyInventoryError(
+                        f"generated documentation scan exceeds {MAX_SCANNED_FILES} files"
+                    )
+    return sorted(candidates)
+
+
 def _validate_active_reference(relative: str, text: str, runnable: str) -> None:
     if runnable in text or any(pattern.search(text) for pattern in FORBIDDEN_ACTIVE_REFERENCE_PATTERNS):
         raise LegacyInventoryError(
@@ -276,6 +355,17 @@ def _validate_test_import(relative: str, text: str) -> None:
     if any(pattern.search(text) for pattern in FORBIDDEN_ACTIVE_IMPORT_PATTERNS):
         raise LegacyInventoryError(
             f"active test contains legacy wrapper import: {relative}"
+        )
+
+
+def _validate_no_executable_legacy_guidance(relative: str, text: str) -> None:
+    normalized = re.sub(r"\\\s*\n\s*", " ", text)
+    if any(
+        pattern.search(normalized)
+        for pattern in EXECUTABLE_LEGACY_GUIDANCE_PATTERNS
+    ):
+        raise LegacyInventoryError(
+            f"documentation contains executable legacy wrapper guidance: {relative}"
         )
 
 
@@ -372,12 +462,26 @@ def validate(repo_root: Path) -> dict[str, Any]:
             )
         elif _is_under(relative, ["tests"]) and not is_inventory_artifact:
             _validate_test_import(relative, text)
+        if path.suffix == ".md":
+            _validate_no_executable_legacy_guidance(relative, text)
 
     if classified != sorted(actual_references):
         raise LegacyInventoryError(
             "classified reference inventory mismatch; "
             f"expected={sorted(actual_references)}, actual={classified}"
         )
+
+    generated_documentation_bytes = 0
+    for path in _candidate_generated_documentation_files(root, generated_roots):
+        relative = path.relative_to(root).as_posix()
+        text = _read_regular_text(path, relative, MAX_SOURCE_FILE_BYTES)
+        generated_documentation_bytes += len(text.encode("utf-8"))
+        if generated_documentation_bytes > MAX_SCANNED_SOURCE_BYTES:
+            raise LegacyInventoryError(
+                "aggregate generated documentation scan exceeds "
+                f"{MAX_SCANNED_SOURCE_BYTES} bytes"
+            )
+        _validate_no_executable_legacy_guidance(relative, text)
 
     return {
         "artifact_count": len(artifact_set),

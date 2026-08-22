@@ -58,3 +58,12 @@ verified:
 
 Until that gate passes, maintain the inventory and isolated regression tests;
 do not expand the wrapper family or add new consumers.
+
+Issue #169 records the non-destructive preparation evidence in
+[`loops/issue-169/readiness-crosswalk.md`](loops/issue-169/readiness-crosswalk.md)
+and the separately reviewable future manifest in
+[`loops/issue-169/future-removal-plan.md`](loops/issue-169/future-removal-plan.md).
+The wrapper-independent security fixture is enforced separately from the
+retained legacy test chain. These artifacts are preparation and review inputs;
+they do not satisfy independent review or destructive-action authorization by
+themselves.

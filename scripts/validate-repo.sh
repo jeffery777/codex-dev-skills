@@ -358,6 +358,12 @@ check_desktop_wrapper_legacy() {
   ok "historical Desktop wrapper inventory and active-reference quarantine pass"
 }
 
+check_desktop_wrapper_security_fixtures() {
+  "$PROJECT_PYTHON" -m unittest \
+    tests.test_desktop_wrapper_security_fixtures >/dev/null
+  ok "wrapper-independent Desktop security invariants pass"
+}
+
 check_plugin_package() {
   "$PROJECT_PYTHON" scripts/sync-plugin-package.py >/dev/null
   ok "plugin package exact inventory and canonical parity are valid"
@@ -388,6 +394,7 @@ main() {
   check_loop_ledger
   check_loop_contract
   check_desktop_wrapper_legacy
+  check_desktop_wrapper_security_fixtures
   check_native_runtime_contract
   check_loop_eval
   check_context_continuity

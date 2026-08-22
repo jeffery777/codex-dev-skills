@@ -1,0 +1,189 @@
+schema_version: "desktop-wrapper-security-fixtures/v2"
+fixture_kind: "wrapper-independent-native-security-invariants"
+historical_source_baseline: "864fe8cf61553f6d7db52456a31235da0456f2d3"
+sources:
+  - id: "native-capability-contract"
+    path: "docs/native-runtime-capabilities.md"
+    required_markers:
+      - "Capability availability never grants broader filesystem, network,"
+      - "Creating a new or background Desktop task requires an explicit user request."
+      - "A `clientThreadId` is not a `threadId`"
+      - "The native loop core and its adapters must not import or execute legacy Desktop"
+  - id: "native-runtime-adapter"
+    path: "docs/runtime-adapter-v2.md"
+    required_markers:
+      - "This V2 boundary remains documentation only."
+      - "explicit user authorization for the thread action;"
+      - "external write boundary, including commit, push, PR creation, PR comments, review submissions, merge, deploy, destructive actions, and platform-side mutation;"
+      - "private Desktop runtime state"
+      - "threadId for immediate creation or clientThreadId for queued creation"
+  - id: "current-runtime-evidence"
+    path: "docs/codex-runtime-compatibility-evidence-2026-08-21.md"
+    required_markers:
+      - "These descriptions are current-session evidence, not a published stable schema"
+      - "do not authorize a live session/thread mutation, sharing action,"
+      - "or private runtime-state inspection."
+invariants:
+  - id: "private-runtime-state-is-prohibited"
+    description: "Native adapters stop before private runtime state or unpublished internals are used."
+    evidence:
+      - source_id: "native-capability-contract"
+        markers:
+          - "do not infer it from Desktop databases, logs, sessions,"
+      - source_id: "native-runtime-adapter"
+        markers:
+          - "private Desktop runtime state such as local databases, logs, sessions, auth files, caches, app state, local runtime directories, or private runtime files;"
+  - id: "external-writes-remain-separately-authorized"
+    description: "A runtime action does not authorize repository or platform writes."
+    evidence:
+      - source_id: "native-capability-contract"
+        markers:
+          - "platform-write, destructive-action, or publication authority."
+      - source_id: "native-runtime-adapter"
+        markers:
+          - "or authorize commit, push, PR creation, merge, or other external writes."
+  - id: "state-changing-actions-need-explicit-human-authorization"
+    description: "State-changing runtime actions require exact human authorization and retain their human gates."
+    evidence:
+      - source_id: "native-capability-contract"
+        markers:
+          - "Creating a new or background Desktop task requires an explicit user request."
+      - source_id: "native-runtime-adapter"
+        markers:
+          - "The adapter is a convenience layer, not an authority layer."
+  - id: "response-identities-are-not-interchangeable"
+    description: "Queued client identifiers cannot be used as ready thread identifiers."
+    evidence:
+      - source_id: "native-capability-contract"
+        markers:
+          - "A `clientThreadId` is not a `threadId` and must not"
+          - "registry result that exposes the exact `threadId` and a `projectId` matching"
+      - source_id: "native-runtime-adapter"
+        markers:
+          - "A `clientThreadId` is not a `threadId` and must not"
+          - "verify the exact `threadId` in a"
+  - id: "historical-wrappers-do-not-define-native-execution"
+    description: "Historical helpers are not a native runtime execution path or authorization source."
+    evidence:
+      - source_id: "native-capability-contract"
+        markers:
+          - "is retained only as historical"
+          - "or smoke evidence does not authorize"
+      - source_id: "current-runtime-evidence"
+        markers:
+          - "`desktop_runtime_*` wrappers inactive."
+cases:
+  - id: "auth-or-permission-failure-stops"
+    expected_outcomes:
+      status: "stopped"
+      failure_classes:
+        - "adapter_auth_failure"
+        - "adapter_permission_failure"
+        - "adapter_permission_or_auth_failure"
+    historical_provenance:
+      - path: "tests/test_desktop_runtime_create_thread_executor.py"
+        symbol: "CreateThreadExecutorTests.test_injected_callable_auth_or_permission_failure_is_classified_and_returned"
+    native_evidence:
+      - source_id: "native-runtime-adapter"
+        markers:
+          - "authentication, permission, target identity, branch, or worktree state is unclear;"
+          - "When stopped, return the reason, the lowest-risk next option"
+  - id: "malformed-or-absent-response-stops"
+    expected_outcomes:
+      status: "stopped"
+      failure_classes:
+        - "runtime_response_shape_invalid"
+        - "returned_thread_id_invalid"
+    historical_provenance:
+      - path: "tests/test_desktop_runtime_create_thread_executor.py"
+        symbol: "CreateThreadExecutorTests.test_injected_callable_malformed_response_stops"
+      - path: "tests/test_desktop_runtime_create_thread_live_smoke.py"
+        symbol: "CreateThreadLiveSmokeTests.test_malformed_runtime_response_stops"
+      - path: "tests/test_desktop_runtime_create_thread_executor.py"
+        symbol: "CreateThreadExecutorTests.test_missing_returned_thread_id_stops"
+    native_evidence:
+      - source_id: "native-runtime-adapter"
+        markers:
+          - "minimal response shape the adapter relies on"
+          - "expected result shape is unclear;"
+  - id: "missing-or-invalid-identity-stops"
+    expected_outcomes:
+      status: "stopped"
+      failure_classes:
+        - "returned_thread_id_invalid"
+        - "returned_thread_or_pending_worktree_id_invalid"
+        - "returned_status_invalid"
+    historical_provenance:
+      - path: "tests/test_desktop_runtime_create_thread_executor.py"
+        symbol: "CreateThreadExecutorTests.test_missing_returned_thread_id_stops"
+      - path: "tests/test_desktop_runtime_create_thread_executor.py"
+        symbol: "CreateThreadExecutorTests.test_invalid_returned_status_stops"
+      - path: "tests/test_desktop_runtime_create_thread_live_smoke.py"
+        symbol: "CreateThreadLiveSmokeTests.test_missing_returned_thread_id_and_pending_worktree_id_stops"
+    native_evidence:
+      - source_id: "native-capability-contract"
+        markers:
+          - "A `clientThreadId` is not a `threadId` and must not"
+          - "dispatch and routing evidence only."
+  - id: "known-host-identity-requires-registry-verification"
+    expected_outcomes:
+      status: "unverified"
+      required_identity: "threadId plus hostId from a supported registry result"
+      prohibited_identity: "clientThreadId as a usable threadId"
+    historical_provenance: []
+    native_tests:
+      - path: "tests/test_native_runtime_contract_docs.py"
+        symbol: "NativeRuntimeContractDocsTests.test_desktop_fork_preserves_remote_host_identity"
+    native_evidence:
+      - source_id: "native-capability-contract"
+        markers:
+          - "A `clientThreadId` is not a `threadId` and must not"
+          - "Retain a known source host, then obtain the child"
+          - "Never invent `local` when a remote child"
+  - id: "cache-or-status-cannot-replace-exact-authorization"
+    expected_outcomes:
+      status: "stopped"
+      failure_classes:
+        - "validation_error"
+        - "permission_handling_substituted"
+        - "response_validation_substituted"
+    historical_provenance:
+      - path: "tests/test_desktop_runtime_create_thread_authorization_gate.py"
+        symbol: "CreateThreadAuthorizationGateTests.test_cache_and_preflight_cannot_replace_runtime_call_authorization"
+      - path: "tests/test_desktop_runtime_create_thread_authorization_gate.py"
+        symbol: "CreateThreadAuthorizationGateTests.test_cache_and_preflight_cannot_replace_permission_or_response_validation"
+    native_evidence:
+      - source_id: "native-runtime-adapter"
+        markers:
+          - "Caller-supplied metadata is evidence to normalize, not permission to call the capability."
+          - "exact thread-action authorization"
+  - id: "stale-or-session-mismatched-cache-stops"
+    expected_outcomes:
+      status: "stopped"
+      failure_classes:
+        - "stale_or_expired_cache"
+        - "session_marker_mismatch"
+    historical_provenance:
+      - path: "tests/test_desktop_runtime_create_thread_authorization_gate.py"
+        symbol: "CreateThreadAuthorizationGateTests.test_stale_or_session_mismatched_cache_evidence_blocks"
+    native_evidence:
+      - source_id: "native-capability-contract"
+        markers:
+          - "must still inspect the capability exposed by its active runtime instead of"
+          - "assuming that a recorded schema is permanently available."
+  - id: "destructive-approval-cannot-replace-exact-action-authorization"
+    expected_outcomes:
+      status: "stopped"
+      failure_classes:
+        - "destructive_action_approval_present"
+    historical_provenance:
+      - path: "tests/test_desktop_runtime_create_thread_authorization_gate.py"
+        symbol: "CreateThreadAuthorizationGateTests.test_destructive_action_approval_present_or_true_stops"
+    native_evidence:
+      - source_id: "native-capability-contract"
+        markers:
+          - "Capability availability never grants broader filesystem, network,"
+          - "platform-write, destructive-action, or publication authority."
+      - source_id: "native-runtime-adapter"
+        markers:
+          - "external write boundary, including commit, push, PR creation, PR comments, review submissions, merge, deploy, destructive actions, and platform-side mutation;"
