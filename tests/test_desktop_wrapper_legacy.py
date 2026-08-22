@@ -413,6 +413,77 @@ class DesktopWrapperLegacyTests(unittest.TestCase):
         ):
             legacy.validate(self.root)
 
+    def test_env_option_prefixed_wrapper_command_is_rejected(self) -> None:
+        relative = "docs/desktop-runtime-wrapper-v1-plan.md"
+        self._write(
+            relative,
+            "env -i python3 scripts/desktop_runtime_wrapper_planner.py\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_command_option_prefixed_wrapper_command_is_rejected(self) -> None:
+        relative = "docs/desktop-runtime-wrapper-v1-plan.md"
+        self._write(
+            relative,
+            "command -p python3 scripts/desktop_runtime_wrapper_planner.py\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_labeled_inline_wrapper_command_is_rejected(self) -> None:
+        relative = "docs/desktop-runtime-wrapper-v1-plan.md"
+        self._write(
+            relative,
+            "Example: `python3 scripts/desktop_runtime_wrapper_planner.py --example`\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_uppercase_active_wrapper_reference_is_rejected(self) -> None:
+        self._write(
+            "scripts/active_consumer.sh",
+            "python3 scripts/DESKTOP_RUNTIME_WRAPPER_PLANNER.py\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "runnable legacy wrapper reference"
+        ):
+            legacy.validate(self.root)
+
+    def test_uppercase_generic_active_reference_requires_historical_marker(self) -> None:
+        relative = "skills/desktop-project-delivery/SKILL.md"
+        self._write(relative, "Use DESKTOP_RUNTIME_* as the current adapter.\n")
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "unqualified legacy wrapper reference"
+        ):
+            legacy.validate(self.root)
+
+    def test_extensionless_readme_wrapper_command_is_rejected(self) -> None:
+        self._write(
+            "docs/archive/README",
+            "python3 scripts/desktop_runtime_wrapper_planner.py\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_generated_extensionless_readme_wrapper_command_is_rejected(self) -> None:
+        self._write(
+            "plugin/codex-dev-skills/skills/example/README",
+            "python3 scripts/desktop_runtime_wrapper_planner.py\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
     def test_symlinked_generated_documentation_root_is_rejected(self) -> None:
         generated_root = self.root / "plugin/codex-dev-skills"
         generated_file = generated_root / "skills/generated/SKILL.md"

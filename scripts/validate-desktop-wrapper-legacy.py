@@ -87,20 +87,22 @@ ALLOWED_ACTIVE_REFERENCE_MARKERS = (
     "legacy",
 )
 FORBIDDEN_ACTIVE_IMPORT_PATTERNS = (
-    re.compile(r"^\s*import\s+(?:scripts\.)?desktop_runtime_", re.MULTILINE),
-    re.compile(r"^\s*from\s+scripts(?:\.desktop_runtime_|\s+import\s+desktop_runtime_)", re.MULTILINE),
+    re.compile(
+        r"^\s*import\s+(?:scripts\.)?desktop_runtime_",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    re.compile(
+        r"^\s*from\s+scripts(?:\.desktop_runtime_|\s+import\s+desktop_runtime_)",
+        re.IGNORECASE | re.MULTILINE,
+    ),
 )
 FORBIDDEN_ACTIVE_REFERENCE_PATTERNS = (
-    re.compile(r"desktop_runtime_[A-Za-z0-9_*-]*\.py"),
-    re.compile(r"scripts\.desktop_runtime_"),
+    re.compile(r"desktop_runtime_[A-Za-z0-9_*-]*\.py", re.IGNORECASE),
+    re.compile(r"scripts\.desktop_runtime_", re.IGNORECASE),
     *FORBIDDEN_ACTIVE_IMPORT_PATTERNS,
 )
 EXECUTABLE_LEGACY_GUIDANCE_PATTERNS = (
     re.compile(
-        r"^\s*(?:[-*]\s*|\d+\.\s*)?(?:`+\s*)?(?:\$\s*)?"
-        r"(?:[A-Za-z_][A-Za-z0-9_-]*:\s*[\"']?)?"
-        r"(?:(?:(?:command|env)\s+)|"
-        r"(?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+))*"
         r"(?:(?:uv\s+run\s+)?"
         r"(?:python(?:3)?|\./scripts/project-python|pytest))\b[^\n]*"
         r"(?:scripts[/.]desktop_runtime_|test_desktop_runtime_)",
@@ -247,6 +249,10 @@ def _is_under(relative: str, roots: list[str]) -> bool:
     return any(path == PurePosixPath(root) or PurePosixPath(root) in path.parents for root in roots)
 
 
+def _is_guidance_file(path: Path) -> bool:
+    return path.name in {"README", "README.md"} or path.suffix in GUIDANCE_SUFFIXES
+
+
 def _candidate_source_files(repo_root: Path, generated_roots: list[str]) -> list[Path]:
     candidates: list[Path] = []
 
@@ -329,7 +335,7 @@ def _candidate_generated_documentation_files(
             child_directories[:] = retained_directories
             for name in sorted(filenames):
                 path = directory_path / name
-                if path.suffix not in GUIDANCE_SUFFIXES:
+                if not _is_guidance_file(path):
                     continue
                 candidates.append(path)
                 if len(candidates) > MAX_SCANNED_FILES:
@@ -340,12 +346,14 @@ def _candidate_generated_documentation_files(
 
 
 def _validate_active_reference(relative: str, text: str, runnable: str) -> None:
-    if runnable in text or any(pattern.search(text) for pattern in FORBIDDEN_ACTIVE_REFERENCE_PATTERNS):
+    if runnable.casefold() in text.casefold() or any(
+        pattern.search(text) for pattern in FORBIDDEN_ACTIVE_REFERENCE_PATTERNS
+    ):
         raise LegacyInventoryError(
             f"active surface contains runnable legacy wrapper reference: {relative}"
         )
     for line_number, line in enumerate(text.splitlines(), start=1):
-        if REFERENCE_TOKEN not in line:
+        if REFERENCE_TOKEN.casefold() not in line.casefold():
             continue
         normalized = line.casefold()
         if not any(marker in normalized for marker in ALLOWED_ACTIVE_REFERENCE_MARKERS):
@@ -451,7 +459,7 @@ def validate(repo_root: Path) -> dict[str, Any]:
                 "aggregate canonical source scan exceeds "
                 f"{MAX_SCANNED_SOURCE_BYTES} bytes"
             )
-        has_reference = REFERENCE_TOKEN in text
+        has_reference = REFERENCE_TOKEN.casefold() in text.casefold()
         if has_reference:
             if relative not in artifact_set:
                 actual_references.add(relative)
@@ -466,7 +474,7 @@ def validate(repo_root: Path) -> dict[str, Any]:
                 )
             elif _is_under(relative, ["tests"]) and not is_inventory_artifact:
                 _validate_test_import(relative, text)
-        if path.suffix in GUIDANCE_SUFFIXES:
+        if _is_guidance_file(path):
             _validate_no_executable_legacy_guidance(relative, text)
     if classified != sorted(actual_references):
         raise LegacyInventoryError(

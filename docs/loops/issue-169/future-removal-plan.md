@@ -133,10 +133,11 @@ references; the deprecation contract says no active CLI/Desktop adapter,
 entrypoint, or consumer may use them. The repository check cannot rule out an
 external clone or a dynamically built external command.
 
-Inference: direct native execution risk is low, but public compatibility and
-security-evidence loss remain material. Treat physical removal as a **pre-1.0
-minor release**, not a patch. This planning work is a no-release audit; a
-non-destructive crosswalk/fixture/doc change may be a patch candidate.
+Inference and accepted release decision: direct native execution risk is low,
+but public compatibility and security-evidence loss remain material. Issue
+#169 is a **no-release** preparation change. If a later explicitly authorized
+physical-removal Issue completes, publish that removal as a **pre-1.0 minor
+release**, not a patch.
 
 ## Recovery procedure
 
@@ -167,8 +168,7 @@ Do not execute a wrapper or legacy smoke helper:
 ./scripts/project-python scripts/sync-plugin-package.py
 ./scripts/project-python -m unittest tests.test_plugin_packaging
 ./scripts/validate-repo.sh
-rg -n '^\\s*(?:\\$\\s*)?(?:python3?|\\./scripts/project-python)\\b[^\\n]*(?:scripts/desktop_runtime_|test_desktop_runtime_)' README.md CONTRIBUTING.md docs policies skills examples plugin/codex-dev-skills catalog.yaml install.sh .agents .codex .codex-plugin
-rg -n 'desktop_runtime_' scripts tests
+rg -n 'desktop_runtime_' README.md CONTRIBUTING.md docs policies skills examples plugin/codex-dev-skills scripts tests catalog.yaml install.sh
 git diff --check
 git status --short --branch
 ```
