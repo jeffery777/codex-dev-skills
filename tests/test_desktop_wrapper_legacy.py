@@ -474,6 +474,49 @@ class DesktopWrapperLegacyTests(unittest.TestCase):
         ):
             legacy.validate(self.root)
 
+    def test_standalone_relative_wrapper_command_is_rejected(self) -> None:
+        relative = "docs/desktop-runtime-wrapper-v1-plan.md"
+        self._write(
+            relative,
+            "scripts/desktop_runtime_wrapper_planner.py --example\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_uv_run_relative_wrapper_command_is_rejected(self) -> None:
+        relative = "docs/desktop-runtime-wrapper-v1-plan.md"
+        self._write(
+            relative,
+            "uv run scripts/desktop_runtime_wrapper_planner.py --example\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_uv_run_relative_wrapper_stdin_redirection_is_rejected(self) -> None:
+        relative = "docs/desktop-runtime-wrapper-v1-plan.md"
+        self._write(
+            relative,
+            "uv run scripts/desktop_runtime_wrapper_planner.py < prepared.json\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
+    def test_uppercase_readme_suffix_wrapper_command_is_rejected(self) -> None:
+        self._write(
+            "docs/archive/README.MD",
+            "python3 scripts/desktop_runtime_wrapper_planner.py\n",
+        )
+        with self.assertRaisesRegex(
+            legacy.LegacyInventoryError, "executable legacy wrapper guidance"
+        ):
+            legacy.validate(self.root)
+
     def test_generated_extensionless_readme_wrapper_command_is_rejected(self) -> None:
         self._write(
             "plugin/codex-dev-skills/skills/example/README",

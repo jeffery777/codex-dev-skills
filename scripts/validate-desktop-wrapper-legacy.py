@@ -110,7 +110,12 @@ EXECUTABLE_LEGACY_GUIDANCE_PATTERNS = (
     ),
     re.compile(
         r"^\s*(?:[-*]\s*|\d+\.\s*)?(?:`+\s*)?(?:\$\s*)?"
-        r"\./scripts/desktop_runtime_[A-Za-z0-9_-]*\.py\b",
+        r"(?:\./)?scripts/desktop_runtime_[A-Za-z0-9_-]*\.py\b"
+        r"(?:(?:`+\s*)?$|\s+--?\S)",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    re.compile(
+        r"\buv\s+run\s+(?:\./)?scripts/desktop_runtime_[A-Za-z0-9_-]*\.py\b",
         re.IGNORECASE | re.MULTILINE,
     ),
     re.compile(
@@ -250,7 +255,10 @@ def _is_under(relative: str, roots: list[str]) -> bool:
 
 
 def _is_guidance_file(path: Path) -> bool:
-    return path.name in {"README", "README.md"} or path.suffix in GUIDANCE_SUFFIXES
+    return (
+        path.name.casefold() in {"readme", "readme.md"}
+        or path.suffix.casefold() in GUIDANCE_SUFFIXES
+    )
 
 
 def _candidate_source_files(repo_root: Path, generated_roots: list[str]) -> list[Path]:
@@ -280,7 +288,10 @@ def _candidate_source_files(repo_root: Path, generated_roots: list[str]) -> list
             relative_text = path.relative_to(repo_root).as_posix()
             if _is_under(relative_text, generated_roots):
                 continue
-            if name not in {"README", "README.md"} and path.suffix not in SCANNED_SUFFIXES:
+            if (
+                name.casefold() not in {"readme", "readme.md"}
+                and path.suffix.casefold() not in SCANNED_SUFFIXES
+            ):
                 continue
             candidates.append(path)
             if len(candidates) > MAX_SCANNED_FILES:
