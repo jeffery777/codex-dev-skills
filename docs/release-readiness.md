@@ -146,9 +146,13 @@ blockers, and quality; measured token shifting or lower quality must not qualify
 fresh rollover. Synthetic fixtures prove only routing/accounting. Release also
 requires provenance-bearing paired runs of the same objective, including raw
 results, measurement method, quality rubric, bootstrap-inclusive tokens, wall
-time, reads, rounds, stale errors, blockers, and final quality. This empirical
-gate is currently **not satisfied**, so v0.17.0 is a justified minor candidate
-but not release-ready. Align policy, template, source/plugin package, catalog,
+time, reads, rounds, stale errors, blockers, and final quality. The bounded
+2026-08-22 pair in `docs/loops/issue-165/paired-run-evidence.md` satisfies that
+empirical gate at feature commit `4d66efa0429d55b7c4ab8e6399387244684e8960`:
+both conditions scored 8/8, while the fresh checkpoint condition used fewer
+tokens, less wall time, and fewer reads. Its single-order/cache/generalization
+limits remain explicit and it is not a universal performance claim. Align
+policy, template, source/plugin package, catalog,
 installer, README, roadmap, examples, migration/compatibility notes, tests,
 evals, and v0.17.0 release notes. Treat this as a minor release because it adds
 a public cross-runtime workflow contract and CLI operation. Require independent

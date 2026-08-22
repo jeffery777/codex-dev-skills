@@ -49,9 +49,17 @@
 - Independent deep review ran five read-only rounds. The first four rounds
   identified and closed durability, identity, idempotency, Desktop-state,
   malformed-input, and evidence-qualification blockers. Round five reported
-  PASS with no remaining MUST-FIX or scoped SHOULD-FIX; reviewed diff digest:
-  `342e79892c128a1865fefade339ddf56970a77103e12e03d0491b31f5de5168b`.
+  PASS with no remaining MUST-FIX or scoped SHOULD-FIX. The exact staged diff
+  committed as `4d66efa0429d55b7c4ab8e6399387244684e8960` had digest
+  `7aff82162c6f5da1a23d6055d01fa98a48adbb2ca137ef48f7e97b35938e5ba5`.
+- The exact feature commit passed a complete zero-finding security diff scan
+  with all 15 inventory items closed.
+- The bounded 2026-08-22 same-objective pair now satisfies the empirical gate;
+  both conditions scored 8/8 and the fresh checkpoint condition used fewer
+  tokens, less wall time, and fewer reads. See `paired-run-evidence.md` for raw
+  result fields, digests, method, and limitations.
 
-The empirical paired-run release evidence remains intentionally unsatisfied,
-so v0.17.0 is a justified minor candidate but not release-ready. Commit, push,
-PR, merge, tag, and GitHub Release remain human gates.
+v0.17.0 remains a justified minor candidate. The durable evidence delta passed
+formal review; exact-head security verification and CI remain required, and CI
+requires a pushed PR. Push, PR, merge, tag, and GitHub Release remain separate
+human gates.

@@ -55,8 +55,10 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   checkpoint-only fresh rollover; binds single-writer stop/start ownership,
   lineage, idempotency, and anti-recursion; provides Desktop/CLI/IDE capability
   and fallback semantics; and keeps graph lineage advisory. CLI phase one is
-  clean and non-interactive only. Publication requires end-to-end cost/quality
-  evaluation, independent review, CI, and exact-head readiness.
+  clean and non-interactive only. The bounded same-objective cost/quality pair
+  is recorded in `docs/loops/issue-165/paired-run-evidence.md`; publication
+  still requires CI, exact-head security/review readiness, and separate human
+  authorization for platform and release writes.
 
 - Issue #159 owns the v0.16.1 Linux qualification-timeout follow-up. Refresh
   entrypoints validate the existing bounded refresh timeout before contacting

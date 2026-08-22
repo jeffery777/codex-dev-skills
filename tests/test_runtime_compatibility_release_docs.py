@@ -64,6 +64,66 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
         self.assertIn("v0.17.0 candidate", read("README.md"))
         self.assertIn("Issue #165 owns the v0.17.0", read("docs/roadmap.md"))
 
+    def test_v0170_paired_run_release_evidence_is_durable_and_consistent(self) -> None:
+        evidence_path = "docs/loops/issue-165/paired-run-evidence.md"
+        results_path = "docs/loops/issue-165/paired-run-results.json"
+        evidence = read(evidence_path)
+        results = json.loads(read(results_path))
+
+        self.assertEqual(
+            "issue-165-paired-run-release-evidence/v1", results["schema"]
+        )
+        self.assertEqual("gpt-5.6-terra", results["provenance"]["model"])
+        self.assertEqual(
+            "4d66efa0429d55b7c4ab8e6399387244684e8960",
+            results["provenance"]["head_under_test"],
+        )
+        self.assertEqual(
+            ["compressed-current-context", "fresh-durable-checkpoint"],
+            [run["condition"] for run in results["runs"]],
+        )
+        for run in results["runs"]:
+            with self.subTest(condition=run["condition"]):
+                usage = run["usage"]
+                self.assertEqual(
+                    usage["input_tokens"] + usage["output_tokens"],
+                    usage["objective_total_tokens_including_bootstrap"],
+                )
+                self.assertEqual(8, run["quality"]["score"])
+                self.assertEqual([True] * 8, run["quality"]["checks"])
+                self.assertFalse(
+                    run["final_result"]["quality_answers"][
+                        "release_evidence_flag"
+                    ]
+                )
+                self.assertEqual(
+                    len(set(run["final_result"]["files_read"])),
+                    run["measurement"]["declared_unique_repository_reads"],
+                )
+
+        compressed, fresh = results["runs"]
+        self.assertLess(
+            fresh["usage"]["objective_total_tokens_including_bootstrap"],
+            compressed["usage"]["objective_total_tokens_including_bootstrap"],
+        )
+        self.assertLess(
+            fresh["measurement"]["wall_seconds"],
+            compressed["measurement"]["wall_seconds"],
+        )
+        self.assertEqual(
+            [
+                "machine-local absolute paths",
+                "command text",
+                "runtime log output",
+            ],
+            results["redaction_boundary"]["excluded"],
+        )
+        self.assertIn("paired-run-results.json", evidence)
+        self.assertIn(evidence_path, read("README.md"))
+        self.assertIn(evidence_path, read("docs/release-readiness.md"))
+        self.assertIn(evidence_path, read("docs/release-notes-v0.17.0.md"))
+        self.assertIn(evidence_path, read("docs/roadmap.md"))
+
     def test_generated_plugin_manifest_uses_current_version(self) -> None:
         manifest = json.loads(
             read("plugin/codex-dev-skills/.codex-plugin/plugin.json")

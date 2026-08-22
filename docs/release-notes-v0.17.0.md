@@ -49,9 +49,14 @@ The provenance-labelled synthetic comparison records end-to-end objective tokens
 handoff/bootstrap overhead, wall time, repeated reads, review/fix rounds,
 stale-context errors, blockers, and final quality. Measured token shifting or a
 quality regression selects regrounding rather than fresh rollover. It tests
-routing and accounting only; it is not empirical A/B evidence. A paired-run
-artifact for the same objective, with raw results and a declared quality rubric,
-remains required before v0.17.0 can be released.
+routing and accounting only; it is not empirical A/B evidence. The bounded
+same-objective pair in `docs/loops/issue-165/paired-run-evidence.md` records the
+method, raw-result fields, artifact digests, predeclared rubric, token totals
+including bootstrap, wall time, reads, rounds, stale errors, blockers, quality,
+and limitations. Both conditions scored 8/8; the fresh checkpoint condition
+used fewer tokens, less wall time, and fewer reads. This satisfies the empirical
+candidate gate without claiming that one ordered pair generalizes to every
+objective or runtime.
 
 Existing CLI `start`, `resume`, `fork`, interactive fork, Desktop fork/create,
 review closure, and loop ledger contracts remain compatible. Rollback returns
@@ -72,8 +77,9 @@ tasks, sessions, worktrees, runtime state, or repository history.
 git diff --check
 ```
 
-Independent code and documentation review, empirical paired-run evidence, a fresh security diff scan, CI, and
-exact-head merge readiness must pass. The annotated `v0.17.0` tag and
+Independent code and documentation review and the empirical paired-run gate
+have passed for the feature commit. A fresh exact-head security diff scan, CI,
+and exact-head merge readiness remain required after evidence updates. The annotated `v0.17.0` tag and
 non-draft/non-prerelease GitHub Release must bind the exact reviewed merge
 commit only after separate human authorization.
 

@@ -1,0 +1,221 @@
+{
+  "schema": "issue-165-paired-run-release-evidence/v1",
+  "provenance": {
+    "repository": "jeffery777/codex-dev-skills",
+    "base": "944a65a71b0d15b757627a91f1fb97279e3dc8ac",
+    "head_under_test": "4d66efa0429d55b7c4ab8e6399387244684e8960",
+    "objective_id": "issue-165-release-readiness-v2",
+    "runtime": "codex-cli 0.149.0",
+    "model": "gpt-5.6-terra",
+    "order": [
+      "compressed-current-context",
+      "fresh-durable-checkpoint"
+    ],
+    "execution": "sequential-read-only-ephemeral"
+  },
+  "rubric": {
+    "maximum_score": 8,
+    "required_markers": {
+      "threshold_behavior": [
+        "ASSESSMENT_ONLY",
+        "TWO_ROUNDS",
+        "NO_AUTOMATIC_ROLLOVER"
+      ],
+      "mode_distinction": [
+        "PARALLEL_DELEGATION",
+        "FORK_WITH_HISTORY",
+        "FRESH_FROM_CHECKPOINT"
+      ],
+      "writer_contract": [
+        "DURABLE_CHECKPOINT",
+        "SINGLE_WRITER",
+        "SOURCE_STOP_WRITING",
+        "LINEAGE",
+        "IDEMPOTENCY",
+        "ANTI_RECURSION"
+      ],
+      "runtime_matrix": [
+        "DESKTOP",
+        "CLI",
+        "IDE",
+        "SAFE_FALLBACK",
+        "NO_UNPUBLISHED_INTERNALS"
+      ],
+      "graph_authority": [
+        "ADVISORY_ONLY",
+        "NO_TASK_AUTHORITY",
+        "NO_OWNERSHIP_AUTHORITY",
+        "NO_COMPLETION_AUTHORITY"
+      ]
+    },
+    "other_checks": [
+      "exact objective_id, base, and head",
+      "release_evidence_flag is false",
+      "paired-run blocker exists without a false completion claim"
+    ]
+  },
+  "runs": [
+    {
+      "condition": "compressed-current-context",
+      "prompt_bytes": 2244,
+      "usage": {
+        "input_tokens": 377419,
+        "cached_input_tokens": 301312,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4582,
+        "reasoning_output_tokens": 1916,
+        "objective_total_tokens_including_bootstrap": 382001
+      },
+      "measurement": {
+        "wall_seconds": 99.846,
+        "declared_unique_repository_reads": 16,
+        "completed_command_events": 7,
+        "unique_completed_commands": 7,
+        "exact_repeated_commands": 0,
+        "review_fix_rounds": 0,
+        "stale_context_error_count": 1,
+        "blocker_count": 1
+      },
+      "quality": {
+        "checks": [true, true, true, true, true, true, true, true],
+        "score": 8
+      },
+      "final_result": {
+        "objective_id": "issue-165-release-readiness-v2",
+        "base": "944a65a71b0d15b757627a91f1fb97279e3dc8ac",
+        "head": "4d66efa0429d55b7c4ab8e6399387244684e8960",
+        "facts": [
+          "HEAD 與指定提交一致；工作樹乾淨，且 base..head 的 git diff --check 無輸出。",
+          "HEAD 將 v0.17.0 明確標示為 release candidate，並把實證 paired-run 證據列為仍需滿足的 release gate。",
+          "已提交 eval suite 的 measurement_provenance.evidence_kind 為 synthetic-contract-fixture，且 release_evidence_qualified 為 false。"
+        ],
+        "files_read": [
+          "README.md",
+          "docs/roadmap.md",
+          "docs/context-continuity.md",
+          "policies/context-continuity-policy.md",
+          "skills/loop-engineering/SKILL.md",
+          "evals/context-continuity/suite.json",
+          "docs/release-readiness.md",
+          "docs/release-notes-v0.17.0.md",
+          "docs/native-runtime-capabilities.md",
+          "docs/runtime-compatibility.md",
+          "skills/loop-engineering/scripts/context_continuity.py",
+          "skills/cli-session-handoff/scripts/cli_session_handoff.py",
+          "scripts/eval-context-continuity.py",
+          "tests/test_context_continuity.py",
+          "tests/test_eval_context_continuity.py",
+          "tests/test_cli_session_handoff.py"
+        ],
+        "blockers": [
+          "缺少同一 objective 的實證、具來源資訊的 paired-run 證據：須含 raw results、measurement method、quality rubric，以及含 bootstrap 的 tokens、wall time、reads、review/fix rounds、stale-context errors、blockers 與 final quality。已提交 synthetic suite 僅驗證路由與計量，不能滿足此 release gate。"
+        ],
+        "stale_context_errors": [
+          "指定的 docs/context-continuity-rollover.md 不存在於 HEAD；實際的契約文件是 docs/context-continuity.md。"
+        ],
+        "quality_answers": {
+          "threshold_behavior": "ASSESSMENT_ONLY：預設 TWO_ROUNDS 個未完成 review/fix rounds 只會觸發 context-health assessment；NO_AUTOMATIC_ROLLOVER：實作固定回報 automatic_rollover_authorized=false、runtime_action_performed=false、task_created=false，任何 runtime mutation 仍需另行精確授權。",
+          "mode_distinction": "PARALLEL_DELEGATION：僅分派具不重疊 ownership 的獨立高雜訊 packet，主 delivery owner 保留整合與完成責任；FORK_WITH_HISTORY：延續同一任務並複製既有對話歷史；FRESH_FROM_CHECKPOINT：刻意不複製歷史，從 digest-bound durable checkpoint 啟動，並作同 objective 的循序 writer ownership transfer。",
+          "writer_contract": "DURABLE_CHECKPOINT 必須綁定 repository/objective、精確 Git 狀態、已完成與剩餘工作、驗證、風險、next packet 與 writers；SINGLE_WRITER 要求 source/destination 不同且僅一位 active writer；SOURCE_STOP_WRITING 必須在 destination writer 啟用前確認；LINEAGE 綁定 rollover ID 與 checkpoint SHA-256；IDEMPOTENCY 使相同 replay 成為無 mutation 的 no-op；ANTI_RECURSION 禁止未具 material progress 與新 checkpoint 的連續 rollover。",
+          "runtime_matrix": "DESKTOP 可在已授權、具精確 project/checkpoint starting state 的 create_thread 下進行 fresh path；CLI 僅支援乾淨、non-interactive 且已授權的 fresh-continuation；IDE 未假定獨立 task control plane；SAFE_FALLBACK 為 current-session regrounding 或 paste-ready prompt；NO_UNPUBLISHED_INTERNALS：契約禁止依賴未公開 Desktop internals、private CLI state、UI scraping、app-server clients、daemons 或 sidecars。",
+          "graph_authority": "ADVISORY_ONLY：graph projection 即使缺失或衝突也不改變 canonical repository decision；NO_TASK_AUTHORITY：不能建立 task；NO_OWNERSHIP_AUTHORITY：不能選擇或轉移 writer ownership；NO_COMPLETION_AUTHORITY：不能滿足 gate 或證明 completion。",
+          "release_evidence_flag": false
+        }
+      },
+      "source_digests": {
+        "prompt_sha256": "59abd56ccaa283725c05bdd267fed601ee37f145ad5e85245e8bc46fb7da83e0",
+        "raw_jsonl_sha256": "80986125ff7eda59235c2efde9a7cab3efcdc2445ea5cd43fd0a02792c48ed62",
+        "stderr_sha256": "13c8ef5996e71ac586d27e181444c42a9a8b7814984a1ada631384e251ab5a3c"
+      }
+    },
+    {
+      "condition": "fresh-durable-checkpoint",
+      "prompt_bytes": 2277,
+      "usage": {
+        "input_tokens": 163433,
+        "cached_input_tokens": 115712,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2816,
+        "reasoning_output_tokens": 1025,
+        "objective_total_tokens_including_bootstrap": 166249
+      },
+      "measurement": {
+        "wall_seconds": 64.758,
+        "declared_unique_repository_reads": 10,
+        "completed_command_events": 4,
+        "unique_completed_commands": 4,
+        "exact_repeated_commands": 0,
+        "review_fix_rounds": 0,
+        "stale_context_error_count": 0,
+        "blocker_count": 1
+      },
+      "quality": {
+        "checks": [true, true, true, true, true, true, true, true],
+        "score": 8
+      },
+      "final_result": {
+        "objective_id": "issue-165-release-readiness-v2",
+        "base": "944a65a71b0d15b757627a91f1fb97279e3dc8ac",
+        "head": "4d66efa0429d55b7c4ab8e6399387244684e8960",
+        "facts": [
+          "HEAD 的唯一父提交為指定 base，且工作樹無未提交變更。",
+          "提交中的 v0.17.0 文件將功能定位為候選版本，並明定合成評估只驗證路由與計量。",
+          "文件明確指出實證同目標配對執行證據尚未滿足，因此候選版本尚未具備發行就緒條件。"
+        ],
+        "files_read": [
+          "README.md",
+          "docs/roadmap.md",
+          "docs/context-continuity.md",
+          "docs/loops/issue-165/implementation-plan.md",
+          "docs/loops/issue-165/review-disposition.md",
+          "docs/release-readiness.md",
+          "docs/release-notes-v0.17.0.md",
+          "evals/context-continuity/suite.json",
+          "policies/context-continuity-policy.md",
+          "skills/loop-engineering/SKILL.md"
+        ],
+        "blockers": [
+          "缺少具來源資訊的同一 objective 配對執行實證：原始結果、測量方法、品質量表，以及含 bootstrap 的 token、wall time、讀取次數、輪次、stale errors、blockers 與最終品質。已提交的 suite 是 synthetic-contract-fixture，不能取代此證據。"
+        ],
+        "stale_context_errors": [],
+        "quality_answers": {
+          "threshold_behavior": "ASSESSMENT_ONLY；預設 TWO_ROUNDS（可設定為正整數）僅啟動 context-health assessment；NO_AUTOMATIC_ROLLOVER，門檻本身不能建立工作、派發 session、轉移 writer 或授權 rollover。",
+          "mode_distinction": "PARALLEL_DELEGATION 是具不重疊所有權的平行封閉工作，主 delivery owner 保留整合與完成責任；FORK_WITH_HISTORY 複製同一工作的既有對話歷史；FRESH_FROM_CHECKPOINT 則刻意不繼承雜訊歷史，僅由 durable checkpoint 啟動並進行循序 owner transfer。",
+          "writer_contract": "DURABLE_CHECKPOINT 綁定 repository/objective、Git 狀態、完成與剩餘事項、驗證、風險及下一封包；SINGLE_WRITER 要求唯一 active writer，SOURCE_STOP_WRITING 必須在目的端啟用前確認。LINEAGE 綁定 rollover ID 與 checkpoint SHA-256；IDEMPOTENCY 令 exact replay 成為無變更 no-op，衝突重放停止；ANTI_RECURSION 禁止未有可驗證實質進度時再次 rollover。",
+          "runtime_matrix": "DESKTOP 僅能在能力已記錄且另行授權時使用 create_thread，否則回退；CLI 僅支援乾淨、非互動的 fresh-continuation，dirty 或互動時回退；IDE 未假設獨立控制面。SAFE_FALLBACK 為當前 session regrounding 或可貼上的 prompt；NO_UNPUBLISHED_INTERNALS，任何路徑均不依賴未公開 Desktop 內部狀態、私有 CLI 狀態、UI scraping、daemon 或 sidecar。",
+          "graph_authority": "ADVISORY_ONLY：graph projection 可呈現 lineage/context-health，但具 NO_TASK_AUTHORITY、NO_OWNERSHIP_AUTHORITY 與 NO_COMPLETION_AUTHORITY；不能建立工作、選擇或轉移 writer、滿足 gate 或證明完成。",
+          "release_evidence_flag": false
+        }
+      },
+      "source_digests": {
+        "prompt_sha256": "d832d9829c6c8708d0dd7453c3f7f7832721b150b6b614f60ee128c73aeb618e",
+        "raw_jsonl_sha256": "42dd9b4849539c27d062b1e5711134e4486ff394317754bb9d7c1ecd3dea3215",
+        "stderr_sha256": "4a66e00d05241fe3559d9bcd33e2242d6117a9651838df04f9c644ce76482ed2"
+      }
+    }
+  ],
+  "scoring_disposition": {
+    "original_aggregate_scores": [7, 7],
+    "final_scores": [8, 8],
+    "reason": "The original implementation of rubric check 8 required the English word empirical. Both schema-valid Traditional Chinese blockers satisfied the semantic rubric and made no prohibited completion claim. No final-result field was changed."
+  },
+  "source_summary_digests": {
+    "original_summary_sha256": "6b64729df1ccd667532b2ae8593a54def781d5df97478ebac68ac82342cf11ab",
+    "language_neutral_rescored_summary_sha256": "02611de160f3b0238ec8e3b9d804aadc618132d5f9ae9a0b3ca2a2d39ae9c718",
+    "rubric_sha256": "91db7d9146257c305c2ecc7134c53814a2141b53cb988b0d8a219297794c422b"
+  },
+  "redaction_boundary": {
+    "excluded": [
+      "machine-local absolute paths",
+      "command text",
+      "runtime log output"
+    ],
+    "retained": [
+      "complete schema-valid final results",
+      "usage counters",
+      "measurement inputs",
+      "rubric inputs and disposition",
+      "source artifact digests"
+    ]
+  }
+}

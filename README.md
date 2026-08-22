@@ -566,8 +566,12 @@ choose a writer, or prove completion.
 
 The bundled comparison suite is provenance-labelled synthetic contract data:
 it verifies fail-closed routing and bootstrap-inclusive accounting, not an
-empirical A/B claim. A v0.17.0 release remains gated on paired runs of the same
-objective with raw results and a declared quality rubric.
+empirical A/B claim. The bounded v0.17.0 same-objective empirical pair is
+recorded in
+[`docs/loops/issue-165/paired-run-evidence.md`](docs/loops/issue-165/paired-run-evidence.md)
+with raw-result fields, artifact digests, a predeclared rubric, and explicit
+order/cache/generalization limits. It supports this release candidate without
+turning one pair into a universal performance claim.
 
 When a loop needs durable memory across repeated invocations, workers, worktrees,
 or handoffs, add a repo-owned loop ledger:
