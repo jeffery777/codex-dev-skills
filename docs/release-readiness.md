@@ -130,6 +130,35 @@ installed workflow behavior changes. Require formal finding-free review, a
 fresh zero-finding security diff scan after all release metadata, CI, and
 exact-head merge readiness before merge, annotated tag, or GitHub Release.
 
+For the v0.17.0 Issue #165 context-continuity candidate, require the default
+two-round threshold to trigger assessment only, with a configurable positive
+value and no automatic task mutation. Prove all five decisions, strict durable
+checkpoint completeness, same-repository/objective scope, single destination
+writer, source stop-writing, lineage, exact replay no-op, conflicting replay
+rejection, and anti-recursion without material progress. Keep parallel
+subagents, history-preserving fork, and fresh create semantically distinct.
+Require Desktop `create_thread` with documented capability and separate
+authorization, CLI clean non-interactive `fresh-continuation`, dirty/interactive
+manual fallback, and IDE no-control-surface fallback. Graph lineage must remain
+advisory. The synthetic comparison must include end-to-end token totals with
+bootstrap overhead, wall time, repeated reads, review/fix rounds, stale errors,
+blockers, and quality; measured token shifting or lower quality must not qualify
+fresh rollover. Synthetic fixtures prove only routing/accounting. Release also
+requires provenance-bearing paired runs of the same objective, including raw
+results, measurement method, quality rubric, bootstrap-inclusive tokens, wall
+time, reads, rounds, stale errors, blockers, and final quality. The bounded
+2026-08-22 pair in `docs/loops/issue-165/paired-run-evidence.md` satisfies that
+empirical gate at feature commit `4d66efa0429d55b7c4ab8e6399387244684e8960`:
+both conditions scored 8/8, while the fresh checkpoint condition used fewer
+tokens, less wall time, and fewer reads. Its single-order/cache/generalization
+limits remain explicit and it is not a universal performance claim. Align
+policy, template, source/plugin package, catalog,
+installer, README, roadmap, examples, migration/compatibility notes, tests,
+evals, and v0.17.0 release notes. Treat this as a minor release because it adds
+a public cross-runtime workflow contract and CLI operation. Require independent
+review, fresh security diff scan, CI, and exact-head merge readiness before any
+merge, annotated tag, or GitHub Release.
+
 For the v0.15.0 agent-orchestration and routing candidate, require profile
 registry/digest validation for all eight opt-in profiles; deterministic cases
 for routine Terra-medium, complex Terra-high, multi-trigger Sol-medium,

@@ -1,6 +1,6 @@
 ---
 name: cli-session-handoff
-description: Thin Codex CLI session control adapter for one bounded non-interactive start, resume, or fork, or one manual interactive fork, dashboard, or queued message, already selected by shared orchestration.
+description: Thin Codex CLI session control adapter for one bounded non-interactive start, resume, fork, or fresh continuation, or one manual interactive fork, dashboard, or queued message, already selected by shared orchestration.
 ---
 
 # cli-session-handoff
@@ -27,6 +27,9 @@ The automated adapter uses only the documented stable non-interactive CLI:
 - `codex exec resume <SESSION_ID> --json` for a known saved CLI session;
 - `codex exec fork <SESSION_ID> --json` for a new saved session that copies the
   completed history of an exact known source session.
+- `codex exec --json` for a new saved `fresh-continuation` session whose prompt
+  is bound to a validated durable checkpoint and deliberately copies no prior
+  conversation history.
 
 The documented interactive CLI separately exposes
 `codex fork <SESSION_ID>` for a new chat from a saved interactive session.
@@ -71,6 +74,10 @@ directly. A CLI session identifier is not a Desktop `threadId` or
    - `fork` for a new non-interactive session from an exact known source UUID,
      executed through the private-clone path and expected to return a different
      public session UUID;
+   - `fresh-continuation` for phase-one clean-worktree, non-interactive,
+     same-repository/same-objective rollover after the shared assessment selects
+     `prepare-fresh-rollover`. It starts a new session rather than resuming or
+     forking history;
    - `interactive-fork` when the same interactive task needs a new chat that
      keeps saved history and intentionally reuses the session directory or
      another exact existing checkout/worktree.
@@ -89,7 +96,15 @@ directly. A CLI session identifier is not a Desktop `threadId` or
    changed files, evidence, questions, and residual risk. When an executable
    `scripts/project-python` exists, require it for Python dependency checks,
    scripts, evals, and tests; never substitute bare system Python.
-5. For `start`, `resume`, or `fork`, select the least sandbox required: `read-only` for inspection and
+   For fresh continuation, append the canonical checkpoint as data plus its
+   SHA-256 and stable rollover ID. Require one destination writer, source
+   stop-writing, material progress evidence, exact replay no-op, and no recursive handoff.
+   The executor independently matches the checkpoint canonical host/path to `origin`,
+   digest-binds clean worktree state, and atomically updates one locked durable
+   ledger indexed by both rollover ID and checkpoint digest below the Git control directory
+   before the runtime call; caller-supplied
+   `seen_rollovers` is not the runtime idempotency barrier.
+5. For `start`, `resume`, `fork`, or `fresh-continuation`, select the least sandbox required: `read-only` for inspection and
    `workspace-write` only when the user authorized implementation in the exact
    target worktree. The child runs in a private clone at the expected HEAD;
    read-only changes are discarded, while a bounded binary patch is applied to
@@ -104,7 +119,7 @@ directly. A CLI session identifier is not a Desktop `threadId` or
    name, private session state, or a newly created worktree as a substitute.
 7. Confirm explicit authorization for one CLI session mutation. The adapter's
    marker records the decision but cannot create authority by itself.
-8. For `start`, `resume`, or `fork`, run the repo-owned executor with a JSON request on
+8. For `start`, `resume`, `fork`, or `fresh-continuation`, run the repo-owned executor with a JSON request on
    stdin:
 
    ```bash
@@ -122,7 +137,6 @@ directly. A CLI session identifier is not a Desktop `threadId` or
    interpolate arbitrary message text into a paste-ready shell command. Provide
    a shell command only when the user's exact shell is known and every message
    byte is encoded with that shell's verified literal-quoting rules. Do not send
-   any of these manual operations through the executor.
 9. Treat non-interactive `completed` as process/session handoff evidence only.
    A prepared interactive-fork command is a handoff artifact, not evidence that
    a fork occurred. A prepared dashboard or queue command is likewise not
@@ -131,7 +145,9 @@ directly. A CLI session identifier is not a Desktop `threadId` or
    Re-read the target worktree and verify the diff independently before
    accepting any destination result.
 10. If capability or validation fails, keep the prepared prompt as a manual
-   continuation artifact or continue in the current session.
+    continuation artifact or continue in the current session.
+    Interactive or dirty-worktree fresh continuation always uses this fallback;
+    it is never reported as an automated success.
 
 ## Non-Interactive Request Policy
 
@@ -162,6 +178,11 @@ request shape. In addition:
   display name; `resume` must emit the same UUID, while `fork` must emit the
   newly created session UUID;
 - normal tests must use fake executables and must not create a live session.
+- `fresh-continuation` additionally requires a strict
+  `loop-context-continuity/v1` assessment selecting fresh rollover, clean CLI
+  non-interactive capability, a complete checkpoint, confirmed source stop,
+  and an unseen rollover ID; an exact request replay is stopped by durable
+  local Git-control evidence and performs no second session call.
 
 ## Interactive Fork Policy
 
@@ -205,7 +226,8 @@ request shape. In addition:
 
 ## Output
 
-- Operation and result classification
+- Operation and result classification, plus rollover ID and checkpoint digest
+  for fresh continuation
 - For an interactive fork or dashboard, a paste-ready command; for queue, the
   exact UUID, reviewed message, argv token list, quoting classification, and
   explicit manual-execution boundary
@@ -224,7 +246,8 @@ Stop before execution when:
 - exact user authority for the one session mutation is absent;
 - workspace, expected head, executable, sandbox, or resume/fork identifier is
   ambiguous;
-- the worktree is dirty for an automated `start`, `resume`, or `fork`, or a dirty
+- the worktree is dirty for an automated `start`, `resume`, `fork`, or
+  `fresh-continuation`, or a dirty
   interactive-fork target lacks exclusive same-task ownership;
 - the task could overlap another active writer;
 - the prompt asks for destructive, publication, credential, private-state,

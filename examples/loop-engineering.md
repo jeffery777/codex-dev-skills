@@ -1,5 +1,20 @@
 # Loop Engineering
 
+## Context-Health Assessment After Review Closure
+
+```text
+Two review/fix rounds are complete and the objective is not finished.
+Run the shared context-health assessment; do not automatically open or replace
+a task. Choose among continuing here, regrounding, one disjoint subagent
+packet, fresh rollover preparation, or a human gate.
+
+For fresh rollover, require a canonical checkpoint with exact Git state,
+completed and remaining work, verification, risks, next packet, distinct
+writers, source stop-writing, stable lineage, idempotency, and material
+progress. Fork must remain history-preserving; fresh create must not copy
+conversation history. Treat graph lineage as advisory only.
+```
+
 These examples show how to invoke the `loop-engineering` entrypoint after installing the delivery workflow group.
 
 ## Bounded Feature To PR Readiness

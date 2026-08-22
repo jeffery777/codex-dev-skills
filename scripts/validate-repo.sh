@@ -250,6 +250,14 @@ check_loop_eval() {
   ok "loop engineering workflow eval thresholds pass"
 }
 
+check_context_continuity() {
+  "$PROJECT_PYTHON" scripts/eval-context-continuity.py >"$TMP_DIR/context-continuity-eval.json"
+  "$PROJECT_PYTHON" -m unittest \
+    tests.test_context_continuity \
+    tests.test_eval_context_continuity >/dev/null
+  ok "context continuity decisions, rollover guards, and cost/quality evals pass"
+}
+
 check_agent_profiles() {
   "$PROJECT_PYTHON" scripts/validate-agent-profiles.py >"$TMP_DIR/agent-profiles.json"
   "$PROJECT_PYTHON" -m unittest tests.test_agent_profiles tests.test_installer_agent_profiles >/dev/null
@@ -382,6 +390,7 @@ main() {
   check_desktop_wrapper_legacy
   check_native_runtime_contract
   check_loop_eval
+  check_context_continuity
   check_agent_profiles
   check_agent_routing_eval
   check_memory_contract

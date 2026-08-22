@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import concurrent.futures
+import copy
 import importlib.util
 import json
 import os
@@ -216,6 +218,7 @@ class CliSessionHandoffTests(unittest.TestCase):
         (self.workspace / "README.md").write_text("fixture\n", encoding="utf-8")
         self._git("add", "README.md")
         self._git("commit", "-q", "-m", "fixture")
+        self._git("remote", "add", "origin", "https://github.com/example/repository.git")
         self.head = self._git("rev-parse", "HEAD").stdout.strip()
         self.executable = self.root / "fake-codex"
         self.executable.write_text(
@@ -282,6 +285,74 @@ class CliSessionHandoffTests(unittest.TestCase):
         }
         with mock.patch.dict(os.environ, environment):
             return handoff.execute_handoff(request or self.request())
+
+    def continuity_assessment(self) -> dict[str, object]:
+        metric = {
+            "objective_total_tokens": 100,
+            "wall_time_seconds": 10,
+            "repeated_reads": 0,
+            "review_fix_rounds": 2,
+            "stale_context_errors": 0,
+            "blockers": 0,
+            "handoff_bootstrap_tokens": 10,
+            "quality_score": 90,
+        }
+        return {
+            "contract_version": "loop-context-continuity/v1",
+            "assessment_id": "assessment-1",
+            "objective_id": "issue-165",
+            "repository_id": "github.com/example/repository",
+            "review_fix": {"completed_rounds": 2, "assessment_trigger_rounds": 2},
+            "signals": {
+                "stale_findings": 1,
+                "repeated_reads": 1,
+                "phase_boundary": True,
+                "compaction_or_token_pressure": False,
+                "independent_high_noise_packet": False,
+                "current_context_can_reground": True,
+                "human_gate_required": False,
+            },
+            "runtime": {
+                "surface": "cli",
+                "control_surface": "cli-exec",
+                "mode": "non-interactive",
+            },
+            "worktree": {"state": "clean"},
+            "ownership": {
+                "source_writer": "source",
+                "exclusive_transfer_ready": True,
+                "parallel_packet_disjoint": False,
+            },
+            "checkpoint": {
+                "checkpoint_id": "checkpoint-1",
+                "objective_id": "issue-165",
+                "repository_id": "github.com/example/repository",
+                "branch": self._git("branch", "--show-current").stdout.strip(),
+                "head_sha": self.head,
+                "worktree_state": "clean",
+                "completed": ["implementation"],
+                "remaining": ["review"],
+                "verification": ["focused tests passed"],
+                "risks": [],
+                "next_packet": "review",
+                "source_writer": "source",
+                "destination_writer": "destination",
+                "source_stop_writing_confirmed": True,
+            },
+            "lineage": {
+                "rollover_id": "rollover-1",
+                "prior_rollover_id": None,
+                "prior_checkpoint_sha256": None,
+                "progress_since_prior_rollover": True,
+                "progress_evidence": ["implementation changed since prior checkpoint"],
+                "seen_rollovers": [],
+                "graph_projection": "absent",
+            },
+            "comparison": {
+                "same_context": dict(metric, objective_total_tokens=120),
+                "fresh_rollover": metric,
+            },
+        }
 
     def test_start_success_uses_fixed_argv_and_emits_bounded_receipt(self) -> None:
         request = self.request()
@@ -1069,6 +1140,352 @@ class CliSessionHandoffTests(unittest.TestCase):
         self.assertEqual("stopped", response["status"])
         self.assertEqual("recursive_handoff", response["failure_class"])
         self.assertFalse(self.capture.exists())
+
+    def test_fresh_continuation_binds_checkpoint_and_uses_new_exec_session(self) -> None:
+        request = self.request(
+            operation="fresh-continuation",
+            continuity_assessment=self.continuity_assessment(),
+        )
+        response = self.execute(request=request)
+        self.assertEqual("completed", response["status"])
+        self.assertEqual("rollover-1", response["result"]["rollover_id"])
+        self.assertRegex(response["result"]["checkpoint_sha256"], r"^[0-9a-f]{64}$")
+        argv = json.loads(self.capture.read_text(encoding="utf-8"))
+        self.assertEqual(["exec", "--ignore-user-config", "--json", "-"], argv[10:])
+        prompt = self.prompt_capture.read_text(encoding="utf-8")
+        self.assertIn("Fresh-context continuation checkpoint", prompt)
+        self.assertIn("rollover-1", prompt)
+        self.assertTrue(response["boundaries"]["durable_replay_record_written"])
+        self.assertEqual(
+            response["result"]["session_id"],
+            response["result"]["destination_writer_runtime_id"],
+        )
+
+    def test_fresh_continuation_negative_paths_do_not_call_cli(self) -> None:
+        variants = []
+        interactive = self.continuity_assessment()
+        interactive["runtime"]["mode"] = "interactive"
+        variants.append(interactive)
+        missing = self.continuity_assessment()
+        missing["runtime"] = {"surface": "cli", "control_surface": "none", "mode": "non-interactive"}
+        variants.append(missing)
+        not_stopped = self.continuity_assessment()
+        not_stopped["checkpoint"]["source_stop_writing_confirmed"] = False
+        variants.append(not_stopped)
+        for assessment in variants:
+            with self.subTest(runtime=assessment["runtime"]):
+                if self.capture.exists():
+                    self.capture.unlink()
+                response = self.execute(
+                    request=self.request(
+                        operation="fresh-continuation",
+                        continuity_assessment=assessment,
+                    )
+                )
+                self.assertEqual("stopped", response["status"])
+                self.assertEqual("continuity_contract_rejected", response["failure_class"])
+                self.assertFalse(self.capture.exists())
+
+    def test_fresh_continuation_idempotent_replay_is_noop(self) -> None:
+        assessment = self.continuity_assessment()
+        digest = handoff.context_continuity.checkpoint_sha256(assessment["checkpoint"])
+        assessment["lineage"]["seen_rollovers"] = [
+            {"rollover_id": "rollover-1", "checkpoint_sha256": digest}
+        ]
+        response = self.execute(
+            request=self.request(
+                operation="fresh-continuation", continuity_assessment=assessment
+            )
+        )
+        self.assertEqual("stopped", response["status"])
+        self.assertEqual("idempotent_rollover_replay", response["failure_class"])
+        self.assertFalse(self.capture.exists())
+
+    def test_fresh_continuation_exact_request_replay_uses_durable_barrier(self) -> None:
+        request = self.request(
+            operation="fresh-continuation",
+            continuity_assessment=self.continuity_assessment(),
+        )
+        first = self.execute(request=request)
+        self.assertEqual("completed", first["status"])
+        self.capture.unlink()
+        second = self.execute(request=request)
+        self.assertEqual("stopped", second["status"])
+        self.assertEqual("idempotent_rollover_replay", second["failure_class"])
+        self.assertFalse(self.capture.exists())
+
+    def test_fresh_continuation_same_checkpoint_new_id_is_runtime_conflict(self) -> None:
+        first_assessment = self.continuity_assessment()
+        first = self.execute(
+            request=self.request(
+                operation="fresh-continuation",
+                continuity_assessment=first_assessment,
+            )
+        )
+        self.assertEqual("completed", first["status"])
+        self.capture.unlink()
+        second_assessment = self.continuity_assessment()
+        second_assessment["lineage"]["rollover_id"] = "rollover-2"
+        second = self.execute(
+            request=self.request(
+                operation="fresh-continuation",
+                continuity_assessment=second_assessment,
+            )
+        )
+        self.assertEqual("stopped", second["status"])
+        self.assertEqual("continuity_replay_conflict", second["failure_class"])
+        self.assertFalse(self.capture.exists())
+
+    def test_fresh_continuation_concurrent_same_checkpoint_has_one_winner(self) -> None:
+        first = self.request(
+            operation="fresh-continuation",
+            continuity_assessment=self.continuity_assessment(),
+        )
+        second = copy.deepcopy(first)
+        second["continuity_assessment"]["lineage"]["rollover_id"] = "rollover-2"
+        environment = {
+            "FAKE_CODEX_MODE": "success",
+            "FAKE_CODEX_CAPTURE": str(self.capture),
+            "FAKE_CODEX_PROMPT_CAPTURE": str(self.prompt_capture),
+        }
+        with mock.patch.dict(os.environ, environment):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                results = list(pool.map(handoff.execute_handoff, (first, second)))
+        self.assertEqual(1, sum(item["status"] == "completed" for item in results))
+        loser = next(item for item in results if item["status"] != "completed")
+        self.assertIn(
+            loser["failure_class"],
+            {"continuity_replay_conflict", "continuity_replay_state_busy"},
+        )
+
+    def test_fresh_continuation_concurrent_same_id_has_one_winner(self) -> None:
+        request = self.request(
+            operation="fresh-continuation",
+            continuity_assessment=self.continuity_assessment(),
+        )
+        environment = {
+            "FAKE_CODEX_MODE": "success",
+            "FAKE_CODEX_CAPTURE": str(self.capture),
+            "FAKE_CODEX_PROMPT_CAPTURE": str(self.prompt_capture),
+        }
+        with mock.patch.dict(os.environ, environment):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                results = list(
+                    pool.map(handoff.execute_handoff, (request, copy.deepcopy(request)))
+                )
+        self.assertEqual(1, sum(item["status"] == "completed" for item in results))
+        loser = next(item for item in results if item["status"] != "completed")
+        self.assertIn(
+            loser["failure_class"],
+            {"idempotent_rollover_replay", "continuity_replay_state_busy"},
+        )
+
+    def test_fresh_continuation_rejects_origin_mismatch_and_malformed_enum(self) -> None:
+        mismatch = self.continuity_assessment()
+        mismatch["repository_id"] = "github.com/other/repository"
+        mismatch["checkpoint"]["repository_id"] = "github.com/other/repository"
+        malformed = self.continuity_assessment()
+        malformed["runtime"]["surface"] = []
+        for assessment in (mismatch, malformed):
+            with self.subTest(assessment=assessment):
+                response = self.execute(
+                    request=self.request(
+                        operation="fresh-continuation",
+                        continuity_assessment=assessment,
+                    )
+                )
+                self.assertEqual("stopped", response["status"])
+                self.assertFalse(response["boundaries"]["session_call_performed"])
+
+    def test_fresh_continuation_rejects_different_origin_host_and_file_remote(self) -> None:
+        for remote in (
+            "https://evil.example/example/repository.git",
+            "file:///tmp/example/repository.git",
+            "gh:example/repository.git",
+        ):
+            with self.subTest(remote=remote):
+                self._git("remote", "set-url", "origin", remote)
+                response = self.execute(
+                    request=self.request(
+                        operation="fresh-continuation",
+                        continuity_assessment=self.continuity_assessment(),
+                    )
+                )
+                self.assertEqual("stopped", response["status"])
+                self.assertEqual("continuity_target_mismatch", response["failure_class"])
+                self.assertFalse(response["boundaries"]["session_call_performed"])
+
+    def test_fresh_continuation_replay_directory_symlink_fails_closed(self) -> None:
+        common = pathlib.Path(self._git("rev-parse", "--git-common-dir").stdout.strip())
+        if not common.is_absolute():
+            common = self.workspace / common
+        target = self.root / "attacker-controlled"
+        target.mkdir()
+        (common / "codex-continuity-rollovers").symlink_to(target, target_is_directory=True)
+        response = self.execute(
+            request=self.request(
+                operation="fresh-continuation",
+                continuity_assessment=self.continuity_assessment(),
+            )
+        )
+        self.assertEqual("stopped", response["status"])
+        self.assertEqual("continuity_replay_state_unavailable", response["failure_class"])
+        self.assertFalse(response["boundaries"]["session_call_performed"])
+
+    def test_fresh_continuation_malformed_replay_record_fails_closed(self) -> None:
+        common = pathlib.Path(self._git("rev-parse", "--git-common-dir").stdout.strip())
+        if not common.is_absolute():
+            common = self.workspace / common
+        directory = common / "codex-continuity-rollovers"
+        directory.mkdir(mode=0o700)
+        (directory / "ledger.json").write_text("not-json", encoding="utf-8")
+        response = self.execute(
+            request=self.request(
+                operation="fresh-continuation",
+                continuity_assessment=self.continuity_assessment(),
+            )
+        )
+        self.assertEqual("stopped", response["status"])
+        self.assertEqual("continuity_replay_conflict", response["failure_class"])
+        self.assertFalse(response["boundaries"]["session_call_performed"])
+
+    def test_fresh_continuation_stalled_replay_lock_fails_without_waiting(self) -> None:
+        import fcntl
+
+        common = pathlib.Path(self._git("rev-parse", "--git-common-dir").stdout.strip())
+        if not common.is_absolute():
+            common = self.workspace / common
+        directory = common / "codex-continuity-rollovers"
+        directory.mkdir(mode=0o700)
+        lock_descriptor = os.open(directory / ".lock", os.O_RDWR | os.O_CREAT, 0o600)
+        fcntl.flock(lock_descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        started = time.monotonic()
+        try:
+            response = self.execute(
+                request=self.request(
+                    operation="fresh-continuation",
+                    continuity_assessment=self.continuity_assessment(),
+                )
+            )
+        finally:
+            os.close(lock_descriptor)
+        self.assertLess(time.monotonic() - started, 5)
+        self.assertEqual("stopped", response["status"])
+        self.assertEqual("continuity_replay_state_busy", response["failure_class"])
+        self.assertFalse(response["boundaries"]["session_call_performed"])
+
+    def test_fresh_continuation_atomic_ledger_replace_failure_allows_safe_retry(self) -> None:
+        request = self.request(
+            operation="fresh-continuation",
+            continuity_assessment=self.continuity_assessment(),
+        )
+        with mock.patch.object(handoff.os, "replace", side_effect=OSError("fault")):
+            failed = self.execute(request=request)
+        self.assertEqual("stopped", failed["status"])
+        self.assertEqual("continuity_replay_state_unavailable", failed["failure_class"])
+        self.assertFalse(failed["boundaries"]["session_call_performed"])
+        retried = copy.deepcopy(request)
+        retried["continuity_assessment"]["lineage"]["rollover_id"] = "rollover-2"
+        response = self.execute(request=retried)
+        self.assertEqual("completed", response["status"])
+
+    def test_fresh_continuation_writer_rejects_oversized_ledger(self) -> None:
+        request = self.request(
+            operation="fresh-continuation",
+            continuity_assessment=self.continuity_assessment(),
+        )
+        with mock.patch.dict(
+            os.environ,
+            {
+                "FAKE_CODEX_MODE": "success",
+                "FAKE_CODEX_CAPTURE": str(self.capture),
+            },
+        ):
+            validated = handoff.validate_request(request)
+            with mock.patch.object(
+                handoff, "_read_rollover_ledger", return_value={
+                    "contract": "codex-cli-rollover-replay-ledger/v1",
+                    "entries": [],
+                }
+            ), mock.patch.object(
+                handoff.json, "dumps", return_value="x" * (256 * 1024)
+            ):
+                with self.assertRaisesRegex(
+                    handoff.HandoffValidationError, "bounded size"
+                ):
+                    handoff._claim_rollover(validated)
+        self.assertFalse(self.capture.exists())
+
+    def test_fresh_continuation_directory_fsync_failure_stops_before_dispatch(self) -> None:
+        with mock.patch.object(handoff.os, "fsync", side_effect=OSError("fault")):
+            response = self.execute(
+                request=self.request(
+                    operation="fresh-continuation",
+                    continuity_assessment=self.continuity_assessment(),
+                )
+            )
+        self.assertEqual("stopped", response["status"])
+        self.assertEqual("continuity_replay_state_unavailable", response["failure_class"])
+        self.assertFalse(response["boundaries"]["session_call_performed"])
+
+    def test_fresh_continuation_retries_parent_fsync_after_initial_failure(self) -> None:
+        request = self.request(
+            operation="fresh-continuation",
+            continuity_assessment=self.continuity_assessment(),
+        )
+        real_fsync = handoff.os.fsync
+        calls = 0
+
+        def fail_first(descriptor: int) -> None:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise OSError("parent fsync fault")
+            real_fsync(descriptor)
+
+        with mock.patch.object(handoff.os, "fsync", side_effect=fail_first):
+            failed = self.execute(request=request)
+        self.assertEqual("stopped", failed["status"])
+        self.assertFalse(failed["boundaries"]["session_call_performed"])
+
+        common = pathlib.Path(self._git("rev-parse", "--git-common-dir").stdout.strip())
+        if not common.is_absolute():
+            common = self.workspace / common
+        common_inode = common.stat().st_ino
+        synced_inodes: list[int] = []
+
+        def record_fsync(descriptor: int) -> None:
+            synced_inodes.append(os.fstat(descriptor).st_ino)
+            real_fsync(descriptor)
+
+        retry = copy.deepcopy(request)
+        retry["continuity_assessment"]["lineage"]["rollover_id"] = "rollover-2"
+        with mock.patch.object(handoff.os, "fsync", side_effect=record_fsync):
+            response = self.execute(request=retry)
+        self.assertEqual("completed", response["status"])
+        self.assertIn(common_inode, synced_inodes)
+
+    def test_fresh_continuation_checkpoint_must_match_worktree_head_and_branch(self) -> None:
+        variants = []
+        wrong_head = self.continuity_assessment()
+        wrong_head["checkpoint"]["head_sha"] = "b" * 40
+        variants.append(wrong_head)
+        wrong_branch = self.continuity_assessment()
+        wrong_branch["checkpoint"]["branch"] = "other-branch"
+        variants.append(wrong_branch)
+        for assessment in variants:
+            with self.subTest(checkpoint=assessment["checkpoint"]):
+                if self.capture.exists():
+                    self.capture.unlink()
+                response = self.execute(
+                    request=self.request(
+                        operation="fresh-continuation",
+                        continuity_assessment=assessment,
+                    )
+                )
+                self.assertEqual("stopped", response["status"])
+                self.assertEqual("continuity_target_mismatch", response["failure_class"])
+                self.assertFalse(self.capture.exists())
 
 
 if __name__ == "__main__":

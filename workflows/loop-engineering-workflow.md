@@ -25,6 +25,14 @@ The user-facing skill is `loop-engineering`. It is an entrypoint and router, not
    - Use formal gates only for commit readiness, PR readiness, merge readiness, or explicit repo-policy blocking decisions.
 7. **Decide Next**
    - Continue the loop, prepare a handoff, stop for human decision, or mark the objective complete only when evidence proves completion.
+8. **Assess Context Health When Triggered**
+   - After two unfinished review/fix rounds by default, run the versioned
+     context-health assessment. The threshold triggers assessment only.
+   - Choose exactly one of current-context continuation, regrounding, bounded
+     subagent delegation, fresh rollover preparation, or a human gate.
+   - Require checkpoint, source stop-writing, single destination writer,
+     lineage/idempotency/anti-recursion, and runtime capability before any
+     separately authorized fresh action.
 
 ## Route Map
 
@@ -41,6 +49,7 @@ The user-facing skill is `loop-engineering`. It is an entrypoint and router, not
 | Formal readiness decision | `code-review-gate`, `docs-review-gate`, or `merge-readiness-gate` |
 | Shared bounded subagent packets | `project-orchestrator` or `project-delivery` |
 | Desktop user-owned task/thread/worktree handoff | `desktop-project-delivery` or `desktop-thread-delegation` |
+| Context continuity after unfinished review/fix threshold | `loopctl.py context-health` and `context-continuity-policy.md` |
 
 For heterogeneous subagent work, version 1 retains the nine V2a factors.
 Version 2 adds an explicit workload kind and selects a capability class plus an

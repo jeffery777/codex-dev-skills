@@ -12,6 +12,12 @@ Code Mode tool orchestration: follow
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
 after filesystem installation.
 
+Context continuity: follow
+`../../policies/context-continuity-policy.md` relative to this skill in source
+or plugin checkouts, or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/context-continuity-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when the user asks Codex to run a loop engineering workflow, keep a bounded objective moving autonomously, or act as the delivery owner across repeated plan/implement/verify/review/continue cycles until the objective is complete or a human gate is reached.
@@ -24,6 +30,12 @@ stops at gates. It does not replace `planning`, `implementation-slice`,
 review primitives, formal gates, or Desktop task-control adapters.
 
 ## Loop Contract
+
+Context continuity follows the shared policy above.
+After two unfinished review/fix rounds by default, or another configured
+positive threshold, run `loopctl.py context-health` with the installed
+`context-continuity.template.yaml` when executable evidence is needed. The
+threshold starts assessment only and never authorizes a task mutation.
 
 Each loop iteration must:
 
@@ -46,6 +58,28 @@ Each loop iteration must:
 5. Execute or prepare exactly that workflow, then verify and inspect evidence before deciding the next loop state.
 6. Record or report what changed, what was verified, what remains uncertain, and which next action is selected.
 7. Continue only while the objective, source of truth, permissions, risk, and verification are clear.
+
+### Context Continuity And Fresh Rollover
+
+The assessment has five outcomes: continue the current context, reground it
+from durable sources, delegate one disjoint high-noise packet to a shared
+subagent, prepare a fresh rollover, or stop for a human gate. Token and
+compaction signals are auxiliary only.
+
+A fork preserves completed conversation history. A fresh rollover deliberately
+does not: it starts from a canonical checkpoint that binds repository/objective,
+exact Git state, completed and remaining work, verification, risk, next packet,
+source/destination writers, and confirmed source stop-writing. Fresh rollover
+is sequential same-objective ownership transfer; subagent delegation is
+parallel packet ownership while the delivery owner remains responsible.
+
+Require stable rollover/checkpoint lineage. Exact replay is a no-op, conflicting
+reuse fails closed, and another rollover without material progress is forbidden.
+Graph `continues_as`, checkpoint, or context-health projections are advisory
+only and cannot create tasks, choose writers, satisfy gates, or prove
+completion. The assessment itself performs no runtime action; Desktop/CLI
+adapters retain separate exact mutation gates and IDE uses current-session or
+prompt fallback when no qualified control plane exists.
 
 ## Repo-Owned Loop Ledger
 
@@ -483,5 +517,6 @@ Use these templates when a target repository needs durable loop artifacts:
 - `../../templates/orchestration/loop-handoff-prompt.template.md` or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/loop-handoff-prompt.template.md`
 - `../../templates/orchestration/loop-state-ledger.template.yaml` or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/loop-state-ledger.template.yaml`
 - `../../templates/orchestration/task-claim-lease.template.yaml` or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/task-claim-lease.template.yaml`
+- `../../templates/orchestration/context-continuity.template.yaml` or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/context-continuity.template.yaml`
 
 Reuse existing project, task, and review templates whenever they are sufficient instead of creating loop-specific duplicates.

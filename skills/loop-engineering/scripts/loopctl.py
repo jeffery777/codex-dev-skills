@@ -24,6 +24,7 @@ import loop_yaml  # noqa: E402
 import git_source  # noqa: E402
 import profile_preflight  # noqa: E402
 import agent_routing  # noqa: E402
+import context_continuity  # noqa: E402
 
 CANONICAL_PROFILE_REGISTRY = (
     HERE.parent / "references" / "agent-profile-registry.json"
@@ -32,6 +33,17 @@ CANONICAL_PROFILE_REGISTRY = (
 
 def render(value: object) -> None:
     print(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True, default=str))
+
+
+def command_context_health(path: pathlib.Path) -> int:
+    document = loop_yaml.load_yaml(path)
+    try:
+        result = context_continuity.assess(document)
+    except context_continuity.ContinuityContractError as exc:
+        render({"status": "rejected", "errors": [str(exc)], "runtime_action_performed": False})
+        return 1
+    render({"status": "assessed", "result": result})
+    return 0
 
 
 def _trusted_current_time() -> dt.datetime:
@@ -1628,6 +1640,8 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
     )
     decide.add_argument("--protected-history-sha256")
+    context_health = subparsers.add_parser("context-health")
+    context_health.add_argument("path", type=pathlib.Path)
     agent_route = subparsers.add_parser("agent-route")
     agent_route.add_argument("path", type=pathlib.Path)
     agent_route.add_argument("--runtime-facts", required=True, type=pathlib.Path)
@@ -1699,6 +1713,8 @@ def main(argv: list[str] | None = None) -> int:
                 ),
                 protected_history_sha256=args.protected_history_sha256,
             )
+        if args.command == "context-health":
+            return command_context_health(args.path)
         if args.command == "agent-route":
             return command_agent_route(
                 args.path, runtime_facts_path=args.runtime_facts

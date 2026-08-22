@@ -16,6 +16,9 @@ It adds a shared loop vocabulary:
 - verify and review evidence;
 - update or prepare repo-owned loop ledger state when a target repository uses one;
 - decide whether to continue, hand off, stop, or complete.
+- assess context health after a configurable unfinished review/fix threshold
+  and distinguish current-context regrounding, parallel delegation,
+  history-preserving fork, and fresh-context rollover.
 
 It does not add a scheduler, daemon, private Desktop runtime adapter, platform
 writer, release bot, or replacement for existing phase skills. It may use a
@@ -169,6 +172,13 @@ completion. Disabled or failed memory leaves V1/V2a behavior unchanged. See
 `references/memory-contract-v1.md`.
 
 ## Runtime Compatibility
+
+The versioned context-continuity contract and its five decisions are documented
+in [Context Continuity And Fresh-Context Rollover](context-continuity.md). The
+default two-round threshold invokes assessment only. Fresh rollover requires a
+complete checkpoint, sequential single-writer transfer, source stop-writing,
+lineage/idempotency/anti-recursion, and a separately authorized safe runtime
+path. Graph lineage is advisory only.
 
 Shared behavior works in Codex CLI and Codex Desktop with repository files,
 ordinary shell commands, git inspection, durable artifacts, native goals, and

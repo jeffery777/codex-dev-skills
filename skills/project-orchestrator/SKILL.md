@@ -18,6 +18,12 @@ Code Mode tool orchestration: follow
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
 after filesystem installation.
 
+Context continuity: follow
+`../../policies/context-continuity-policy.md` relative to this skill in source
+or plugin checkouts, or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/context-continuity-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when Codex needs to decide how to advance a bounded project or task: handle it as a single implementation slice, plan first, delegate or hand off, run review, prepare continuation, or stop for a human gate.
@@ -37,7 +43,8 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
 - If ordinary review evidence is needed, route code or mixed changes to `code-review`, high-risk code or mixed changes to `code-review-deep`, and docs-only or docs-dominant changes to `docs-review`.
 - If a formal blocking decision is required for commit readiness, PR readiness, merge readiness, or repo policy, route through `code-review-gate` or `docs-review-gate`.
 - If review findings need closure, route fixes through the smallest primitive workflow: `implementation-slice` for code or mixed changes, `docs-update` for docs-only changes, then rerun the relevant review primitive or formal gate for the current stage.
-- Review closure loops default to 2 rounds unless the user or repo policy sets a different maximum.
+- Review closure loops default to 2 rounds unless the user or repo policy sets a different maximum. Reaching that threshold while work remains incomplete triggers the shared context-health assessment; it does not automatically create, fork, or roll over a task.
+- Apply the context-continuity policy before choosing among current-context continuation, regrounding, bounded subagent delegation, fresh rollover preparation, or a human gate. Token/compaction pressure is advisory only.
 - If the next unit should move to another session or worker, prepare a bounded continuation prompt or task brief.
 - Stop when a human gate is required.
 
@@ -65,6 +72,11 @@ source revision remain valid.
 5. Integrate or inspect results before advancing.
 6. Run relevant verification and the review primitive or formal gate that matches the current stage.
 7. Prepare continuation or readiness evidence when useful.
+8. After the configured unfinished review/fix threshold, run or prepare the
+   context-health assessment. Execute no runtime rollover action without a
+   complete checkpoint, exclusive sequential ownership transfer, source
+   stop-writing, safe runtime capability, idempotency/lineage checks, and the
+   separate authorization required for that exact action.
 
 ## Output
 

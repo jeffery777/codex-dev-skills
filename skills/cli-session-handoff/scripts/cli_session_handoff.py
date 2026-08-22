@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run one bounded Codex CLI start, resume, or fork handoff.
+"""Run one bounded Codex CLI start, resume, fork, or fresh continuation.
 
 The executor consumes a versioned JSON request and emits one redacted JSON
 receipt. It relies only on the documented stable ``codex exec --json`` surface.
@@ -24,11 +24,17 @@ import tempfile
 import threading
 import time
 import uuid
+import urllib.parse
 from dataclasses import dataclass
 from typing import Any, BinaryIO, Callable
 
+HERE = pathlib.Path(__file__).resolve().parent
+LOOP_SCRIPTS = HERE.parents[1] / "loop-engineering" / "scripts"
+sys.path.insert(0, str(LOOP_SCRIPTS))
+import context_continuity  # noqa: E402
 
-ADAPTER_VERSION = "0.2.0"
+
+ADAPTER_VERSION = "0.3.0"
 CONTRACT = "codex-cli-session-handoff/v0"
 REQUEST_SCHEMA_VERSION = 1
 AUTHORIZATION_MARKER = "human-approved-single-cli-session-handoff"
@@ -49,7 +55,7 @@ Runtime handoff boundaries:
 - Return changed files, verification evidence, questions, and residual risk to the parent.
 """.strip()
 
-ALLOWED_OPERATIONS = {"start", "resume", "fork"}
+ALLOWED_OPERATIONS = {"start", "resume", "fork", "fresh-continuation"}
 ALLOWED_SANDBOXES = {"read-only", "workspace-write"}
 ALLOWED_REQUEST_FIELDS = {
     "schema_version",
@@ -63,6 +69,7 @@ ALLOWED_REQUEST_FIELDS = {
     "session_id",
     "prompt_boundary_version",
     "authorization",
+    "continuity_assessment",
 }
 ALLOWED_AUTHORIZATION_FIELDS = {
     "marker",
@@ -165,6 +172,10 @@ class ValidatedRequest:
     sandbox: str
     timeout_seconds: int
     session_id: str | None
+    rollover_id: str | None
+    checkpoint_sha256: str | None
+    repository_id: str | None
+    destination_writer: str | None
 
 
 @dataclass
@@ -329,6 +340,10 @@ def _base_receipt(
             "terminal_event": None,
             "exit_status": None,
             "final_summary": None,
+            "rollover_id": None,
+            "checkpoint_sha256": None,
+            "destination_writer": None,
+            "destination_writer_runtime_id": None,
         },
         "boundaries": {
             "session_call_performed": False,
@@ -342,6 +357,7 @@ def _base_receipt(
             "child_platform_write_status": "not-observed",
             "repository_completion_claimed": False,
             "parent_integration_required": True,
+            "durable_replay_record_written": False,
         },
     }
 
@@ -861,7 +877,7 @@ def _validate_prompt(raw: Any) -> str:
 
 
 def _validate_session_id(operation: str, raw: Any) -> str | None:
-    if operation == "start":
+    if operation in {"start", "fresh-continuation"}:
         if raw not in (None, ""):
             raise HandoffValidationError(
                 "validation_error", "session_id is allowed only for resume or fork."
@@ -881,6 +897,143 @@ def _validate_session_id(operation: str, raw: Any) -> str | None:
             f"{operation} session_id must use canonical UUID form.",
         )
     return canonical
+
+
+def _canonical_repository_id(workspace: pathlib.Path) -> str:
+    git = _native_git(workspace)
+    remote = _run_git(git, workspace, "remote", "get-url", "origin").strip()
+    if not remote:
+        raise HandoffValidationError(
+            "continuity_target_mismatch",
+            "CLI fresh continuation requires a verifiable origin repository.",
+        )
+    if "://" not in remote:
+        raise HandoffValidationError(
+            "continuity_target_mismatch",
+            "The origin must resolve to an explicit HTTPS or ssh:// URL, not a shorthand alias.",
+        )
+    parsed = urllib.parse.urlsplit(remote)
+    if parsed.scheme not in {"https", "ssh"} or parsed.hostname is None:
+        raise HandoffValidationError(
+            "continuity_target_mismatch",
+            "The origin must use a qualified HTTPS or ssh:// remote URL.",
+        )
+    if parsed.password is not None:
+        raise HandoffValidationError(
+            "continuity_target_mismatch",
+            "Credential-bearing origin URLs are not qualified.",
+        )
+    host = parsed.hostname.lower()
+    if parsed.port is not None:
+        host = f"{host}:{parsed.port}"
+    path = parsed.path
+    repository_path = path.strip("/")
+    if repository_path.endswith(".git"):
+        repository_path = repository_path[:-4]
+    repository_id = f"{host}/{repository_path}"
+    if not repository_path or "/" not in repository_path or len(repository_id.encode("utf-8")) > 512:
+        raise HandoffValidationError(
+            "continuity_target_mismatch",
+            "The origin repository identity is malformed.",
+        )
+    return repository_id
+
+
+def _validate_continuity_assessment(
+    operation: str,
+    raw: Any,
+    *,
+    workspace: pathlib.Path,
+    workspace_label: str,
+    expected_head: str,
+) -> tuple[str | None, str | None, str, str | None, str | None]:
+    if operation != "fresh-continuation":
+        if raw is not None:
+            raise HandoffValidationError(
+                "validation_error",
+                "continuity_assessment is allowed only for fresh-continuation.",
+            )
+        return None, None, "", None, None
+    try:
+        assessment = context_continuity.assess(
+            _require_object(raw, "continuity_assessment")
+        )
+    except context_continuity.ContinuityContractError as exc:
+        raise HandoffValidationError(
+            "continuity_contract_rejected", "The continuity assessment is invalid."
+        ) from exc
+    if assessment["decision"] != "prepare-fresh-rollover":
+        raise HandoffValidationError(
+            "continuity_contract_rejected",
+            "The continuity assessment did not select prepare-fresh-rollover.",
+        )
+    if assessment["idempotent_replay"]:
+        raise HandoffValidationError(
+            "idempotent_rollover_replay",
+            "This rollover was already prepared; no CLI session call is allowed.",
+        )
+    raw_assessment = _require_object(raw, "continuity_assessment")
+    runtime = _require_object(raw_assessment.get("runtime"), "continuity_assessment.runtime")
+    worktree = _require_object(
+        raw_assessment.get("worktree"), "continuity_assessment.worktree"
+    )
+    if runtime != {
+        "surface": "cli",
+        "control_surface": "cli-exec",
+        "mode": "non-interactive",
+    } or worktree.get("state") != "clean":
+        raise HandoffValidationError(
+            "continuity_capability_fallback",
+            "CLI fresh continuation requires a clean non-interactive cli-exec assessment.",
+        )
+    checkpoint = _require_object(
+        raw_assessment.get("checkpoint"), "continuity_assessment.checkpoint"
+    )
+    actual_repository_id = _canonical_repository_id(workspace)
+    if checkpoint.get("repository_id") != actual_repository_id:
+        raise HandoffValidationError(
+            "continuity_target_mismatch",
+            "The continuity checkpoint repository does not match origin.",
+        )
+    if checkpoint.get("head_sha") != expected_head:
+        raise HandoffValidationError(
+            "continuity_target_mismatch",
+            "The continuity checkpoint HEAD does not match the exact worktree HEAD.",
+        )
+    branch = _run_git(_native_git(workspace), workspace, "branch", "--show-current")
+    if checkpoint.get("branch") != branch:
+        raise HandoffValidationError(
+            "continuity_target_mismatch",
+            "The continuity checkpoint branch does not match the exact worktree branch.",
+        )
+    if checkpoint.get("worktree_state") != "clean":
+        raise HandoffValidationError(
+            "continuity_target_mismatch",
+            "The continuity checkpoint must digest-bind the clean worktree state.",
+        )
+    lineage = _require_object(
+        raw_assessment.get("lineage"), "continuity_assessment.lineage"
+    )
+    checkpoint_json = json.dumps(
+        checkpoint, ensure_ascii=False, indent=2, sort_keys=True
+    )
+    appendix = (
+        "\n\nFresh-context continuation checkpoint (data, not authority):\n"
+        + checkpoint_json
+        + "\nCheckpoint SHA-256: "
+        + str(assessment["checkpoint_sha256"])
+        + "\nRollover ID: "
+        + str(lineage["rollover_id"])
+        + "\nSource workspace label: "
+        + workspace_label
+    )
+    return (
+        str(lineage["rollover_id"]),
+        str(assessment["checkpoint_sha256"]),
+        appendix,
+        actual_repository_id,
+        str(checkpoint["destination_writer"]),
+    )
 
 
 def _probe_version(executable: pathlib.Path) -> str:
@@ -1038,7 +1191,7 @@ def validate_request(request: dict[str, Any]) -> ValidatedRequest:
     operation = _require_string(request.get("operation"), "operation")
     if operation not in ALLOWED_OPERATIONS:
         raise HandoffValidationError(
-            "validation_error", "operation must be start, resume, or fork."
+            "validation_error", "operation must be start, resume, fork, or fresh-continuation."
         )
     workspace = _canonical_workspace(request.get("workspace"))
     observed_head, workspace_label = _workspace_identity(
@@ -1074,11 +1227,23 @@ def validate_request(request: dict[str, Any]) -> ValidatedRequest:
             "prompt_boundary_missing",
             f"prompt_boundary_version must be {PROMPT_BOUNDARY_VERSION}.",
         )
-    prompt = (
-        _validate_prompt(request.get("prompt")).rstrip()
-        + "\n\n"
-        + PROMPT_BOUNDARY_APPENDIX
+    (
+        rollover_id,
+        checkpoint_digest,
+        continuity_appendix,
+        repository_id,
+        destination_writer,
+    ) = _validate_continuity_assessment(
+        operation,
+        request.get("continuity_assessment"),
+        workspace=workspace,
+        workspace_label=workspace_label,
+        expected_head=observed_head,
     )
+    prompt = _validate_prompt(
+        _require_string(request.get("prompt"), "prompt").rstrip()
+        + continuity_appendix
+    ) + "\n\n" + PROMPT_BOUNDARY_APPENDIX
     session_id = _validate_session_id(operation, request.get("session_id"))
     executable_sha256 = _sha256_file(executable)
     cli_version = _probe_version(executable)
@@ -1094,6 +1259,10 @@ def validate_request(request: dict[str, Any]) -> ValidatedRequest:
         sandbox=sandbox,
         timeout_seconds=timeout,
         session_id=session_id,
+        rollover_id=rollover_id,
+        checkpoint_sha256=checkpoint_digest,
+        repository_id=repository_id,
+        destination_writer=destination_writer,
     )
 
 
@@ -1117,7 +1286,7 @@ def build_argv(
         str(workspace),
         "exec",
     ]
-    if request.operation == "start":
+    if request.operation in {"start", "fresh-continuation"}:
         return [*prefix, "--ignore-user-config", "--json", "-"]
     assert request.session_id is not None
     return [
@@ -1977,6 +2146,238 @@ def _run_child(
     return process.returncode, stdout, None
 
 
+def _read_rollover_ledger(directory_fd: int) -> dict[str, Any]:
+    name = "ledger.json"
+    try:
+        descriptor = os.open(
+            name,
+            os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+            dir_fd=directory_fd,
+        )
+    except FileNotFoundError:
+        return {"contract": "codex-cli-rollover-replay-ledger/v1", "entries": []}
+    except OSError as exc:
+        raise HandoffValidationError(
+            "continuity_replay_conflict",
+            "Existing rollover replay evidence is not a safe regular file.",
+        ) from exc
+    try:
+        file_stat = os.fstat(descriptor)
+        if not stat.S_ISREG(file_stat.st_mode) or file_stat.st_size > 256 * 1024:
+            raise HandoffValidationError(
+                "continuity_replay_conflict",
+                "Existing rollover replay evidence is malformed or oversized.",
+            )
+        raw = os.read(descriptor, 256 * 1024 + 1)
+        if len(raw) > 256 * 1024:
+            raise HandoffValidationError(
+                "continuity_replay_conflict",
+                "Existing rollover replay evidence is malformed or oversized.",
+            )
+        value = json.loads(raw)
+        if (
+            not isinstance(value, dict)
+            or set(value) != {"contract", "entries"}
+            or value.get("contract") != "codex-cli-rollover-replay-ledger/v1"
+            or not isinstance(value.get("entries"), list)
+            or len(value["entries"]) > 1024
+        ):
+            raise ValueError("ledger shape is invalid")
+        required = {
+            "contract",
+            "rollover_id",
+            "checkpoint_sha256",
+            "repository_id",
+            "expected_head",
+            "status",
+        }
+        seen_rollovers: set[str] = set()
+        seen_checkpoints: set[str] = set()
+        for entry in value["entries"]:
+            if not isinstance(entry, dict) or set(entry) != required:
+                raise ValueError("ledger entry shape is invalid")
+            if (
+                entry.get("contract") != "codex-cli-rollover-replay/v1"
+                or not isinstance(entry.get("rollover_id"), str)
+                or not entry["rollover_id"]
+                or not isinstance(entry.get("checkpoint_sha256"), str)
+                or context_continuity.HEX_SHA256.fullmatch(entry["checkpoint_sha256"])
+                is None
+                or not isinstance(entry.get("repository_id"), str)
+                or not entry["repository_id"]
+                or not isinstance(entry.get("expected_head"), str)
+                or HEX_HEAD_RE.fullmatch(entry["expected_head"]) is None
+                or entry.get("status") != "claimed"
+                or entry["rollover_id"] in seen_rollovers
+                or entry["checkpoint_sha256"] in seen_checkpoints
+            ):
+                raise ValueError("ledger entry value is invalid or conflicting")
+            seen_rollovers.add(entry["rollover_id"])
+            seen_checkpoints.add(entry["checkpoint_sha256"])
+        return value
+    except (UnicodeError, ValueError, json.JSONDecodeError) as exc:
+        raise HandoffValidationError(
+            "continuity_replay_conflict",
+            "Existing rollover replay evidence is unreadable or conflicting.",
+        ) from exc
+    finally:
+        os.close(descriptor)
+
+
+def _claim_rollover(request: ValidatedRequest) -> bool:
+    if request.operation != "fresh-continuation":
+        return False
+    if request.rollover_id is None or request.checkpoint_sha256 is None:
+        raise HandoffValidationError(
+            "continuity_contract_rejected", "Fresh rollover identity is missing."
+        )
+    entry = {
+        "contract": "codex-cli-rollover-replay/v1",
+        "rollover_id": request.rollover_id,
+        "checkpoint_sha256": request.checkpoint_sha256,
+        "repository_id": request.repository_id,
+        "expected_head": request.expected_head,
+        "status": "claimed",
+    }
+    git = _native_git(request.workspace)
+    common_raw = _run_git(git, request.workspace, "rev-parse", "--git-common-dir")
+    common = pathlib.Path(common_raw)
+    if not common.is_absolute():
+        common = request.workspace / common
+    try:
+        common = common.resolve(strict=True)
+        common_fd = os.open(
+            common,
+            os.O_RDONLY
+            | getattr(os, "O_DIRECTORY", 0)
+            | getattr(os, "O_NOFOLLOW", 0),
+        )
+    except OSError as exc:
+        raise HandoffValidationError(
+            "continuity_replay_state_unavailable",
+            "The Git control directory is unavailable for durable replay state.",
+        ) from exc
+    try:
+        directory_name = "codex-continuity-rollovers"
+        try:
+            os.mkdir(directory_name, mode=0o700, dir_fd=common_fd)
+        except FileExistsError:
+            pass
+        os.fsync(common_fd)
+        directory_fd = os.open(
+            directory_name,
+            os.O_RDONLY
+            | getattr(os, "O_DIRECTORY", 0)
+            | getattr(os, "O_NOFOLLOW", 0),
+            dir_fd=common_fd,
+        )
+        try:
+            directory_stat = os.fstat(directory_fd)
+            if directory_stat.st_uid != os.geteuid() or directory_stat.st_mode & 0o022:
+                raise HandoffValidationError(
+                    "continuity_replay_state_unavailable",
+                    "Durable replay state must be owned by the current user and not group/world writable.",
+                )
+            import fcntl
+
+            lock_fd: int | None = None
+            try:
+                lock_fd = os.open(
+                    ".lock",
+                    os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0),
+                    0o600,
+                    dir_fd=directory_fd,
+                )
+                try:
+                    fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError as exc:
+                    raise HandoffValidationError(
+                        "continuity_replay_state_busy",
+                        "Durable rollover replay state is busy; no runtime call was attempted.",
+                    ) from exc
+                ledger = _read_rollover_ledger(directory_fd)
+                exact = {key: entry[key] for key in entry if key != "status"}
+                matches = [
+                    item
+                    for item in ledger["entries"]
+                    if item["rollover_id"] == request.rollover_id
+                    or item["checkpoint_sha256"] == request.checkpoint_sha256
+                ]
+                if matches:
+                    if all(
+                        {key: item.get(key) for key in exact} == exact
+                        for item in matches
+                    ):
+                        raise HandoffValidationError(
+                            "idempotent_rollover_replay",
+                            "This rollover or checkpoint already has durable replay evidence; no CLI session call is allowed.",
+                        )
+                    raise HandoffValidationError(
+                        "continuity_replay_conflict",
+                        "The rollover ID or checkpoint conflicts with durable replay evidence.",
+                    )
+                if len(ledger["entries"]) >= 1024:
+                    raise HandoffValidationError(
+                        "continuity_replay_state_unavailable",
+                        "Durable rollover replay ledger reached its bounded capacity.",
+                    )
+                ledger["entries"].append(entry)
+                encoded = (
+                    json.dumps(ledger, sort_keys=True, separators=(",", ":")) + "\n"
+                ).encode("utf-8")
+                if len(encoded) > 256 * 1024:
+                    raise HandoffValidationError(
+                        "continuity_replay_state_unavailable",
+                        "Durable rollover replay ledger would exceed its bounded size.",
+                    )
+                temp_name = f".ledger-{os.getpid()}-{uuid.uuid4().hex}.tmp"
+                temp_created = False
+                try:
+                    descriptor = os.open(
+                        temp_name,
+                        os.O_WRONLY
+                        | os.O_CREAT
+                        | os.O_EXCL
+                        | getattr(os, "O_NOFOLLOW", 0),
+                        0o600,
+                        dir_fd=directory_fd,
+                    )
+                    temp_created = True
+                    with os.fdopen(descriptor, "wb") as handle:
+                        handle.write(encoded)
+                        handle.flush()
+                        os.fsync(handle.fileno())
+                    os.replace(
+                        temp_name,
+                        "ledger.json",
+                        src_dir_fd=directory_fd,
+                        dst_dir_fd=directory_fd,
+                    )
+                    temp_created = False
+                finally:
+                    if temp_created:
+                        try:
+                            os.unlink(temp_name, dir_fd=directory_fd)
+                        except OSError:
+                            pass
+                os.fsync(directory_fd)
+            finally:
+                if lock_fd is not None:
+                    os.close(lock_fd)
+        finally:
+            os.close(directory_fd)
+    except HandoffValidationError:
+        raise
+    except OSError as exc:
+        raise HandoffValidationError(
+            "continuity_replay_state_unavailable",
+            "Durable rollover replay state could not be claimed and persisted safely.",
+        ) from exc
+    finally:
+        os.close(common_fd)
+    return True
+
+
 def execute_handoff(request: dict[str, Any]) -> dict[str, Any]:
     receipt = _base_receipt(request, status="stopped")
     try:
@@ -2009,6 +2410,20 @@ def execute_handoff(request: dict[str, Any]) -> dict[str, Any]:
             "observed_head": validated.expected_head,
         }
     )
+    receipt["result"].update(
+        {
+            "rollover_id": validated.rollover_id,
+            "checkpoint_sha256": validated.checkpoint_sha256,
+            "destination_writer": validated.destination_writer,
+        }
+    )
+
+    try:
+        replay_record = _claim_rollover(validated)
+    except HandoffValidationError as exc:
+        return _stop(request, exc.failure_class, str(exc))
+    if replay_record:
+        receipt["boundaries"]["durable_replay_record_written"] = True
 
     def mark_session_started() -> None:
         receipt["boundaries"]["session_call_performed"] = True
@@ -2080,6 +2495,7 @@ def execute_handoff(request: dict[str, Any]) -> dict[str, Any]:
     receipt["result"].update(
         {
             "session_id": session_id,
+            "destination_writer_runtime_id": session_id,
             "terminal_event": terminal_event,
             "final_summary": summary,
         }
@@ -2149,7 +2565,7 @@ def _example_request() -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Run one bounded Codex CLI start or resume handoff."
+        description="Run one bounded Codex CLI start, resume, fork, or fresh continuation."
     )
     parser.add_argument(
         "--request",

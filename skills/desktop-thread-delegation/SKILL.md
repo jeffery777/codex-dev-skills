@@ -43,6 +43,10 @@ continuation prompt. Do not claim that CLI holds Desktop app task/thread tools.
    - `desktop-thread-create` when a fresh task should start in a Git worktree,
      an explicitly requested saved checkout, a non-Git project, or a
      deliberately projectless context.
+   - `desktop-fresh-rollover` when the shared context-health contract selected
+     a sequential same-repository/same-objective transfer from a complete
+     checkpoint. This uses fresh `create_thread`, not `fork_thread`, because
+     completed conversation history must not be copied.
    - `desktop-thread-share` only when the user explicitly asks to create an
      immutable read-only share link for the current or another exact accessible
      thread. Sharing is a privacy-sensitive disclosure action, not delegation.
@@ -58,6 +62,10 @@ continuation prompt. Do not claim that CLI holds Desktop app task/thread tools.
    use the fixed title `Project task`. The callable keeps `title` optional for
    compatibility, but this adapter supplies it on every `create_thread` call
    for stable UI display. Never treat the title as project identity.
+   For `desktop-fresh-rollover`, also validate the canonical checkpoint digest,
+   rollover lineage/idempotency, one destination writer, material progress,
+   and confirmed source stop-writing. The source task performs no further
+   repository writes after dispatch. Exact replay never creates a duplicate.
 4. Inspect the active callable schema and preserve the selected execution
    intent:
    - for continuation of the same task, use `fork_thread` with
@@ -75,12 +83,23 @@ continuation prompt. Do not claim that CLI holds Desktop app task/thread tools.
    - for a fresh task, call the documented project-list operation, such as
      `list_projects`, and pass its exact `projectId`; when `isGitRepository` is
      true, default to project `environment: {"type": "worktree"}`;
-   - omit worktree `startingState` to start from the project default branch;
+   - for fresh rollover, use that same project `create_thread` path with the
+     checkpoint-only prompt and the exact already selected repository/objective;
+     never replace it with a same-directory or worktree fork, which preserves
+     completed conversation lineage. Set worktree `startingState` to
+     `{"type":"branch","branchName":"<checkpoint-branch>","onMissing":"error"}`;
+     never omit it or use the project default branch for a rollover;
+   - omit worktree `startingState` for an ordinary fresh task to start from the project default branch;
      use `{"type":"working-tree"}` only when the user explicitly requests the
      current checkout including uncommitted changes; use a branch starting
      state only with the exact requested `branchName`, treating omitted
      `onMissing` as `error` and using `create-branch` only for an explicitly
      requested exact new branch name;
+   - keep destination ownership pending after fresh-rollover dispatch. The
+     destination first performs a read-only `git branch --show-current` and
+     `git rev-parse HEAD` check against the checkpoint and reports the result;
+     only an exact match activates it as the sole writer. A mismatch stops at
+     a human gate and the source remains stopped;
    - use project `environment: {"type": "local"}` for a Git project only when
      the user explicitly requests the saved project checkout; non-Git projects
      use `local`;
@@ -179,7 +198,9 @@ continuation prompt. Do not claim that CLI holds Desktop app task/thread tools.
    handoff-status operation when available instead of inferring success from
    list metadata.
 12. If the capability is unavailable or fails, return the prepared prompt as a
-   paste-ready handoff or continue through the shared sequential fallback.
+    paste-ready handoff or continue through the shared sequential fallback.
+    For fresh rollover, this means the source regrounds or stops with a prompt;
+    it must not claim ownership transfer, task creation, or completion.
 13. For an explicitly requested share, inspect the active `share_thread`
     callable, identify the exact `threadId` and preferred `hostId` when supplied,
     and preview the account/workspace audience before the call only from

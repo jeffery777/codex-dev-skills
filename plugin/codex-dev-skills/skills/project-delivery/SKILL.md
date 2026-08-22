@@ -18,6 +18,12 @@ Code Mode tool orchestration: follow
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
 after filesystem installation.
 
+Context continuity: follow
+`../../policies/context-continuity-policy.md` relative to this skill in source
+or plugin checkouts, or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/context-continuity-policy.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when the user delegates an end-to-end project goal and expects the agent to act as delivery owner until the next real human gate.
@@ -37,8 +43,16 @@ For a single clear implementation task, prefer `implementation-slice`. Use `proj
 6. Route code or mixed changes through `code-review`, high-risk code or mixed changes through `code-review-deep`, and docs-only or docs-dominant changes through `docs-review`.
 7. Use `code-review-gate` or `docs-review-gate` only when commit readiness, PR readiness, merge readiness, or repo policy requires a formal blocking decision.
 8. If reviews or gates produce actionable blockers, close them by returning to the smallest primitive workflow and rerunning the relevant review primitive or formal gate within the configured round limit.
+   After the default two unfinished review/fix rounds (or another configured
+   threshold), apply the shared context-continuity policy. The threshold starts
+   assessment only; it cannot auto-create or auto-roll over a task.
 9. Sync docs or status files when that is part of the repo policy.
 10. Prepare PR readiness evidence, but do not commit, push, create PRs, publish, merge, deploy, post platform comments, submit reviews, or perform destructive actions without the required human gate.
+11. When assessment selects fresh rollover preparation, require the versioned
+    durable checkpoint, same repository/objective, one destination writer,
+    confirmed source stop-writing, lineage/idempotency/anti-recursion, and the
+    runtime adapter's separate mutation gate. The source delivery owner stops
+    writing; the destination becomes the sole owner only after dispatch.
 
 For concurrent workers, dispatch the fixed independent set once, continue
 parent-owned work, and use one supported wait-for-any/mailbox wait rather than

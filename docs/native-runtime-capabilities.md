@@ -214,6 +214,21 @@ after the source session stops writing; it remains ineligible for the
 non-interactive private-clone executor. The fork does not create a new Git
 worktree.
 
+Issue #165 adds one additive `fresh-continuation` operation. It uses a new
+`codex exec --json` session, not resume or fork, and appends a validated
+`loop-context-continuity/v1` checkpoint to the prompt. Phase one is limited to
+a clean exact worktree and non-interactive private-clone execution. The
+assessment must select `prepare-fresh-rollover`, bind the same repository and
+objective, name distinct source/destination writers, confirm source
+stop-writing and material progress, and carry an unseen rollover ID. Exact
+replay performs no session call. The executor verifies the checkpoint against
+the actual canonical `origin` host/path, includes worktree state in the checkpoint digest, and
+atomically updates a non-blocking, directory-synced at-most-once ledger indexed
+by rollover ID and checkpoint digest below the Git control directory before dispatch;
+runtime identity in the completed receipt binds the declared destination
+writer to the returned session. Interactive, dirty, or unavailable cases use
+the current-session or paste-ready prompt fallback.
+
 Codex CLI 0.149.0 adds two public session-control entrypoints that remain
 outside the private-clone executor:
 
@@ -317,6 +332,13 @@ Current callable semantics include:
   boundary and requires additional explicit authorization. Cloud handoff is
   unsupported. Omit model and reasoning overrides unless the user explicitly
   requests supported values.
+- A fresh-context rollover uses `create_thread` with the exact selected project
+  and a checkpoint-only prompt. It must not use `fork_thread`, because fork
+  copies completed conversation history. The source stops writing before the
+  destination becomes the sole delivery owner. Dispatch remains coordination
+  evidence and exact replay must not create a duplicate task. The worktree
+  starts from the exact checkpoint branch with `onMissing: error`; the new task
+  remains a pending writer until it reports a read-only exact branch/HEAD check.
 - A worktree target omits `startingState` to start from the project default
   branch. Use `{"type":"working-tree"}` only when the user explicitly wants
   the current checkout and uncommitted changes. Use
@@ -531,6 +553,12 @@ The sequential fallback executes the same selected task in the current session
 or prepares a durable continuation prompt or task brief. It preserves the same
 source-of-truth, authority, verification, review, and completion rules. A
 missing optional runtime capability changes execution mode, not task semantics.
+
+For IDE surfaces, no independent fresh-task control plane is assumed. The
+qualified baseline is the shared assessment plus current-session regrounding,
+bounded subagent delegation for disjoint work, or a paste-ready prompt. See
+[Context Continuity And Fresh-Context Rollover](context-continuity.md) for the
+Desktop/CLI/IDE capability matrix.
 
 For V2a profile routing, attempt the lowest sufficient same-class profile, a
 parent/default mapping with explicit class/tier evidence, and current-session
