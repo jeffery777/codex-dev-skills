@@ -10,6 +10,26 @@ import yaml
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
+ACTIVE_CANONICAL_GUIDANCE_FILES = (
+    "docs/desktop-runtime-wrapper-v1-deprecation.md",
+    "docs/native-runtime-capabilities.md",
+    "docs/release-readiness.md",
+    "docs/roadmap.md",
+    "docs/runtime-compatibility.md",
+    "docs/skill-selection-guide.md",
+    "docs/source-classification.md",
+)
+
+RETIRED_WRAPPER_RUNNABLE_REFERENCE = re.compile(
+    r"(?:"
+    r"(?:python(?:3)?|project-python)(?:[^\n]|\\\n){0,240}"
+    r"(?:scripts[/\\.]?)?desktop[_-]?runtime[_-]"
+    r"|(?:from|import)\s+(?:scripts\.)?desktop[_-]?runtime[_-]"
+    r"|(?:\./)?scripts/desktop[_-]?runtime[_-]"
+    r")",
+    re.IGNORECASE,
+)
+
 
 def read(relative_path: str) -> str:
     return (ROOT / relative_path).read_text(encoding="utf-8")
@@ -674,6 +694,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             ROOT / "catalog.yaml",
             ROOT / "install.sh",
             ROOT / "plugin/codex-dev-skills/.codex-plugin/plugin.json",
+            *(ROOT / path for path in ACTIVE_CANONICAL_GUIDANCE_FILES),
         )
         active_guidance_roots = (
             ROOT / ".agents",
@@ -688,15 +709,6 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         )
         active_guidance = list(active_guidance_files)
         active_guidance.extend(collect_active_guidance(active_guidance_roots))
-        runnable_reference = re.compile(
-            r"(?:"
-            r"(?:python(?:3)?|project-python)(?:[^\n]|\\\n){0,240}"
-            r"(?:scripts[/\\.]?)?desktop[_-]?runtime[_-]"
-            r"|(?:from|import)\s+(?:scripts\.)?desktop[_-]?runtime[_-]"
-            r"|(?:\./)?scripts/desktop[_-]?runtime[_-]"
-            r")",
-            re.IGNORECASE,
-        )
 
         for path in active_guidance:
             relative_path = path.relative_to(ROOT).as_posix()
@@ -705,7 +717,24 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
                     guidance = read_scanned_guidance(path)
                 except UnicodeDecodeError:
                     continue
-                self.assertNotRegex(guidance, runnable_reference)
+                self.assertNotRegex(guidance, RETIRED_WRAPPER_RUNNABLE_REFERENCE)
+
+    def test_active_canonical_docs_reject_runnable_wrapper_guidance(self) -> None:
+        self.assertIn(
+            "docs/runtime-compatibility.md",
+            ACTIVE_CANONICAL_GUIDANCE_FILES,
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repo_root = pathlib.Path(temp_dir)
+            canonical_doc = repo_root / "docs/runtime-compatibility.md"
+            canonical_doc.parent.mkdir()
+            canonical_doc.write_text(
+                "Run ./scripts/desktop_runtime_probe.py for compatibility.",
+                encoding="utf-8",
+            )
+
+            guidance = read_scanned_guidance(canonical_doc, repo_root)
+            self.assertRegex(guidance, RETIRED_WRAPPER_RUNNABLE_REFERENCE)
 
     def test_active_guidance_scan_rejects_out_of_repo_symlinks(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

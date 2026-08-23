@@ -5,9 +5,9 @@
 This began as the reviewable plan for a later destructive slice. Issue #169 was
 non-destructive and did not authorize deletion. Issue #171 independently
 reviewed the manifest and obtained explicit user authorization for the exact
-targets; its working-tree implementation remains uncommitted until full
-verification, formal review, security diff scan, and a separate commit gate
-all pass.
+targets. The removal was committed and opened as a pull request only after full
+verification, formal review, security diff scan, and their separate human gates
+passed. Merge, tag, Release, and deployment remain separately gated.
 
 Recovery baseline: `864fe8cf61553f6d7db52456a31235da0456f2d3` (`v0.17.1`).
 It is a recovery reference, not permission to overwrite a later branch or
