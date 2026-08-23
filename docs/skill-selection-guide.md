@@ -154,10 +154,9 @@ with [Runtime Compatibility](runtime-compatibility.md):
 
 Validate target identity, permission/auth failures, and the actual response at
 the call site. Current creation responses distinguish an immediate `threadId`
-plus `hostId` from a queued `clientThreadId`; do not reuse historical wrapper
-response shapes as active schema evidence. Legacy `desktop_runtime_*` helpers
-remain historical compatibility evidence only and must not be executed by the
-active workflow.
+plus `hostId` from a queued `clientThreadId`; do not infer current schema from
+historical examples. Desktop Runtime Wrapper V1 is retired and provides no
+runnable or importable workflow path.
 Use `wait_threads` only as bounded, host-aware observation when exposed; its
 compact snapshots are not shared-subagent semantics or completion evidence.
 

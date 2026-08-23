@@ -2,13 +2,16 @@
 
 ## Scope and terms
 
-This is a non-destructive preparation record. It classifies all 16 historical
-Desktop Runtime Wrapper V1 scripts and their 263 test assertions. It does not
-authorize wrapper execution, archiving, or deletion.
+This began as a non-destructive preparation record. It classifies all 16
+historical Desktop Runtime Wrapper V1 scripts and their 263 test assertions and
+is retained after Issue #171 as non-executable behavior-disposition evidence.
+It does not authorize restoration, execution, publication, or another
+platform mutation.
 
 Source baseline: `864fe8cf61553f6d7db52456a31235da0456f2d3` (`v0.17.1`).
-The canonical artifact list is
-[`docs/desktop-runtime-wrapper-v1-inventory.yaml`](../../desktop-runtime-wrapper-v1-inventory.yaml).
+The removed canonical artifact list and its Issue #171 recovery receipt are
+preserved in the reviewed
+[`future-removal-plan.md`](future-removal-plan.md).
 
 `current-native-covered` means the current user-visible capability and its
 authority boundary are specified in

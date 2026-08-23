@@ -9,17 +9,15 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## v0.2.x: More Maintainer Workflows
 
-- The former Desktop runtime wrapper V1 chain is frozen as historical
-  compatibility and regression evidence. It is not an active execution path;
-  future cleanup may archive or remove it only through a separately reviewed
-  deprecation slice.
+- Desktop Runtime Wrapper V1 is retired. Its non-executable historical record
+  does not provide a compatibility or execution path; current behavior belongs
+  to native runtime contracts and active runtime callables.
 - Loop engineering adds an explicit shared entrypoint for clear bounded objectives: bootstrap from durable source of truth, classify current state, route through existing phase skills, verify and review evidence, continue or hand off when safe, and stop at human gates. It preserves the independent use of implementation, documentation, review, formal gate, continuation, milestone, and Desktop-specific skills.
 - Repo-owned loop state and ledger support is the next loop-engineering hardening step: keep source revision, task state, claim/lease state, verification evidence, review evidence, blockers, and next decisions in repository files first; treat future external memory adapters as optional cache or coordination layers unless a repository explicitly defines a stronger reviewed authority model.
 - Loop Engineering V1 is tracked in issue #81. It adds one production route and
   transition core, structured YAML validation, revision/event/idempotency
   guards, deterministic workflow evals, native Goal mode, shared subagents, and
-  thin scheduler/Desktop task adapters. The v0.x Desktop wrapper chain becomes
-  legacy compatibility evidence rather than the active runtime path.
+  thin scheduler/Desktop task adapters.
 - Loop Engineering V2a shipped in v0.6.0 from issue #85. It adds deterministic
   capability classification, replaceable custom-agent profiles, runtime
   preflight/degradation, and route/worker/integration receipts while preserving
@@ -37,7 +35,6 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   Luna-max remain eval-first candidates. The `loop_v2a_` namespace remains a
   protocol identifier independent of the V3 improvement program.
 - Milestone continuation adds a shared upper-layer workflow for checking bounded milestone task state across repeated invocations, selecting the next ready task, routing through existing delivery and continuation workflows, and keeping runtime scheduling outside the skill.
-- Keep any later Desktop runtime wrapper slices behind separate review and human approval, especially before adding remediation, broader runtime thread-tool invocation, platform writes, or any other state-changing path.
 
 ## Maintenance Approach
 
@@ -48,12 +45,11 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Issue #169 owns the non-destructive Desktop Runtime Wrapper V1 sunset
-  preparation. It classifies retained behavior against native adapters,
-  extracts wrapper-independent security invariants, removes executable legacy
-  documentation guidance, and prepares an exact future removal/recovery plan.
-  It does not delete or execute the wrappers and does not authorize a later
-  destructive slice.
+- Issue #171 retires Desktop Runtime Wrapper V1 after the reviewed removal
+  gates. The retirement keeps wrapper-independent security invariants and
+  native authorization, identity, fail-closed, private-state, external-write,
+  and non-execution contracts; it does not create a replacement compatibility
+  layer.
 
 - Issue #167 owns the v0.17.1 public-documentation coherence patch. It aligns
   README and the durable Operational Evidence continuation handoff with the
@@ -82,19 +78,17 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   It records CLI 0.149.0, keeps `codex agents` and UUID-only `codex queue` in
   the independent CLI control-plane adapter, adds privacy-gated immutable
   Desktop `share_thread` guidance, and preserves shared orchestration,
-  completion authority, opt-in custom-agent profiles, and the inactive
-  historical wrapper boundary.
+  completion authority, opt-in custom-agent profiles, and native runtime
+  contract boundaries.
 - Issue #157 completed GN-FU-01 in v0.16.0. It defines
   distinct primary-main, primary-branch, linked-worktree, detached, dirty, and
   PR base/head identities; binds exact evidence to complete relevant content,
   tool/configuration, and freshness; and makes old or missing sidecars
   explicitly advisory. Linked-worktree automatic refresh and remote-only merge
   advancement remain fail-closed. GitNexus remains non-authoritative.
-- Issue #163 owns the v0.16.3 patch that freezes and quarantines the historical
-  compatibility evidence: the `desktop_runtime_*` wrapper V1 surface remains behind a strict machine-readable
-  inventory, active-consumer guardrail, and explicit sunset criteria. Physical
-  archive or deletion remains a later separately reviewed and explicitly
-  authorized destructive slice.
+- Issue #163 owns the v0.16.3 patch that prepared the historical V1 retirement
+  evidence. Issue #171 later removed that obsolete surface after separate
+  review, security evidence, recovery planning, and explicit authorization.
 - Global profile synchronization follows the accepted Loop Engineering V1
   authority, goal, subagent, and human-gate contract. The separate global
   profile repository should not be edited in issue #81.

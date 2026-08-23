@@ -38,8 +38,6 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
         for expected in (
             "# Release Notes: v0.16.3",
             "Issue #163",
-            "desktop_runtime_*",
-            "zero detected active runnable",
             "compare/v0.16.2...v0.16.3",
         ):
             with self.subTest(expected=expected):

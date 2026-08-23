@@ -468,9 +468,10 @@ rules.
 `../../docs/native-runtime-capabilities.md` relative to this skill is the canonical runtime
 contract; filesystem installation also places it at
 `~/.codex/templates/docs/native-runtime-capabilities.md`. It defines authority
-mapping, current callable response semantics, and adapter fallbacks. Legacy
-`desktop_runtime_*` helpers are compatibility evidence only; the native loop
-path must not import, execute, or recommend them.
+mapping, current callable response semantics, and adapter fallbacks. The native
+loop path uses only documented capabilities exposed in its active runtime after
+call-site validation; a repository-local helper script is not a native control
+path and must not be imported, executed, or recommended.
 
 ## Human Gates
 

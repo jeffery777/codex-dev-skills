@@ -2,15 +2,15 @@
 
 Thanks for helping keep these Codex development workflows useful and public.
 
-## Historical Desktop Wrapper Boundary
+## Historical Desktop Wrapper Retirement Boundary
 
-Do not add active consumers, runnable guidance, installer entries, or plugin
-entrypoints for the historical Desktop runtime wrapper V1 helpers. Before
-changing their retained scripts, focused tests, or references, read the
-[deprecation contract](docs/desktop-runtime-wrapper-v1-deprecation.md), update
-its machine-readable inventory in the same change, and run the focused legacy
-validator. Archive or deletion requires a separate reviewed plan and explicit
-destructive-action authorization.
+Desktop Runtime Wrapper V1 is retired. Its helper scripts, focused tests,
+machine-readable inventory, and legacy validator are no longer retained. Do not
+reintroduce them as active consumers, runnable guidance, installer entries,
+catalog entries, hooks, or plugin entrypoints. Current behavior is owned by the
+[native capability contract](docs/native-runtime-capabilities.md); the
+[retirement record](docs/desktop-runtime-wrapper-v1-deprecation.md) is
+non-executable historical evidence only.
 
 ## Ground Rules
 

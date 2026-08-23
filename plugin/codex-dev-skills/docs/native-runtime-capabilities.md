@@ -249,8 +249,8 @@ outside the private-clone executor:
 `codex doctor --json` may provide redacted installation, configuration,
 authentication, network, Desktop-state, and update diagnostics. It remains
 diagnostic evidence, not a substitute for active command/callable inspection,
-authorization, repository verification, or a reason to execute the historical
-Desktop wrapper chain.
+authorization, repository verification, or a reason to use superseded
+repository integration guidance.
 
 The same interpreter risk exists when ordinary Codex CLI operates in a Git
 worktree: a new checkout does not imply that a shell has activated the source
@@ -565,22 +565,18 @@ parent/default mapping with explicit class/tier evidence, and current-session
 sequential execution with the same evidence before stopping. Stop at a human
 gate when the requested risk class or tier cannot be preserved safely.
 
-## Legacy Desktop Wrapper Boundary
+## Retired V1 Historical Record
 
-The `desktop_runtime_*` helper family is retained only as historical
-compatibility evidence for the v0.x Desktop wrapper experiments. It is not the
-active Loop Engineering runtime path, and its preflight, handshake, cache,
-executor-envelope, injected-callable, or smoke evidence does not authorize or
-implement a native capability call.
+Desktop Runtime Wrapper V1 is retired and is not a native capability boundary.
+The native loop core and its adapters own all current runtime behavior; current
+callable schemas and call-site validation govern native operations.
 
-The native loop core and its adapters must not import or execute legacy Desktop
-wrapper helpers. Current callable schemas and call-site validation govern native
-operations. Historical tests may remain isolated until a separately reviewed
-cleanup removes or archives them. The canonical source repository's V1
-deprecation contract and machine-readable inventory prevent new active
-consumers and define the exact evidence required before that destructive
-cleanup can be proposed; those maintainer-only guardrails are not plugin
-entrypoints.
+The retirement record preserves only non-executable historical context. It
+cannot authorize or implement a native capability call, and it cannot weaken
+authorization, target or returned identity validation, fail-closed handling,
+private-state boundaries, external-write gates, or default non-execution.
+Wrapper-independent fixture coverage remains the maintained evidence for the
+historical safety cases.
 
 ## References
 

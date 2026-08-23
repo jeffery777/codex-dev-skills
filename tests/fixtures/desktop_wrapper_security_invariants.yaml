@@ -8,7 +8,7 @@ sources:
       - "Capability availability never grants broader filesystem, network,"
       - "Creating a new or background Desktop task requires an explicit user request."
       - "A `clientThreadId` is not a `threadId`"
-      - "The native loop core and its adapters must not import or execute legacy Desktop"
+      - "Desktop Runtime Wrapper V1 is retired and is not a native capability boundary."
   - id: "native-runtime-adapter"
     path: "docs/runtime-adapter-v2.md"
     required_markers:
@@ -67,8 +67,8 @@ invariants:
     evidence:
       - source_id: "native-capability-contract"
         markers:
-          - "is retained only as historical"
-          - "or smoke evidence does not authorize"
+          - "Desktop Runtime Wrapper V1 is retired and is not a native capability boundary."
+          - "The retirement record preserves only non-executable historical context."
       - source_id: "current-runtime-evidence"
         markers:
           - "`desktop_runtime_*` wrappers inactive."

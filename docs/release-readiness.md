@@ -114,21 +114,19 @@ catalog, installer, README, roadmap, tests, and v0.16.2 release notes. Treat
 v0.16.2 as a patch because it adds backward-compatible adapter and safety
 guidance without migration or shared workflow contract changes.
 
-For the v0.16.3 Issue #163 historical-wrapper quarantine candidate, require the
-machine-readable inventory to match every retained historical `desktop_runtime_*` script,
-focused test, and classified canonical reference exactly. Prove that malformed
-or duplicate YAML, unsafe paths, missing/stale/new artifacts, unclassified
-references, generated-copy promotion, symlink substitution, traversal errors,
-file-count/per-file/aggregate resource exhaustion, active runnable paths, and
-ordinary script or non-historical test imports fail closed. Exact inventoried
-historical fixtures must remain usable as non-authoritative regression evidence,
-and native CLI/Desktop adapters must remain the only current runtime control
-planes. Align catalog, installer, README, roadmap, generated plugin package,
-tests, and v0.16.3 release notes. Treat v0.16.3 as a patch because it adds a
-backward-compatible repository safety/maintenance gate without migration or
-installed workflow behavior changes. Require formal finding-free review, a
-fresh zero-finding security diff scan after all release metadata, CI, and
-exact-head merge readiness before merge, annotated tag, or GitHub Release.
+For the Issue #171 Desktop Runtime Wrapper V1 retirement candidate, require an
+exact reviewed removal manifest, a recorded pre-removal recovery baseline, and
+evidence that no active consumer, catalog, installer, hook, plugin entrypoint,
+dynamic reference, or case variant remains. Preserve the wrapper-independent
+security fixtures and native authorization, identity, fail-closed,
+private-state, external-write, and non-execution contracts. Rewrite canonical
+sources before regenerating package copies; never treat a generated copy as a
+source of truth. Run native contract, security-fixture, packaging, and
+repository validation after removal, then require formal finding-free review,
+a fresh zero-finding security diff scan, CI, and exact-head merge readiness.
+Classify the physical removal as a pre-1.0 minor release, not a patch. Commit,
+push, PR, merge, tag, GitHub Release, and deployment remain separate explicit
+human gates.
 
 For the v0.17.0 Issue #165 context-continuity candidate, require the default
 two-round threshold to trigger assessment only, with a configurable positive

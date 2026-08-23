@@ -29,9 +29,10 @@ bounded deadline without changing the M0/M1 feature or authority baseline.
 v0.16.2, published through Issue #161 / PR #162, refreshes the independent CLI
 and Desktop adapters for CLI 0.149 session dashboard/queue behavior and
 immutable Desktop thread sharing without changing shared completion authority.
-v0.16.3, published through Issue #163 / PR #164, freezes the historical Desktop runtime
-wrapper V1 family behind a strict inventory, active-consumer quarantine, and
-explicit sunset gate without deleting the retained compatibility fixtures.
+v0.16.3, published through Issue #163 / PR #164, established the historical
+Desktop runtime wrapper V1 retirement preparation; Issue #171 subsequently
+retired the obsolete helper family while preserving independent security
+fixtures and native runtime contracts.
 v0.17.0, published through Issue #165 / PR #166, adds a shared context-continuity
 assessment, durable fresh-rollover checkpoint, single-writer transfer,
 lineage/idempotency/anti-recursion, Desktop/CLI/IDE capability matrix, and a
@@ -1169,11 +1170,13 @@ The latest maintained comparison is
 [Codex runtime compatibility evidence (2026-08-21)](docs/codex-runtime-compatibility-evidence-2026-08-21.md).
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
-`desktop_runtime_*` scripts and [historical V1 plan](docs/desktop-runtime-wrapper-v1-plan.md)
-remain regression and migration evidence only; active Loop Engineering skills
-must not import, execute, or recommend them. Their complete retained surface,
-machine validation, and destructive sunset gate are defined by the
-[V1 deprecation contract](docs/desktop-runtime-wrapper-v1-deprecation.md).
+Desktop Runtime Wrapper V1 is retired and provides no runnable or importable
+integration path. Current behavior is owned by the
+[Native Runtime Capability Contract](docs/native-runtime-capabilities.md) and
+the documented active runtime callable; validate each action's authority,
+target, and response at the call site. The [V1 retirement record](docs/desktop-runtime-wrapper-v1-deprecation.md)
+and [historical plan](docs/desktop-runtime-wrapper-v1-plan.md) are
+non-executable context only.
 
 After an authorized Desktop `create_thread`, emit the current runtime's
 created-task UI directive with the returned ready `threadId` or queued

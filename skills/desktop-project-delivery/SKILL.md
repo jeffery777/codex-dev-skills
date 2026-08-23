@@ -57,8 +57,11 @@ readiness stages.
 `../../docs/native-runtime-capabilities.md` relative to this skill is canonical in source and plugin checkouts; filesystem
 installation also places it at
 `~/.codex/templates/docs/native-runtime-capabilities.md`.
-Legacy `desktop_runtime_*` helpers are compatibility evidence only and are not
-an active dependency of this skill.
+The current native runtime contract governs capability availability and
+authority. Use only exposed runtime capabilities after active callable-schema
+inspection and call-site validation; a repository-local helper script is not
+an execution path for this skill and must not be imported, executed, or
+recommended.
 
 ## Output
 

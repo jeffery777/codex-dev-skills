@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 import re
+import tempfile
 import unittest
 
 import yaml
@@ -12,6 +13,48 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 def read(relative_path: str) -> str:
     return (ROOT / relative_path).read_text(encoding="utf-8")
+
+
+def read_scanned_guidance(path: pathlib.Path, root: pathlib.Path = ROOT) -> str:
+    relative_path = path.relative_to(root).as_posix()
+    if path.is_symlink():
+        raise ValueError(f"active guidance must not be a symlink: {relative_path}")
+    try:
+        resolved_path = path.resolve(strict=True)
+    except FileNotFoundError as exc:
+        raise ValueError(f"active guidance path is missing: {relative_path}") from exc
+    if not resolved_path.is_relative_to(root.resolve()):
+        raise ValueError(
+            f"active guidance must resolve inside the repository: {relative_path}"
+        )
+    return resolved_path.read_text(encoding="utf-8")
+
+
+def collect_active_guidance(
+    active_roots: tuple[pathlib.Path, ...],
+    repo_root: pathlib.Path = ROOT,
+) -> list[pathlib.Path]:
+    collected: list[pathlib.Path] = []
+    for active_root in active_roots:
+        relative_root = active_root.relative_to(repo_root).as_posix()
+        if active_root.is_symlink():
+            raise ValueError(
+                f"active guidance root must not be a symlink: {relative_root}"
+            )
+        if not active_root.exists():
+            continue
+        resolved_root = active_root.resolve(strict=True)
+        if not resolved_root.is_relative_to(repo_root.resolve()):
+            raise ValueError(
+                "active guidance root must resolve inside the repository: "
+                f"{relative_root}"
+            )
+        collected.extend(
+            path
+            for path in active_root.rglob("*")
+            if path.is_file() or path.is_symlink()
+        )
+    return collected
 
 
 class NativeRuntimeContractDocsTests(unittest.TestCase):
@@ -26,7 +69,6 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "### Desktop thread control plane",
             "### Hooks",
             "### Sequential fallback",
-            "## Legacy Desktop Wrapper Boundary",
         ):
             with self.subTest(heading=heading):
                 self.assertIn(heading, contract)
@@ -34,6 +76,12 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("completion authority", contract)
         self.assertIn("clientThreadId", contract)
         self.assertIn("explicit user request", contract)
+        self.assertIn("callable schema", contract)
+        self.assertIn("call-site validation", contract)
+        self.assertIn("private-state boundaries", contract)
+        self.assertIn("external-write authorization", contract)
+        self.assertIn("fail-closed handling", contract)
+        self.assertIn("default non-execution", contract)
 
     def test_subagent_delegation_is_cross_runtime(self) -> None:
         policy = read("policies/runtime-compatibility-policy.md")
@@ -298,18 +346,9 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             boundary,
         )
 
-        pipeline_section = boundary.split(
-            "## End-To-End Evidence Pipeline Fixture", 1
-        )[1].split("## Session Compatibility Status", 1)[0]
-        self.assertNotIn(
-            "python3 scripts/desktop_runtime_evidence_pipeline.py",
-            pipeline_section,
-        )
-        self.assertNotIn(
-            "./scripts/project-python "
-            "scripts/desktop_runtime_evidence_pipeline.py",
-            pipeline_section,
-        )
+        self.assertIn("private runtime state", combined)
+        self.assertIn("external write", combined)
+        self.assertIn("explicit user request", combined)
 
     def test_worktree_python_environment_contract_covers_desktop_and_cli(self) -> None:
         agents = read("AGENTS.md")
@@ -609,7 +648,108 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "skills/desktop-project-delivery/SKILL.md",
         ):
             with self.subTest(relative_path=relative_path):
-                self.assertIn("compatibility evidence only", read(relative_path))
+                skill = read(relative_path)
+                self.assertIn("native-runtime-capabilities.md", skill)
+                self.assertIn("call-site validation", skill)
+                self.assertIn("must not be imported, executed, or", skill)
+                self.assertIn("recommended", skill)
+                self.assertNotIn("desktop_runtime_", skill)
+
+    def test_retired_desktop_wrapper_cannot_be_reintroduced(self) -> None:
+        retired_artifact_name = re.compile(
+            r"^(?:test[_-])?desktop[_-]?runtime[_-]",
+            re.IGNORECASE,
+        )
+        reintroduced_artifacts = [
+            path.relative_to(ROOT).as_posix()
+            for root in (ROOT / "scripts", ROOT / "tests")
+            for path in root.rglob("*")
+            if retired_artifact_name.match(path.name)
+        ]
+        self.assertEqual([], sorted(reintroduced_artifacts))
+
+        active_guidance_files = (
+            ROOT / "README.md",
+            ROOT / "CONTRIBUTING.md",
+            ROOT / "catalog.yaml",
+            ROOT / "install.sh",
+            ROOT / "plugin/codex-dev-skills/.codex-plugin/plugin.json",
+        )
+        active_guidance_roots = (
+            ROOT / ".agents",
+            ROOT / ".codex",
+            ROOT / "examples",
+            ROOT / "policies",
+            ROOT / "skills",
+            ROOT / "templates/hooks",
+            ROOT / "workflows",
+            ROOT / "plugin/codex-dev-skills/docs",
+            ROOT / "plugin/codex-dev-skills/skills",
+        )
+        active_guidance = list(active_guidance_files)
+        active_guidance.extend(collect_active_guidance(active_guidance_roots))
+        runnable_reference = re.compile(
+            r"(?:"
+            r"(?:python(?:3)?|project-python)(?:[^\n]|\\\n){0,240}"
+            r"(?:scripts[/\\.]?)?desktop[_-]?runtime[_-]"
+            r"|(?:from|import)\s+(?:scripts\.)?desktop[_-]?runtime[_-]"
+            r"|(?:\./)?scripts/desktop[_-]?runtime[_-]"
+            r")",
+            re.IGNORECASE,
+        )
+
+        for path in active_guidance:
+            relative_path = path.relative_to(ROOT).as_posix()
+            with self.subTest(relative_path=relative_path):
+                try:
+                    guidance = read_scanned_guidance(path)
+                except UnicodeDecodeError:
+                    continue
+                self.assertNotRegex(guidance, runnable_reference)
+
+    def test_active_guidance_scan_rejects_out_of_repo_symlinks(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = pathlib.Path(temp_dir)
+            repo_root = temp_root / "repo"
+            repo_root.mkdir()
+            external = temp_root / "external.txt"
+            external.write_text(
+                "synthetic marker ./scripts/desktop_runtime_probe.py",
+                encoding="utf-8",
+            )
+            guidance_link = repo_root / "guidance.md"
+            guidance_link.symlink_to(external)
+
+            with self.assertRaisesRegex(
+                ValueError,
+                r"must not be a symlink: guidance\.md",
+            ) as raised:
+                read_scanned_guidance(guidance_link, repo_root)
+
+            self.assertNotIn("synthetic marker", str(raised.exception))
+
+    def test_active_guidance_scan_rejects_symlink_roots(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = pathlib.Path(temp_dir)
+            repo_root = temp_root / "repo"
+            repo_root.mkdir()
+            external_root = temp_root / "external"
+            external_root.mkdir()
+
+            root_targets = (
+                ("external-root", external_root),
+                ("broken-root", temp_root / "missing"),
+            )
+            for name, target in root_targets:
+                with self.subTest(name=name):
+                    active_root = repo_root / name
+                    active_root.symlink_to(target, target_is_directory=True)
+                    with self.assertRaisesRegex(
+                        ValueError,
+                        rf"root must not be a symlink: {name}",
+                    ) as raised:
+                        collect_active_guidance((active_root,), repo_root)
+                    self.assertNotIn(str(target), str(raised.exception))
 
 
 if __name__ == "__main__":

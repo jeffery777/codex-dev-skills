@@ -47,15 +47,12 @@ explicitly authorized destructive slice.
 
 ## Verification And Release Gate
 
-```bash
-./scripts/project-python scripts/validate-desktop-wrapper-legacy.py
-./scripts/project-python -m unittest tests.test_desktop_wrapper_legacy
-./scripts/project-python -m unittest tests.test_runtime_compatibility_release_docs
-./scripts/project-python scripts/sync-plugin-package.py --write
-./scripts/project-python scripts/sync-plugin-package.py
-./scripts/validate-repo.sh
-git diff --check
-```
+The v0.16.3 release candidate passed its then-current inventory validator,
+adversarial quarantine tests, runtime-compatibility contract tests, generated
+package parity, full repository validation, and Git whitespace checks. The
+obsolete inventory validator and focused test entrypoints were removed by the
+later Issue #171 retirement; this historical release record does not retain
+their runnable commands.
 
 Formal code/documentation review, a fresh zero-finding security diff scan, CI,
 and exact-head merge readiness must all pass. The annotated `v0.16.3` tag and

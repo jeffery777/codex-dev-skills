@@ -437,15 +437,17 @@ Before a future read-only `read_thread` runtime call, a non-state-changing prefl
 
 The preflight result may be `ready`, `fallback`, or `stopped`. `ready` means only that evidence is complete for a future separately approved read-only runtime call. Use `fallback` for missing or unavailable capability/comparison evidence; use `stopped` for incompatible or unclear contract evidence, classification mismatch, missing repo/remote/branch/thread-id evidence, missing expected fields, forbidden private source hints, attempts to treat preflight as runtime-call authorization, or external-write requests.
 
-## End-To-End Evidence Pipeline Fixture
+## Retired End-To-End Evidence Pipeline
 
-The V1 pipeline and its component helpers are frozen historical compatibility
-fixtures. Active examples do not provide runnable commands for them. Use the
+The former V1 pipeline and its component helpers have been removed. This
+section preserves only the non-executable concepts needed to understand the
+historical boundary; it does not identify retained fixtures or an available
+helper path. Use the
 [native capability contract](../docs/native-runtime-capabilities.md) and the
-current runtime's documented callable instead. Maintainers studying the old
-fixtures should start from the
-[legacy inventory and sunset contract](../docs/desktop-runtime-wrapper-v1-deprecation.md),
-which does not authorize executing or reactivating the helpers.
+current runtime's documented callable instead. The
+[retirement record](../docs/desktop-runtime-wrapper-v1-deprecation.md) provides
+historical context and does not authorize reconstructing or reactivating the
+removed helpers.
 
 ## Scenario 3: Stop Instead Of Adapting
 

@@ -1,17 +1,36 @@
-# Issue #169 Exact Future Wrapper V1 Removal Plan
+# Issue #169 Wrapper V1 Removal Plan And Issue #171 Recovery Receipt
 
 ## Status and authority
 
-This is a reviewable plan for a **future** destructive slice. Issue #169 is
-non-destructive: it must not delete, archive, execute, or reactivate wrappers.
-A later Issue may use this plan only after independent review accepts it and
-the user explicitly authorizes the exact destructive targets.
+This began as the reviewable plan for a later destructive slice. Issue #169 was
+non-destructive and did not authorize deletion. Issue #171 independently
+reviewed the manifest and obtained explicit user authorization for the exact
+targets; its working-tree implementation remains uncommitted until full
+verification, formal review, security diff scan, and a separate commit gate
+all pass.
 
 Recovery baseline: `864fe8cf61553f6d7db52456a31235da0456f2d3` (`v0.17.1`).
 It is a recovery reference, not permission to overwrite a later branch or
 restore unrelated changes.
 
-## Exact manifest
+Issue #171 pre-removal recovery receipt: the exact clean baseline is
+`2cb1d539596a4bea6c5a8306c9fdea1eba831220` on
+`codex/171-remove-desktop-runtime-wrapper-v1`, with no configured upstream.
+The user explicitly authorized the reviewed destructive slice after its
+path-level preview, then separately authorized the two post-review rewrite
+paths recorded below. This receipt does not authorize its commit, push, PR,
+merge, tag, Release, or deployment. If recovery is approved, restore exactly
+58 canonical/control paths from this SHA: the 35 deletion paths, the 20
+classified-reference paths that this removal actually modifies,
+`scripts/validate-repo.sh`, and the two authorized post-review rewrite paths.
+Do not restore the three retained historical references that have no removal
+diff: `docs/codex-runtime-compatibility-evidence-2026-08-21.md`,
+`docs/release-notes-v0.5.0.md`, or
+`docs/release-security-evidence-v0.2.0.md`. After restoring canonical sources,
+regenerate the four plugin copies; do not reset the branch or overwrite
+unrelated work. This recovery set corresponds exactly to the 62 changed paths.
+
+## Exact reviewed manifest
 
 ### 1. Delete the 32 historical artifacts only after readiness passes
 
@@ -74,9 +93,11 @@ future wrapper.
 
 The Issue #169 inventory has **23** classified references. The 32 artifacts
 above are a separate exact set: 16 scripts plus 16 focused tests. Their
-relationship is intentional: the inventory classifies all non-artifact files
-that mention the wrapper family; it does not duplicate artifact paths as
-references. Every inventory reference has one action below.
+relationship is intentional: the inventory classified the non-artifact files
+known during the original review and did not duplicate artifact paths as
+references. Every inventory reference has one action below. Formal review of
+the implementation found two additional active guidance paths; the user
+separately authorized their exact rewrite disposition below.
 
 ```text
 rewrite: README.md — remove the frozen-family mention or state only that V1 is retired.
@@ -104,10 +125,18 @@ rewrite: tests/test_native_runtime_contract_docs.py — remove assertions requir
 rewrite: tests/test_runtime_compatibility_release_docs.py — remove assertions requiring V1 release-boundary wording.
 ```
 
+Post-review authorized scope expansion:
+
+```text
+rewrite: CONTRIBUTING.md — remove instructions to update or execute the deleted inventory, retained helpers, tests, and validator; state the native retirement boundary.
+rewrite: examples/runtime-adapter-boundary.md — remove claims that the deleted pipeline remains a fixture or helper path; retain commandless historical context.
+```
+
 The three Issue #169 additions are explicitly retained as non-executable
 evidence: the two files in `docs/loops/issue-169/` and
-`tests/fixtures/desktop_wrapper_security_invariants.yaml`. No path absent from
-the current 23-entry inventory is a removal-manifest target.
+`tests/fixtures/desktop_wrapper_security_invariants.yaml`. Apart from the two
+post-review rewrites explicitly listed above, no path absent from the original
+23-entry inventory is a removal-manifest target.
 
 If release-note fidelity needs a wrapper name, keep it as plain historical
 text and link to the tagged source; do not retain a runnable command.
@@ -135,16 +164,19 @@ external clone or a dynamically built external command.
 
 Inference and accepted release decision: direct native execution risk is low,
 but public compatibility and security-evidence loss remain material. Issue
-#169 is a **no-release** preparation change. If a later explicitly authorized
-physical-removal Issue completes, publish that removal as a **pre-1.0 minor
-release**, not a patch.
+#169 is a **no-release** preparation change. The separately authorized Issue
+#171 physical removal is classified as a **pre-1.0 minor release**, not a
+patch; publication remains separately gated.
 
 ## Recovery procedure
 
 1. Record the exact pre-removal SHA and `git status --short --branch` in review
    evidence; confirm it descends from or deliberately supersedes `v0.17.1`.
-2. If rollback is approved, restore only exact manifest paths from that SHA;
-   do not reset a shared branch or overwrite unrelated work.
+2. If rollback is approved, restore only the 58 changed canonical/control paths
+   identified above, including `scripts/validate-repo.sh`, `CONTRIBUTING.md`,
+   and `examples/runtime-adapter-boundary.md`; do not restore the three
+   no-diff historical references, reset a shared branch, or overwrite unrelated
+   work.
 3. Restore canonical docs before regenerating plugin copies; generated files
    are never the source of truth.
 4. Re-run all commands below, including independent fixtures and package
@@ -183,7 +215,8 @@ Update `scripts/validate-repo.sh` before running the full suite.
    release classification, and verification evidence.
 2. Independent security review accepts wrapper-independent fixtures.
 3. A maintainer resolves any active consumer or external compatibility promise.
-4. The user explicitly authorizes deletion after reviewing the final diff and
-   recovery evidence.
+4. The user explicitly authorized the exact deletion slice after reviewing its
+   path-level preview and recovery evidence; that authorization did not include
+   commit, push, PR, merge, tag, Release, or deployment.
 5. Commit, push, PR, merge, tag, Release, and deployment remain separate
    permissions; this plan grants none.
