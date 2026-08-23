@@ -2,13 +2,16 @@
 
 ## Scope and terms
 
-This is a non-destructive preparation record. It classifies all 16 historical
-Desktop Runtime Wrapper V1 scripts and their 263 test assertions. It does not
-authorize wrapper execution, archiving, or deletion.
+This began as a non-destructive preparation record. It classifies all 16
+historical Desktop Runtime Wrapper V1 scripts and their 263 test assertions and
+is retained after Issue #171 as non-executable behavior-disposition evidence.
+It does not authorize restoration, execution, publication, or another
+platform mutation.
 
 Source baseline: `864fe8cf61553f6d7db52456a31235da0456f2d3` (`v0.17.1`).
-The canonical artifact list is
-[`docs/desktop-runtime-wrapper-v1-inventory.yaml`](../../desktop-runtime-wrapper-v1-inventory.yaml).
+The removed canonical artifact list and its Issue #171 recovery receipt are
+preserved in the reviewed
+[`future-removal-plan.md`](future-removal-plan.md).
 
 `current-native-covered` means the current user-visible capability and its
 authority boundary are specified in
@@ -77,8 +80,10 @@ dependency:
 1. **Authority boundary** — creation is state-changing; explicit exact user
    authorization is required; cache/readiness records cannot substitute for
    call-site decisions.
-2. **Target and routing identity** — project/target/worktree intent, returned
-   `threadId` versus queued `clientThreadId`, and known `hostId` stay distinct.
+2. **Target and routing identity** — the native contract test preserves
+   project/target/worktree intent; the wrapper-independent fixture preserves
+   returned `threadId` versus queued `clientThreadId` and known `hostId` as
+   distinct identities.
 3. **Failure and response handling** — auth/permission failures, malformed
    responses, and invalid/missing identities never count as successful creation.
 4. **Private-state/external-write boundary** — private runtime state, private
@@ -86,21 +91,24 @@ dependency:
 5. **Non-execution** — docs/contract tests create no thread; no daemon,
    sidecar, injected live runner, or background executor replaces the wrapper.
 
-The v2 fixture now preserves these families as explicit cases and expected
-outcomes. The wrapper-independent receiver checks them through the following
-exact symbols; historical symbols are provenance only and are parsed as text,
-never imported or executed.
+The v2 fixture now preserves the fixture-backed portions of these families as
+explicit cases and expected outcomes. The combined successor evidence is
+checked through the following exact symbols: the native contract suite checks
+target-selection intent, while the wrapper-independent receiver checks the
+fixture-backed identity and security cases. Historical symbols are provenance
+only and are parsed as text, never imported or executed.
 
 | Security family | Fixture invariant/case IDs | Exact independent test symbols |
 | --- | --- | --- |
 | Authority boundary | `state-changing-actions-need-explicit-human-authorization`; `cache-or-status-cannot-replace-exact-authorization`; `destructive-approval-cannot-replace-exact-action-authorization` | `DesktopWrapperSecurityFixtureTests.test_fixture_evidence_is_present_in_current_native_sources`; `DesktopWrapperSecurityFixtureTests.test_case_mappings_are_complete_and_reference_existing_test_symbols` |
-| Target and routing identity | `response-identities-are-not-interchangeable`; `missing-or-invalid-identity-stops`; `known-host-identity-requires-registry-verification` | `DesktopWrapperSecurityFixtureTests.test_fixture_evidence_is_present_in_current_native_sources`; `NativeRuntimeContractDocsTests.test_desktop_fork_preserves_remote_host_identity` |
+| Target and routing identity | `response-identities-are-not-interchangeable`; `missing-or-invalid-identity-stops`; `known-host-identity-requires-registry-verification` | `NativeRuntimeContractDocsTests.test_desktop_target_selection_preserves_project_and_worktree_intent`; `DesktopWrapperSecurityFixtureTests.test_fixture_evidence_is_present_in_current_native_sources`; `NativeRuntimeContractDocsTests.test_desktop_fork_preserves_remote_host_identity` |
 | Failure and response handling | `auth-or-permission-failure-stops`; `malformed-or-absent-response-stops`; `missing-or-invalid-identity-stops` | `DesktopWrapperSecurityFixtureTests.test_fixture_has_a_complete_and_stable_schema`; `DesktopWrapperSecurityFixtureTests.test_fixture_evidence_is_present_in_current_native_sources` |
 | Private-state/external-write boundary | `private-runtime-state-is-prohibited`; `external-writes-remain-separately-authorized` | `DesktopWrapperSecurityFixtureTests.test_fixture_evidence_is_present_in_current_native_sources` |
 | Non-execution | `historical-wrappers-do-not-define-native-execution` | `DesktopWrapperSecurityFixtureTests.test_security_fixture_is_independent_of_historical_entrypoint_imports`; `NativeRuntimeContractDocsTests.test_native_core_does_not_depend_on_legacy_desktop_helpers` |
 
-These mappings preserve the current security semantics, not the V1 helper
-mechanisms, cache schemas, response flags, injected runner, or smoke entrypoint.
+These fixture and native-contract mappings preserve the current security
+semantics, not the V1 helper mechanisms, cache schemas, response flags,
+injected runner, or smoke entrypoint.
 
 ## Later-removal conditions
 

@@ -66,17 +66,13 @@ are independently verified:
    rollback/recovery evidence, and verification commands; and
 6. the user explicitly authorizes that archive or deletion slice.
 
-## Verification
+## Historical Verification Record
 
-```bash
-./scripts/project-python -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'
-./scripts/project-python scripts/validate-desktop-wrapper-legacy.py
-./scripts/project-python -m unittest tests.test_desktop_wrapper_legacy
-./scripts/project-python scripts/sync-plugin-package.py --write
-./scripts/project-python scripts/sync-plugin-package.py
-./scripts/validate-repo.sh
-git diff --check
-```
+The Issue #163 implementation verified its pinned Python/PyYAML environment,
+the then-current inventory validator and adversarial tests, generated package
+parity, full repository checks, and Git whitespace. The obsolete validator and
+test entrypoints were removed by the later Issue #171 retirement and are not
+current commands or operator guidance.
 
 ## Human Gates
 

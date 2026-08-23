@@ -250,9 +250,9 @@ Disallowed tool use:
 - starting app-server daemons, remote-control daemons, wrapper daemons, sidecars, or background services;
 - using experimental app-server thread endpoints directly.
 
-Legacy `desktop_runtime_*` preflight, handshake, cache, injected-callable, and
-smoke helpers are compatibility evidence only, not this adapter's active
-runtime path. This skill must not import or execute them.
+Native thread operations use only exposed current callables after call-site
+validation. A repository-local helper script is not a thread-control path and
+must not be imported, executed, or recommended.
 
 ## Prompt Requirements
 
@@ -314,6 +314,6 @@ the selected task is ambiguous or no longer ready, the work expands scope,
 ownership overlaps, verification would be insufficient for the risk, the next
 step lacks required authority, current callable request or response semantics
 are unclear, or the only available path depends on unpublished Desktop
-internals or legacy wrapper execution. Also stop before sharing when the target
+internals or a non-native helper execution. Also stop before sharing when the target
 or audience is ambiguous, sensitive content may remain, or no safe bounded
 preview can be established.

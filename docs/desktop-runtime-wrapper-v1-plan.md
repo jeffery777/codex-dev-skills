@@ -2,10 +2,10 @@
 
 ## Status
 
-This document is a frozen historical record of the former Desktop Runtime
-Wrapper V1 experiment. It is not current integration guidance. The
-`desktop_runtime_*` helper family remains quarantined historical evidence and
-has no active entrypoint or supported consumer.
+This document is a historical record of the former Desktop Runtime Wrapper V1
+experiment. It is not current integration guidance. V1 is retired: its helper
+artifacts and focused legacy validation chain are no longer present, and it has
+no supported consumer.
 
 Runnable commands, request recipes, callable examples, and live-smoke handoff
 instructions are intentionally omitted. Current behavior is owned by the
@@ -64,26 +64,25 @@ and are enforced without importing or executing a historical wrapper.
 
 ## Historical implementation outcome
 
-The repository eventually contained sixteen bounded helper modules and sixteen
+The repository formerly contained sixteen bounded helper modules and sixteen
 focused historical test modules. They demonstrated the planned evidence chain,
 including successful, fallback, stopped, malformed-response, identity,
 authorization, and session-mismatch cases.
 
 That breadth also made the family expensive to understand and easy to mistake
-for a supported runtime path. Native Desktop task controls later became the
-canonical integration surface, so Issue #163 froze the V1 family instead of
-continuing it. The freeze established an exact inventory, zero active
-entrypoints, active-surface quarantine, and explicit sunset requirements.
+for a supported runtime path. Native Desktop task controls became the canonical
+integration surface, so Issue #163 froze the V1 family instead of continuing
+it. Issue #171 completed its reviewed retirement; the retired artifacts are not
+a compatibility layer that can be restored or reactivated through this record.
 
-Issue #169 then prepared the non-destructive evidence needed for a possible
-future retirement:
+Issue #169 prepared the non-destructive evidence used for retirement:
 
 - classified retained native semantics separately from obsolete wrapper
   mechanisms;
 - preserved security invariants independently of wrapper entrypoints;
 - removed executable historical guidance;
-- documented exact future deletion, regeneration, verification, release-value,
-  and recovery steps.
+- documented exact deletion, regeneration, verification, release-value, and
+  recovery steps.
 
 ## Current source of truth
 
@@ -94,18 +93,15 @@ Use these current sources instead of reconstructing a V1 invocation:
 - `docs/runtime-adapter-v2.md` for the shared adapter safety model;
 - `skills/desktop-thread-delegation/SKILL.md` for the active Desktop
   task-control adapter;
-- `docs/desktop-runtime-wrapper-v1-deprecation.md` for the quarantine and
-  sunset contract;
-- `docs/desktop-runtime-wrapper-v1-inventory.yaml` for the exact retained
-  historical artifact inventory;
+- `docs/desktop-runtime-wrapper-v1-deprecation.md` for the retirement record;
 - `docs/loops/issue-169/readiness-crosswalk.md` for behavior disposition and
   exact successor evidence;
-- `docs/loops/issue-169/future-removal-plan.md` for the separately reviewed,
-  non-authorizing removal and recovery plan.
+- `docs/loops/issue-169/future-removal-plan.md` for the reviewed historical
+  removal and recovery record.
 
 ## Authority boundary
 
-This historical record does not authorize wrapper execution, deletion,
-archiving, restoration, publication, or any platform mutation. A future
-physical removal remains a separate destructive task requiring an exact
-reviewed diff, complete recovery evidence, and explicit user authorization.
+This historical record does not authorize restoration, publication, or any
+platform mutation. It does not recreate an execution path or weaken native
+authorization, identity, fail-closed, private-state, external-write, or
+non-execution boundaries.

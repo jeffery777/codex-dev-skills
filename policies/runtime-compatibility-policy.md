@@ -72,5 +72,5 @@ skills and universal-plugin skills are separate discovery sources; installers
 must not knowingly create same-name filesystem/plugin duplicates.
 
 Hooks are optional guardrails and must not be described as complete enforcement.
-Legacy `desktop_runtime_*` helpers are compatibility evidence only; the native
-loop core must not import or execute them as its active runtime path.
+Desktop Runtime Wrapper V1 is retired; current native runtime contracts and
+call-site validation remain the sole supported behavior boundary.
