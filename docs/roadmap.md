@@ -45,13 +45,17 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Issue #175 owns the v0.18.1 post-release state-coherence patch. It aligns
-  active README, roadmap, readiness, continuation, version metadata, and
-  drift-prevention contracts with the published v0.18.0 state without changing
-  shared, CLI, Desktop, or Memory runtime contracts, installer logic, target
-  selection, installed payload behavior, or completion authority. Installer
-  receipt metadata advances normally to 0.18.1. M2, V3-C, and Memory activation
-  remain separately gated.
+- Issue #175 / PR #176 published the v0.18.1 post-release state-coherence patch
+  at merge commit `b5cb03ae467222215f42c3081cad796ad3a2ecf3`. The annotated
+  `v0.18.1` tag and non-draft, non-prerelease GitHub Release bind that exact
+  commit. The patch aligns active README, roadmap, readiness, continuation,
+  version metadata, and drift-prevention contracts with the published v0.18.0
+  state without changing shared, CLI, Desktop, or Memory runtime contracts,
+  installer logic, target selection, installed payload behavior, or completion
+  authority. Installer receipt metadata is 0.18.1. M2, V3-C, and Memory
+  activation remain separately gated. The repository has no deployment target
+  or publish/deploy workflow, so deployment is not applicable and the GitHub
+  Release is not deployment evidence.
 
 - Issue #171 / PR #172 delivered the Desktop Runtime Wrapper V1 retirement;
   Issue #174 / PR #173 published it as the v0.18.0 pre-1.0 minor release at
