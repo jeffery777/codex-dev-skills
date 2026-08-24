@@ -103,9 +103,11 @@ requires another human gate. M2 and V3-C release targets remain TBD.
 
 ## Next Task Bootstrap Checklist
 
-Issue #175 owns only the bounded v0.18.1 post-release state-coherence slice.
-This program handoff implicitly authorizes no future implementation. A future
-task should:
+Issue #175 / PR #176 published the bounded v0.18.1 post-release
+state-coherence patch at merge commit
+`b5cb03ae467222215f42c3081cad796ad3a2ecf3`; the annotated `v0.18.1` tag and
+non-draft, non-prerelease GitHub Release bind that exact commit. This program
+handoff implicitly authorizes no future implementation. A future task should:
 
 1. Read `AGENTS.md`, `README.md`, `docs/roadmap.md`, this program directory,
    and `docs/operational-evidence-contract.md`.

@@ -16,12 +16,15 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current development candidate is the v0.18.1 post-release state-coherence
-patch through Issue #175. It corrects active release guidance, traceability,
-version metadata, and drift-prevention contracts without changing shared, CLI,
-Desktop, or Memory runtime contracts, installer logic, target selection,
-installed payload behavior, or completion authority; installer receipt
-metadata advances normally to 0.18.1. v0.18.0 published the Desktop Runtime
+The current published version is v0.18.1. Issue #175 / PR #176 published the
+post-release state-coherence patch at merge commit
+`b5cb03ae467222215f42c3081cad796ad3a2ecf3`; the annotated `v0.18.1` tag and
+non-draft, non-prerelease GitHub Release bind that exact commit. The patch
+corrects active release guidance, traceability, version metadata, and
+drift-prevention contracts without changing shared, CLI, Desktop, or Memory
+runtime contracts, installer logic, target selection, installed payload
+behavior, or completion authority; installer receipt metadata is 0.18.1.
+v0.18.0 published the Desktop Runtime
 Wrapper V1 retirement through Issue #174 / PR #173 at merge commit
 `3b789e2f9749f2643b6fe75397d22f6e21a71ce2`; the annotated `v0.18.0` tag and
 non-draft, non-prerelease GitHub Release bind that exact commit. The repository
@@ -1299,7 +1302,7 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.18.1.md` contains the current v0.18.1 release notes (release candidate);
+`docs/release-notes-v0.18.1.md` contains the current v0.18.1 release notes, preserved as the point-in-time release-candidate record for the published release;
 `docs/release-notes-v0.18.0.md`, `docs/release-notes-v0.17.1.md`, `docs/release-notes-v0.17.0.md`, `docs/release-notes-v0.16.3.md`, `docs/release-notes-v0.16.2.md`, `docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
 `docs/release-notes-v0.14.2.md`, `docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and

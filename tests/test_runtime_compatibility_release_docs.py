@@ -118,12 +118,13 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
             )
             self.assertNotIn(stale_phrases[document], text, document)
 
-    def test_v0181_candidate_metadata_and_traceability_align(self) -> None:
+    def test_v0181_historical_notes_and_published_traceability_align(self) -> None:
         self.assertEqual("0.18.1", yaml.safe_load(read("catalog.yaml"))["version"])
         self.assertIn('VERSION="0.18.1"', read("install.sh"))
         notes = read("docs/release-notes-v0.18.1.md")
         for expected in (
             "# Release Notes: v0.18.1",
+            "Status: release candidate",
             "Issue #175",
             "post-release state-coherence patch",
             "compare/v0.18.0...v0.18.1",
@@ -132,9 +133,38 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, notes)
-        self.assertIn("current development candidate is the v0.18.1", read("README.md"))
-        self.assertIn("Issue #175 owns the v0.18.1", read("docs/roadmap.md"))
-        self.assertIn("Issue #175 v0.18.1", read("docs/release-readiness.md"))
+        published_phrases = {
+            "README.md": "Issue #175 / PR #176 published the post-release state-coherence patch",
+            "docs/roadmap.md": "Issue #175 / PR #176 published the v0.18.1",
+            "docs/release-readiness.md": "Issue #175 / PR #176 published the v0.18.1",
+        }
+        stale_phrases = {
+            "README.md": "current development candidate is the v0.18.1",
+            "docs/roadmap.md": "Issue #175 owns the v0.18.1",
+            "docs/release-readiness.md": "Issue #175 v0.18.1 post-release state-coherence patch candidate",
+        }
+        for document, published_phrase in published_phrases.items():
+            text = " ".join(read(document).split())
+            for expected in (
+                published_phrase,
+                "b5cb03ae467222215f42c3081cad796ad3a2ecf3",
+                "annotated `v0.18.1`",
+                "GitHub Release",
+                "no deployment target or publish/deploy workflow",
+            ):
+                with self.subTest(document=document, expected=expected):
+                    self.assertIn(expected, text)
+            self.assertRegex(
+                text,
+                r"deployment is (?:therefore )?not applicable",
+                document,
+            )
+            self.assertRegex(
+                text,
+                r"GitHub Release(?: publication)? is not deployment evidence",
+                document,
+            )
+            self.assertNotIn(stale_phrases[document], text, document)
 
     def test_v0170_paired_run_release_evidence_is_durable_and_consistent(self) -> None:
         evidence_path = "docs/loops/issue-165/paired-run-evidence.md"

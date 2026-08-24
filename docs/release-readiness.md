@@ -127,23 +127,22 @@ baseline. The repository has no deployment target or publish/deploy workflow;
 deployment is therefore not applicable, and GitHub Release publication is not
 deployment evidence.
 
-For the Issue #175 v0.18.1 post-release state-coherence patch candidate, align
-active README, roadmap, readiness, and Operational Evidence continuation
-guidance with the published v0.18.0 state; add exact Issue #174, PR #173, tag,
-Release, and merge-SHA traceability; align catalog, installer receipt, and the
-package-local plugin manifest at 0.18.1; and add the smallest contract coverage
-that prevents published/candidate drift. Preserve historical point-in-time
-release notes instead of backfilling post-release maintenance into v0.18.0.
-Keep M1 inactive and non-promotional, and keep M2, V3-C, and Memory activation
-behind new evidence and explicit human decisions. Treat v0.18.1 as a patch
-because it corrects published guidance, traceability, metadata, and tests
-without changing shared, CLI, Desktop, or Memory runtime contracts, installer
-logic, target selection, installed payload behavior, or completion authority;
-installer receipt metadata advances normally to 0.18.1. Require independent
-documentation review, repository verification, exact-head CI, and merge
-readiness before any separately authorized commit, push, PR, merge, annotated
-tag, or GitHub Release. Deployment remains not applicable unless a separately
-reviewed deployment target and workflow exist.
+Issue #175 / PR #176 published the v0.18.1 post-release state-coherence patch at
+merge commit `b5cb03ae467222215f42c3081cad796ad3a2ecf3`. The annotated
+`v0.18.1` tag and non-draft, non-prerelease GitHub Release bind that exact
+commit. The patch aligns active README, roadmap, readiness, and Operational
+Evidence continuation guidance with the published v0.18.0 state; adds exact
+Issue #174, PR #173, tag, Release, and merge-SHA traceability; aligns catalog,
+installer receipt, and the package-local plugin manifest at 0.18.1; and adds
+contract coverage that prevents published/candidate drift. Historical
+point-in-time v0.18.1 release-candidate notes remain unchanged. M1 remains
+inactive and non-promotional, and M2, V3-C, and Memory activation remain behind
+new evidence and explicit human decisions. v0.18.1 is a patch because it
+corrects published guidance, traceability, metadata, and tests without changing
+shared, CLI, Desktop, or Memory runtime contracts, installer logic, target
+selection, installed payload behavior, or completion authority. The repository
+has no deployment target or publish/deploy workflow; deployment is therefore
+not applicable, and GitHub Release publication is not deployment evidence.
 
 For the v0.17.0 Issue #165 context-continuity candidate, require the default
 two-round threshold to trigger assessment only, with a configurable positive
