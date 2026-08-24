@@ -45,13 +45,15 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Issue #171 retires Desktop Runtime Wrapper V1 after the reviewed removal
-  gates. The retirement keeps wrapper-independent security invariants and
-  native authorization, identity, fail-closed, private-state, external-write,
-  and non-execution contracts; it does not create a replacement compatibility
-  layer.
+- Issue #171 / PR #172 delivered the Desktop Runtime Wrapper V1 retirement now
+  prepared for the v0.18.0 pre-1.0 minor release. The retirement keeps
+  wrapper-independent security invariants and native authorization, identity,
+  fail-closed, private-state, external-write, and non-execution contracts; it
+  does not create a replacement compatibility layer. The annotated tag,
+  GitHub Release, and any deployment remain separately gated.
 
-- Issue #167 owns the v0.17.1 public-documentation coherence patch. It aligns
+- Issue #167 / PR #168 published the v0.17.1 public-documentation coherence
+  patch. It aligns
   README and the durable Operational Evidence continuation handoff with the
   released v0.14.0 M0/M1 baseline, removes stale routing to completed Issue
   #147 and v0.13.0, and adds regression coverage without activating M1 or

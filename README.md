@@ -16,8 +16,12 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current development candidate is the v0.17.1 documentation-coherence
-patch through Issue #167. Memory M1 was published in v0.14.0 through Issue
+The current development candidate is the v0.18.0 pre-1.0 minor release closure
+for the Desktop Runtime Wrapper V1 retirement delivered through Issue #171 /
+PR #172. It preserves wrapper-independent security fixtures and native runtime
+contracts without restoring or replacing the retired helper family. v0.17.1
+published the documentation-coherence patch through Issue #167 / PR #168.
+Memory M1 was published in v0.14.0 through Issue
 #147 / PR #148. v0.14.2 published the installer-backup isolation
 hotfix through Issue #151 / PR #152. v0.15.0 published lower-overhead agent
 coordination guidance and a Terra-high `senior` routing tier through Issue #153
@@ -1288,8 +1292,8 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.17.1.md` contains the current v0.17.1 release notes (release candidate);
-`docs/release-notes-v0.17.0.md`, `docs/release-notes-v0.16.3.md`, `docs/release-notes-v0.16.2.md`, `docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
+`docs/release-notes-v0.18.0.md` contains the current v0.18.0 release notes (release candidate);
+`docs/release-notes-v0.17.1.md`, `docs/release-notes-v0.17.0.md`, `docs/release-notes-v0.16.3.md`, `docs/release-notes-v0.16.2.md`, `docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
 `docs/release-notes-v0.14.2.md`, `docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and
 `docs/release-notes-v0.1.0.md` remain historical point-in-time records.
