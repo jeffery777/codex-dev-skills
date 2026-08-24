@@ -114,19 +114,25 @@ catalog, installer, README, roadmap, tests, and v0.16.2 release notes. Treat
 v0.16.2 as a patch because it adds backward-compatible adapter and safety
 guidance without migration or shared workflow contract changes.
 
-For the Issue #171 Desktop Runtime Wrapper V1 retirement candidate, require an
-exact reviewed removal manifest, a recorded pre-removal recovery baseline, and
-evidence that no active consumer, catalog, installer, hook, plugin entrypoint,
-dynamic reference, or case variant remains. Preserve the wrapper-independent
-security fixtures and native authorization, identity, fail-closed,
-private-state, external-write, and non-execution contracts. Rewrite canonical
-sources before regenerating package copies; never treat a generated copy as a
-source of truth. Run native contract, security-fixture, packaging, and
-repository validation after removal, then require formal finding-free review,
-a fresh zero-finding security diff scan, CI, and exact-head merge readiness.
-Classify the physical removal as a pre-1.0 minor release, not a patch. Commit,
-push, PR, merge, tag, GitHub Release, and deployment remain separate explicit
-human gates.
+For the v0.18.0 Issue #171 / PR #172 Desktop Runtime Wrapper V1 retirement
+candidate, require the exact v0.17.1-to-current-main release delta to include
+both Issue #169 / PR #170 preparation and the later physical removal. Preserve
+the reviewed removal manifest, recorded pre-removal recovery baseline,
+wrapper-independent security fixtures, and native authorization, identity,
+fail-closed, private-state, external-write, and non-execution contracts.
+Confirm that no active consumer, catalog, installer, hook, plugin entrypoint,
+dynamic reference, or case variant remains. Rewrite canonical sources before
+regenerating package copies; never treat a generated copy as a source of truth.
+Align catalog, installer, package-local plugin manifest, README, roadmap,
+v0.18.0 release notes, and version contract tests. Run native contract,
+security-fixture, packaging, repository validation, and full unit verification,
+then require formal finding-free review, a fresh zero-finding security diff
+scan, exact-head CI, and merge readiness for the release-closure change.
+Classify the physical removal as a pre-1.0 minor release, not a patch. An
+annotated `v0.18.0` tag may bind only the exact release-closure PR merge commit
+after those gates pass. Commit, push, PR, merge, tag, GitHub Release, and
+deployment remain separate explicit human gates; a GitHub Release is not
+deployment evidence.
 
 For the v0.17.0 Issue #165 context-continuity candidate, require the default
 two-round threshold to trigger assessment only, with a configurable positive
