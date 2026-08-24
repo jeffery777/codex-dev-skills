@@ -114,25 +114,36 @@ catalog, installer, README, roadmap, tests, and v0.16.2 release notes. Treat
 v0.16.2 as a patch because it adds backward-compatible adapter and safety
 guidance without migration or shared workflow contract changes.
 
-For the v0.18.0 Issue #171 / PR #172 Desktop Runtime Wrapper V1 retirement
-candidate, require the exact v0.17.1-to-current-main release delta to include
-both Issue #169 / PR #170 preparation and the later physical removal. Preserve
-the reviewed removal manifest, recorded pre-removal recovery baseline,
-wrapper-independent security fixtures, and native authorization, identity,
-fail-closed, private-state, external-write, and non-execution contracts.
-Confirm that no active consumer, catalog, installer, hook, plugin entrypoint,
-dynamic reference, or case variant remains. Rewrite canonical sources before
-regenerating package copies; never treat a generated copy as a source of truth.
-Align catalog, installer, package-local plugin manifest, README, roadmap,
-v0.18.0 release notes, and version contract tests. Run native contract,
-security-fixture, packaging, repository validation, and full unit verification,
-then require formal finding-free review, a fresh zero-finding security diff
-scan, exact-head CI, and merge readiness for the release-closure change.
-Classify the physical removal as a pre-1.0 minor release, not a patch. An
-annotated `v0.18.0` tag may bind only the exact release-closure PR merge commit
-after those gates pass. Commit, push, PR, merge, tag, GitHub Release, and
-deployment remain separate explicit human gates; a GitHub Release is not
+Issue #174 / PR #173 published the Issue #171 / PR #172 Desktop Runtime Wrapper
+V1 retirement as v0.18.0 at merge commit
+`3b789e2f9749f2643b6fe75397d22f6e21a71ce2`. The annotated `v0.18.0` tag and
+non-draft, non-prerelease GitHub Release bind that exact commit. The published
+delta includes Issue #169 / PR #170 preparation, the later physical removal,
+and the release-closure metadata, documentation, and contract-test slice. The
+reviewed removal manifest, recovery baseline, wrapper-independent security
+fixtures, and native authorization, identity, fail-closed, private-state,
+external-write, and non-execution contracts remain the historical readiness
+baseline. The repository has no deployment target or publish/deploy workflow;
+deployment is therefore not applicable, and GitHub Release publication is not
 deployment evidence.
+
+For the Issue #175 v0.18.1 post-release state-coherence patch candidate, align
+active README, roadmap, readiness, and Operational Evidence continuation
+guidance with the published v0.18.0 state; add exact Issue #174, PR #173, tag,
+Release, and merge-SHA traceability; align catalog, installer receipt, and the
+package-local plugin manifest at 0.18.1; and add the smallest contract coverage
+that prevents published/candidate drift. Preserve historical point-in-time
+release notes instead of backfilling post-release maintenance into v0.18.0.
+Keep M1 inactive and non-promotional, and keep M2, V3-C, and Memory activation
+behind new evidence and explicit human decisions. Treat v0.18.1 as a patch
+because it corrects published guidance, traceability, metadata, and tests
+without changing shared, CLI, Desktop, or Memory runtime contracts, installer
+logic, target selection, installed payload behavior, or completion authority;
+installer receipt metadata advances normally to 0.18.1. Require independent
+documentation review, repository verification, exact-head CI, and merge
+readiness before any separately authorized commit, push, PR, merge, annotated
+tag, or GitHub Release. Deployment remains not applicable unless a separately
+reviewed deployment target and workflow exist.
 
 For the v0.17.0 Issue #165 context-continuity candidate, require the default
 two-round threshold to trigger assessment only, with a configurable positive

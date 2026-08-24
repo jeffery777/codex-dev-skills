@@ -103,8 +103,9 @@ requires another human gate. M2 and V3-C release targets remain TBD.
 
 ## Next Task Bootstrap Checklist
 
-No post-v0.17.0 implementation Issue is implicitly authorized by this program
-handoff. A future task should:
+Issue #175 owns only the bounded v0.18.1 post-release state-coherence slice.
+This program handoff implicitly authorizes no future implementation. A future
+task should:
 
 1. Read `AGENTS.md`, `README.md`, `docs/roadmap.md`, this program directory,
    and `docs/operational-evidence-contract.md`.
