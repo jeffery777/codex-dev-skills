@@ -73,9 +73,7 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
         self.assertIn("v0.17.1\npublished the documentation-coherence", read("README.md"))
         self.assertIn("Issue #167 / PR #168 published the v0.17.1", read("docs/roadmap.md"))
 
-    def test_v0180_candidate_metadata_and_traceability_align(self) -> None:
-        self.assertEqual("0.18.0", yaml.safe_load(read("catalog.yaml"))["version"])
-        self.assertIn('VERSION="0.18.0"', read("install.sh"))
+    def test_v0180_historical_notes_and_published_traceability_remain(self) -> None:
         notes = read("docs/release-notes-v0.18.0.md")
         for expected in (
             "# Release Notes: v0.18.0",
@@ -86,9 +84,57 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, notes)
-        self.assertIn("current development candidate is the v0.18.0", read("README.md"))
-        self.assertIn("Issue #171 / PR #172 delivered", read("docs/roadmap.md"))
-        self.assertIn("For the v0.18.0 Issue #171 / PR #172", read("docs/release-readiness.md"))
+        published_phrases = {
+            "README.md": "v0.18.0 published the Desktop Runtime Wrapper V1 retirement through Issue #174 / PR #173",
+            "docs/roadmap.md": "Issue #174 / PR #173 published it as the v0.18.0",
+            "docs/release-readiness.md": "Issue #174 / PR #173 published the Issue #171 / PR #172",
+        }
+        stale_phrases = {
+            "README.md": "current development candidate is the v0.18.0",
+            "docs/roadmap.md": "prepared for the v0.18.0",
+            "docs/release-readiness.md": "For the v0.18.0 Issue #171 / PR #172",
+        }
+        for document, published_phrase in published_phrases.items():
+            text = " ".join(read(document).split())
+            for expected in (
+                "Issue #174 / PR #173",
+                "3b789e2f9749f2643b6fe75397d22f6e21a71ce2",
+                "annotated `v0.18.0`",
+                "GitHub Release",
+                "no deployment target or publish/deploy workflow",
+                published_phrase,
+            ):
+                with self.subTest(document=document, expected=expected):
+                    self.assertIn(expected, text)
+            self.assertRegex(
+                text,
+                r"deployment is (?:therefore )?not applicable",
+                document,
+            )
+            self.assertRegex(
+                text,
+                r"GitHub Release(?: publication)? is not deployment evidence",
+                document,
+            )
+            self.assertNotIn(stale_phrases[document], text, document)
+
+    def test_v0181_candidate_metadata_and_traceability_align(self) -> None:
+        self.assertEqual("0.18.1", yaml.safe_load(read("catalog.yaml"))["version"])
+        self.assertIn('VERSION="0.18.1"', read("install.sh"))
+        notes = read("docs/release-notes-v0.18.1.md")
+        for expected in (
+            "# Release Notes: v0.18.1",
+            "Issue #175",
+            "post-release state-coherence patch",
+            "compare/v0.18.0...v0.18.1",
+            "no deployment target or publish/deploy workflow",
+            "M2, V3-C, and Memory activation remain",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, notes)
+        self.assertIn("current development candidate is the v0.18.1", read("README.md"))
+        self.assertIn("Issue #175 owns the v0.18.1", read("docs/roadmap.md"))
+        self.assertIn("Issue #175 v0.18.1", read("docs/release-readiness.md"))
 
     def test_v0170_paired_run_release_evidence_is_durable_and_consistent(self) -> None:
         evidence_path = "docs/loops/issue-165/paired-run-evidence.md"
@@ -154,7 +200,7 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
         manifest = json.loads(
             read("plugin/codex-dev-skills/.codex-plugin/plugin.json")
         )
-        self.assertEqual("0.18.0", manifest["version"])
+        self.assertEqual("0.18.1", manifest["version"])
 
 
 if __name__ == "__main__":

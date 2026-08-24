@@ -78,9 +78,19 @@ class OperationalEvidenceStatusDocsTests(unittest.TestCase):
             "does not activate or promote M1",
             "authorized Issue before M2, V3-C",
             "verify current platform",
+            "Issue #175 owns only the bounded v0.18.1",
+            "implicitly authorizes no future implementation",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, continuation)
+        self.assertNotIn(
+            "No post-v0.17.0 implementation Issue",
+            continuation,
+        )
+        self.assertNotIn(
+            "No implementation beyond the bounded Issue #175",
+            continuation,
+        )
 
 
 if __name__ == "__main__":
