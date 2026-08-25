@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -11,6 +12,9 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "install.sh"
+INSTALLER_VERSION = re.search(
+    r'^VERSION="([^"]+)"$', INSTALLER.read_text(encoding="utf-8"), re.MULTILINE
+).group(1)
 SOURCE_PROFILES = ROOT / "agent-profiles"
 PROFILE_NAMES = sorted(path.name for path in SOURCE_PROFILES.glob("*.toml"))
 
@@ -216,7 +220,7 @@ class AgentProfileInstallerTests(unittest.TestCase):
         installed_state = state_dir / "installed.jsonl"
         installed_state.write_text(
             installed_state.read_text(encoding="utf-8").replace(
-                '"version":"0.18.2"', '"version":"0.14.2"'
+                f'"version":"{INSTALLER_VERSION}"', '"version":"0.14.2"'
             ),
             encoding="utf-8",
         )
@@ -233,7 +237,7 @@ class AgentProfileInstallerTests(unittest.TestCase):
             receipt.read_text(encoding="utf-8"),
         )
         self.assertIn(
-            '"version":"0.18.2","action":"update"',
+            f'"version":"{INSTALLER_VERSION}","action":"update"',
             installed_state.read_text(encoding="utf-8"),
         )
 

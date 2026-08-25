@@ -68,9 +68,7 @@ class ImprovementProposalContractDocsTests(unittest.TestCase):
         skill = read("skills/loop-engineering/SKILL.md")
         self.assertIn("scripts/proposalctl.py", skill)
 
-    def test_current_candidate_packaging_and_release_metadata_agree(self):
-        self.assertIn('VERSION="0.18.2"', read("install.sh"))
-        self.assertIn('version: "0.18.2"', read("catalog.yaml"))
+    def test_v0150_and_earlier_historical_release_metadata_remain(self):
         self.assertIn("docs/release-notes-v0.15.0.md", read("README.md"))
         notes = read("docs/release-notes-v0.15.0.md")
         self.assertIn("# Release Notes: v0.15.0", notes)

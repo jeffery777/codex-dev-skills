@@ -20,7 +20,8 @@ Before preparing release readiness evidence, read the durable source of truth:
 - `AGENTS.md`
 - `README.md`
 - `docs/roadmap.md`
-- `docs/release-notes-v0.1.0.md` as historical release context, or the current release notes draft for an unreleased version
+- `docs/release-notes-v0.1.0.md` as historical release context, or the
+  release-notes file matching the repository source/package version
 - `catalog.yaml`
 - `install.sh`
 - relevant `skills/`, `templates/`, `workflows/`, and `policies/` files for the changed scope
@@ -38,7 +39,7 @@ Check these items before asking a maintainer to approve external writes:
 
 - Scope is clear: changed files match the release or PR objective.
 - Roadmap is current: completed public roadmap items are removed or updated without unrelated rewriting.
-- Release notes match their role: historical release notes remain a point-in-time record, while current release notes drafts match the intended release scope.
+- Release notes match their role: historical release notes remain a point-in-time record, while the source/package-version candidate record matches the intended release scope.
 - Installer state is aligned: `catalog.yaml`, `install.sh`, skills, templates, workflows, and README install groups agree.
 - Plugin state is aligned when present: the package-local
   `plugin/codex-dev-skills/.codex-plugin/plugin.json`, the
@@ -50,6 +51,37 @@ Check these items before asking a maintainer to approve external writes:
 - Human gates are explicit: commit, push, PR creation, tag, publish, merge, release, deploy, platform comments, and review submissions require exact approval.
 - Review evidence exists: ordinary review primitives or formal gates were run at the stage that needs them.
 - Verification is re-runnable: commands and skipped checks are listed with enough context for another maintainer.
+
+## Release-State Contract
+
+Apply `policies/release-state-contract.md` to every release-sensitive change:
+
+- `catalog.yaml` is the canonical offline repository source/package version;
+  `install.sh` and the package-local plugin manifest must match it.
+- A matching release-notes file records candidate preparation. Issue, branch,
+  test, review, merge-readiness, or candidate wording does not prove
+  publication.
+- GitHub Release metadata and the corresponding annotated tag are publication
+  truth. Before mutation, preview the exact payload and check identity,
+  conflicts, and transition safety. After each separately authorized mutation,
+  read back the tag object, dereferenced commit, Release target, draft state,
+  and prerelease state through the connector-first GitHub control plane.
+- Active guidance must not carry a mutable current-publication or candidate
+  pointer. Historical release notes remain point-in-time records and are not
+  rewritten only because publication later occurred.
+- Ordinary offline repository validation proves source/package parity and
+  candidate structure. Its lexical assertions are bounded regression checks,
+  not semantic review or Git-history attestation. It does not access GitHub or
+  prove publication.
+
+Release-sensitive review must classify those roles explicitly and must not
+declare readiness only because tests pass.
+
+## Historical Scope-Specific Readiness Records
+
+The records below preserve point-in-time readiness expectations for earlier
+release candidates and publications. They are not active current-version or
+current-candidate pointers.
 
 v0.14.1 was published through PR #150. Its dated 2026-08-18 runtime evidence,
 focused automation/thread/plugin/installer contract tests, plugin-validator
@@ -143,19 +175,6 @@ shared, CLI, Desktop, or Memory runtime contracts, installer logic, target
 selection, installed payload behavior, or completion authority. The repository
 has no deployment target or publish/deploy workflow; deployment is therefore
 not applicable, and GitHub Release publication is not deployment evidence.
-
-For the v0.18.2 Issue #179 patch candidate, require the dated 2026-08-25
-runtime evidence to distinguish deprecated `codex mcp-server` hosting from
-supported external MCP client configuration, connectors, and native Desktop
-thread tools. Require the validator to accept only zero arguments or one
-`--skip-unit-tests`, reject every other argument before validation begins,
-preserve all non-unit checks and direct evals, and keep the zero-argument
-behavior backward compatible. Exact-head CI must run checks first and full
-unittest discovery exactly once. Record focused contracts, generated plugin
-parity, one local checks-only timing, one complete local discovery pass,
-independent review, and exact-head CI before merge. Treat v0.18.2 as a patch
-because it corrects current public runtime guidance and adds compatible
-validator/CI orchestration without migration or weaker coverage.
 
 For the v0.17.0 Issue #165 context-continuity candidate, require the default
 two-round threshold to trigger assessment only, with a configurable positive
@@ -521,6 +540,22 @@ Before tag or release publication, report:
 - review or gate evidence used;
 - skipped checks and residual risk;
 - whether the action is reversible or requires manual recovery.
+
+Also verify before either mutation:
+
+- exact repository identity, target branch, and HEAD;
+- exact proposed annotated-tag and Release payloads;
+- absence of conflicting tag or Release state;
+- transition safety: active tracked guidance remains true after a successful
+  publication.
+
+Tag creation and GitHub Release publication are separate mutations and retain
+separate human gates. After each authorized mutation, use the connector-first
+GitHub control plane to read back the resulting state. Confirm the annotated
+tag object and dereferenced commit, then the Release target, draft state, and
+prerelease state. If readback is absent or conflicts with the approved payload,
+report publication as incomplete and stop; do not use a tracked coherence patch
+as a substitute for repairing or completing platform state.
 
 ## PR Readiness Summary
 

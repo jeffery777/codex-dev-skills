@@ -232,21 +232,10 @@ check_installer_target_modes() {
   ok "installer target modes are documented and fail closed"
 }
 
-check_installer_version() {
-  local current_release_version installer_version catalog_version
-  current_release_version="$(sed -n 's/.*current v\([0-9][0-9.]*\) release notes.*/\1/p' README.md | head -n 1)"
-  installer_version="$(sed -n 's/^VERSION="\([^"]*\)"/\1/p' install.sh | head -n 1)"
-  catalog_version="$(sed -n 's/^version:[[:space:]]*"\([^"]*\)"/\1/p' catalog.yaml | head -n 1)"
-  [[ -n "$current_release_version" ]] || fail "README must reference current release notes"
-  [[ -n "$installer_version" ]] || fail "install.sh must declare VERSION"
-  [[ -n "$catalog_version" ]] || fail "catalog.yaml must declare version"
-  if [[ "$installer_version" != "$current_release_version" ]]; then
-    fail "install.sh VERSION ($installer_version) must match current release notes version ($current_release_version)"
-  fi
-  if [[ "$catalog_version" != "$current_release_version" ]]; then
-    fail "catalog.yaml version ($catalog_version) must match current release notes version ($current_release_version)"
-  fi
-  ok "catalog, installer, and current release versions match"
+check_release_state() {
+  "$PROJECT_PYTHON" scripts/validate-release-state.py
+  run_unit_tests tests.test_release_state_contract
+  ok "offline release-state structural and source/package checks are valid"
 }
 
 frontmatter_value() {
@@ -419,7 +408,7 @@ main() {
   check_code_mode_tool_policy
   check_plugin_package
   check_installer_target_modes
-  check_installer_version
+  check_release_state
   check_skill_metadata
   check_loop_ledger
   check_loop_contract

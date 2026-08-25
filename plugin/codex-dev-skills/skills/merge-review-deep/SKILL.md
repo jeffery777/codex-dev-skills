@@ -12,6 +12,12 @@ Code Mode tool orchestration: follow
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
 after filesystem installation.
 
+For release-sensitive review, follow
+`../../policies/release-state-contract.md` relative to this skill in source or
+plugin checkouts, or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/release-state-contract.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill for high-risk, release-sensitive, or policy-required merge review where routine `merge-review` is insufficient.
@@ -27,10 +33,18 @@ This is a deeper review primitive, not the formal branch readiness gate. Use `me
 - stale artifact reuse
 - hidden regression risk
 - release and operational evidence
+- transition-safe release state across source/package, candidate,
+  publication, active-guidance, and historical-record roles
 
 ## Workflow
 
 Follow `merge-review`, then re-check evidence from source files and commands rather than relying only on summaries.
+
+For a release-sensitive change, classify every relevant assertion into the
+five release-state roles, run the offline release-state validator, and verify
+that active guidance remains true after successful publication. Distinguish
+pre-mutation payload/conflict checks from post-mutation platform readback;
+neither tests nor a proposed tag/Release payload prove publication.
 
 ## Output
 

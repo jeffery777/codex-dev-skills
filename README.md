@@ -16,23 +16,29 @@ skills, an executable loop contract, native goals, shared subagents, formal
 gates, and thin runtime adapters to run bounded implementation, review,
 handoff, and release-readiness workflows consistently.
 
-The current published version is v0.18.1. Issue #175 / PR #176 published the
-post-release state-coherence patch at merge commit
-`b5cb03ae467222215f42c3081cad796ad3a2ecf3`; the annotated `v0.18.1` tag and
-non-draft, non-prerelease GitHub Release bind that exact commit. The patch
-corrects active release guidance, traceability, version metadata, and
-drift-prevention contracts without changing shared, CLI, Desktop, or Memory
-runtime contracts, installer logic, target selection, installed payload
-behavior, or completion authority; installer receipt metadata is 0.18.1.
-The current development candidate is v0.18.2 through Issue #179. It refreshes
-the public Codex CLI/MCP compatibility boundary for the 2026-08-24
-`codex mcp-server` deprecation and adds a backward-compatible
-`--skip-unit-tests` validator mode so exact-head CI can keep all checks and one
-full discovery pass without rerunning the validator's 44-module focused
-subset. It does not remove general MCP client support, weaken repository
-validation, or change runtime, installer, security, data, or completion
-authority contracts. Installer receipt metadata advances to 0.18.2 for the
-candidate package.
+Repository source/package version is declared by `catalog.yaml`; `install.sh`
+and the package-local plugin manifest must match it. A matching release-notes
+file is a point-in-time candidate-preparation record, not publication proof.
+Current publication state comes from GitHub Release metadata and the
+corresponding annotated tag through the connector-first control plane. Ordinary
+offline validation checks source/package parity and candidate structure without
+network access. Active guidance intentionally carries no mutable latest-release
+or development-candidate pointer. See the
+[release-state contract](policies/release-state-contract.md).
+
+The v0.18.2 source snapshot refreshed the public Codex CLI/MCP compatibility
+boundary for the 2026-08-24 `codex mcp-server` deprecation and added a
+backward-compatible `--skip-unit-tests` validator mode so exact-head CI keeps
+all checks and one full discovery pass without rerunning the validator's
+44-module focused subset. It did not remove general MCP client support, weaken
+repository validation, or change runtime, installer, security, data, or
+completion authority contracts.
+Issue #175 / PR #176 published the post-release state-coherence patch at merge
+commit `b5cb03ae467222215f42c3081cad796ad3a2ecf3`; the annotated `v0.18.1`
+tag and non-draft, non-prerelease GitHub Release bind that exact commit. The
+repository has no deployment target or publish/deploy workflow, so deployment
+is not applicable and GitHub Release publication is not deployment evidence.
+This is historical traceability, not a current-publication pointer.
 v0.18.0 published the Desktop Runtime
 Wrapper V1 retirement through Issue #174 / PR #173 at merge commit
 `3b789e2f9749f2643b6fe75397d22f6e21a71ce2`; the annotated `v0.18.0` tag and
@@ -1316,8 +1322,10 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.18.2.md` contains the current v0.18.2 release notes candidate;
-`docs/release-notes-v0.18.1.md` is preserved as the point-in-time release-candidate record for the published v0.18.1 release;
+The release-notes file derived from the source/package version is candidate
+preparation only. GitHub tag and Release metadata provide publication truth.
+`docs/release-notes-v0.18.2.md` and `docs/release-notes-v0.18.1.md` are
+preserved as point-in-time candidate records;
 `docs/release-notes-v0.18.0.md`, `docs/release-notes-v0.17.1.md`, `docs/release-notes-v0.17.0.md`, `docs/release-notes-v0.16.3.md`, `docs/release-notes-v0.16.2.md`, `docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
 `docs/release-notes-v0.14.2.md`, `docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and

@@ -19,6 +19,7 @@ SHARED_FILES = {
     "policies/code-mode-tool-orchestration-policy.md",
     "policies/context-continuity-policy.md",
     "policies/github-control-plane-policy.md",
+    "policies/release-state-contract.md",
     "docs/native-runtime-capabilities.md",
 }
 SHARED_PREFIXES = ("templates/orchestration/",)

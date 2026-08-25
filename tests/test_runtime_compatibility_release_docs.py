@@ -164,9 +164,7 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
             )
             self.assertNotIn(stale_phrases[document], text, document)
 
-    def test_v0182_candidate_metadata_and_contracts_align(self) -> None:
-        self.assertEqual("0.18.2", yaml.safe_load(read("catalog.yaml"))["version"])
-        self.assertIn('VERSION="0.18.2"', read("install.sh"))
+    def test_v0182_historical_candidate_metadata_and_contracts_remain(self) -> None:
         notes = read("docs/release-notes-v0.18.2.md")
         for expected in (
             "# Release Notes: v0.18.2",
@@ -184,11 +182,20 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
                 self.assertIn(expected, notes)
         self.assertRegex(notes, r"57\s+in this\s+candidate")
         self.assertRegex(notes, r"not the source rollback\s+target")
-        for document in ("README.md", "docs/roadmap.md", "docs/release-readiness.md"):
+        for document in ("README.md", "docs/roadmap.md"):
             with self.subTest(document=document):
                 text = " ".join(read(document).split())
-                self.assertIn("Issue #179", text)
                 self.assertIn("v0.18.2", text)
+
+    def test_active_guidance_uses_non_recursive_release_state_roles(self) -> None:
+        for document in ("README.md", "docs/roadmap.md", "docs/release-readiness.md"):
+            with self.subTest(document=document):
+                text = read(document).lower()
+                self.assertNotIn("current published version", text)
+                self.assertNotIn("current development candidate", text)
+        self.assertIn("Repository source/package version", read("README.md"))
+        self.assertIn("publication truth", read("docs/roadmap.md"))
+        self.assertIn("## Release-State Contract", read("docs/release-readiness.md"))
 
     def test_v0170_paired_run_release_evidence_is_durable_and_consistent(self) -> None:
         evidence_path = "docs/loops/issue-165/paired-run-evidence.md"
@@ -254,7 +261,7 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
         manifest = json.loads(
             read("plugin/codex-dev-skills/.codex-plugin/plugin.json")
         )
-        self.assertEqual("0.18.2", manifest["version"])
+        self.assertEqual(yaml.safe_load(read("catalog.yaml"))["version"], manifest["version"])
 
 
 if __name__ == "__main__":
