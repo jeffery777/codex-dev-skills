@@ -18,6 +18,12 @@ or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/context-continuity-policy.md`
 after filesystem installation.
 
+Exact-head merge review: when a loop owns an existing PR or merge-readiness
+decision, follow `../../policies/exact-head-merge-review-contract.md` relative
+to this skill in source or plugin checkouts, or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/exact-head-merge-review-contract.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when the user asks Codex to run a loop engineering workflow, keep a bounded objective moving autonomously, or act as the delivery owner across repeated plan/implement/verify/review/continue cycles until the objective is complete or a human gate is reached.
@@ -58,6 +64,31 @@ Each loop iteration must:
 5. Execute or prepare exactly that workflow, then verify and inspect evidence before deciding the next loop state.
 6. Record or report what changed, what was verified, what remains uncertain, and which next action is selected.
 7. Continue only while the objective, source of truth, permissions, risk, and verification are clear.
+
+### Exact-Head PR Closure
+
+When a PR exists, the loop may not classify the objective as merge-ready or
+complete from pre-commit code, docs, deep, or security review. Those results
+are reusable input evidence only. Advance through `PR_CREATED`,
+`EXACT_HEAD_CI_PASSED`, `EXACT_HEAD_MERGE_REVIEW_PASSED`,
+`RECEIPT_PLATFORM_READBACK_CONFIRMED`, `MERGE_READINESS_READY`, and the
+separate `HUMAN_MERGE_AUTHORIZED` state.
+
+Bind the receipt to repository, PR, exact base/head/merge-base SHAs, diff
+identity, hosted CI, findings, unresolved review threads, and platform
+readback. Any relevant drift returns the loop to `REVIEW_REQUIRED`; chat,
+worker, goal, ledger, or local-report state cannot repair that gap.
+
+After a fix, select code review and Security Diff Scan scope from the affected
+boundary and record why prior evidence remains applicable. Widen the rerun when
+shared assumptions changed. Every changed PR head still requires a complete
+new base-to-head Merge Review and receipt readback.
+
+Clean internal reviews and scans advance automatically to the next safe
+read-only or already-authorized stage. Do not invent another human stop merely
+because a phase ended; stop only for an actual decision, authority,
+environment, permission, material-risk, destructive-action, or unauthorized
+external-write boundary.
 
 ### Context Continuity And Fresh Rollover
 

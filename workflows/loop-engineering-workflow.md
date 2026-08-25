@@ -34,6 +34,20 @@ The user-facing skill is `loop-engineering`. It is an entrypoint and router, not
      lineage/idempotency/anti-recursion, and runtime capability before any
      separately authorized fresh action.
 
+When the loop owns an existing PR, apply
+`policies/exact-head-merge-review-contract.md`. Pre-commit review evidence may
+be reused as input but cannot supply the Merge Review verdict. Require the
+ordered PR-created, exact-head-CI, exact-head-review, platform-receipt-readback,
+merge-readiness, and separate merge-authorization states. Any relevant base,
+head, diff, CI, finding, thread, or receipt drift returns to
+`REVIEW_REQUIRED`.
+
+After a remediation, rerun code review and Security Diff Scan over the
+smallest affected boundary that can prove closure, widening when prior
+assumptions changed. A new head always receives a complete base-to-head Merge
+Review. Clean read-only or already-authorized phases continue without an
+additional human stop.
+
 ## Route Map
 
 | Situation | Use |

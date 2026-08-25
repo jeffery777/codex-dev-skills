@@ -86,10 +86,18 @@ For a PR merge readiness task:
 
 1. Confirm local branch, base ref, head SHA, and changed files.
 2. Run the repo-required local validation and review gates.
-3. Fetch GitHub changed files, comments, reviews, workflow runs, and statuses.
-4. Reconcile local evidence with platform evidence.
-5. Post a merge review comment only when the maintainer explicitly authorizes that platform write.
-6. Merge only when the maintainer explicitly authorizes merge, the head SHA still matches, and no blockers remain.
+3. Treat pre-commit review as input evidence only; it cannot supply the
+   exact-head Merge Review verdict.
+4. Fetch GitHub changed files, comments, reviews, workflow runs, statuses, and
+   unresolved threads, then bind them to the exact repository, PR, base, head,
+   merge base, and diff identity.
+5. Reconcile local evidence with platform evidence and validate the normalized
+   `exact-head-merge-review/v1` snapshot offline with
+   `./scripts/project-python scripts/validate-exact-head-merge-review.py <snapshot.json>`.
+6. Post a Merge Review receipt only when the maintainer explicitly authorizes
+   that platform write, then read the receipt back and bind its digest.
+7. Merge only when the maintainer explicitly authorizes merge, a final live
+   readback still matches every receipt binding, and no blockers remain.
 
 ## Report Shape
 

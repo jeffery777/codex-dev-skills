@@ -99,6 +99,7 @@ class CodeModeToolPolicyTests(unittest.TestCase):
             "agent-profiles",
             "docs",
             "policies",
+            "scripts",
             "skills",
             "templates",
             "workflows",

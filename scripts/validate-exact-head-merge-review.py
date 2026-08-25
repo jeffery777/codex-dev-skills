@@ -1,0 +1,651 @@
+#!/usr/bin/env python3
+"""Fail-closed, offline validation for exact-head merge-review evidence."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import pathlib
+import re
+import stat
+import sys
+from datetime import datetime
+
+
+MAX_INPUT_BYTES = 256 * 1024
+CONTRACT = "exact-head-merge-review/v1"
+SHA = re.compile(r"[0-9a-f]{40}\Z")
+DIGEST = re.compile(r"[0-9a-f]{64}\Z")
+GITHUB_URL = re.compile(r"https://github\.com/[^\s]+\Z")
+REPOSITORY = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
+RFC3339_UTC = re.compile(
+    r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?Z\Z"
+)
+REVIEW_MODES = frozenset(("merge-review", "merge-review-deep"))
+
+
+class ExactHeadMergeReviewError(ValueError):
+    """A deterministic failure of the exact-head merge-review contract."""
+
+
+def reject_duplicate_json_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Build JSON objects while rejecting duplicate keys before values are lost."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ExactHeadMergeReviewError(
+                f"JSON object contains duplicate key: {key!r}"
+            )
+        result[key] = value
+    return result
+
+
+def reject_json_constant(value: str) -> object:
+    raise ExactHeadMergeReviewError(f"JSON contains unsupported constant: {value}")
+
+
+def load_json(data: bytes) -> object:
+    """Decode bounded, strict-UTF-8 JSON without permissive duplicate semantics."""
+    if len(data) > MAX_INPUT_BYTES:
+        raise ExactHeadMergeReviewError("input exceeds size limit")
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ExactHeadMergeReviewError("input is not strict UTF-8") from exc
+    try:
+        return json.loads(
+            text,
+            object_pairs_hook=reject_duplicate_json_keys,
+            parse_constant=reject_json_constant,
+        )
+    except (json.JSONDecodeError, RecursionError) as exc:
+        raise ExactHeadMergeReviewError("input is not valid JSON") from exc
+
+
+def read_input(argument: str, stdin: object | None = None) -> bytes:
+    """Read one bounded regular-file input, or bounded bytes from explicit stdin."""
+    if argument == "-":
+        source = sys.stdin.buffer if stdin is None else stdin
+        data = source.read(MAX_INPUT_BYTES + 1)
+        if not isinstance(data, bytes):
+            raise ExactHeadMergeReviewError("stdin must provide bytes")
+        if len(data) > MAX_INPUT_BYTES:
+            raise ExactHeadMergeReviewError("input exceeds size limit")
+        return data
+    path = pathlib.Path(argument)
+    nofollow = getattr(os, "O_NOFOLLOW", None)
+    nonblock = getattr(os, "O_NONBLOCK", None)
+    if nofollow is None or nonblock is None:
+        raise ExactHeadMergeReviewError(
+            "regular-file input requires no-follow and nonblocking support"
+        )
+    try:
+        descriptor = os.open(path, os.O_RDONLY | nofollow | nonblock)
+    except ValueError as exc:
+        raise ExactHeadMergeReviewError("input file path is invalid") from exc
+    except OSError as exc:
+        if isinstance(exc, FileNotFoundError):
+            raise ExactHeadMergeReviewError("input file is missing") from exc
+        raise ExactHeadMergeReviewError(
+            "input file must be a regular non-symlink file"
+        ) from exc
+    try:
+        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+            raise ExactHeadMergeReviewError(
+                "input file must be a regular non-symlink file"
+            )
+        with os.fdopen(descriptor, "rb", closefd=False) as source:
+            data = source.read(MAX_INPUT_BYTES + 1)
+        if len(data) > MAX_INPUT_BYTES:
+            raise ExactHeadMergeReviewError("input exceeds size limit")
+        return data
+    except OSError as exc:
+        raise ExactHeadMergeReviewError("input file cannot be read") from exc
+    finally:
+        os.close(descriptor)
+
+
+def require_object(value: object, label: str) -> dict[str, object]:
+    if not isinstance(value, dict):
+        raise ExactHeadMergeReviewError(f"{label} must be an object")
+    return value
+
+
+def require_exact_fields(
+    value: object, label: str, fields: frozenset[str]
+) -> dict[str, object]:
+    result = require_object(value, label)
+    present = frozenset(result)
+    missing = sorted(fields - present)
+    unknown = sorted(present - fields)
+    if missing:
+        raise ExactHeadMergeReviewError(
+            f"{label} is missing required field: {missing[0]}"
+        )
+    if unknown:
+        raise ExactHeadMergeReviewError(
+            f"{label} contains unknown critical field: {unknown[0]}"
+        )
+    return result
+
+
+def require_string(value: object, label: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise ExactHeadMergeReviewError(f"{label} must be a non-empty string")
+    return value
+
+
+def require_repository(value: object, label: str) -> str:
+    result = require_string(value, label)
+    if REPOSITORY.fullmatch(result) is None:
+        raise ExactHeadMergeReviewError(
+            f"{label} must be a GitHub owner/repository identifier"
+        )
+    return result
+
+
+def require_positive_integer(value: object, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ExactHeadMergeReviewError(f"{label} must be a positive integer")
+    return value
+
+
+def require_zero_integer(value: object, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value != 0:
+        raise ExactHeadMergeReviewError(f"{label} must be zero")
+    return value
+
+
+def require_false(value: object, label: str) -> bool:
+    if value is not False:
+        raise ExactHeadMergeReviewError(f"{label} must be false")
+    return False
+
+
+def require_sha(value: object, label: str) -> str:
+    result = require_string(value, label)
+    if SHA.fullmatch(result) is None:
+        raise ExactHeadMergeReviewError(
+            f"{label} must be a lowercase 40-character hexadecimal SHA"
+        )
+    return result
+
+
+def require_digest(value: object, label: str) -> str:
+    result = require_string(value, label)
+    if DIGEST.fullmatch(result) is None:
+        raise ExactHeadMergeReviewError(
+            f"{label} must be a lowercase 64-character hexadecimal digest"
+        )
+    return result
+
+
+def require_true(value: object, label: str) -> bool:
+    if value is not True:
+        raise ExactHeadMergeReviewError(f"{label} must be true")
+    return True
+
+
+def require_github_url(value: object, label: str) -> str:
+    result = require_string(value, label)
+    if GITHUB_URL.fullmatch(result) is None:
+        raise ExactHeadMergeReviewError(f"{label} must be an HTTPS GitHub URL")
+    return result
+
+
+def require_rfc3339_utc(value: object, label: str) -> str:
+    result = require_string(value, label)
+    if RFC3339_UTC.fullmatch(result) is None:
+        raise ExactHeadMergeReviewError(f"{label} must be an RFC3339 UTC timestamp")
+    try:
+        datetime.fromisoformat(result[:-1] + "+00:00")
+    except ValueError as exc:
+        raise ExactHeadMergeReviewError(
+            f"{label} must be an RFC3339 UTC timestamp"
+        ) from exc
+    return result
+
+
+def canonical_receipt_digest(receipt: dict[str, object]) -> str:
+    """Return the SHA-256 of the complete receipt under deterministic JSON encoding."""
+    encoded = json.dumps(
+        receipt,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def canonical_range_identity_digest(
+    repository: str,
+    pr_number: int,
+    base_sha: str,
+    head_sha: str,
+    merge_base_sha: str,
+) -> str:
+    """Return the deterministic SHA-256 for the reviewed base-to-head range."""
+    encoded = json.dumps(
+        {
+            "repository": repository,
+            "pr_number": pr_number,
+            "base_sha": base_sha,
+            "head_sha": head_sha,
+            "merge_base_sha": merge_base_sha,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def validate_required_ci(
+    value: object, label: str, reviewed_head: str
+) -> list[dict[str, object]]:
+    if not isinstance(value, list) or not value:
+        raise ExactHeadMergeReviewError(f"{label} must contain at least one check")
+    ci_names: set[str] = set()
+    ci_run_ids: set[int] = set()
+    checks: list[dict[str, object]] = []
+    for index, check in enumerate(value):
+        item = require_exact_fields(
+            check,
+            f"{label}[{index}]",
+            frozenset(("name", "status", "head_sha", "run_id")),
+        )
+        name = require_string(item["name"], f"{label}[{index}].name")
+        run_id = require_positive_integer(item["run_id"], f"{label}[{index}].run_id")
+        if name in ci_names:
+            raise ExactHeadMergeReviewError(f"{label} contains duplicate name: {name!r}")
+        if run_id in ci_run_ids:
+            raise ExactHeadMergeReviewError(f"{label} contains duplicate run_id: {run_id}")
+        if item["status"] != "success":
+            raise ExactHeadMergeReviewError(
+                f"{label}[{index}].status must equal 'success'"
+            )
+        require_equal(
+            reviewed_head,
+            require_sha(item["head_sha"], f"{label}[{index}].head_sha"),
+            f"{label}[{index}].head_sha",
+        )
+        ci_names.add(name)
+        ci_run_ids.add(run_id)
+        checks.append(item)
+    return checks
+
+
+def validate_required_ci_policy(
+    value: object, label: str, ci_names: set[str]
+) -> dict[str, object]:
+    policy = require_exact_fields(
+        value,
+        label,
+        frozenset(("source", "reference", "required_names")),
+    )
+    source = require_string(policy["source"], f"{label}.source")
+    if source not in {"github_ruleset", "repository_policy"}:
+        raise ExactHeadMergeReviewError(
+            f"{label}.source must equal github_ruleset or repository_policy"
+        )
+    require_string(policy["reference"], f"{label}.reference")
+    required_names = policy["required_names"]
+    if not isinstance(required_names, list) or not required_names:
+        raise ExactHeadMergeReviewError(f"{label}.required_names must be a non-empty list")
+    normalized_names: list[str] = []
+    for index, name in enumerate(required_names):
+        normalized = require_string(name, f"{label}.required_names[{index}]")
+        if normalized in normalized_names:
+            raise ExactHeadMergeReviewError(
+                f"{label}.required_names contains duplicate name: {normalized!r}"
+            )
+        normalized_names.append(normalized)
+    if set(normalized_names) != ci_names:
+        raise ExactHeadMergeReviewError(
+            f"{label}.required_names must exactly equal the required CI name set"
+        )
+    return policy
+
+
+def validate_dispositions(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        raise ExactHeadMergeReviewError("receipt.dispositions must be a list")
+    finding_ids: set[str] = set()
+    dispositions: list[dict[str, object]] = []
+    for index, finding in enumerate(value):
+        item = require_exact_fields(
+            finding,
+            f"receipt.dispositions[{index}]",
+            frozenset(("finding_id", "severity", "disposition", "evidence")),
+        )
+        finding_id = require_string(
+            item["finding_id"], f"receipt.dispositions[{index}].finding_id"
+        )
+        if finding_id in finding_ids:
+            raise ExactHeadMergeReviewError(
+                f"receipt.dispositions contains duplicate finding_id: {finding_id!r}"
+            )
+        severity = require_string(
+            item["severity"], f"receipt.dispositions[{index}].severity"
+        )
+        if severity not in {"MUST-FIX", "SHOULD-FIX", "NIT"}:
+            raise ExactHeadMergeReviewError(
+                f"receipt.dispositions[{index}].severity is invalid"
+            )
+        disposition = require_string(
+            item["disposition"], f"receipt.dispositions[{index}].disposition"
+        )
+        if disposition not in {"fixed", "rejected", "deferred"}:
+            raise ExactHeadMergeReviewError(
+                f"receipt.dispositions[{index}].disposition is invalid"
+            )
+        require_string(item["evidence"], f"receipt.dispositions[{index}].evidence")
+        finding_ids.add(finding_id)
+        dispositions.append(item)
+    return dispositions
+
+
+def validate_pre_commit_evidence(value: object) -> list[dict[str, object]]:
+    if not isinstance(value, list):
+        raise ExactHeadMergeReviewError("receipt.pre_commit_evidence must be a list")
+    evidence_ids: set[str] = set()
+    evidence_items: list[dict[str, object]] = []
+    allowed_kinds = {
+        "code-review",
+        "code-review-deep",
+        "docs-review",
+        "security-diff-scan",
+    }
+    for index, evidence in enumerate(value):
+        item = require_exact_fields(
+            evidence,
+            f"receipt.pre_commit_evidence[{index}]",
+            frozenset(
+                (
+                    "kind",
+                    "evidence_id",
+                    "reviewed_content_digest",
+                    "result",
+                    "applicability_rationale",
+                )
+            ),
+        )
+        kind = require_string(
+            item["kind"], f"receipt.pre_commit_evidence[{index}].kind"
+        )
+        if kind not in allowed_kinds:
+            raise ExactHeadMergeReviewError(
+                f"receipt.pre_commit_evidence[{index}].kind is invalid"
+            )
+        evidence_id = require_string(
+            item["evidence_id"], f"receipt.pre_commit_evidence[{index}].evidence_id"
+        )
+        if evidence_id in evidence_ids:
+            raise ExactHeadMergeReviewError(
+                "receipt.pre_commit_evidence contains duplicate evidence_id: "
+                f"{evidence_id!r}"
+            )
+        require_digest(
+            item["reviewed_content_digest"],
+            f"receipt.pre_commit_evidence[{index}].reviewed_content_digest",
+        )
+        if item["result"] != "no_findings":
+            raise ExactHeadMergeReviewError(
+                f"receipt.pre_commit_evidence[{index}].result must equal 'no_findings'"
+            )
+        require_string(
+            item["applicability_rationale"],
+            f"receipt.pre_commit_evidence[{index}].applicability_rationale",
+        )
+        evidence_ids.add(evidence_id)
+        evidence_items.append(item)
+    return evidence_items
+
+
+def require_equal(receipt: object, snapshot: object, label: str) -> None:
+    if receipt != snapshot:
+        raise ExactHeadMergeReviewError(f"receipt {label} does not match platform snapshot")
+
+
+def validate_payload(payload: object) -> tuple[str, int]:
+    """Validate all receipt evidence against a same-identity platform readback."""
+    top = require_exact_fields(
+        payload,
+        "input",
+        frozenset(("contract", "receipt", "platform_snapshot")),
+    )
+    if top["contract"] != CONTRACT:
+        raise ExactHeadMergeReviewError(f"contract must equal {CONTRACT!r}")
+    receipt = require_exact_fields(
+        top["receipt"],
+        "receipt",
+        frozenset(
+            (
+                "repository",
+                "pr_number",
+                "review_mode",
+                "reviewed_base_sha",
+                "reviewed_head_sha",
+                "reviewed_merge_base_sha",
+                "reviewed_diff_digest",
+                "receipt_authority",
+                "merge_authorized",
+                "findings",
+                "dispositions",
+                "residual_risk",
+                "pre_commit_evidence",
+                "required_ci",
+                "required_ci_policy",
+            )
+        ),
+    )
+    snapshot = require_exact_fields(
+        top["platform_snapshot"],
+        "platform_snapshot",
+        frozenset(
+            (
+                "repository",
+                "pr_number",
+                "base_sha",
+                "head_sha",
+                "merge_base_sha",
+                "diff_digest",
+                "readback",
+                "state",
+                "draft",
+                "mergeable",
+                "receipt_id",
+                "receipt_url",
+                "platform_readback_at",
+                "receipt_digest",
+                "required_ci",
+                "required_ci_policy",
+                "unresolved_review_threads",
+            )
+        ),
+    )
+
+    repository = require_repository(receipt["repository"], "receipt.repository")
+    pr_number = require_positive_integer(receipt["pr_number"], "receipt.pr_number")
+    review_mode = require_string(receipt["review_mode"], "receipt.review_mode")
+    if review_mode not in REVIEW_MODES:
+        raise ExactHeadMergeReviewError(
+            "receipt.review_mode must be one of: merge-review, merge-review-deep"
+        )
+    if receipt["receipt_authority"] != "advisory_review_evidence":
+        raise ExactHeadMergeReviewError(
+            "receipt.receipt_authority must equal 'advisory_review_evidence'"
+        )
+    require_false(receipt["merge_authorized"], "receipt.merge_authorized")
+
+    reviewed_base = require_sha(
+        receipt["reviewed_base_sha"], "receipt.reviewed_base_sha"
+    )
+    reviewed_head = require_sha(
+        receipt["reviewed_head_sha"], "receipt.reviewed_head_sha"
+    )
+    reviewed_merge_base = require_sha(
+        receipt["reviewed_merge_base_sha"], "receipt.reviewed_merge_base_sha"
+    )
+    reviewed_digest = require_digest(
+        receipt["reviewed_diff_digest"], "receipt.reviewed_diff_digest"
+    )
+    expected_range_digest = canonical_range_identity_digest(
+        repository,
+        pr_number,
+        reviewed_base,
+        reviewed_head,
+        reviewed_merge_base,
+    )
+    if reviewed_digest != expected_range_digest:
+        raise ExactHeadMergeReviewError(
+            "receipt.reviewed_diff_digest must equal the canonical range identity digest"
+        )
+    findings = require_exact_fields(
+        receipt["findings"],
+        "receipt.findings",
+        frozenset(("must_fix_open", "should_fix_open", "nit_open")),
+    )
+    for name in ("must_fix_open", "should_fix_open", "nit_open"):
+        require_zero_integer(findings[name], f"receipt.findings.{name}")
+    validate_dispositions(receipt["dispositions"])
+    require_string(receipt["residual_risk"], "receipt.residual_risk")
+    validate_pre_commit_evidence(receipt["pre_commit_evidence"])
+    receipt_ci = validate_required_ci(
+        receipt["required_ci"], "receipt.required_ci", reviewed_head
+    )
+    receipt_ci_names = {item["name"] for item in receipt_ci}
+    validate_required_ci_policy(
+        receipt["required_ci_policy"],
+        "receipt.required_ci_policy",
+        receipt_ci_names,
+    )
+
+    require_equal(
+        repository,
+        require_repository(
+            snapshot["repository"], "platform_snapshot.repository"
+        ),
+        "repository",
+    )
+    require_equal(
+        pr_number,
+        require_positive_integer(
+            snapshot["pr_number"], "platform_snapshot.pr_number"
+        ),
+        "pr_number",
+    )
+    require_equal(
+        reviewed_base,
+        require_sha(snapshot["base_sha"], "platform_snapshot.base_sha"),
+        "base_sha",
+    )
+    require_equal(
+        reviewed_head,
+        require_sha(snapshot["head_sha"], "platform_snapshot.head_sha"),
+        "head_sha",
+    )
+    require_equal(
+        reviewed_merge_base,
+        require_sha(snapshot["merge_base_sha"], "platform_snapshot.merge_base_sha"),
+        "merge_base_sha",
+    )
+    require_equal(
+        reviewed_digest,
+        require_digest(snapshot["diff_digest"], "platform_snapshot.diff_digest"),
+        "diff_digest",
+    )
+    if snapshot["diff_digest"] != expected_range_digest:
+        raise ExactHeadMergeReviewError(
+            "platform_snapshot.diff_digest must equal the canonical range identity digest"
+        )
+
+    readback = require_exact_fields(
+        snapshot["readback"],
+        "platform_snapshot.readback",
+        frozenset(("source", "confirmed")),
+    )
+    if readback["source"] != "github" or readback["confirmed"] is not True:
+        raise ExactHeadMergeReviewError(
+            "platform_snapshot.readback must confirm GitHub platform readback"
+        )
+    if snapshot["state"] != "open":
+        raise ExactHeadMergeReviewError("platform_snapshot.state must equal 'open'")
+    require_false(snapshot["draft"], "platform_snapshot.draft")
+    require_true(snapshot["mergeable"], "platform_snapshot.mergeable")
+    receipt_id = require_positive_integer(
+        snapshot["receipt_id"], "platform_snapshot.receipt_id"
+    )
+    receipt_url = require_github_url(
+        snapshot["receipt_url"], "platform_snapshot.receipt_url"
+    )
+    pr_url = f"https://github.com/{repository}/pull/{pr_number}"
+    expected_receipt_urls = frozenset(
+        (
+            f"{pr_url}#issuecomment-{receipt_id}",
+            f"{pr_url}#pullrequestreview-{receipt_id}",
+        )
+    )
+    if receipt_url not in expected_receipt_urls:
+        raise ExactHeadMergeReviewError(
+            "platform_snapshot.receipt_url must bind the receipt ID to its repository and PR"
+        )
+    require_rfc3339_utc(
+        snapshot["platform_readback_at"], "platform_snapshot.platform_readback_at"
+    )
+    supplied_receipt_digest = require_digest(
+        snapshot["receipt_digest"], "platform_snapshot.receipt_digest"
+    )
+    if supplied_receipt_digest != canonical_receipt_digest(receipt):
+        raise ExactHeadMergeReviewError(
+            "platform_snapshot.receipt_digest does not match canonical receipt digest"
+        )
+    snapshot_ci = validate_required_ci(
+        snapshot["required_ci"], "platform_snapshot.required_ci", reviewed_head
+    )
+    snapshot_ci_names = {item["name"] for item in snapshot_ci}
+    snapshot_policy = validate_required_ci_policy(
+        snapshot["required_ci_policy"],
+        "platform_snapshot.required_ci_policy",
+        snapshot_ci_names,
+    )
+    if receipt_ci != snapshot_ci:
+        raise ExactHeadMergeReviewError(
+            "receipt.required_ci does not exactly match platform_snapshot.required_ci"
+        )
+    if receipt["required_ci_policy"] != snapshot_policy:
+        raise ExactHeadMergeReviewError(
+            "receipt.required_ci_policy does not exactly match platform_snapshot.required_ci_policy"
+        )
+    require_zero_integer(
+        snapshot["unresolved_review_threads"],
+        "platform_snapshot.unresolved_review_threads",
+    )
+    return repository, pr_number
+
+
+def validate_input(argument: str, stdin: object | None = None) -> tuple[str, int]:
+    """Read and validate a single explicit offline evidence input."""
+    return validate_payload(load_json(read_input(argument, stdin)))
+
+
+def main(argv: list[str] | None = None) -> int:
+    arguments = sys.argv[1:] if argv is None else argv
+    if len(arguments) != 1:
+        print(
+            "validate-exact-head-merge-review.py requires exactly one JSON input path or '-'",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        repository, pr_number = validate_input(arguments[0])
+    except (OSError, ExactHeadMergeReviewError) as exc:
+        print(f"exact-head merge-review validation failed: {exc}", file=sys.stderr)
+        return 1
+    print(f"exact-head merge-review evidence valid for {repository} PR #{pr_number}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -65,3 +65,21 @@ Do not sync local runtime state, credential files, application state, logs, sess
 - A release-sensitive review must classify source/package version, candidate
   preparation, publication truth, active guidance, and historical records. It
   must not pass solely because tests succeed.
+
+## Exact-Head Merge Review
+
+- Follow `policies/exact-head-merge-review-contract.md` after a pull request
+  exists and before reporting merge readiness.
+- Pre-commit code, documentation, deep, and security review evidence may be
+  reused when its revision and scope still match; its verdict cannot replace
+  exact-head Merge Review.
+- Bind Merge Review to the repository, PR, exact base/head/merge-base SHAs,
+  diff identity, hosted CI, findings, review threads, and platform receipt
+  readback. Any relevant drift invalidates readiness.
+- After a fix, rerun code review and Security Diff Scan proportionally to the
+  affected boundary, but always repeat complete base-to-head exact-head Merge
+  Review for a changed PR head.
+- Clean review and scan results may advance automatically to later read-only or
+  already-authorized stages. Stop only at a real decision, authority,
+  environment, permission, risk, destructive-action, or unauthorized
+  external-write boundary.

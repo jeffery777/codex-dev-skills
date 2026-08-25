@@ -56,6 +56,11 @@ Before merge, re-check:
 
 Do not merge until the required merge review has no unresolved blocking findings and the maintainer has authorized the merge.
 
+For an existing PR, require `exact-head-merge-review/v1` evidence bound to the
+current repository, PR, base/head/merge-base, diff, hosted CI, findings,
+threads, and platform receipt readback. Pre-commit review evidence is reusable
+input only; its verdict cannot satisfy merge readiness.
+
 ## Release Or Tag Gate
 
 Before creating a tag or publishing a release, report:

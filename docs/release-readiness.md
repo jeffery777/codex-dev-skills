@@ -559,6 +559,13 @@ as a substitute for repairing or completing platform state.
 
 ## PR Readiness Summary
 
+For an existing PR, apply `policies/exact-head-merge-review-contract.md` before
+reporting merge readiness. Pre-commit review evidence is input only. Require
+successful exact-head hosted CI, current base/head/merge-base and diff identity,
+closed findings, zero unresolved threads, and an authorized platform-visible
+receipt that was read back and validated as `exact-head-merge-review/v1`.
+Repeat the complete Merge Review whenever the PR head changes.
+
 A release or PR readiness handoff should include:
 
 - changed files and why they are in scope;

@@ -30,6 +30,12 @@ plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/release-state-contract.md`
 after filesystem installation.
 
+Exact-head merge review: after PR creation, follow
+`../../policies/exact-head-merge-review-contract.md` relative to this skill in
+source or plugin checkouts, or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/exact-head-merge-review-contract.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when the user delegates an end-to-end project goal and expects the agent to act as delivery owner until the next real human gate.
@@ -57,7 +63,13 @@ For a single clear implementation task, prefer `implementation-slice`. Use `proj
    assessment only; it cannot auto-create or auto-roll over a task.
 9. Sync docs or status files when that is part of the repo policy.
 10. Prepare PR readiness evidence, but do not commit, push, create PRs, publish, merge, deploy, post platform comments, submit reviews, or perform destructive actions without the required human gate.
-11. When assessment selects fresh rollover preparation, require the versioned
+11. After an authorized PR creation or head update, treat pre-commit review
+    verdicts as implementation evidence only. Advance through `PR_CREATED`,
+    exact-head CI, exact-head Merge Review, authorized receipt publication and
+    readback, and formal merge readiness without inserting extra human stops
+    between read-only or already-authorized clean stages. Any drift or finding
+    returns to the earliest affected review state.
+12. When assessment selects fresh rollover preparation, require the versioned
     durable checkpoint, same repository/objective, one destination writer,
     confirmed source stop-writing, lineage/idempotency/anti-recursion, and the
     runtime adapter's separate mutation gate. The source delivery owner stops
@@ -72,6 +84,12 @@ continue, and reuse the original worker for bounded follow-up when safe.
 ## Stop Conditions
 
 Stop for product ambiguity, source-of-truth conflict, broad scope expansion, external writes, destructive actions, material security or data risk, or insufficient verification for high-risk changes.
+
+Do not stop merely because one internal phase completed. When review and scan
+results are clean, continue to the next safe read-only or already-authorized
+phase. After a fix, choose proportional code/security re-review from the
+affected boundary; always repeat complete exact-head Merge Review for a changed
+PR head.
 
 ## Output
 

@@ -26,6 +26,7 @@ groups:
       - source: policies/code-mode-tool-orchestration-policy.md
       - source: policies/context-continuity-policy.md
       - source: policies/delivery-drift-control-policy.md
+      - source: policies/exact-head-merge-review-contract.md
       - source: policies/human-gate-policy.md
       - source: policies/github-control-plane-policy.md
       - source: policies/model-selection-policy.md
@@ -37,6 +38,7 @@ groups:
       - source: policies/review-artifact-policy.md
       - source: policies/runtime-compatibility-policy.md
       - source: policies/security-review-escalation-policy.md
+      - source: scripts/validate-exact-head-merge-review.py
       - source: templates/orchestration/agent-task-brief.template.md
       - source: templates/orchestration/agent-routing-integration.template.yaml
       - source: templates/orchestration/closure-triage-overlay.template.yaml

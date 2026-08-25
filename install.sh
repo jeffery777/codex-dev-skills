@@ -852,6 +852,7 @@ group_templates() {
         policies/code-mode-tool-orchestration-policy.md \
         policies/context-continuity-policy.md \
         policies/delivery-drift-control-policy.md \
+        policies/exact-head-merge-review-contract.md \
         policies/github-control-plane-policy.md \
         policies/human-gate-policy.md \
         policies/model-selection-policy.md \
@@ -863,6 +864,7 @@ group_templates() {
         policies/review-artifact-policy.md \
         policies/runtime-compatibility-policy.md \
         policies/security-review-escalation-policy.md \
+        scripts/validate-exact-head-merge-review.py \
         templates/orchestration/agent-task-brief.template.md \
         templates/orchestration/agent-routing-integration.template.yaml \
         templates/orchestration/closure-triage-overlay.template.yaml \
