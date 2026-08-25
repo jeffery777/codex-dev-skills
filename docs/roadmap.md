@@ -45,6 +45,17 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
+- Issue #179 owns the v0.18.2 runtime-compatibility and repository-validation
+  de-duplication candidate. It records the precise `codex mcp-server`
+  deprecation boundary without treating external MCP client support,
+  connectors, or native Desktop tools as deprecated. It also adds a
+  fail-closed `--skip-unit-tests` validator mode and changes exact-head CI to
+  run all non-unit checks and evals first, followed by one complete unittest
+  discovery pass. Default validator behavior remains backward compatible and
+  validation coverage is not reduced. Treat this as a patch release because
+  it adds compatible guidance and CI orchestration without migration or
+  runtime/installer/security authority changes.
+
 - Issue #175 / PR #176 published the v0.18.1 post-release state-coherence patch
   at merge commit `b5cb03ae467222215f42c3081cad796ad3a2ecf3`. The annotated
   `v0.18.1` tag and non-draft, non-prerelease GitHub Release bind that exact

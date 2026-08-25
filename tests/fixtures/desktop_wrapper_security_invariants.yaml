@@ -18,7 +18,7 @@ sources:
       - "private Desktop runtime state"
       - "threadId for immediate creation or clientThreadId for queued creation"
   - id: "current-runtime-evidence"
-    path: "docs/codex-runtime-compatibility-evidence-2026-08-21.md"
+    path: "docs/codex-runtime-compatibility-evidence-2026-08-25.md"
     required_markers:
       - "These descriptions are current-session evidence, not a published stable schema"
       - "do not authorize a live session/thread mutation, sharing action,"
@@ -71,7 +71,7 @@ invariants:
           - "The retirement record preserves only non-executable historical context."
       - source_id: "current-runtime-evidence"
         markers:
-          - "`desktop_runtime_*` wrappers inactive."
+          - "`desktop_runtime_*` wrappers are inactive."
 cases:
   - id: "auth-or-permission-failure-stops"
     expected_outcomes:

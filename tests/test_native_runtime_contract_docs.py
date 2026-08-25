@@ -202,20 +202,25 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
 
     def test_latest_runtime_evidence_records_current_versions_and_schemas(self) -> None:
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-21.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-25.md")
 
         for expected in (
-            "0.149.0",
-            "26.818.22352",
-            "codex agents",
-            "codex queue",
-            "codex doctor --json",
-            "share_thread",
-            "skill model delegation",
-            "ChatGPT data controls",
+            "0.149.1",
+            "codex mcp-server",
+            "deprecated",
+            "not removed",
+            "Unknown",
+            "Codex app server",
+            "Codex SDK",
+            "codex mcp add",
+            "external MCP servers",
+            "native thread tools",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, evidence)
+
+        self.assertNotIn("all MCP server support is deprecated", evidence)
+        self.assertIn("No Desktop callable schema was re-read", evidence)
 
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-07-31.md").is_file()
@@ -228,6 +233,9 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         )
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-19.md").is_file()
+        )
+        self.assertTrue(
+            (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-25.md").is_file()
         )
 
     def test_cli_queue_and_desktop_share_preserve_runtime_layers(self) -> None:

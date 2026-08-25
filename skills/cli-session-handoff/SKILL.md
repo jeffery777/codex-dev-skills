@@ -51,6 +51,13 @@ prove that a specific session operation is supported, replace active public
 CLI help/schema inspection, or authorize app-server, remote-control, private
 runtime-state, or historical Desktop wrapper access.
 
+`codex mcp-server` is deprecated and is out of scope for this adapter: it
+exposed Codex itself as an MCP server, rather than controlling a saved CLI
+session. Its public migration boundary is Codex app server for product
+integrations or the Codex SDK for automation/CI; neither route authorizes this
+skill to start a daemon or make direct app-server calls. Codex's external MCP
+client configuration remains a separate supported surface.
+
 The automated `codex exec` and manual interactive-fork paths do not use
 interactive UI automation, Desktop `create_thread`, private session files,
 direct app-server or remote-control APIs, a caller-started daemon, or a

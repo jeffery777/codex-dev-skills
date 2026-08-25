@@ -13,8 +13,47 @@ fail() {
 }
 
 ok() {
+  if [[ "${UNIT_TEST_GROUP_SKIPPED:-false}" == true ]]; then
+    printf '[SKIP] embedded unit-test group: %s\n' "$*"
+    UNIT_TEST_GROUP_SKIPPED=false
+    return
+  fi
   printf '[OK] %s\n' "$*"
 }
+
+SKIP_UNIT_TESTS=false
+UNIT_TEST_GROUP_SKIPPED=false
+
+parse_args() {
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      --skip-unit-tests)
+        "$SKIP_UNIT_TESTS" && fail "duplicate option: $1"
+        SKIP_UNIT_TESTS=true
+        ;;
+      --)
+        fail "unexpected option: $1"
+        ;;
+      -*)
+        fail "unknown option: $1"
+        ;;
+      *)
+        fail "unexpected positional argument: $1"
+        ;;
+    esac
+    shift
+  done
+}
+
+run_unit_tests() {
+  if [[ "$SKIP_UNIT_TESTS" == true ]]; then
+    UNIT_TEST_GROUP_SKIPPED=true
+    return
+  fi
+  "$PROJECT_PYTHON" -m unittest "$@" >/dev/null
+}
+
+parse_args "$@"
 
 TMP_BASE="${TMPDIR:-/tmp}"
 case "$TMP_BASE" in
@@ -159,7 +198,7 @@ check_installer_catalog_consistency() {
 
 check_code_mode_tool_policy() {
   "$PROJECT_PYTHON" scripts/validate-code-mode-tool-policy.py
-  "$PROJECT_PYTHON" -m unittest tests.test_code_mode_tool_policy >/dev/null
+  run_unit_tests tests.test_code_mode_tool_policy
   ok "Code Mode tool policy references and isolated packaging contracts pass"
 }
 
@@ -252,109 +291,106 @@ check_loop_eval() {
 
 check_context_continuity() {
   "$PROJECT_PYTHON" scripts/eval-context-continuity.py >"$TMP_DIR/context-continuity-eval.json"
-  "$PROJECT_PYTHON" -m unittest \
-    tests.test_context_continuity \
-    tests.test_eval_context_continuity >/dev/null
+  run_unit_tests tests.test_context_continuity tests.test_eval_context_continuity
   ok "context continuity decisions, rollover guards, and cost/quality evals pass"
 }
 
 check_agent_profiles() {
   "$PROJECT_PYTHON" scripts/validate-agent-profiles.py >"$TMP_DIR/agent-profiles.json"
-  "$PROJECT_PYTHON" -m unittest tests.test_agent_profiles tests.test_installer_agent_profiles >/dev/null
+  run_unit_tests tests.test_agent_profiles tests.test_installer_agent_profiles
   ok "custom-agent profiles and isolated installer contracts pass"
 }
 
 check_agent_routing_eval() {
   "$PROJECT_PYTHON" scripts/eval-agent-routing.py >"$TMP_DIR/agent-routing-eval.json"
-  "$PROJECT_PYTHON" -m unittest tests.test_agent_routing tests.test_eval_agent_routing >/dev/null
+  run_unit_tests tests.test_agent_routing tests.test_eval_agent_routing
   ok "heterogeneous agent routing eval thresholds pass"
 }
 
 check_memory_contract() {
   "$PROJECT_PYTHON" scripts/eval-memory-contract.py >"$TMP_DIR/memory-contract-eval.json"
-  "$PROJECT_PYTHON" -m unittest tests.test_memory_contract tests.test_memoryctl tests.test_eval_memory_contract >/dev/null
+  run_unit_tests tests.test_memory_contract tests.test_memoryctl tests.test_eval_memory_contract
   ok "external memory contract, CLI, and eval thresholds pass"
 }
 
 check_operational_evidence_contract() {
   "$PROJECT_PYTHON" scripts/eval-operational-evidence.py >"$TMP_DIR/operational-evidence-eval.json"
-  "$PROJECT_PYTHON" -m unittest \
+  run_unit_tests \
     tests.test_operational_evidence \
     tests.test_evidencectl \
-    tests.test_eval_operational_evidence >/dev/null
+    tests.test_eval_operational_evidence
   ok "operational evidence contract, CLI, fixtures, and eval thresholds pass"
 }
 
 check_improvement_lineage_contract() {
   "$PROJECT_PYTHON" scripts/eval-improvement-lineage.py >"$TMP_DIR/improvement-lineage-eval.json"
-  "$PROJECT_PYTHON" -m unittest \
+  run_unit_tests \
     tests.test_improvement_lineage \
     tests.test_improvementctl \
     tests.test_eval_improvement_lineage \
-    tests.test_improvement_lineage_contract_docs >/dev/null
+    tests.test_improvement_lineage_contract_docs
   ok "improvement lineage and deterministic projection contracts pass"
 }
 
 check_improvement_proposal_contract() {
   "$PROJECT_PYTHON" scripts/eval-improvement-proposal.py >"$TMP_DIR/improvement-proposal-eval.json"
-  "$PROJECT_PYTHON" -m unittest \
+  run_unit_tests \
     tests.test_improvement_proposal \
     tests.test_proposalctl \
     tests.test_eval_improvement_proposal \
-    tests.test_improvement_proposal_contract_docs >/dev/null
+    tests.test_improvement_proposal_contract_docs
   ok "proposal-only evidence-to-proposal contracts pass"
 }
 
 check_candidate_evaluation_contract() {
   "$PROJECT_PYTHON" scripts/eval-candidate-evaluation.py >"$TMP_DIR/candidate-evaluation-eval.json"
-  "$PROJECT_PYTHON" -m unittest \
+  run_unit_tests \
     tests.test_candidate_evaluation \
     tests.test_evaluationctl \
     tests.test_eval_candidate_evaluation \
-    tests.test_candidate_evaluation_contract_docs >/dev/null
+    tests.test_candidate_evaluation_contract_docs
   ok "isolated candidate evaluation, replay, context, packet, and eval contracts pass"
 }
 
 check_memory_m0_contracts() {
   "$PROJECT_PYTHON" scripts/eval-memory-operation.py >"$TMP_DIR/memory-operation-eval.json"
   "$PROJECT_PYTHON" scripts/eval-memory-qualification.py >"$TMP_DIR/memory-qualification-eval.json"
-  "$PROJECT_PYTHON" -m unittest \
+  run_unit_tests \
     tests.test_memory_operation \
     tests.test_operationctl \
     tests.test_eval_memory_operation \
     tests.test_memory_qualification \
     tests.test_qualificationctl \
     tests.test_eval_memory_qualification \
-    tests.test_memory_m0_contract_docs >/dev/null
+    tests.test_memory_m0_contract_docs
   ok "Memory M0 operation authority, atomic receipt, zero-touch, and qualification contracts pass"
 }
 
 check_memory_m1_contracts() {
   "$PROJECT_PYTHON" scripts/eval-memory-sqlite.py >"$TMP_DIR/memory-sqlite-eval.json"
-  "$PROJECT_PYTHON" -m unittest \
+  run_unit_tests \
     tests.test_memory_sqlite \
     tests.test_sqlitectl \
     tests.test_eval_memory_sqlite \
-    tests.test_memory_sqlite_contract_docs >/dev/null
+    tests.test_memory_sqlite_contract_docs
   ok "Memory M1 SQLite/FTS5 reference adapter safety and conformance contracts pass"
 }
 
 check_loop_contract() {
-  "$PROJECT_PYTHON" -m unittest tests.test_loop_engineering_core tests.test_loopctl >/dev/null
+  run_unit_tests tests.test_loop_engineering_core tests.test_loopctl
   ok "loop engineering event, transition, migration, and CLI contracts pass"
 }
 
 check_native_runtime_contract() {
-  "$PROJECT_PYTHON" -m unittest \
+  run_unit_tests \
     tests.test_cli_session_handoff \
     tests.test_native_runtime_contract_docs \
-    tests.test_project_python >/dev/null
+    tests.test_project_python
   ok "native CLI/Desktop runtime adapter contracts pass"
 }
 
 check_desktop_wrapper_security_fixtures() {
-  "$PROJECT_PYTHON" -m unittest \
-    tests.test_desktop_wrapper_security_fixtures >/dev/null
+  run_unit_tests tests.test_desktop_wrapper_security_fixtures
   ok "wrapper-independent Desktop security invariants pass"
 }
 
@@ -365,9 +401,9 @@ check_plugin_package() {
 
 check_repository_guardrails() {
   "$PROJECT_PYTHON" scripts/validate-gitnexus-config.py >"$TMP_DIR/gitnexus-config.json"
-  "$PROJECT_PYTHON" -m unittest \
+  run_unit_tests \
     tests.test_gitnexus_config_guard \
-    tests.test_pr_issue_link >/dev/null
+    tests.test_pr_issue_link
   ok "GitNexus and pull request linkage repository guardrails pass"
 }
 

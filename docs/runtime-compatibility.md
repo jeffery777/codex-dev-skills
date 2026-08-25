@@ -7,7 +7,11 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only. See the maintained
-[2026-08-21 compatibility evidence](codex-runtime-compatibility-evidence-2026-08-21.md).
+[2026-08-25 compatibility evidence](codex-runtime-compatibility-evidence-2026-08-25.md).
+The 2026-08-25 update records the public deprecation of `codex mcp-server`;
+that command ran Codex as an MCP server and is distinct from Codex's MCP client
+configuration, connectors, and native Desktop task/thread tools. The Desktop
+callable table remains the separate 2026-08-21 point-in-time record.
 
 ## `shared`
 

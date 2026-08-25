@@ -30,11 +30,12 @@ All metadata reads are read-only and must be limited to what the configured runt
 A future adapter may use only these sources:
 
 - documented and configured APIs that are intentionally exposed for thread operations;
-- runtime-provided MCP or thread tools such as `create_thread`, `fork_thread`,
+- runtime-provided thread tools such as `create_thread`, `fork_thread`,
   `list_threads`, `list_archived_threads`, `read_thread`, `wait_threads`,
   `send_message_to_thread`, `handoff_thread`, `get_handoff_status`,
   `share_thread`, `open_in_codex`, `read_thread_terminal`, or equivalent named tools when they
-  are present in the active tool list;
+  are present in the active tool list. These native thread tools are not the
+  deprecated `codex mcp-server` command;
 - explicitly installed plugins or connectors that expose thread operations through a documented interface;
 - caller-supplied documented metadata, such as an active tool list excerpt, connector metadata, or runtime-reported schema that has already been gathered and supplied to the wrapper;
 - ordinary repository files and git commands for repo state, branch checks, prompts, and evidence.
@@ -44,7 +45,10 @@ Caller-supplied metadata is evidence to normalize, not permission to call the ca
 
 ## Contract Family Boundary
 
-Facts last verified on 2026-08-21. The current public product surface is the
+Desktop callable facts last verified on 2026-08-21. The separate 2026-08-25
+public CLI evidence records that `codex mcp-server` is deprecated; it does not
+change this Desktop contract or authorize a direct app-server integration. The
+current public product surface is the
 ChatGPT desktop app; this document retains `Desktop` as the compatibility label
 for its Codex task and thread control plane:
 

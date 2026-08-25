@@ -234,12 +234,15 @@ class PullRequestIssueLinkTests(unittest.TestCase):
         )
         self.assertGreaterEqual(workflow.count("rg --version"), 2)
         self.assertIn("PYTHONDONTWRITEBYTECODE: \"1\"", workflow)
-        self.assertIn("python -m unittest discover", workflow)
+        checks_index = workflow.index("./scripts/validate-repo.sh --skip-unit-tests")
+        unit_index = workflow.index("python -m unittest discover")
+        self.assertLess(checks_index, unit_index)
+        self.assertEqual(1, workflow.count("./scripts/validate-repo.sh --skip-unit-tests"))
+        self.assertEqual(1, workflow.count("python -m unittest discover"))
         self.assertIn(
             'git switch --create ci-validation "$EXPECTED_HEAD_SHA"',
             workflow,
         )
-        self.assertIn("./scripts/validate-repo.sh", workflow)
 
         action_lines = [
             line.strip()

@@ -248,7 +248,7 @@ Disallowed tool use:
 - editing Codex Desktop local databases, logs, sessions, auth files, caches, app state, or other private runtime state;
 - using unpublished endpoints, scraping unpublished Desktop UI state, or reverse-engineered Desktop internals as a substitute for a thread tool;
 - starting app-server daemons, remote-control daemons, wrapper daemons, sidecars, or background services;
-- using experimental app-server thread endpoints directly.
+- using app-server thread endpoints directly, whether stable or experimental.
 
 Native thread operations use only exposed current callables after call-site
 validation. A repository-local helper script is not a thread-control path and

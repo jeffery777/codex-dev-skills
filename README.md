@@ -24,6 +24,15 @@ corrects active release guidance, traceability, version metadata, and
 drift-prevention contracts without changing shared, CLI, Desktop, or Memory
 runtime contracts, installer logic, target selection, installed payload
 behavior, or completion authority; installer receipt metadata is 0.18.1.
+The current development candidate is v0.18.2 through Issue #179. It refreshes
+the public Codex CLI/MCP compatibility boundary for the 2026-08-24
+`codex mcp-server` deprecation and adds a backward-compatible
+`--skip-unit-tests` validator mode so exact-head CI can keep all checks and one
+full discovery pass without rerunning the validator's 44-module focused
+subset. It does not remove general MCP client support, weaken repository
+validation, or change runtime, installer, security, data, or completion
+authority contracts. Installer receipt metadata advances to 0.18.2 for the
+candidate package.
 v0.18.0 published the Desktop Runtime
 Wrapper V1 retirement through Issue #174 / PR #173 at merge commit
 `3b789e2f9749f2643b6fe75397d22f6e21a71ce2`; the annotated `v0.18.0` tag and
@@ -1181,7 +1190,12 @@ The main thread remains responsible for integrating returned work, checking the 
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-08-21)](docs/codex-runtime-compatibility-evidence-2026-08-21.md).
+[Codex runtime compatibility evidence (2026-08-25)](docs/codex-runtime-compatibility-evidence-2026-08-25.md).
+It records that `codex mcp-server`, the command that exposed Codex itself as an
+MCP server, is deprecated but not removed in observed CLI 0.149.1. This does
+not deprecate Codex's external MCP client configuration, connectors, or native
+Desktop task/thread tools; the Desktop callable table remains separate
+2026-08-21 point-in-time evidence.
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 Desktop Runtime Wrapper V1 is retired and provides no runnable or importable
@@ -1302,7 +1316,8 @@ Shared orchestration templates include loop engineering specs, repo-owned loop s
 - [Desktop project delivery](examples/desktop-project-delivery.md)
 
 See `docs/roadmap.md` for the near-term public roadmap.
-`docs/release-notes-v0.18.1.md` contains the current v0.18.1 release notes, preserved as the point-in-time release-candidate record for the published release;
+`docs/release-notes-v0.18.2.md` contains the current v0.18.2 release notes candidate;
+`docs/release-notes-v0.18.1.md` is preserved as the point-in-time release-candidate record for the published v0.18.1 release;
 `docs/release-notes-v0.18.0.md`, `docs/release-notes-v0.17.1.md`, `docs/release-notes-v0.17.0.md`, `docs/release-notes-v0.16.3.md`, `docs/release-notes-v0.16.2.md`, `docs/release-notes-v0.16.0.md`, `docs/release-notes-v0.15.1.md`, and `docs/release-notes-v0.15.0.md` record published releases;
 `docs/release-notes-v0.14.2.md`, `docs/release-notes-v0.14.1.md`, `docs/release-notes-v0.14.0.md`, `docs/release-notes-v0.13.0.md`, `docs/release-notes-v0.12.1.md`,
 `docs/release-notes-v0.12.0.md`, and
@@ -1468,18 +1483,34 @@ Run the repository hygiene check before proposing a release or PR:
 ./scripts/project-python --version
 ./scripts/project-python -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'
 ./scripts/validate-repo.sh
-./scripts/project-python scripts/eval-loop-engineering.py
-./scripts/project-python scripts/eval-context-continuity.py
-./scripts/project-python scripts/eval-agent-routing.py
-./scripts/project-python scripts/eval-memory-contract.py
-./scripts/project-python scripts/eval-operational-evidence.py
-./scripts/project-python -m unittest discover -s tests -p 'test_*.py'
 ```
 
 This validates catalog/release consistency, required skill metadata, runtime
 labels, symlink safety, structured loop YAML, event/transition behavior,
-workflow eval thresholds, and public hygiene checks. PyYAML is the only Python
-runtime dependency and is required by the structured ledger commands.
+workflow eval thresholds, the maintained focused unit groups, and public
+hygiene checks. The zero-argument command remains backward compatible and
+includes all direct eval acceptance scripts.
+
+When a full unittest discovery pass is also required, avoid rerunning the
+validator's focused unit groups:
+
+```bash
+./scripts/validate-repo.sh --skip-unit-tests
+./scripts/project-python -m unittest discover -s tests -p 'test_*.py'
+```
+
+`--skip-unit-tests` omits only the embedded unit-test groups; hygiene,
+catalog/installer/version consistency, plugin parity, validators, and direct
+eval acceptance checks still run. It is the CI orchestration mode, not a
+weaker structural check. Unknown, duplicate, extra, and positional arguments
+fail before validation begins. Ordinary documentation or contract changes may
+use focused tests plus this checks-only orchestration and rely on exact-head CI
+for full discovery. Runtime, installer, security, and release-sensitive
+changes should run the checks-only orchestration and one full discovery pass
+both locally and in exact-head CI.
+
+PyYAML is the only Python runtime dependency and is required by the structured
+ledger commands.
 The repository pins Python 3.12.9 with `.python-version`.
 `scripts/project-python` selects `CODEX_PROJECT_PYTHON`, a repository `.venv`,
 `pyenv`, or an already-correct `python3`, in that order, and rejects a version
