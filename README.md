@@ -1145,6 +1145,15 @@ Re-check closure evidence, rollback path, security/privacy, migration safety, an
 
 The deep result is still review evidence, not merge authorization.
 
+After a PR exists, follow the
+[exact-head Merge-Review contract](policies/exact-head-merge-review-contract.md).
+Pre-commit review evidence may be reused when its revision and scope still
+apply, but its verdict cannot replace PR-bound Merge Review. Merge readiness
+requires exact repository/PR/base/head/merge-base/diff identity, successful
+hosted CI, closed findings, zero unresolved threads, and a platform-visible
+receipt that was read back for the current head. Any relevant drift invalidates
+the receipt.
+
 Every ready-for-review pull request must also contain a standalone closing
 reference to an open Issue in this repository, for example:
 
@@ -1165,7 +1174,14 @@ Use merge-readiness-gate for main..HEAD.
 Check the plan, diff, tests, and review evidence. Report READY, BLOCKED, or NEEDS HUMAN DECISION. Do not commit, push, merge, deploy, post platform comments, submit reviews, or perform other external writes unless explicitly authorized.
 ```
 
-The gate is a thin adapter and evidence-and-decision layer: it summarizes verification, review evidence, blocking decisions, residual risk, and the human approval boundary. It is not another merge review primitive and does not automatically authorize commit, push, merge, deploy, platform comments, review submissions, or other external writes. Before any authorized merge or platform-side mutation, confirm the head SHA has not changed and no blockers remain.
+The gate is a thin adapter and evidence-and-decision layer: it summarizes verification, review evidence, blocking decisions, residual risk, and the human approval boundary. It is not another merge review primitive and does not automatically authorize commit, push, merge, deploy, platform comments, review submissions, or other external writes. Before any authorized merge or platform-side mutation, repeat connector-first readback and confirm every exact-head receipt binding still matches and no blocker remains.
+
+After a remediation, code review and Security Diff Scan may rerun over the
+smallest affected boundary that proves closure, with an explicit rationale for
+reused evidence. A changed PR head always receives a new complete base-to-head
+Merge Review and platform receipt readback. Clean internal stages may advance
+without an additional human stop when the next action is read-only or already
+authorized.
 
 ### Codex Desktop Delegated Delivery
 

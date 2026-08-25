@@ -26,9 +26,12 @@ is shared.
 1. Confirm branch, base, head, changed files, and repository identity.
 2. Gather verification, review, docs, and implementation evidence.
 3. Run `merge-readiness-gate`.
-4. Return the shared gate's readiness summary without adding a second
+4. For an existing PR, preserve the shared
+   `exact-head-merge-review-contract.md` requirement. Pre-commit review
+   evidence cannot replace the PR-bound Merge Review verdict.
+5. Return the shared gate's readiness summary without adding a second
    Desktop-specific decision.
-5. Stop before committing, pushing, creating PRs, publishing, merging, deploying, posting platform comments, submitting reviews, or resolving platform threads unless the exact action is explicitly authorized.
+6. Stop before committing, pushing, creating PRs, publishing, merging, deploying, posting platform comments, submitting reviews, or resolving platform threads unless the exact action is explicitly authorized.
 
 ## Output
 

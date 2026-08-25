@@ -60,6 +60,11 @@ Result: `<passed | failed | skipped>`
 - Formal gate: `<none | code-review-gate | docs-review-gate | merge-readiness-gate | desktop-implementation-gate | desktop-pr-merge-gate>`
 - Findings:
   - `<finding-or-none>`
+- Exact-head merge-review state: `<not-applicable | PR_CREATED | EXACT_HEAD_CI_PASSED | EXACT_HEAD_MERGE_REVIEW_PASSED | RECEIPT_PLATFORM_READBACK_CONFIRMED | MERGE_READINESS_READY | HUMAN_MERGE_AUTHORIZED | REVIEW_REQUIRED>`
+- PR/base/head/merge-base/diff binding: `<evidence-or-none>`
+- Hosted CI and review-thread binding: `<evidence-or-none>`
+- Platform receipt ID/digest/readback: `<evidence-or-none>`
+- Pre-commit evidence reuse rationale: `<rationale-or-none>`
 
 ## Next Decision
 

@@ -18,6 +18,12 @@ plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/release-state-contract.md`
 after filesystem installation.
 
+Exact-head evidence: follow
+`../../policies/exact-head-merge-review-contract.md` relative to this skill in
+source or plugin checkouts, or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/exact-head-merge-review-contract.md`
+after filesystem installation when a PR exists or merge readiness is assessed.
+
 ## Purpose
 
 Use this skill for high-risk, release-sensitive, or policy-required merge review where routine `merge-review` is insufficient.
@@ -39,6 +45,12 @@ This is a deeper review primitive, not the formal branch readiness gate. Use `me
 ## Workflow
 
 Follow `merge-review`, then re-check evidence from source files and commands rather than relying only on summaries.
+
+Re-evaluate whether pre-commit review and Security Diff Scan evidence still
+applies to the exact head. After a fix, rerun those reviews over the smallest
+scope that proves the remediation and its affected boundaries, widening when
+their assumptions changed. A changed PR head always requires a new complete
+base-to-head Merge Review and platform receipt readback.
 
 For a release-sensitive change, classify every relevant assertion into the
 five release-state roles, run the offline release-state validator, and verify

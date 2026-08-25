@@ -94,6 +94,11 @@ evidence.
 
 ## Human Gates
 
+Exact-head Merge Review evidence is distinct from merge authorization. When a
+PR exists, list the required `exact-head-merge-review/v1` receipt and platform
+readback here. Pre-commit review evidence may be reused as input but cannot
+satisfy the Merge Review verdict.
+
 Stop before:
 
 - product ambiguity or source-of-truth conflict

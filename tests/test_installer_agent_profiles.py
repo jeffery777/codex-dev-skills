@@ -64,7 +64,15 @@ class AgentProfileInstallerTests(unittest.TestCase):
         destination = self.root / name
         destination.mkdir()
         shutil.copy2(INSTALLER, destination / "install.sh")
-        for item in ("agent-profiles", "docs", "policies", "skills", "templates", "workflows"):
+        for item in (
+            "agent-profiles",
+            "docs",
+            "policies",
+            "scripts",
+            "skills",
+            "templates",
+            "workflows",
+        ):
             shutil.copytree(ROOT / item, destination / item)
         return destination
 

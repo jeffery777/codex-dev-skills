@@ -31,4 +31,7 @@ Closes #ISSUE_NUMBER
 ## Review Evidence
 
 - [ ] Appropriate code or documentation review gate
-- [ ] Merge review will be anchored to the final head SHA before merge
+- [ ] Pre-commit review is treated as input evidence, not the Merge Review verdict
+- [ ] Exact-head Merge Review binds repository, PR, base/head/merge-base, diff, CI, findings, and threads
+- [ ] Platform-visible receipt was read back for the final head before merge readiness
+- [ ] Receipt states `merge_authorized: false`; merge authorization is separate

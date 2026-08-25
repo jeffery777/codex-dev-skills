@@ -1,8 +1,8 @@
 # Release Notes: v0.19.0
 
-Status: release candidate for Issue #181. Commit, push, pull request creation,
-merge, annotated tag creation, and GitHub Release publication remain separate
-human gates.
+Status: release candidate for Issue #181 with Issue #183 exact-head
+merge-review hardening. Commit, push, pull request creation, merge, annotated
+tag creation, and GitHub Release publication remain separate human gates.
 
 v0.19.0 is a backward-compatible workflow-contract release over v0.18.2. It
 defines a reusable, non-recursive release-state contract so successful
@@ -37,6 +37,15 @@ coherence patch.
 - Keeps tag creation and GitHub Release publication as separately authorized
   mutations. Repository tests and proposed platform payloads do not prove
   publication.
+- Issue #183 adds an exact-head Merge-Review contract after PR #182 exposed
+  that pre-commit deep review evidence could be described as if it were the
+  PR-bound Merge Review verdict. Pre-commit evidence remains reusable input,
+  but merge readiness now requires exact PR/base/head/merge-base/diff identity,
+  successful hosted CI, closed findings, zero unresolved threads, and
+  platform-visible receipt readback.
+- Remediation code review and Security Diff Scan may be proportional to the
+  affected boundary with recorded reuse rationale; every changed PR head still
+  requires a new complete base-to-head Merge Review.
 
 ## Offline Validation
 
@@ -83,5 +92,6 @@ non-prerelease GitHub Release remain later, separate human gates.
 ## Traceability
 
 - Issue #181: <https://github.com/jeffery777/codex-dev-skills/issues/181>
+- Issue #183: <https://github.com/jeffery777/codex-dev-skills/issues/183>
 - Base release: <https://github.com/jeffery777/codex-dev-skills/releases/tag/v0.18.2>
 - Compare after publication: <https://github.com/jeffery777/codex-dev-skills/compare/v0.18.2...v0.19.0>

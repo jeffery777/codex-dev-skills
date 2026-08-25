@@ -18,8 +18,10 @@ MANIFEST_PATH = ".codex-plugin/plugin.json"
 SHARED_FILES = {
     "policies/code-mode-tool-orchestration-policy.md",
     "policies/context-continuity-policy.md",
+    "policies/exact-head-merge-review-contract.md",
     "policies/github-control-plane-policy.md",
     "policies/release-state-contract.md",
+    "scripts/validate-exact-head-merge-review.py",
     "docs/native-runtime-capabilities.md",
 }
 SHARED_PREFIXES = ("templates/orchestration/",)
@@ -27,7 +29,17 @@ SHARED_PREFIXES = ("templates/orchestration/",)
 
 def tracked_files() -> set[str]:
     result = subprocess.run(
-        ["git", "ls-files", "-z", "--", "skills", "policies", "templates", "docs"],
+        [
+            "git",
+            "ls-files",
+            "-z",
+            "--",
+            "skills",
+            "policies",
+            "templates",
+            "docs",
+            "scripts",
+        ],
         cwd=ROOT,
         check=True,
         capture_output=True,

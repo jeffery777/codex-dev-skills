@@ -37,6 +37,14 @@ pull-request number, branch/head SHA when relevant, authentication context,
 and result that the connector path would have required. Report the fallback
 reason in the delivery or readiness evidence.
 
+For exact-head Merge Review, also follow
+`policies/exact-head-merge-review-contract.md`. Read the current PR base, head,
+merge base, diff identity, hosted CI, findings or reviews, unresolved threads,
+and platform-visible receipt through this control plane. Normalize that state
+for offline validation; do not let the validator access GitHub itself. Repeat
+the live readback immediately before an authorized merge because an earlier
+receipt or successful check can become stale.
+
 ## Mutation And Authority Boundary
 
 Connector-first does not authorize a GitHub write. Creating or editing Issues,

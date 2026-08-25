@@ -35,6 +35,13 @@ Good fits:
 - A docs sync after verified behavior changes.
 - A normal merge review or formal branch readiness gate after implementation, verification, and review evidence exist.
 
+For an existing PR, `policies/exact-head-merge-review-contract.md` prevents a
+pre-commit review verdict from satisfying merge readiness. Prior code, docs,
+deep, and security evidence can be reused only when its revision, scope, and
+assumptions still apply. The final Merge Review binds the exact PR base/head,
+merge base, diff, hosted CI, findings, review threads, and platform receipt
+readback. A changed head always invalidates the exact-head verdict.
+
 Poor fits without more human direction:
 
 - Open-ended product discovery.
@@ -113,6 +120,12 @@ git state, verification evidence, review evidence, and accepted platform state.
 For small or single-task work, prefer the smallest direct skill such as `implementation-slice`, `planning`, or `code-review`. `project-orchestrator` may still be used as a router, but it should downgrade a clear single task to the matching focused workflow instead of forcing a project-level delivery loop.
 
 Review primitives such as `code-review`, `docs-review`, and high-risk `code-review-deep` provide ordinary review evidence. Formal `code-review-gate` and `docs-review-gate` runs are reserved for commit readiness, PR readiness, merge readiness, or explicit repo-policy blocking decisions, and they do not replace maintainer approval.
+
+Clean internal review and scan stages may advance directly to the next safe
+read-only or already-authorized stage. After a fix, rerun code review and
+Security Diff Scan proportionally to the affected boundary, widening when the
+fix changes earlier assumptions. This autonomy does not remove external-write,
+permission, environment, material-risk, destructive-action, or decision gates.
 
 V2b external memory can accelerate bootstrap or exploration only after strict
 identity, provenance, digest, freshness, conflict, sensitivity, lifecycle, and
