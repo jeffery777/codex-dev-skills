@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import os
 import pathlib
+import re
 import shutil
 import stat
 import subprocess
@@ -14,6 +15,9 @@ from unittest import mock
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "install.sh"
+INSTALLER_VERSION = re.search(
+    r'^VERSION="([^"]+)"$', INSTALLER.read_text(encoding="utf-8"), re.MULTILINE
+).group(1)
 INSTALLER_ENV_OVERRIDES = (
     "CODEX_CLI",
     "CODEX_SKILLS_DIR",
@@ -1389,7 +1393,7 @@ class RuntimeGroupInstallerTests(unittest.TestCase):
                 self.assertEqual(local_edit, backup_marker.read_text(encoding="utf-8"))
                 state_dir = self.root / f"{home_name}-state" / "codex-dev-skills"
                 self.assertIn(
-                    '"version":"0.18.2","action":"update"',
+                    f'"version":"{INSTALLER_VERSION}","action":"update"',
                     (state_dir / "installed.jsonl").read_text(encoding="utf-8"),
                 )
                 if target_kind.startswith("profile-receipt"):
@@ -1679,7 +1683,7 @@ class RuntimeGroupInstallerTests(unittest.TestCase):
         )
         self.assertFalse(backup_b.exists())
         self.assertIn(
-            '"version":"0.18.2","action":"update"',
+            f'"version":"{INSTALLER_VERSION}","action":"update"',
             (self.root / "cross-state-A" / "codex-dev-skills" / "installed.jsonl").read_text(encoding="utf-8"),
         )
         self.assertFalse(

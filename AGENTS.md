@@ -46,3 +46,22 @@ Destructive actions require explicit confirmation. This includes deletion, force
 Do not depend on unpublished Codex Desktop internals. Desktop-only behavior must be labeled Desktop-only and should provide a CLI fallback when possible.
 
 Do not sync local runtime state, credential files, application state, logs, sessions, caches, SQLite databases, or machine-local config into this repository.
+
+## Release State
+
+- Follow `policies/release-state-contract.md` for release preparation and
+  release-sensitive review.
+- Treat `catalog.yaml` as the canonical offline source/package version; README
+  prose, roadmap prose, release-note status, tags, and Releases do not define
+  that local version.
+- Do not maintain tracked "current published version" or "current development
+  candidate" assertions. Verify current publication state from the annotated
+  tag and non-draft, non-prerelease GitHub Release metadata at the release gate.
+- Keep ordinary repository validation offline. It proves source/package parity
+  and candidate structure, not GitHub publication.
+- Preserve existing release notes as point-in-time records. Modify an existing
+  note only for an independently verified factual or safety defect with an
+  explicit in-scope justification.
+- A release-sensitive review must classify source/package version, candidate
+  preparation, publication truth, active guidance, and historical records. It
+  must not pass solely because tests succeed.

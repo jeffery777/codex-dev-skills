@@ -9,6 +9,8 @@ import subprocess
 import tempfile
 import unittest
 
+import yaml
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PACKAGE_ROOT = ROOT / "plugin" / "codex-dev-skills"
@@ -31,9 +33,10 @@ INSTALLER_ENV_OVERRIDES = (
 class PluginPackagingTests(unittest.TestCase):
     def test_manifest_packages_the_generated_skill_tree(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        catalog = yaml.safe_load((ROOT / "catalog.yaml").read_text(encoding="utf-8"))
 
         self.assertEqual("codex-dev-skills", manifest["name"])
-        self.assertEqual("0.18.2", manifest["version"])
+        self.assertEqual(catalog["version"], manifest["version"])
         self.assertEqual("./skills/", manifest["skills"])
         self.assertTrue((PACKAGE_ROOT / "skills" / "project-delivery" / "SKILL.md").is_file())
         self.assertFalse((ROOT / ".codex-plugin" / "plugin.json").exists())

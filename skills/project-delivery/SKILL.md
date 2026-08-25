@@ -24,6 +24,12 @@ or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/context-continuity-policy.md`
 after filesystem installation.
 
+Release state: for release preparation or release-sensitive review, follow
+`../../policies/release-state-contract.md` relative to this skill in source or
+plugin checkouts, or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/release-state-contract.md`
+after filesystem installation.
+
 ## Purpose
 
 Use this skill when the user delegates an end-to-end project goal and expects the agent to act as delivery owner until the next real human gate.
@@ -33,6 +39,9 @@ For a single clear implementation task, prefer `implementation-slice`. Use `proj
 ## Workflow
 
 1. Bootstrap from repo instructions, current git state, plans, specs, docs, status files, and review artifacts.
+   For release-sensitive work, classify source/package version, candidate
+   preparation, publication truth, active guidance, and historical records
+   before proposing a mutation or readiness result.
 2. Apply `project-orchestrator` routing rules to classify the objective, select the next phase, and decide whether to proceed, hand off, or stop.
 3. Produce or update a plan when the source of truth is incomplete.
 4. Implement in small slices using `implementation-slice` semantics. When

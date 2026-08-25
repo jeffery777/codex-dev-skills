@@ -51,9 +51,7 @@ class ImprovementLineageContractDocsTests(unittest.TestCase):
             all(value is False for value in profile["authority_invariants"].values())
         )
 
-    def test_current_release_metadata_is_aligned(self):
-        self.assertIn('VERSION="0.18.2"', read("install.sh"))
-        self.assertIn('version: "0.18.2"', read("catalog.yaml"))
+    def test_v0150_historical_release_metadata_remains(self):
         self.assertIn(
             "docs/release-notes-v0.15.0.md",
             read("README.md"),
