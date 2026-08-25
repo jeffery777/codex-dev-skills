@@ -12,6 +12,12 @@ the active callable schemas, the public Codex documentation, and the maintained
 must still inspect the capability exposed by its active runtime instead of
 assuming that a recorded schema is permanently available.
 
+The [2026-08-25 compatibility evidence](codex-runtime-compatibility-evidence-2026-08-25.md)
+adds a public CLI/MCP boundary only: `codex mcp-server` is deprecated, remains
+present in observed CLI 0.149.1, and has no published removal date. This does
+not re-verify the Desktop callable table, nor does it deprecate Codex's MCP
+client configuration, connectors, or native thread tools.
+
 The custom-agent configuration facts below were last verified on 2026-07-11
 from the public Codex subagent documentation. Runtime model availability and
 reasoning support remain session capabilities and must still be preflighted.

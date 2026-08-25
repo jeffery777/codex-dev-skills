@@ -241,7 +241,7 @@ Repo-level instruction files should define project-specific source of truth:
 
 Use `AGENTS.md` for durable instruction layering, and `AGENTS.override.md` only when a temporary override should take precedence without deleting the base file. Use Codex `.rules` files for command permission exceptions, not as a substitute for workflow policy or human gates.
 
-Runtime configuration remains outside these skills. Permission profiles, `codex exec` sandbox choices such as the default read-only automation posture, web search mode, MCP server setup, and project instruction discovery limits such as `project_doc_max_bytes` should be configured in Codex runtime settings or documented project setup. Skills may remind users to verify those settings, but they should not imply that installing this pack changes them.
+Runtime configuration remains outside these skills. Permission profiles, `codex exec` sandbox choices such as the default read-only automation posture, web search mode, external MCP server client configuration (for example `codex mcp` and runtime configuration), and project instruction discovery limits such as `project_doc_max_bytes` should be configured in Codex runtime settings or documented project setup. `codex mcp-server` was the separate deprecated command for exposing Codex itself as an MCP server. Skills may remind users to verify settings, but they should not imply that installing this pack changes them.
 
 In practice:
 

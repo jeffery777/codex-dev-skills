@@ -58,12 +58,12 @@ jobs:
           git switch --create ci-validation "$EXPECTED_HEAD_SHA"
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
 
-      - name: Run full unit suite
+      - name: Run repository checks without duplicate unit tests
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: ./scripts/validate-repo.sh --skip-unit-tests
+
+      - name: Run full unit suite once
         env:
           PYTHONDONTWRITEBYTECODE: "1"
         run: ./scripts/project-python -m unittest discover -s tests -p 'test_*.py'
-
-      - name: Run repository validation
-        env:
-          PYTHONDONTWRITEBYTECODE: "1"
-        run: ./scripts/validate-repo.sh

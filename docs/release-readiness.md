@@ -144,6 +144,19 @@ selection, installed payload behavior, or completion authority. The repository
 has no deployment target or publish/deploy workflow; deployment is therefore
 not applicable, and GitHub Release publication is not deployment evidence.
 
+For the v0.18.2 Issue #179 patch candidate, require the dated 2026-08-25
+runtime evidence to distinguish deprecated `codex mcp-server` hosting from
+supported external MCP client configuration, connectors, and native Desktop
+thread tools. Require the validator to accept only zero arguments or one
+`--skip-unit-tests`, reject every other argument before validation begins,
+preserve all non-unit checks and direct evals, and keep the zero-argument
+behavior backward compatible. Exact-head CI must run checks first and full
+unittest discovery exactly once. Record focused contracts, generated plugin
+parity, one local checks-only timing, one complete local discovery pass,
+independent review, and exact-head CI before merge. Treat v0.18.2 as a patch
+because it corrects current public runtime guidance and adds compatible
+validator/CI orchestration without migration or weaker coverage.
+
 For the v0.17.0 Issue #165 context-continuity candidate, require the default
 two-round threshold to trigger assessment only, with a configurable positive
 value and no automatic task mutation. Prove all five decisions, strict durable
@@ -425,6 +438,13 @@ Run the repository hygiene check:
 ```bash
 ./scripts/validate-repo.sh
 ```
+
+The zero-argument command remains the complete local validation path: it runs
+all repository checks, evals, and focused unit groups. CI avoids running those
+focused unit groups twice by running checks first with
+`./scripts/validate-repo.sh --skip-unit-tests`, then one full unittest
+discovery pass. `--skip-unit-tests` is only for that orchestration; unknown,
+duplicate, extra, and positional arguments fail before validation begins.
 
 For docs-only release readiness work, also run:
 
