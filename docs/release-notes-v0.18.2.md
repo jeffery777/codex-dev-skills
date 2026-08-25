@@ -55,8 +55,12 @@ introducing platform-specific fixtures.
 Existing zero-argument validator callers, installed skills, runtime adapters,
 installer target selection, security and data boundaries, and completion
 authority remain compatible. Installer receipt metadata advances to 0.18.2.
-Rollback is a source revert to the reviewed v0.18.1 tag; no data migration,
-deployment target, or destructive cleanup is involved.
+Revert this patch or its eventual merge commit to restore the exact starting
+source baseline `0a7b000d4fb55e25228d3329a02247540c341932`. The annotated
+`v0.18.1` tag remains the base release identity, not the source rollback
+target, because current main also contains later published-state coherence
+commits. No data migration, deployment target, or destructive cleanup is
+involved.
 
 ## Verification And Release Gate
 

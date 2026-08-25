@@ -177,11 +177,13 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
             "all 11",
             "44-module focused subset",
             "compare/v0.18.1...v0.18.2",
+            "0a7b000d4fb55e25228d3329a02247540c341932",
             "no deployment target or publish/deploy workflow",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, notes)
         self.assertRegex(notes, r"57\s+in this\s+candidate")
+        self.assertRegex(notes, r"not the source rollback\s+target")
         for document in ("README.md", "docs/roadmap.md", "docs/release-readiness.md"):
             with self.subTest(document=document):
                 text = " ".join(read(document).split())
