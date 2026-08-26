@@ -166,6 +166,7 @@ jobs:
         id: collect
         env:
           EXACT_HEAD_GATE_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPOSITORY_READ_TOKEN: ${{ github.token }}
           RECEIPT_ID: ${{ inputs.receipt_id || '' }}
         run: |
           ./scripts/project-python scripts/collect-exact-head-merge-readiness.py \
@@ -179,6 +180,7 @@ jobs:
             --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             --expected-head "${{ matrix.target.head_sha }}" \
             --receipt-id "$RECEIPT_ID" \
+            --repository-read-token-env REPOSITORY_READ_TOKEN \
             --expected-app-id "${{ secrets.EXACT_HEAD_GATE_APP_ID }}" \
             --expected-app-slug "${{ steps.app-token.outputs.app-slug }}"
           if test -f "$RUNNER_TEMP/exact-head-merge-readiness.json"; then

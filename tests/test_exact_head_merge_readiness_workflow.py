@@ -31,6 +31,11 @@ class ExactHeadReadinessWorkflowTests(unittest.TestCase):
         self.assertEqual({"contents": "read", "pull-requests": "read"}, self.workflow["permissions"])
         self.assertIn("permission-checks: write", self.text)
         self.assertIn("permission-actions: read", self.text)
+        self.assertNotIn("permission-contents: read", self.text)
+        self.assertIn("REPOSITORY_READ_TOKEN: ${{ github.token }}", self.text)
+        self.assertIn(
+            "--repository-read-token-env REPOSITORY_READ_TOKEN", self.text
+        )
         self.assertNotIn("contents: write", self.text)
         self.assertNotIn("pull-requests: write", self.text)
 

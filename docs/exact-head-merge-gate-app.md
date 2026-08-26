@@ -47,6 +47,14 @@ that only trusted default-branch workflow code may use. Registration,
 installation, protected-environment configuration, and credential placement
 are independent human gates.
 
+Repository contents and compare reads use the workflow's separate read-only
+`GITHUB_TOKEN`, exposed to the collector only through
+`REPOSITORY_READ_TOKEN`. The dedicated App token is never used for those
+endpoints and does not receive `contents: read`. The workflow-level token has
+`contents: read` and `pull-requests: read`, cannot publish the dedicated
+check, and is not exposed to PR-controlled code. The collector fails closed if
+the two environment selectors or resolved token values are identical.
+
 For a single-maintainer repository, do not add an environment required-reviewer
 rule to this event-driven controller: doing so queues every relevant receipt or
 drift event behind manual deployment approval. Restrict deployment branches to

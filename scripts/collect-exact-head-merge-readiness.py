@@ -356,7 +356,14 @@ def require_unique_open_pr_for_head(client: GitHubClient, pr_number: int, head: 
         )
 
 
-def collect_upstream_checks(client: GitHubClient, pr_number: int, base: str, head: str, policy: dict[str, object]) -> list[dict[str, object]]:
+def collect_upstream_checks(
+    client: GitHubClient,
+    repository_read_client: GitHubClient,
+    pr_number: int,
+    base: str,
+    head: str,
+    policy: dict[str, object],
+) -> list[dict[str, object]]:
     result: list[dict[str, object]] = []
     for expected_raw in policy["required_upstream_workflows"]:  # type: ignore[union-attr]
         expected = validator.require_exact_fields(expected_raw, "policy.required_upstream_workflows[]", UPSTREAM_POLICY_FIELDS)
@@ -404,7 +411,12 @@ def collect_upstream_checks(client: GitHubClient, pr_number: int, base: str, hea
         workflow_path = str(expected["workflow_path"])
         encoded_path = "/".join(urllib.parse.quote(part, safe="") for part in workflow_path.split("/"))
         for revision in (base, head):
-            content = client.json("GET", client.repo_path(f"/contents/{encoded_path}?ref={revision}"))
+            content = repository_read_client.json(
+                "GET",
+                repository_read_client.repo_path(
+                    f"/contents/{encoded_path}?ref={revision}"
+                ),
+            )
             if not isinstance(content, dict) or content.get("sha") != expected["workflow_blob_sha"]:
                 raise ControlPlaneError(f"required upstream workflow {context!r} definition drifted at {revision}")
         item = {
@@ -591,14 +603,22 @@ def read_mergeable_pull(client: GitHubClient, pr_number: int) -> dict[str, objec
     raise ControlPlaneError("pull request mergeability remained indeterminate after bounded retry")
 
 
-def build_envelope(client: GitHubClient, pr_number: int, receipt_id: int, receipt_sequence: int, policy: dict[str, object], gate: dict[str, object]) -> dict[str, object]:
+def build_envelope(
+    client: GitHubClient,
+    repository_read_client: GitHubClient,
+    pr_number: int,
+    receipt_id: int,
+    receipt_sequence: int,
+    policy: dict[str, object],
+    gate: dict[str, object],
+) -> dict[str, object]:
     pull = read_mergeable_pull(client, pr_number)
     if not isinstance(pull, dict):
         raise ControlPlaneError("pull request response is invalid")
     base = validator.require_sha(pull.get("base", {}).get("sha") if isinstance(pull.get("base"), dict) else None, "pull.base.sha")
     head = validator.require_sha(pull.get("head", {}).get("sha") if isinstance(pull.get("head"), dict) else None, "pull.head.sha")
-    compare_path = client.repo_path(f"/compare/{base}...{head}")
-    comparison = client.json("GET", compare_path)
+    compare_path = repository_read_client.repo_path(f"/compare/{base}...{head}")
+    comparison = repository_read_client.json("GET", compare_path)
     try:
         merge_base = validator.require_sha(comparison["merge_base_commit"]["sha"], "compare.merge_base_commit.sha")  # type: ignore[index]
     except (KeyError, TypeError) as exc:
@@ -620,7 +640,9 @@ def build_envelope(client: GitHubClient, pr_number: int, receipt_id: int, receip
         int(policy["max_receipt_bytes"]),
         set(policy["trusted_receipt_author_associations"]),  # type: ignore[arg-type]
     )
-    upstream = collect_upstream_checks(client, pr_number, base, head, policy)
+    upstream = collect_upstream_checks(
+        client, repository_read_client, pr_number, base, head, policy
+    )
     owner, name = client.repository.split("/", 1)
     unresolved, threads_digest = collect_threads(client, owner, name, pr_number)
     findings_digest = canonical_digest({"findings": receipt.get("findings"), "dispositions": receipt.get("dispositions")})
@@ -673,7 +695,20 @@ def run(args: argparse.Namespace) -> dict[str, object] | None:
     token = os.environ.get(args.token_env)
     if not token:
         raise ControlPlaneError(f"{args.token_env} is required")
+    repository_read_token = os.environ.get(args.repository_read_token_env)
+    if not repository_read_token:
+        raise ControlPlaneError(f"{args.repository_read_token_env} is required")
+    if token == repository_read_token:
+        raise ControlPlaneError(
+            "dedicated App and repository-read tokens must be distinct"
+        )
     client = GitHubClient(args.repository, token, args.api_url, int(policy["max_api_response_bytes"]))
+    repository_read_client = GitHubClient(
+        args.repository,
+        repository_read_token,
+        args.api_url,
+        int(policy["max_api_response_bytes"]),
+    )
     live = client.json("GET", client.repo_path(f"/pulls/{pr_number}"))
     if not isinstance(live, dict) or not isinstance(live.get("head"), dict):
         raise ControlPlaneError("live pull request identity is unavailable")
@@ -727,10 +762,26 @@ def run(args: argparse.Namespace) -> dict[str, object] | None:
             raise ControlPlaneError("no current exact-head receipt is bound to this PR head")
         if args.receipt_id is not None and args.receipt_id != receipt_id:
             raise ControlPlaneError("requested receipt ID is not the authoritative current receipt")
-        first = build_envelope(client, pr_number, receipt_id, receipt_sequence, policy, gate)
+        first = build_envelope(
+            client,
+            repository_read_client,
+            pr_number,
+            receipt_id,
+            receipt_sequence,
+            policy,
+            gate,
+        )
         validator.validate_payload(first)
         confirm_gate_check(client, gate, first["platform_snapshot"]["head_sha"], external_id)  # type: ignore[index]
-        envelope = build_envelope(client, pr_number, receipt_id, receipt_sequence, policy, gate)
+        envelope = build_envelope(
+            client,
+            repository_read_client,
+            pr_number,
+            receipt_id,
+            receipt_sequence,
+            policy,
+            gate,
+        )
         validator.validate_payload(envelope)
         confirm_gate_check(client, gate, envelope["platform_snapshot"]["head_sha"], external_id)  # type: ignore[index]
         if stable_evidence_identity(first) != stable_evidence_identity(envelope):
@@ -766,6 +817,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--api-url", default="https://api.github.com")
     parser.add_argument("--token-env", default="EXACT_HEAD_GATE_TOKEN")
+    parser.add_argument(
+        "--repository-read-token-env", default="REPOSITORY_READ_TOKEN"
+    )
     parser.add_argument("--workflow-name", required=True)
     parser.add_argument("--workflow-run-id", required=True, type=int)
     parser.add_argument("--run-url", required=True)
@@ -789,6 +843,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--run-url must bind repository and workflow run ID")
     if args.expected_app_id < 1 or not args.expected_app_slug:
         parser.error("dedicated App identity must be explicit")
+    if args.token_env == args.repository_read_token_env:
+        parser.error("dedicated App and repository-read token selectors must differ")
     return args
 
 

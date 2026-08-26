@@ -41,6 +41,9 @@ authority.
   issues/read, actions/read, and checks/write permissions. Its credentials are
   restricted to protected trusted-workflow execution; fork PRs receive no
   credential-bearing PR-code execution path.
+- Uses the workflow's separate read-only `GITHUB_TOKEN` for repository
+  contents and compare reads, so the dedicated App does not need
+  `contents: read`.
 - Preserves ordinary offline validation without network or authentication
   dependency. GitHub state is read through the connector-first control plane,
   normalized, and then validated locally.

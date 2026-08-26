@@ -227,29 +227,58 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                         "path": ".github/workflows/repository-validation.yml",
                         "state": "active",
                     }
-                return {"sha": "393848fe55596c4e89969d94f6ba89ce523010d7"}
+                raise AssertionError(f"unexpected App-token endpoint: {path}")
 
         client = FakeClient()
-        result = control.collect_upstream_checks(client, 185, "a" * 40, head, policy)
+        repository_read_client = mock.Mock()
+        repository_read_client.repo_path.side_effect = (
+            lambda suffix: f"/repos/{client.repository}{suffix}"
+        )
+        repository_read_client.json.return_value = {
+            "sha": "393848fe55596c4e89969d94f6ba89ce523010d7"
+        }
+        result = control.collect_upstream_checks(
+            client, repository_read_client, 185, "a" * 40, head, policy
+        )
         self.assertEqual(head, result[0]["head_sha"])
         self.assertIn(f"head_sha={head}", client.collection_path)
         self.assertEqual(("workflow_runs", 5), client.assertions)
         self.assertEqual("exact-pr-head/v1", result[0]["run_name_contract"])
         self.assertEqual(f"Repository Validation PR #185 @ {head}", result[0]["run_display_title"])
         self.assertEqual("Repository Validation", result[0]["workflow_name"])
+        self.assertEqual(2, repository_read_client.json.call_count)
+        self.assertTrue(
+            all(
+                "/contents/" in call.args[1]
+                for call in repository_read_client.json.call_args_list
+            )
+        )
         with self.assertRaisesRegex(control.ControlPlaneError, "no run for the live PR head"):
-            control.collect_upstream_checks(FakeClient(), 186, "a" * 40, head, policy)
-        with self.assertRaisesRegex(control.ControlPlaneError, "not successful"):
             control.collect_upstream_checks(
-                FakeClient(conclusion=None), 185, "a" * 40, head, policy,
+                FakeClient(), repository_read_client, 186, "a" * 40, head, policy
             )
         with self.assertRaisesRegex(control.ControlPlaneError, "not successful"):
             control.collect_upstream_checks(
-                FakeClient(conclusion="failure"), 185, "a" * 40, head, policy,
+                FakeClient(conclusion=None),
+                repository_read_client,
+                185,
+                "a" * 40,
+                head,
+                policy,
+            )
+        with self.assertRaisesRegex(control.ControlPlaneError, "not successful"):
+            control.collect_upstream_checks(
+                FakeClient(conclusion="failure"),
+                repository_read_client,
+                185,
+                "a" * 40,
+                head,
+                policy,
             )
         with self.assertRaisesRegex(control.ControlPlaneError, "does not match policy"):
             control.collect_upstream_checks(
                 FakeClient(canonical_name="Impostor Workflow"),
+                repository_read_client,
                 185,
                 "a" * 40,
                 head,
@@ -270,6 +299,71 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(control.ControlPlaneError, "exactly this one open pull request"):
             control.require_unique_open_pr_for_head(client, 185, head)
+
+    def test_compare_identity_uses_only_repository_read_client(self) -> None:
+        base = "a" * 40
+        head = "b" * 40
+        merge_base = "c" * 40
+        policy = control.load_policy(
+            ROOT / ".github/exact-head-merge-readiness-policy.json"
+        )
+        app_client = mock.Mock()
+        app_client.repository = "jeffery777/codex-dev-skills"
+        app_client.repo_path.side_effect = (
+            lambda suffix: "/repos/jeffery777/codex-dev-skills" + suffix
+        )
+        app_client.json.return_value = {
+            "base": {"sha": base},
+            "head": {"sha": head},
+            "state": "open",
+            "draft": False,
+            "mergeable": True,
+        }
+        repository_read_client = mock.Mock()
+        repository_read_client.repo_path.side_effect = (
+            lambda suffix: "/repos/jeffery777/codex-dev-skills" + suffix
+        )
+        repository_read_client.json.return_value = {
+            "merge_base_commit": {"sha": merge_base}
+        }
+        receipt = valid_v2_payload()["receipt"]
+        with (
+            mock.patch.object(
+                control, "select_current_receipt", return_value=(321, 1)
+            ),
+            mock.patch.object(
+                control,
+                "get_receipt",
+                return_value=(
+                    receipt,
+                    321,
+                    "https://github.com/jeffery777/codex-dev-skills/pull/185#issuecomment-321",
+                ),
+            ),
+            mock.patch.object(control, "collect_upstream_checks", return_value=[]),
+            mock.patch.object(
+                control,
+                "collect_threads",
+                return_value=(0, control.canonical_digest([])),
+            ),
+        ):
+            envelope = control.build_envelope(
+                app_client,
+                repository_read_client,
+                185,
+                321,
+                1,
+                policy,
+                {},
+            )
+        self.assertEqual(merge_base, envelope["platform_snapshot"]["merge_base_sha"])
+        self.assertEqual(
+            "/repos/jeffery777/codex-dev-skills/compare/"
+            f"{base}...{head}",
+            repository_read_client.json.call_args.args[1],
+        )
+        self.assertEqual(1, app_client.json.call_count)
+        self.assertIn("/pulls/185", app_client.json.call_args.args[1])
 
     def test_bounded_page_rejects_pagination(self) -> None:
         client = control.GitHubClient("o/r", "token", "https://api.github.com", 1024)
@@ -324,6 +418,56 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                 control.parse_args(base + ["--run-url", "https://github.com/o/r/actions/runs/123", "--api-url", "https://example.com"])
             with self.assertRaises(SystemExit):
                 control.parse_args(base + ["--run-url", "https://github.com/other/r/actions/runs/123"])
+            with self.assertRaises(SystemExit):
+                control.parse_args(
+                    base
+                    + [
+                        "--run-url",
+                        "https://github.com/o/r/actions/runs/123",
+                        "--token-env",
+                        "SHARED_TOKEN",
+                        "--repository-read-token-env",
+                        "SHARED_TOKEN",
+                    ]
+                )
+
+    def test_run_rejects_identical_token_values_before_api_access(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            event = root / "event.json"
+            event.write_text(
+                '{"pull_request":{"number":185}}', encoding="utf-8"
+            )
+            args = control.parse_args([
+                "--repository", "jeffery777/codex-dev-skills",
+                "--event-path", str(event),
+                "--output", str(root / "out.json"),
+                "--policy", str(
+                    ROOT / ".github/exact-head-merge-readiness-policy.json"
+                ),
+                "--workflow-name", "Exact-Head Merge Readiness Controller",
+                "--workflow-run-id", "900",
+                "--run-url",
+                "https://github.com/jeffery777/codex-dev-skills/actions/runs/900",
+                "--expected-head", "b" * 40,
+                "--expected-app-id", "100001",
+                "--expected-app-slug", "exact-head-gate",
+            ])
+            with (
+                mock.patch.dict(
+                    "os.environ",
+                    {
+                        "EXACT_HEAD_GATE_TOKEN": "same",
+                        "REPOSITORY_READ_TOKEN": "same",
+                    },
+                ),
+                mock.patch.object(control, "GitHubClient") as client_factory,
+            ):
+                with self.assertRaisesRegex(
+                    control.ControlPlaneError, "tokens must be distinct"
+                ):
+                    control.run(args)
+            client_factory.assert_not_called()
 
     def test_routed_head_drift_fails_before_gate_check_lookup_or_mutation(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -343,8 +487,16 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
             fake = mock.Mock()
             fake.json.return_value = {"head": {"sha": "c" * 40}}
             with (
-                mock.patch.dict("os.environ", {"EXACT_HEAD_GATE_TOKEN": "secret"}),
-                mock.patch.object(control, "GitHubClient", return_value=fake),
+                mock.patch.dict(
+                    "os.environ",
+                    {
+                        "EXACT_HEAD_GATE_TOKEN": "secret",
+                        "REPOSITORY_READ_TOKEN": "read-only",
+                    },
+                ),
+                mock.patch.object(
+                    control, "GitHubClient", return_value=fake
+                ) as client_factory,
                 mock.patch.object(control, "find_gate_check") as find,
                 mock.patch.object(control, "start_check") as start,
             ):
@@ -352,6 +504,10 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                     control.run(args)
             find.assert_not_called()
             start.assert_not_called()
+            self.assertEqual(
+                ["secret", "read-only"],
+                [call.args[1] for call in client_factory.call_args_list],
+            )
 
     def test_run_collects_twice_and_publishes_only_stable_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -385,7 +541,13 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
             second = json.loads(json.dumps(first))
             second["platform_snapshot"]["platform_readback_at"] = "2026-08-25T12:00:01Z"
             with (
-                mock.patch.dict("os.environ", {"EXACT_HEAD_GATE_TOKEN": "secret"}),
+                mock.patch.dict(
+                    "os.environ",
+                    {
+                        "EXACT_HEAD_GATE_TOKEN": "secret",
+                        "REPOSITORY_READ_TOKEN": "read-only",
+                    },
+                ),
                 mock.patch.object(control, "GitHubClient", return_value=fake),
                 mock.patch.object(control, "find_gate_check", return_value=None),
                 mock.patch.object(control, "select_current_receipt", return_value=(321, 1)),
@@ -429,7 +591,13 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
             second = json.loads(json.dumps(first))
             second["platform_snapshot"]["receipt_id"] = 999
             with (
-                mock.patch.dict("os.environ", {"EXACT_HEAD_GATE_TOKEN": "secret"}),
+                mock.patch.dict(
+                    "os.environ",
+                    {
+                        "EXACT_HEAD_GATE_TOKEN": "secret",
+                        "REPOSITORY_READ_TOKEN": "read-only",
+                    },
+                ),
                 mock.patch.object(control, "GitHubClient", return_value=fake),
                 mock.patch.object(control, "find_gate_check", return_value=None),
                 mock.patch.object(control, "select_current_receipt", return_value=(321, 1)),
@@ -481,7 +649,13 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                 return {}
 
             with (
-                mock.patch.dict("os.environ", {"EXACT_HEAD_GATE_TOKEN": "secret"}),
+                mock.patch.dict(
+                    "os.environ",
+                    {
+                        "EXACT_HEAD_GATE_TOKEN": "secret",
+                        "REPOSITORY_READ_TOKEN": "read-only",
+                    },
+                ),
                 mock.patch.object(control, "GitHubClient", return_value=fake),
                 mock.patch.object(control, "find_gate_check", return_value={
                     "id": 901, "status": "completed", "conclusion": "success",

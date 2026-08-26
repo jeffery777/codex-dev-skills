@@ -134,6 +134,10 @@ permissions. Its credentials belong only to a protected environment usable by
 trusted default-branch workflow code. Fork PRs may receive the same metadata
 evaluation, but no PR-controlled code receives those credentials. A shared
 GitHub Actions identity is not an adequate trust source for this check.
+Repository contents and compare endpoints use the workflow's distinct
+read-only `GITHUB_TOKEN`; the dedicated App token must not receive
+`contents: read` or be used for those reads. The collector rejects identical
+token selectors or token values.
 
 GitHub atomically enforces that the dedicated check succeeds on the current
 head, strict up-to-date policy, and resolved review conversations. The
