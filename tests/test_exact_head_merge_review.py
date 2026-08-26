@@ -52,29 +52,10 @@ def valid_payload() -> dict[str, object]:
         "reviewed_diff_digest": range_digest,
         "receipt_authority": "advisory_review_evidence",
         "merge_authorized": False,
-        "findings": {
-            "must_fix_open": 0,
-            "should_fix_open": 0,
-            "nit_open": 0,
-        },
-        "dispositions": [
-            {
-                "finding_id": "R183-CR-001",
-                "severity": "MUST-FIX",
-                "disposition": "fixed",
-                "evidence": "commit dc4d8b7",
-            }
-        ],
+        "findings": {"must_fix_open": 0, "should_fix_open": 0, "nit_open": 0},
+        "dispositions": [{"finding_id": "R183-CR-001", "severity": "MUST-FIX", "disposition": "fixed", "evidence": "commit dc4d8b7"}],
         "residual_risk": "GitHub platform state remains subject to final live readback.",
-        "pre_commit_evidence": [
-            {
-                "kind": "code-review-deep",
-                "evidence_id": "deep-review-dc4d8b7",
-                "reviewed_content_digest": "e" * 64,
-                "result": "no_findings",
-                "applicability_rationale": "The final range retains the reviewed implementation boundary.",
-            }
-        ],
+        "pre_commit_evidence": [{"kind": "code-review-deep", "evidence_id": "deep-review-dc4d8b7", "reviewed_content_digest": "e" * 64, "result": "no_findings", "applicability_rationale": "The final range retains the reviewed implementation boundary."}],
         "required_ci": required_ci,
         "required_ci_policy": required_ci_policy,
     }
@@ -82,23 +63,115 @@ def valid_payload() -> dict[str, object]:
         "contract": "exact-head-merge-review/v1",
         "receipt": receipt,
         "platform_snapshot": {
+            "repository": "jeffery777/codex-dev-skills", "pr_number": 183,
+            "base_sha": BASE, "head_sha": HEAD, "merge_base_sha": MERGE_BASE,
+            "diff_digest": range_digest, "readback": {"source": "github", "confirmed": True},
+            "state": "open", "draft": False, "mergeable": True, "receipt_id": 123,
+            "receipt_url": "https://github.com/jeffery777/codex-dev-skills/pull/183#issuecomment-123",
+            "platform_readback_at": "2026-08-25T12:00:00Z",
+            "receipt_digest": review.canonical_receipt_digest(receipt),
+            "required_ci": required_ci, "required_ci_policy": required_ci_policy,
+            "unresolved_review_threads": 0,
+        },
+    }
+
+
+def valid_v2_payload() -> dict[str, object]:
+    findings = {"must_fix_open": 0, "should_fix_open": 0, "nit_open": 0}
+    dispositions: list[dict[str, object]] = []
+    threads_digest = review.canonical_digest([])
+    findings_digest = review.canonical_digest(
+        {"findings": findings, "dispositions": dispositions}
+    )
+    checks = [
+        {
+            "workflow_name": "Repository Validation",
+            "workflow_run_id": 456,
+            "workflow_attempt": 1,
+            "workflow_id": 12,
+            "workflow_path": ".github/workflows/repository-validation.yml",
+            "event": "pull_request",
+            "run_name_contract": "exact-pr-head/v1",
+            "run_display_title": f"Repository Validation PR #185 @ {HEAD}",
+            "workflow_blob_sha": "f" * 40,
+            "check_context": "Validate repository",
+            "head_sha": HEAD,
+            "conclusion": "success",
+            "details_url": "https://github.com/jeffery777/codex-dev-skills/actions/runs/456",
+        }
+    ]
+    ci_policy = {
+        "source": "repository_policy",
+        "reference": ".github/exact-head-merge-readiness-policy.json",
+        "required_workflows": [
+            {
+                "check_context": "Validate repository",
+                "workflow_name": "Repository Validation",
+                "workflow_id": 12,
+                "workflow_path": ".github/workflows/repository-validation.yml",
+                "event": "pull_request",
+                "run_name_contract": "exact-pr-head/v1",
+                "workflow_blob_sha": "f" * 40,
+            }
+        ],
+    }
+    range_identity_digest = review.canonical_range_identity_digest(
+        "jeffery777/codex-dev-skills", 185, BASE, HEAD, MERGE_BASE
+    )
+    receipt = {
+        "repository": "jeffery777/codex-dev-skills",
+        "pr_number": 185,
+        "receipt_sequence": 1,
+        "review_mode": "merge-review-deep",
+        "reviewed_base_sha": BASE,
+        "reviewed_head_sha": HEAD,
+        "reviewed_merge_base_sha": MERGE_BASE,
+        "reviewed_range_identity_digest": range_identity_digest,
+        "reviewed_review_threads_digest": threads_digest,
+        "reviewed_findings_digest": findings_digest,
+        "receipt_authority": "advisory_review_evidence",
+        "merge_authorized": False,
+        "findings": findings,
+        "dispositions": dispositions,
+        "residual_risk": "Platform state is re-read immediately before success.",
+        "pre_commit_evidence": [],
+        "required_ci": checks,
+        "required_ci_policy": ci_policy,
+    }
+    return {
+        "contract": "exact-head-merge-readiness/v2",
+        "receipt": receipt,
+        "platform_snapshot": {
             "repository": "jeffery777/codex-dev-skills",
-            "pr_number": 183,
+            "pr_number": 185,
             "base_sha": BASE,
             "head_sha": HEAD,
             "merge_base_sha": MERGE_BASE,
-            "diff_digest": range_digest,
+            "range_identity_digest": range_identity_digest,
             "readback": {"source": "github", "confirmed": True},
             "state": "open",
             "draft": False,
             "mergeable": True,
-            "receipt_id": 123,
-            "receipt_url": "https://github.com/jeffery777/codex-dev-skills/pull/183#issuecomment-123",
+            "receipt_id": 321,
+            "receipt_url": "https://github.com/jeffery777/codex-dev-skills/pull/185#issuecomment-321",
             "platform_readback_at": "2026-08-25T12:00:00Z",
             "receipt_digest": review.canonical_receipt_digest(receipt),
-            "required_ci": required_ci,
-            "required_ci_policy": required_ci_policy,
+            "required_ci": copy.deepcopy(checks),
+            "required_ci_policy": copy.deepcopy(ci_policy),
             "unresolved_review_threads": 0,
+            "review_threads_digest": threads_digest,
+            "findings_digest": findings_digest,
+        },
+        "gate": {
+            "workflow_name": "Exact-Head Merge Readiness Controller",
+            "workflow_run_id": 900,
+            "check_context": "Exact-Head Merge Readiness",
+            "check_run_id": 901,
+            "check_app_id": 100001,
+            "check_app_slug": "exact-head-gate",
+            "details_url": "https://github.com/jeffery777/codex-dev-skills/actions/runs/900",
+            "head_sha": HEAD,
+            "conclusion": "success",
         },
     }
 
@@ -119,6 +192,71 @@ class ExactHeadMergeReviewTests(unittest.TestCase):
         self.assertEqual(
             ("jeffery777/codex-dev-skills", 183), review.validate_payload(valid_payload())
         )
+
+    def test_v1_and_v2_contracts_are_explicitly_supported(self) -> None:
+        self.assertEqual(
+            ("jeffery777/codex-dev-skills", 183),
+            review.validate_payload(valid_payload()),
+        )
+        self.assertEqual(
+            ("jeffery777/codex-dev-skills", 185),
+            review.validate_payload(valid_v2_payload()),
+        )
+
+    def test_v2_separates_check_workflow_run_and_app_identities(self) -> None:
+        payload = valid_v2_payload()
+        payload["receipt"]["required_ci"][0]["workflow_run_id"] = 999  # type: ignore[index]
+        payload["receipt"]["required_ci"][0]["details_url"] = (  # type: ignore[index]
+            "https://github.com/jeffery777/codex-dev-skills/actions/runs/999"
+        )
+        payload["platform_snapshot"]["required_ci"] = copy.deepcopy(  # type: ignore[index]
+            payload["receipt"]["required_ci"]  # type: ignore[index]
+        )
+        payload["platform_snapshot"]["receipt_digest"] = review.canonical_receipt_digest(  # type: ignore[index]
+            payload["receipt"]  # type: ignore[index]
+        )
+        self.assertEqual(
+            ("jeffery777/codex-dev-skills", 185), review.validate_payload(payload)
+        )
+        payload["gate"]["check_app_id"] = 0  # type: ignore[index]
+        self.assert_invalid(payload, "gate.check_app_id must be a positive integer")
+
+    def test_v2_forbids_gate_self_dependency_and_all_drift(self) -> None:
+        payload = valid_v2_payload()
+        payload["receipt"]["required_ci"][0]["check_context"] = review.GATE_CONTEXT  # type: ignore[index]
+        self.assert_invalid(payload, "must not contain the readiness gate context")
+        for field in (
+            "base_sha", "head_sha", "merge_base_sha", "range_identity_digest",
+            "review_threads_digest", "findings_digest",
+        ):
+            with self.subTest(field=field):
+                payload = valid_v2_payload()
+                payload["platform_snapshot"][field] = (  # type: ignore[index]
+                    "e" * 40 if field.endswith("sha") else "e" * 64
+                )
+                self.assert_invalid(payload, "does not match")
+
+    def test_v2_receipt_and_gate_are_strict_and_fail_closed(self) -> None:
+        payload = valid_v2_payload()
+        payload["receipt"]["unexpected"] = True  # type: ignore[index]
+        self.assert_invalid(payload, "unknown critical field")
+        payload = valid_v2_payload()
+        payload["gate"]["conclusion"] = "neutral"  # type: ignore[index]
+        self.assert_invalid(payload, "gate.conclusion must equal 'success'")
+        payload = valid_v2_payload()
+        payload["platform_snapshot"]["unresolved_review_threads"] = 1  # type: ignore[index]
+        self.assert_invalid(payload, "unresolved_review_threads must be zero")
+        payload = valid_v2_payload()
+        payload["gate"]["details_url"] = "https://github.com/other/repository/actions/runs/900"  # type: ignore[index]
+        self.assert_invalid(payload, "gate.details_url does not bind repository")
+        payload = valid_v2_payload()
+        payload["receipt"]["required_ci"][0]["details_url"] = (  # type: ignore[index]
+            "https://github.com/other/repository/actions/runs/456"
+        )
+        self.assert_invalid(payload, "details_url does not bind repository")
+        payload = valid_v2_payload()
+        payload["receipt"]["receipt_sequence"] = review.MAX_RECEIPT_SEQUENCE + 1  # type: ignore[index]
+        self.assert_invalid(payload, "receipt.receipt_sequence must not exceed")
 
     def test_range_identity_digest_is_deterministic_and_not_caller_chosen(self) -> None:
         self.assertEqual(

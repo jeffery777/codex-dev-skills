@@ -94,10 +94,17 @@ For a PR merge readiness task:
 5. Reconcile local evidence with platform evidence and validate the normalized
    `exact-head-merge-review/v1` snapshot offline with
    `./scripts/project-python scripts/validate-exact-head-merge-review.py <snapshot.json>`.
+   When the repository configures hosted enforcement, also verify the
+   `exact-head-merge-readiness/v2` envelope and its dedicated-App
+   `Exact-Head Merge Readiness` check are attached to the live PR head. The
+   authoritative receipt comes from a complete strict JSON body; never use
+   Markdown scraping as the evidence contract.
 6. Post a Merge Review receipt only when the maintainer explicitly authorizes
    that platform write, then read the receipt back and bind its digest.
-7. Merge only when the maintainer explicitly authorizes merge, a final live
-   readback still matches every receipt binding, and no blockers remain.
+7. Merge only when the maintainer explicitly authorizes merge, required
+   dedicated-App readiness is successful, a final live readback still matches
+   every receipt and gate binding, and no blockers remain. The controller must
+   not execute PR-head code or include its own check in upstream required CI.
 
 ## Report Shape
 
@@ -110,6 +117,7 @@ GitHub workflow summary:
 - Local diff: matches PR changed-file list
 - Checks: no workflow runs reported
 - Review threads: no unresolved blockers
+- Exact-head gate: required only when configured; dedicated App identity verified
 - Recommended next action: post merge review comment, then merge if authorized
 - Human gate: platform write and merge require exact authorization
 ```

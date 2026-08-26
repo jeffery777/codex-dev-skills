@@ -35,8 +35,13 @@ This is the normal user-facing merge review entry point. It reports review evide
    plane. Reject missing, failing, stale, or head-mismatched evidence.
 5. Check that docs, migrations, and operational notes are updated when required.
 6. Produce an exact-head receipt, publish it only with authority, and read it
-   back before a formal gate reports merge readiness. Any relevant state drift
-   invalidates the receipt.
+   back before a formal gate reports merge readiness. Its authoritative body is
+   strict JSON, not scraped Markdown. Where configured, verify the dedicated
+   GitHub App's `Exact-Head Merge Readiness` v2 check is attached to the live
+   PR head and binds the same base/head/merge-base/range identity, CI, findings,
+   threads, receipt digest, and check identity. Native live-head and resolved-
+   conversation rules apply at merge time; other relevant drift invalidates
+   the hosted projection after the controller processes its event.
 7. Report readiness with evidence and residual risk. State explicitly that the
    receipt does not authorize merge.
 
@@ -47,5 +52,6 @@ This is the normal user-facing merge review entry point. It reports review evide
 - Non-blocking Findings
 - DoD Alignment
 - Verification Evidence
-- PR-bound exact-head evidence and platform receipt readback
+- PR-bound exact-head evidence, platform receipt readback, and configured
+  hosted-gate identity
 - Residual Risk

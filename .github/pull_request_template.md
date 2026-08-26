@@ -34,4 +34,6 @@ Closes #ISSUE_NUMBER
 - [ ] Pre-commit review is treated as input evidence, not the Merge Review verdict
 - [ ] Exact-head Merge Review binds repository, PR, base/head/merge-base, diff, CI, findings, and threads
 - [ ] Platform-visible receipt was read back for the final head before merge readiness
+- [ ] When configured, `Exact-Head Merge Readiness` succeeded on the final head from the dedicated GitHub App
+- [ ] The receipt is complete strict JSON with a matching digest; Markdown is not its evidence contract
 - [ ] Receipt states `merge_authorized: false`; merge authorization is separate

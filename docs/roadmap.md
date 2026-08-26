@@ -45,6 +45,14 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
+- Issue #185 defines the next platform-enforcement milestone for the
+  exact-head Merge-Review contract. It adds a trusted default-branch collector,
+  dedicated GitHub App check identity, strict JSON receipt, and canary-first
+  ruleset rollout so a PR cannot merge on a stale handoff or pre-commit review.
+  It preserves separate human gates for App setup, ruleset mutation and
+  activation, merge, tag, Release, and deployment; it does not enable
+  auto-merge or execute untrusted PR code in a privileged workflow.
+
 - The release-state contract separates offline source/package version,
   candidate preparation, GitHub publication truth, active guidance, and
   historical notes. Active roadmap items do not carry a mutable current-release

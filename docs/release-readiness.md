@@ -561,10 +561,22 @@ as a substitute for repairing or completing platform state.
 
 For an existing PR, apply `policies/exact-head-merge-review-contract.md` before
 reporting merge readiness. Pre-commit review evidence is input only. Require
-successful exact-head hosted CI, current base/head/merge-base and diff identity,
+successful exact-head hosted CI, current base/head/merge-base and range identity,
 closed findings, zero unresolved threads, and an authorized platform-visible
 receipt that was read back and validated as `exact-head-merge-review/v1`.
 Repeat the complete Merge Review whenever the PR head changes.
+
+Where a repository has configured platform enforcement, additionally require a
+successful dedicated-App `Exact-Head Merge Readiness` check validated as
+`exact-head-merge-readiness/v2`. Its trusted default-branch collector must
+attach the check to the live PR head without executing PR-head code. The strict
+JSON receipt, its digest, the upstream CI set, and check/App identity all bind
+the readiness result. GitHub natively blocks stale heads and unresolved
+conversations; relevant receipt/finding/range events reproject the check after
+controller processing and do not claim an atomic edit/merge transaction. The readiness check cannot satisfy its own
+upstream CI requirement. GitHub App setup, ruleset updates, and ruleset
+activation are separate human gates; ordinary offline validation remains
+network-independent.
 
 A release or PR readiness handoff should include:
 

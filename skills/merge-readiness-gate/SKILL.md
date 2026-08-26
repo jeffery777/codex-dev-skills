@@ -41,6 +41,11 @@ This gate is a thin adapter and evidence-and-decision layer around existing revi
 4. Require successful exact-head hosted CI, zero unresolved review threads,
    closed findings, a platform-visible receipt, and connector-first readback
    whose normalized `exact-head-merge-review/v1` evidence validates offline.
+   When configured, also require `Exact-Head Merge Readiness` from its
+   dedicated GitHub App, attached to the live PR head and validated as
+   `exact-head-merge-readiness/v2`; the upstream CI set cannot contain this
+   check. The receipt is supplied by a complete strict JSON body with a
+   canonical receipt digest, not a Markdown parsing convention.
    In source or plugin checkouts use
    `../../scripts/validate-exact-head-merge-review.py`; filesystem installation
    uses
@@ -50,8 +55,9 @@ This gate is a thin adapter and evidence-and-decision layer around existing revi
    roles separately from connector-read tag/Release publication truth; reject
    tracked mutable publication assertions and unjustified historical-note
    rewrites.
-6. Return `BLOCKED` when any receipt binding is missing or stale. Base/head,
-   diff, CI, finding, thread, or receipt drift invalidates `READY`.
+6. Return `BLOCKED` when any receipt or hosted-gate binding is missing or
+   stale. Base/head/merge-base, diff, CI, finding, thread, receipt, source-App,
+   or gate-run drift invalidates `READY`.
 7. Stop for final human approval before commit, push, merge, deploy, destructive actions, platform comments, review submissions, or external publication unless the user has explicitly authorized the exact action.
 8. Before any authorized merge or platform-side mutation, repeat live readback,
    confirm every receipt binding still matches, and verify no blocker remains.
@@ -60,7 +66,7 @@ This gate is a thin adapter and evidence-and-decision layer around existing revi
 
 - Gate Result: READY | BLOCKED | NEEDS HUMAN DECISION
 - Base and head
-- PR, diff, CI, thread, and platform receipt bindings
+- PR, diff, CI, thread, platform receipt, and configured hosted-gate bindings
 - Evidence reviewed
 - Blockers
 - Residual risk
