@@ -1,0 +1,4 @@
+exact-head-merge-readiness-canary/v1
+issue: 188
+purpose: qualify the hosted dedicated-App check on a real pull-request head
+merge: prohibited
