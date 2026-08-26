@@ -149,9 +149,13 @@ App-controlled merge path, which remains outside this contract's authority.
 The repository ruleset is the enforcement point. It must require pull
 requests, block deletion and non-fast-forward updates, require resolved review
 conversations, dismiss stale approvals after pushes, enable strict required
-checks, and require `Exact-Head Merge Readiness` bound to the dedicated App
-integration ID. Hosted CI is a policy-pinned input to the gate rather than a
-same-name shared-App merge predicate. It has no bypass actors. Because a single-owner repository can
+checks, preserve `Validate repository` and `Validate closing Issue` bound to
+their verified GitHub Actions integration, and require
+`Exact-Head Merge Readiness` bound to the dedicated App integration ID.
+Repository Validation is also a policy-pinned input to the gate; the separate
+closing-Issue check remains a native platform predicate so PR traceability
+cannot drift independently of a previously green readiness projection. The
+ruleset has no bypass actors. Because a single-owner repository can
 deadlock on self-approval, approval-count policy is a separate human decision;
 it must not be substituted for the App-backed exact-head check.
 

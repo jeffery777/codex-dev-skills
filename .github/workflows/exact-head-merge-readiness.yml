@@ -45,12 +45,15 @@ jobs:
                 '[{pr_number: .pull_request.number, head_sha: .pull_request.head.sha}]' \
                 "$GITHUB_EVENT_PATH")" ;;
             issue_comment)
-              jq -e '.issue.pull_request != null' "$GITHUB_EVENT_PATH" >/dev/null
-              pr_number="$(jq -er '.issue.number' "$GITHUB_EVENT_PATH")"
-              pr_targets="$(gh api \
-                -H 'Accept: application/vnd.github+json' \
-                "/repos/$GITHUB_REPOSITORY/pulls/$pr_number" \
-                --jq '[{pr_number: .number, head_sha: .head.sha}]')" ;;
+              if jq -e '.issue.pull_request != null' "$GITHUB_EVENT_PATH" >/dev/null; then
+                pr_number="$(jq -er '.issue.number' "$GITHUB_EVENT_PATH")"
+                pr_targets="$(gh api \
+                  -H 'Accept: application/vnd.github+json' \
+                  "/repos/$GITHUB_REPOSITORY/pulls/$pr_number" \
+                  --jq '[{pr_number: .number, head_sha: .head.sha}]')"
+              else
+                pr_targets='[]'
+              fi ;;
             workflow_run)
               head_sha="$(jq -er '.workflow_run.head_sha' "$GITHUB_EVENT_PATH")"
               workflow_id="$(jq -er '.workflow_run.workflow_id' "$GITHUB_EVENT_PATH")"

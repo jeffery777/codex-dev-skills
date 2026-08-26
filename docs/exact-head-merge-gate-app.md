@@ -208,6 +208,14 @@ integer and no other substitution. This is a preview, not mutation authority:
         "strict_required_status_checks_policy": true,
         "required_status_checks": [
           {
+            "context": "Validate repository",
+            "integration_id": 15368
+          },
+          {
+            "context": "Validate closing Issue",
+            "integration_id": 15368
+          },
+          {
             "context": "Exact-Head Merge Readiness",
             "integration_id": "<DEDICATED_APP_INTEGRATION_ID_FROM_CANARY>"
           }
@@ -222,6 +230,9 @@ At the ruleset human gate, reject the preview until the placeholder has become
 an integer and the complete live ruleset is re-read. Update the full payload
 with `PUT /repos/jeffery777/codex-dev-skills/rulesets/21035619`; do not patch a
 partial rule list that could drop deletion or non-fast-forward protection.
+The two existing contexts remain bound to the verified GitHub Actions
+integration `15368`; the canary-derived integration applies only to
+`Exact-Head Merge Readiness`.
 
 ## Verification
 

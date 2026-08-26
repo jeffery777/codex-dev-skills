@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import pathlib
 import re
 import unittest
@@ -10,6 +11,7 @@ import yaml
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github/workflows/exact-head-merge-readiness.yml"
 UPSTREAM_WORKFLOW = ROOT / ".github/workflows/repository-validation.yml"
+ROLLOUT_GUIDE = ROOT / "docs/exact-head-merge-gate-app.md"
 
 
 class ExactHeadReadinessWorkflowTests(unittest.TestCase):
@@ -65,6 +67,39 @@ class ExactHeadReadinessWorkflowTests(unittest.TestCase):
         self.assertIn('--expected-head "${{ matrix.target.head_sha }}"', self.text)
         self.assertIn("commits/$head_sha/pulls?per_page=100&page=$page", self.text)
         self.assertIn("commits/$head_sha/pulls?per_page=100&page=6", self.text)
+
+    def test_non_pr_issue_comments_are_successful_no_ops(self) -> None:
+        self.assertIn(
+            "if jq -e '.issue.pull_request != null' \"$GITHUB_EVENT_PATH\" >/dev/null; then",
+            self.text,
+        )
+        issue_comment_case = self.text.split("issue_comment)", 1)[1].split(
+            "workflow_run)", 1
+        )[0]
+        self.assertIn("else\n                pr_targets='[]'\n              fi", issue_comment_case)
+
+    def test_ruleset_preview_preserves_all_required_contexts(self) -> None:
+        guide = ROLLOUT_GUIDE.read_text(encoding="utf-8")
+        payloads = [
+            json.loads(body)
+            for body in re.findall(r"```json\n(.*?)\n```", guide, re.DOTALL)
+            if '"required_status_checks"' in body
+        ]
+        self.assertEqual(1, len(payloads))
+        rules = payloads[0]["rules"]
+        required = next(
+            rule["parameters"]["required_status_checks"]
+            for rule in rules
+            if rule["type"] == "required_status_checks"
+        )
+        self.assertEqual(
+            {
+                "Validate repository": 15368,
+                "Validate closing Issue": 15368,
+                "Exact-Head Merge Readiness": "<DEDICATED_APP_INTEGRATION_ID_FROM_CANARY>",
+            },
+            {item["context"]: item["integration_id"] for item in required},
+        )
 
     def test_upstream_validation_uses_trusted_definition_without_secrets(self) -> None:
         text = UPSTREAM_WORKFLOW.read_text(encoding="utf-8")
