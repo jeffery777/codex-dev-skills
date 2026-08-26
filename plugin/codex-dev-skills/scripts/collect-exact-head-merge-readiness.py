@@ -362,6 +362,25 @@ def collect_upstream_checks(client: GitHubClient, pr_number: int, base: str, hea
         expected = validator.require_exact_fields(expected_raw, "policy.required_upstream_workflows[]", UPSTREAM_POLICY_FIELDS)
         context = expected["check_context"]
         workflow_id = validator.require_positive_integer(expected["workflow_id"], f"workflow {context}.workflow_id")
+        workflow_definition = client.json(
+            "GET", client.repo_path(f"/actions/workflows/{workflow_id}"),
+        )
+        if not isinstance(workflow_definition, dict):
+            raise ControlPlaneError(f"workflow definition for {context!r} is incomplete")
+        workflow_identity = {
+            "id": workflow_definition.get("id"),
+            "name": workflow_definition.get("name"),
+            "path": workflow_definition.get("path"),
+            "state": workflow_definition.get("state"),
+        }
+        expected_workflow_identity = {
+            "id": workflow_id,
+            "name": expected["workflow_name"],
+            "path": expected["workflow_path"],
+            "state": "active",
+        }
+        if workflow_identity != expected_workflow_identity:
+            raise ControlPlaneError(f"workflow definition for {context!r} does not match policy")
         event = urllib.parse.quote(str(expected["event"]), safe="")
         encoded_head = urllib.parse.quote(head, safe="")
         runs = client.json_object_array_pages(
@@ -389,7 +408,7 @@ def collect_upstream_checks(client: GitHubClient, pr_number: int, base: str, hea
             if not isinstance(content, dict) or content.get("sha") != expected["workflow_blob_sha"]:
                 raise ControlPlaneError(f"required upstream workflow {context!r} definition drifted at {revision}")
         item = {
-            "workflow_name": validator.require_string(workflow_run.get("name"), f"check {context}.workflow_name"),
+            "workflow_name": validator.require_string(workflow_definition.get("name"), f"check {context}.workflow_name"),
             "workflow_run_id": validator.require_positive_integer(workflow_run.get("id"), f"check {context}.workflow_run_id"),
             "workflow_attempt": validator.require_positive_integer(workflow_run.get("run_attempt"), f"check {context}.workflow_attempt"),
             "workflow_id": validator.require_positive_integer(workflow_run.get("workflow_id"), f"check {context}.workflow_id"),

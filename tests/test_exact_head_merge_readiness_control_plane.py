@@ -189,9 +189,14 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
         class FakeClient:
             repository = "jeffery777/codex-dev-skills"
 
-            def __init__(self, conclusion: str | None = "success") -> None:
+            def __init__(
+                self,
+                conclusion: str | None = "success",
+                canonical_name: str = "Repository Validation",
+            ) -> None:
                 self.collection_path = ""
                 self.conclusion = conclusion
+                self.canonical_name = canonical_name
 
             def repo_path(self, suffix: str) -> str:
                 return f"/repos/{self.repository}{suffix}"
@@ -204,7 +209,7 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                             "id": 456,
                             "run_attempt": 1,
                             "workflow_id": 330877463,
-                            "name": "Repository Validation",
+                            "name": f"Repository Validation PR #185 @ {head}",
                             "path": ".github/workflows/repository-validation.yml",
                             "event": "pull_request",
                             "display_title": f"Repository Validation PR #185 @ {head}",
@@ -215,6 +220,13 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                 ]
 
             def json(self, method: str, path: str, **kwargs: object) -> object:
+                if path.endswith("/actions/workflows/330877463"):
+                    return {
+                        "id": 330877463,
+                        "name": self.canonical_name,
+                        "path": ".github/workflows/repository-validation.yml",
+                        "state": "active",
+                    }
                 return {"sha": "393848fe55596c4e89969d94f6ba89ce523010d7"}
 
         client = FakeClient()
@@ -224,6 +236,7 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
         self.assertEqual(("workflow_runs", 5), client.assertions)
         self.assertEqual("exact-pr-head/v1", result[0]["run_name_contract"])
         self.assertEqual(f"Repository Validation PR #185 @ {head}", result[0]["run_display_title"])
+        self.assertEqual("Repository Validation", result[0]["workflow_name"])
         with self.assertRaisesRegex(control.ControlPlaneError, "no run for the live PR head"):
             control.collect_upstream_checks(FakeClient(), 186, "a" * 40, head, policy)
         with self.assertRaisesRegex(control.ControlPlaneError, "not successful"):
@@ -233,6 +246,14 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
         with self.assertRaisesRegex(control.ControlPlaneError, "not successful"):
             control.collect_upstream_checks(
                 FakeClient(conclusion="failure"), 185, "a" * 40, head, policy,
+            )
+        with self.assertRaisesRegex(control.ControlPlaneError, "does not match policy"):
+            control.collect_upstream_checks(
+                FakeClient(canonical_name="Impostor Workflow"),
+                185,
+                "a" * 40,
+                head,
+                policy,
             )
 
     def test_live_head_must_belong_to_exactly_one_open_pr(self) -> None:
