@@ -4,7 +4,7 @@
 # skill. routes_to is always a list and is required only for deprecated aliases.
 
 name: codex-dev-skills
-version: "0.19.0"
+version: "0.20.0"
 platforms:
   - codex
   - codex-desktop
@@ -39,6 +39,7 @@ groups:
       - source: policies/runtime-compatibility-policy.md
       - source: policies/security-review-escalation-policy.md
       - source: scripts/validate-exact-head-merge-review.py
+      - source: scripts/collect-exact-head-merge-readiness.py
       - source: templates/orchestration/agent-task-brief.template.md
       - source: templates/orchestration/agent-routing-integration.template.yaml
       - source: templates/orchestration/closure-triage-overlay.template.yaml

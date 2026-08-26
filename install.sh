@@ -19,7 +19,7 @@ DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
-VERSION="0.19.0"
+VERSION="0.20.0"
 
 case "$CODEX_DEV_SKILLS_TARGET" in
   legacy) DEFAULT_CODEX_SKILLS_DIR="$DEFAULT_CODEX_LEGACY_SKILLS_DIR" ;;
@@ -865,6 +865,7 @@ group_templates() {
         policies/runtime-compatibility-policy.md \
         policies/security-review-escalation-policy.md \
         scripts/validate-exact-head-merge-review.py \
+        scripts/collect-exact-head-merge-readiness.py \
         templates/orchestration/agent-task-brief.template.md \
         templates/orchestration/agent-routing-integration.template.yaml \
         templates/orchestration/closure-triage-overlay.template.yaml \

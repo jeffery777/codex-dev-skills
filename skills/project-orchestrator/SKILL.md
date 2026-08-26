@@ -51,8 +51,10 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
 - If review findings need closure, route fixes through the smallest primitive workflow: `implementation-slice` for code or mixed changes, `docs-update` for docs-only changes, then rerun the relevant review primitive or formal gate for the current stage.
 - If a PR exists, never route pre-commit review evidence directly to merge
   readiness. Require exact-head CI, PR-bound Merge Review, receipt publication
-  and readback, then the formal merge-readiness gate. A changed head invalidates
-  the exact-head verdict.
+  and readback, configured dedicated-App `Exact-Head Merge Readiness`, then
+  the formal merge-readiness gate. The hosted collector never runs PR-head
+  code and must target the live PR head; a changed head or other evidence drift
+  invalidates the exact-head verdict.
 - When a fix closes findings, rerun code review and Security Diff Scan over the
   smallest justified affected scope; widen when shared assumptions changed.
   Continue automatically after clean internal stages when the next action is

@@ -1149,10 +1149,22 @@ After a PR exists, follow the
 [exact-head Merge-Review contract](policies/exact-head-merge-review-contract.md).
 Pre-commit review evidence may be reused when its revision and scope still
 apply, but its verdict cannot replace PR-bound Merge Review. Merge readiness
-requires exact repository/PR/base/head/merge-base/diff identity, successful
+requires exact repository/PR/base/head/merge-base/range identity, successful
 hosted CI, closed findings, zero unresolved threads, and a platform-visible
 receipt that was read back for the current head. Any relevant drift invalidates
 the receipt.
+
+Repositories that opt into platform enforcement also require the dedicated-App
+`Exact-Head Merge Readiness` check. Its trusted default-branch collector binds
+the live PR head, base/merge-base/range identity, upstream CI, findings,
+threads, strict
+JSON receipt digest, and check identity without executing untrusted PR code.
+GitHub natively enforces live-head success, strict updates, and resolved
+conversations; receipt and finding drift is reprojected after a relevant event
+is processed rather than atomically with the Merge click. The check cannot
+count itself as upstream CI. GitHub
+App setup, ruleset mutation or activation, and merge remain separate human
+gates; see [the hosted gate guide](docs/exact-head-merge-gate-app.md).
 
 Every ready-for-review pull request must also contain a standalone closing
 reference to an open Issue in this repository, for example:

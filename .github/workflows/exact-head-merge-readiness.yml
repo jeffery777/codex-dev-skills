@@ -1,0 +1,193 @@
+name: Exact-Head Merge Readiness Controller
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft, edited]
+  issue_comment:
+    types: [created, edited, deleted]
+  workflow_run:
+    workflows: [Repository Validation]
+    types: [in_progress, completed]
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to re-evaluate
+        required: true
+        type: string
+      receipt_id:
+        description: Optional exact strict-JSON receipt comment ID
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  route:
+    name: Resolve exact pull request identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      pr_targets: ${{ steps.route.outputs.pr_targets }}
+    steps:
+      - name: Resolve PR number from platform-owned event fields
+        id: route
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          case "$EVENT_NAME" in
+            pull_request_target)
+              pr_targets="$(jq -c \
+                '[{pr_number: .pull_request.number, head_sha: .pull_request.head.sha}]' \
+                "$GITHUB_EVENT_PATH")" ;;
+            issue_comment)
+              jq -e '.issue.pull_request != null' "$GITHUB_EVENT_PATH" >/dev/null
+              pr_number="$(jq -er '.issue.number' "$GITHUB_EVENT_PATH")"
+              pr_targets="$(gh api \
+                -H 'Accept: application/vnd.github+json' \
+                "/repos/$GITHUB_REPOSITORY/pulls/$pr_number" \
+                --jq '[{pr_number: .number, head_sha: .head.sha}]')" ;;
+            workflow_run)
+              head_sha="$(jq -er '.workflow_run.head_sha' "$GITHUB_EVENT_PATH")"
+              workflow_id="$(jq -er '.workflow_run.workflow_id' "$GITHUB_EVENT_PATH")"
+              test "$workflow_id" = "330877463"
+              pr_targets='[]'
+              collection_complete=false
+              for page in 1 2 3 4 5; do
+                page_json="$(gh api \
+                  -H 'Accept: application/vnd.github+json' \
+                  "/repos/$GITHUB_REPOSITORY/commits/$head_sha/pulls?per_page=100&page=$page")"
+                pr_targets="$(jq -cn \
+                  --argjson accumulated "$pr_targets" \
+                  --argjson current "$page_json" \
+                  --arg head_sha "$head_sha" \
+                  '$accumulated + [$current[] | select(.state == "open" and .head.sha == $head_sha) | {pr_number: .number, head_sha: .head.sha}]')"
+                if jq -e 'length < 100' <<<"$page_json" >/dev/null; then
+                  collection_complete=true
+                  break
+                fi
+              done
+              if test "$collection_complete" != true; then
+                extra_count="$(gh api \
+                  -H 'Accept: application/vnd.github+json' \
+                  "/repos/$GITHUB_REPOSITORY/commits/$head_sha/pulls?per_page=100&page=6" \
+                  --jq 'length')"
+                test "$extra_count" = 0
+              fi
+              # One head-scoped job is enough to fail a shared-head check closed.
+              pr_targets="$(jq 'if length > 1 then [.[0]] else . end' <<<"$pr_targets")" ;;
+            workflow_dispatch)
+              raw_pr_number="$(jq -er '.inputs.pr_number' "$GITHUB_EVENT_PATH")"
+              [[ "$raw_pr_number" =~ ^[1-9][0-9]*$ ]]
+              pr_targets="$(gh api \
+                -H 'Accept: application/vnd.github+json' \
+                "/repos/$GITHUB_REPOSITORY/pulls/$raw_pr_number" \
+                --jq '[{pr_number: .number, head_sha: .head.sha}]')" ;;
+            schedule)
+              pr_targets='[]'
+              collection_complete=false
+              for page in 1 2 3; do
+                page_json="$(gh api \
+                  -H 'Accept: application/vnd.github+json' \
+                  "/repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100&page=$page")"
+                pr_targets="$(jq -cn \
+                  --argjson accumulated "$pr_targets" \
+                  --argjson current "$page_json" \
+                  '$accumulated + [$current[] | {pr_number: .number, head_sha: .head.sha}]')"
+                if test "$(jq 'length' <<<"$pr_targets")" -gt 250; then
+                  echo "Scheduled reconciliation exceeds the explicit 250-open-PR matrix capacity." >&2
+                  exit 1
+                fi
+                if jq -e 'length < 100' <<<"$page_json" >/dev/null; then
+                  collection_complete=true
+                  break
+                fi
+              done
+              if test "$collection_complete" != true; then
+                echo "Scheduled reconciliation could not prove complete bounded pagination." >&2
+                exit 1
+              fi ;;
+            *) exit 0 ;;
+          esac
+          jq -e 'type == "array" and all(.[];
+            (keys | sort) == ["head_sha", "pr_number"] and
+            (.pr_number | type == "number" and . > 0) and
+            (.head_sha | type == "string" and test("^[0-9a-f]{40}$")))' \
+            <<<"$pr_targets" >/dev/null
+          echo "pr_targets=$(jq -c . <<<"$pr_targets")" >> "$GITHUB_OUTPUT"
+
+  evaluate:
+    name: Trusted exact-head controller
+    needs: route
+    if: needs.route.outputs.pr_targets != '' && needs.route.outputs.pr_targets != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.route.outputs.pr_targets) }}
+    concurrency:
+      group: exact-head-readiness-${{ matrix.target.head_sha }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: exact-head-merge-gate
+    steps:
+      - name: Check out trusted default-branch controller
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: refs/heads/${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Set up repository Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version-file: .python-version
+
+      - name: Create least-privilege dedicated App token
+        id: app-token
+        uses: actions/create-github-app-token@67018539274d69449ef7c02e8e71183d1719ab42
+        with:
+          app-id: ${{ secrets.EXACT_HEAD_GATE_APP_ID }}
+          private-key: ${{ secrets.EXACT_HEAD_GATE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-actions: read
+          permission-checks: write
+          permission-issues: read
+          permission-pull-requests: read
+
+      - name: Normalize live state, validate offline, and publish the head-bound check
+        id: collect
+        env:
+          EXACT_HEAD_GATE_TOKEN: ${{ steps.app-token.outputs.token }}
+          RECEIPT_ID: ${{ inputs.receipt_id || '' }}
+        run: |
+          ./scripts/project-python scripts/collect-exact-head-merge-readiness.py \
+            --repository "$GITHUB_REPOSITORY" \
+            --pr-number "${{ matrix.target.pr_number }}" \
+            --event-path "$GITHUB_EVENT_PATH" \
+            --policy .github/exact-head-merge-readiness-policy.json \
+            --output "$RUNNER_TEMP/exact-head-merge-readiness.json" \
+            --workflow-name "$GITHUB_WORKFLOW" \
+            --workflow-run-id "$GITHUB_RUN_ID" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --expected-head "${{ matrix.target.head_sha }}" \
+            --receipt-id "$RECEIPT_ID" \
+            --expected-app-id "${{ secrets.EXACT_HEAD_GATE_APP_ID }}" \
+            --expected-app-slug "${{ steps.app-token.outputs.app-slug }}"
+          if test -f "$RUNNER_TEMP/exact-head-merge-readiness.json"; then
+            echo "evaluated=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "evaluated=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Revalidate the normalized envelope without network access
+        if: steps.collect.outputs.evaluated == 'true'
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: >-
+          ./scripts/project-python scripts/validate-exact-head-merge-review.py
+          "$RUNNER_TEMP/exact-head-merge-readiness.json"

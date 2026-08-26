@@ -16,10 +16,17 @@ For ordinary base-to-head merge quality and DoD review, use `merge-review`. For 
    evidence cannot supply the exact-head verdict.
 4. Verify successful exact-head hosted CI, findings closure, zero unresolved
    review threads, and an authorized platform-visible receipt whose connector
-   readback validates as `exact-head-merge-review/v1`.
+   readback validates as `exact-head-merge-review/v1`. Where the hosted gate is
+   configured, also require a successful dedicated-App `Exact-Head Merge
+   Readiness` check whose `exact-head-merge-readiness/v2` envelope binds the
+   live head, base, merge base, range identity, CI, findings, threads, complete strict
+   JSON receipt body, receipt digest, and publishing check identity. The
+   upstream CI set must exclude the readiness check itself.
 5. Check docs, migration notes, release notes, or operational evidence when applicable. For release-sensitive work, apply `policies/release-state-contract.md`: keep source/package version, candidate preparation, GitHub publication truth, active guidance, and historical records distinct; block mutable tracked publication claims even when tests pass.
 6. Decide gate result: READY, BLOCKED, or NEEDS HUMAN DECISION. Missing or stale
-   repository/PR/base/head/merge-base/diff/CI/thread/receipt evidence is BLOCKED.
+   repository/PR/base/head/merge-base/range/CI/thread/receipt/gate evidence is
+   BLOCKED. Native live-head/thread predicates apply at merge time; other
+   relevant drift returns the gate to BLOCKED after controller processing.
 7. Stop before commit, push, merge, deploy, platform comments, review submissions, or publication unless the user explicitly authorized the exact action.
 8. Before any authorized merge or platform-side mutation, repeat the live
    platform readback and confirm all bindings still match and no blocker remains.

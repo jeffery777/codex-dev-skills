@@ -52,6 +52,12 @@ scope that proves the remediation and its affected boundaries, widening when
 their assumptions changed. A changed PR head always requires a new complete
 base-to-head Merge Review and platform receipt readback.
 
+For a configured hosted gate, independently inspect its dedicated GitHub App
+identity, check/run identity, live-head attachment, strict JSON receipt digest,
+and upstream-CI exclusion. Treat any drift in base/head/merge-base/range, CI,
+findings, review threads, receipt, or gate identity as a blocker; the check
+does not itself authorize merge.
+
 For a release-sensitive change, classify every relevant assertion into the
 five release-state roles, run the offline release-state validator, and verify
 that active guidance remains true after successful publication. Distinguish

@@ -66,9 +66,12 @@ For a single clear implementation task, prefer `implementation-slice`. Use `proj
 11. After an authorized PR creation or head update, treat pre-commit review
     verdicts as implementation evidence only. Advance through `PR_CREATED`,
     exact-head CI, exact-head Merge Review, authorized receipt publication and
-    readback, and formal merge readiness without inserting extra human stops
-    between read-only or already-authorized clean stages. Any drift or finding
-    returns to the earliest affected review state.
+    readback, configured dedicated-App `Exact-Head Merge Readiness` check, and
+    formal merge readiness without inserting extra human stops between
+    read-only or already-authorized clean stages. The collector must target the
+    live PR head without executing PR code; any drift in head, base, CI,
+    finding, thread, strict-JSON receipt, or check identity returns to the
+    earliest affected review state.
 12. When assessment selects fresh rollover preparation, require the versioned
     durable checkpoint, same repository/objective, one destination writer,
     confirmed source stop-writing, lineage/idempotency/anti-recursion, and the

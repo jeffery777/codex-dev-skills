@@ -38,10 +38,23 @@ READY | BLOCKED | NEEDS HUMAN DECISION
 - Contract: `exact-head-merge-review/v1`
 - Receipt ID and URL:
 - Receipt digest:
+- Receipt body is complete strict JSON; digest scope verified (not Markdown scraping):
 - Connector readback time:
 - Validation result:
 - Receipt authority: `advisory_review_evidence`
 - Merge authorized: `false`
+
+## Hosted Exact-Head Gate (when configured)
+
+- Contract: `exact-head-merge-readiness/v2`
+- Receipt sequence (positive, bounded, and greater than the prior exact-head receipt):
+- Check context: `Exact-Head Merge Readiness`
+- Check run ID / details URL:
+- Dedicated GitHub App ID / slug:
+- Check head SHA equals live PR head:
+- Gate workflow/run identity:
+- Upstream CI excludes this gate:
+- Gate conclusion and final drift readback:
 
 ## Release-State Classification (when release-sensitive)
 
@@ -58,5 +71,5 @@ READY | BLOCKED | NEEDS HUMAN DECISION
 
 ## Required Human Gate
 
-The receipt records review evidence only. State the separate merge authority or
-human decision still required.
+The receipt and hosted gate record evidence only. State the separate merge
+authority or human decision still required.

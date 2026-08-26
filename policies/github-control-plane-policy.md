@@ -45,6 +45,17 @@ for offline validation; do not let the validator access GitHub itself. Repeat
 the live readback immediately before an authorized merge because an earlier
 receipt or successful check can become stale.
 
+The hosted v2 collector is a trusted default-branch control-plane client, not
+an executor of PR code. It resolves the live PR and explicitly targets the
+custom check at `pull_request.head.sha`; it must not infer that SHA from a
+default-branch event context. It reads the single App-pointer-selected
+whole-body strict JSON issue comment as the receipt and verifies its digest.
+It must not treat rendered
+Markdown, an arbitrary comment fragment, workflow artifacts, or a shared
+GitHub Actions check identity as the authoritative receipt or dedicated-App
+identity. Upstream hosted CI uses an exact trusted workflow ID/name/path/event
+and associated live PR head, and excludes `Exact-Head Merge Readiness` itself.
+
 ## Mutation And Authority Boundary
 
 Connector-first does not authorize a GitHub write. Creating or editing Issues,
@@ -55,6 +66,15 @@ require the exact authority and human gate defined by the active workflow.
 Local `git` remains the normal control plane for branch creation and working
 tree state. Commit, push, force updates, tag creation, and destructive Git
 operations retain their separate authority and safety requirements.
+
+Registering or installing a GitHub App, configuring a protected environment or
+secret, changing a ruleset, activating a ruleset, and modifying bypass actors
+are separate high-impact platform mutations. Require an exact reviewed payload
+and post-mutation readback for each. A ruleset rollout first remains disabled
+until a canary check identifies the dedicated App integration ID; activation is
+a later, independently authorized mutation. Do not grant the collector merge,
+auto-merge, tag, Release, deployment, comment, review, or arbitrary content
+write authority.
 
 ## Dependency Unavailable
 

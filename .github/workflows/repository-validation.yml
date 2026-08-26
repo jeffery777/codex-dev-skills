@@ -1,4 +1,5 @@
 name: Repository Validation
+run-name: "Repository Validation PR #${{ github.event.pull_request.number }} @ ${{ github.event.pull_request.head.sha }}"
 
 on:
   pull_request:
