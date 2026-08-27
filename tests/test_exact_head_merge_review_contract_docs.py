@@ -26,6 +26,12 @@ class ExactHeadMergeReviewContractDocsTests(unittest.TestCase):
             "HUMAN_MERGE_AUTHORIZED",
             "returns the flow to `REVIEW_REQUIRED`",
             "merge_authorized: false",
+            "Each relevant evaluation creates a fresh check run",
+            "older successes cannot substitute",
+            "Historical same-context check runs are expected",
+            "same ID and sequence from silently replacing",
+            "Both success and failure publication require",
+            "per-suite 1,000-run limit",
         ):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, policy)

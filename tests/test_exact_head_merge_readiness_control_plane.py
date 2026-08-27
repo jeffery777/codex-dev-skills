@@ -122,13 +122,13 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
             len(control.pointer_value("jeffery777/codex-dev-skills", 185, "a" * 40, 999999999, 999999, 999999, "b" * 64)),
             255,
         )
-        self.assertEqual((99, 7, 3), control.parse_pointer(value, "o/r", 5, "a" * 40))
-        self.assertEqual((None, None, 0), control.parse_pointer(value, "o/r", 6, "a" * 40))
-        self.assertEqual((None, None, 0), control.parse_pointer(value, "o/r", 5, "b" * 40))
+        self.assertEqual((99, 7, 3, "b" * 64), control.parse_pointer(value, "o/r", 5, "a" * 40))
+        self.assertEqual((None, None, 0, None), control.parse_pointer(value, "o/r", 6, "a" * 40))
+        self.assertEqual((None, None, 0, None), control.parse_pointer(value, "o/r", 5, "b" * 40))
         exhausted = control.pointer_value(
             "o/r", 5, "a" * 40, 99, 7, control.validator.MAX_RECEIPT_SEQUENCE,
         )
-        self.assertEqual((None, None, 0), control.parse_pointer(exhausted, "o/r", 5, "a" * 40))
+        self.assertEqual((None, None, 0, None), control.parse_pointer(exhausted, "o/r", 5, "a" * 40))
         with self.assertRaisesRegex(control.ControlPlaneError, "bounded integer range"):
             control.pointer_value(
                 "o/r", 5, "a" * 40, 99, 7,
@@ -165,22 +165,55 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
         with self.assertRaisesRegex(control.ControlPlaneError, "duplicate sequence"):
             control.select_current_receipt(client, 185, head, None, None, 262144, {"OWNER"})
 
-    def test_existing_gate_check_is_reopened_instead_of_duplicated(self) -> None:
+    def test_latest_gate_check_uses_native_bounded_selector(self) -> None:
+        client = mock.Mock()
+        client.repo_path.side_effect = lambda suffix: "/repos/o/r" + suffix
+        latest = {
+            "id": 9,
+            "name": control.validator.GATE_CONTEXT,
+            "head_sha": "a" * 40,
+            "app": {"id": 10, "slug": "gate"},
+        }
+        # Native latest filtering remains bounded even when the head has more
+        # than one API page of immutable historical runs.
+        client.json_page.return_value = {"total_count": 101, "check_runs": [latest]}
+        self.assertEqual(
+            latest,
+            control.find_gate_check(
+                client, "a" * 40, control.validator.GATE_CONTEXT, 10
+            ),
+        )
+        path = client.json_page.call_args.args[0]
+        self.assertIn("check_name=Exact-Head+Merge+Readiness", path)
+        self.assertIn("app_id=10", path)
+        self.assertIn("filter=latest", path)
+        self.assertIn("per_page=100", path)
+        self.assertNotIn("filter=all", path)
+
+        client.json_page.return_value = {
+            "total_count": 2,
+            "check_runs": [latest, dict(latest, id=8)],
+        }
+        with self.assertRaisesRegex(control.ControlPlaneError, "ambiguous or drifted"):
+            control.find_gate_check(
+                client, "a" * 40, control.validator.GATE_CONTEXT, 10
+            )
+
+    def test_each_evaluation_creates_a_fresh_gate_check(self) -> None:
         client = mock.Mock()
         client.repo_path.side_effect = lambda suffix: "/repos/o/r" + suffix
         client.json.return_value = {"id": 9, "app": {"id": 10, "slug": "gate"}}
         result = control.start_check(
             client,
-            {"id": 9},
             "a" * 40,
             control.validator.GATE_CONTEXT,
             "https://github.com/o/r/actions/runs/1",
             "pointer",
         )
         self.assertEqual(9, result["id"])
-        self.assertEqual("PATCH", client.json.call_args.args[0])
+        self.assertEqual("POST", client.json.call_args.args[0])
         self.assertEqual("in_progress", client.json.call_args.kwargs["body"]["status"])
-        self.assertNotIn("head_sha", client.json.call_args.kwargs["body"])
+        self.assertEqual("a" * 40, client.json.call_args.kwargs["body"]["head_sha"])
 
     def test_upstream_workflow_run_name_binds_platform_pr_head(self) -> None:
         policy = control.load_policy(ROOT / ".github/exact-head-merge-readiness-policy.json")
@@ -509,6 +542,297 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                 [call.args[1] for call in client_factory.call_args_list],
             )
 
+    def test_existing_latest_check_with_invalid_pointer_publishes_fresh_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            event = root / "event.json"
+            event.write_text('{"pull_request":{"number":185}}', encoding="utf-8")
+            args = control.parse_args([
+                "--repository", "jeffery777/codex-dev-skills",
+                "--event-path", str(event), "--output", str(root / "out.json"),
+                "--policy", str(ROOT / ".github/exact-head-merge-readiness-policy.json"),
+                "--workflow-name", "Exact-Head Merge Readiness Controller",
+                "--workflow-run-id", "900",
+                "--run-url", "https://github.com/jeffery777/codex-dev-skills/actions/runs/900",
+                "--expected-head", "b" * 40,
+                "--expected-app-id", "100001", "--expected-app-slug", "exact-head-gate",
+            ])
+            fake = mock.Mock()
+            fake.json.return_value = {"head": {"sha": "b" * 40}}
+            with (
+                mock.patch.dict(
+                    "os.environ",
+                    {
+                        "EXACT_HEAD_GATE_TOKEN": "secret",
+                        "REPOSITORY_READ_TOKEN": "read-only",
+                    },
+                ),
+                mock.patch.object(control, "GitHubClient", return_value=fake),
+                mock.patch.object(
+                    control,
+                    "find_gate_check",
+                    return_value={"id": 901, "external_id": "malformed"},
+                ),
+                mock.patch.object(control, "start_check", return_value={
+                    "id": 902,
+                    "app": {"id": 100001, "slug": "exact-head-gate"},
+                }) as start,
+                mock.patch.object(control, "confirm_gate_check"),
+                mock.patch.object(control, "confirm_latest_gate_check") as confirm_latest,
+                mock.patch.object(control, "confirm_completed_gate_check") as confirm_completed,
+                mock.patch.object(control, "update_check") as update,
+            ):
+                with self.assertRaisesRegex(
+                    control.ControlPlaneError, "invalid pointer"
+                ):
+                    control.run(args)
+            start.assert_called_once()
+            self.assertEqual("failure", update.call_args.args[2])
+            self.assertEqual("failure", confirm_completed.call_args.args[4])
+            self.assertEqual(2, confirm_latest.call_count)
+
+    def test_failure_publication_error_preserves_evaluation_and_readback_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            event = root / "event.json"
+            event.write_text('{"pull_request":{"number":185}}', encoding="utf-8")
+            args = control.parse_args([
+                "--repository", "jeffery777/codex-dev-skills",
+                "--event-path", str(event), "--output", str(root / "out.json"),
+                "--policy", str(ROOT / ".github/exact-head-merge-readiness-policy.json"),
+                "--workflow-name", "Exact-Head Merge Readiness Controller",
+                "--workflow-run-id", "900",
+                "--run-url", "https://github.com/jeffery777/codex-dev-skills/actions/runs/900",
+                "--expected-head", "b" * 40,
+                "--expected-app-id", "100001", "--expected-app-slug", "exact-head-gate",
+            ])
+            fake = mock.Mock()
+            fake.json.return_value = {"head": {"sha": "b" * 40}}
+            with (
+                mock.patch.dict(
+                    "os.environ",
+                    {
+                        "EXACT_HEAD_GATE_TOKEN": "secret",
+                        "REPOSITORY_READ_TOKEN": "read-only",
+                    },
+                ),
+                mock.patch.object(control, "GitHubClient", return_value=fake),
+                mock.patch.object(
+                    control, "find_gate_check",
+                    return_value={"id": 901, "external_id": "malformed"},
+                ),
+                mock.patch.object(control, "start_check", return_value={
+                    "id": 902,
+                    "app": {"id": 100001, "slug": "exact-head-gate"},
+                }),
+                mock.patch.object(control, "confirm_gate_check"),
+                mock.patch.object(control, "confirm_latest_gate_check"),
+                mock.patch.object(control, "update_check"),
+                mock.patch.object(
+                    control,
+                    "confirm_completed_gate_check",
+                    side_effect=control.ControlPlaneError("failure readback drifted"),
+                ),
+            ):
+                with self.assertRaisesRegex(
+                    control.ControlPlaneError,
+                    "invalid pointer: failure readback drifted",
+                ):
+                    control.run(args)
+
+    def test_same_receipt_sequence_cannot_replace_bound_digest(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            event = root / "event.json"
+            event.write_text('{"pull_request":{"number":185}}', encoding="utf-8")
+            args = control.parse_args([
+                "--repository", "jeffery777/codex-dev-skills",
+                "--event-path", str(event), "--output", str(root / "out.json"),
+                "--policy", str(ROOT / ".github/exact-head-merge-readiness-policy.json"),
+                "--workflow-name", "Exact-Head Merge Readiness Controller",
+                "--workflow-run-id", "900",
+                "--run-url", "https://github.com/jeffery777/codex-dev-skills/actions/runs/900",
+                "--expected-head", "b" * 40,
+                "--expected-app-id", "100001", "--expected-app-slug", "exact-head-gate",
+            ])
+            head = "b" * 40
+            prior_digest = "c" * 64
+            pointer = control.pointer_value(
+                "jeffery777/codex-dev-skills", 185, head, 321, 1, 7,
+                prior_digest,
+            )
+            fake = mock.Mock()
+            fake.json.return_value = {"head": {"sha": head}}
+            set_pointer = mock.Mock()
+            update = mock.Mock()
+            with (
+                mock.patch.dict(
+                    "os.environ",
+                    {
+                        "EXACT_HEAD_GATE_TOKEN": "secret",
+                        "REPOSITORY_READ_TOKEN": "read-only",
+                    },
+                ),
+                mock.patch.object(control, "GitHubClient", return_value=fake),
+                mock.patch.object(control, "find_gate_check", return_value={
+                    "id": 901, "status": "completed", "conclusion": "success",
+                    "external_id": pointer,
+                }),
+                mock.patch.object(control, "start_check", return_value={
+                    "id": 902,
+                    "app": {"id": 100001, "slug": "exact-head-gate"},
+                }),
+                mock.patch.object(control, "confirm_gate_check"),
+                mock.patch.object(control, "confirm_latest_gate_check"),
+                mock.patch.object(control, "confirm_completed_gate_check") as confirm_completed,
+                mock.patch.object(control, "require_unique_open_pr_for_head"),
+                mock.patch.object(control, "select_current_receipt", return_value=(321, 1)),
+                mock.patch.object(control, "get_receipt", return_value=(
+                    valid_v2_payload()["receipt"], 321,
+                    "https://github.com/jeffery777/codex-dev-skills/pull/185#issuecomment-321",
+                )),
+                mock.patch.object(control, "set_check_pointer", set_pointer),
+                mock.patch.object(control, "update_check", update),
+            ):
+                with self.assertRaisesRegex(
+                    control.ControlPlaneError, "without a higher receipt sequence"
+                ):
+                    control.run(args)
+            set_pointer.assert_called_once()
+            self.assertTrue(
+                str(set_pointer.call_args.args[3]).endswith(":" + prior_digest)
+            )
+            self.assertEqual("failure", update.call_args.args[2])
+            self.assertTrue(str(update.call_args.args[5]).endswith(":" + prior_digest))
+            self.assertEqual("failure", confirm_completed.call_args.args[4])
+
+    def test_higher_sequence_is_tombstoned_before_direct_receipt_readback(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            event = root / "event.json"
+            event.write_text('{"pull_request":{"number":185}}', encoding="utf-8")
+            args = control.parse_args([
+                "--repository", "jeffery777/codex-dev-skills",
+                "--event-path", str(event), "--output", str(root / "out.json"),
+                "--policy", str(ROOT / ".github/exact-head-merge-readiness-policy.json"),
+                "--workflow-name", "Exact-Head Merge Readiness Controller",
+                "--workflow-run-id", "900",
+                "--run-url", "https://github.com/jeffery777/codex-dev-skills/actions/runs/900",
+                "--expected-head", "b" * 40,
+                "--expected-app-id", "100001", "--expected-app-slug", "exact-head-gate",
+            ])
+            head = "b" * 40
+            pointer = control.pointer_value(
+                "jeffery777/codex-dev-skills", 185, head, 321, 1, 7,
+                "c" * 64,
+            )
+            fake = mock.Mock()
+            fake.json.return_value = {"head": {"sha": head}}
+            with (
+                mock.patch.dict(
+                    "os.environ",
+                    {
+                        "EXACT_HEAD_GATE_TOKEN": "secret",
+                        "REPOSITORY_READ_TOKEN": "read-only",
+                    },
+                ),
+                mock.patch.object(control, "GitHubClient", return_value=fake),
+                mock.patch.object(control, "find_gate_check", return_value={
+                    "id": 901, "external_id": pointer,
+                }),
+                mock.patch.object(control, "start_check", return_value={
+                    "id": 902,
+                    "app": {"id": 100001, "slug": "exact-head-gate"},
+                }),
+                mock.patch.object(control, "confirm_gate_check"),
+                mock.patch.object(control, "confirm_latest_gate_check"),
+                mock.patch.object(control, "confirm_completed_gate_check"),
+                mock.patch.object(control, "require_unique_open_pr_for_head"),
+                mock.patch.object(control, "select_current_receipt", return_value=(322, 2)),
+                mock.patch.object(
+                    control, "get_receipt",
+                    side_effect=control.ControlPlaneError("receipt disappeared"),
+                ),
+                mock.patch.object(control, "set_check_pointer") as set_pointer,
+                mock.patch.object(control, "update_check") as update,
+            ):
+                with self.assertRaisesRegex(
+                    control.ControlPlaneError, "receipt disappeared"
+                ):
+                    control.run(args)
+            tombstone = set_pointer.call_args.args[3]
+            self.assertEqual(
+                (322, 2, 8, None),
+                control.parse_pointer(
+                    tombstone,
+                    "jeffery777/codex-dev-skills",
+                    185,
+                    head,
+                ),
+            )
+            self.assertEqual(tombstone, update.call_args.args[5])
+            self.assertEqual("failure", update.call_args.args[2])
+
+    def test_locked_receipt_digest_rejects_envelope_body_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            event = root / "event.json"
+            event.write_text('{"pull_request":{"number":185}}', encoding="utf-8")
+            args = control.parse_args([
+                "--repository", "jeffery777/codex-dev-skills",
+                "--event-path", str(event), "--output", str(root / "out.json"),
+                "--policy", str(ROOT / ".github/exact-head-merge-readiness-policy.json"),
+                "--workflow-name", "Exact-Head Merge Readiness Controller",
+                "--workflow-run-id", "900",
+                "--run-url", "https://github.com/jeffery777/codex-dev-skills/actions/runs/900",
+                "--expected-head", "b" * 40,
+                "--expected-app-id", "100001", "--expected-app-slug", "exact-head-gate",
+            ])
+            original = valid_v2_payload()
+            drifted = json.loads(json.dumps(original))
+            drifted["receipt"]["residual_risk"] = "edited without a new sequence"
+            drifted["platform_snapshot"]["receipt_digest"] = (
+                control.validator.canonical_receipt_digest(drifted["receipt"])
+            )
+            fake = mock.Mock()
+            fake.json.return_value = {"head": {"sha": "b" * 40}}
+            with (
+                mock.patch.dict(
+                    "os.environ",
+                    {
+                        "EXACT_HEAD_GATE_TOKEN": "secret",
+                        "REPOSITORY_READ_TOKEN": "read-only",
+                    },
+                ),
+                mock.patch.object(control, "GitHubClient", return_value=fake),
+                mock.patch.object(control, "find_gate_check", return_value=None),
+                mock.patch.object(control, "start_check", return_value={
+                    "id": 902,
+                    "app": {"id": 100001, "slug": "exact-head-gate"},
+                }),
+                mock.patch.object(control, "confirm_gate_check"),
+                mock.patch.object(control, "confirm_latest_gate_check"),
+                mock.patch.object(control, "confirm_completed_gate_check"),
+                mock.patch.object(control, "require_unique_open_pr_for_head"),
+                mock.patch.object(control, "select_current_receipt", return_value=(321, 1)),
+                mock.patch.object(control, "get_receipt", return_value=(
+                    original["receipt"], 321,
+                    "https://github.com/jeffery777/codex-dev-skills/pull/185#issuecomment-321",
+                )),
+                mock.patch.object(control, "set_check_pointer") as set_pointer,
+                mock.patch.object(control, "build_envelope", return_value=drifted) as collect,
+                mock.patch.object(control, "update_check") as update,
+            ):
+                with self.assertRaisesRegex(
+                    control.ControlPlaneError, "drifted after its digest was locked"
+                ):
+                    control.run(args)
+            self.assertEqual(1, collect.call_count)
+            self.assertEqual(2, set_pointer.call_count)
+            locked_pointer = set_pointer.call_args_list[-1].args[3]
+            self.assertEqual(locked_pointer, update.call_args.args[5])
+            self.assertEqual("failure", update.call_args.args[2])
+
     def test_run_collects_twice_and_publishes_only_stable_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
@@ -551,19 +875,27 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                 mock.patch.object(control, "GitHubClient", return_value=fake),
                 mock.patch.object(control, "find_gate_check", return_value=None),
                 mock.patch.object(control, "select_current_receipt", return_value=(321, 1)),
+                mock.patch.object(control, "get_receipt", return_value=(
+                    first["receipt"], 321,
+                    "https://github.com/jeffery777/codex-dev-skills/pull/185#issuecomment-321",
+                )),
                 mock.patch.object(control, "start_check", return_value=created),
                 mock.patch.object(control, "require_unique_open_pr_for_head"),
-                mock.patch.object(control, "set_check_pointer"),
+                mock.patch.object(control, "set_check_pointer") as set_pointer,
                 mock.patch.object(control, "build_envelope", side_effect=[first, second]) as collect,
                 mock.patch.object(control, "confirm_gate_check") as confirm,
+                mock.patch.object(control, "confirm_latest_gate_check") as confirm_latest,
                 mock.patch.object(control, "confirm_completed_gate_check") as confirm_completed,
                 mock.patch.object(control, "update_check") as update,
             ):
                 result = control.run(args)
             self.assertEqual(second, result)
             self.assertEqual(2, collect.call_count)
-            self.assertEqual(3, confirm.call_count)
+            self.assertEqual(5, confirm.call_count)
+            self.assertEqual(5, confirm_latest.call_count)
+            self.assertEqual(2, set_pointer.call_count)
             confirm_completed.assert_called_once()
+            self.assertEqual("success", confirm_completed.call_args.args[4])
             update.assert_called_once()
             self.assertEqual("success", update.call_args.args[2])
             self.assertTrue(output.is_file())
@@ -601,17 +933,23 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                 mock.patch.object(control, "GitHubClient", return_value=fake),
                 mock.patch.object(control, "find_gate_check", return_value=None),
                 mock.patch.object(control, "select_current_receipt", return_value=(321, 1)),
+                mock.patch.object(control, "get_receipt", return_value=(
+                    first["receipt"], 321,
+                    "https://github.com/jeffery777/codex-dev-skills/pull/185#issuecomment-321",
+                )),
                 mock.patch.object(control, "start_check", return_value=created),
                 mock.patch.object(control, "require_unique_open_pr_for_head"),
                 mock.patch.object(control, "set_check_pointer"),
                 mock.patch.object(control, "build_envelope", side_effect=[first, second]),
                 mock.patch.object(control, "confirm_gate_check"),
-                mock.patch.object(control, "confirm_completed_gate_check"),
+                mock.patch.object(control, "confirm_latest_gate_check"),
+                mock.patch.object(control, "confirm_completed_gate_check") as confirm_completed,
                 mock.patch.object(control, "update_check") as update,
             ):
                 with self.assertRaises(control.validator.ExactHeadMergeReviewError):
                     control.run(args)
             self.assertEqual("failure", update.call_args.args[2])
+            self.assertEqual("failure", confirm_completed.call_args.args[4])
 
     def test_existing_success_is_invalidated_before_receipt_collection_errors(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -638,7 +976,8 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
 
             def start(*unused: object, **unused_kwargs: object) -> dict[str, object]:
                 order.append("invalidate")
-                return {"id": 901, "app": {"id": 100001, "slug": "exact-head-gate"}}
+                self.assertTrue(str(unused[-1]).endswith(":" + "c" * 64))
+                return {"id": 902, "app": {"id": 100001, "slug": "exact-head-gate"}}
 
             def select(*unused: object, **unused_kwargs: object) -> tuple[None, None]:
                 order.append("collect")
@@ -662,15 +1001,18 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                     "external_id": pointer,
                 }),
                 mock.patch.object(control, "start_check", side_effect=start),
+                mock.patch.object(control, "confirm_gate_check"),
+                mock.patch.object(control, "confirm_latest_gate_check"),
                 mock.patch.object(control, "require_unique_open_pr_for_head"),
                 mock.patch.object(control, "select_current_receipt", side_effect=select),
                 mock.patch.object(control, "update_check", side_effect=update),
+                mock.patch.object(control, "confirm_completed_gate_check"),
             ):
                 with self.assertRaisesRegex(control.ControlPlaneError, "exceeds 500"):
                     control.run(args)
             self.assertEqual(["invalidate", "collect", "fail"], order)
 
-    def test_completed_success_requires_exact_platform_readback(self) -> None:
+    def test_completed_check_requires_exact_success_and_failure_readback(self) -> None:
         client = mock.Mock()
         client.repo_path.side_effect = lambda suffix: "/repos/o/r" + suffix
         client.json.return_value = {
@@ -685,13 +1027,36 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
             "details_url": "https://github.com/o/r/actions/runs/1",
         }
         control.confirm_completed_gate_check(
-            client, gate, "a" * 40, "pointer", "ready", "digest",
+            client, gate, "a" * 40, "pointer", "success", "ready", "digest",
+        )
+        client.json.return_value["conclusion"] = "failure"
+        control.confirm_completed_gate_check(
+            client, gate, "a" * 40, "pointer", "failure", "ready", "digest",
         )
         client.json.return_value["external_id"] = "drifted"
         with self.assertRaisesRegex(control.ControlPlaneError, "did not survive"):
             control.confirm_completed_gate_check(
-                client, gate, "a" * 40, "pointer", "ready", "digest",
+                client, gate, "a" * 40, "pointer", "success", "ready", "digest",
             )
+
+    def test_fresh_check_must_remain_authoritative_latest(self) -> None:
+        gate = {
+            "check_run_id": 9,
+            "check_app_id": 10,
+            "check_app_slug": "gate",
+        }
+        client = mock.Mock()
+        with mock.patch.object(
+            control, "find_gate_check", return_value={"id": 9}
+        ):
+            control.confirm_latest_gate_check(client, gate, "a" * 40)
+        with mock.patch.object(
+            control, "find_gate_check", return_value={"id": 8}
+        ):
+            with self.assertRaisesRegex(
+                control.ControlPlaneError, "authoritative latest"
+            ):
+                control.confirm_latest_gate_check(client, gate, "a" * 40)
 
 
 if __name__ == "__main__":

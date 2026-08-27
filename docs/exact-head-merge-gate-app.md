@@ -19,13 +19,20 @@ App identity. Its check context is exactly `Exact-Head Merge Readiness`.
 
 The collector workflow is stored and executed from the trusted default branch.
 It reads GitHub metadata, normalizes a bounded snapshot, validates it offline,
-and creates or updates the single dedicated-App check run for the current live
-`pull_request.head.sha`. It must re-read the pull request before reporting
-success and fail closed if the repository, PR number, base, head, merge base,
-or range identity changed. Its compact App-owned `external_id` stays below the
+and creates a fresh dedicated-App check run for each relevant evaluation of the
+current live `pull_request.head.sha`. Completed checks remain immutable
+history; the GitHub-native latest selector for the exact context, App, and head
+identifies the authoritative prior pointer and must select the fresh
+`in_progress` check before evaluation continues. The collector must re-read
+the pull request before reporting success and fail closed if the repository,
+PR number, base, head, merge base, or range identity changed. Its compact
+App-owned `external_id` stays below the
 GitHub limit and is the durable pointer to the one current receipt comment for
-that repository, PR, and head. Relevant events are grouped by live head; unrelated
-comments are no-ops, and scheduled reconciliation repairs coalesced events.
+that repository, PR, and head. Its receipt digest locks the body selected for a
+given receipt ID and sequence; changing that body requires a unique higher
+sequence. Relevant events are grouped by live head; unrelated comments are
+no-ops unless the authoritative pointer itself is malformed, and scheduled
+reconciliation repairs coalesced events.
 The matrix and concurrency key carry the platform-read head SHA, not just the
 PR number. Before success, the controller also proves through a bounded commit-
 to-pulls read that this head belongs to exactly one open PR; a shared head is
@@ -128,9 +135,18 @@ truth. Scheduled reconciliation handles at most 250 open PRs per run, below
 GitHub Actions' 256-job matrix limit, and fails
 visibly rather than truncating a larger collection. The schedule has no
 completion-time SLA. Before evaluating comments or other drift-prone evidence,
-the controller changes any existing success check to `in_progress`; after
-publishing success, it reads the completed check back and compares its head,
-App, context, details URL, pointer, conclusion, title, and evidence digest.
+the controller creates a fresh `in_progress` check that must supersede any
+older success under GitHub's native latest-check projection. After publishing
+success, it reads the completed check back, confirms that it remains the latest
+check, and compares its head, App, context, details URL, pointer, conclusion,
+title, and evidence digest. A failure is subject to the same completed-check
+and native-latest readback before the controller reports that invalidation as
+authoritative. Historical check count does not affect the bounded latest
+selector. GitHub limits one check suite to 1,000 check runs with the same name
+and automatically deletes older same-name runs at that limit, so the pointer
+and latest selection never depend on permanent history. A malformed
+authoritative pointer is superseded by a fresh verified failure; ambiguous
+native latest selection fails without claiming a new authoritative state.
 This design does not claim an atomic
 transaction between editing an issue comment and clicking Merge. Achieving
 that stronger property would require a GitHub-native pre-merge predicate or

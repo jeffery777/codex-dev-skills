@@ -144,8 +144,21 @@ head, strict up-to-date policy, and resolved review conversations. The
 controller re-evaluates base, merge base, range identity, hosted CI,
 finding disposition, current receipt body/digest, check identity, and source
 App identity when a relevant event or scheduled reconciliation is processed.
-The compact App pointer retains the current receipt sequence as a tombstone;
-only a unique higher exact-head sequence can supersede it. This is an event-driven
+Each relevant evaluation creates a fresh check run because a completed GitHub
+check is immutable lifecycle history. The native latest selector for the exact
+context, App and head must identify that fresh check before evaluation and after
+publication; older successes cannot substitute for a newer in-progress or
+failing evaluation. The authoritative prior check carries the compact App
+pointer across generations and retains the current receipt sequence as a
+tombstone; its digest prevents the same ID and sequence from silently replacing
+the selected receipt body, and only a unique higher exact-head sequence can
+supersede it. Both success and failure publication require exact completed-check
+and native-latest readback. A malformed prior pointer must be superseded by a
+fresh verified failure rather than leaving an older success authoritative.
+Historical same-context check runs are expected and do not make bounded latest
+selection ambiguous; GitHub may automatically delete older same-name runs after
+the per-suite 1,000-run limit, so readiness never depends on permanent history.
+This is an event-driven
 projection, not an atomic transaction with the Merge click. A stronger
 receipt/finding guarantee would require a GitHub-native pre-merge predicate or
 App-controlled merge path, which remains outside this contract's authority.
