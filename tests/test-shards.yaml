@@ -27,6 +27,7 @@ shards:
       - tests.test_eval_context_continuity
       - tests.test_eval_loop_engineering
       - tests.test_loop_engineering_core
+      - tests.test_loop_state_roadmap_docs
   - id: loop-control
     modules:
       - tests.test_loopctl
