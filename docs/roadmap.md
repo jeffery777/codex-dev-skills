@@ -45,13 +45,23 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Issue #185 defines the next platform-enforcement milestone for the
-  exact-head Merge-Review contract. It adds a trusted default-branch collector,
-  dedicated GitHub App check identity, strict JSON receipt, and canary-first
-  ruleset rollout so a PR cannot merge on a stale handoff or pre-commit review.
-  It preserves separate human gates for App setup, ruleset mutation and
-  activation, merge, tag, Release, and deployment; it does not enable
-  auto-merge or execute untrusted PR code in a privileged workflow.
+- Issues #185, #190, #192, and #186 are completed exact-head rollout and
+  immediate follow-up milestones, not future task-selection targets. Issue
+  #185 delivered the trusted default-branch collector, dedicated GitHub App
+  check identity, strict JSON receipt, and canary-first ruleset rollout; Issue
+  #190 repaired the completed-check lifecycle; Issue #192 stabilized the Codex
+  runtime compatibility baseline; and Issue #186 sharded repository tests
+  behind the stable aggregate CI check. Together they form the durable
+  post-v0.20 exact-head maintenance baseline while preserving separate human
+  gates and the prohibition on executing untrusted PR code in the privileged
+  collector.
+
+- Issue #188 / PR #189 is reserved as intentionally retained operational
+  canary evidence for that exact-head baseline. It is not pending product work
+  and must stay unmerged. Canary cleanup remains a separate
+  destructive human gate. Its live platform state, ruleset enforcement, and
+  publication truth must be read from GitHub when needed rather than mirrored
+  as mutable tracked current-state assertions.
 
 - The release-state contract separates offline source/package version,
   candidate preparation, GitHub publication truth, active guidance, and

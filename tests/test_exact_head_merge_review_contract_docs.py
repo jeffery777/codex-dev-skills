@@ -12,6 +12,28 @@ def read(relative: str) -> str:
 
 
 class ExactHeadMergeReviewContractDocsTests(unittest.TestCase):
+    def test_roadmap_keeps_completed_rollout_out_of_future_task_selection(self) -> None:
+        roadmap = " ".join(read("docs/roadmap.md").split())
+        for phrase in (
+            "Issues #185, #190, #192, and #186 are completed",
+            "not future task-selection targets",
+            "Issue #185 delivered the trusted default-branch collector",
+            "Issue #190 repaired the completed-check lifecycle",
+            "Issue #192 stabilized the Codex runtime compatibility baseline",
+            "Issue #186 sharded repository tests",
+            "Issue #188 / PR #189 is reserved as intentionally retained operational",
+            "It is not pending product work and must stay unmerged",
+            "Canary cleanup remains a separate destructive human gate",
+            "rather than mirrored as mutable tracked current-state assertions",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, roadmap)
+
+        self.assertNotIn(
+            "Issue #185 defines the next platform-enforcement milestone",
+            roadmap,
+        )
+
     def test_policy_separates_review_roles_and_requires_ordered_transition(self) -> None:
         policy = " ".join(
             read("policies/exact-head-merge-review-contract.md").split()
