@@ -13,7 +13,14 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   does not provide a compatibility or execution path; current behavior belongs
   to native runtime contracts and active runtime callables.
 - Loop engineering adds an explicit shared entrypoint for clear bounded objectives: bootstrap from durable source of truth, classify current state, route through existing phase skills, verify and review evidence, continue or hand off when safe, and stop at human gates. It preserves the independent use of implementation, documentation, review, formal gate, continuation, milestone, and Desktop-specific skills.
-- Repo-owned loop state and ledger support is the next loop-engineering hardening step: keep source revision, task state, claim/lease state, verification evidence, review evidence, blockers, and next decisions in repository files first; treat future external memory adapters as optional cache or coordination layers unless a repository explicitly defines a stronger reviewed authority model.
+- Issue #77 / PR #78 delivered repo-owned loop state and ledger support as a
+  durable baseline, not a future task-selection target. The repository-owned
+  contract, templates, validator, tests, and v0.4.0 point-in-time release note
+  record that completed milestone: keep source revision, task state,
+  claim/lease state, verification evidence, review evidence, blockers, and next
+  decisions in repository files first; treat future external memory adapters as
+  optional cache or coordination layers unless a repository explicitly defines
+  a stronger reviewed authority model.
 - Loop Engineering V1 is tracked in issue #81. It adds one production route and
   transition core, structured YAML validation, revision/event/idempotency
   guards, deterministic workflow evals, native Goal mode, shared subagents, and
