@@ -458,12 +458,39 @@ Run the repository hygiene check:
 ./scripts/validate-repo.sh
 ```
 
-The zero-argument command remains the complete local validation path: it runs
-all repository checks, evals, and focused unit groups. CI avoids running those
-focused unit groups twice by running checks first with
-`./scripts/validate-repo.sh --skip-unit-tests`, then one full unittest
-discovery pass. `--skip-unit-tests` is only for that orchestration; unknown,
-duplicate, extra, and positional arguments fail before validation begins.
+The zero-argument command remains the complete repository-check path: it runs
+all structural checks, evals, focused unit groups, and the exact shard
+inventory validator. Repository unittest modules are partitioned by stable
+functional ownership in `tests/test-shards.yaml`; duplicate, missing,
+nonexistent, symlinked, and unassigned modules fail closed.
+
+For local development, first run exact focused modules, then every affected
+shard selected from changed paths and dependency evidence:
+
+```bash
+./scripts/project-python scripts/test-shards.py list
+./scripts/project-python scripts/test-shards.py run <affected-shard>
+./scripts/validate-repo.sh --skip-unit-tests
+```
+
+GitNexus impact analysis may contribute selection evidence but cannot prove
+that an unselected shard is unaffected. Before PR readiness, run the complete
+local equivalent:
+
+```bash
+./scripts/validate-repo.sh --skip-unit-tests
+./scripts/project-python scripts/test-shards.py run-all
+```
+
+Hosted Repository Validation always executes all manifest shards with
+`fail-fast: false` plus the repository-wide checks. Exactly one platform-facing
+aggregate job is named `Validate repository`; it succeeds only when manifest
+planning, repository checks, and the complete shard matrix all succeed. A
+failed, cancelled, skipped, timed-out, or missing component cannot produce
+aggregate success. Individual shard job names are diagnostic only and must not
+become required-check or ruleset contracts. `--skip-unit-tests` remains only a
+CI/local orchestration option; unknown, duplicate, extra, and positional
+arguments fail before validation begins.
 
 For docs-only release readiness work, also run:
 

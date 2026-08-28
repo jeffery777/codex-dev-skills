@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import pathlib
 import re
+import subprocess
 import unittest
 
 import yaml
@@ -11,6 +14,8 @@ import yaml
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github/workflows/exact-head-merge-readiness.yml"
 UPSTREAM_WORKFLOW = ROOT / ".github/workflows/repository-validation.yml"
+UPSTREAM_POLICY = ROOT / ".github/exact-head-merge-readiness-policy.json"
+SHARD_MANIFEST = ROOT / "tests/test-shards.yaml"
 ROLLOUT_GUIDE = ROOT / "docs/exact-head-merge-gate-app.md"
 
 
@@ -122,6 +127,97 @@ class ExactHeadReadinessWorkflowTests(unittest.TestCase):
         self.assertNotIn("environment:", text)
         self.assertNotIn("actions/cache", text)
         self.assertNotIn("upload-artifact", text)
+
+    def test_upstream_shards_behind_one_fail_closed_aggregate_context(self) -> None:
+        text = UPSTREAM_WORKFLOW.read_text(encoding="utf-8")
+        workflow = yaml.safe_load(text)
+        jobs = workflow["jobs"]
+
+        self.assertEqual(
+            1,
+            sum(job.get("name") == "Validate repository" for job in jobs.values()),
+        )
+        self.assertEqual("Validate repository", jobs["validate"]["name"])
+        self.assertEqual(
+            ["plan", "repository_checks", "test_shards"], jobs["validate"]["needs"]
+        )
+        self.assertEqual("${{ always() }}", jobs["validate"]["if"])
+        self.assertFalse(jobs["test_shards"]["strategy"]["fail-fast"])
+        self.assertEqual(
+            "${{ fromJSON(needs.plan.outputs.shards) }}",
+            jobs["test_shards"]["strategy"]["matrix"]["shard"],
+        )
+        aggregate = jobs["validate"]["steps"][0]
+        self.assertEqual(
+            {
+                "PLAN_RESULT": "${{ needs.plan.result }}",
+                "REPOSITORY_CHECKS_RESULT": "${{ needs.repository_checks.result }}",
+                "TEST_SHARDS_RESULT": "${{ needs.test_shards.result }}",
+            },
+            aggregate["env"],
+        )
+        self.assertEqual(3, aggregate["run"].count('test "$'))
+        self.assertEqual(3, aggregate["run"].count('" = success'))
+        self.assertIn("scripts/test-shards.py validate", text)
+        self.assertIn("scripts/test-shards.py list --format json", text)
+        self.assertIn('scripts/test-shards.py run "${{ matrix.shard }}"', text)
+
+    def test_upstream_aggregate_rejects_every_non_success_result(self) -> None:
+        workflow = yaml.safe_load(UPSTREAM_WORKFLOW.read_text(encoding="utf-8"))
+        aggregate_script = workflow["jobs"]["validate"]["steps"][0]["run"]
+
+        def run(plan: str, repository_checks: str, test_shards: str) -> int:
+            environment = os.environ.copy()
+            environment.update(
+                PLAN_RESULT=plan,
+                REPOSITORY_CHECKS_RESULT=repository_checks,
+                TEST_SHARDS_RESULT=test_shards,
+            )
+            return subprocess.run(
+                ["bash", "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", aggregate_script],
+                cwd=ROOT,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            ).returncode
+
+        self.assertEqual(0, run("success", "success", "success"))
+        for component in range(3):
+            for result in ("", "failure", "cancelled", "skipped"):
+                values = ["success", "success", "success"]
+                values[component] = result
+                with self.subTest(component=component, result=result):
+                    self.assertNotEqual(0, run(*values))
+
+    def test_internal_shards_are_not_required_context_contracts(self) -> None:
+        policy = json.loads(UPSTREAM_POLICY.read_text(encoding="utf-8"))
+        guide = ROLLOUT_GUIDE.read_text(encoding="utf-8")
+        manifest = yaml.safe_load(SHARD_MANIFEST.read_text(encoding="utf-8"))
+        policy_contexts = {policy["check_context"]} | {
+            item["check_context"] for item in policy["required_upstream_workflows"]
+        }
+        ruleset_contexts = {
+            "Validate repository",
+            "Validate closing Issue",
+            "Exact-Head Merge Readiness",
+        }
+
+        for shard in manifest["shards"]:
+            self.assertNotIn(shard["id"], policy_contexts)
+            self.assertNotIn(shard["id"], ruleset_contexts)
+        self.assertIn('"context": "Validate repository"', guide)
+
+    def test_upstream_policy_pins_the_current_workflow_blob(self) -> None:
+        workflow_bytes = UPSTREAM_WORKFLOW.read_bytes()
+        blob = b"blob " + str(len(workflow_bytes)).encode("ascii") + b"\0" + workflow_bytes
+        expected_sha = hashlib.sha1(blob, usedforsecurity=False).hexdigest()
+        policy = json.loads(UPSTREAM_POLICY.read_text(encoding="utf-8"))
+
+        self.assertEqual(
+            expected_sha,
+            policy["required_upstream_workflows"][0]["workflow_blob_sha"],
+        )
 
 
 if __name__ == "__main__":

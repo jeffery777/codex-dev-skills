@@ -13,8 +13,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
-    name: Validate repository
+  plan:
+    name: Plan test shards (internal)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      shards: ${{ steps.matrix.outputs.shards }}
+    steps:
+      - name: Check out exact pull request head
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up repository Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version-file: .python-version
+
+      - name: Install verification dependencies
+        run: ./scripts/project-python -m pip install --disable-pip-version-check --requirement requirements.txt
+
+      - name: Verify exact head and Python environment
+        env:
+          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          ./scripts/project-python -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'
+          git switch --create ci-shard-plan "$EXPECTED_HEAD_SHA"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+
+      - name: Validate and emit the complete shard matrix
+        id: matrix
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          ./scripts/project-python scripts/test-shards.py validate
+          shards="$(./scripts/project-python scripts/test-shards.py list --format json)"
+          printf 'shards=%s\n' "$shards" >> "$GITHUB_OUTPUT"
+
+  repository_checks:
+    name: Repository checks (internal)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -56,7 +96,7 @@ jobs:
         run: |
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
           ./scripts/project-python -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'
-          git switch --create ci-validation "$EXPECTED_HEAD_SHA"
+          git switch --create ci-repository-checks "$EXPECTED_HEAD_SHA"
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
 
       - name: Run repository checks without duplicate unit tests
@@ -64,7 +104,78 @@ jobs:
           PYTHONDONTWRITEBYTECODE: "1"
         run: ./scripts/validate-repo.sh --skip-unit-tests
 
-      - name: Run full unit suite once
+  test_shards:
+    name: Test shard ${{ matrix.shard }} (internal)
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    steps:
+      - name: Check out exact pull request head
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up repository Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version-file: .python-version
+
+      - name: Install repository validation tools
+        run: |
+          if command -v rg >/dev/null 2>&1; then
+            rg --version
+            exit 0
+          fi
+
+          apt_options=(
+            -o Acquire::ForceIPv4=true
+            -o Acquire::Retries=1
+            -o Acquire::http::Timeout=30
+            -o Acquire::https::Timeout=30
+          )
+          sudo env DEBIAN_FRONTEND=noninteractive timeout --kill-after=10s 90s apt-get "${apt_options[@]}" update
+          sudo env DEBIAN_FRONTEND=noninteractive timeout --kill-after=10s 90s apt-get "${apt_options[@]}" install --no-install-recommends --yes ripgrep
+          rg --version
+
+      - name: Install verification dependencies
+        run: ./scripts/project-python -m pip install --disable-pip-version-check --requirement requirements.txt
+
+      - name: Verify exact head and Python environment
+        env:
+          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          ./scripts/project-python -c 'import sys, yaml; print(sys.executable); print(yaml.__version__)'
+          git switch --create "ci-test-${{ matrix.shard }}" "$EXPECTED_HEAD_SHA"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+
+      - name: Run test shard ${{ matrix.shard }}
         env:
           PYTHONDONTWRITEBYTECODE: "1"
-        run: ./scripts/project-python -m unittest discover -s tests -p 'test_*.py'
+          PYTHONHASHSEED: "0"
+        run: ./scripts/project-python scripts/test-shards.py run "${{ matrix.shard }}"
+
+  validate:
+    name: Validate repository
+    if: ${{ always() }}
+    needs: [plan, repository_checks, test_shards]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every validation component to succeed
+        env:
+          PLAN_RESULT: ${{ needs.plan.result }}
+          REPOSITORY_CHECKS_RESULT: ${{ needs.repository_checks.result }}
+          TEST_SHARDS_RESULT: ${{ needs.test_shards.result }}
+        run: |
+          printf 'plan=%s repository_checks=%s test_shards=%s\n' \
+            "$PLAN_RESULT" "$REPOSITORY_CHECKS_RESULT" "$TEST_SHARDS_RESULT"
+          test "$PLAN_RESULT" = success
+          test "$REPOSITORY_CHECKS_RESULT" = success
+          test "$TEST_SHARDS_RESULT" = success

@@ -268,7 +268,7 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
             lambda suffix: f"/repos/{client.repository}{suffix}"
         )
         repository_read_client.json.return_value = {
-            "sha": "393848fe55596c4e89969d94f6ba89ce523010d7"
+            "sha": "0c84c54137596641b6096c0c10abe2c85f74ffaa"
         }
         result = control.collect_upstream_checks(
             client, repository_read_client, 185, "a" * 40, head, policy
