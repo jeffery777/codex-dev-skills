@@ -460,51 +460,67 @@ def pointer_value(repository: str, pr_number: int, head: str, receipt_id: int | 
     return value
 
 
-def parse_pointer(value: object, repository: str, pr_number: int, head: str) -> tuple[int | None, int | None, int]:
+def parse_pointer(value: object, repository: str, pr_number: int, head: str) -> tuple[int | None, int | None, int, str | None]:
     if not isinstance(value, str):
-        return None, None, 0
+        return None, None, 0, None
     match = re.fullmatch(r"ehr1:([0-9a-f]{16}):([1-9][0-9]*):([0-9a-f]{40}):([0-9]+):([0-9]+):([1-9][0-9]*):(-|[0-9a-f]{64})", value)
     if match is None:
-        return None, None, 0
+        return None, None, 0, None
     expected_repository = hashlib.sha256(repository.encode("utf-8")).hexdigest()[:16]
     if match.group(1) != expected_repository or int(match.group(2)) != pr_number or match.group(3) != head:
-        return None, None, 0
+        return None, None, 0, None
     receipt_id = int(match.group(4)) or None
     receipt_sequence = int(match.group(5)) or None
     generation = int(match.group(6))
+    receipt_digest = None if match.group(7) == "-" else match.group(7)
     if (
         (receipt_id is not None and receipt_id > validator.MAX_RECEIPT_SEQUENCE)
         or (receipt_sequence is not None and receipt_sequence > validator.MAX_RECEIPT_SEQUENCE)
         or generation >= validator.MAX_RECEIPT_SEQUENCE
     ):
-        return None, None, 0
+        return None, None, 0, None
     if (receipt_id is None) != (receipt_sequence is None):
-        return None, None, 0
-    return receipt_id, receipt_sequence, generation
+        return None, None, 0, None
+    if receipt_digest is not None and receipt_id is None:
+        return None, None, 0, None
+    return receipt_id, receipt_sequence, generation, receipt_digest
 
 
 def find_gate_check(client: GitHubClient, head: str, context: str, app_id: int) -> dict[str, object] | None:
-    response = client.json_page(client.repo_path(f"/commits/{head}/check-runs?filter=all&per_page=100"))
+    query = urllib.parse.urlencode(
+        {
+            "check_name": context,
+            "app_id": app_id,
+            "filter": "latest",
+            "per_page": 100,
+        }
+    )
+    response = client.json_page(client.repo_path(f"/commits/{head}/check-runs?{query}"))
     runs = response.get("check_runs") if isinstance(response, dict) else None
     if not isinstance(runs, list):
         raise ControlPlaneError("GitHub check-runs response is incomplete")
-    matches = [run for run in runs if isinstance(run, dict) and run.get("name") == context and isinstance(run.get("app"), dict) and run["app"].get("id") == app_id]
-    if len(matches) > 1:
-        raise ControlPlaneError("dedicated readiness check is ambiguous for the live head")
+    matches = [
+        run for run in runs
+        if isinstance(run, dict)
+        and run.get("name") == context
+        and run.get("head_sha") == head
+        and isinstance(run.get("app"), dict)
+        and run["app"].get("id") == app_id
+    ]
+    if len(matches) != len(runs) or len(matches) > 1:
+        raise ControlPlaneError(
+            "latest dedicated readiness check selection is ambiguous or drifted"
+        )
     return matches[0] if matches else None
 
 
-def start_check(client: GitHubClient, existing: dict[str, object] | None, head: str, context: str, details_url: str, external_id: str) -> dict[str, object]:
+def start_check(client: GitHubClient, head: str, context: str, details_url: str, external_id: str) -> dict[str, object]:
     body = {
         "name": context, "status": "in_progress", "details_url": details_url, "external_id": external_id,
+        "head_sha": head,
         "output": {"title": "Exact-head evidence is being evaluated", "summary": "Trusted default-branch control plane is reading live GitHub state."},
     }
-    if existing is None:
-        body["head_sha"] = head
-        value = client.json("POST", client.repo_path("/check-runs"), body=body)
-    else:
-        check_id = validator.require_positive_integer(existing.get("id"), "existing check.id")
-        value = client.json("PATCH", client.repo_path(f"/check-runs/{check_id}"), body=body)
+    value = client.json("POST", client.repo_path("/check-runs"), body=body)
     if not isinstance(value, dict):
         raise ControlPlaneError("created check-run response is invalid")
     return value
@@ -555,11 +571,32 @@ def confirm_gate_check(client: GitHubClient, gate: dict[str, object], expected_h
         raise ControlPlaneError("gate check identity drifted before success publication")
 
 
+def confirm_latest_gate_check(
+    client: GitHubClient,
+    gate: dict[str, object],
+    expected_head: str,
+) -> None:
+    latest = find_gate_check(
+        client,
+        expected_head,
+        validator.GATE_CONTEXT,
+        validator.require_positive_integer(gate["check_app_id"], "gate.check_app_id"),
+    )
+    expected_id = validator.require_positive_integer(
+        gate["check_run_id"], "gate.check_run_id"
+    )
+    if latest is None or latest.get("id") != expected_id:
+        raise ControlPlaneError(
+            "fresh gate check is not the authoritative latest check"
+        )
+
+
 def confirm_completed_gate_check(
     client: GitHubClient,
     gate: dict[str, object],
     expected_head: str,
     expected_external_id: str,
+    expected_conclusion: str,
     expected_title: str,
     expected_summary: str,
 ) -> None:
@@ -570,7 +607,7 @@ def confirm_completed_gate_check(
     expected = {
         "id": check_id, "name": validator.GATE_CONTEXT, "head_sha": expected_head,
         "app_id": gate["check_app_id"], "app_slug": gate["check_app_slug"],
-        "status": "completed", "conclusion": "success", "external_id": expected_external_id,
+        "status": "completed", "conclusion": expected_conclusion, "external_id": expected_external_id,
         "details_url": gate["details_url"], "title": expected_title[:255],
         "summary": expected_summary[:65535],
     }
@@ -582,7 +619,9 @@ def confirm_completed_gate_check(
         "title": live["output"].get("title"), "summary": live["output"].get("summary"),
     }
     if actual != expected:
-        raise ControlPlaneError("completed success check did not survive exact platform readback")
+        raise ControlPlaneError(
+            f"completed {expected_conclusion} check did not survive exact platform readback"
+        )
 
 
 def stable_evidence_identity(envelope: dict[str, object]) -> str:
@@ -716,21 +755,23 @@ def run(args: argparse.Namespace) -> dict[str, object] | None:
     if head != args.expected_head:
         raise ControlPlaneError("routed PR head drifted before the head-scoped controller started")
     existing = find_gate_check(client, head, str(policy["check_context"]), args.expected_app_id)
-    existing_receipt_id, existing_receipt_sequence, generation = parse_pointer(
+    existing_receipt_id, existing_receipt_sequence, generation, existing_receipt_digest = parse_pointer(
         existing.get("external_id") if existing else None, args.repository, pr_number, head,
     )
+    invalid_existing_pointer = existing is not None and generation == 0
     relevant, _ = event_receipt_decision(
         event_raw, current_receipt_id=existing_receipt_id, explicit_receipt_id=args.receipt_id,
         repository=args.repository, pr_number=pr_number, maximum=int(policy["max_receipt_bytes"]),
         trusted_associations=set(policy["trusted_receipt_author_associations"]),  # type: ignore[arg-type]
     )
-    if not relevant:
+    if not relevant and not invalid_existing_pointer:
         return None
     external_id = pointer_value(
         args.repository, pr_number, head,
         existing_receipt_id, existing_receipt_sequence, generation + 1,
+        existing_receipt_digest,
     )
-    check = start_check(client, existing, head, str(policy["check_context"]), args.run_url, external_id)
+    check = start_check(client, head, str(policy["check_context"]), args.run_url, external_id)
     check_id = validator.require_positive_integer(check.get("id"), "check.id")
     app = check.get("app")
     if not isinstance(app, dict):
@@ -747,17 +788,69 @@ def run(args: argparse.Namespace) -> dict[str, object] | None:
         "details_url": args.run_url,
     }
     try:
+        confirm_gate_check(client, gate, head, external_id)
+        confirm_latest_gate_check(client, gate, head)
+        if invalid_existing_pointer:
+            raise ControlPlaneError(
+                "authoritative latest gate check has an invalid pointer"
+            )
         require_unique_open_pr_for_head(client, pr_number, head)
         receipt_id, receipt_sequence = select_current_receipt(
             client, pr_number, head, existing_receipt_id, existing_receipt_sequence,
             int(policy["max_receipt_bytes"]),
             set(policy["trusted_receipt_author_associations"]),  # type: ignore[arg-type]
         )
+        selected_receipt_digest = (
+            existing_receipt_digest
+            if (receipt_id, receipt_sequence)
+            == (existing_receipt_id, existing_receipt_sequence)
+            else None
+        )
         external_id = pointer_value(
-            args.repository, pr_number, head, receipt_id, receipt_sequence, generation + 1,
+            args.repository,
+            pr_number,
+            head,
+            receipt_id,
+            receipt_sequence,
+            generation + 1,
+            selected_receipt_digest,
         )
         set_check_pointer(client, check_id, args.run_url, external_id)
         confirm_gate_check(client, gate, head, external_id)
+        confirm_latest_gate_check(client, gate, head)
+        if receipt_id is not None and receipt_sequence is not None:
+            selected_receipt, _, _ = get_receipt(
+                client,
+                pr_number,
+                head,
+                receipt_id,
+                receipt_sequence,
+                int(policy["max_receipt_bytes"]),
+                set(policy["trusted_receipt_author_associations"]),  # type: ignore[arg-type]
+            )
+            live_receipt_digest = validator.canonical_receipt_digest(
+                selected_receipt
+            )
+            if (
+                selected_receipt_digest is not None
+                and live_receipt_digest != selected_receipt_digest
+            ):
+                raise ControlPlaneError(
+                    "current receipt body changed without a higher receipt sequence"
+                )
+            selected_receipt_digest = live_receipt_digest
+            external_id = pointer_value(
+                args.repository,
+                pr_number,
+                head,
+                receipt_id,
+                receipt_sequence,
+                generation + 1,
+                selected_receipt_digest,
+            )
+            set_check_pointer(client, check_id, args.run_url, external_id)
+            confirm_gate_check(client, gate, head, external_id)
+            confirm_latest_gate_check(client, gate, head)
         if receipt_id is None or receipt_sequence is None:
             raise ControlPlaneError("no current exact-head receipt is bound to this PR head")
         if args.receipt_id is not None and args.receipt_id != receipt_id:
@@ -772,6 +865,13 @@ def run(args: argparse.Namespace) -> dict[str, object] | None:
             gate,
         )
         validator.validate_payload(first)
+        if (
+            validator.canonical_receipt_digest(first["receipt"])
+            != selected_receipt_digest
+        ):
+            raise ControlPlaneError(
+                "current receipt body drifted after its digest was locked"
+            )
         confirm_gate_check(client, gate, first["platform_snapshot"]["head_sha"], external_id)  # type: ignore[index]
         envelope = build_envelope(
             client,
@@ -783,24 +883,53 @@ def run(args: argparse.Namespace) -> dict[str, object] | None:
             gate,
         )
         validator.validate_payload(envelope)
+        if (
+            validator.canonical_receipt_digest(envelope["receipt"])
+            != selected_receipt_digest
+        ):
+            raise ControlPlaneError(
+                "current receipt body drifted after its digest was locked"
+            )
         confirm_gate_check(client, gate, envelope["platform_snapshot"]["head_sha"], external_id)  # type: ignore[index]
+        confirm_latest_gate_check(client, gate, head)
         if stable_evidence_identity(first) != stable_evidence_identity(envelope):
             raise ControlPlaneError("live evidence drifted during success publication")
         digest = canonical_digest(envelope)
         completed_external_id = pointer_value(
             args.repository, pr_number, head, receipt_id, receipt_sequence, generation + 1,
-            validator.canonical_receipt_digest(envelope["receipt"]),
+            selected_receipt_digest,
         )
         success_title = "Exact-head merge evidence is current"
         success_summary = f"Evidence digest: `{digest}`\n\nHead: `{head}`"
         update_check(client, check_id, "success", success_title, success_summary, completed_external_id)
         confirm_completed_gate_check(
-            client, gate, head, completed_external_id, success_title, success_summary,
+            client, gate, head, completed_external_id, "success", success_title, success_summary,
         )
+        confirm_latest_gate_check(client, gate, head)
         args.output.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return envelope
     except Exception as exc:
-        update_check(client, check_id, "failure", "Exact-head merge evidence is not current", str(exc), external_id)
+        failure_title = "Exact-head merge evidence is not current"
+        failure_summary = str(exc)
+        try:
+            update_check(
+                client, check_id, "failure", failure_title, failure_summary, external_id
+            )
+            confirm_completed_gate_check(
+                client,
+                gate,
+                head,
+                external_id,
+                "failure",
+                failure_title,
+                failure_summary,
+            )
+            confirm_latest_gate_check(client, gate, head)
+        except Exception as publication_exc:
+            raise ControlPlaneError(
+                "failed to publish authoritative gate failure after "
+                f"{exc}: {publication_exc}"
+            ) from publication_exc
         raise
 
 
