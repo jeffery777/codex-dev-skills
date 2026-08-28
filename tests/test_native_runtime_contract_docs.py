@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 import re
+import subprocess
 import tempfile
 import unittest
 
@@ -75,6 +76,15 @@ def collect_active_guidance(
             if path.is_file() or path.is_symlink()
         )
     return collected
+
+
+def is_untracked_python_bytecode_cache(path: pathlib.Path) -> bool:
+    return (
+        not path.is_symlink()
+        and path.is_file()
+        and path.suffix == ".pyc"
+        and "__pycache__" in path.parts
+    )
 
 
 class NativeRuntimeContractDocsTests(unittest.TestCase):
@@ -202,25 +212,47 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
 
     def test_latest_runtime_evidence_records_current_versions_and_schemas(self) -> None:
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-25.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-28.md")
 
         for expected in (
-            "0.149.1",
+            "0.150.1",
+            "26.820.80927",
+            "0.150.0-alpha.8",
             "codex mcp-server",
             "deprecated",
-            "not removed",
-            "Unknown",
-            "Codex app server",
-            "Codex SDK",
-            "codex mcp add",
+            "codex exec",
+            "Codex app-server",
+            "version",
+            "list_projects",
+            "create_thread",
+            "fork_thread",
+            "wait_threads",
+            "automation_update",
+            "startingState",
+            "threadId",
+            "clientThreadId",
             "external MCP servers",
-            "native thread tools",
+            "native Desktop task/thread tools",
+            "No production adapter or shared-core change is required",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, evidence)
 
         self.assertNotIn("all MCP server support is deprecated", evidence)
-        self.assertIn("No Desktop callable schema was re-read", evidence)
+        self.assertIn(
+            "These descriptions are current-session evidence, not a published stable schema",
+            evidence,
+        )
+        self.assertIn("must not collapse", evidence)
+
+        for relative_path in (
+            "README.md",
+            "docs/runtime-compatibility.md",
+            "docs/native-runtime-capabilities.md",
+            "docs/runtime-adapter-v2.md",
+        ):
+            with self.subTest(maintained_pointer=relative_path):
+                self.assertIn("2026-08-28", read(relative_path))
 
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-07-31.md").is_file()
@@ -236,6 +268,9 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         )
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-25.md").is_file()
+        )
+        self.assertTrue(
+            (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-28.md").is_file()
         )
 
     def test_cli_queue_and_desktop_share_preserve_runtime_layers(self) -> None:
@@ -688,12 +723,24 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             r"^(?:test[_-])?desktop[_-]?runtime[_-]",
             re.IGNORECASE,
         )
-        reintroduced_artifacts = [
-            path.relative_to(ROOT).as_posix()
+        tracked = subprocess.run(
+            ["git", "ls-files", "-z", "--", "scripts", "tests"],
+            cwd=ROOT,
+            check=True,
+            stdout=subprocess.PIPE,
+        ).stdout.split(b"\0")
+        tracked_paths = {
+            value.decode("utf-8", errors="strict") for value in tracked if value
+        }
+        reintroduced_artifacts = {
+            relative
             for root in (ROOT / "scripts", ROOT / "tests")
             for path in root.rglob("*")
             if retired_artifact_name.match(path.name)
-        ]
+            for relative in (path.relative_to(ROOT).as_posix(),)
+            if relative in tracked_paths
+            or not is_untracked_python_bytecode_cache(path)
+        }
         self.assertEqual([], sorted(reintroduced_artifacts))
 
         active_guidance_files = (
@@ -726,6 +773,33 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
                 except UnicodeDecodeError:
                     continue
                 self.assertNotRegex(guidance, RETIRED_WRAPPER_RUNNABLE_REFERENCE)
+
+    def test_only_regular_untracked_bytecode_cache_is_inventory_noise(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = pathlib.Path(temp_dir)
+            cache_root = temp_root / "__pycache__"
+            cache_root.mkdir()
+
+            bytecode = cache_root / "desktop_runtime_probe.cpython-312.pyc"
+            bytecode.write_bytes(b"synthetic bytecode cache")
+            source = cache_root / "desktop_runtime_probe.py"
+            source.write_text("raise RuntimeError\n", encoding="utf-8")
+            fake_bytecode_directory = cache_root / "desktop_runtime_probe.pyc"
+            fake_bytecode_directory.mkdir()
+            bytecode_symlink = cache_root / "desktop_runtime_link.pyc"
+            bytecode_symlink.symlink_to(bytecode)
+            out_of_cache_bytecode = temp_root / "desktop_runtime_probe.pyc"
+            out_of_cache_bytecode.write_bytes(b"synthetic bytecode outside cache")
+
+            self.assertTrue(is_untracked_python_bytecode_cache(bytecode))
+            for forbidden in (
+                source,
+                fake_bytecode_directory,
+                bytecode_symlink,
+                out_of_cache_bytecode,
+            ):
+                with self.subTest(forbidden=forbidden.name):
+                    self.assertFalse(is_untracked_python_bytecode_cache(forbidden))
 
     def test_active_canonical_docs_reject_runnable_wrapper_guidance(self) -> None:
         self.assertIn(
