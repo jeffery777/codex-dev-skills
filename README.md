@@ -1224,12 +1224,13 @@ The main thread remains responsible for integrating returned work, checking the 
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-08-25)](docs/codex-runtime-compatibility-evidence-2026-08-25.md).
+[Codex runtime compatibility evidence (2026-08-28)](docs/codex-runtime-compatibility-evidence-2026-08-28.md).
 It records that `codex mcp-server`, the command that exposed Codex itself as an
-MCP server, is deprecated but not removed in observed CLI 0.149.1. This does
+MCP server, is deprecated but not removed in observed standalone CLI 0.150.1.
+It also records Desktop 26.820.80927 and its bundled CLI 0.150.0-alpha.8 as
+separate point-in-time observations rather than one global version. This does
 not deprecate Codex's external MCP client configuration, connectors, or native
-Desktop task/thread tools; the Desktop callable table remains separate
-2026-08-21 point-in-time evidence.
+Desktop task/thread tools.
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 Desktop Runtime Wrapper V1 is retired and provides no runnable or importable

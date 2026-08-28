@@ -1,13 +1,15 @@
 # Release Notes: v0.20.0
 
-Status: release candidate for Issue #185. Commit, push, pull request creation,
-merge, GitHub App registration or installation, protected-environment or secret
-configuration, ruleset mutation or activation, annotated tag creation, and
-GitHub Release publication remain separate human gates.
+Status: release candidate for Issue #185 with follow-up Issue #192. Commit,
+push, pull request creation, merge, GitHub App registration or installation,
+protected-environment or secret configuration, ruleset mutation or activation,
+annotated tag creation, and GitHub Release publication remain separate human
+gates.
 
 v0.20.0 is a backward-compatible workflow-contract release over v0.19.0. It
-adds a reusable, platform-enforced exact-head merge gate without granting new
-merge, auto-merge, tag, Release, deployment, comment, review, or content-write
+adds a reusable, platform-enforced exact-head merge gate and refreshes the
+Codex CLI/Desktop compatibility baseline without granting new merge,
+auto-merge, tag, Release, deployment, comment, review, or content-write
 authority.
 
 ## Hosted Exact-Head Enforcement
@@ -51,6 +53,20 @@ authority.
   integration ID, update the ruleset while disabled, prove drift failures, and
   activate only through a later independent human gate.
 
+## Runtime Compatibility And Validation Stability
+
+- Records standalone Codex CLI `0.150.1`, ChatGPT Desktop `26.820.80927`, and
+  Desktop-bundled CLI `0.150.0-alpha.8` as separate point-in-time observations
+  rather than collapsing them into one global runtime version.
+- Confirms that the shared workflow core, CLI session-control adapter, and
+  Desktop task/thread adapters remain compatible and retain independent CLI
+  and Desktop entrypoints over the shared layer.
+- Makes retired-wrapper inventory validation ignore only untracked Python
+  bytecode/cache noise while tracked forbidden artifacts still fail closed.
+- Recognizes `continuity_replay_state_unavailable` as a legitimate fail-closed
+  concurrent loser outcome while retaining the exactly-one-winner invariant
+  and proving that the losing path never dispatches a CLI session.
+
 ## Compatibility And Boundaries
 
 The release changes public workflow, policy, validation, documentation, and
@@ -73,14 +89,16 @@ git diff --check
 git status --short --branch
 ```
 
-Require focused v2 collector, validator, workflow-security, and contract tests;
-independent release-sensitive review; Security Diff Scan; hosted canary and
-drift checks; exact-head Merge Review; and final disabled/active ruleset
-readback as applicable. Annotated tag `v0.20.0` and a non-draft,
-non-prerelease GitHub Release remain later, separate human gates.
+Require focused v2 collector, validator, workflow-security, runtime-contract,
+retired-wrapper inventory, and concurrent handoff tests; independent
+release-sensitive review; Security Diff Scan; hosted canary and drift checks;
+exact-head Merge Review; and final disabled/active ruleset readback as
+applicable. Annotated tag `v0.20.0` and a non-draft, non-prerelease GitHub
+Release remain later, separate human gates.
 
 ## Traceability
 
 - Issue #185: <https://github.com/jeffery777/codex-dev-skills/issues/185>
+- Issue #192: <https://github.com/jeffery777/codex-dev-skills/issues/192>
 - Base release: <https://github.com/jeffery777/codex-dev-skills/releases/tag/v0.19.0>
 - Compare after publication: <https://github.com/jeffery777/codex-dev-skills/compare/v0.19.0...v0.20.0>
