@@ -10,7 +10,7 @@
       "workflow_path": ".github/workflows/repository-validation.yml",
       "event": "pull_request",
       "run_name_contract": "exact-pr-head/v1",
-      "workflow_blob_sha": "393848fe55596c4e89969d94f6ba89ce523010d7"
+      "workflow_blob_sha": "0c84c54137596641b6096c0c10abe2c85f74ffaa"
     }
   ],
   "required_ci_policy": {

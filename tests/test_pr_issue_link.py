@@ -239,14 +239,15 @@ class PullRequestIssueLinkTests(unittest.TestCase):
         self.assertGreaterEqual(workflow.count("rg --version"), 2)
         self.assertIn("PYTHONDONTWRITEBYTECODE: \"1\"", workflow)
         checks_index = workflow.index("./scripts/validate-repo.sh --skip-unit-tests")
-        unit_index = workflow.index("python -m unittest discover")
-        self.assertLess(checks_index, unit_index)
+        shard_index = workflow.index('scripts/test-shards.py run "${{ matrix.shard }}"')
+        self.assertLess(checks_index, shard_index)
         self.assertEqual(1, workflow.count("./scripts/validate-repo.sh --skip-unit-tests"))
-        self.assertEqual(1, workflow.count("python -m unittest discover"))
-        self.assertIn(
-            'git switch --create ci-validation "$EXPECTED_HEAD_SHA"',
-            workflow,
-        )
+        self.assertEqual(0, workflow.count("python -m unittest discover"))
+        self.assertEqual(1, workflow.count('scripts/test-shards.py run "${{ matrix.shard }}"'))
+        self.assertIn('git switch --create ci-shard-plan "$EXPECTED_HEAD_SHA"', workflow)
+        self.assertIn('git switch --create ci-repository-checks "$EXPECTED_HEAD_SHA"', workflow)
+        self.assertIn('git switch --create "ci-test-${{ matrix.shard }}"', workflow)
+        self.assertIn("if: ${{ always() }}", workflow)
 
         action_lines = [
             line.strip()

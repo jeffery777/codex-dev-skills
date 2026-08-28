@@ -396,12 +396,19 @@ check_repository_guardrails() {
   ok "GitNexus and pull request linkage repository guardrails pass"
 }
 
+check_test_shards() {
+  "$PROJECT_PYTHON" scripts/test-shards.py validate >"$TMP_DIR/test-shards.txt"
+  run_unit_tests tests.test_test_shards
+  ok "repository test shard manifest is a complete exact partition"
+}
+
 main() {
   require_rg
   check_no_provider_terms
   check_sensitive_private_terms
   check_legacy_private_names
   check_repository_guardrails
+  check_test_shards
   check_catalog_sources
   check_catalog_skill_metadata
   check_installer_catalog_consistency

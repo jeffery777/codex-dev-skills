@@ -1,0 +1,91 @@
+schema_version: 1
+test_root: tests
+test_pattern: test_*.py
+shards:
+  - id: exact-head-merge
+    modules:
+      - tests.test_exact_head_merge_readiness_control_plane
+      - tests.test_exact_head_merge_readiness_workflow
+      - tests.test_exact_head_merge_review
+      - tests.test_exact_head_merge_review_contract_docs
+  - id: gitnexus
+    modules:
+      - tests.test_eval_gitnexus_index_lifecycle
+      - tests.test_gitnexus_adapter
+      - tests.test_gitnexus_config_guard
+      - tests.test_gitnexus_hook
+  - id: installer-agent-profiles
+    modules:
+      - tests.test_agent_profiles
+      - tests.test_installer_agent_profiles
+  - id: installer-runtime
+    modules:
+      - tests.test_installer_runtime_groups
+  - id: loop-context
+    modules:
+      - tests.test_context_continuity
+      - tests.test_eval_context_continuity
+      - tests.test_eval_loop_engineering
+      - tests.test_loop_engineering_core
+  - id: loop-control
+    modules:
+      - tests.test_loopctl
+  - id: memory-m0
+    modules:
+      - tests.test_eval_memory_contract
+      - tests.test_eval_memory_operation
+      - tests.test_eval_memory_qualification
+      - tests.test_memory_contract
+      - tests.test_memory_m0_contract_docs
+      - tests.test_memory_operation
+      - tests.test_memory_qualification
+      - tests.test_memoryctl
+      - tests.test_operationctl
+      - tests.test_qualificationctl
+  - id: memory-m1-and-evaluation
+    modules:
+      - tests.test_agent_routing
+      - tests.test_candidate_evaluation
+      - tests.test_candidate_evaluation_contract_docs
+      - tests.test_eval_agent_routing
+      - tests.test_eval_candidate_evaluation
+      - tests.test_eval_memory_sqlite
+      - tests.test_evaluationctl
+      - tests.test_memory_sqlite
+      - tests.test_memory_sqlite_contract_docs
+      - tests.test_sqlitectl
+  - id: native-runtime
+    modules:
+      - tests.test_cli_session_handoff
+      - tests.test_desktop_wrapper_security_fixtures
+      - tests.test_native_runtime_contract_docs
+  - id: operational-improvement
+    modules:
+      - tests.test_eval_improvement_lineage
+      - tests.test_eval_improvement_proposal
+      - tests.test_eval_operational_evidence
+      - tests.test_evidencectl
+      - tests.test_improvement_lineage
+      - tests.test_improvement_lineage_contract_docs
+      - tests.test_improvement_proposal
+      - tests.test_improvement_proposal_contract_docs
+      - tests.test_improvementctl
+      - tests.test_operational_evidence
+      - tests.test_operational_evidence_status_docs
+      - tests.test_proposalctl
+  - id: plugin-packaging
+    modules:
+      - tests.test_plugin_packaging
+  - id: repository-policy
+    modules:
+      - tests.test_code_mode_tool_policy
+      - tests.test_github_control_plane_policy
+      - tests.test_pr_issue_link
+      - tests.test_project_python
+      - tests.test_release_state_contract
+      - tests.test_review_disposition_contract
+      - tests.test_runtime_compatibility_release_docs
+      - tests.test_security_scan_recovery_contract
+      - tests.test_test_shards
+      - tests.test_validate_loop_ledger
+      - tests.test_validate_repo

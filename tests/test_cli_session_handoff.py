@@ -1255,8 +1255,13 @@ class CliSessionHandoffTests(unittest.TestCase):
         loser = next(item for item in results if item["status"] != "completed")
         self.assertIn(
             loser["failure_class"],
-            {"continuity_replay_conflict", "continuity_replay_state_busy"},
+            {
+                "continuity_replay_conflict",
+                "continuity_replay_state_busy",
+                "continuity_replay_state_unavailable",
+            },
         )
+        self.assertFalse(loser["boundaries"]["session_call_performed"])
 
     def test_fresh_continuation_concurrent_same_id_has_one_winner(self) -> None:
         request = self.request(
@@ -1277,8 +1282,13 @@ class CliSessionHandoffTests(unittest.TestCase):
         loser = next(item for item in results if item["status"] != "completed")
         self.assertIn(
             loser["failure_class"],
-            {"idempotent_rollover_replay", "continuity_replay_state_busy"},
+            {
+                "idempotent_rollover_replay",
+                "continuity_replay_state_busy",
+                "continuity_replay_state_unavailable",
+            },
         )
+        self.assertFalse(loser["boundaries"]["session_call_performed"])
 
     def test_fresh_continuation_rejects_origin_mismatch_and_malformed_enum(self) -> None:
         mismatch = self.continuity_assessment()

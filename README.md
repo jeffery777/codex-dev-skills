@@ -1224,12 +1224,13 @@ The main thread remains responsible for integrating returned work, checking the 
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-08-25)](docs/codex-runtime-compatibility-evidence-2026-08-25.md).
+[Codex runtime compatibility evidence (2026-08-28)](docs/codex-runtime-compatibility-evidence-2026-08-28.md).
 It records that `codex mcp-server`, the command that exposed Codex itself as an
-MCP server, is deprecated but not removed in observed CLI 0.149.1. This does
+MCP server, is deprecated but not removed in observed standalone CLI 0.150.1.
+It also records Desktop 26.820.80927 and its bundled CLI 0.150.0-alpha.8 as
+separate point-in-time observations rather than one global version. This does
 not deprecate Codex's external MCP client configuration, connectors, or native
-Desktop task/thread tools; the Desktop callable table remains separate
-2026-08-21 point-in-time evidence.
+Desktop task/thread tools.
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 Desktop Runtime Wrapper V1 is retired and provides no runnable or importable
@@ -1523,27 +1524,50 @@ Run the repository hygiene check before proposing a release or PR:
 
 This validates catalog/release consistency, required skill metadata, runtime
 labels, symlink safety, structured loop YAML, event/transition behavior,
-workflow eval thresholds, the maintained focused unit groups, and public
-hygiene checks. The zero-argument command remains backward compatible and
-includes all direct eval acceptance scripts.
+workflow eval thresholds, the maintained focused unit groups, the exact test
+shard inventory, and public hygiene checks. The zero-argument command remains
+backward compatible and includes all direct eval acceptance scripts.
 
-When a full unittest discovery pass is also required, avoid rerunning the
-validator's focused unit groups:
+Repository unittest modules have one explicit functional owner in
+`tests/test-shards.yaml`. Validate or inspect that offline inventory and rerun
+one shard deterministically through the selected project interpreter:
+
+```bash
+./scripts/project-python scripts/test-shards.py validate
+./scripts/project-python scripts/test-shards.py list
+./scripts/project-python scripts/test-shards.py run <shard-id>
+```
+
+Use these verification tiers:
+
+1. Run exact focused test modules for the changed behavior.
+2. Use changed paths, dependency evidence, and optional GitNexus impact
+   analysis to select every affected functional shard. GitNexus evidence does
+   not prove absence of impact.
+3. Run the affected shards plus repository-wide checks without duplicating
+   the validator's focused unit groups.
+4. Before PR readiness, run every shard. Hosted CI always runs the complete
+   matrix and exposes exactly one required aggregate context,
+   `Validate repository`; individual shard names are diagnostic and are not
+   ruleset contracts.
+
+The local complete equivalent is:
 
 ```bash
 ./scripts/validate-repo.sh --skip-unit-tests
-./scripts/project-python -m unittest discover -s tests -p 'test_*.py'
+./scripts/project-python scripts/test-shards.py run-all
 ```
 
 `--skip-unit-tests` omits only the embedded unit-test groups; hygiene,
 catalog/installer/version consistency, plugin parity, validators, and direct
 eval acceptance checks still run. It is the CI orchestration mode, not a
 weaker structural check. Unknown, duplicate, extra, and positional arguments
-fail before validation begins. Ordinary documentation or contract changes may
-use focused tests plus this checks-only orchestration and rely on exact-head CI
-for full discovery. Runtime, installer, security, and release-sensitive
-changes should run the checks-only orchestration and one full discovery pass
-both locally and in exact-head CI.
+fail before validation begins. Duplicate, nonexistent, symlinked, and
+unassigned shard modules also fail closed. Ordinary documentation or contract
+changes may use focused tests plus affected shards and rely on exact-head CI
+for the complete matrix. Runtime, installer, security, and release-sensitive
+changes should run the checks-only orchestration and `run-all` locally; the
+exact-head workflow repeats all shards before the aggregate can succeed.
 
 PyYAML is the only Python runtime dependency and is required by the structured
 ledger commands.
