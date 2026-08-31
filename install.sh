@@ -19,7 +19,7 @@ DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
-VERSION="0.20.0"
+VERSION="0.21.0"
 
 case "$CODEX_DEV_SKILLS_TARGET" in
   legacy) DEFAULT_CODEX_SKILLS_DIR="$DEFAULT_CODEX_LEGACY_SKILLS_DIR" ;;
@@ -795,7 +795,7 @@ group_description() {
     codex-review-workflow) echo "Routine and deep code, docs, and merge review workflows." ;;
     codex-delivery-workflow) echo "Shared loop engineering, planning, bounded implementation, docs update, and delegated delivery workflows." ;;
     codex-cli-session-handoff) echo "CLI-only non-interactive start/resume/fork/fresh-continuation plus manual interactive-fork, agents-dashboard, and argv-safe UUID queue guidance over the shared delivery workflow." ;;
-    desktop-delivery-workflow) echo "Two active Codex Desktop entry/control-plane adapters plus deprecated shared-gate compatibility aliases." ;;
+    desktop-delivery-workflow) echo "Three active Codex Desktop entry/control-plane adapters plus deprecated shared-gate compatibility aliases." ;;
     codex-agent-profiles) echo "Opt-in Loop Engineering V2a custom-agent runtime profiles." ;;
     codex-dev-skills) echo "Alias for all groups." ;;
   esac
@@ -824,7 +824,7 @@ group_skills() {
     codex-cli-session-handoff)
       printf '%s\n' cli-session-handoff ;;
     desktop-delivery-workflow)
-      printf '%s\n' desktop-project-delivery desktop-thread-delegation desktop-spec-plan-gate desktop-implementation-gate desktop-pr-merge-gate ;;
+      printf '%s\n' desktop-project-delivery desktop-thread-delegation desktop-sidebar-organization desktop-spec-plan-gate desktop-implementation-gate desktop-pr-merge-gate ;;
     codex-agent-profiles) : ;;
   esac
 }

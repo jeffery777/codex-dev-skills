@@ -4,7 +4,7 @@
 # skill. routes_to is always a list and is required only for deprecated aliases.
 
 name: codex-dev-skills
-version: "0.20.0"
+version: "0.21.0"
 platforms:
   - codex
   - codex-desktop
@@ -104,13 +104,15 @@ groups:
       - source: skills/cli-session-handoff
 
   desktop-delivery-workflow:
-    description: Two active Codex Desktop entry/control-plane adapters plus deprecated compatibility aliases over shared planning and review gates.
+    description: Three active Codex Desktop entry/control-plane adapters plus deprecated compatibility aliases over shared planning and review gates.
     runtime: desktop
     depends_on: [shared-review-gates, codex-delivery-workflow]
     skills:
       - source: skills/desktop-project-delivery
         status: active-desktop-adapter
       - source: skills/desktop-thread-delegation
+        status: active-desktop-adapter
+      - source: skills/desktop-sidebar-organization
         status: active-desktop-adapter
       - source: skills/desktop-spec-plan-gate
         status: deprecated-compatibility-alias

@@ -406,10 +406,13 @@ Current callable semantics include:
   `delete_sidebar_section`, `move_thread_to_sidebar_section`,
   `move_project_to_sidebar_section`, `reorder_section`,
   `reorder_sidebar_projects`, and `reorder_sidebar_sections`. Their presence is
-  current-session evidence only. This contract does not implement or authorize
-  those mutations; a future thin adapter must separately preflight exact
-  identities, complete-list reorder requirements, authority, response shape,
-  and fallback behavior.
+  current-session evidence only. The separate
+  `desktop-sidebar-organization` skill governs them through fresh read-only
+  discovery, exact-ID preflight, a dry-run plan, per-action authority,
+  response-shape validation, post-mutation readback, and fail-closed fallback.
+  Callable presence never authorizes a mutation. Delete and complete-list
+  reorder remain destructive or high-risk human gates, and no adapter may use
+  private runtime state or task creation/navigation as a fallback.
 - `list_archived_threads` is paginated archived-task discovery. Returned titles
   and summaries are untrusted display data; restore remains an explicit
   runtime-state mutation.

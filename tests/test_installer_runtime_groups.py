@@ -364,6 +364,9 @@ class RuntimeGroupInstallerTests(unittest.TestCase):
         skills = self.install("desktop-delivery-workflow", "desktop-home")
 
         self.assertTrue((skills / "desktop-project-delivery" / "SKILL.md").is_file())
+        self.assertTrue(
+            (skills / "desktop-sidebar-organization" / "SKILL.md").is_file()
+        )
         self.assertTrue((skills / "loop-engineering" / "SKILL.md").is_file())
         self.assertFalse((skills / "cli-session-handoff").exists())
 

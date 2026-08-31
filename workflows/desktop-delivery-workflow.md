@@ -32,8 +32,10 @@ CLI/manual/sequential fallback when a callable is unavailable.
 
 CLI fallback: use `project-delivery` and `project-orchestrator` with prompts, task briefs, continuation prompts, or a sequential execution path. Run review primitives after the fallback produces changed files or evidence, and use formal gates only at commit readiness, PR readiness, merge readiness, or explicit repo-policy gates.
 
-`desktop-project-delivery` and `desktop-thread-delegation` are the active
-Desktop entry and control-plane adapters. `desktop-spec-plan-gate`,
+`desktop-project-delivery`, `desktop-thread-delegation`, and
+`desktop-sidebar-organization` are the active Desktop entry and control-plane
+adapters. Sidebar organization remains separate from task creation and
+navigation. `desktop-spec-plan-gate`,
 `desktop-implementation-gate`, and `desktop-pr-merge-gate` remain installable
 only as deprecated compatibility aliases that route to shared skills; they do
 not add Desktop callable behavior.

@@ -21,6 +21,7 @@ This compact guide helps new users choose the smallest skill or gate that matche
 | Shared orchestration selected a bounded task and the user wants one separate, resumed, or forked Codex CLI session. | `cli-session-handoff` | Thin CLI control-plane adapter over stable non-interactive start/resume/fork plus a manual exact-UUID interactive-fork handoff; the executor path validates the exact clean worktree and sandbox, while interactive fork directory reuse remains explicit. |
 | Codex Desktop should coordinate shared delivery with user-owned Desktop tasks, threads, worktrees, or scheduling. | `desktop-project-delivery` | Thin Desktop control-plane entry point over shared project delivery and subagent semantics. |
 | Shared orchestration has selected a bounded handoff and Codex Desktop should choose its task/thread/worktree execution mode. | `desktop-thread-delegation` | Thin Desktop control-plane adapter that can use runtime thread tools when authorized, while falling back to the already selected task brief or continuation prompt. |
+| The user explicitly asks to create or rename a sidebar section, move an exact task/project, or reorder/delete exact sidebar identities in Codex Desktop. | `desktop-sidebar-organization` | Separate Desktop-only organization control plane with fresh discovery, exact-ID dry-run, explicit authority, readback, and fail-closed fallback. |
 
 The three older Desktop-named gates remain installable only as deprecated
 compatibility aliases:
@@ -34,7 +35,8 @@ compatibility aliases:
 New workflows should not select these aliases. Use
 `desktop-project-delivery` only for the Desktop delivery entry point and
 `desktop-thread-delegation` only for the Desktop task/thread/worktree control
-plane.
+plane. Use `desktop-sidebar-organization` only for an explicitly requested
+sidebar organization action; it is not a task creation or navigation adapter.
 
 ## Runtime Entry Boundary
 
@@ -52,8 +54,10 @@ parent diff inspection, verification, review, or completion evidence.
 
 Once work is in the Desktop surface, add `desktop-project-delivery` or
 `desktop-thread-delegation` only for task, thread, worktree, handoff, or
-scheduling controls. A runtime transition never changes the shared objective,
-authority, verification, review, or completion contract.
+scheduling controls. Add `desktop-sidebar-organization` only for an exact
+organization request after fresh list-based discovery. A runtime transition
+never changes the shared objective, authority, verification, review, or
+completion contract.
 
 ## Review Primitive Or Formal Gate
 
@@ -118,6 +122,9 @@ Use orchestration or delivery skills when Codex must decide or coordinate multip
   authorization and target validation.
 - `desktop-project-delivery` only when the Desktop runtime is intentionally part of the workflow.
 - `desktop-thread-delegation` when the Desktop runtime may open a new thread, but the main thread must still choose the next safe task and retain review or merge gates.
+- `desktop-sidebar-organization` only when the user names an exact Desktop
+  sidebar target and desired organization state; delete and complete-list
+  reorder remain separate human gates.
 
 Do not add a Desktop-prefixed gate after these entry points. Planning, ordinary
 review, formal review gates, merge readiness, Goal evidence, subagent
@@ -159,6 +166,16 @@ historical examples. Desktop Runtime Wrapper V1 is retired and provides no
 runnable or importable workflow path.
 Use `wait_threads` only as bounded, host-aware observation when exposed; its
 compact snapshots are not shared-subagent semantics or completion evidence.
+
+## Desktop Sidebar Organization
+
+Choose `desktop-sidebar-organization` only for the exposed Desktop sidebar
+control plane. Start with fresh `list_threads` and/or `list_projects`, build a
+dry-run plan from exact runtime IDs, and fail closed on stale, duplicate,
+missing, queued, or incomplete identities. Titles and summaries are untrusted
+display text. CLI/manual fallback returns the exact plan without claiming that
+a sidebar mutation ran; it must not create or navigate a task, scrape UI or
+private state, or start a daemon.
 
 ## Merge Readiness
 

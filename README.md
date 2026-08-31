@@ -409,6 +409,10 @@ For Codex Desktop delegated delivery, install the Desktop group only when that w
 ./install.sh install desktop-delivery-workflow
 ```
 
+That group includes separate adapters for project delivery, task/thread
+handoff, and explicitly requested sidebar organization. Installing it does not
+authorize any live Desktop mutation.
+
 ## How Projects Use These Skills
 
 These skills work best when the target repository keeps durable project context in files that Codex can read before editing: repo-level `AGENTS.md`, project specs, implementation plans, review templates, and policy files.
@@ -1222,6 +1226,16 @@ Keep review, commit, PR, merge, platform comments, and other external writes beh
 
 The main thread remains responsible for integrating returned work, checking the diff, running verification, and enforcing review or merge gates.
 
+Use `desktop-sidebar-organization` separately when the user explicitly asks to
+create or rename a sidebar section, move an exact task/project, or prepare a
+reorder/delete action. The skill discovers exact IDs with fresh
+`list_threads`/`list_projects` reads, emits a dry-run plan, validates the
+callable response, and reads the result back. It never treats titles or
+summaries as identity, never substitutes a queued `clientThreadId` for a ready
+`threadId`, and never uses task creation or navigation as a fallback. Delete
+and complete-list reorder remain separate human gates; tests and CI use only
+synthetic contract evidence and perform no live sidebar mutation.
+
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
 [Codex runtime compatibility evidence (2026-08-31)](docs/codex-runtime-compatibility-evidence-2026-08-31.md).
@@ -1319,6 +1333,7 @@ at
 | `task-continuation` | shared | Select the next safe task and prepare a continuation prompt or task brief from durable project context. |
 | `desktop-project-delivery` | desktop | Thin Desktop UX adapter over shared project delivery. |
 | `desktop-thread-delegation` | desktop | Control a user-authorized Desktop task/thread/worktree handoff selected by shared orchestration. |
+| `desktop-sidebar-organization` | desktop | Plan and validate explicitly authorized sidebar organization by exact identity with fail-closed readback. |
 | `desktop-spec-plan-gate` | desktop | Deprecated compatibility alias; new workflows use shared `planning`. |
 | `desktop-implementation-gate` | desktop | Deprecated compatibility alias; new workflows use shared review primitives and formal gates. |
 | `desktop-pr-merge-gate` | desktop | Deprecated compatibility alias; new workflows use shared `merge-readiness-gate`. |
