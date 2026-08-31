@@ -6,6 +6,7 @@ import importlib.util
 import json
 import os
 import pathlib
+import shutil
 import signal
 import stat
 import subprocess
@@ -31,6 +32,113 @@ sys.modules[SPEC.name] = handoff
 SPEC.loader.exec_module(handoff)
 
 SESSION_ID = "0199a213-81c0-7800-8aa1-bbab2a035a53"
+
+
+class CodexPublicHelpCompatibilityTests(unittest.TestCase):
+    """Read-only public CLI shape checks; never starts or resumes a session."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.codex = shutil.which("codex")
+        if cls.codex is None:
+            raise unittest.SkipTest(
+                "Codex CLI is unavailable; public-help compatibility smoke skipped"
+            )
+        cls.runtime_temp = tempfile.TemporaryDirectory(prefix="codex-public-help-")
+        cls.addClassCleanup(cls.runtime_temp.cleanup)
+        cls.runtime_root = pathlib.Path(cls.runtime_temp.name)
+        cls.codex_home = cls.runtime_root / "codex-home"
+        cls.home = cls.runtime_root / "home"
+        cls.config_home = cls.runtime_root / "config"
+        cls.cache_home = cls.runtime_root / "cache"
+        cls.state_home = cls.runtime_root / "state"
+        for path in (
+            cls.codex_home,
+            cls.home,
+            cls.config_home,
+            cls.cache_home,
+            cls.state_home,
+        ):
+            path.mkdir()
+
+    def run_public(self, *arguments: str) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        for name in (
+            "OPENAI_API_KEY",
+            "OPENAI_ORG_ID",
+            "OPENAI_PROJECT_ID",
+        ):
+            env.pop(name, None)
+        env.update(
+            {
+                "HOME": str(self.home),
+                "CODEX_HOME": str(self.codex_home),
+                "XDG_CONFIG_HOME": str(self.config_home),
+                "XDG_CACHE_HOME": str(self.cache_home),
+                "XDG_STATE_HOME": str(self.state_home),
+            }
+        )
+        result = subprocess.run(
+            [self.codex, *arguments],
+            cwd=ROOT,
+            env=env,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
+        created = [
+            path.relative_to(self.runtime_root)
+            for path in self.runtime_root.rglob("*")
+        ]
+        self.assertFalse(
+            any("sessions" in path.parts for path in created),
+            f"public-help smoke created session state: {created}",
+        )
+        self.assertFalse(
+            any(path.suffix == ".jsonl" for path in created),
+            f"public-help smoke created JSONL state: {created}",
+        )
+        return result
+
+    def test_version_and_exec_help_shapes(self) -> None:
+        version = self.run_public("--version").stdout.strip()
+        self.assertRegex(version, r"^codex-cli\s+\S+$")
+
+        exec_help = self.run_public("exec", "--help").stdout
+        for marker in ("Usage: codex exec", "resume", "fork", "--json"):
+            with self.subTest(command="exec", marker=marker):
+                self.assertIn(marker, exec_help)
+
+        resume_help = self.run_public("exec", "resume", "--help").stdout
+        for marker in ("Usage: codex exec resume", "[SESSION_ID]", "--json"):
+            with self.subTest(command="exec resume", marker=marker):
+                self.assertIn(marker, resume_help)
+
+        fork_help = self.run_public("exec", "fork", "--help").stdout
+        for marker in ("Usage: codex exec fork", "<SESSION_ID>", "--json"):
+            with self.subTest(command="exec fork", marker=marker):
+                self.assertIn(marker, fork_help)
+
+    def test_plugin_list_json_shape(self) -> None:
+        payload = json.loads(self.run_public("plugin", "list", "--json").stdout)
+        self.assertIsInstance(payload, dict)
+        self.assertIsInstance(payload.get("installed"), list)
+        self.assertIsInstance(payload.get("available"), list)
+        for item in payload["installed"]:
+            with self.subTest(plugin=item.get("name")):
+                self.assertIsInstance(item, dict)
+                self.assertTrue(
+                    {
+                        "pluginId",
+                        "name",
+                        "version",
+                        "installed",
+                        "enabled",
+                        "source",
+                    }.issubset(item)
+                )
 
 
 FAKE_CODEX = r'''
