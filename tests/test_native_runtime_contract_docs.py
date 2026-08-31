@@ -281,6 +281,63 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-31.md").is_file()
         )
 
+    def test_desktop_sidebar_organization_skill_is_separate_and_fail_closed(self) -> None:
+        skill = read("skills/desktop-sidebar-organization/SKILL.md")
+
+        self.assertIn("Runtime compatibility: desktop", skill)
+        self.assertIn("separate", skill)
+        self.assertIn("desktop-thread-delegation", skill)
+        self.assertIn("list_threads", skill)
+        self.assertIn("list_projects", skill)
+        self.assertIn("fresh", skill)
+        self.assertIn("dry-run plan", skill)
+        self.assertIn("exact-target authority", skill)
+        self.assertIn("response shape", skill)
+        self.assertIn("post-mutation readback", skill)
+        self.assertIn("exact deleted `sectionId` is absent", skill)
+        self.assertIn("every member observed in preflight", skill)
+        self.assertIn("perform no compensating", skill)
+        self.assertIn("fail closed", skill)
+
+        for callable_name in (
+            "create_sidebar_section",
+            "rename_sidebar_section",
+            "delete_sidebar_section",
+            "move_thread_to_sidebar_section",
+            "move_project_to_sidebar_section",
+            "reorder_section",
+            "reorder_sidebar_projects",
+            "reorder_sidebar_sections",
+        ):
+            with self.subTest(callable_name=callable_name):
+                self.assertIn(callable_name, skill)
+
+        for requirement in (
+            "pinned",
+            "chats",
+            "threads",
+            "clientThreadId",
+            "untrusted display input",
+            "Duplicate names",
+            "complete-list reorder preconditions",
+            "exactly once",
+            "partial-list semantics",
+            "high-risk human gate",
+            "destructive human gate",
+            "live sidebar mutation",
+        ):
+            with self.subTest(requirement=requirement):
+                self.assertIn(requirement, skill)
+
+        for disallowed in (
+            "Desktop databases",
+            "codex app-server",
+            "wrapper daemon",
+            "UI scraping",
+        ):
+            with self.subTest(disallowed=disallowed):
+                self.assertIn(disallowed, skill)
+
     def test_cli_queue_and_desktop_share_preserve_runtime_layers(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
         compatibility = read("docs/runtime-compatibility.md")

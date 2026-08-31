@@ -182,10 +182,13 @@ for its Codex task and thread control plane:
   `create_sidebar_section`, `rename_sidebar_section`,
   `delete_sidebar_section`, `move_thread_to_sidebar_section`,
   `move_project_to_sidebar_section`, `reorder_section`,
-  `reorder_sidebar_projects`, and `reorder_sidebar_sections`. This evidence
-  refresh does not add those mutations to the adapter. A future thin contract
-  must separately define exact identity preflight, complete-list reorder
-  preconditions, mutation authority, response validation, and fallback.
+  `reorder_sidebar_projects`, and `reorder_sidebar_sections`. The independent
+  `desktop-sidebar-organization` skill is their thin control-plane adapter; it
+  does not extend `desktop-thread-delegation`. It requires fresh discovery,
+  exact identity, a reviewed dry-run plan, action-specific authority,
+  response-shape validation, post-mutation readback, and fail-closed fallback.
+  Complete-list semantics apply only where the active callable requires them;
+  delete and complete-list reorder retain separate high-risk human gates.
 - The Linux Desktop app is a preview with platform-specific gaps, including no
   Computer Use at the recorded date. Capability detection and CLI/manual
   fallback are required; macOS availability is not a universal contract.

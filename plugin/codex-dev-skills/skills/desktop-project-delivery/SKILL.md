@@ -17,8 +17,10 @@ This is a thin UX adapter. `project-delivery`, `project-orchestrator`, the share
 subagent delegation policy, and the repository's completion evidence remain
 authoritative. Ordinary subagent delegation is not Desktop-only.
 
-This skill and `desktop-thread-delegation` are the Desktop-specific entry and
-control-plane adapters. The legacy Desktop-named planning, implementation, and
+This skill, `desktop-thread-delegation`, and
+`desktop-sidebar-organization` are separate Desktop-specific entry and
+control-plane adapters. Sidebar organization is never an implicit delivery or
+task-creation step. The legacy Desktop-named planning, implementation, and
 PR/merge gates are deprecated compatibility aliases for shared skills; they do
 not add Desktop callable behavior.
 
@@ -41,6 +43,9 @@ readiness stages.
    disjoint or isolated and keep the main agent responsible for integration.
 3. Invoke `desktop-thread-delegation` only when the user explicitly wants a
    separate user-owned Desktop task, thread, or worktree.
+   Invoke `desktop-sidebar-organization` separately only when the user
+   explicitly requests an exact sidebar organization change; never use it to
+   infer task creation, navigation, registration, or completion.
 4. Use Desktop scheduling only as a wakeup control plane through the active
    `automation_update` capability. Default recurring requests in the current
    local task to a same-task heartbeat. Use cron only for explicitly standalone

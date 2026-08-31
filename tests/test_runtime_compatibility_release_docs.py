@@ -197,6 +197,30 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
         self.assertIn("publication truth", read("docs/roadmap.md"))
         self.assertIn("## Release-State Contract", read("docs/release-readiness.md"))
 
+    def test_v0210_candidate_covers_sidebar_and_cumulative_range(self) -> None:
+        notes = read("docs/release-notes-v0.21.0.md")
+        for expected in (
+            "# Release Notes: v0.21.0",
+            "Status: release candidate prepared through Issue #201",
+            "desktop-sidebar-organization",
+            "764ab074e7a1b35a200faea5ae0a19ac92ec194e",
+            "Repository validation",
+            "Roadmap",
+            "2026-08-31 compatibility evidence",
+            "separate human gates",
+            "compare/v0.20.0...v0.21.0",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, notes)
+
+        catalog = yaml.safe_load(read("catalog.yaml"))
+        self.assertEqual("0.21.0", catalog["version"])
+        self.assertIn("desktop-sidebar-organization", read("README.md"))
+        self.assertIn(
+            "desktop-sidebar-organization",
+            read("docs/skill-selection-guide.md"),
+        )
+
     def test_v0170_paired_run_release_evidence_is_durable_and_consistent(self) -> None:
         evidence_path = "docs/loops/issue-165/paired-run-evidence.md"
         results_path = "docs/loops/issue-165/paired-run-results.json"

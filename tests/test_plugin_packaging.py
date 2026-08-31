@@ -39,6 +39,14 @@ class PluginPackagingTests(unittest.TestCase):
         self.assertEqual(catalog["version"], manifest["version"])
         self.assertEqual("./skills/", manifest["skills"])
         self.assertTrue((PACKAGE_ROOT / "skills" / "project-delivery" / "SKILL.md").is_file())
+        self.assertTrue(
+            (
+                PACKAGE_ROOT
+                / "skills"
+                / "desktop-sidebar-organization"
+                / "SKILL.md"
+            ).is_file()
+        )
         self.assertFalse((ROOT / ".codex-plugin" / "plugin.json").exists())
 
     def test_repo_marketplace_resolves_to_the_narrow_package_root(self) -> None:

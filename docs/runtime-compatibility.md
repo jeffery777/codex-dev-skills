@@ -8,10 +8,12 @@ compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only. See the maintained
 [2026-08-31 compatibility evidence](codex-runtime-compatibility-evidence-2026-08-31.md).
-The 2026-08-31 update records standalone CLI, Desktop application, and
-Desktop-bundled CLI observations independently, rechecks the active Desktop
-callable boundary including sidebar organization surfaces without implementing
-their mutation contract, and preserves the distinction between the deprecated
+The 2026-08-31 evidence records standalone CLI, Desktop application, and
+Desktop-bundled CLI observations independently and rechecks the active Desktop
+callable boundary including sidebar organization surfaces. The subsequent
+`desktop-sidebar-organization` candidate implements a separate thin mutation
+contract without rewriting that point-in-time evidence, and preserves the
+distinction between the deprecated
 `codex mcp-server`, Codex's MCP client configuration, connectors, plugins, and
 native Desktop task/thread tools.
 
@@ -268,6 +270,15 @@ coordination operations when the active callable schema classifies them that
 way. A bounded wait may return compact progress for multiple tasks, but it is
 not repository completion evidence and does not replace detailed reads,
 integration checks, verification, or review.
+
+Sidebar organization is a separate Desktop-only control plane. The
+`desktop-sidebar-organization` skill uses fresh `list_threads` and
+`list_projects` discovery, exact runtime IDs, a reviewed dry-run plan,
+action-specific authorization, response validation, and post-mutation
+readback. It fails closed rather than guessing from display names, stale or
+partial snapshots, or queued `clientThreadId` values. Delete and complete-list
+reorder remain human gates; CLI fallback is an exact manual plan, not a live
+sidebar mutation.
 
 ## Evidence
 
