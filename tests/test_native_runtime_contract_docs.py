@@ -212,12 +212,13 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
 
     def test_latest_runtime_evidence_records_current_versions_and_schemas(self) -> None:
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-28.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-31.md")
 
         for expected in (
-            "0.150.1",
-            "26.820.80927",
-            "0.150.0-alpha.8",
+            "0.151.0",
+            "26.825.51511",
+            "7377",
+            "0.151.0-alpha.7.2",
             "codex mcp-server",
             "deprecated",
             "codex exec",
@@ -233,6 +234,10 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "clientThreadId",
             "external MCP servers",
             "native Desktop task/thread tools",
+            "create_sidebar_section",
+            "move_thread_to_sidebar_section",
+            "reorder_sidebar_sections",
+            "does not implement a sidebar section mutation contract",
             "No production adapter or shared-core change is required",
         ):
             with self.subTest(expected=expected):
@@ -252,7 +257,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "docs/runtime-adapter-v2.md",
         ):
             with self.subTest(maintained_pointer=relative_path):
-                self.assertIn("2026-08-28", read(relative_path))
+                self.assertIn("2026-08-31", read(relative_path))
 
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-07-31.md").is_file()
@@ -271,6 +276,9 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         )
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-28.md").is_file()
+        )
+        self.assertTrue(
+            (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-31.md").is_file()
         )
 
     def test_cli_queue_and_desktop_share_preserve_runtime_layers(self) -> None:

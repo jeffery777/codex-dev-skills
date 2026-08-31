@@ -45,7 +45,7 @@ Caller-supplied metadata is evidence to normalize, not permission to call the ca
 
 ## Contract Family Boundary
 
-Desktop callable facts were last verified on 2026-08-28. The maintained
+Desktop callable facts were last verified on 2026-08-31. The maintained
 point-in-time evidence records the independent CLI and Desktop runtime builds
 and confirms that the deprecated `codex mcp-server` does not change this
 Desktop contract or authorize a direct app-server integration. The current
@@ -178,6 +178,14 @@ for its Codex task and thread control plane:
   policy stays outside the prompt; raw directives and RRULE output are not a
   supported adapter surface. Neither scheduling form changes workflow
   authority or completion criteria.
+- Active callable schemas also expose Desktop-only sidebar organization through
+  `create_sidebar_section`, `rename_sidebar_section`,
+  `delete_sidebar_section`, `move_thread_to_sidebar_section`,
+  `move_project_to_sidebar_section`, `reorder_section`,
+  `reorder_sidebar_projects`, and `reorder_sidebar_sections`. This evidence
+  refresh does not add those mutations to the adapter. A future thin contract
+  must separately define exact identity preflight, complete-list reorder
+  preconditions, mutation authority, response validation, and fallback.
 - The Linux Desktop app is a preview with platform-specific gaps, including no
   Computer Use at the recorded date. Capability detection and CLI/manual
   fallback are required; macOS availability is not a universal contract.
