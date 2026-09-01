@@ -45,7 +45,7 @@ Caller-supplied metadata is evidence to normalize, not permission to call the ca
 
 ## Contract Family Boundary
 
-Desktop callable facts were last verified on 2026-08-31. The maintained
+Desktop callable facts were last verified on 2026-09-01. The maintained
 point-in-time evidence records the independent CLI and Desktop runtime builds
 and confirms that the deprecated `codex mcp-server` does not change this
 Desktop contract or authorize a direct app-server integration. The current

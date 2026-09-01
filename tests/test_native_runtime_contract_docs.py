@@ -212,10 +212,10 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
 
     def test_latest_runtime_evidence_records_current_versions_and_schemas(self) -> None:
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-31.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-09-01.md")
 
         for expected in (
-            "0.151.0",
+            "0.152.0",
             "26.825.51511",
             "7377",
             "0.151.0-alpha.7.2",
@@ -237,7 +237,9 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "create_sidebar_section",
             "move_thread_to_sidebar_section",
             "reorder_sidebar_sections",
-            "does not implement a sidebar section mutation contract",
+            "desktop-sidebar-organization",
+            "tools.update_plan.enabled",
+            "observed and locally qualified public-help surface",
             "No production adapter or shared-core change is required",
         ):
             with self.subTest(expected=expected):
@@ -257,7 +259,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "docs/runtime-adapter-v2.md",
         ):
             with self.subTest(maintained_pointer=relative_path):
-                self.assertIn("2026-08-31", read(relative_path))
+                self.assertIn("2026-09-01", read(relative_path))
 
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-07-31.md").is_file()
@@ -279,6 +281,9 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         )
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-08-31.md").is_file()
+        )
+        self.assertTrue(
+            (ROOT / "docs/codex-runtime-compatibility-evidence-2026-09-01.md").is_file()
         )
 
     def test_desktop_sidebar_organization_skill_is_separate_and_fail_closed(self) -> None:
@@ -625,6 +630,8 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("clean", combined)
         self.assertIn("non-interactive", combined)
         self.assertIn("private clone", combined)
+        self.assertIn("documented stable non-interactive start/resume", combined)
+        self.assertIn("observed and locally qualified public-help", combined)
         self.assertNotIn("shell=True", implementation)
         self.assertNotIn("desktop_runtime_", implementation)
         self.assertNotIn("create_thread", implementation)

@@ -6,19 +6,20 @@ shared contract owns objective, task, evidence, review, and completion
 semantics. Runtime capabilities may start, coordinate, observe, or wake work,
 but they do not become completion authority.
 
-Facts in the current capability table were last verified on 2026-08-31 from
+Facts in the current capability table were last verified on 2026-09-01 from
 the active callable schemas, the public Codex documentation, and the maintained
-[compatibility evidence](codex-runtime-compatibility-evidence-2026-08-31.md). Every adapter
+source-repository compatibility evidence at
+`docs/codex-runtime-compatibility-evidence-2026-09-01.md`. Every adapter
 must still inspect the capability exposed by its active runtime instead of
 assuming that a recorded schema is permanently available.
 
 The maintained evidence records standalone CLI, Desktop application, and
 Desktop-bundled CLI observations independently. It confirms that
-`codex mcp-server` remains present but deprecated in observed CLI 0.151.0 and
+`codex mcp-server` remains present but deprecated in observed CLI 0.152.0 and
 does not deprecate Codex's MCP client configuration, connectors, plugins, or
 native thread tools.
 
-The custom-agent configuration facts below were last verified on 2026-08-31
+The custom-agent configuration facts below were last verified on 2026-09-01
 from the public Codex subagent documentation. Runtime model availability and
 reasoning support remain session capabilities and must still be preflighted.
 
@@ -154,11 +155,13 @@ repository-controlled receipt assertions.
 
 Codex CLI has its own session control plane, distinct from shared subagents and
 Desktop tasks. The documented stable non-interactive surface supports
-`codex exec --json` for a new saved session,
-`codex exec resume <SESSION_ID> --json` for a known session, and
-`codex exec fork <SESSION_ID> --json` for a new saved session copied from the
-completed history of an exact known source session. Public JSONL events
-include `thread.started`, terminal turn events, item events, and errors.
+`codex exec --json` for a new saved session and
+`codex exec resume <SESSION_ID> --json` for a known session. The observed CLI
+public help additionally exposes `codex exec fork <SESSION_ID> --json` for a
+new saved session copied from the completed history of an exact known source
+session. The repo treats that fork form as an observed and locally qualified
+public-help surface rather than a documented stability promise. Public JSONL
+events include `thread.started`, terminal turn events, item events, and errors.
 The documented interactive surface separately supports
 `codex fork <SESSION_ID>` to create a new chat from a saved interactive
 session. When the invocation and saved session directories differ,

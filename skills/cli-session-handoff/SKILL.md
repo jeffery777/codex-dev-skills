@@ -21,12 +21,15 @@ completion.
 
 ## Runtime Boundary
 
-The automated adapter uses only the documented stable non-interactive CLI:
+The automated adapter uses the documented stable non-interactive start/resume
+CLI plus an observed and locally qualified public-help fork form:
 
 - `codex exec --json` for a new saved CLI session;
 - `codex exec resume <SESSION_ID> --json` for a known saved CLI session;
 - `codex exec fork <SESSION_ID> --json` for a new saved session that copies the
-  completed history of an exact known source session.
+  completed history of an exact known source session; this form is qualified
+  from the active CLI public help rather than treated as a documented stability
+  promise.
 - `codex exec --json` for a new saved `fresh-continuation` session whose prompt
   is bound to a validated durable checkpoint and deliberately copies no prior
   conversation history.

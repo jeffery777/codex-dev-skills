@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import types
 import unittest
 from unittest import mock
 
@@ -61,7 +62,9 @@ class CodexPublicHelpCompatibilityTests(unittest.TestCase):
         ):
             path.mkdir()
 
-    def run_public(self, *arguments: str) -> subprocess.CompletedProcess[str]:
+    def run_public_argv(
+        self, argv: list[str]
+    ) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         for name in (
             "OPENAI_API_KEY",
@@ -79,7 +82,7 @@ class CodexPublicHelpCompatibilityTests(unittest.TestCase):
             }
         )
         result = subprocess.run(
-            [self.codex, *arguments],
+            argv,
             cwd=ROOT,
             env=env,
             check=False,
@@ -101,6 +104,9 @@ class CodexPublicHelpCompatibilityTests(unittest.TestCase):
             f"public-help smoke created JSONL state: {created}",
         )
         return result
+
+    def run_public(self, *arguments: str) -> subprocess.CompletedProcess[str]:
+        return self.run_public_argv([self.codex, *arguments])
 
     def test_version_and_exec_help_shapes(self) -> None:
         version = self.run_public("--version").stdout.strip()
@@ -139,6 +145,24 @@ class CodexPublicHelpCompatibilityTests(unittest.TestCase):
                         "source",
                     }.issubset(item)
                 )
+
+    def test_production_argv_shapes_are_accepted_by_public_help(self) -> None:
+        for operation in ("start", "resume", "fork"):
+            request = types.SimpleNamespace(
+                executable=pathlib.Path(self.codex),
+                sandbox="read-only",
+                workspace=ROOT,
+                operation=operation,
+                session_id=None if operation == "start" else SESSION_ID,
+            )
+            argv = handoff.build_argv(request)
+            self.assertEqual("-", argv[-1])
+            argv[-1] = "--help"
+
+            result = self.run_public_argv(argv)
+
+            with self.subTest(operation=operation):
+                self.assertIn("Usage: codex exec", result.stdout)
 
 
 FAKE_CODEX = r'''

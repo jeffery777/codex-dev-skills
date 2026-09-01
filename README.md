@@ -486,9 +486,10 @@ review imported skills/plugins for duplicate names before adding this pack
 through another distribution path.
 
 After shared orchestration selects a bounded handoff,
-`cli-session-handoff` may use the documented stable
-`codex exec --json`, `codex exec resume <SESSION_ID> --json`, or
-`codex exec fork <SESSION_ID> --json` surface. The
+`cli-session-handoff` may use the documented stable `codex exec --json` and
+`codex exec resume <SESSION_ID> --json` surfaces. It may also use the observed
+and locally qualified public-help `codex exec fork <SESSION_ID> --json`
+surface. The
 adapter requires one exact authorization, a clean canonical Git worktree,
 matching expected HEAD, an explicit read-only or workspace-write sandbox, and
 a fixed no-publication/no-recursion prompt boundary. The child runs in a
@@ -1238,9 +1239,9 @@ synthetic contract evidence and perform no live sidebar mutation.
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-08-31)](docs/codex-runtime-compatibility-evidence-2026-08-31.md).
+[Codex runtime compatibility evidence (2026-09-01)](docs/codex-runtime-compatibility-evidence-2026-09-01.md).
 It records that `codex mcp-server`, the command that exposed Codex itself as an
-MCP server, is deprecated but not removed in observed standalone CLI 0.151.0.
+MCP server, is deprecated but not removed in observed standalone CLI 0.152.0.
 It also records Desktop 26.825.51511 build 7377 and its bundled CLI
 0.151.0-alpha.7.2 as
 separate point-in-time observations rather than one global version. This does

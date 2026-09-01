@@ -81,7 +81,7 @@ EXPECTED_CASE_OUTCOMES = {
 EXPECTED_SOURCE_PATHS = {
     "native-capability-contract": "docs/native-runtime-capabilities.md",
     "native-runtime-adapter": "docs/runtime-adapter-v2.md",
-    "current-runtime-evidence": "docs/codex-runtime-compatibility-evidence-2026-08-31.md",
+    "current-runtime-evidence": "docs/codex-runtime-compatibility-evidence-2026-09-01.md",
 }
 
 
