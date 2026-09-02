@@ -60,10 +60,11 @@ Result: `<passed | failed | skipped>`
 - Formal gate: `<none | code-review-gate | docs-review-gate | merge-readiness-gate | desktop-implementation-gate | desktop-pr-merge-gate>`
 - Findings:
   - `<finding-or-none>`
-- Exact-head merge-review state: `<not-applicable | PR_CREATED | EXACT_HEAD_CI_PASSED | EXACT_HEAD_MERGE_REVIEW_PASSED | RECEIPT_PLATFORM_READBACK_CONFIRMED | MERGE_READINESS_READY | HUMAN_MERGE_AUTHORIZED | REVIEW_REQUIRED>`
-- PR/base/head/merge-base/diff binding: `<evidence-or-none>`
-- Hosted CI and review-thread binding: `<evidence-or-none>`
-- Platform receipt ID/digest/readback: `<evidence-or-none>`
+- Exact-head content state: `<not-applicable | EXACT_RANGE_SELECTED | CHANGE_REQUEST_CREATED | EXACT_HEAD_VERIFICATION_PASSED | EXACT_HEAD_CONTENT_REVIEW_PASSED | CONTENT_READINESS_READY | HUMAN_MERGE_AUTHORIZED | REVIEW_REQUIRED>`
+- Change-request/base/head/merge-base/diff binding: `<evidence-or-none>`
+- Code/documentation coherence evidence: `<evidence-or-none>`
+- Platform enforcement: `<VERIFIED | UNVERIFIED | BLOCKED | NOT_CONFIGURED>`
+- Selected provider profile/readback: `<evidence-or-none>`
 - Pre-commit evidence reuse rationale: `<rationale-or-none>`
 
 ## Next Decision

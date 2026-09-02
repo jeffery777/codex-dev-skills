@@ -1,9 +1,9 @@
 # Release-State Contract
 
-Use this contract for release preparation, release-sensitive review, and
-publication readiness. It separates durable repository state from mutable
-GitHub publication state so a successful publication does not require a later
-tracked coherence patch.
+Use this provider-neutral contract for release preparation, release-sensitive
+review, and publication readiness. It separates durable repository state from
+mutable provider publication state so a successful publication does not
+require a later tracked coherence patch.
 
 ## State Roles
 
@@ -19,15 +19,18 @@ define this local version.
 The release-notes file derived from the source/package version is a
 point-in-time candidate-preparation record. Its Issue, branch, verification,
 review, merge-readiness, or candidate wording does not prove publication.
-Preparing or merging a candidate does not authorize a tag or GitHub Release.
+Preparing or merging a candidate does not authorize an annotated tag or
+provider Release.
 
 ### Publication Truth
 
-GitHub Release metadata and the corresponding annotated tag are publication
-truth. Publication-sensitive checks must verify the exact repository, tag
-object, dereferenced commit, Release target, draft state, and prerelease state
-through the GitHub control plane. A tracked file must not mirror a mutable
-"latest" or current-publication pointer.
+The corresponding annotated tag is durable publication identity. When
+repository policy selects a provider publication profile, its native Release
+metadata is additional publication truth. Publication-sensitive checks must
+verify the exact repository, tag object, dereferenced commit, provider Release
+target, draft state, and prerelease state through that provider's control
+plane. A tracked file must not mirror a mutable "latest" or current-publication
+pointer.
 
 Ordinary repository validation is offline. It must not access the network,
 scrape GitHub, or fail merely because GitHub metadata is unavailable. Offline
@@ -39,7 +42,8 @@ publication.
 README, roadmap, and release-readiness guidance describe stable capabilities
 and these state roles. They must not assert a mutable current published version
 or current development candidate. When a maintainer needs current publication
-state, active guidance directs them to GitHub tag and Release metadata.
+state, active guidance directs them to the annotated tag and configured
+provider Release metadata.
 
 ### Historical Release Notes
 
@@ -62,11 +66,11 @@ state, and transition safety: active guidance must remain true if publication
 succeeds. This is a preview and conflict check, not publication evidence.
 
 After each separately authorized publication mutation, read back the annotated
-tag object and dereferenced commit plus the Release target, draft state, and
-prerelease state through the connector-first GitHub control plane. Publication
-is incomplete when that readback is absent or conflicts with the approved
-payload; a later tracked-file patch is not a substitute for resolving the
-platform state.
+tag object and dereferenced commit plus configured provider Release target,
+draft state, and prerelease state through its normal control plane. Publication
+is incomplete when a required readback is absent or conflicts with the approved
+payload; a later tracked-file patch is not a substitute for resolving provider
+state.
 
 Before ordinary PR readiness, run the offline release-state validator. If
 active guidance claims mutable publication state, if source/package versions
@@ -81,6 +85,6 @@ publication claims, and justify any historical-note modification.
 ## Authority Boundary
 
 This contract does not authorize commit, push, pull request creation, merge,
-tag creation, GitHub Release publication, deployment, comments, reviews,
+tag creation, provider Release publication, deployment, comments, reviews,
 labels, cleanup, or another external write. Each action retains its separate
 human gate.

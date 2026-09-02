@@ -18,11 +18,12 @@ plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/release-state-contract.md`
 after filesystem installation.
 
-Exact-head evidence: follow
+Exact-head content evidence: follow
 `../../policies/exact-head-merge-review-contract.md` relative to this skill in
 source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/exact-head-merge-review-contract.md`
-after filesystem installation when a PR exists or merge readiness is assessed.
+after filesystem installation when a change request exists or merge readiness
+is assessed.
 
 ## Purpose
 
@@ -49,19 +50,19 @@ Follow `merge-review`, then re-check evidence from source files and commands rat
 Re-evaluate whether pre-commit review and Security Diff Scan evidence still
 applies to the exact head. After a fix, rerun those reviews over the smallest
 scope that proves the remediation and its affected boundaries, widening when
-their assumptions changed. A changed PR head always requires a new complete
-base-to-head Merge Review and platform receipt readback.
+their assumptions changed. A changed change-request head always requires a new
+complete base-to-head Merge Review.
 
-For a configured hosted gate, independently inspect its dedicated GitHub App
-identity, check/run identity, live-head attachment, strict JSON receipt digest,
-and upstream-CI exclusion. Treat any drift in base/head/merge-base/range, CI,
-findings, review threads, receipt, or gate identity as a blocker; the check
-does not itself authorize merge.
+Independently inspect any provider enforcement profile selected by repository
+policy. For the optional GitHub profile this includes its dedicated App,
+check/run identity, live-head attachment, strict JSON receipt digest, and
+upstream-CI exclusion. Provider evidence is reported separately from content
+review and never authorizes merge.
 
 For a release-sensitive change, classify every relevant assertion into the
 five release-state roles, run the offline release-state validator, and verify
 that active guidance remains true after successful publication. Distinguish
-pre-mutation payload/conflict checks from post-mutation platform readback;
+pre-mutation payload/conflict checks from provider-specific post-mutation readback;
 neither tests nor a proposed tag/Release payload prove publication.
 
 ## Output

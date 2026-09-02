@@ -19,11 +19,12 @@ handoff, and release-readiness workflows consistently.
 Repository source/package version is declared by `catalog.yaml`; `install.sh`
 and the package-local plugin manifest must match it. A matching release-notes
 file is a point-in-time candidate-preparation record, not publication proof.
-Current publication state comes from GitHub Release metadata and the
-corresponding annotated tag through the connector-first control plane. Ordinary
-offline validation checks source/package parity and candidate structure without
-network access. Active guidance intentionally carries no mutable latest-release
-or development-candidate pointer. See the
+For this GitHub-hosted repository, current publication state comes from GitHub Release metadata
+and the corresponding annotated tag through the connector-first control plane.
+The installed release-state contract is provider-neutral. Ordinary offline
+validation checks source/package parity and candidate structure without network
+access. Active guidance intentionally carries no mutable latest-release or
+development-candidate pointer. See the
 [release-state contract](policies/release-state-contract.md).
 
 The v0.18.2 source snapshot refreshed the public Codex CLI/MCP compatibility
@@ -1150,16 +1151,22 @@ Re-check closure evidence, rollback path, security/privacy, migration safety, an
 
 The deep result is still review evidence, not merge authorization.
 
-After a PR exists, follow the
+After a pull request, merge request, or another change request exists, follow the
 [exact-head Merge-Review contract](policies/exact-head-merge-review-contract.md).
 Pre-commit review evidence may be reused when its revision and scope still
-apply, but its verdict cannot replace PR-bound Merge Review. Merge readiness
-requires exact repository/PR/base/head/merge-base/range identity, successful
-hosted CI, closed findings, zero unresolved threads, and a platform-visible
-receipt that was read back for the current head. Any relevant drift invalidates
-the receipt.
+apply, but its verdict cannot replace exact-head content review. Content
+readiness requires exact repository/base/head/merge-base/range identity,
+deterministic offline validation, closed findings, and explicit code ↔
+documentation coherence over the complete range. A changed head invalidates
+the content verdict.
 
-Repositories that opt into platform enforcement also require the dedicated-App
+Content Review and Platform Enforcement are reported separately. Repositories
+without a provider profile use `platform_enforcement: NOT_CONFIGURED`; missing
+GitHub objects do not block provider-neutral content review.
+
+This repository explicitly opts into the
+[GitHub exact-head enforcement profile](policies/github-exact-head-enforcement-profile.md)
+and therefore also requires the dedicated-App
 `Exact-Head Merge Readiness` check. Its trusted default-branch collector binds
 the live PR head, base/merge-base/range identity, upstream CI, findings,
 threads, strict
@@ -1191,14 +1198,18 @@ Use merge-readiness-gate for main..HEAD.
 Check the plan, diff, tests, and review evidence. Report READY, BLOCKED, or NEEDS HUMAN DECISION. Do not commit, push, merge, deploy, post platform comments, submit reviews, or perform other external writes unless explicitly authorized.
 ```
 
-The gate is a thin adapter and evidence-and-decision layer: it summarizes verification, review evidence, blocking decisions, residual risk, and the human approval boundary. It is not another merge review primitive and does not automatically authorize commit, push, merge, deploy, platform comments, review submissions, or other external writes. Before any authorized merge or platform-side mutation, repeat connector-first readback and confirm every exact-head receipt binding still matches and no blocker remains.
+The gate is a thin adapter and evidence-and-decision layer: it reports Content
+Review, optional Platform Enforcement, overall formal readiness, residual risk,
+and the human approval boundary. It is not another merge review primitive and
+does not authorize an external write. Repeat provider readback before an
+authorized merge only when the selected provider profile requires it.
 
 After a remediation, code review and Security Diff Scan may rerun over the
 smallest affected boundary that proves closure, with an explicit rationale for
-reused evidence. A changed PR head always receives a new complete base-to-head
-Merge Review and platform receipt readback. Clean internal stages may advance
-without an additional human stop when the next action is read-only or already
-authorized.
+reused evidence. A changed change-request head always receives a new complete
+base-to-head content Merge Review. Repeat provider receipt readback only when
+the selected profile requires it. Clean internal stages may advance without an
+additional human stop when the next action is read-only or already authorized.
 
 ### Codex Desktop Delegated Delivery
 

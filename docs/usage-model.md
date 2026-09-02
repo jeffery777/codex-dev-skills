@@ -35,12 +35,18 @@ Good fits:
 - A docs sync after verified behavior changes.
 - A normal merge review or formal branch readiness gate after implementation, verification, and review evidence exist.
 
-For an existing PR, `policies/exact-head-merge-review-contract.md` prevents a
+For an existing change request,
+`policies/exact-head-merge-review-contract.md` prevents a
 pre-commit review verdict from satisfying merge readiness. Prior code, docs,
 deep, and security evidence can be reused only when its revision, scope, and
-assumptions still apply. The final Merge Review binds the exact PR base/head,
-merge base, diff, hosted CI, findings, review threads, and platform receipt
-readback. A changed head always invalidates the exact-head verdict.
+assumptions still apply. The final provider-neutral Merge Review binds exact
+base/head/merge-base revisions, complete diff identity, deterministic
+verification, findings, dispositions, and code/documentation coherence. A
+changed head invalidates the exact-head content verdict. Provider enforcement
+is reported separately and is required only when repository policy selects a
+provider profile; GitHub repositories may opt into
+`policies/github-exact-head-enforcement-profile.md` without imposing it on
+GitLab CE.
 
 Poor fits without more human direction:
 

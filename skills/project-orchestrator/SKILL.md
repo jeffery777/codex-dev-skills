@@ -7,11 +7,12 @@ description: Shared project orchestration layer that routes bounded work across 
 
 Runtime compatibility: shared
 
-GitHub control plane: follow
+GitHub control plane: when the target repository is hosted on GitHub and the
+workflow reads or mutates GitHub state, follow
 `../../policies/github-control-plane-policy.md` relative to this skill in
 source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/github-control-plane-policy.md`
-after filesystem installation, when the target repository is hosted on GitHub.
+after filesystem installation.
 
 Code Mode tool orchestration: follow
 `../../policies/code-mode-tool-orchestration-policy.md` relative to this skill in source or plugin checkouts, or
@@ -24,7 +25,8 @@ or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/context-continuity-policy.md`
 after filesystem installation.
 
-Exact-head merge review: when routing an existing PR toward merge readiness,
+Exact-head content review: when routing an existing change request toward
+merge readiness,
 follow `../../policies/exact-head-merge-review-contract.md` relative to this
 skill in source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/exact-head-merge-review-contract.md`
@@ -49,12 +51,12 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
 - If ordinary review evidence is needed, route code or mixed changes to `code-review`, high-risk code or mixed changes to `code-review-deep`, and docs-only or docs-dominant changes to `docs-review`.
 - If a formal blocking decision is required for commit readiness, PR readiness, merge readiness, or repo policy, route through `code-review-gate` or `docs-review-gate`.
 - If review findings need closure, route fixes through the smallest primitive workflow: `implementation-slice` for code or mixed changes, `docs-update` for docs-only changes, then rerun the relevant review primitive or formal gate for the current stage.
-- If a PR exists, never route pre-commit review evidence directly to merge
-  readiness. Require exact-head CI, PR-bound Merge Review, receipt publication
-  and readback, configured dedicated-App `Exact-Head Merge Readiness`, then
-  the formal merge-readiness gate. The hosted collector never runs PR-head
-  code and must target the live PR head; a changed head or other evidence drift
-  invalidates the exact-head verdict.
+- If a change request exists, never route pre-commit review evidence directly
+  to merge readiness. Require deterministic verification, complete exact-head
+  content Merge Review, code/documentation coherence, and the formal gate. A
+  changed head invalidates the content verdict. Evaluate provider enforcement
+  separately; require GitHub receipts, Checks, Apps, Actions, or rulesets only
+  when repository policy selects the GitHub enforcement profile.
 - When a fix closes findings, rerun code review and Security Diff Scan over the
   smallest justified affected scope; widen when shared assumptions changed.
   Continue automatically after clean internal stages when the next action is

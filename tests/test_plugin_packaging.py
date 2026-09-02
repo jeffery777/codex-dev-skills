@@ -92,6 +92,7 @@ class PluginPackagingTests(unittest.TestCase):
             capture_output=True,
         ).stdout.decode("utf-8").split("\0")
         self.assertIn("policies/github-control-plane-policy.md", tracked)
+        self.assertIn("policies/github-exact-head-enforcement-profile.md", tracked)
 
     def test_generator_rejects_every_extra_package_entry_kind(self) -> None:
         cases = ("ignored-tree", "empty-directory", "symlink", "special")

@@ -7,11 +7,12 @@ description: Carry a bounded software delivery objective through discovery, plan
 
 Runtime compatibility: shared
 
-GitHub control plane: follow
+GitHub control plane: when the target repository is hosted on GitHub and the
+workflow reads or mutates GitHub state, follow
 `../../policies/github-control-plane-policy.md` relative to this skill in
 source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/github-control-plane-policy.md`
-after filesystem installation, when the target repository is hosted on GitHub.
+after filesystem installation.
 
 Code Mode tool orchestration: follow
 `../../policies/code-mode-tool-orchestration-policy.md` relative to this skill in source or plugin checkouts, or
@@ -30,7 +31,7 @@ plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/release-state-contract.md`
 after filesystem installation.
 
-Exact-head merge review: after PR creation, follow
+Exact-head content review: after change-request creation, follow
 `../../policies/exact-head-merge-review-contract.md` relative to this skill in
 source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/exact-head-merge-review-contract.md`
@@ -62,16 +63,17 @@ For a single clear implementation task, prefer `implementation-slice`. Use `proj
    threshold), apply the shared context-continuity policy. The threshold starts
    assessment only; it cannot auto-create or auto-roll over a task.
 9. Sync docs or status files when that is part of the repo policy.
-10. Prepare PR readiness evidence, but do not commit, push, create PRs, publish, merge, deploy, post platform comments, submit reviews, or perform destructive actions without the required human gate.
-11. After an authorized PR creation or head update, treat pre-commit review
-    verdicts as implementation evidence only. Advance through `PR_CREATED`,
-    exact-head CI, exact-head Merge Review, authorized receipt publication and
-    readback, configured dedicated-App `Exact-Head Merge Readiness` check, and
-    formal merge readiness without inserting extra human stops between
-    read-only or already-authorized clean stages. The collector must target the
-    live PR head without executing PR code; any drift in head, base, CI,
-    finding, thread, strict-JSON receipt, or check identity returns to the
-    earliest affected review state.
+10. Prepare change-request readiness evidence, but do not commit, push, create
+    a pull/merge request, publish, merge, deploy, post platform comments, submit
+    reviews, or perform destructive actions without the required human gate.
+11. After an authorized change-request creation or head update, treat
+    pre-commit verdicts as implementation evidence only. Advance through exact-
+    head deterministic verification, complete content Merge Review,
+    code/documentation coherence, and the formal gate. Report optional provider
+    enforcement separately. When repository policy selects the GitHub profile,
+    also require its authorized receipt publication/readback and dedicated-App
+    check without weakening its trust boundary. Relevant drift returns only the
+    affected content or provider dimension to its earliest review state.
 12. When assessment selects fresh rollover preparation, require the versioned
     durable checkpoint, same repository/objective, one destination writer,
     confirmed source stop-writing, lineage/idempotency/anti-recursion, and the
@@ -92,7 +94,7 @@ Do not stop merely because one internal phase completed. When review and scan
 results are clean, continue to the next safe read-only or already-authorized
 phase. After a fix, choose proportional code/security re-review from the
 affected boundary; always repeat complete exact-head Merge Review for a changed
-PR head.
+change-request head.
 
 ## Output
 
