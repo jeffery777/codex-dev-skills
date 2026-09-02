@@ -16,16 +16,19 @@ Use merge-review-deep for main..HEAD.
 Re-check closure evidence, rollback path, security/privacy, migration safety, release notes, and hidden regression risk. Stay read-only.
 ```
 
-Use `merge-readiness-gate` only when a workflow needs a formal branch readiness gate before PR handoff, merge readiness, or final human approval:
+Use `merge-readiness-gate` only when a workflow needs a formal branch readiness gate before change-request handoff, merge readiness, or final human approval:
 
 ```text
 Use merge-readiness-gate for main..HEAD.
-Read the current merge-review or merge-review-deep evidence, summarize blockers and residual risk, and report READY, BLOCKED, or NEEDS HUMAN DECISION. Do not commit, push, merge, deploy, post platform comments, submit reviews, or perform other external writes unless explicitly authorized.
+Read the current merge-review or merge-review-deep evidence. Report Content Review, Platform Enforcement, and Overall Formal Gate separately. Do not commit, push, merge, deploy, post platform comments, submit reviews, or perform other external writes unless explicitly authorized.
 ```
 
 The gate is a thin evidence-and-decision layer. It is not another merge review primitive and does not automatically authorize merge or any other external write. Before an authorized merge or platform-side mutation, confirm the head SHA has not changed and no blockers remain.
 
-When a PR exists, apply `policies/exact-head-merge-review-contract.md`.
+When a change request exists, apply
+`policies/exact-head-merge-review-contract.md`.
 Pre-commit review evidence may be reused as input, but its verdict cannot
-replace PR-bound exact-head Merge Review. Publish and read back the exact-head
-receipt before reporting merge readiness; any relevant drift invalidates it.
+replace exact-head content Merge Review. Require deterministic offline checks
+and code/documentation coherence for the complete range. Apply receipt or
+provider readback requirements only when repository policy selects a provider
+profile; the optional GitHub profile preserves the existing hosted controls.

@@ -40,6 +40,8 @@ class GitHubControlPlanePolicyTests(unittest.TestCase):
             "A repository habit, an existing shell snippet, convenience, or familiarity",
             policy,
         )
+        self.assertIn("Only when repository policy selects", policy)
+        self.assertIn("github-exact-head-enforcement-profile.md", policy)
 
     def test_policy_is_packaged_with_common_workflows(self) -> None:
         catalog = yaml.safe_load(read("catalog.yaml"))
@@ -48,6 +50,9 @@ class GitHubControlPlanePolicyTests(unittest.TestCase):
             for entry in catalog["groups"]["shared-review-gates"]["templates"]
         }
         self.assertIn("policies/github-control-plane-policy.md", templates)
+        self.assertIn(
+            "policies/github-exact-head-enforcement-profile.md", templates
+        )
 
     def test_example_does_not_allow_repository_habit_as_gh_fallback(self) -> None:
         example = read("examples/github-workflow-guidance.md")

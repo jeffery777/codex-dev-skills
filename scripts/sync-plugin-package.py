@@ -19,6 +19,7 @@ SHARED_FILES = {
     "policies/code-mode-tool-orchestration-policy.md",
     "policies/context-continuity-policy.md",
     "policies/exact-head-merge-review-contract.md",
+    "policies/github-exact-head-enforcement-profile.md",
     "policies/github-control-plane-policy.md",
     "policies/release-state-contract.md",
     "scripts/validate-exact-head-merge-review.py",

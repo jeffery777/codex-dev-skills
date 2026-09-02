@@ -34,29 +34,52 @@ class ExactHeadMergeReviewContractDocsTests(unittest.TestCase):
             roadmap,
         )
 
-    def test_policy_separates_review_roles_and_requires_ordered_transition(self) -> None:
+    def test_policy_separates_content_and_provider_readiness(self) -> None:
         policy = " ".join(
             read("policies/exact-head-merge-review-contract.md").split()
         )
         for phrase in (
             "their verdict does not satisfy exact-head Merge Review",
-            "PR_CREATED",
-            "EXACT_HEAD_CI_PASSED",
-            "EXACT_HEAD_MERGE_REVIEW_PASSED",
-            "RECEIPT_PLATFORM_READBACK_CONFIRMED",
-            "MERGE_READINESS_READY",
+            "CHANGE_REQUEST_CREATED",
+            "EXACT_HEAD_VERIFICATION_PASSED",
+            "EXACT_HEAD_CONTENT_REVIEW_PASSED",
+            "CONTENT_READINESS_READY",
             "HUMAN_MERGE_AUTHORIZED",
-            "returns the flow to `REVIEW_REQUIRED`",
+            "code, documentation, configuration, package, and version coherence",
+            "content_review",
+            "platform_enforcement",
+            "NOT_CONFIGURED",
+            "GitLab CE repository may use this content contract without GitHub",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, policy)
+
+        profile = " ".join(
+            read("policies/github-exact-head-enforcement-profile.md").split()
+        )
+        for phrase in (
+            "optional provider profile",
+            "EXACT_HEAD_CI_PASSED",
+            "RECEIPT_PLATFORM_READBACK_CONFIRMED",
+            "GITHUB_EXACT_HEAD_ENFORCEMENT_VERIFIED",
             "merge_authorized: false",
             "Each relevant evaluation creates a fresh check run",
             "older successes cannot substitute",
             "Historical same-context check runs are expected",
             "same ID and sequence from silently replacing",
             "Both success and failure publication require",
+            "A malformed prior pointer is superseded by a fresh verified failure",
             "per-suite 1,000-run limit",
+            "Fork pull requests may receive the same metadata evaluation",
+            "A shared GitHub Actions identity is not an adequate trust source",
+            "The upstream required-CI set excludes the readiness check itself",
+            "zero open `MUST-FIX`, `SHOULD-FIX`, and `NIT` findings",
+            "event-driven projection rather than an atomic transaction",
+            "Approval-count policy remains a separate human decision",
+            "Do not require the readiness check before the canary identifies its App",
         ):
             with self.subTest(phrase=phrase):
-                self.assertIn(phrase, policy)
+                self.assertIn(phrase, profile)
 
     def test_all_merge_readiness_consumers_require_exact_head_contract(self) -> None:
         consumers = (
@@ -76,22 +99,23 @@ class ExactHeadMergeReviewContractDocsTests(unittest.TestCase):
                 self.assertIn("exact-head-merge-review-contract.md", text)
                 self.assertIn("pre-commit", text.lower())
 
-    def test_report_template_binds_platform_evidence_without_merge_authority(self) -> None:
+    def test_report_template_separates_content_and_provider_evidence(self) -> None:
         template = read("templates/review/merge-review-report.template.md")
         for field in (
-            "Pull request number and URL",
-            "Base SHA",
-            "Head SHA",
-            "Merge-base SHA",
-            "Diff digest",
-            "Required hosted CI name/run ID/head SHA/conclusion",
-            "Required CI policy source/reference/exact required-name set",
-            "Unresolved review threads",
+            "Content Review",
+            "Platform Enforcement",
+            "Overall Formal Gate",
+            "Change-request provider/type/number/URL",
+            "Base revision",
+            "Head revision",
+            "Merge-base revision",
+            "Diff/range digest",
+            "Documentation claims compared",
+            "Version/package/generated-artifact parity",
             "Finding ID/severity/disposition/evidence",
-            "Receipt ID and URL",
-            "Receipt digest",
-            "Connector readback time",
-            "Merge authorized: `false`",
+            "Selected profile",
+            "GitHub Profile Details (only when selected)",
+            "separate merge authority",
         ):
             with self.subTest(field=field):
                 self.assertIn(field, template)
@@ -109,10 +133,14 @@ class ExactHeadMergeReviewContractDocsTests(unittest.TestCase):
         self.assertIn("Clean internal", combined)
 
     def test_policy_is_distributed_by_catalog_installer_and_plugin_sync(self) -> None:
-        relative = "policies/exact-head-merge-review-contract.md"
-        self.assertIn(relative, read("catalog.yaml"))
-        self.assertIn(relative, read("install.sh"))
-        self.assertIn(relative, read("scripts/sync-plugin-package.py"))
+        for relative in (
+            "policies/exact-head-merge-review-contract.md",
+            "policies/github-exact-head-enforcement-profile.md",
+        ):
+            with self.subTest(relative=relative):
+                self.assertIn(relative, read("catalog.yaml"))
+                self.assertIn(relative, read("install.sh"))
+                self.assertIn(relative, read("scripts/sync-plugin-package.py"))
 
     def test_validator_is_distributed_by_catalog_installer_and_plugin_sync(self) -> None:
         relative = "scripts/validate-exact-head-merge-review.py"

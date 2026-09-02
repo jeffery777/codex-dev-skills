@@ -18,8 +18,9 @@ or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/context-continuity-policy.md`
 after filesystem installation.
 
-Exact-head merge review: when a loop owns an existing PR or merge-readiness
-decision, follow `../../policies/exact-head-merge-review-contract.md` relative
+Exact-head content review: when a loop owns an existing change request or
+merge-readiness decision, follow
+`../../policies/exact-head-merge-review-contract.md` relative
 to this skill in source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/exact-head-merge-review-contract.md`
 after filesystem installation.
@@ -65,24 +66,29 @@ Each loop iteration must:
 6. Record or report what changed, what was verified, what remains uncertain, and which next action is selected.
 7. Continue only while the objective, source of truth, permissions, risk, and verification are clear.
 
-### Exact-Head PR Closure
+### Exact-Head Change-Request Closure
 
-When a PR exists, the loop may not classify the objective as merge-ready or
+When a change request exists, the loop may not classify the objective as merge-ready or
 complete from pre-commit code, docs, deep, or security review. Those results
-are reusable input evidence only. Advance through `PR_CREATED`,
-`EXACT_HEAD_CI_PASSED`, `EXACT_HEAD_MERGE_REVIEW_PASSED`,
-`RECEIPT_PLATFORM_READBACK_CONFIRMED`, `MERGE_READINESS_READY`, and the
-separate `HUMAN_MERGE_AUTHORIZED` state.
+are reusable input evidence only. Advance through `CHANGE_REQUEST_CREATED`,
+`EXACT_HEAD_VERIFICATION_PASSED`, `EXACT_HEAD_CONTENT_REVIEW_PASSED`,
+`CONTENT_READINESS_READY`, and the separate `HUMAN_MERGE_AUTHORIZED` state.
 
-Bind the receipt to repository, PR, exact base/head/merge-base SHAs, diff
-identity, hosted CI, findings, unresolved review threads, and platform
-readback. Any relevant drift returns the loop to `REVIEW_REQUIRED`; chat,
-worker, goal, ledger, or local-report state cannot repair that gap.
+Bind content review to repository, change request when present, exact
+base/head/merge-base revisions, diff identity, deterministic verification,
+findings, dispositions, and code/documentation coherence. Any relevant drift
+returns content review to `REVIEW_REQUIRED`; chat, worker, goal, ledger, or
+provider state cannot repair that gap.
+
+Report provider enforcement separately as `VERIFIED`, `UNVERIFIED`, `BLOCKED`,
+or `NOT_CONFIGURED`. Apply GitHub App/check/receipt/ruleset requirements only
+when repository policy selects the optional GitHub profile.
 
 After a fix, select code review and Security Diff Scan scope from the affected
 boundary and record why prior evidence remains applicable. Widen the rerun when
-shared assumptions changed. Every changed PR head still requires a complete
-new base-to-head Merge Review and receipt readback.
+shared assumptions changed. Every changed change-request head still requires a
+complete new base-to-head Merge Review. Repeat provider readback only when the
+selected profile requires it.
 
 Clean internal reviews and scans advance automatically to the next safe
 read-only or already-authorized stage. Do not invent another human stop merely

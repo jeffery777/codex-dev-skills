@@ -83,6 +83,18 @@ The records below preserve point-in-time readiness expectations for earlier
 release candidates and publications. They are not active current-version or
 current-candidate pointers.
 
+For the Issue #205 provider-neutral Merge Review candidate, require the final
+complete range to bind exact base/head/merge-base identity, deterministic
+offline validation, finding dispositions, and code/documentation coherence.
+Report Content Review separately from Platform Enforcement. Prove that an
+unconfigured provider does not require GitHub objects or falsely claim provider
+verification, while this repository's explicitly selected GitHub profile keeps
+its existing App/check/receipt/ruleset security properties. Treat this as a
+pre-1.0 minor release because it changes the installed shared workflow
+contract. Align catalog, installer, plugin manifest/package, release notes,
+README, roadmap, templates, workflows, and tests. Merge, annotated tag,
+provider Release publication, and deployment remain separate human gates.
+
 v0.14.1 was published through PR #150. Its dated 2026-08-18 runtime evidence,
 focused automation/thread/plugin/installer contract tests, plugin-validator
 output, and confirmation that local Codex/ChatGPT memories or Computer History

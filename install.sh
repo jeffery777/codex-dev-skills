@@ -19,7 +19,7 @@ DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
-VERSION="0.21.0"
+VERSION="0.22.0"
 
 case "$CODEX_DEV_SKILLS_TARGET" in
   legacy) DEFAULT_CODEX_SKILLS_DIR="$DEFAULT_CODEX_LEGACY_SKILLS_DIR" ;;
@@ -853,6 +853,7 @@ group_templates() {
         policies/context-continuity-policy.md \
         policies/delivery-drift-control-policy.md \
         policies/exact-head-merge-review-contract.md \
+        policies/github-exact-head-enforcement-profile.md \
         policies/github-control-plane-policy.md \
         policies/human-gate-policy.md \
         policies/model-selection-policy.md \

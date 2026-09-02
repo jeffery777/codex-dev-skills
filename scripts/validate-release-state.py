@@ -241,7 +241,7 @@ def validate_policy() -> None:
     normalized_policy = " ".join(policy.split())
     for phrase in (
         "`catalog.yaml` is the canonical offline source/package version",
-        "GitHub Release metadata and the corresponding annotated tag are publication truth",
+        "The corresponding annotated tag is durable publication identity",
         "Ordinary repository validation is offline",
         "point-in-time historical record",
         "must not declare readiness only because repository tests pass",

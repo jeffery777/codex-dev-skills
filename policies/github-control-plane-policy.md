@@ -37,15 +37,18 @@ pull-request number, branch/head SHA when relevant, authentication context,
 and result that the connector path would have required. Report the fallback
 reason in the delivery or readiness evidence.
 
-For exact-head Merge Review, also follow
-`policies/exact-head-merge-review-contract.md`. Read the current PR base, head,
-merge base, diff identity, hosted CI, findings or reviews, unresolved threads,
-and platform-visible receipt through this control plane. Normalize that state
-for offline validation; do not let the validator access GitHub itself. Repeat
-the live readback immediately before an authorized merge because an earlier
-receipt or successful check can become stale.
+For provider-neutral exact-head content review, follow
+`policies/exact-head-merge-review-contract.md`. Only when repository policy selects
+the GitHub hosted enforcement model, also follow
+`policies/github-exact-head-enforcement-profile.md`. Read the current PR base,
+head, merge base, diff identity, hosted CI, findings or reviews, unresolved
+threads, and platform-visible receipt through this control plane. Normalize
+that state for offline validation; do not let the validator access GitHub
+itself. Repeat the live readback immediately before an authorized merge because
+an earlier receipt or successful check can become stale.
 
-The hosted v2 collector is a trusted default-branch control-plane client, not
+When that profile is selected, the hosted v2 collector is a trusted
+default-branch control-plane client, not
 an executor of PR code. It resolves the live PR and explicitly targets the
 custom check at `pull_request.head.sha`; it must not infer that SHA from a
 default-branch event context. It reads the single App-pointer-selected

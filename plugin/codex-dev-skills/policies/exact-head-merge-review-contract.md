@@ -1,192 +1,136 @@
 # Exact-Head Merge-Review Contract
 
-Use this contract after a pull request exists and before any workflow reports
-merge readiness. It prevents implementation review evidence from being
-mistaken for review of the immutable pull-request head.
+Use this provider-neutral contract after a change request exists, or whenever a
+workflow reports formal merge content readiness. A change request may be a
+GitHub pull request, GitLab merge request, another forge-native review object,
+or a locally identified base-to-head range when no provider adapter is
+configured.
+
+The contract prevents implementation evidence from being mistaken for review
+of the immutable content that is actually proposed for merge. Provider-native
+enforcement is a separate, optional profile and must never become the source of
+truth for code, documentation, or version coherence.
 
 ## Evidence Roles
 
 Pre-commit code, documentation, deep, and security reviews prove properties of
-the content they inspected. They may be reused as inputs to later review when
-their source revision and scope still match, but their verdict does not satisfy
+the content they inspected. They may be reused when their source revision,
+scope, and assumptions still match, but their verdict does not satisfy
 exact-head Merge Review.
 
-Exact-head Merge Review is a separate base-to-head integration review. Its
-platform-visible receipt binds repository, pull-request number, exact base,
-head and merge-base SHAs, diff identity, review mode, and findings. The current
-platform snapshot separately binds required hosted CI, PR state, review-thread
-state, receipt identity and digest, and readback time. The complete normalized
-evidence plus the report's residual-risk section supports the gate; a local
-report, chat handoff, worker summary, goal state, or pre-PR review is not a
-substitute.
+Exact-head Merge Review is a complete base-to-head integration review. Bind it
+to:
 
-Merge readiness is the formal decision that the exact-head evidence is current
-and complete. Merge authorization remains a separate human or accepted
-platform action. Review evidence must always state that it does not authorize
-merge.
+- repository identity and change-request identity when one exists;
+- exact base, head, and merge-base revisions;
+- deterministic diff or range identity;
+- review mode and applicable Definition of Done;
+- verification commands and results;
+- findings, dispositions, and residual risk; and
+- code, documentation, configuration, package, and version coherence.
 
-## Required Transition
+A local report, chat handoff, worker summary, goal state, provider status, or
+earlier review is not a substitute for this evidence.
 
-The only successful transition is:
+## Content-Coherence Review
+
+Every exact-head Merge Review must inspect the final complete range rather than
+only the newest commit or files that happen to be documentation-dominant.
+Reviewers must:
+
+1. run deterministic offline repository, version, package, schema, generated-
+   artifact, or documentation checks that the repository provides;
+2. compare user-visible documentation claims with the code, configuration,
+   specification, tests, and observed behavior that support them;
+3. detect stale names, commands, paths, feature states, compatibility claims,
+   release scope, and superseded descriptions;
+4. confirm that changed user-visible behavior has corresponding documentation
+   or record why no documentation change is required; and
+5. classify every finding and retain a durable disposition before content
+   readiness passes.
+
+Tests alone do not prove semantic documentation coherence. Human or model
+review alone does not replace deterministic checks for facts that can be
+validated mechanically.
+
+## Required Content Transition
+
+The successful provider-neutral transition is:
 
 ```text
-PR_CREATED
-  -> EXACT_HEAD_CI_PASSED
-  -> EXACT_HEAD_MERGE_REVIEW_PASSED
-  -> RECEIPT_PLATFORM_READBACK_CONFIRMED
-  -> MERGE_READINESS_READY
+CHANGE_REQUEST_CREATED
+  -> EXACT_HEAD_VERIFICATION_PASSED
+  -> EXACT_HEAD_CONTENT_REVIEW_PASSED
+  -> CONTENT_READINESS_READY
   -> HUMAN_MERGE_AUTHORIZED
 ```
 
-Do not skip a state or infer one from a later state. PR creation or a new push
-invalidates every pre-commit verdict for merge-readiness purposes. A change to
-the repository identity, PR number, base, head, merge base, diff identity,
-required CI result, finding disposition, unresolved review threads, or receipt
-readback returns the flow to `REVIEW_REQUIRED` at the earliest affected state.
+When no forge-native change request exists, the first state may instead be
+`EXACT_RANGE_SELECTED`. Do not skip a state or infer content readiness from a
+later provider status. Merge authorization remains a separate human or
+accepted platform action; review evidence must always state that it does not
+authorize merge.
 
-## Receipt And Snapshot
+A new push or a change to repository identity, change-request identity, base,
+head, merge base, diff identity, required verification, finding disposition,
+or coherence evidence returns the content flow to `REVIEW_REQUIRED` at the
+earliest affected state. Every changed head requires a new complete
+base-to-head Merge Review.
 
-`exact-head-merge-review/v1` remains the advisory-review evidence vocabulary.
-Use `exact-head-merge-readiness/v2` for the hosted, platform-enforced
-normalized envelope. The v2 envelope has exactly `contract`, `receipt`,
-`platform_snapshot`, and `gate` top-level fields. Its strict JSON receipt is
-the authoritative data contract; a human-readable Markdown rendering may
-accompany it, but Markdown scraping must not be used to reconstruct evidence.
+## Separate Readiness Dimensions
 
-The v2 receipt and connector-read platform snapshot must agree on:
+Report these dimensions independently:
 
-- repository and positive pull-request number;
-- a positive exact-head `receipt_sequence` that uniquely orders structured
-  receipts without relying on cross-object IDs or timestamps;
-- exact 40-hex base, head, and merge-base SHAs;
-- a deterministic, versioned canonical range-identity digest;
-- `merge-review` or `merge-review-deep` mode;
-- required hosted CI workflow IDs, names, paths, events, policy-pinned Git
-  blobs, run attempts, the
-  trusted `exact-pr-head/v1` display-title binding to PR number/head SHA, and
-  successful conclusions;
-- current open, non-draft, mergeable state;
-- zero unresolved review threads;
-- zero open `MUST-FIX`, `SHOULD-FIX`, and `NIT` findings after recorded
-  dispositions;
-- a positive platform receipt identifier and matching GitHub issue-comment
-  URL, canonical receipt digest from the complete strict
-  JSON receipt body, and readback time;
-- `receipt_authority: advisory_review_evidence` and
-  `merge_authorized: false`.
+- `content_review`: `PASSED | BLOCKED | NEEDS_HUMAN_DECISION`
+- `platform_enforcement`: `VERIFIED | UNVERIFIED | BLOCKED | NOT_CONFIGURED`
 
-The `receipt` records the reviewed identity, findings and dispositions,
-residual risk, reusable pre-commit evidence, and the required-CI policy. Each
-required-CI identity includes its policy-pinned workflow ID/name/path/event and
-Git blob, run and attempt, policy context, trusted display-title PR/head
-binding, conclusion, and repository/run-bound details URL. The `platform_snapshot` repeats the live
-base/head/merge-base/range identity and
-binds the receipt readback, upstream checks, unresolved-thread count and
-digest, and findings digest. The `gate` records the publishing workflow/run,
-the `Exact-Head Merge Readiness` check and run, its source App identity, exact
-head SHA, and conclusion. The upstream required-CI set must not include the
-gate itself.
+`content_review: PASSED` means the exact reviewed content satisfies the
+provider-neutral contract. It does not claim that a forge pipeline, discussion,
+approval rule, check, receipt, ruleset, or merge box was inspected.
 
-The offline validator consumes normalized data already read through the GitHub
-connector-first control plane. It does not access GitHub, authenticate the
-reviewer, create a receipt, submit a review, authorize merge, or replace the
-final live readback immediately before an authorized merge. Ordinary offline
-repository validation remains network-independent; the hosted collector reads
-GitHub state, normalizes it, and invokes the validator on that bounded input.
+`platform_enforcement: NOT_CONFIGURED` is valid when repository policy does not
+select a provider profile. `UNVERIFIED` means a profile or relevant provider
+state exists but current evidence was not read successfully. If repository
+policy requires a provider profile, `UNVERIFIED` or `BLOCKED` prevents the
+formal merge gate from reporting overall readiness without erasing otherwise
+valid content-review evidence.
 
-In source or plugin checkouts, run the validator at
-`scripts/validate-exact-head-merge-review.py`. Filesystem installation places
-the same file at
-`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/scripts/validate-exact-head-merge-review.py`.
-Invoke it with the active workflow's qualified Python interpreter and one
-explicit normalized JSON input path or `-` for bounded stdin.
+## Provider Profiles
+
+Provider profiles are opt-in repository overlays. A profile may add pipeline,
+review-thread, approval, receipt, status-check, protected-branch, release, or
+final live-readback requirements. It must:
+
+- name the selected provider and exact repository;
+- define its normalized evidence and staleness rules;
+- preserve this contract's exact-head and coherence requirements;
+- distinguish provider verification from content review and merge authority;
+- fail closed for claims that require unavailable or stale provider evidence;
+  and
+- avoid requiring its provider objects when the profile is not selected.
+
+GitHub repositories that select the existing App/check/receipt/ruleset
+enforcement use `policies/github-exact-head-enforcement-profile.md`. A GitLab
+CE repository may use this content contract without GitHub, and may add a
+separate GitLab profile for MR head, pipeline, discussion, approval, protected-
+branch, and final readback evidence when its deployment exposes those controls.
 
 ## Review And Remediation Scope
 
 After a finding is fixed, rerun code review and Security Diff Scan over the
-smallest scope that can prove the fix and its affected boundaries. Record why
-unchanged prior evidence remains applicable. Escalate to a wider rerun when the
-fix changes shared contracts, data or trust boundaries, generated artifacts,
-packaging, or the assumptions of earlier evidence.
+smallest scope that proves the fix and affected boundaries. Record why
+unchanged prior evidence remains applicable. Escalate when the fix changes
+shared contracts, data or trust boundaries, generated artifacts, packaging,
+documentation claims, or assumptions of earlier evidence.
 
-Any changed PR head still requires a new exact-head Merge Review and receipt
-readback over the complete base-to-head integration risk. Proportional fix
-review never permits reusing an old exact-head verdict for a new SHA.
-
-When required reviews and scans have no unresolved findings, the workflow may
-advance autonomously through later read-only or already-authorized stages.
-Stop only for an actual human decision, missing authority, environment or
-permission failure, material ambiguity or risk, destructive action, or an
-external write that has not already been authorized for the bounded objective.
-
-## Hosted Enforcement And Trust Boundary
-
-The hosted `Exact-Head Merge Readiness` check is the platform-enforced v2
-projection of this contract. A trusted default-branch collector must resolve
-the live pull request and write the check explicitly to its current
-`pull_request.head.sha`; it must never rely on `GITHUB_SHA` from
-`issue_comment`, `workflow_run`, or another default-branch event. It must not
-checkout, import, execute, cache, or consume artifacts from PR-head code.
-
-The collector is published by a dedicated GitHub App identity with the minimum
-metadata/read, pull-requests/read, issues/read, actions/read, and checks/write
-permissions. Its credentials belong only to a protected environment usable by
-trusted default-branch workflow code. Fork PRs may receive the same metadata
-evaluation, but no PR-controlled code receives those credentials. A shared
-GitHub Actions identity is not an adequate trust source for this check.
-Repository contents and compare endpoints use the workflow's distinct
-read-only `GITHUB_TOKEN`; the dedicated App token must not receive
-`contents: read` or be used for those reads. The collector rejects identical
-token selectors or token values.
-
-GitHub atomically enforces that the dedicated check succeeds on the current
-head, strict up-to-date policy, and resolved review conversations. The
-controller re-evaluates base, merge base, range identity, hosted CI,
-finding disposition, current receipt body/digest, check identity, and source
-App identity when a relevant event or scheduled reconciliation is processed.
-Each relevant evaluation creates a fresh check run because a completed GitHub
-check is immutable lifecycle history. The native latest selector for the exact
-context, App and head must identify that fresh check before evaluation and after
-publication; older successes cannot substitute for a newer in-progress or
-failing evaluation. The authoritative prior check carries the compact App
-pointer across generations and retains the current receipt sequence as a
-tombstone; its digest prevents the same ID and sequence from silently replacing
-the selected receipt body, and only a unique higher exact-head sequence can
-supersede it. Both success and failure publication require exact completed-check
-and native-latest readback. A malformed prior pointer must be superseded by a
-fresh verified failure rather than leaving an older success authoritative.
-Historical same-context check runs are expected and do not make bounded latest
-selection ambiguous; GitHub may automatically delete older same-name runs after
-the per-suite 1,000-run limit, so readiness never depends on permanent history.
-This is an event-driven
-projection, not an atomic transaction with the Merge click. A stronger
-receipt/finding guarantee would require a GitHub-native pre-merge predicate or
-App-controlled merge path, which remains outside this contract's authority.
-
-The repository ruleset is the enforcement point. It must require pull
-requests, block deletion and non-fast-forward updates, require resolved review
-conversations, dismiss stale approvals after pushes, enable strict required
-checks, preserve `Validate repository` and `Validate closing Issue` bound to
-their verified GitHub Actions integration, and require
-`Exact-Head Merge Readiness` bound to the dedicated App integration ID.
-Repository Validation is also a policy-pinned input to the gate; the separate
-closing-Issue check remains a native platform predicate so PR traceability
-cannot drift independently of a previously green readiness projection. The
-ruleset has no bypass actors. Because a single-owner repository can
-deadlock on self-approval, approval-count policy is a separate human decision;
-it must not be substituted for the App-backed exact-head check.
-
-Roll out in this order: merge and independently review the trusted controller;
-register/install the App and protect its environment through separate human
-gates; run a canary; read back its App integration ID; update the ruleset while
-disabled; prove every documented drift case fails closed; then activate only
-the `enforcement` field through another human gate and verify a fresh PR merge
-box. Do not require the check before the canary identifies its App. The check
-does not authorize auto-merge, merge, tag creation, Release publication, or
-deployment.
+Proportional fix review never permits reusing an old exact-head verdict for a
+new head. Clean internal reviews and scans may advance automatically to later
+read-only or already-authorized stages. Stop only for an actual human decision,
+missing authority, environment or permission failure, material ambiguity or
+risk, destructive action, or an unauthorized external write.
 
 ## Authority Boundary
 
-This contract does not authorize commit, push, pull-request creation, platform
-comments or reviews, merge, tag creation, GitHub Release publication,
-deployment, ruleset mutation, or another external write.
+This contract does not authorize commit, push, change-request creation,
+platform comments or reviews, merge, tag creation, Release publication,
+deployment, provider-policy mutation, or another external write.
