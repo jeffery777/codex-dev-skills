@@ -34,6 +34,23 @@ class ExactHeadMergeReviewContractDocsTests(unittest.TestCase):
             roadmap,
         )
 
+    def test_roadmap_records_v0220_merge_review_baseline_as_completed(self) -> None:
+        roadmap = " ".join(read("docs/roadmap.md").split())
+        for phrase in (
+            "Issue #205 / PR #206 completed the v0.22.0 provider-neutral exact-head Merge Review baseline",
+            "Content readiness binds the final complete range",
+            "Provider enforcement is reported separately",
+            "installed shared skills no longer impose it on GitLab CE or another forge",
+            "This completed baseline is not a future task-selection target",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, roadmap)
+
+        self.assertNotIn(
+            "Issue #205 owns the provider-neutral exact-head Merge Review and v0.22.0 candidate",
+            roadmap,
+        )
+
     def test_policy_separates_content_and_provider_readiness(self) -> None:
         policy = " ".join(
             read("policies/exact-head-merge-review-contract.md").split()
