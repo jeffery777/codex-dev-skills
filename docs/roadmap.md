@@ -52,12 +52,13 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
-- Issue #205 owns the provider-neutral exact-head Merge Review and v0.22.0
-  candidate. Content readiness binds the final complete range, deterministic
-  validation, findings, dispositions, and code/documentation coherence.
-  Provider enforcement is reported separately. This repository retains its
-  existing GitHub App/check/receipt/ruleset profile, while installed shared
-  skills no longer impose it on GitLab CE or another forge.
+- Issue #205 / PR #206 completed the v0.22.0 provider-neutral exact-head Merge
+  Review baseline. Content readiness binds the final complete range,
+  deterministic validation, findings, dispositions, and code/documentation
+  coherence. Provider enforcement is reported separately. This repository
+  retains its existing GitHub App/check/receipt/ruleset profile, while
+  installed shared skills no longer impose it on GitLab CE or another forge.
+  This completed baseline is not a future task-selection target.
 
 - Issues #185, #190, #192, and #186 are completed exact-head rollout and
   immediate follow-up milestones, not future task-selection targets. Issue
