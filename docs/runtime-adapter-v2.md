@@ -45,10 +45,11 @@ Caller-supplied metadata is evidence to normalize, not permission to call the ca
 
 ## Contract Family Boundary
 
-Desktop callable facts were last verified on 2026-09-01. The maintained
-point-in-time evidence records the independent CLI and Desktop runtime builds
-and confirms that the deprecated `codex mcp-server` does not change this
-Desktop contract or authorize a direct app-server integration. The current
+Desktop callable facts were last verified on 2026-09-04. The
+[maintained point-in-time evidence](codex-runtime-compatibility-evidence-2026-09-04.md)
+records the independent CLI and Desktop runtime builds and confirms that the
+deprecated `codex mcp-server` does not change this Desktop contract or
+authorize a direct app-server integration. The current
 public product surface is the
 ChatGPT desktop app; this document retains `Desktop` as the compatibility label
 for its Codex task and thread control plane:
@@ -59,6 +60,10 @@ for its Codex task and thread control plane:
   `send_message_to_thread`, and `handoff_thread`, plus
   `get_handoff_status`, `share_thread`, `open_in_codex`, and
   `read_thread_terminal`.
+- The active runtime also exposes `set_thread_archived` and
+  `set_thread_title`, plus account, voice, workspace, and plugin helpers. The
+  maintained compatibility evidence inventories them, but this adapter does
+  not adopt them or infer new authority from their availability.
 - Desktop also exposes `list_projects`; it returns local and remote project
   information including `isGitRepository`. Project-scoped `create_thread`
   callers should use a returned `projectId` rather than infer project identity
@@ -71,10 +76,12 @@ for its Codex task and thread control plane:
   Git project's saved checkout; and use `projectless` only for intentionally
   non-project work. A prohibition on
   creating a new worktree is not a reason to choose `projectless`.
-- Current read-only `list_projects` results use `schemaVersion: 2` and supply
-  project and host routing fields. Current `list_threads` results use
+- The 2026-09-01 read-only `list_projects` result used `schemaVersion: 2` and
+  supplied project and host routing fields. The same refresh's `list_threads`
+  result used
   `schemaVersion: 4`, with pinned tasks in `pinnedThreads` carrying
-  `pinnedIndex` and non-pinned tasks in `threads`.
+  `pinnedIndex` and non-pinned tasks in `threads`; those response versions
+  were not live-revalidated on 2026-09-04.
 - Desktop `create_thread` requires `prompt` and `target`; `target` is a
   `project`, `projectless`, or `chatgptWorkCloud` union. Project targets carry a
   `projectId` plus a local or worktree `environment`. Worktree targets may

@@ -1250,11 +1250,10 @@ synthetic contract evidence and perform no live sidebar mutation.
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-09-01)](docs/codex-runtime-compatibility-evidence-2026-09-01.md).
+[Codex runtime compatibility evidence (2026-09-04)](docs/codex-runtime-compatibility-evidence-2026-09-04.md).
 It records that `codex mcp-server`, the command that exposed Codex itself as an
-MCP server, is deprecated but not removed in observed standalone CLI 0.152.0.
-It also records Desktop 26.825.51511 build 7377 and its bundled CLI
-0.151.0-alpha.7.2 as
+MCP server, is deprecated but not removed in observed standalone CLI 0.153.2.
+It also records Desktop 26.901.22334 build 7746 and its bundled CLI 0.153.0 as
 separate point-in-time observations rather than one global version. This does
 not deprecate Codex's external MCP client configuration, connectors, or native
 Desktop task/thread tools.

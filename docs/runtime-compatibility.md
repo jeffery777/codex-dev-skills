@@ -7,10 +7,11 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only. See the maintained
-[2026-09-01 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-01.md).
-The 2026-09-01 evidence records standalone CLI, Desktop application, and
+[2026-09-04 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-04.md).
+The 2026-09-04 evidence records standalone CLI, Desktop application, and
 Desktop-bundled CLI observations independently and rechecks the active Desktop
-callable boundary including sidebar organization surfaces. The active
+callable boundary including sidebar organization, task metadata, account,
+voice, workspace, and plugin helper surfaces. The active
 `desktop-sidebar-organization` skill implements a separate thin mutation
 contract without collapsing the CLI and Desktop entry paths, and preserves the
 distinction between the deprecated
