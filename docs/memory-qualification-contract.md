@@ -77,3 +77,7 @@ PYTHONDONTWRITEBYTECODE=1 ./scripts/project-python -m unittest \
 
 Passing does not implement or authorize SQLite/FTS5 M1. This contract is
 included in **v0.14.0** as the unchanged qualification authority boundary.
+
+The v0.23.0 thin local pilot adds synthetic pre-registration only. Its result
+is `synthetic-pilot-qualified-awaiting-human-decision`; it is not an efficacy,
+activation, promotion, or authorization result.

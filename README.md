@@ -1650,3 +1650,12 @@ Contributions should keep the repository public, runtime-compatible, and low-sur
 ## Safety And Privacy
 
 Never add credentials, private keys, local runtime files, logs, local databases, app state, or machine-specific config. When a workflow discusses sensitive data, keep examples generic and never include real values.
+
+## Memory M1 local opt-in pilot
+
+Version `0.23.0` adds `memory-m1-local-pilot/v1`: an explicit, default-off,
+local/manual/CI-only advisory façade. It reuses the existing SQLite/FTS5 M1,
+V2b, and M0 contracts; it does not add an external LLM or embedding API, vector
+database, provider/MCP adapter, daemon, service, scheduler, hook, automatic
+recall/write, raw chat/log storage, or physical purge. Synthetic qualification
+is not real efficacy and awaits a human decision.

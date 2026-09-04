@@ -625,4 +625,9 @@ A release or PR readiness handoff should include:
 - unresolved questions or skipped checks;
 - human gate required for commit, push, PR creation, merge, tag, release publication, platform comments, or review submissions.
 
+For v0.23.0, the thin local M1 pilot is a public installed capability and thus
+uses the pre-1.0 minor candidate classification. Its synthetic qualification
+must be reported as awaiting a human decision, never as activation, promotion,
+or real-world efficacy evidence.
+
 Stop and ask before any external write if the target, permissions, release version, tag name, source of truth, or verification evidence is unclear.

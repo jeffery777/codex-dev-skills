@@ -357,12 +357,14 @@ check_memory_m0_contracts() {
 
 check_memory_m1_contracts() {
   "$PROJECT_PYTHON" scripts/eval-memory-sqlite.py >"$TMP_DIR/memory-sqlite-eval.json"
+  "$PROJECT_PYTHON" scripts/eval-memory-pilot.py >"$TMP_DIR/memory-pilot-eval.json"
   run_unit_tests \
     tests.test_memory_sqlite \
     tests.test_sqlitectl \
     tests.test_eval_memory_sqlite \
-    tests.test_memory_sqlite_contract_docs
-  ok "Memory M1 SQLite/FTS5 reference adapter safety and conformance contracts pass"
+    tests.test_memory_sqlite_contract_docs \
+    tests.test_memory_pilot
+  ok "Memory M1 SQLite/FTS5 reference adapter and thin local pilot contracts pass"
 }
 
 check_loop_contract() {

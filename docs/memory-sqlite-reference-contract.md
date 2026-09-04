@@ -103,3 +103,22 @@ PYTHONDONTWRITEBYTECODE=1 ./scripts/project-python -m unittest \
   tests.test_memory_sqlite_contract_docs
 ./scripts/project-python scripts/eval-memory-sqlite.py
 ```
+
+## Thin Local Pilot Façade
+
+The v0.23.0 `memory-m1-local-pilot/v1` façade is an explicit caller library,
+not a replacement adapter. It accepts one trimmed line of at most 512 UTF-8
+bytes and, before an M1 open/write, applies the existing V2b sensitivity rules
+plus lexical rejection for chat/log markers, secrets, credentials, PII,
+private or absolute paths, and configuration assignments. This is a narrow
+machine-checkable input boundary, not a general DLP guarantee. Its four profile
+labels do not alter this schema, record kinds, fingerprints, or M0 authority semantics.
+For remember/recall the exact profile/class is stored in canonical
+`dev.jeffery.memory-pilot/profile` record extensions, binding it to the record
+digest and M0 chain. Invalidate carries no class assertion; it is only the M0
+exact-target logical transition.
+V2b evaluates the complete bounded M1 result before the façade selects adopted
+digests for the requested class, preserving cross-class lifecycle dominance.
+Selected records are exposed only as an advisory projection of canonical
+digest, pilot class, one-line content, and source references; no authority or
+completion field is projected.

@@ -52,6 +52,7 @@ shards:
       - tests.test_eval_candidate_evaluation
       - tests.test_eval_memory_sqlite
       - tests.test_evaluationctl
+      - tests.test_memory_pilot
       - tests.test_memory_sqlite
       - tests.test_memory_sqlite_contract_docs
       - tests.test_sqlitectl

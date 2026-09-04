@@ -84,3 +84,8 @@ PYTHONDONTWRITEBYTECODE=1 ./scripts/project-python -m unittest \
 
 Passing is conformance evidence only. This contract is included in
 **v0.14.0** and does not authorize a backend or operation.
+
+The v0.23.0 thin local pilot does not relax this chain: explicit remember and
+logical invalidate require the same complete accepted eligibility, exact
+authority, trusted time, identity, and pre-state bindings before M1 is opened.
+The profile cannot mint, infer, or reuse authority.
