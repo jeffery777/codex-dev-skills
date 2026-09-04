@@ -326,6 +326,14 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   cross-branch state and adds clean PR base/head pair identities. It does not
   activate query adoption, shared indexes, scheduling, or completion authority.
 
+## Memory M1 Local Pilot
+
+Issue #209 owns the v0.23.0 default-off thin local opt-in pilot. It preserves
+the M1 SQLite/FTS5 schema and M0/V2b authority chain, exposes only explicit
+manual/CI use, and qualifies synthetic retrieval safety evidence. It does not
+authorize activation, promotion, real-world efficacy claims, external
+providers, automatic lifecycle behavior, or private/raw data storage.
+
 ## Non-Goals
 
 - General prompt collection.

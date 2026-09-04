@@ -544,6 +544,16 @@ If evidence is incomplete, weak, indirect, or contradictory, continue gathering 
 - Next selected task or required human decision
 - Residual risk
 
+## Memory M1 Local Pilot
+
+`memorypilotctl.py off` is the default route and has no adapter/filesystem
+touch. `memory-m1-local-pilot/v1` is an explicit local/manual/CI-only,
+advisory-only façade over the separately qualified SQLite/FTS5 adapter. It
+never runs automatically or makes repository, verification, review, authority,
+acceptance, promotion, merge, release, or activation decisions. Its four
+profile labels classify an already eligible `durable-lesson`; they do not add
+record kinds or mint authority.
+
 ## Templates
 
 Use these templates when a target repository needs durable loop artifacts:

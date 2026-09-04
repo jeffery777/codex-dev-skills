@@ -367,6 +367,17 @@ V1/V2a/V2b/V2c-A no-memory path. Hook output is advisory context and cannot
 authorize index adoption, repository mutation, an external write, review
 acceptance, gate satisfaction, or completion.
 
+## M1 Local Pilot Profile
+
+`memory-m1-local-pilot/v1` is a separate default-off, explicit local/manual/CI
+profile. It labels only verified facts, decisions, constraints, and evidence
+references around an already V2b/M0-authorized `durable-lesson`; labels are not
+authority-bearing record kinds, but remember/recall bind the exact label in a
+canonical namespaced record extension. Remember, recall, and logical invalidate are
+manual caller operations only. Recall compiles only structured tokens through
+M1 and then applies the V2b advisory retrieval decision. No raw SQL/FTS,
+automatic lifecycle hook, provider, network, daemon, or physical purge exists.
+
 ## Disable And Roll Back
 
 Leave the GitNexus adapter disabled, or remove its machine-local opt-in and

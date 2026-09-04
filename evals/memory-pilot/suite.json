@@ -1,0 +1,19 @@
+{
+  "contract_version": "memory-m1-local-pilot-eval/v1",
+  "kind": "synthetic-pre-registration",
+  "metrics": {
+    "retrieval_precision": {"minimum": 1},
+    "stale_memory_rejection": {"minimum": 1},
+    "false_authority_rate": {"maximum": 0},
+    "task_result_non_regression": {"minimum": 1},
+    "bounded_context_reduction": {"minimum_net_tokens": 1, "overhead_tokens": 8},
+    "memory_on_backend_touch": {"minimum": 1}
+  },
+  "cases": [
+    {"id":"verified-relevant","scenario":"remember-and-recall","expected":{"relevant":true,"retrieved":true,"adopted":true,"stale_rejected":false}},
+    {"id":"stale-rejected","scenario":"cross-class-supersession","expected":{"relevant":false,"retrieved":true,"adopted":false,"stale_rejected":true}}
+  ],
+  "pass_status": "synthetic-pilot-qualified-awaiting-human-decision",
+  "prohibitions": ["activation", "promotion", "real-user-efficacy"],
+  "suite_digest": "2bcc51d6b10610ac835204705f473e6618ae11829353494528060d8e1348a7dc"
+}

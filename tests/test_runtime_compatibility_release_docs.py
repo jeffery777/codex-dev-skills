@@ -219,28 +219,25 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
             read("docs/skill-selection-guide.md"),
         )
 
-    def test_v0220_candidate_is_provider_neutral_and_minor(self) -> None:
-        notes = read("docs/release-notes-v0.22.0.md")
+    def test_v0230_candidate_is_thin_local_pilot_and_minor(self) -> None:
+        notes = read("docs/release-notes-v0.23.0.md")
         for expected in (
-            "# Release Notes: v0.22.0",
-            "Issue #205",
-            "Provider-Neutral Exact-Head Merge Review",
-            "content_review",
-            "platform_enforcement",
-            "GitLab CE",
-            "optional GitHub",
-            "pre-1.0 minor release",
-            "compare/v0.21.0...v0.22.0",
+            "# Release Notes: v0.23.0",
+            "Issue #209",
+            "Memory M1 Thin Local Opt-In Pilot",
+            "default-off",
+            "synthetic",
+            "advisory",
             "separate human gates",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, notes)
 
         catalog = yaml.safe_load(read("catalog.yaml"))
-        self.assertEqual("0.22.0", catalog["version"])
-        self.assertIn("0.22.0", read("install.sh"))
+        self.assertEqual("0.23.0", catalog["version"])
+        self.assertIn("0.23.0", read("install.sh"))
         self.assertEqual(
-            "0.22.0",
+            "0.23.0",
             json.loads(
                 read("plugin/codex-dev-skills/.codex-plugin/plugin.json")
             )["version"],
