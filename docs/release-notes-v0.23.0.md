@@ -30,6 +30,13 @@ tag, and non-draft/non-prerelease publication are separate human gates.
 daemon, service, scheduler, automatic recall/write, physical purge, migration,
 or V3-C behavior is included.
 
+The maintained point-in-time compatibility evidence is refreshed for
+standalone Codex CLI `0.153.2`, ChatGPT Desktop `26.901.22334` build `7746`,
+and its bundled Codex CLI `0.153.0`. The refresh records the current callable
+inventory without adopting new adapter behavior or authority. This remains
+within Issue #209's release-candidate scope and does not require a separate
+issue.
+
 ## Verification And Release Gate
 
 ```bash

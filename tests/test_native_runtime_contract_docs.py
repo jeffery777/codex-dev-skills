@@ -212,13 +212,13 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
 
     def test_latest_runtime_evidence_records_current_versions_and_schemas(self) -> None:
-        evidence = read("docs/codex-runtime-compatibility-evidence-2026-09-01.md")
+        evidence = read("docs/codex-runtime-compatibility-evidence-2026-09-04.md")
 
         for expected in (
-            "0.152.0",
-            "26.825.51511",
-            "7377",
-            "0.151.0-alpha.7.2",
+            "0.153.2",
+            "26.901.22334",
+            "7746",
+            "0.153.0",
             "codex mcp-server",
             "deprecated",
             "codex exec",
@@ -238,7 +238,9 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "move_thread_to_sidebar_section",
             "reorder_sidebar_sections",
             "desktop-sidebar-organization",
-            "tools.update_plan.enabled",
+            "set_thread_archived",
+            "get_usage_limits",
+            "load_workspace_dependencies",
             "observed and locally qualified public-help surface",
             "No production adapter or shared-core change is required",
         ):
@@ -259,7 +261,10 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "docs/runtime-adapter-v2.md",
         ):
             with self.subTest(maintained_pointer=relative_path):
-                self.assertIn("2026-09-01", read(relative_path))
+                self.assertIn(
+                    "codex-runtime-compatibility-evidence-2026-09-04.md",
+                    read(relative_path),
+                )
 
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-07-31.md").is_file()
@@ -284,6 +289,9 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         )
         self.assertTrue(
             (ROOT / "docs/codex-runtime-compatibility-evidence-2026-09-01.md").is_file()
+        )
+        self.assertTrue(
+            (ROOT / "docs/codex-runtime-compatibility-evidence-2026-09-04.md").is_file()
         )
 
     def test_desktop_sidebar_organization_skill_is_separate_and_fail_closed(self) -> None:
