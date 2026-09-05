@@ -334,6 +334,25 @@ manual/CI use, and qualifies synthetic retrieval safety evidence. It does not
 authorize activation, promotion, real-world efficacy claims, external
 providers, automatic lifecycle behavior, or private/raw data storage.
 
+## Proposed Memory Governance Milestone
+
+[Issue #212](https://github.com/jeffery777/codex-dev-skills/issues/212) 追蹤本次
+docs-only 研究與設計；實作須另開 Issue／分支，不以文件交付表示 MG1 功能完成。
+此次版本評估建議不另發版：交付僅為研究與待核准提案，沒有改變安裝能力或
+既有操作契約。若核准後的範圍改變而值得發版，版本範圍與發行準備仍沿用
+#212，實際發布仍須另行核准。
+
+下一個記憶治理里程碑 MG1 仍為規劃提案，參考 Mem0、Zep、Letta，
+以及微軟相關 Memora／PlugMem 的公開設計；後兩者補充內容／檢索表示分離
+與事實／方法型知識的整理，不授權自動採集、寫入或正式規則提升。
+建議採唯讀 `memory-audit` 與具變更能力的 `memory-maintenance`，共用本機管理核心，
+支援自然語言盤點、新增、修改、停止使用、內容刪除與容量管理。停止使用保留內容；
+內容刪除涵蓋舊版與衍生資料；磁碟空間回收另行量測。舊或少用不構成自動刪除授權。
+完整里程碑須包含內容清除與容量驗證，不能把只完成停止使用當作全部交付。
+既有 M1 仍只支援 logical delete；新 storage/operation contract 須另行核准與資格驗證，
+本次不實作、不啟用外部 backend，也不更改既有版本／發行紀錄。詳見
+[里程碑規格](memory-governance-milestone.md)與[外部設計研究](memory-governance-research.md)。
+
 ## Non-Goals
 
 - General prompt collection.
