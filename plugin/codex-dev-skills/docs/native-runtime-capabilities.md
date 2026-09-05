@@ -158,6 +158,15 @@ alone do not qualify a candidate. The eight baseline roles remain available, and
 candidate profiles cannot become implicit fallback targets. This enforcement
 belongs to `loopctl.py agent-route`, not to direct native role invocation.
 
+The shared parent workflow owns current-fact collection and invocation. When
+V2 facts omit explicit candidates, the router discovers a user-approved
+qualification store and matches scope, runtime, expiry and local evidence
+digests before existing preflight checks. CLI observations do not establish
+Desktop support. The parent must verify the selected role is callable in the
+active runtime; otherwise it reroutes with corrected availability. Neither the
+loader nor these skills read private Desktop state or install a global dispatch
+hook. See `docs/agent-qualification-autoload.md` for the executable contract.
+
 ### CLI session control plane
 
 Codex CLI has its own session control plane, distinct from shared subagents and

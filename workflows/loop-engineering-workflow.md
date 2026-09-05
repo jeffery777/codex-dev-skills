@@ -88,13 +88,22 @@ integrate completed receipts while unrelated workers continue and reuse the
 original worker for bounded follow-up when its assignment remains fresh.
 The executable contract is `loopctl.py agent-route <decision-input.yaml>
 --runtime-facts <current-runtime-facts.json>` using the `agent_route` section of
-the installed decision-input template. Runtime facts are current-session CLI
+the installed decision-input template. Runtime facts are current-session CLI or Desktop
 evidence, not repository-controlled YAML, and the route registry must be the
 canonical registry shipped with the installed skill. Main-agent integration
 uses `agent-integrate` with explicit repository, worker-artifact, and
 verification roots plus assignment freshness; it independently reads those
 files, their SHA-256 digests, and exact branch/HEAD instead of trusting a
 receipt's self-attested current state.
+
+The parent prepares and runs that command during normal delegation; it does
+not send the user back to a manual JSON/CLI step. Follow the automatic
+qualification procedure in `skills/loop-engineering/SKILL.md`: assess the
+task against approved evidence, set its qualified scope, collect fresh public
+runtime facts and omit `enabled_candidates` to let the router discover the
+user store. Explicit empty candidates retain opt-out. This integrates the
+shared CLI/Desktop workflow without inventing a daemon, private runtime
+reader, or global conversation hook. See `docs/agent-qualification-autoload.md`.
 
 ## State Model
 

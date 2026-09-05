@@ -17,6 +17,7 @@ shards:
   - id: installer-agent-profiles
     modules:
       - tests.test_agent_profiles
+      - tests.test_agent_qualification
       - tests.test_installer_agent_profiles
   - id: installer-runtime
     modules:

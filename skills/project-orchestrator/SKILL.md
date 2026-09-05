@@ -68,6 +68,15 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
 
 ## Delegation Economy
 
+Before selecting a custom-agent candidate, perform the shared automatic
+qualification procedure in `loop-engineering` (Agent Routing). The parent
+classifies the actual task, checks its qualified scope, gathers current public
+runtime facts and invokes the installed `agent-route` command itself. Do not
+ask the user to supply qualification JSON or repeat CLI arguments. The router
+discovers the explicitly approved user-level store; a missing or inapplicable
+record retains baseline routing. Do not turn a past CLI observation into
+Desktop availability or infer native dispatch support from installation alone.
+
 Delegate by disjoint ownership and useful parallelism, not by one worker per
 discipline. Keep implementation, focused tests, and directly related docs with
 one owner unless they form independently verifiable artifacts; keep author and

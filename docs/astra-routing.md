@@ -44,6 +44,13 @@ These augment the existing availability, effort and parent-sandbox facts. The
 caller must verify the reference's class/tier, model/effort, profile digest,
 representative cases and outcome before enabling it. The router validates the
 shape and digest binding; it does not dereference the reference or grade quality.
+
+That explicit interface remains supported. Shared workflows also support
+[automatic qualification discovery](agent-qualification-autoload.md) from an
+approved user store when `enabled_candidates` is omitted. The parent assesses
+task scope and supplies fresh runtime facts; the loader checks local evidence
+digests, scope, runtime and expiry without grading the evidence. An explicit
+empty object opts out and is never replaced by stored candidates.
 Dates provide provenance and do not establish freshness: re-read the active
 surface for each session. Never reuse Desktop evidence to assert CLI/API support.
 Remove the entry if quality fails or becomes unverified. Do not add a lower-tier

@@ -286,7 +286,7 @@ check_context_continuity() {
 
 check_agent_profiles() {
   "$PROJECT_PYTHON" scripts/validate-agent-profiles.py >"$TMP_DIR/agent-profiles.json"
-  run_unit_tests tests.test_agent_profiles tests.test_installer_agent_profiles
+  run_unit_tests tests.test_agent_profiles tests.test_agent_qualification tests.test_installer_agent_profiles
   ok "custom-agent profiles and isolated installer contracts pass"
 }
 

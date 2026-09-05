@@ -39,13 +39,16 @@ expect: {}
 # consumes this separate V2a contract and emits a content-bound `route_receipt`.
 # Version 1 remains accepted for compatibility and omits `workload_kind`; use
 # version 2 for cost-aware class/tier selection.
-# Runtime/model facts are trusted current-session CLI evidence and must not be
+# Runtime/model facts are trusted current-session CLI or Desktop evidence and must not be
 # embedded in this repository-controlled document.
 agent_route:
   contract_version: 2
   task:
     id: "<task-id>"
     workload_kind: "<mechanical | exploration | implementation | review | security-review | research-orchestration>"
+    # Optional V2 only. Parent sets this after matching the actual task against
+    # approved user qualification evidence; omit when no scope is qualified.
+    # qualification_scope: "<reviewed-task-type>"
     factors:
       ambiguity: "<low | moderate | high>"
       reasoning_depth: "<shallow | balanced | deep>"
