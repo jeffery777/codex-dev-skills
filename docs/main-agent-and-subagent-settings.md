@@ -49,6 +49,13 @@ deep/security and Sol-xhigh exceptional. Astra-medium advanced and Astra-high
 deep/security profiles remain separately qualified opt-ins. Main-agent selection
 does not qualify these child profiles or bypass their gates.
 
+During normal delegation, shared delivery/orchestration skills make the parent
+prepare current runtime facts and invoke the router, which automatically
+discovers approved user qualification records. Users do not repeat candidate
+JSON or qualification-path arguments. This is scoped workflow automation, not
+a global conversation hook. See [automatic qualification loading](agent-qualification-autoload.md)
+for one-time adoption, revocation and the separate current-runtime checks.
+
 ## Escalation is a workflow decision
 
 The main agent first gathers repository evidence, records task factors and uses

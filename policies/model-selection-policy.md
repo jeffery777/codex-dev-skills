@@ -93,6 +93,17 @@ authorization. Degrade in this order:
 Unknown availability is not completion evidence and a recoverable mismatch does
 not permanently fail the objective.
 
+The parent owns routine qualification and runtime-input preparation. For V2
+candidate routing, the shared workflow automatically loads an explicitly
+approved user-level qualification store when current facts omit
+`enabled_candidates`; it does not ask the user to repeat JSON or CLI options.
+Match the actual task to reviewed scope before assigning its scope identifier.
+Require matching runtime, current profile/evidence bytes and unexpired approval;
+never synthesize a quality claim from availability or a task label. Saved
+qualification does not establish current model, effort, native role or sandbox
+capability. CLI and Desktop observations remain separate. An invalid or
+inapplicable record leaves baseline selection and existing human gates intact.
+
 If a requested capability is unavailable, state the fallback and its risk. Do
 not encode host-private aliases or a permanently current model name into public
 skills. Runtime profiles may map the capability classes above to models whose

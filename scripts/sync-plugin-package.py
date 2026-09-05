@@ -25,6 +25,7 @@ SHARED_FILES = {
     "scripts/validate-exact-head-merge-review.py",
     "scripts/collect-exact-head-merge-readiness.py",
     "docs/native-runtime-capabilities.md",
+    "docs/agent-qualification-autoload.md",
 }
 SHARED_PREFIXES = ("templates/orchestration/",)
 

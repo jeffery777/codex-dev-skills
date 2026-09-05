@@ -55,6 +55,11 @@ For a single clear implementation task, prefer `implementation-slice`. Use `proj
    delegation helps, split by disjoint ownership and parallelism rather than
    discipline; keep code, focused tests, and directly related docs with the
    implementation owner by default.
+   Before candidate delegation, have the parent execute the shared automatic
+   qualification procedure in `loop-engineering`: assess task scope, collect
+   current runtime evidence, and call the installed router. Qualification
+   discovery and runtime-input preparation are agent work, not instructions
+   the user must repeat. Preserve baseline fallback when evidence is absent.
 5. Run relevant verification and inspect the diff.
 6. Route code or mixed changes through `code-review`, high-risk code or mixed changes through `code-review-deep`, and docs-only or docs-dominant changes through `docs-review`.
 7. Use `code-review-gate` or `docs-review-gate` only when commit readiness, PR readiness, merge readiness, or repo policy requires a formal blocking decision.

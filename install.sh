@@ -892,6 +892,7 @@ group_templates() {
     codex-delivery-workflow)
       printf '%s\n' \
         docs/native-runtime-capabilities.md \
+        docs/agent-qualification-autoload.md \
         templates/orchestration/loop-engineering-spec.template.md \
         templates/orchestration/loop-decision-input.template.yaml \
         templates/orchestration/loop-event.template.yaml \

@@ -24,6 +24,7 @@ import loop_yaml  # noqa: E402
 import git_source  # noqa: E402
 import profile_preflight  # noqa: E402
 import agent_routing  # noqa: E402
+import agent_qualification  # noqa: E402
 import context_continuity  # noqa: E402
 
 CANONICAL_PROFILE_REGISTRY = (
@@ -806,7 +807,7 @@ def command_agent_route(
             task,
             {"id", "factors"}
             if contract_version == 1
-            else {"id", "factors", "workload_kind"},
+            else {"id", "factors", "workload_kind", "qualification_scope"},
             "agent route task",
         ),
         (
@@ -856,7 +857,10 @@ def command_agent_route(
             raise profile_preflight.ProfileValidationError(
                 "registry must be the canonical installed skill registry"
             )
-        runtime_facts_path = runtime_facts_path.resolve()
+        if "qualification_scope" in task and (not isinstance(task["qualification_scope"], str) or not task["qualification_scope"].strip()):
+            raise profile_preflight.ProfileValidationError("qualification_scope must be a non-empty string")
+        if str(runtime_facts_path) != "-":
+            runtime_facts_path = runtime_facts_path.resolve()
         role = preflight_input.get("role")
         if not isinstance(role, str) or not role:
             raise profile_preflight.ProfileValidationError("role must be a non-empty string")
@@ -883,6 +887,11 @@ def command_agent_route(
             role in profile_preflight.CANDIDATE_ROLES or facts.get("enabled_candidates")
         ):
             raise profile_preflight.ProfileValidationError("candidate selection requires route contract version 2")
+        autoload = None
+        if contract_version == 2:
+            facts, autoload = agent_qualification.discover(
+                facts, role=role, entries=entries, scope=task.get("qualification_scope")
+            )
         collision_report = profile_preflight.detect_collisions(profile_dir, roots, destination)
         def destination_matches(candidate: dict[str, Any]) -> bool:
             if not destination.is_dir():
@@ -931,6 +940,8 @@ def command_agent_route(
                 }
                 if candidate_result["decision"] == "ready" and installed:
                     preflight_result = candidate_result
+        if autoload is not None:
+            selection["autoload"] = autoload
         evidence = preflight_result.get("route_profile_evidence")
         if evidence is None and preflight_result.get("fallback_tier") == "same-capability-profile":
             evidence = preflight_result.get("fallback_evidence")
@@ -970,7 +981,7 @@ def command_agent_route(
                     evidence = candidate_evidence
                     break
         if preflight_result["decision"] == "human-gate":
-            render({"status": "human-gate", "profile_preflight": preflight_result})
+            render({"status": "human-gate", "profile_preflight": preflight_result, "profile_selection": selection})
             return 2
         if isinstance(evidence, dict) and not destination_matches(evidence):
             degraded_facts = copy.deepcopy(facts)
@@ -987,7 +998,7 @@ def command_agent_route(
             evidence = None
             facts = degraded_facts
             if preflight_result["decision"] == "human-gate":
-                render({"status": "human-gate", "profile_preflight": preflight_result})
+                render({"status": "human-gate", "profile_preflight": preflight_result, "profile_selection": selection})
                 return 2
         parent = facts.get("parent_default") if isinstance(facts.get("parent_default"), dict) else {}
         sequential = facts.get("sequential") if isinstance(facts.get("sequential"), dict) else {}

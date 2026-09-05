@@ -309,7 +309,7 @@ def candidate_enabled(entry: dict[str, Any], facts: dict[str, Any]) -> bool:
 
 def runtime_facts(path: pathlib.Path) -> dict[str, Any]:
     try:
-        facts = _object(json.loads(path.read_text(encoding="utf-8")), "runtime facts")
+        facts = _object(json.loads(sys.stdin.read() if str(path) == "-" else path.read_text(encoding="utf-8")), "runtime facts")
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ProfileValidationError(f"invalid runtime facts {path}: {exc}") from exc
     _exact(facts, {"custom_agent_surface", "available_models", "reasoning_efforts", "compatible_profiles", "parent_default", "sequential", "parent_sandbox_mode", "enabled_candidates", "model_surface"}, "runtime facts")

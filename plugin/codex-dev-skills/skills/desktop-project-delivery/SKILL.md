@@ -41,6 +41,13 @@ readiness stages.
    bootstrap, select work, define ownership, verify, review, and decide gates.
 2. Use shared subagents for independent bounded work when useful. Keep writes
    disjoint or isolated and keep the main agent responsible for integration.
+   Apply the shared automatic qualification procedure before candidate
+   selection. Collect model, effort, custom-role and sandbox evidence from
+   the active Desktop callable surface; pass `model_surface.runtime: desktop`.
+   The parent prepares the router input. Do not ask the user to run a CLI
+   command, reuse CLI availability, or read private Desktop state. If the
+   selected native role cannot be dispatched through the current callable,
+   reground availability and reroute; installation alone does not prove it.
 3. Invoke `desktop-thread-delegation` only when the user explicitly wants a
    separate user-owned Desktop task, thread, or worktree.
    Invoke `desktop-sidebar-organization` separately only when the user

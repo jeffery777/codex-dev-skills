@@ -85,6 +85,7 @@ groups:
       - source: skills/docs-update
     templates:
       - source: docs/native-runtime-capabilities.md
+      - source: docs/agent-qualification-autoload.md
       - source: templates/orchestration/loop-engineering-spec.template.md
       - source: templates/orchestration/loop-decision-input.template.yaml
       - source: templates/orchestration/loop-event.template.yaml

@@ -321,8 +321,8 @@ allows a lower tier to satisfy a higher-tier route silently.
 
 Three Astra profiles are opt-in candidates that require qualification: advanced worker at medium,
 and deep/security reviewers at high. The eight baseline mappings remain unchanged.
-Installation alone does not enable candidate routing. Version 2 routing requires
-`enabled_candidates` in current-session runtime facts, keyed by candidate name,
+Installation alone does not enable candidate routing. The explicit version 2
+interface accepts `enabled_candidates` in current-session runtime facts, keyed by candidate name,
 with its exact `profile_sha256` and a non-empty `quality_evidence` reference to
 operator-verified real-model results for that class/tier. Include `model_surface`
 with `runtime` (`cli`, `desktop`, or `api`), `source`, and `observed_on` (ISO date).
@@ -336,6 +336,14 @@ For the optional Astra-high main-agent preset, user versus project settings,
 installed child-profile locations and effort escalation guidance, see
 [main-agent and subagent settings](docs/main-agent-and-subagent-settings.md).
 The preset is an example only; installation does not change personal defaults.
+
+For normal workflow delegation, the parent prepares current CLI or Desktop
+facts and the router automatically discovers an explicitly approved user
+qualification store. Users do not supply candidate JSON or a qualification
+path on every task. The store binds reviewed task scope, runtime, expiry and
+evidence/profile digests; it never supplies cached availability. An explicit
+empty `enabled_candidates` object opts out for the current invocation. See
+[automatic qualification loading](docs/agent-qualification-autoload.md).
 
 The deterministic task role remains the baseline role. An enabled, qualified,
 available, installed candidate for that exact role may be selected; otherwise

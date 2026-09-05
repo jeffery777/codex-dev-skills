@@ -3367,6 +3367,67 @@ class CliTests(unittest.TestCase):
             changed["profile_selection"]["qualification"]["quality_evidence"] = "tampered"
             self.assertFalse(loopctl.agent_routing.validate_route_receipt(changed)["valid"])
 
+            # The same native route now discovers only user-store quality data.
+            from unittest.mock import patch
+            user_root = root.resolve() / "user-codex"
+            user_root.mkdir(mode=0o700)
+            (user_root / "evidence.md").write_text("synthetic")
+            qualification = {
+                "schema_version": 1, "enabled": True, "qualifications": [{
+                    "profile": candidate, "profile_sha256": digest,
+                    "capability_class": "balanced-worker", "capability_tier": "advanced",
+                    "task_scopes": ["fixture-repair"], "runtimes": ["desktop", "cli"],
+                    "quality_evidence": "evidence.md",
+                    "quality_evidence_sha256": hashlib.sha256(b"synthetic").hexdigest(),
+                    "expires_on": "2099-01-01", "enabled": True,
+                }],
+            }
+            (user_root / "agent-qualifications.json").write_text(json.dumps(qualification))
+            auto_facts = copy.deepcopy(facts)
+            auto_facts.pop("enabled_candidates")
+            auto_doc = copy.deepcopy(document)
+            auto_doc["agent_route"]["task"]["qualification_scope"] = "fixture-repair"
+            with patch.dict(os.environ, CODEX_HOME=str(user_root)):
+                for runtime in ("desktop", "cli"):
+                    auto_facts["model_surface"]["runtime"] = runtime
+                    code, result = run(auto_facts, auto_doc)
+                    self.assertEqual(0, code, result)
+                    receipt = result["route_receipt"]
+                    self.assertEqual(candidate, receipt["runtime_mapping"])
+                    self.assertEqual("qualified", receipt["profile_selection"]["autoload"]["status"])
+                    self.assertEqual(
+                        "qualification-evidence-sha256:" + hashlib.sha256(b"synthetic").hexdigest(),
+                        receipt["profile_selection"]["qualification"]["quality_evidence"],
+                    )
+                    self.assertNotIn("evidence.md", json.dumps(receipt))
+                    self.assertNotIn(str(user_root), json.dumps(receipt))
+                    receipt["profile_selection"]["autoload"]["scope"] = "tampered"
+                    self.assertFalse(loopctl.agent_routing.validate_route_receipt(receipt)["valid"])
+                for mutation in ("scope", "runtime", "override", "availability", "sandbox"):
+                    f, d = copy.deepcopy(auto_facts), copy.deepcopy(auto_doc)
+                    if mutation == "scope":
+                        d["agent_route"]["task"]["qualification_scope"] = "unqualified-task"
+                    elif mutation == "runtime":
+                        f["model_surface"]["runtime"] = "api"
+                    elif mutation == "override":
+                        f["enabled_candidates"] = {}
+                    elif mutation == "availability":
+                        f["available_models"] = ["gpt-5.6-sol"]
+                    else:
+                        f["parent_sandbox_mode"] = "read-only"
+                    code, result = run(f, d)
+                    if mutation == "sandbox":
+                        self.assertEqual(2, code, result)
+                    else:
+                        self.assertEqual(0, code, result)
+                        self.assertEqual(baseline, result["route_receipt"]["runtime_mapping"])
+                route_path.write_text(json.dumps(auto_doc))
+                output = StringIO()
+                with patch("sys.stdin", StringIO(json.dumps(auto_facts))), redirect_stdout(output):
+                    code = loopctl.main(["agent-route", str(route_path), "--runtime-facts", "-"])
+                self.assertEqual(0, code, output.getvalue())
+                self.assertEqual(candidate, json.loads(output.getvalue())["route_receipt"]["runtime_mapping"])
+
             for mutation in ("disabled", "unavailable", "unsupported", "unknown", "unqualified"):
                 with self.subTest(mutation=mutation):
                     f = copy.deepcopy(facts)
