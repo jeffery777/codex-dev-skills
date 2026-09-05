@@ -35,7 +35,7 @@ UNSAFE_TEXT = (
     re.compile(r"(?i)(?:desktop|codex)[-_ ](?:database|db|session|log|cache|auth|app[-_ ]state)"),
 )
 REGISTRY_TOP_KEYS = {"schema_version", "namespace", "official_surface", "profiles"}
-REGISTRY_PROFILE_KEYS = {"name", "file", "profile_sha256", "capability_class", "capability_tier", "tier_rank", "intended_task_class", "sandbox_expectation", "allowed_workflow_scope", "output_contract", "runtime_mapping", "fallback"}
+REGISTRY_PROFILE_KEYS = {"name", "file", "profile_sha256", "capability_class", "capability_tier", "tier_rank", "intended_task_class", "sandbox_expectation", "allowed_workflow_scope", "output_contract", "runtime_mapping", "fallback", "candidate_for"}
 MAPPING_KEYS = {"model", "reasoning_effort", "availability", "last_verified", "replaceable"}
 FALLBACK_KEYS = {"same_capability_first", "allow_parent_default", "allow_sequential", "human_gate_if_unresolved"}
 COMPATIBLE_PROFILE_KEYS = {"name", "profile_path", "capability_class", "capability_tier", "config_valid", "model_available", "reasoning_available", "sandbox", "allowed_workflow_scope", "profile_digest"}
@@ -51,6 +51,13 @@ ROLE_CONTRACTS = {
     "loop_v2a_exceptional_researcher": ("deep-reviewer", "exceptional", 6, "read-only", {"read", "search", "verify", "report-findings", "report-receipt"}),
     "loop_v2a_security_reviewer": ("security-reviewer", "deep", 5, "read-only", {"read", "search", "validate", "defensive-control-analysis", "report-findings", "report-receipt"}),
 }
+CANDIDATE_ROLES = {
+    "loop_v2a_astra_advanced_worker": "loop_v2a_advanced_worker",
+    "loop_v2a_astra_deep_reviewer": "loop_v2a_deep_reviewer",
+    "loop_v2a_astra_security_reviewer": "loop_v2a_security_reviewer",
+}
+for _candidate, _baseline in CANDIDATE_ROLES.items():
+    ROLE_CONTRACTS[_candidate] = ROLE_CONTRACTS[_baseline]
 
 
 class ProfileValidationError(ValueError):
@@ -187,6 +194,8 @@ def validate(profile_dir: pathlib.Path, registry_path: pathlib.Path = DEFAULT_RE
         if entry.get("sandbox_expectation") not in SAFE_SANDBOX_MODES:
             raise ProfileValidationError(f"registry profile {name} has unsafe sandbox expectation")
         expected_contract = ROLE_CONTRACTS.get(name)
+        if entry.get("candidate_for") != CANDIDATE_ROLES.get(name):
+            raise ProfileValidationError(f"registry profile {name} has invalid candidate_for")
         if expected_contract is None or (
             entry.get("capability_class"),
             entry.get("capability_tier"),
@@ -268,12 +277,43 @@ def _external_name(path: pathlib.Path) -> str:
         raise ProfileValidationError(f"cannot inspect external agent {path}: {exc}") from exc
 
 
+def candidate_facts(facts: dict[str, Any]) -> dict[str, Any]:
+    """Validate explicit, operator-verified qualification; never infer it from availability."""
+    enabled = _object(facts.get("enabled_candidates", {}), "enabled_candidates")
+    for name, raw in enabled.items():
+        if name not in CANDIDATE_ROLES:
+            raise ProfileValidationError(f"unknown candidate profile: {name}")
+        evidence = _object(raw, f"candidate {name}")
+        _exact(evidence, {"profile_sha256", "quality_evidence"}, f"candidate {name}")
+        digest = evidence.get("profile_sha256")
+        if not isinstance(digest, str) or not SHA256.fullmatch(digest):
+            raise ProfileValidationError("candidate qualification requires profile_sha256")
+        _string(evidence.get("quality_evidence"), "candidate quality_evidence")
+    surface = facts.get("model_surface")
+    if enabled or surface is not None:
+        surface = _object(surface, "model_surface")
+        _exact(surface, {"runtime", "source", "observed_on"}, "model_surface")
+        if not isinstance(surface.get("runtime"), str) or surface["runtime"] not in {"cli", "desktop", "api"}:
+            raise ProfileValidationError("model_surface.runtime must be cli, desktop, or api")
+        _string(surface.get("source"), "model_surface.source")
+        _date(surface.get("observed_on"), "model_surface.observed_on")
+    return enabled
+
+
+def candidate_enabled(entry: dict[str, Any], facts: dict[str, Any]) -> bool:
+    if entry["name"] not in CANDIDATE_ROLES:
+        return True
+    evidence = candidate_facts(facts).get(entry["name"])
+    return isinstance(evidence, dict) and evidence["profile_sha256"] == entry["_profile_digest"]
+
+
 def runtime_facts(path: pathlib.Path) -> dict[str, Any]:
     try:
         facts = _object(json.loads(path.read_text(encoding="utf-8")), "runtime facts")
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ProfileValidationError(f"invalid runtime facts {path}: {exc}") from exc
-    _exact(facts, {"custom_agent_surface", "available_models", "reasoning_efforts", "compatible_profiles", "parent_default", "sequential", "parent_sandbox_mode"}, "runtime facts")
+    _exact(facts, {"custom_agent_surface", "available_models", "reasoning_efforts", "compatible_profiles", "parent_default", "sequential", "parent_sandbox_mode", "enabled_candidates", "model_surface"}, "runtime facts")
+    candidate_facts(facts)
     surface = facts.get("custom_agent_surface")
     if surface is not None and (
         not isinstance(surface, str)
@@ -403,6 +443,9 @@ def _validated_same_class(
         candidate = _object(raw, f"compatible profile evidence[{index}]")
         _exact(candidate, COMPATIBLE_PROFILE_KEYS, f"compatible profile evidence[{index}]")
         name = _string(candidate.get("name"), f"compatible profile evidence[{index}].name")
+        # Experimental profiles are never implicit fallback targets, including v1.
+        if name in CANDIDATE_ROLES:
+            continue
         digest = candidate.get("profile_digest")
         if not isinstance(digest, str) or not SHA256.fullmatch(digest):
             raise ProfileValidationError("compatible profile evidence requires a lowercase SHA-256 profile_digest")
@@ -544,6 +587,15 @@ def preflight(
     base = {"profile": entry["name"], "capability_class": entry["capability_class"], "capability_tier": entry["capability_tier"], "tier_rank": entry["tier_rank"], "runtime_mapping": entry["runtime_mapping"], "collisions": conflicts}
     if conflicts:
         return {**base, "state": "human-gate", "decision": "human-gate", "reason": "profile-name-collision"}
+    if entry["name"] in CANDIDATE_ROLES and (
+        not enforce_tier or not candidate_enabled(entry, facts)
+    ):
+        decision, selected, tier, evidence = _fallback(
+            entry, facts, custom_surface_available=facts.get("custom_agent_surface") == "available", enforce_tier=True,
+            trusted_profiles=trusted_profiles,
+        )
+        return {**base, "state": "candidate-not-qualified-or-disabled", "decision": decision,
+                "selected": selected, "fallback_tier": tier, "fallback_evidence": evidence}
     surface = facts.get("custom_agent_surface", "unknown")
     if not isinstance(surface, str) or surface not in {"available", "unavailable", "unknown"}:
         raise ProfileValidationError("runtime facts custom_agent_surface must be available, unavailable, or unknown")

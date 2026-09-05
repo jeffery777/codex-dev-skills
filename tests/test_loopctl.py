@@ -3327,6 +3327,105 @@ class CliTests(unittest.TestCase):
                 )
             self.assertIn("must match the deterministic", rejected.getvalue())
 
+    def test_astra_candidate_selection_and_safe_degradation(self):
+        # Synthetic qualification only: these tests do not measure model quality.
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            document = agent_route_document({"branch": "fixture", "head_sha": "a" * 40})
+            payload = document["agent_route"]
+            payload["contract_version"] = 2
+            payload["task"]["workload_kind"] = "implementation"
+            payload["task"]["factors"].update(reasoning_depth="deep", code_context_volume="large", verification_burden="high")
+            baseline = "loop_v2a_advanced_worker"
+            candidate = "loop_v2a_astra_advanced_worker"
+            payload["profile_preflight"]["role"] = baseline
+            digest = hashlib.sha256((ROOT / "agent-profiles" / (candidate + ".toml")).read_bytes()).hexdigest()
+            facts = {
+                "custom_agent_surface": "available", "parent_sandbox_mode": "workspace-write",
+                "available_models": ["gpt-5.6-sol", "gpt-6-astra"],
+                "reasoning_efforts": {"gpt-5.6-sol": ["medium"], "gpt-6-astra": ["medium"]},
+                "model_surface": {"runtime": "desktop", "source": "synthetic fixture", "observed_on": "2026-09-05"},
+                "enabled_candidates": {candidate: {"profile_sha256": digest, "quality_evidence": "synthetic-fixture-not-model-measurement"}},
+            }
+            route_path, facts_path = root / "route.json", root / "facts.json"
+
+            def run(f, d=None):
+                route_path.write_text(json.dumps(d or document))
+                facts_path.write_text(json.dumps(f))
+                output = StringIO()
+                with redirect_stdout(output):
+                    code = loopctl.main(["agent-route", str(route_path), "--runtime-facts", str(facts_path)])
+                return code, json.loads(output.getvalue())
+
+            code, result = run(facts)
+            self.assertEqual(0, code, result)
+            receipt = result["route_receipt"]
+            self.assertEqual(candidate, receipt["runtime_mapping"])
+            self.assertEqual("advanced", receipt["selected_capability_tier"])
+            self.assertTrue(loopctl.agent_routing.validate_route_receipt(receipt)["valid"])
+            changed = copy.deepcopy(receipt)
+            changed["profile_selection"]["qualification"]["quality_evidence"] = "tampered"
+            self.assertFalse(loopctl.agent_routing.validate_route_receipt(changed)["valid"])
+
+            for mutation in ("disabled", "unavailable", "unsupported", "unknown", "unqualified"):
+                with self.subTest(mutation=mutation):
+                    f = copy.deepcopy(facts)
+                    if mutation == "disabled":
+                        f.pop("enabled_candidates")
+                    elif mutation == "unavailable":
+                        f["available_models"] = ["gpt-5.6-sol"]
+                    elif mutation == "unsupported":
+                        f["reasoning_efforts"]["gpt-6-astra"] = ["low"]
+                    elif mutation == "unknown":
+                        f.pop("reasoning_efforts")
+                        f["parent_default"] = {"available": True, "capability_classes": ["balanced-worker"], "capability_tiers": {"balanced-worker": ["advanced"]}}
+                    else:
+                        f["enabled_candidates"][candidate]["profile_sha256"] = "0" * 64
+                    code, result = run(f)
+                    self.assertEqual(0, code, result)
+                    self.assertEqual("parent/default" if mutation == "unknown" else baseline, result["route_receipt"]["runtime_mapping"])
+
+            # Native presence is required; a source-only candidate must use installed baseline.
+            destination = root / "installed"
+            destination.mkdir()
+            shutil.copy2(ROOT / "agent-profiles" / (baseline + ".toml"), destination)
+            d = copy.deepcopy(document)
+            d["agent_route"]["profile_preflight"]["destination_root"] = str(destination)
+            code, result = run(facts, d)
+            self.assertEqual(0, code, result)
+            self.assertEqual(baseline, result["route_receipt"]["runtime_mapping"])
+
+            # Even if Astra is available, missing opt-in cannot make it a baseline fallback.
+            f = copy.deepcopy(facts)
+            f.pop("enabled_candidates")
+            f["available_models"] = ["gpt-6-astra"]
+            self.assertEqual(2, run(f)[0])
+            for missing in ("capability_classes", "capability_tiers", "available"):
+                for mode in ("parent_default", "sequential"):
+                    f = copy.deepcopy(facts)
+                    f["available_models"] = []
+                    f[mode] = {"available": True, "capability_classes": ["balanced-worker"], "capability_tiers": {"balanced-worker": ["advanced"]}}
+                    f[mode].pop(missing)
+                    code, result = run(f)
+                    self.assertIn(code, (1, 2), (missing, mode, result))
+            f = copy.deepcopy(facts)
+            f["parent_sandbox_mode"] = "read-only"
+            self.assertEqual(2, run(f)[0])
+            for bad_runtime in ([], {}, True, 1, None):
+                f = copy.deepcopy(facts)
+                f["model_surface"]["runtime"] = bad_runtime
+                self.assertEqual(1, run(f)[0])
+            f = copy.deepcopy(facts)
+            f.pop("model_surface")
+            self.assertEqual(1, run(f)[0])
+            f = copy.deepcopy(facts)
+            f["enabled_candidates"][candidate]["quality_evidence"] = ""
+            self.assertEqual(1, run(f)[0])
+            d = copy.deepcopy(document)
+            d["agent_route"]["contract_version"] = 1
+            d["agent_route"]["task"].pop("workload_kind")
+            self.assertEqual(1, run(facts, d)[0])
+
     def test_agent_route_v2_automatically_uses_installed_higher_tier(self):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)

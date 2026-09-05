@@ -1,0 +1,746 @@
+{
+  "schema_version": 1,
+  "issue": 215,
+  "status": "subscription-screening-complete-not-qualified",
+  "source_revision": "368a0948cc0fac7d06bb760ef20357d0e0b3e753",
+  "limits": {
+    "session_attempts_including_retries_and_grading": 12,
+    "wall_seconds": 5400,
+    "input_tokens": null,
+    "output_tokens_including_reasoning": null,
+    "usd": null,
+    "purchase_additional_usage": false
+  },
+  "launch_requirements": [
+    "fixed identical input per comparison",
+    "exact profile and source digests",
+    "explicit model and reasoning effort",
+    "isolated disposable checkout",
+    "sequential execution with wall-time stop",
+    "record public usage when available; missing usage is unknown",
+    "stop on subscription limits; no additional usage purchase",
+    "independent evidence review"
+  ],
+  "cases": [
+    {
+      "id": "advanced-runtime-evidence",
+      "class": "balanced-worker",
+      "tier": "advanced",
+      "configurations": [
+        [
+          "gpt-5.6-sol",
+          "medium"
+        ],
+        [
+          "gpt-6-astra",
+          "medium"
+        ],
+        [
+          "gpt-6-astra",
+          "low"
+        ]
+      ],
+      "input_files": [
+        "skills/loop-engineering/scripts/profile_preflight.py",
+        "skills/loop-engineering/scripts/loopctl.py",
+        "tests/test_agent_profiles.py"
+      ],
+      "task": "In a disposable checkout, add runtime provenance and explicit qualified candidate selection while retaining the canonical registry and baseline role. Return a patch and verification evidence; no external writes.",
+      "acceptance": [
+        "missing qualification cannot select candidate",
+        "unavailable or unsupported candidate falls back to sufficient same-class baseline",
+        "no alternate registry accepted",
+        "focused tests demonstrate rejection and fallback",
+        "no false completion"
+      ]
+    },
+    {
+      "id": "advanced-fixture-fidelity",
+      "class": "balanced-worker",
+      "tier": "advanced",
+      "configurations": [
+        [
+          "gpt-5.6-sol",
+          "medium"
+        ],
+        [
+          "gpt-6-astra",
+          "medium"
+        ],
+        [
+          "gpt-6-astra",
+          "low"
+        ]
+      ],
+      "input_files": [
+        "scripts/eval-agent-routing.py",
+        "evals/agent-routing/suite.json",
+        "tests/test_eval_agent_routing.py",
+        "skills/loop-engineering/scripts/agent_routing.py"
+      ],
+      "task": "Fix fixture generation overwriting explicit negative or unknown availability and sandbox facts. Add regression cases without changing the production capability classifier. Return a patch and verification evidence.",
+      "acceptance": [
+        "explicit false and null preserved",
+        "sandbox rejection represented faithfully",
+        "all baseline cases preserved",
+        "fixtures explicitly not quality or cost measurement",
+        "no false completion"
+      ]
+    },
+    {
+      "id": "deep-public-contract",
+      "class": "deep-reviewer",
+      "tier": "deep",
+      "configurations": [
+        [
+          "gpt-5.6-sol",
+          "high"
+        ],
+        [
+          "gpt-6-astra",
+          "high"
+        ],
+        [
+          "gpt-6-astra",
+          "medium"
+        ]
+      ],
+      "input_files": [
+        "skills/loop-engineering/scripts/agent_routing.py",
+        "tests/test_agent_routing.py",
+        "policies/model-selection-policy.md"
+      ],
+      "seeded_change": "In _runtime_route remove the required_tier argument from _valid_profile(profile, capability_class, required_tier), leaving all other source bytes unchanged.",
+      "task": "Review the supplied seeded diff read-only. Report independently reachable contract regressions with exact evidence, counterexamples and verification; do not edit the checkout.",
+      "acceptance": [
+        "identify lower-tier route satisfying higher-tier classification",
+        "give reproducible advanced-to-everyday counterexample",
+        "preserve distinction between class and tier",
+        "no invented unrelated blocker",
+        "no tracked edits"
+      ]
+    },
+    {
+      "id": "security-sandbox",
+      "class": "security-reviewer",
+      "tier": "deep",
+      "configurations": [
+        [
+          "gpt-5.6-sol",
+          "high"
+        ],
+        [
+          "gpt-6-astra",
+          "high"
+        ],
+        [
+          "gpt-6-astra",
+          "medium"
+        ]
+      ],
+      "input_files": [
+        "skills/loop-engineering/scripts/profile_preflight.py",
+        "skills/loop-engineering/scripts/loopctl.py",
+        "tests/test_agent_profiles.py"
+      ],
+      "seeded_change": "In _sandbox_evidence replace the rejection of parent sandbox weaker than profile sandbox with an unconditional non-widening success; leave other checks unchanged.",
+      "task": "Review the supplied seeded diff read-only. Trace whether an available workspace-write profile can pass a read-only parent. Distinguish workflow authorization from technical containment.",
+      "acceptance": [
+        "identify sandbox widening",
+        "trace production caller to preflight",
+        "give available-model and supported-effort counterexample with read-only parent",
+        "do not claim host sandbox escape beyond routing approval",
+        "no tracked edits"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "case": "advanced-runtime-evidence",
+      "protocol": "same prompt and baseline checkout, explicit model/effort via public subscription CLI; custom profile developer_instructions were not activated",
+      "session_attempts": 4,
+      "completed_sessions": 3,
+      "prelaunch_environment_failure": 1,
+      "additional_model_grading_calls": 0,
+      "results": [
+        {
+          "configuration": "sol-medium",
+          "terminal": "turn.completed",
+          "exit_code": 0,
+          "wall_seconds_approx": 330.6,
+          "usage": {
+            "input_tokens": 1367165,
+            "cached_input_tokens": 1282688,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 9163,
+            "reasoning_output_tokens": 2393
+          },
+          "original_tests": {
+            "run": 148,
+            "failures": 2,
+            "errors": 0
+          },
+          "finding": "baseline higher-tier fallback regression and malformed-runtime TypeError",
+          "candidate_tests_independently_rerun": null,
+          "changed_files": [
+            {
+              "path": "skills/loop-engineering/scripts/agent_routing.py",
+              "sha256": "9fb05f17cd5a25305e0f4156ff58decb1ad9c4e8014b687e4826da78a808266c"
+            },
+            {
+              "path": "skills/loop-engineering/scripts/loopctl.py",
+              "sha256": "9147bdc4d414fb59b426178718855a4ef8d25c296b1a39b293c4fe80461cc746"
+            },
+            {
+              "path": "skills/loop-engineering/scripts/profile_preflight.py",
+              "sha256": "99197b629c2346abaecb0cd8fba30daad5580e3956fd12fdaab0e41a9faad4d9"
+            },
+            {
+              "path": "tests/test_agent_profiles.py",
+              "sha256": "5e3a10b52e7dc2efe88d654a312c845869b22557f7b4b22dc1592530e1aeea19"
+            },
+            {
+              "path": "tests/test_loopctl.py",
+              "sha256": "963710cb36c71eb288f95612a1454e34fcdb304c0fbd4c17ca26c6138c741905"
+            }
+          ],
+          "tracked_diff_sha256": "c46ab02c282156749528b2f7b3bc35ed7afa4397ed0ff6d09d670521caa8d587",
+          "qualification": "not-qualified"
+        },
+        {
+          "configuration": "astra-medium",
+          "terminal": "turn.completed",
+          "exit_code": 0,
+          "wall_seconds_approx": 382.1,
+          "usage": {
+            "input_tokens": 856612,
+            "cached_input_tokens": 790528,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 9368,
+            "reasoning_output_tokens": 1506
+          },
+          "original_tests": {
+            "run": 148,
+            "failures": 1,
+            "errors": 0
+          },
+          "finding": "no additional blocker found in bounded inspection; one intentional legacy unregistered-profile rejection",
+          "candidate_tests_independently_rerun": 15,
+          "changed_files": [
+            {
+              "path": "tests/test_runtime_candidates.py",
+              "sha256": "433e1c33a18f1363006bc40bfb0403eb8af77611a286951c0c8c29d14e113bac"
+            },
+            {
+              "path": "skills/loop-engineering/scripts/agent_routing.py",
+              "sha256": "9fb05f17cd5a25305e0f4156ff58decb1ad9c4e8014b687e4826da78a808266c"
+            },
+            {
+              "path": "skills/loop-engineering/scripts/loopctl.py",
+              "sha256": "e3dcac24a9aded84203bfa1b8369cfcdf08b4606a16f7ff47db16d394334d4e1"
+            },
+            {
+              "path": "skills/loop-engineering/scripts/profile_preflight.py",
+              "sha256": "ab9eee93d4178366a562180e2379a84fef748fa61d2286139f66fb6390016c7a"
+            },
+            {
+              "path": "tests/test_agent_profiles.py",
+              "sha256": "ba9cfaa4c8a431de7f7902bb30ccc2fef7db5c42dbed497a1acf667848f85378"
+            }
+          ],
+          "tracked_diff_sha256": "900af9dfe59a577288b5bc096513eebf6952af670414f7950096aded555a6a27",
+          "qualification": "not-qualified"
+        },
+        {
+          "configuration": "astra-low",
+          "terminal": "turn.completed",
+          "exit_code": 0,
+          "wall_seconds_approx": 344.1,
+          "usage": {
+            "input_tokens": 762886,
+            "cached_input_tokens": 693504,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 8619,
+            "reasoning_output_tokens": 1048
+          },
+          "original_tests": {
+            "run": 148,
+            "failures": 1,
+            "errors": 0
+          },
+          "finding": "no additional blocker found in bounded inspection; one intentional legacy unregistered-profile rejection",
+          "candidate_tests_independently_rerun": 11,
+          "changed_files": [
+            {
+              "path": "tests/test_runtime_candidate_routing.py",
+              "sha256": "e1126d81a301c5602bc4e82d8de06e18c9863586843ac79ee1c2c34aaeeed5ed"
+            },
+            {
+              "path": "skills/loop-engineering/scripts/agent_routing.py",
+              "sha256": "9fb05f17cd5a25305e0f4156ff58decb1ad9c4e8014b687e4826da78a808266c"
+            },
+            {
+              "path": "skills/loop-engineering/scripts/loopctl.py",
+              "sha256": "c0405e00f7387048cb18fb4f5a37083df298fde7ffc431878cf88c978b7426a6"
+            },
+            {
+              "path": "skills/loop-engineering/scripts/profile_preflight.py",
+              "sha256": "4c4a421cccb6aa5805386a2988b88337b80965cb3ba51e7e190845e59ba76770"
+            },
+            {
+              "path": "tests/test_agent_profiles.py",
+              "sha256": "ba9cfaa4c8a431de7f7902bb30ccc2fef7db5c42dbed497a1acf667848f85378"
+            }
+          ],
+          "tracked_diff_sha256": "fa132030c0130ee6b8b92c8158128afdb7a43e3d7f06bd7320fe0522b7f4321b",
+          "qualification": "not-qualified"
+        }
+      ],
+      "prompt_sha256": "d7a41fc7dbb11282c4f66631e90b9c8ad763de78568f122715a7debbdc3e08b5",
+      "qualification": "screening-only; remaining cases and exact-profile evidence required"
+    },
+    {
+      "case": "advanced-fixture-fidelity",
+      "protocol": "same prompt and baseline checkout, explicit model/effort via public subscription CLI; custom profile developer_instructions were not activated",
+      "session_attempts": 3,
+      "completed_sessions": 3,
+      "additional_model_grading_calls": 0,
+      "results": [
+        {
+          "configuration": "sol-medium",
+          "terminal": "turn.completed",
+          "exit_code": 0,
+          "wall_seconds": 142.55,
+          "usage": {
+            "input_tokens": 306235,
+            "cached_input_tokens": 260096,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 5120,
+            "reasoning_output_tokens": 1439
+          },
+          "independent_tests": 46,
+          "eval_cases": 29,
+          "independent_probe": {
+            "explicit_value_probes": 12,
+            "preservation_failures": [],
+            "original_builder_detected_failures": [
+              [
+                "model_available",
+                false
+              ],
+              [
+                "model_available",
+                null
+              ],
+              [
+                "reasoning_available",
+                false
+              ],
+              [
+                "reasoning_available",
+                null
+              ],
+              [
+                "sandbox",
+                false
+              ],
+              [
+                "sandbox",
+                null
+              ],
+              [
+                "parent_sandbox_mode",
+                false
+              ],
+              [
+                "parent_sandbox_mode",
+                null
+              ],
+              [
+                "sandbox_non_widening",
+                false
+              ],
+              [
+                "sandbox_non_widening",
+                null
+              ],
+              [
+                "allowed_workflow_scope",
+                false
+              ],
+              [
+                "allowed_workflow_scope",
+                null
+              ]
+            ],
+            "changed_or_missing_baseline_cases": [],
+            "classifier_unchanged": true,
+            "eval_status": "passed"
+          },
+          "thresholds_unchanged": true,
+          "original_builder_failed_case_ids": [
+            "fixture-explicit-model-unavailable-gate",
+            "fixture-unknown-reasoning-availability-gate",
+            "fixture-sandbox-rejection-gate"
+          ],
+          "changed_files": [
+            {
+              "path": "evals/agent-routing/suite.json",
+              "sha256": "544fc853c3f2fc1851186ebd82bf4502b34562eb2823291b724167161286061f"
+            },
+            {
+              "path": "scripts/eval-agent-routing.py",
+              "sha256": "7338b21b35394d6a558ba73a7c01483b947c281c49f4988b708c6bdd9e408fb7"
+            },
+            {
+              "path": "tests/test_eval_agent_routing.py",
+              "sha256": "02aac1a6823846fc86aa129c869abc57cabf766dc4b6c8c27dea7f57b9698a3c"
+            }
+          ],
+          "tracked_diff_sha256": "8fc3bc8738a7ac60a567d7bfec6a3c866d1459f2c314009df8acb2bebaf8df3c",
+          "case_assessment": "passed-bounded-screening",
+          "qualification": "not-qualified"
+        },
+        {
+          "configuration": "astra-medium",
+          "terminal": "turn.completed",
+          "exit_code": 0,
+          "wall_seconds": 176.58,
+          "usage": {
+            "input_tokens": 237477,
+            "cached_input_tokens": 192640,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 4450,
+            "reasoning_output_tokens": 355
+          },
+          "independent_tests": 49,
+          "eval_cases": 39,
+          "independent_probe": {
+            "explicit_value_probes": 12,
+            "preservation_failures": [],
+            "original_builder_detected_failures": [
+              [
+                "model_available",
+                false
+              ],
+              [
+                "model_available",
+                null
+              ],
+              [
+                "reasoning_available",
+                false
+              ],
+              [
+                "reasoning_available",
+                null
+              ],
+              [
+                "sandbox",
+                false
+              ],
+              [
+                "sandbox",
+                null
+              ],
+              [
+                "parent_sandbox_mode",
+                false
+              ],
+              [
+                "parent_sandbox_mode",
+                null
+              ],
+              [
+                "sandbox_non_widening",
+                false
+              ],
+              [
+                "sandbox_non_widening",
+                null
+              ],
+              [
+                "allowed_workflow_scope",
+                false
+              ],
+              [
+                "allowed_workflow_scope",
+                null
+              ]
+            ],
+            "changed_or_missing_baseline_cases": [],
+            "classifier_unchanged": true,
+            "eval_status": "passed"
+          },
+          "thresholds_unchanged": true,
+          "original_builder_failed_case_ids": [
+            "fixture-model-unavailable",
+            "fixture-model-unknown",
+            "fixture-reasoning-unavailable",
+            "fixture-reasoning-unknown",
+            "fixture-sandbox-rejected",
+            "fixture-sandbox-verdict-unknown",
+            "fixture-sandbox-widening",
+            "fixture-sandbox-unknown",
+            "fixture-parent-sandbox-read-only",
+            "fixture-parent-sandbox-unknown",
+            "fixture-digest-unknown",
+            "fixture-workflow-scope-unknown",
+            "fixture-workflow-scope-empty"
+          ],
+          "changed_files": [
+            {
+              "path": "evals/agent-routing/suite.json",
+              "sha256": "ff9daf9c179695199596b13a1b40ab86f83280fa77ba1eca172fad4f6b17a8b7"
+            },
+            {
+              "path": "scripts/eval-agent-routing.py",
+              "sha256": "39eaa8f7e5735889d211b3f9e00bef50a3e24489ce93c04f4841ff1ca4fc3e1d"
+            },
+            {
+              "path": "tests/test_eval_agent_routing.py",
+              "sha256": "6617cc8510bc25f867763bc2faf661b50b401f7dbe7cca152b6334e83185ae4e"
+            }
+          ],
+          "tracked_diff_sha256": "445ed837c9f44dafeedd4ddd3d76ff4a7336aa6f258330ca5262617efff41291",
+          "case_assessment": "passed-bounded-screening",
+          "qualification": "not-qualified"
+        },
+        {
+          "configuration": "astra-low",
+          "terminal": "turn.completed",
+          "exit_code": 0,
+          "wall_seconds": 136.68,
+          "usage": {
+            "input_tokens": 235582,
+            "cached_input_tokens": 193920,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 3343,
+            "reasoning_output_tokens": 116
+          },
+          "independent_tests": 47,
+          "eval_cases": 39,
+          "independent_probe": {
+            "explicit_value_probes": 12,
+            "preservation_failures": [],
+            "original_builder_detected_failures": [
+              [
+                "model_available",
+                false
+              ],
+              [
+                "model_available",
+                null
+              ],
+              [
+                "reasoning_available",
+                false
+              ],
+              [
+                "reasoning_available",
+                null
+              ],
+              [
+                "sandbox",
+                false
+              ],
+              [
+                "sandbox",
+                null
+              ],
+              [
+                "parent_sandbox_mode",
+                false
+              ],
+              [
+                "parent_sandbox_mode",
+                null
+              ],
+              [
+                "sandbox_non_widening",
+                false
+              ],
+              [
+                "sandbox_non_widening",
+                null
+              ],
+              [
+                "allowed_workflow_scope",
+                false
+              ],
+              [
+                "allowed_workflow_scope",
+                null
+              ]
+            ],
+            "changed_or_missing_baseline_cases": [],
+            "classifier_unchanged": true,
+            "eval_status": "passed"
+          },
+          "thresholds_unchanged": true,
+          "original_builder_failed_case_ids": [
+            "fixture-model-false",
+            "fixture-model-null",
+            "fixture-reasoning-false",
+            "fixture-reasoning-null",
+            "fixture-sandbox-rejected",
+            "fixture-sandbox-unknown",
+            "fixture-sandbox-null",
+            "fixture-sandbox-wrong",
+            "fixture-parent-sandbox-null",
+            "fixture-parent-sandbox-read-only",
+            "fixture-digest-null",
+            "fixture-scope-null",
+            "fixture-scope-empty"
+          ],
+          "changed_files": [
+            {
+              "path": "evals/agent-routing/suite.json",
+              "sha256": "faf8ad09682c4f60f3e0f37cb2752e32a0849bf856be6c5300731655d4219b12"
+            },
+            {
+              "path": "scripts/eval-agent-routing.py",
+              "sha256": "beba1b0222f89e0a42b1821ea5df130a92e8d3671880b564c98e3ab5ee54cdb8"
+            },
+            {
+              "path": "tests/test_eval_agent_routing.py",
+              "sha256": "01c4b437a70a49d730ba2a6a1ff6ea4d9d31dec0ccb4595341026667be3cf1f3"
+            }
+          ],
+          "tracked_diff_sha256": "39763d42cca32e12da06a22d5d792f703393f0c955b783158f647b8e9c05e26f",
+          "case_assessment": "passed-bounded-screening",
+          "qualification": "not-qualified"
+        }
+      ],
+      "prompt_sha256": "17ed875046d5665db49c530828d759c081d2b3cc8d3ecac730eba7afffabcf65",
+      "qualification": "screening-only; deep/security and exact-profile evidence outstanding"
+    },
+    {
+      "case": "deep-public-contract",
+      "protocol": "same case prompt and exact seeded diff, explicit model/high, public subscription CLI read-only sandbox; custom profile developer_instructions not activated",
+      "session_attempts": 2,
+      "completed_sessions": 2,
+      "additional_model_grading_calls": 0,
+      "results": [
+        {
+          "configuration": "sol-high",
+          "model": "gpt-5.6-sol",
+          "reasoning_effort": "high",
+          "terminal": "turn.completed",
+          "exit_code": 0,
+          "wall_seconds": 121.41,
+          "usage": {
+            "input_tokens": 509052,
+            "cached_input_tokens": 443904,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 3832,
+            "reasoning_output_tokens": 1207
+          },
+          "seed_patch_sha256": "6d573f7ec91c63759198007e0d3c95ab883ff1e417a2f20ffa06a07eb7561f53",
+          "final_response_sha256": "bff3085933fd186ddb8fd5522f2510ec4053fff0a283878a3e2389674ef65bd6",
+          "checkout_unchanged": true,
+          "core_seeded_defect_detected": true,
+          "boundary_calibrated": true,
+          "assessment": "core-finding-confirmed; exact advanced-to-everyday example absent from model report",
+          "qualification": "not-qualified"
+        },
+        {
+          "configuration": "astra-high",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high",
+          "terminal": "turn.completed",
+          "exit_code": 0,
+          "wall_seconds": 113.33,
+          "usage": {
+            "input_tokens": 259294,
+            "cached_input_tokens": 209920,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 2406,
+            "reasoning_output_tokens": 176
+          },
+          "seed_patch_sha256": "6d573f7ec91c63759198007e0d3c95ab883ff1e417a2f20ffa06a07eb7561f53",
+          "final_response_sha256": "47d82e4f1b55ca87e651d9eed69849ed5911f455bcdebfcbafacee4a4a0ccef5",
+          "checkout_unchanged": true,
+          "core_seeded_defect_detected": true,
+          "boundary_calibrated": true,
+          "assessment": "core-finding-confirmed; exact advanced-to-everyday example absent from model report",
+          "qualification": "not-qualified"
+        }
+      ],
+      "prompt_sha256": "ad0d36b0625ef6bc78d823b52b7e361ed8664f6bbb27179310e088d919c4f60c",
+      "qualification": "screening-only"
+    },
+    {
+      "case": "security-sandbox",
+      "protocol": "same case prompt and exact seeded diff, explicit model/high, public subscription CLI read-only sandbox; custom profile developer_instructions not activated",
+      "session_attempts": 2,
+      "completed_sessions": 2,
+      "additional_model_grading_calls": 0,
+      "results": [
+        {
+          "configuration": "sol-high",
+          "model": "gpt-5.6-sol",
+          "reasoning_effort": "high",
+          "terminal": "turn.completed",
+          "exit_code": 0,
+          "wall_seconds": 129.86,
+          "usage": {
+            "input_tokens": 393516,
+            "cached_input_tokens": 345216,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 3754,
+            "reasoning_output_tokens": 1317
+          },
+          "seed_patch_sha256": "81e92f5637dfe73d333b5e829075bec32f150b67f62fd4177408a63542c4dcd9",
+          "final_response_sha256": "90f48727691ba72e82e99b258ac64ba6cdaf24facc160076ddb1f49022fa7470",
+          "checkout_unchanged": true,
+          "core_seeded_defect_detected": true,
+          "boundary_calibrated": true,
+          "assessment": "core-finding-confirmed; complete profile qualification not established",
+          "qualification": "not-qualified"
+        },
+        {
+          "configuration": "astra-high",
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high",
+          "terminal": "turn.completed",
+          "exit_code": 0,
+          "wall_seconds": 105.34,
+          "usage": {
+            "input_tokens": 272789,
+            "cached_input_tokens": 227584,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 2367,
+            "reasoning_output_tokens": 108
+          },
+          "seed_patch_sha256": "81e92f5637dfe73d333b5e829075bec32f150b67f62fd4177408a63542c4dcd9",
+          "final_response_sha256": "550b8ccfb15566d6b4070102b39da26084a33928de1fc577b9b4fe0e3ebd90f6",
+          "checkout_unchanged": true,
+          "core_seeded_defect_detected": true,
+          "boundary_calibrated": true,
+          "assessment": "core-finding-confirmed; complete profile qualification not established",
+          "qualification": "not-qualified"
+        }
+      ],
+      "prompt_sha256": "7971c72cdbe11cdab808674873d0668d867e76c24c248cf0e6eaf2cec0cdd416",
+      "qualification": "screening-only"
+    }
+  ],
+  "qualification": "No production candidate is qualified by this fixture or manifest. Freeze materialized input hashes before any launch; truncation, budget exhaustion and incomplete review are not passes.",
+  "execution_mode": "chatgpt-subscription",
+  "budget_amendment": "User approved subscription execution on 2026-09-05. Dollar and token hard caps are replaced by at most 12 session attempts including retries and grading, and 90 minutes. Internal provider requests/retries are not bounded by this session count. Start with one case and three configurations.",
+  "attempts_used": 11,
+  "batch_deadline_unix": 1788591025.2051475,
+  "remaining_matrix_configurations": [
+    {
+      "case": "deep-public-contract",
+      "model": "gpt-6-astra",
+      "effort": "medium"
+    },
+    {
+      "case": "security-sandbox",
+      "model": "gpt-6-astra",
+      "effort": "medium"
+    }
+  ]
+}

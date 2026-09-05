@@ -728,6 +728,8 @@ def build_route_receipt(
             "worker_receipt_cannot_prove_completion": True,
         },
     }
+    if "profile_selection" in runtime:
+        body["profile_selection"] = _require_object(runtime["profile_selection"], "profile selection")
     body["route_receipt_id"] = _digest(body)
     return body
 

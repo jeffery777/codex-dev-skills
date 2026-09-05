@@ -147,3 +147,6 @@ groups:
       - source: agent-profiles/loop_v2a_deep_reviewer.toml
       - source: agent-profiles/loop_v2a_exceptional_researcher.toml
       - source: agent-profiles/loop_v2a_security_reviewer.toml
+      - source: agent-profiles/loop_v2a_astra_advanced_worker.toml
+      - source: agent-profiles/loop_v2a_astra_deep_reviewer.toml
+      - source: agent-profiles/loop_v2a_astra_security_reviewer.toml

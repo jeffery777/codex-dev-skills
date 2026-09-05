@@ -1,0 +1,8 @@
+# Optional main-agent preset for demanding project delivery and orchestration.
+# Merge these two keys into a trusted project's .codex/config.toml for project
+# scope, or into your user config only when you want a cross-project default.
+# This example is not automatically installed or loaded by Codex.
+# Explicit CLI or Desktop conversation settings must be checked separately.
+# No sandbox, approval, provider, authentication or subagent defaults are set.
+model = "gpt-6-astra"
+model_reasoning_effort = "high"

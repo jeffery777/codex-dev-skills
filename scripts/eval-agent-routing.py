@@ -104,14 +104,14 @@ def _build(router, case: dict[str, Any]) -> dict[str, Any]:
             profile["profile_digest"] = router._digest(
                 {"name": profile.get("name"), "eval_case": case["id"]}
             )
-            profile["model_available"] = True
-            profile["reasoning_available"] = True
-            profile["sandbox"] = router.CLASS_SANDBOX[capability_class]
-            profile["parent_sandbox_mode"] = "workspace-write"
-            profile["sandbox_non_widening"] = True
-            profile["allowed_workflow_scope"] = sorted(
+            profile.setdefault("model_available", True)
+            profile.setdefault("reasoning_available", True)
+            profile.setdefault("sandbox", router.CLASS_SANDBOX[capability_class])
+            profile.setdefault("parent_sandbox_mode", "workspace-write")
+            profile.setdefault("sandbox_non_widening", True)
+            profile.setdefault("allowed_workflow_scope", sorted(
                 router.CLASS_WORKFLOW_SCOPE[capability_class]
-            )
+            ))
     return router.build_route_receipt(
         task_id=case["id"], factors=case["factors"], runtime=runtime,
         contract_version=case.get("contract_version", 1),

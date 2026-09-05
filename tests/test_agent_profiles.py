@@ -35,6 +35,9 @@ class AgentProfileValidationTests(unittest.TestCase):
         self.assertEqual(2, registry["schema_version"])
         self.assertEqual(
             {
+                "loop_v2a_astra_advanced_worker",
+                "loop_v2a_astra_deep_reviewer",
+                "loop_v2a_astra_security_reviewer",
                 "loop_v2a_fast_explorer",
                 "loop_v2a_mechanical_reader",
                 "loop_v2a_balanced_worker",
@@ -163,7 +166,7 @@ class AgentProfileValidationTests(unittest.TestCase):
             shutil.copytree(PROFILE_DIR, destination)
             report = VALIDATOR.detect_collisions(PROFILE_DIR, [destination], destination)
             self.assertEqual([], report["conflicts"])
-            self.assertEqual(8, len(report["expected_instances"]))
+            self.assertEqual(11, len(report["expected_instances"]))
 
     def test_destination_modified_instance_and_cross_root_match_are_conflicts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -243,7 +246,7 @@ class AgentProfileValidationTests(unittest.TestCase):
                 encoding="utf-8",
             )
             _, entries = VALIDATOR.validate(destination, REGISTRY)
-            self.assertEqual(8, len(entries))
+            self.assertEqual(11, len(entries))
             changed = destination / "loop_v2a_balanced_worker.toml"
             changed.write_text(
                 changed.read_text(encoding="utf-8").replace(
@@ -285,6 +288,34 @@ class AgentProfilePreflightTests(unittest.TestCase):
             "capability_classes": [capability_class],
             "capability_tiers": {capability_class: [tier]},
         }
+
+    def test_candidates_require_qualification_and_use_trusted_v2_baselines(self) -> None:
+        for candidate, baseline in VALIDATOR.CANDIDATE_ROLES.items():
+            with self.subTest(candidate=candidate):
+                entry, original = self.entries[candidate], self.entries[baseline]
+                effort = entry["runtime_mapping"]["reasoning_effort"]
+                facts = self.ready_facts("gpt-6-astra", effort)
+                facts["parent_sandbox_mode"] = "workspace-write"
+                self.assertEqual("candidate-not-qualified-or-disabled", self.check(candidate, facts)["state"])
+                facts["enabled_candidates"] = {candidate: {"profile_sha256": entry["_profile_digest"], "quality_evidence": "synthetic-only"}}
+                facts["model_surface"] = {"runtime": "api", "source": "synthetic-only", "observed_on": "2026-09-05"}
+                self.assertEqual("ready", self.check(candidate, facts)["state"])
+                facts["reasoning_efforts"]["gpt-6-astra"] = ["low"]
+                self.assertEqual("unavailable", self.check(candidate, facts)["state"])
+                # Real canonical baseline bytes provide sufficient v2 same-class fallback.
+                facts["available_models"].append("gpt-5.6-sol")
+                facts["reasoning_efforts"]["gpt-5.6-sol"] = [effort]
+                facts["compatible_profiles"] = {entry["capability_class"]: [{
+                    "name": baseline, "profile_path": str(PROFILE_DIR / original["file"]),
+                    "capability_class": original["capability_class"], "capability_tier": original["capability_tier"],
+                    "config_valid": True, "model_available": True, "reasoning_available": True,
+                    "sandbox": original["sandbox_expectation"], "allowed_workflow_scope": original["allowed_workflow_scope"],
+                    "profile_digest": original["_profile_digest"],
+                }]}
+                result = self.check(candidate, facts)
+                self.assertEqual("fallback-safe", result["decision"])
+                self.assertEqual(baseline, result["selected"])
+                self.assertEqual("same-capability-profile", result["fallback_tier"])
 
     def test_ready_when_profile_mapping_is_available(self) -> None:
         result = self.check(

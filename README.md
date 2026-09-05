@@ -241,7 +241,7 @@ CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES \
 The collision preflight checks TOML `name` identities across those roots. For
 install and update, the installer first validates the repository profile
 sources against the canonical installed-skill registry, then preflights all
-eight profile destinations before changing any dependency skill, template, or
+eleven profile destinations before changing any dependency skill, template, or
 profile. Dependency installation retains the existing installer sync behavior;
 the all-profile preflight prevents a profile collision from causing a partial
 expanded-group update. It also protects profile paths from overwrite, symlink
@@ -318,6 +318,33 @@ candidates rather than installed defaults. Exact model and reasoning
 availability remains current-session runtime evidence. Selection uses the
 lowest sufficient same-class tier, never alphabetical profile order, and never
 allows a lower tier to satisfy a higher-tier route silently.
+
+Three Astra profiles are opt-in candidates that require qualification: advanced worker at medium,
+and deep/security reviewers at high. The eight baseline mappings remain unchanged.
+Installation alone does not enable candidate routing. Version 2 routing requires
+`enabled_candidates` in current-session runtime facts, keyed by candidate name,
+with its exact `profile_sha256` and a non-empty `quality_evidence` reference to
+operator-verified real-model results for that class/tier. Include `model_surface`
+with `runtime` (`cli`, `desktop`, or `api`), `source`, and `observed_on` (ISO date).
+These are trusted caller assertions, not an automatic quality grader. Do not
+populate them from synthetic fixtures or merely from a model availability list.
+Omit a candidate after failed or unverified qualification. See
+[the Astra adoption and measurement record](docs/astra-routing.md) for the exact
+facts shape, evidence boundaries, and outstanding real-model qualification.
+
+For the optional Astra-high main-agent preset, user versus project settings,
+installed child-profile locations and effort escalation guidance, see
+[main-agent and subagent settings](docs/main-agent-and-subagent-settings.md).
+The preset is an example only; installation does not change personal defaults.
+
+The deterministic task role remains the baseline role. An enabled, qualified,
+available, installed candidate for that exact role may be selected; otherwise
+routing retains the baseline and existing sufficient-tier fallback. Candidates
+never enter implicit alternative-profile searches, including legacy v1 routes.
+`profile_selection` in the digest-bound receipt records the attempt, qualification
+reference, runtime source, and candidate state. `runtime_mapping` records the
+actual execution choice. Native direct role invocation is outside this router's
+qualification enforcement; these files do not change personal runtime settings.
 
 The `loop_v2a_` filename and role namespace identifies the V2a heterogeneous
 agent-routing contract; it is not the current repository release or V3 program

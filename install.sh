@@ -840,7 +840,10 @@ group_agent_profiles() {
         agent-profiles/loop_v2a_advanced_worker.toml \
         agent-profiles/loop_v2a_deep_reviewer.toml \
         agent-profiles/loop_v2a_exceptional_researcher.toml \
-        agent-profiles/loop_v2a_security_reviewer.toml ;;
+        agent-profiles/loop_v2a_security_reviewer.toml \
+        agent-profiles/loop_v2a_astra_advanced_worker.toml \
+        agent-profiles/loop_v2a_astra_deep_reviewer.toml \
+        agent-profiles/loop_v2a_astra_security_reviewer.toml ;;
   esac
 }
 

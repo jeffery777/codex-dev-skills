@@ -151,6 +151,13 @@ artifact bytes, verification files, and selected profile from explicit trusted
 roots and checks exact worker/verification digests rather than trusting
 repository-controlled receipt assertions.
 
+Astra candidate selection is an additional version 2 opt-in within the canonical
+registry. Current runtime facts must bind qualification to the profile digest and
+identify the observed model interface. Installed presence and model availability
+alone do not qualify a candidate. The eight baseline roles remain available, and
+candidate profiles cannot become implicit fallback targets. This enforcement
+belongs to `loopctl.py agent-route`, not to direct native role invocation.
+
 ### CLI session control plane
 
 Codex CLI has its own session control plane, distinct from shared subagents and
