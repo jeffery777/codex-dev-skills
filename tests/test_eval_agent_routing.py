@@ -19,7 +19,7 @@ class AgentRoutingEvalTests(unittest.TestCase):
     def test_production_backed_matrix_passes(self) -> None:
         report = runner.evaluate()
         self.assertEqual("passed", report["status"])
-        self.assertEqual(25, report["metrics"]["total_cases"])
+        self.assertEqual(30, report["metrics"]["total_cases"])
         self.assertEqual(1.0, report["metrics"]["route_correctness_rate"])
         self.assertEqual(0, report["metrics"]["false_completion_count"])
         self.assertEqual(1.0, report["metrics"]["evidence_completeness_rate"])
@@ -46,6 +46,19 @@ class AgentRoutingEvalTests(unittest.TestCase):
             "stop-for-human-gate",
             cases["v2-exceptional-unavailable-gate"]["actual"]["mode"],
         )
+
+    def test_negative_astra_cases_detect_restored_overwrite_bug(self) -> None:
+        import copy
+        router = runner.load_router()
+        cases = runner.load_suite(runner.DEFAULT_SUITE)["cases"]
+        negative = [c for c in cases if c["id"].startswith("v2-astra-") and c["id"] != "v2-astra-positive-control"]
+        self.assertEqual(4, len(negative))
+        for case in negative:
+            with self.subTest(case=case["id"]):
+                self.assertEqual("stop-for-human-gate", runner._build(router, case)["execution_mode"])
+                mutated = copy.deepcopy(case)
+                mutated["runtime"]["profiles"][0].update(model_available=True, reasoning_available=True, parent_sandbox_mode="workspace-write")
+                self.assertEqual("custom-agent-profile", runner._build(router, mutated)["execution_mode"])
 
     def test_duplicate_case_ids_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

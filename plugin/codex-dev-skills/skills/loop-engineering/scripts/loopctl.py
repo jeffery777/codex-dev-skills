@@ -879,6 +879,10 @@ def command_agent_route(
                 + classification["selected_role"]
             )
         facts = profile_preflight.runtime_facts(runtime_facts_path)
+        if contract_version == 1 and (
+            role in profile_preflight.CANDIDATE_ROLES or facts.get("enabled_candidates")
+        ):
+            raise profile_preflight.ProfileValidationError("candidate selection requires route contract version 2")
         collision_report = profile_preflight.detect_collisions(profile_dir, roots, destination)
         def destination_matches(candidate: dict[str, Any]) -> bool:
             if not destination.is_dir():
@@ -904,6 +908,29 @@ def command_agent_route(
             enforce_tier=contract_version == 2,
             trusted_profiles=entries,
         )
+        selection = {"policy": "baseline", "requested_profile": role, "candidate": None}
+        if contract_version == 2:
+            for candidate_name, baseline_name in profile_preflight.CANDIDATE_ROLES.items():
+                if baseline_name != role:
+                    continue
+                candidate_entry = entries.get(candidate_name)
+                if candidate_entry is None or candidate_name not in facts.get("enabled_candidates", {}):
+                    continue
+                candidate_result = profile_preflight.preflight(
+                    candidate_entry, facts, collision_report, enforce_tier=True,
+                    trusted_profiles=entries,
+                )
+                candidate_evidence = candidate_result.get("route_profile_evidence")
+                installed = isinstance(candidate_evidence, dict) and destination_matches(candidate_evidence)
+                selection = {
+                    "policy": "qualified-candidate-opt-in", "requested_profile": role,
+                    "candidate": candidate_name, "candidate_state": candidate_result["state"],
+                    "installed": installed,
+                    "qualification": facts["enabled_candidates"][candidate_name],
+                    "model_surface": facts["model_surface"],
+                }
+                if candidate_result["decision"] == "ready" and installed:
+                    preflight_result = candidate_result
         evidence = preflight_result.get("route_profile_evidence")
         if evidence is None and preflight_result.get("fallback_tier") == "same-capability-profile":
             evidence = preflight_result.get("fallback_evidence")
@@ -914,6 +941,7 @@ def command_agent_route(
                     entry
                     for name, entry in entries.items()
                     if name != role
+                    and name not in profile_preflight.CANDIDATE_ROLES
                     and entry["capability_class"] == required["capability_class"]
                     and entry["tier_rank"] >= required["tier_rank"]
                 ),
@@ -964,6 +992,7 @@ def command_agent_route(
         parent = facts.get("parent_default") if isinstance(facts.get("parent_default"), dict) else {}
         sequential = facts.get("sequential") if isinstance(facts.get("sequential"), dict) else {}
         runtime = {
+            "profile_selection": selection,
             "custom_agents_available": facts.get("custom_agent_surface") == "available",
             "profiles": [evidence] if isinstance(evidence, dict) else [],
             "parent_default_available": parent.get("available") is True,
