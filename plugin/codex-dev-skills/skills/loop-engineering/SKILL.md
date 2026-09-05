@@ -355,7 +355,7 @@ either CLI or Desktop. The user does not need to provide a qualification path,
    or pass current JSON on stdin with `--runtime-facts -`, and invoke
    `agent-route` yourself. Omit `enabled_candidates` for automatic discovery;
    an explicit `{}` disables candidates for that invocation. The router loads
-   the store afresh, checks scope/runtime/expiry and evidence/profile digests,
+   the store afresh, checks scope/runtime/optional expiry and evidence/profile digests,
    then applies the existing installed-byte and sandbox checks.
 4. Inspect the receipt's `profile_selection.autoload` and actual selected role.
    Use only a role the current native callable supports. Reroute on capability

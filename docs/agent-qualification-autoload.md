@@ -30,7 +30,7 @@ This example is synthetic and does not qualify any real model or profile:
       "runtimes": ["cli"],
       "quality_evidence": "qualification/fixture-report.md",
       "quality_evidence_sha256": "<64 lowercase hexadecimal characters>",
-      "expires_on": "2026-10-01",
+      "expires_on": null,
       "enabled": true
     }
   ]
@@ -40,9 +40,18 @@ This example is synthetic and does not qualify any real model or profile:
 All shown fields are required. Unknown fields, duplicate JSON keys, duplicate
 profile records, nonfinite JSON values, invalid dates, and malformed records
 reject the store. Lists contain unique, nonempty strings; runtimes are `cli`,
-`desktop`, or `api`. Dates use `YYYY-MM-DD`; expiry is inclusive through that
-local calendar date. Disabling the store revokes every candidate. Disabling a
+`desktop`, or `api`. Set `expires_on` explicitly to `null` for no fixed deadline;
+the field remains required. An optional date uses `YYYY-MM-DD` and is inclusive
+through that local calendar date. Existing dated approvals keep their deadline;
+they are never silently converted to indefinite approvals. There is no automatic
+expiry reminder or renewal prompt. Disabling the store revokes every candidate. Disabling a
 record revokes that profile. Removal takes effect on the next route invocation.
+
+A record without a fixed deadline still undergoes every integrity, scope,
+runtime and current-capability check on each invocation. Changed profile or
+evidence bytes invalidate its binding; an inapplicable task or runtime cannot
+use it. These checks do not detect unobserved provider-side model behavior
+changes: new quality concerns still require explicit revocation and revalidation.
 
 A record must match the canonical candidate's baseline role, capability class,
 tier, and profile digest. Its scope and runtime must match the current task and

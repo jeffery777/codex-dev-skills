@@ -98,7 +98,8 @@ candidate routing, the shared workflow automatically loads an explicitly
 approved user-level qualification store when current facts omit
 `enabled_candidates`; it does not ask the user to repeat JSON or CLI options.
 Match the actual task to reviewed scope before assigning its scope identifier.
-Require matching runtime, current profile/evidence bytes and unexpired approval;
+Require matching runtime, current profile/evidence bytes and approval that is enabled and either
+explicitly has no fixed deadline or has not expired;
 never synthesize a quality claim from availability or a task label. Saved
 qualification does not establish current model, effort, native role or sandbox
 capability. CLI and Desktop observations remain separate. An invalid or

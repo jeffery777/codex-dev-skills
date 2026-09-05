@@ -130,13 +130,17 @@ def discover(facts, *, role, entries, scope, today=None):
         for record in data["qualifications"]:
             if not isinstance(record, dict) or set(record) != RECORD_KEYS:
                 raise Untrusted("invalid-record")
-            if any(not isinstance(record[k], str) or not record[k].strip() for k in RECORD_KEYS - {"enabled", "task_scopes", "runtimes"}):
+            if any(not isinstance(record[k], str) or not record[k].strip() for k in RECORD_KEYS - {"enabled", "task_scopes", "runtimes", "expires_on"}):
                 raise Untrusted("invalid-record")
             if type(record["enabled"]) is not bool or not _strings(record["task_scopes"]) or not _strings(record["runtimes"]) or set(record["runtimes"]) - {"cli", "desktop", "api"}:
                 raise Untrusted("invalid-record")
-            if not SHA.fullmatch(record["profile_sha256"]) or not SHA.fullmatch(record["quality_evidence_sha256"]) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", record["expires_on"]):
+            if not SHA.fullmatch(record["profile_sha256"]) or not SHA.fullmatch(record["quality_evidence_sha256"]):
                 raise Untrusted("invalid-record")
-            dt.date.fromisoformat(record["expires_on"])
+            expiry = record["expires_on"]
+            if expiry is not None:
+                if not isinstance(expiry, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", expiry):
+                    raise Untrusted("invalid-record")
+                dt.date.fromisoformat(expiry)
             if record["profile"] in seen:
                 raise Untrusted("duplicate-profile")
             seen.add(record["profile"])
@@ -162,7 +166,7 @@ def discover(facts, *, role, entries, scope, today=None):
                 reason = "scope-mismatch"
             elif runtime not in record["runtimes"]:
                 reason = "runtime-mismatch"
-            elif dt.date.fromisoformat(record["expires_on"]) < (today or dt.date.today()):
+            elif record["expires_on"] is not None and dt.date.fromisoformat(record["expires_on"]) < (today or dt.date.today()):
                 reason = "expired"
             else:
                 evidence = _read(fd, record["quality_evidence"], MAX_EVIDENCE_BYTES)

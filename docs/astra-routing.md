@@ -49,7 +49,7 @@ That explicit interface remains supported. Shared workflows also support
 [automatic qualification discovery](agent-qualification-autoload.md) from an
 approved user store when `enabled_candidates` is omitted. The parent assesses
 task scope and supplies fresh runtime facts; the loader checks local evidence
-digests, scope, runtime and expiry without grading the evidence. An explicit
+digests, scope, runtime and optional expiry without grading the evidence. An explicit
 empty object opts out and is never replaced by stored candidates.
 Dates provide provenance and do not establish freshness: re-read the active
 surface for each session. Never reuse Desktop evidence to assert CLI/API support.

@@ -77,6 +77,41 @@ class QualificationTests(unittest.TestCase):
         self.save()
         self.assertIn("store-disabled", self.run_load()[1]["reasons"])
 
+    def test_explicit_no_expiry_retains_all_other_checks(self):
+        self.record["expires_on"] = None
+        self.save()
+        output, audit = aq.discover({"model_surface": {"runtime": "cli"}}, role=self.role, entries=self.entries, scope="fixture-repair", today=dt.date(9999, 12, 31))
+        self.assertIn(self.name, output["enabled_candidates"])
+        self.assertEqual("qualified", audit["status"])
+        self.assertFalse(self.run_load(scope="unqualified")[0]["enabled_candidates"])
+        self.assertFalse(self.run_load({"model_surface": {"runtime": "api"}})[0]["enabled_candidates"])
+        for field, value, reason in [("enabled", False, "record-disabled"), ("profile_sha256", "b" * 64, "profile-mismatch"), ("quality_evidence_sha256", "b" * 64, "evidence-mismatch")]:
+            with self.subTest(field=field):
+                original = self.record[field]
+                self.record[field] = value
+                self.save()
+                out, audit = self.run_load()
+                self.assertFalse(out["enabled_candidates"])
+                self.assertIn(reason, audit["reasons"])
+                self.record[field] = original
+
+    def test_expiry_requires_explicit_null_or_valid_date(self):
+        for expiry in (False, True, 0, [], {}, "", "null", "2026-02-30"):
+            with self.subTest(expiry=expiry):
+                self.record["expires_on"] = expiry
+                self.save()
+                self.assertFalse(self.run_load()[0]["enabled_candidates"])
+        del self.record["expires_on"]
+        self.save()
+        self.assertIn("invalid-record", self.run_load()[1]["reasons"])
+
+    def test_dated_expiry_remains_inclusive(self):
+        self.record["expires_on"] = "2026-09-05"
+        self.save()
+        for day, accepted in [(dt.date(2026, 9, 5), True), (dt.date(2026, 9, 6), False)]:
+            output, _ = aq.discover({"model_surface": {"runtime": "cli"}}, role=self.role, entries=self.entries, scope="fixture-repair", today=day)
+            self.assertEqual(accepted, bool(output["enabled_candidates"]))
+
     def test_strict_json_and_bounded_reads(self):
         path = self.root / "agent-qualifications.json"
         for raw in ['{"schema_version":1,"schema_version":1}', '{"value":NaN}', '[' * 2000, 'x' * (aq.MAX_STORE_BYTES + 1)]:
