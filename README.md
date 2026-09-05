@@ -340,7 +340,7 @@ The preset is an example only; installation does not change personal defaults.
 For normal workflow delegation, the parent prepares current CLI or Desktop
 facts and the router automatically discovers an explicitly approved user
 qualification store. Users do not supply candidate JSON or a qualification
-path on every task. The store binds reviewed task scope, runtime, expiry and
+path on every task. The store binds reviewed task scope, runtime, optional expiry and
 evidence/profile digests; it never supplies cached availability. An explicit
 empty `enabled_candidates` object opts out for the current invocation. See
 [automatic qualification loading](docs/agent-qualification-autoload.md).

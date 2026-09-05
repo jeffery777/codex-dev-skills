@@ -3379,7 +3379,7 @@ class CliTests(unittest.TestCase):
                     "task_scopes": ["fixture-repair"], "runtimes": ["desktop", "cli"],
                     "quality_evidence": "evidence.md",
                     "quality_evidence_sha256": hashlib.sha256(b"synthetic").hexdigest(),
-                    "expires_on": "2099-01-01", "enabled": True,
+                    "expires_on": None, "enabled": True,
                 }],
             }
             (user_root / "agent-qualifications.json").write_text(json.dumps(qualification))
