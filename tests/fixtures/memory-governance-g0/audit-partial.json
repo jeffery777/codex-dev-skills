@@ -1,0 +1,140 @@
+{
+  "contract_version": "mg1-g0-synthetic/v0",
+  "case_id": "synthetic-audit-partial",
+  "mode": "audit",
+  "profile": {
+    "max_items": 10,
+    "max_versions": 3,
+    "history_seconds": 5000,
+    "max_payload_bytes": 1000,
+    "max_proofs": 10,
+    "proof_seconds": 500,
+    "confirmation_seconds": 60,
+    "max_scan_items": 1,
+    "budget_bytes": 100000,
+    "reserve_bytes": 10000,
+    "maintenance_proof_reserve": 2,
+    "marker_seconds": 500
+  },
+  "before": {
+    "scope": {
+      "principal_id": "synthetic-principal",
+      "root_id": "synthetic-root"
+    },
+    "epoch": 1,
+    "reject_before": 0,
+    "items": [
+      {
+        "item_id": "synthetic-item",
+        "status": "active",
+        "current_revision": 1,
+        "indexed_revision": 1,
+        "versions": [
+          {
+            "revision": 1,
+            "created_at": 900,
+            "body": "synthetic: earlier fact",
+            "summary": "synthetic: earlier summary",
+            "cues": [
+              "synthetic-old-cue"
+            ],
+            "retired_at": null
+          }
+        ],
+        "identity_epoch": 1,
+        "erased_at": null
+      },
+      {
+        "item_id": "synthetic-second-item",
+        "status": "active",
+        "current_revision": 1,
+        "indexed_revision": 1,
+        "versions": [
+          {
+            "revision": 1,
+            "created_at": 900,
+            "body": "synthetic: earlier fact",
+            "summary": "synthetic: earlier summary",
+            "cues": [
+              "synthetic-old-cue"
+            ],
+            "retired_at": null
+          }
+        ],
+        "identity_epoch": 1,
+        "erased_at": null
+      }
+    ],
+    "proofs": [],
+    "storage": {
+      "file_bytes": 8000,
+      "free_bytes": 64000,
+      "reclaimable_bytes": 2000
+    }
+  },
+  "after": {
+    "scope": {
+      "principal_id": "synthetic-principal",
+      "root_id": "synthetic-root"
+    },
+    "epoch": 1,
+    "reject_before": 0,
+    "items": [
+      {
+        "item_id": "synthetic-item",
+        "status": "active",
+        "current_revision": 1,
+        "indexed_revision": 1,
+        "versions": [
+          {
+            "revision": 1,
+            "created_at": 900,
+            "body": "synthetic: earlier fact",
+            "summary": "synthetic: earlier summary",
+            "cues": [
+              "synthetic-old-cue"
+            ],
+            "retired_at": null
+          }
+        ],
+        "identity_epoch": 1,
+        "erased_at": null
+      },
+      {
+        "item_id": "synthetic-second-item",
+        "status": "active",
+        "current_revision": 1,
+        "indexed_revision": 1,
+        "versions": [
+          {
+            "revision": 1,
+            "created_at": 900,
+            "body": "synthetic: earlier fact",
+            "summary": "synthetic: earlier summary",
+            "cues": [
+              "synthetic-old-cue"
+            ],
+            "retired_at": null
+          }
+        ],
+        "identity_epoch": 1,
+        "erased_at": null
+      }
+    ],
+    "proofs": [],
+    "storage": {
+      "file_bytes": 8000,
+      "free_bytes": 64000,
+      "reclaimable_bytes": 2000
+    }
+  },
+  "inventory": {
+    "item_ids": [
+      "synthetic-item"
+    ],
+    "complete": false,
+    "reason": "limit",
+    "scanned_count": 1,
+    "snapshot_digest": "a5fbd8464071d878236d5b7960e100ae725dd74e2b48ac4f34e975e642ebd118"
+  }
+}

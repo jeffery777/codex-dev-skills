@@ -364,6 +364,14 @@ docs-only 研究與設計；實作須另開 Issue／分支，不以文件交付�
 本次不實作、不啟用外部 backend，也不更改既有版本／發行紀錄。詳見
 [里程碑規格](memory-governance-milestone.md)與[外部設計研究](memory-governance-research.md)。
 
+#212 的文件已由 PR #214 合併；#213 追蹤 G0 契約接受，#225 提供
+[獨立合成格式與離線 checker](memory-governance-g0-contract.md)，包括精確 scope／
+revision／preview-confirmation 綁定、有限 profile、分段清除聲明及防重播案例。
+所有產品參數仍須顯式選擇；測試值不是預設。G0 不能證明真實交易、內容清除、
+容量回收或資料契約已接受，也不提供 G1／G2 執行核心。
+#222 的歷史 annotation 追溯另見
+[來源分析](loops/issue-222/source-analysis.md)；不與 class-crowding 混為同一缺陷。
+
 ## Non-Goals
 
 - General prompt collection.

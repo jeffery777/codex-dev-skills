@@ -89,7 +89,7 @@ def _synthetic_task(advisory_context: list[dict]) -> dict:
     }
 
 
-def _observe_cases() -> tuple[list[dict], int, bool]:
+def _observe_cases() -> tuple[list[dict], int]:
     off_task_result = _synthetic_task([])
     with tempfile.TemporaryDirectory() as directory:
         state = sqlite_fixtures.secure_state_root(pathlib.Path(directory))
