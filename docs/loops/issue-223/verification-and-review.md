@@ -113,6 +113,14 @@ task's conflict detection, metric thresholds and suite digest are unchanged.
 The original full-suite run preceded this fix; its affected shard and offline
 evals are repeated and hosted CI must cover the final head.
 
+The first hosted run also exposed a historical v0.23.0 documentation test
+that pinned the live catalog/installer/manifest to that old version
+(RC-MF-002). The test now checks its historical note only. Existing generic
+release-state tests retain current three-way version parity, mismatch rejection
+and matching candidate-record validation; no historical note is edited.
+The repository-policy shard passed all 76 tests after this correction; an
+independent review also passed the 22 focused runtime/release-state tests.
+
 Receipt hashes remain consistency
 checks, not caller authentication. External host interpretation of invocation
 metadata and live model behavior were not validated.
