@@ -36,6 +36,26 @@ def read(relative_path: str) -> str:
     return (ROOT / relative_path).read_text(encoding="utf-8")
 
 
+def read_skill(relative_path: str) -> str:
+    """Read the entry and its reachable operation references, not every file."""
+    entry = ROOT / relative_path
+    pending = [entry]
+    visited: set[pathlib.Path] = set()
+    documents: list[str] = []
+    while pending:
+        path = pending.pop()
+        if path in visited:
+            continue
+        visited.add(path)
+        text = read_scanned_guidance(path)
+        documents.append(text)
+        for link in re.findall(r"\]\(([^)#]+\.md)(?:#[^)]*)?\)", text):
+            target = (path.parent / link).resolve()
+            if target.is_relative_to(entry.parent / "references"):
+                pending.append(target)
+    return "\n".join(documents)
+
+
 def read_scanned_guidance(path: pathlib.Path, root: pathlib.Path = ROOT) -> str:
     relative_path = path.relative_to(root).as_posix()
     if path.is_symlink():
@@ -127,7 +147,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         )
 
     def test_desktop_skills_are_thin_adapters(self) -> None:
-        thread_skill = read("skills/desktop-thread-delegation/SKILL.md")
+        thread_skill = read_skill("skills/desktop-thread-delegation/SKILL.md")
         delivery_skill = read("skills/desktop-project-delivery/SKILL.md")
 
         self.assertIn("thin Desktop UX adapter", thread_skill)
@@ -139,7 +159,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
     def test_desktop_thread_adapter_does_not_own_task_selection(self) -> None:
         readme = read("README.md")
         guide = read("docs/skill-selection-guide.md")
-        thread_skill = read("skills/desktop-thread-delegation/SKILL.md")
+        thread_skill = read_skill("skills/desktop-thread-delegation/SKILL.md")
         example = read("examples/desktop-thread-delegation.md")
         combined = "\n".join((readme, guide, thread_skill, example))
 
@@ -158,7 +178,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
     def test_desktop_wait_observation_is_host_aware_and_non_authoritative(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
         adapter = read("docs/runtime-adapter-v2.md")
-        thread_skill = read("skills/desktop-thread-delegation/SKILL.md")
+        thread_skill = read_skill("skills/desktop-thread-delegation/SKILL.md")
         combined = "\n".join((contract, adapter, thread_skill))
 
         self.assertIn("wait_threads", combined)
@@ -171,7 +191,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
     def test_desktop_fork_preserves_remote_host_identity(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
         adapter = read("docs/runtime-adapter-v2.md")
-        thread_skill = read("skills/desktop-thread-delegation/SKILL.md")
+        thread_skill = read_skill("skills/desktop-thread-delegation/SKILL.md")
         example = read("examples/desktop-thread-delegation.md")
         evidence = read(
             "docs/codex-runtime-compatibility-evidence-2026-08-12.md"
@@ -351,11 +371,81 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             with self.subTest(disallowed=disallowed):
                 self.assertIn(disallowed, skill)
 
+    def test_sidebar_authority_and_discovery_are_action_scoped(self) -> None:
+        skill = read("skills/desktop-sidebar-organization/SKILL.md")
+        self.assertIn("the user does not need to provide raw IDs or callable names", skill)
+        self.assertIn("Obtain one fresh snapshot from the registry needed", skill)
+        self.assertIn("Read both only when the action needs", skill)
+        self.assertIn("Existing authority", skill)
+        self.assertIn("routine reversible create/rename/move/reorder", skill)
+        self.assertIn("`delete_sidebar_section` retains its destructive", skill)
+        self.assertIn("changed scope/membership/effect", skill)
+        self.assertNotIn("exact full ordered ID list", skill)
+        self.assertNotIn("Immediately before planning and immediately again", skill)
+
+    def test_runtime_operation_references_are_reachable_and_preserve_boundaries(self) -> None:
+        expected = {
+            "cli-session-handoff": {
+                "non-interactive.md": ("private clone", "exact UUID", "--example"),
+                "fresh-continuation.md": ("checkpoint digest", "no recursive handoff", "no second session call"),
+                "interactive-fork.md": ("exclusive", "tui.resume_cwd", "manual interactive"),
+                "dashboard-queue.md": ("argv token", "canonical UUID", "dispatch/wakeup evidence"),
+            },
+            "desktop-thread-delegation": {
+                "create-fork.md": ("clientThreadId", "observed `projectId`", "source task must stop writing"),
+                "fresh-rollover.md": ("sole writer", "onMissing", "Exact replay"),
+                "observe-handoff.md": ("afterCursor", "hostId", "snapshot never proves completion"),
+                "share.md": ("complete thread", "audience", "exposes no revoke operation"),
+            },
+        }
+        for skill_name, references in expected.items():
+            entry = read(f"skills/{skill_name}/SKILL.md")
+            for reference, boundaries in references.items():
+                with self.subTest(skill=skill_name, reference=reference):
+                    self.assertIn(f"references/{reference}", entry)
+                    body = read(f"skills/{skill_name}/references/{reference}")
+                    for boundary in boundaries:
+                        self.assertIn(boundary, body)
+        for skill_name in expected:
+            body = read_skill(f"skills/{skill_name}/SKILL.md")
+            self.assertIn("recursive session dispatch", body)
+            self.assertIn("private", body)
+
+    def test_installed_invocation_does_not_assume_source_checkout(self) -> None:
+        cli = read("skills/cli-session-handoff/references/non-interactive.md")
+        self.assertIn('"$HANDOFF_PYTHON" "$HANDOFF_SKILL_DIR/scripts/', cli)
+        self.assertIn("Only while maintaining a source checkout", cli)
+        self.assertIn("installed `loop-engineering` dependency", cli)
+        for name in ("memory-operation-v0", "memory-qualification-v0", "memory-sqlite-v0"):
+            with self.subTest(reference=name):
+                body = read(f"skills/loop-engineering/references/{name}.md")
+                self.assertIn('"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/', body)
+                self.assertIn("already", body)
+                self.assertIn("pinned resolver", body)
+                self.assertNotIn("./scripts/project-python <installed-loop-engineering>", body)
+
+    def test_active_runtime_example_has_no_retired_helper_teaching(self) -> None:
+        example = read("examples/runtime-adapter-boundary.md")
+        self.assertIn("native tools directly after call-site validation", example)
+        self.assertIn("non-executable historical example", example)
+        for retired_operation in (
+            "normalize-runtime-capability-metadata",
+            "plan-thread-action",
+            "preflight-create-thread-runtime-call",
+            "preflight-read-thread-runtime-call",
+            "compare-runtime-contract-evidence",
+        ):
+            self.assertNotIn(retired_operation, example)
+        historical = read("docs/history/runtime-adapter-v1-example.md")
+        self.assertIn("Historical, non-executable record", historical)
+        self.assertIn("Every helper and helper-shaped JSON contract below is", historical)
+        self.assertIn("retired", historical)
+
     def test_cli_queue_and_desktop_share_preserve_runtime_layers(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
         compatibility = read("docs/runtime-compatibility.md")
-        cli_skill = read("skills/cli-session-handoff/SKILL.md")
-        desktop_skill = read("skills/desktop-thread-delegation/SKILL.md")
+        cli_skill = read_skill("skills/cli-session-handoff/SKILL.md")
+        desktop_skill = read_skill("skills/desktop-thread-delegation/SKILL.md")
         human_gate = read("policies/human-gate-policy.md")
         combined = "\n".join(
             (contract, compatibility, cli_skill, desktop_skill, human_gate)
@@ -390,7 +480,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
     def test_desktop_post_create_visibility_contract(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
         adapter = read("docs/runtime-adapter-v2.md")
-        thread_skill = read("skills/desktop-thread-delegation/SKILL.md")
+        thread_skill = read_skill("skills/desktop-thread-delegation/SKILL.md")
         example = read("examples/desktop-thread-delegation.md")
         boundary_example = read("examples/runtime-adapter-boundary.md")
         combined = "\n".join(
@@ -419,10 +509,8 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             combined,
             re.compile(r"local chat", re.IGNORECASE),
         )
-        self.assertIn(
-            '"required_request_fields": ["prompt", "target"]',
-            boundary_example,
-        )
+        self.assertIn("required `prompt` and", boundary_example)
+        self.assertIn("`target`", boundary_example)
         self.assertNotIn(
             '"required_request_fields": ["thread_id"]',
             boundary_example,
@@ -431,7 +519,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
     def test_desktop_target_selection_preserves_project_and_worktree_intent(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
         adapter = read("docs/runtime-adapter-v2.md")
-        skill = read("skills/desktop-thread-delegation/SKILL.md")
+        skill = read_skill("skills/desktop-thread-delegation/SKILL.md")
         example = read("examples/desktop-thread-delegation.md")
         combined = "\n".join((contract, adapter, skill, example))
 
@@ -461,7 +549,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
     def test_desktop_create_title_and_project_association_are_distinct(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
         adapter = read("docs/runtime-adapter-v2.md")
-        skill = read("skills/desktop-thread-delegation/SKILL.md")
+        skill = read_skill("skills/desktop-thread-delegation/SKILL.md")
         example = read("examples/desktop-thread-delegation.md")
         boundary = read("examples/runtime-adapter-boundary.md")
         combined = "\n".join((contract, adapter, skill, example, boundary))
@@ -469,23 +557,20 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         for expected in (
             "concise non-empty safe `title`",
             "callable keeps `title` optional",
-            "maintainer-approved nonsensitive task identifier",
-            "never copy prompt text",
-            "`Project task`",
+            "ordinary descriptive titles",
+            "user-approved objective",
+            "Do not copy sensitive prompt excerpts",
             "preview",
             "display evidence only",
             "observed `projectId`",
             "selected project",
             "never create a duplicate",
-            '"adapter_required_fields": ["title"]',
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, combined)
 
-        self.assertIn(
-            '"required_request_fields": ["prompt", "target"]',
-            boundary,
-        )
+        self.assertIn("required `prompt` and", boundary)
+        self.assertIn("`target`", boundary)
 
         self.assertIn("private runtime state", combined)
         self.assertIn("external write", combined)
@@ -496,8 +581,8 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         readme = read("README.md")
         contract = read("docs/native-runtime-capabilities.md")
         compatibility = read("docs/runtime-compatibility.md")
-        desktop = read("skills/desktop-thread-delegation/SKILL.md")
-        cli = read("skills/cli-session-handoff/SKILL.md")
+        desktop = read_skill("skills/desktop-thread-delegation/SKILL.md")
+        cli = read_skill("skills/cli-session-handoff/SKILL.md")
         evidence = read("docs/codex-runtime-compatibility-evidence-2026-08-12.md")
         combined = "\n".join(
             (agents, readme, contract, compatibility, desktop, cli, evidence)
@@ -591,7 +676,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
     def test_cli_and_desktop_entry_paths_remain_distinct(self) -> None:
         readme = read("README.md")
         shared = read("skills/project-orchestrator/SKILL.md")
-        cli = read("skills/cli-session-handoff/SKILL.md")
+        cli = read_skill("skills/cli-session-handoff/SKILL.md")
         desktop = read("skills/desktop-project-delivery/SKILL.md")
 
         self.assertIn("### CLI And Desktop Entry Paths", readme)
@@ -605,7 +690,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
 
     def test_cli_session_adapter_uses_stable_public_surface(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
-        skill = read("skills/cli-session-handoff/SKILL.md")
+        skill = read_skill("skills/cli-session-handoff/SKILL.md")
         policy = read("policies/runtime-compatibility-policy.md")
         implementation = read(
             "skills/cli-session-handoff/scripts/cli_session_handoff.py"
@@ -647,7 +732,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
     def test_cli_interactive_fork_is_manual_and_reuses_selected_directory(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
         adapter = read("docs/runtime-adapter-v2.md")
-        skill = read("skills/cli-session-handoff/SKILL.md")
+        skill = read_skill("skills/cli-session-handoff/SKILL.md")
         example = read("examples/cli-session-handoff.md")
         evidence = read("docs/codex-runtime-compatibility-evidence-2026-07-31.md")
         implementation = read(
@@ -680,7 +765,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
     def test_desktop_worktree_fork_preserves_lineage_and_queued_identity(self) -> None:
         contract = read("docs/native-runtime-capabilities.md")
         adapter = read("docs/runtime-adapter-v2.md")
-        skill = read("skills/desktop-thread-delegation/SKILL.md")
+        skill = read_skill("skills/desktop-thread-delegation/SKILL.md")
         example = read("examples/desktop-thread-delegation.md")
         combined = "\n".join((contract, adapter, skill, example))
 

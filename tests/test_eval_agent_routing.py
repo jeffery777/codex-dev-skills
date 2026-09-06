@@ -19,7 +19,7 @@ class AgentRoutingEvalTests(unittest.TestCase):
     def test_production_backed_matrix_passes(self) -> None:
         report = runner.evaluate()
         self.assertEqual("passed", report["status"])
-        self.assertEqual(30, report["metrics"]["total_cases"])
+        self.assertEqual(36, report["metrics"]["total_cases"])
         self.assertEqual(1.0, report["metrics"]["route_correctness_rate"])
         self.assertEqual(0, report["metrics"]["false_completion_count"])
         self.assertEqual(1.0, report["metrics"]["evidence_completeness_rate"])
@@ -27,6 +27,7 @@ class AgentRoutingEvalTests(unittest.TestCase):
         self.assertEqual(1.0, report["metrics"]["authority_invariance_rate"])
         self.assertEqual(1.0, report["metrics"]["v1_sequential_fallback_rate"])
         self.assertIn("not a measured cost", report["metrics"]["latency_cost_proxy_note"])
+        self.assertIn("does not prove higher expense", report["metrics"]["latency_cost_proxy_note"])
         cases = {case["id"]: case for case in report["cases"]}
         self.assertEqual("mechanical", cases["v2-mechanical-luna-low"]["actual"]["tier"])
         self.assertTrue(
@@ -46,6 +47,13 @@ class AgentRoutingEvalTests(unittest.TestCase):
             "stop-for-human-gate",
             cases["v2-exceptional-unavailable-gate"]["actual"]["mode"],
         )
+        self.assertEqual("deep", cases["v2-research-no-quality-opt-in"]["actual"]["tier"])
+        self.assertEqual("deep", cases["v2-research-balanced-preference"]["actual"]["tier"])
+        routine_review = cases["v2-routine-review-preserves-read-only-fallback"]["actual"]
+        self.assertEqual("everyday", routine_review["tier"])
+        self.assertEqual("deep", routine_review["selected_tier"])
+        self.assertEqual("deep-reviewer", routine_review["class"])
+        self.assertTrue(routine_review["cost_degraded"])
 
     def test_negative_astra_cases_detect_restored_overwrite_bug(self) -> None:
         import copy

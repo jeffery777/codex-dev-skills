@@ -233,15 +233,9 @@ class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
             with self.subTest(expected=expected):
                 self.assertIn(expected, notes)
 
-        catalog = yaml.safe_load(read("catalog.yaml"))
-        self.assertEqual("0.23.0", catalog["version"])
-        self.assertIn("0.23.0", read("install.sh"))
-        self.assertEqual(
-            "0.23.0",
-            json.loads(
-                read("plugin/codex-dev-skills/.codex-plugin/plugin.json")
-            )["version"],
-        )
+        # This is a historical candidate record. Current source/package parity
+        # is checked independently by test_release_state_contract.
+        self.assertIn("`0.23.0`", notes)
 
     def test_v0170_paired_run_release_evidence_is_durable_and_consistent(self) -> None:
         evidence_path = "docs/loops/issue-165/paired-run-evidence.md"

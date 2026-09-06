@@ -9,11 +9,12 @@ Runtime compatibility: desktop
 
 ## Purpose
 
-Use this skill only when the user has already selected one exact Codex Desktop
-sidebar-organization action and supplied the exact target. It is a separate
-Desktop-only control plane from `desktop-thread-delegation`: it neither creates,
-continues, navigates, archives, pins, nor delegates tasks, and it does not
-choose the next work item.
+Use this skill when the user requests a concrete Codex Desktop sidebar
+organization action. Resolve the intended target from current public registry
+data; the user does not need to provide raw IDs or callable names. It is a separate
+Desktop-only control plane from `desktop-thread-delegation`: it does not create,
+continue, navigate, archive, or delegate tasks, and it does not choose the next
+work item. A move to the documented `pinned` destination pins the selected item.
 
 The current public product surface is the ChatGPT desktop app. CLI has no
 equivalent sidebar callable. Its fallback is a dry-run plan or an exact,
@@ -47,10 +48,14 @@ not execute a live sidebar mutation.
    `../../docs/native-runtime-capabilities.md`. Capability evidence is not
    authority. If the callable, request shape, response shape, or error shape
    is unavailable or ambiguous, fail closed.
-2. Immediately before planning and immediately again before a mutation, obtain
-   fresh read-only `list_threads` and `list_projects` snapshots. Do not reuse a
-   stale snapshot, cached UI state, prior tool response, title, summary, or
-   user-supplied display label as identity proof.
+2. Obtain one fresh snapshot from the registry needed by this action:
+   `list_threads` for task/section identity and section membership;
+   `list_projects` for project identity. Read both only when the action needs
+   facts from both. Reuse the snapshot through planning and the call while its
+   relevant identities, membership, and scope remain current; refresh if an
+   intervening event, elapsed delay, or conflict makes it stale. A display
+   label can locate a candidate, but the registry-returned exact ID and context
+   establish its identity. Never use cached UI state as identity proof.
 3. Resolve task identity only from an exact ready `threadId` in the current
    registry and retain its runtime-reported `hostId` when present. A
    `clientThreadId` is queued setup evidence, not a `threadId`; never pass it
@@ -74,8 +79,8 @@ not execute a live sidebar mutation.
      callable schema exposes those special values. Project moves may use
      `threads` or `null` only where exposed. Do not substitute one family's
      special value for another or invent a default-section identifier.
-   - A custom section cannot be deleted, renamed, or reordered merely because
-     a display title appears unique.
+   - A unique display label must still resolve to an exact observed custom
+     `sectionId` before deletion, rename, or reorder.
 
 If a fresh snapshot changes between preflight and call time, repeat discovery
 and regenerate the dry run. Do not silently merge two snapshots or retry a
@@ -83,23 +88,27 @@ mutation against a changed membership set.
 
 ## Dry-run Plan And Authority
 
-Before every mutation, present an exact dry-run plan containing the callable,
-the exact source and destination IDs (including `hostId` for a task when
-available), expected special-value classification, snapshot time or revision
-when exposed, complete-list proof when required, and the response/readback
-checks. A dry run never mutates the sidebar.
+Prepare a dry-run plan with the resolved source/destination IDs, host routing,
+special-value classification, snapshot time/revision when exposed, complete-list
+proof when required, and expected response/readback. Present the user-facing
+effect in a concise action summary; retain raw IDs as operation evidence rather
+than requiring the user to approve tool syntax.
 
-Execute only after the user explicitly authorizes that exact callable and exact
-target(s) from that dry run. A generic request such as “organize my sidebar,” a
-title match, “put it over there,” or authorization for a previous snapshot is
-not authority. Create, rename, and move require this exact-target authority.
+A concrete request such as “rename Planning to Roadmap,” “move task X into
+Research,” or “put these sections in A, B, C order” provides exact-target authority
+once discovery resolves the requested targets unambiguously. Existing authority
+remains valid while target, scope, membership, and effect stay unchanged. Do not
+ask again solely for a callable name, raw IDs, an unchanged snapshot, or a
+routine reversible create/rename/move/reorder. A generic request such as
+“organize my sidebar” is insufficient to choose an arbitrary new arrangement.
 
-`delete_sidebar_section`, `reorder_section`, and
-`reorder_sidebar_sections` retain a separate high-risk human gate after the
-complete dry-run preview. Do not treat ordinary organization consent as that
-gate. The user must explicitly confirm the exact section ID or the exact full
-ordered ID list and its effect. If confirmation, target identity, or recovery
-expectation is unclear, stop.
+`delete_sidebar_section` retains its destructive high-risk human gate after the
+concrete preview: identify the section, member retention, effect, and recovery
+expectation. Existing explicit confirmation for that exact deletion may satisfy
+the gate; ordinary organization intent does not. Also stop for ambiguous target,
+changed scope/membership/effect, or unclear recovery. A changed snapshot requires
+new discovery and a revised plan; renewed user authorization is needed only
+when the intended effect is no longer covered by the original request.
 
 For `reorder_section`, the `threadIds` request must contain every current task
 in that exact target section exactly once: no duplicate, missing, foreign,
@@ -125,7 +134,8 @@ summary is not validation. An unknown, partial, queued, or contradictory
 response is fail-closed: do not retry automatically and report the state as
 unverified.
 
-Then obtain fresh `list_threads` and `list_projects` readback. Confirm the
+Then obtain fresh readback from the registry or registries needed to prove this
+action. Confirm the
 same exact IDs and the requested observable result: a created/renamed custom
 section's returned identity is present; a move has the expected placement; a
 complete-list reorder has the exact requested order; and a partial project
@@ -157,7 +167,7 @@ claim success.
 ## Output
 
 - Current callable and schema evidence, marked current-session or unverified
-- Fresh `list_threads` / `list_projects` discovery facts and exact identities
+- Needed `list_threads` / `list_projects` discovery facts and exact identities
 - Special-value and complete-list classification
 - Exact dry-run plan and explicit authority or human-gate result
 - Dispatch response validation and post-mutation readback as separate states
@@ -170,7 +180,7 @@ claim success.
 Stop before mutation for unclear capability schema, source-of-truth conflict,
 stale or incomplete discovery, duplicate/missing/queued identity, unknown host
 routing, unsupported special value, incomplete reorder list, authority that is
-not exact-target, missing delete/reorder human gate, unexpected response, or
+not exact-target, missing destructive human gate, unexpected response, or
 failed readback. Also stop for scope expansion, security/privacy/data risk, or
 any path requiring a private-state, app-server, daemon, or UI-scraping
 integration.

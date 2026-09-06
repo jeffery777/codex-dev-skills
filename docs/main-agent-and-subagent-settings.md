@@ -38,7 +38,7 @@ Confirm the selected model/effort in the destination before delegating work.
 
 Child roles should receive explicit model/effort settings from their selected
 profile. Otherwise native inheritance can make a small child task inherit the
-main agent's expensive configuration. An explicit spawn override or configured
+main agent's stronger configuration unnecessarily. An explicit spawn override or configured
 subagent default can change native resolution; this repository cannot assume
 which wins without checking the actual runtime. See the official
 [subagent settings](https://learn.chatgpt.com/docs/agent-configuration/subagents#choosing-models-and-reasoning).
@@ -48,6 +48,13 @@ Terra-medium everyday, Terra-high senior, Sol-medium advanced, Sol-high
 deep/security and Sol-xhigh exceptional. Astra-medium advanced and Astra-high
 deep/security profiles remain separately qualified opt-ins. Main-agent selection
 does not qualify these child profiles or bypass their gates.
+
+Routine read-only review now has an everyday capability requirement, but the
+existing registry still supplies the read-only deep profile as its sufficient
+fallback. No cheaper reviewer has been activated by that classification change.
+Exceptional selection, including fallback, requires quality-first
+research/orchestration with the classifier's multiple complexity triggers.
+Tier rank and `cost_degraded` are policy labels, not usage or price measurements.
 
 During normal delegation, shared delivery/orchestration skills make the parent
 prepare current runtime facts and invoke the router, which automatically

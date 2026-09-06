@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import json
 import pathlib
 import unittest
 
@@ -85,11 +86,12 @@ def route(task_factors=None, runtime=None):
     )
 
 
-def route_v2(workload_kind, task_factors=None, runtime=None):
+def route_v2(workload_kind, task_factors=None, runtime=None, quality_preference=None):
     return routing.build_route_receipt(
         task_id="P2",
         factors=task_factors or factors(),
         workload_kind=workload_kind,
+        quality_preference=quality_preference,
         contract_version=2,
         runtime=runtime or {
             "custom_agents_available": True,
@@ -257,7 +259,7 @@ class ClassificationTests(unittest.TestCase):
                     write_blast_radius="none",
                     verification_burden="high",
                 ),
-                ("deep-reviewer", "exceptional"),
+                ("deep-reviewer", "deep"),
             ),
         )
         for workload_kind, task_factors, expected in cases:
@@ -268,6 +270,73 @@ class ClassificationTests(unittest.TestCase):
                     workload_kind=workload_kind,
                 )
                 self.assertEqual(expected, (result["capability_class"], result["capability_tier"]))
+
+    def test_v2_routine_review_separates_read_only_class_from_required_tier(self):
+        result = routing.classify_task(
+            factors(write_blast_radius="none"),
+            contract_version=2, workload_kind="review",
+        )
+        self.assertEqual("deep-reviewer", result["capability_class"])
+        self.assertEqual("read-only", routing.CLASS_SANDBOX[result["capability_class"]])
+        self.assertEqual("everyday", result["capability_tier"])
+        self.assertEqual("loop_v2a_deep_reviewer", result["selected_role"])
+
+    def test_v2_review_complexity_and_hard_triggers_preserve_deep_requirement(self):
+        for changes in (
+            {"ambiguity": "high"}, {"reasoning_depth": "deep"},
+            {"verification_burden": "high"}, {"code_context_volume": "large"},
+            {"write_blast_radius": "broad"},
+            *({"security_data_migration_public_contract_risk": risk}
+              for risk in ("security", "data", "migration", "public-contract", "high")),
+        ):
+            with self.subTest(changes=changes):
+                result = routing.classify_task(
+                    factors(**{"write_blast_radius": "none", **changes}),
+                    contract_version=2, workload_kind="review",
+                )
+                self.assertEqual("deep", result["capability_tier"])
+                self.assertEqual(
+                    "security-reviewer" if changes.get("security_data_migration_public_contract_risk") == "security"
+                    else "deep-reviewer", result["capability_class"],
+                )
+
+    def test_v2_exceptional_requires_explicit_quality_preference(self):
+        task_factors = factors(
+            ambiguity="high", reasoning_depth="deep", code_context_volume="large",
+            write_blast_radius="none", verification_burden="high",
+        )
+        for preference in (None, "balanced", "quality-first"):
+            with self.subTest(preference=preference):
+                result = routing.classify_task(
+                    task_factors, contract_version=2, workload_kind="research-orchestration",
+                    quality_preference=preference,
+                )
+                self.assertEqual("exceptional" if preference == "quality-first" else "deep", result["capability_tier"])
+                self.assertEqual(preference == "quality-first", "quality-first-exceptional-trigger" in result["reasons"])
+        # Preference cannot replace the workload, complexity, or safety checks.
+        for kind, changes in (
+            ("research-orchestration", {"ambiguity": "moderate", "reasoning_depth": "balanced"}),
+            ("review", {}),
+            ("research-orchestration", {"security_data_migration_public_contract_risk": "security"}),
+            ("research-orchestration", {"write_blast_radius": "broad"}),
+        ):
+            with self.subTest(kind=kind, changes=changes):
+                result = routing.classify_task(
+                    {**task_factors, **changes}, contract_version=2, workload_kind=kind,
+                    quality_preference="quality-first",
+                )
+                self.assertEqual("deep", result["capability_tier"])
+
+    def test_quality_preference_is_v2_only_and_rejects_malformed_values(self):
+        with self.assertRaisesRegex(routing.AgentRoutingContractError, "version 1"):
+            routing.classify_task(factors(), quality_preference="balanced")
+        for malformed in (True, [], {}, "fast", ""):
+            with self.subTest(malformed=malformed):
+                with self.assertRaisesRegex(routing.AgentRoutingContractError, "quality_preference"):
+                    routing.classify_task(
+                        factors(), contract_version=2, workload_kind="review",
+                        quality_preference=malformed,
+                    )
 
     def test_v2_security_risk_cannot_be_cost_downgraded(self):
         result = routing.classify_task(
@@ -287,6 +356,107 @@ class ClassificationTests(unittest.TestCase):
 
 
 class RouteTests(unittest.TestCase):
+    def test_v2_routine_review_uses_existing_read_only_profile_as_higher_tier_fallback(self):
+        receipt = route_v2(
+            "review", factors(write_blast_radius="none"),
+            runtime={"custom_agents_available": True, "profiles": [
+                profile("worker", "balanced-worker", "everyday"),
+                profile("reviewer", "deep-reviewer", "deep"),
+            ]},
+        )
+        self.assertEqual("reviewer", receipt["runtime_mapping"])
+        self.assertEqual("everyday", receipt["required_capability_tier"])
+        self.assertEqual("deep", receipt["selected_capability_tier"])
+        self.assertEqual("same-class-higher-tier", receipt["fallback"])
+        self.assertTrue(receipt["cost_degraded"])
+        self.assertEqual("read-only", receipt["config_evidence"]["sandbox"])
+        self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+
+    def test_v2_quality_preference_is_bound_to_receipt_integrity_and_semantics(self):
+        receipt = route_v2(
+            "research-orchestration",
+            factors(ambiguity="high", reasoning_depth="deep", code_context_volume="large", write_blast_radius="none"),
+            runtime={"custom_agents_available": True, "profiles": [profile("exceptional", "deep-reviewer", "exceptional")]},
+            quality_preference="quality-first",
+        )
+        self.assertEqual("quality-first", receipt["classification"]["quality_preference"])
+        self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+        receipt["classification"]["quality_preference"] = "balanced"
+        self.assertIn("route-receipt-integrity-mismatch", routing.validate_route_receipt(receipt)["issues"])
+        receipt["route_receipt_id"] = routing._digest({key: value for key, value in receipt.items() if key != "route_receipt_id"})
+        self.assertIn("classification-semantic-mismatch", routing.validate_route_receipt(receipt)["issues"])
+
+    def test_v2_fallback_cannot_implicitly_select_exceptional(self):
+        for mode in ("custom-agent-profile", "parent-default", "sequential-current-session"):
+            runtime = {
+                "custom_agents_available": mode == "custom-agent-profile",
+                "profiles": [profile("exceptional", "deep-reviewer", "exceptional")],
+                "parent_default_available": mode == "parent-default",
+                "parent_capability_classes": ["deep-reviewer"],
+                "parent_capability_tiers": {"deep-reviewer": ["exceptional"]},
+                "sequential_available": mode == "sequential-current-session",
+                "current_session_capability_classes": ["deep-reviewer"],
+                "current_session_capability_tiers": {"deep-reviewer": ["exceptional"]},
+            }
+            for preference in (None, "balanced", "quality-first"):
+                with self.subTest(mode=mode, preference=preference):
+                    receipt = route_v2(
+                        "review", factors(write_blast_radius="none"),
+                        runtime=runtime, quality_preference=preference,
+                    )
+                    self.assertEqual("stop-for-human-gate", receipt["execution_mode"])
+                    self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+                    eligible = route_v2(
+                        "research-orchestration",
+                        factors(write_blast_radius="none", ambiguity="high", reasoning_depth="deep", code_context_volume="large"),
+                        runtime=runtime, quality_preference=preference,
+                    )
+                    self.assertEqual(mode if preference == "quality-first" else "stop-for-human-gate", eligible["execution_mode"])
+                    self.assertTrue(routing.validate_route_receipt(eligible)["valid"])
+                    if preference == "quality-first":
+                        # Rehash a coherent routine-review classification while
+                        # retaining the exceptional execution evidence.
+                        eligible["classification"] = receipt["classification"]
+                        eligible["selected_role"] = receipt["selected_role"]
+                        eligible["required_capability_tier"] = "everyday"
+                        eligible["cost_degraded"] = True
+                        if mode == "custom-agent-profile":
+                            eligible["fallback"] = "same-class-higher-tier"
+                        eligible["route_receipt_id"] = routing._digest({key: value for key, value in eligible.items() if key != "route_receipt_id"})
+                        self.assertFalse(routing.validate_route_receipt(eligible)["valid"])
+        # The coupled-work branch must enforce the same selection limit.
+        runtime["sequential_available"] = True
+        for preference in (None, "quality-first"):
+            with self.subTest(coupled_preference=preference):
+                receipt = route_v2(
+                    "review", factors(write_blast_radius="none", independence_parallelizability="coupled"),
+                    runtime=runtime, quality_preference=preference,
+                )
+                self.assertEqual("stop-for-human-gate", receipt["execution_mode"])
+                self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+                eligible = route_v2(
+                    "research-orchestration",
+                    factors(write_blast_radius="none", independence_parallelizability="coupled", ambiguity="high", reasoning_depth="deep", code_context_volume="large"),
+                    runtime=runtime, quality_preference=preference,
+                )
+                self.assertEqual("sequential-current-session" if preference == "quality-first" else "stop-for-human-gate", eligible["execution_mode"])
+                self.assertTrue(routing.validate_route_receipt(eligible)["valid"])
+                if preference == "quality-first":
+                    eligible["classification"] = receipt["classification"]
+                    eligible["selected_role"] = receipt["selected_role"]
+                    eligible["required_capability_tier"] = "everyday"
+                    eligible["cost_degraded"] = True
+                    eligible["route_receipt_id"] = routing._digest({key: value for key, value in eligible.items() if key != "route_receipt_id"})
+                    self.assertFalse(routing.validate_route_receipt(eligible)["valid"])
+        legacy = route(
+            factors(reasoning_depth="deep"),
+            runtime={"custom_agents_available": True, "profiles": [profile("exceptional", "deep-reviewer", "exceptional")]},
+        )
+        self.assertEqual(1, legacy["contract_version"])
+        self.assertEqual("custom-agent-profile", legacy["execution_mode"])
+        self.assertNotIn("quality_preference", legacy["classification"])
+        self.assertTrue(routing.validate_route_receipt(legacy)["valid"])
+
     def test_loop_core_exposes_thin_routing_boundary(self):
         receipt = core.evaluate_agent_route(
             task_id="P1",
@@ -756,6 +926,68 @@ class RouteTests(unittest.TestCase):
             "execution-mode-semantic-mismatch",
             routing.validate_route_receipt(receipt)["issues"],
         )
+
+
+class HistoricalReceiptTests(unittest.TestCase):
+    def setUp(self):
+        self.fixture = json.loads((ROOT / "tests" / "fixtures" / "agent-routing-legacy-v2.json").read_text())
+
+    def test_frozen_legacy_route_worker_and_disposition_still_validate(self):
+        self.assertEqual("43e50dd4280c580276f5bd2383c056bd47931e0d", self.fixture["source_revision"])
+        self.assertEqual(3, len(self.fixture["cases"]))
+        original = copy.deepcopy(self.fixture)
+        for case in self.fixture["cases"]:
+            with self.subTest(case=case["id"]):
+                receipt = case["route_receipt"]
+                self.assertNotIn("routing_policy_revision", receipt)
+                self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+                validation = routing.validate_worker_receipt(case["worker_receipt"], receipt)
+                self.assertEqual(case["worker_validation"], validation)
+                disposition = routing.validate_main_agent_disposition(
+                    case["main_agent_disposition"], receipt, validation,
+                    current_source_revision=receipt["source_revision"],
+                    current_profile_digest=receipt["selected_profile_digest"],
+                    assignment_fresh=True,
+                )
+                self.assertEqual(case["validated_disposition"], disposition)
+                self.assertTrue(disposition["integration_accepted"])
+                self.assertFalse(disposition["completion_proven"])
+        self.assertEqual(original, self.fixture)
+
+    def test_legacy_receipts_cannot_mix_current_policy_or_quality_fields(self):
+        for case in self.fixture["cases"]:
+            for mutation in ("revision", "quality", "null-quality", "top-level-quality"):
+                with self.subTest(case=case["id"], mutation=mutation):
+                    receipt = copy.deepcopy(case["route_receipt"])
+                    if mutation == "revision":
+                        receipt["routing_policy_revision"] = routing.ROUTING_POLICY_REVISION
+                    elif mutation == "top-level-quality":
+                        receipt["quality_preference"] = "quality-first"
+                    else:
+                        receipt["classification"]["quality_preference"] = None if mutation == "null-quality" else "quality-first"
+                    receipt["route_receipt_id"] = routing._digest({key: value for key, value in receipt.items() if key != "route_receipt_id"})
+                    self.assertFalse(routing.validate_route_receipt(receipt)["valid"])
+
+    def test_current_builder_binds_fixed_policy_and_rejects_policy_selection(self):
+        receipt = route_v2("review", factors(write_blast_radius="none"))
+        self.assertEqual(routing.ROUTING_POLICY_REVISION, receipt["routing_policy_revision"])
+        with self.assertRaisesRegex(TypeError, "routing_policy_revision"):
+            routing.build_route_receipt(routing_policy_revision=None)
+        for revision in (None, "legacy", "future", True, 2, [], {}):
+            with self.subTest(revision=revision):
+                changed = copy.deepcopy(receipt)
+                changed["routing_policy_revision"] = revision
+                changed["route_receipt_id"] = routing._digest({key: value for key, value in changed.items() if key != "route_receipt_id"})
+                self.assertIn("unsupported-routing-policy-revision", routing.validate_route_receipt(changed)["issues"])
+        changed = copy.deepcopy(receipt)
+        changed.pop("routing_policy_revision")
+        changed["route_receipt_id"] = routing._digest({key: value for key, value in changed.items() if key != "route_receipt_id"})
+        self.assertFalse(routing.validate_route_receipt(changed)["valid"])
+        legacy_v1 = route()
+        self.assertNotIn("routing_policy_revision", legacy_v1)
+        legacy_v1["routing_policy_revision"] = routing.ROUTING_POLICY_REVISION
+        legacy_v1["route_receipt_id"] = routing._digest({key: value for key, value in legacy_v1.items() if key != "route_receipt_id"})
+        self.assertFalse(routing.validate_route_receipt(legacy_v1)["valid"])
 
 
 class ReceiptTests(unittest.TestCase):

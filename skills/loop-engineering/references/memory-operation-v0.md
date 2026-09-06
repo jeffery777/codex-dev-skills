@@ -15,21 +15,31 @@ applied, idempotent replay, or failed. Success requires atomic state plus
 receipt; replay cannot mutate twice; uncertainty is failure. V2b `delete` is
 logical only and physical purge is unsupported.
 
+Resolve `LOOP_SKILL_DIR` to the absolute installed `loop-engineering` directory
+containing `SKILL.md`, and `LOOP_PYTHON` to the absolute interpreter already
+selected and verified for this environment. The commands below use those
+resolved values; they do not assume the target repository contains
+`./scripts/project-python` or this source tree. Follow the target repository's
+environment rules and do not install into or substitute another interpreter.
+Only when maintaining the **codex-dev-skills source checkout**, use its tracked
+`./scripts/project-python` instead of `"$LOOP_PYTHON"`; all checks, scripts,
+evals, and tests in that checkout must use its pinned resolver.
+
 ```bash
-./scripts/project-python <installed-loop-engineering>/scripts/operationctl.py --help
-./scripts/project-python <installed-loop-engineering>/scripts/operationctl.py validate <authority.json>
-./scripts/project-python <installed-loop-engineering>/scripts/operationctl.py authorize \
+"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/operationctl.py" --help
+"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/operationctl.py" validate <authority.json>
+"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/operationctl.py" authorize \
   <authority.json> <candidate.json> <eligibility.json> \
   --accepted-authority-receipts <accepted.json> \
   --accepted-eligibility-receipts <accepted.json> \
   --trusted-time <trusted-time.json> --accepted-trusted-time-receipts <accepted.json>
-./scripts/project-python <installed-loop-engineering>/scripts/operationctl.py validate-request \
+"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/operationctl.py" validate-request \
   <request.json> --authority <authority.json> --mutation-candidate <candidate.json> \
   --eligibility-receipt <eligibility.json> \
   --accepted-authority-receipts <accepted.json> \
   --accepted-eligibility-receipts <accepted.json> \
   --trusted-time <trusted-time.json> --accepted-trusted-time-receipts <accepted.json>
-./scripts/project-python <installed-loop-engineering>/scripts/operationctl.py validate-receipt \
+"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/operationctl.py" validate-receipt \
   <receipt.json> <request.json> --authority <authority.json> \
   --mutation-candidate <candidate.json> --eligibility-receipt <eligibility.json> \
   --accepted-authority-receipts <accepted.json> \

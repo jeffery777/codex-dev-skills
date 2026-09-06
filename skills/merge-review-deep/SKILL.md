@@ -45,7 +45,9 @@ This is a deeper review primitive, not the formal branch readiness gate. Use `me
 
 ## Workflow
 
-Follow `merge-review`, then re-check evidence from source files and commands rather than relying only on summaries.
+Use the `merge-review` workflow with the additional focus above in one review
+pass. Verify evidence from source files and commands rather than relying only
+on summaries; two complete consecutive reviews are not required by this skill.
 
 Re-evaluate whether pre-commit review and Security Diff Scan evidence still
 applies to the exact head. After a fix, rerun those reviews over the smallest

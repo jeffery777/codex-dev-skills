@@ -25,7 +25,12 @@ install into a different interpreter; report verification blocked instead.
 
 After confirming the absolute CLI executable, canonical worktree, exact HEAD,
 read-only or workspace-write ceiling, timeout, and authorization, prepare a
-request from the example:
+request from the example. The following commands apply only in the
+**codex-dev-skills source checkout**, which requires its pinned resolver.
+For an installed skill in another repository, use the selected interpreter and
+actual installed skill path described in the
+[portable invocation reference](../skills/cli-session-handoff/references/non-interactive.md#portable-invocation).
+Do not assume another repository contains this project's script paths.
 
 ```bash
 ./scripts/project-python skills/cli-session-handoff/scripts/cli_session_handoff.py --example

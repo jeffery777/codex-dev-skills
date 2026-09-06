@@ -4,7 +4,7 @@ Long-running work drifts when runtime memory, summaries, or stale artifacts repl
 
 ## Re-bootstrap Triggers
 
-Re-read durable project artifacts:
+Check current state and the relevant durable evidence:
 
 - at the start of each phase
 - after context compaction or resume
@@ -19,6 +19,17 @@ Prefer repository-owned instructions, specs, plans, status files, review artifac
 ## Rules
 
 - Do not treat memory, chat summaries, or worker output as authoritative over repo files.
+- Bootstrap once, then read changed or newly relevant sources at the triggers
+  above. A checkpoint may record branch/base/head, worktree diff identity, scope,
+  phase, source paths and evidence references. A matching HEAD alone cannot
+  establish freshness: uncommitted files, instructions, verification assumptions
+  and provider state may have changed.
+- Reuse prior reads and checks only while their inputs and scope remain valid.
+  After compaction or resume, verify checkpoint references against current state;
+  reconstruct the affected context when references are missing or conflicting.
+- Do not copy every source or repeat a full bootstrap/report at each phase.
+  Report the changed facts and link still-valid evidence. A changed request head
+  still requires complete base-to-head exact-head Merge Review.
 - Mark stale or missing evidence explicitly.
 - If the current state conflicts with prior summaries, inspect cheaply before deciding.
 - Stop for human decision when the conflict affects behavior, public contract, data, security, or delivery scope.

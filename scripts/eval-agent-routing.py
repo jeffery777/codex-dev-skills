@@ -22,6 +22,8 @@ REQUIRED_RECEIPT = {
     "runtime_mapping", "fallback", "assigned_scope", "ownership",
     "source_revision", "authority_contract_sha256", "authority_invariants",
 }
+# Legacy output names retained for consumers. These ordinal values are not
+# model-specific measurements or estimates of latency, tokens, or price.
 PROXY = {
     "fast-read-explorer": {"latency": 1, "token_cost": 1},
     "balanced-worker": {"latency": 2, "token_cost": 2},
@@ -116,6 +118,7 @@ def _build(router, case: dict[str, Any]) -> dict[str, Any]:
         task_id=case["id"], factors=case["factors"], runtime=runtime,
         contract_version=case.get("contract_version", 1),
         workload_kind=case.get("workload_kind"),
+        quality_preference=case.get("quality_preference"),
         assigned_scope=["bounded/example.py"],
         ownership={"owner": "eval-worker", "disjoint": True},
         source_revision={"head_sha": "eval-source"},
@@ -260,7 +263,11 @@ def evaluate(path: pathlib.Path = DEFAULT_SUITE) -> dict[str, Any]:
         "authority_invariance_rate": sum(item["authority_invariant"] for item in reports) / total,
         "v1_sequential_fallback_rate": 1.0 if v1_preserved else 0.0,
         "observed_runner_seconds": time.perf_counter() - started,
-        "latency_cost_proxy_note": "Ordinal capability proxy only; not a measured cost or improvement claim.",
+        "latency_cost_proxy_note": (
+            "Legacy ordinal capability proxy only; not a measured cost or improvement claim. "
+            "The latency/token_cost names do not estimate model latency, token use, or price. "
+            "cost_degraded means selected tier exceeds required tier; it does not prove higher expense."
+        ),
     }
     threshold_failures = {
         key: [expected, metrics.get(key)]

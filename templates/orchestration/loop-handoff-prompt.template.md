@@ -2,6 +2,11 @@
 
 Use this prompt when a loop engineering objective should continue in another session, worker, or sequential execution path. The receiving agent must re-read source-of-truth files before editing.
 
+Instantiate only the selected next packet. Link the current checkpoint and
+evidence rather than copying earlier iterations; retain exact scope, ownership,
+verification and authorization boundaries. A fresh rollover additionally needs
+the context-continuity contract; this prompt alone cannot transfer ownership.
+
 ```text
 Use loop-engineering for <objective>.
 

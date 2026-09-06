@@ -1,6 +1,6 @@
 ---
 name: loop-engineering
-description: Run an explicit loop engineering workflow for a clear bounded objective by repeatedly bootstrapping, routing, verifying, reviewing, continuing, handing off, or stopping at human gates.
+description: Run an explicitly requested durable loop, or continue an existing repo-owned loop contract, through routing, verification, review, and authorized continuation.
 ---
 
 # loop-engineering
@@ -27,44 +27,64 @@ after filesystem installation.
 
 ## Purpose
 
-Use this skill when the user asks Codex to run a loop engineering workflow, keep a bounded objective moving autonomously, or act as the delivery owner across repeated plan/implement/verify/review/continue cycles until the objective is complete or a human gate is reached.
+Use this skill for an explicitly requested durable loop workflow or an existing
+repo-owned loop spec, ledger, or production decision contract. Ordinary bounded
+delivery uses `project-delivery`; one clear task uses `implementation-slice`.
+Autonomous progress or candidate delegation alone does not activate a durable
+loop. If the user explicitly names this skill, use its production decision path.
 
-This is a thin user-facing loop entrypoint. It classifies the current state,
-chooses the next safe workflow, integrates evidence, reports progress, and
-stops at gates. It does not replace `planning`, `implementation-slice`,
-`docs-update`, `project-orchestrator`, `project-delivery`,
-`task-continuation`, `milestone-continuation`, shared subagent delegation,
-review primitives, formal gates, or Desktop task-control adapters.
+This entrypoint selects existing workflows, integrates evidence, and preserves
+loop authority. It does not replace planning, implementation, review, delivery,
+continuation, subagents, or runtime adapters.
 
-## Loop Contract
+## Read Only The Triggered Reference
 
-Context continuity follows the shared policy above.
-After two unfinished review/fix rounds by default, or another configured
-positive threshold, run `loopctl.py context-health` with the installed
-`context-continuity.template.yaml` when executable evidence is needed. The
-threshold starts assessment only and never authorizes a task mutation.
+Load a reference before the matching action; do not preload the whole table.
+Paths below are relative to this skill and ship in source/plugin/install copies.
 
-Each loop iteration must:
+| Trigger | Required reference |
+| --- | --- |
+| Existing ledger, protected history, any event write, or durable templates | `references/loop-state-and-authorization.md` |
+| Heterogeneous profile routing or routed-worker acceptance | `references/agent-routing.md` |
+| Candidate delegation, also callable directly from delivery/orchestrator | `references/agent-qualification.md` |
+| Security scan continuation, recovery, or reporting | `references/security-scan-recovery.md` |
+| Context-health threshold, context drift, or fresh rollover | `references/context-continuity.md` |
+| Optional GitNexus hook/controller or index identity | `references/gitnexus-runtime.md` |
+| Explicit V2b/V2d/V3-A/V3-B evidence, memory contract, or local pilot use | `references/optional-evidence-memory.md`, then its matching contract reference |
 
-1. Re-bootstrap from durable repository source of truth:
-   - repo instructions and policies;
-   - project specs, loop specs, plans, task manifests, repo-owned loop ledgers, status docs, and reports;
-   - review evidence, verification commands, templates, and current git state.
-2. Treat chat summaries, prior handoffs, runtime summaries, and worker self-reports as context only.
-3. Classify the request and current state:
-   - `single-clear-task`
-   - `bounded-delivery-objective`
-   - `review-closure-loop`
-   - `milestone-continuation-loop`
-   - `handoff-or-continuation`
-   - `shared-subagent-delegation`
-   - `desktop-delegation`
-   - `human-gate`
-   - `complete`
-4. Choose the smallest workflow that can safely advance the objective.
-5. Execute or prepare exactly that workflow, then verify and inspect evidence before deciding the next loop state.
-6. Record or report what changed, what was verified, what remains uncertain, and which next action is selected.
-7. Continue only while the objective, source of truth, permissions, risk, and verification are clear.
+`memory-off` is the default complete path, with zero backend/filesystem touch.
+Do not import or touch memory adapters just to route an ordinary task. Optional
+evidence, projections, qualification, and memory remain advisory; none can
+activate, promote, authorize, satisfy a gate, or prove completion.
+
+## Loop Cycle And Evidence Freshness
+
+1. Initially bootstrap repo instructions/policies, relevant specs/plans/task
+   manifests, loop state/status, verification/review artifacts, and current Git
+   state. Read only sources needed for the current objective and phase.
+2. At each iteration, revalidate that baseline against current repository and
+   worktree identity, branch/HEAD, tracked/untracked content, applicable policy,
+   task/scope/ownership, phase, tool/environment, and evidence dependencies.
+   Reuse inspected content only while those bindings remain valid. Re-read
+   affected sources after drift; reground fully after a conflict, lost provenance,
+   phase boundary introducing new requirements, or uncertain freshness. An
+   unchanged SHA alone does not prove an unchanged worktree or valid evidence.
+3. Treat chat, handoffs, runtime summaries, worker reports, and optional memory
+   as locating/coordination context only. Validate the current ledger before
+   selecting work when one exists; resolve conflicts from authoritative sources.
+4. Classify the state as `single-clear-task`, `bounded-delivery-objective`,
+   `review-closure-loop`, `milestone-continuation-loop`, `handoff-or-continuation`,
+   `shared-subagent-delegation`, `desktop-delegation`, `human-gate`, or `complete`.
+5. Run the production decision below and execute or prepare exactly its smallest
+   safe routed workflow. Verify and inspect evidence before deciding again.
+6. Report changed evidence, verification, uncertainty, next action, and iteration
+   result. Continue while objective, permissions, risk, and verification are clear.
+
+Reuse review evidence only when its source/content, worktree, scope, assumptions,
+phase, policy and environment still match; otherwise rerun the affected review.
+After two unfinished review/fix rounds by default (or another configured positive
+threshold), load `references/context-continuity.md` and assess context health.
+The threshold authorizes assessment only, never a runtime task mutation.
 
 ### Exact-Head Change-Request Closure
 
@@ -96,317 +116,30 @@ because a phase ended; stop only for an actual decision, authority,
 environment, permission, material-risk, destructive-action, or unauthorized
 external-write boundary.
 
-### Context Continuity And Fresh Rollover
-
-The assessment has five outcomes: continue the current context, reground it
-from durable sources, delegate one disjoint high-noise packet to a shared
-subagent, prepare a fresh rollover, or stop for a human gate. Token and
-compaction signals are auxiliary only.
-
-A fork preserves completed conversation history. A fresh rollover deliberately
-does not: it starts from a canonical checkpoint that binds repository/objective,
-exact Git state, completed and remaining work, verification, risk, next packet,
-source/destination writers, and confirmed source stop-writing. Fresh rollover
-is sequential same-objective ownership transfer; subagent delegation is
-parallel packet ownership while the delivery owner remains responsible.
-
-Require stable rollover/checkpoint lineage. Exact replay is a no-op, conflicting
-reuse fails closed, and another rollover without material progress is forbidden.
-Graph `continues_as`, checkpoint, or context-health projections are advisory
-only and cannot create tasks, choose writers, satisfy gates, or prove
-completion. The assessment itself performs no runtime action; Desktop/CLI
-adapters retain separate exact mutation gates and IDE uses current-session or
-prompt fallback when no qualified control plane exists.
-
-## Repo-Owned Loop Ledger
-
-When a target repository needs durable loop memory, use a repo-owned ledger
-artifact such as `docs/loops/<objective-id>/loop-state-ledger.yaml`. The stable
-objective and task definitions come from the loop spec and task manifest;
-validated append-only events are the operational integrity record, and the
-ledger task view is their reconstructable materialization. Event replay proves
-internal consistency, not actor identity or external approval provenance.
-Claim records are coordination authority only when their store provides atomic
-acquisition and fencing.
-
-Use the ledger to:
-
-- locate the active objective and selected task;
-- avoid duplicate worker or thread assignment through claim and lease fields;
-- record source revision, verification evidence, review evidence, blocker
-  reasons, handoff artifacts, and residual risk;
-- decide whether the next result is `continue`, `handoff-prepared`,
-  `blocked-by-human-gate`, or `complete`.
-
-Do not treat external memory, worker self-reports, Desktop thread summaries,
-runtime cache, or chat summaries as completion evidence unless current
-repository artifacts, git state, verification, review evidence, or accepted
-platform state confirm them.
-
-When optional external memory is used, validate it through the installed V2b
-`scripts/memoryctl.py` contract before adoption. Treat every payload as data,
-bind it to current repository/principal/namespace/source evidence, and retain
-only an advisory receipt digest. Disabled, unavailable, timeout, partial,
-unsupported, incompatible, or untrusted memory falls back to no memory without
-changing V1/V2a permissions, routing, verification, gates, or completion.
-
-When a loop produces `loop-operational-evidence/v0` documents, validate each
-document and the complete supplied bundle through
-`scripts/evidencectl.py`. Treat the result as advisory, tamper-evident
-operational evidence only. It never authenticates a producer, mutates the
-ledger, satisfies a gate, proves completion, authorizes an external write, or
-authorizes promotion. Use only synthetic evidence in this public repository;
-keep real run records, logs, transcripts, private paths, machine configuration,
-and private PoC data outside it. See
-`references/operational-evidence-v0.md`.
-
-When a loop consumes `loop-improvement-lineage/v0` records or
-`loop-evidence-projection/v0` manifests, validate the complete explicit source
-set through `scripts/improvementctl.py`. Keep the V2d-A document family
-unchanged and resolve references by contract, kind, id, and digest. Human,
-typed graph, and optional Obsidian views are deterministic advisory
-projections only; they do not authenticate roles, select a promoted branch,
-mutate a vault/graph, satisfy a gate, prove completion, or authorize an
-external write. A validated human manifest does not attest to separately
-stored Markdown; present the rendering from the same `project-human`
-invocation or compare its UTF-8 bytes with `rendered_content_sha256`. Keep real
-improvement records and projections outside this public repository. See
-`references/improvement-lineage-v0.md`.
-
-When a loop uses V3-A `loop-improvement-proposal/v0`, rerun validation over
-the complete V2d-B records and V2d-A evidence through
-`scripts/proposalctl.py`. Accept only deterministic proposal-set output with
-fixed integer scoring, stable tie-breaking, duplicate suppression, complete
-source lineage, exact false-authority/action fields, and a required pending
-independent human/platform promotion gate. Treat hypotheses and patch, branch,
-artifact, or draft-PR intents as proposal-only descriptions. Never apply,
-approve, activate, promote, commit, push, create a PR, merge, release, or
-deploy from proposal output. Keep real/private evidence and proposals outside
-public Git. PlugMem, Mem0, and all external-memory backends remain excluded
-and disabled for V3-A. See
-`references/improvement-proposal-v0.md`.
-
-When a loop uses V3-B `loop-candidate-evaluation/v0`, validate the selected
-V3-A proposal against the complete V2d source set and use only
-`scripts/evaluationctl.py` in its closed synthetic manual/CI envelope. Require
-the fixed policy, exact public environment equivalence, deterministic replay
-by the structurally independent verifier role, exact false-authority/action
-fields, and a pending independent human/platform promotion gate. `memory-off`
-is the default complete path. Optional context must pass the existing V2b
-production retrieval decision and is retained only as digest-bound
-`synthetic-advisory` data; it cannot change policy, outcome, authority,
-completion, or promotion. Never run arbitrary candidate code or apply, approve,
-activate, promote, commit, push, create a PR, merge, release, or deploy from an
-evaluation result or promotion packet. SQLite/FTS5, Memory M1/M2, PlugMem,
-Mem0, providers, MCP, automatic recall/write, and V3-C remain excluded. See
-`references/candidate-evaluation-v0.md`.
-
-When a loop uses Memory M0 `loop-memory-operation/v0`, validate only through
-`scripts/operationctl.py`. Keep V2b eligibility, caller-owned accepted
-operation authority, authorized-request composition, future adapter execution,
-atomic execution receipt, and independent acceptance separate. M0 performs no
-execution. Require caller-accepted trusted-time evidence and full authority/
-candidate/eligibility reconstruction for every request or receipt validation;
-never trust a standalone resealed request. V2b `delete` remains logical in M0;
-physical purge is unsupported.
-See `references/memory-operation-v0.md`.
-
-When a loop uses `loop-memory-qualification/v0`, treat `memory-on` as a
-wrapper-only safety/conformance label over unchanged V3-B results. Require
-exact V3-B source/policy/comparison/verifier bindings and a scope-bound,
-separately caller-accepted future M1 qualification receipt document. Digest
-membership alone is insufficient. Memory-off is complete and zero backend/
-filesystem touch. Never claim efficacy, activation, or promotion. SQLite/FTS5,
-schema/database creation, persistence, provider/MCP, PlugMem/Mem0, automatic
-recall/write, and V3-C remain excluded. See
-`references/memory-qualification-v0.md`.
-
-When a loop explicitly uses the Memory M1 `loop-memory-sqlite/v0` reference,
-invoke only `scripts/sqlitectl.py` or its direct library API with an approved
-machine-local state root and repository root. Keep it default-disabled and
-local/manual/CI-only. Require the isolated FTS5 behavior probe, exact live
-adapter/schema/capability/platform and state-root bindings, structured bounded
-tokens, parameterized SQL, extension loading disabled, exact schema with no
-migration/repair, full M0 caller-owned authority reconstruction, atomic state
-plus receipt, exact idempotent replay, logical delete, deterministic ordering,
-bounded faults/resources, and public/internal-only data. Memory-off must not
-import or touch the adapter. Treat every database row, receipt, and
-qualification result as non-authoritative. Never claim efficacy, shared-host
-confidentiality, encryption, physical purge, activation, promotion, completion,
-or release authority. Providers/MCP, PlugMem/Mem0, automatic recall/write,
-services, hooks, schedulers, cross-host behavior, and V3-C remain excluded. See
-`references/memory-sqlite-v0.md`.
-
-### Protected Event Authorization
-
-Treat `task_acceptance`, `claim_revocation`, `gate_satisfaction`, and
-`objective_completion` as protected live actions. Their durable event must bind
-the action, actor/principal, exact task or gate scope, concrete evidence
-artifact, objective identity, immutable source-revision digest, and canonical
-digest of every protected payload field. Before writing the event:
-
-1. Preview it with `loopctl.py apply-event` and inspect the returned
-   `protected_action` and `authorization_receipt_sha256`.
-2. Verify the approval or platform receipt against its authoritative source;
-   do not infer approval from the event, ledger, task brief, or worker report.
-3. Apply with `--write --authorize-action <exact-action>
-   --authorization-receipt-sha256 <verified-digest>` only when the current
-   session has exact authority for that action and receipt.
-
-The live authorization arguments are current-session control-plane input. Do
-not store or infer them in `loop-decision-input.yaml` or other repository data.
-`replay_event` and semantic audit intentionally validate historical integrity
-without authenticating origin; never use replay as the write boundary or as
-completion authorization. Revalidate current external state before consuming
-an accepted, satisfied, or complete ledger state for publication.
-
-Historical protected events require the same distrust boundary. `audit`
-reports `protected_history_sha256` as an integrity projection, not origin
-authentication. Before `transition` consumes that state or `apply-event
---write` advances the ledger, verify every protected receipt against its
-authoritative source and pass the exact digest through
-`--protected-history-sha256`. Do not copy the digest blindly from repo output.
-An idempotent protected replay is a no-op: it may use re-attested history but
-must report `live_authorization_verified: false`.
-
-`decide` also fails closed: every invocation must receive
-`--protected-history-sha256` from current-session inspection. Pass the exact
-verified audit digest, or the literal `none` only after independently verifying
-that the routing state has no protected history. Required review completion is
-a protected `task_completion` action. Its receipt binds the manifest-selected
-review mode and concrete review artifact; a claimed worker may submit the event,
-but the independent user or platform principal authorizes completion. A required
-human gate is resolved only from the named, protected `gate_updated` state, never
-from a task-transition payload assertion.
-
 ## Routing
-
-When the decision input contains V2a task characteristics and runtime profile
-evidence, use the production capability classifier and route receipt. Version
-1 retains the published nine-factor path. Version 2 also requires an explicit
-workload kind and records a separate cost-aware capability tier. Classify
-ambiguity, reasoning depth, context volume, high-risk domains, write blast
-radius, latency/cost sensitivity, independence, and verification burden; do not
-select a capability from the task name alone. Model/profile routing never
-changes permissions, scope, human gates, or completion criteria.
-
-Keep class and tier separate. Class binds sandbox and workflow scope; tier
-binds the minimum model/reasoning need. Select the lowest verified same-class
-profile that meets the tier. Record a higher-tier selection as cost degraded
-and never silently substitute a lower tier. Reserve exceptional/xhigh routing
-for explicit quality-first research or orchestration with multiple triggers.
-Use `senior` Terra-high for complex but bounded implementation before
-escalating multi-trigger advanced work to Sol-medium. Terra-xhigh and Luna-max
-remain eval-only candidates, not installed default profiles; add either only
-after representative comparisons show a distinct quality/usage advantage.
-
-Custom-agent `sandbox_mode` is a technical runtime constraint distinct from
-workflow authorization. Preflight must compare it with current-session
-`parent_sandbox_mode` evidence and reject or degrade any profile that would
-widen the parent sandbox. A profile never authorizes writes merely because its
-sandbox technically permits them.
-
-Preflight role/profile availability before delegation. Use the lowest
-sufficient same-class profile, then a parent/default mapping with explicit
-class/tier evidence, then sequential current-session execution with the same
-evidence.
-Stop at a human gate when a security or high-risk class cannot safely degrade.
-Record worker and main-agent integration receipts; worker self-report remains
-coordination evidence.
-
-The `loop_v2a_` profile namespace names the V2a heterogeneous-agent routing
-contract, not the repository release or V3 improvement-program version. Do not
-rename installed profiles as a cosmetic version sync; a namespace migration
-requires aliases, collision handling, installer migration, and an explicit
-compatibility window.
-
-Security review stays defensive and local-first. Prefer static analysis, local
-fixtures, negative tests, synthetic inputs, and minimal non-invasive
-validation. When runtime policy rejects a validation path, use safer local
-evidence or record the verification limit; never evade the policy, conceal
-intent, or access or mutate external systems.
-
-Materialize the `agent_route` section from
-`../../templates/orchestration/loop-decision-input.template.yaml` relative to this skill or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/loop-decision-input.template.yaml` after filesystem installation. Keep runtime facts
-out of the repository document: obtain them from the active public runtime and
-pass that current-session evidence separately. The registry path must resolve
-to the canonical registry shipped beside the installed skill. Run:
-
-```bash
-python3 <skill-dir>/scripts/loopctl.py agent-route <decision-input.yaml> \
-  --runtime-facts <current-runtime-facts.json>
-```
-
-### Automatic Qualification Before Delegation
-
-The parent performs this procedure during ordinary candidate delegation in
-either CLI or Desktop. The user does not need to provide a qualification path,
-`enabled_candidates`, or the command above for each task.
-
-1. Read the approved user store at `${CODEX_HOME:-$HOME/.codex}/agent-qualifications.json`
-   as data. Evaluate the actual task against the referenced quality evidence;
-   set V2 `task.qualification_scope` only for a matching reviewed task type.
-   A matching label alone does not establish quality or authorize a task.
-2. Gather current model/effort, custom-role, parent sandbox and fallback facts
-   from the active public runtime. Identify CLI or Desktop in `model_surface`.
-   Do not derive availability from saved qualification records, copied pilot
-   results, another runtime, or private app state. Preserve unknown values.
-3. Prepare the decision input and current facts in local temporary artifacts,
-   or pass current JSON on stdin with `--runtime-facts -`, and invoke
-   `agent-route` yourself. Omit `enabled_candidates` for automatic discovery;
-   an explicit `{}` disables candidates for that invocation. The router loads
-   the store afresh, checks scope/runtime/optional expiry and evidence/profile digests,
-   then applies the existing installed-byte and sandbox checks.
-4. Inspect the receipt's `profile_selection.autoload` and actual selected role.
-   Use only a role the current native callable supports. Reroute on capability
-   drift instead of substituting a different model or widening authority.
-
-Missing, revoked or mismatched qualification retains the existing baseline
-route; no safe execution option retains the human gate. Do not manufacture
-qualification to make routing succeed or create a store without adoption
-authorization. This is workflow automation when these skills are invoked,
-not a global Codex hook or an automatic model change in every conversation.
-The format and trust boundary are in
-`../../docs/agent-qualification-autoload.md` in source/plugin checkouts, or
-`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/docs/agent-qualification-autoload.md`
-after filesystem installation.
-
-Use the emitted content-bound route receipt for assignment. Before accepting a
-worker result, validate its artifact digests and compare the assignment to the
-current source revision, selected profile digest, and ownership state.
-
-Materialize `../../templates/orchestration/agent-routing-integration.template.yaml` relative to this skill or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/agent-routing-integration.template.yaml` after filesystem installation
-and run:
-
-```bash
-python3 <skill-dir>/scripts/loopctl.py agent-integrate <receipt.yaml> \
-  --repo-root <current-git-root> \
-  --artifact-root <worker-output-root> \
-  --verification-root <main-agent-verification-root> \
-  --assignment-fresh \
-  [--profile-path <selected-custom-profile.toml>]
-```
-
-The command independently reads exact Git branch and HEAD, regular non-symlink
-artifact and verification files with their declared SHA-256 digests, and the
-selected custom profile. Omit `--profile-path`
-only for a route that selected no custom profile. Do not embed those current
-facts in the receipt document.
-Only an `accepted` result is integration evidence, and even that result keeps
-`completion_proven: false` until repository verification/review/acceptance proves
-the objective's completion criteria.
 
 The production decision function is the active routing authority. Before using
 the table below, materialize the current decision input from
 `../../templates/orchestration/loop-decision-input.template.yaml` relative to this skill or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/loop-decision-input.template.yaml` after filesystem installation and run:
+
+Every `decide` invocation requires current-session protected-history inspection.
+Use the externally re-attested digest, or literal `none` only after independently
+verifying there is no protected history. Follow the ledger/authorization
+reference before consuming protected state; repository output cannot authorize it.
+
+In this source repository use `./scripts/project-python` and
+`<skill-dir>=skills/loop-engineering`. After filesystem installation use the
+verified consumer Python interpreter and installed skill path; the source
+resolver is not an installed dependency. Installed command shape:
 
 ```bash
 python3 <skill-dir>/scripts/loopctl.py decide <decision-input.yaml> --protected-history-sha256 <verified-digest-or-none>
 ```
 
 Route from the returned `decision`; do not independently reinterpret the prose
-table when the executable result is available. If the CLI dependency is
-missing, install the skill-local `requirements.txt` and rerun. If runtime facts
+table when the executable result is available. If a CLI dependency is
+missing, inspect the selected interpreter and the skill-local `requirements.txt`,
+resolve it within existing environment/install authority, and rerun. If runtime facts
 cannot be represented without guessing, stop at a human gate rather than
 bypassing the production decision contract.
 
@@ -415,134 +148,51 @@ For an executable V1 migration preview, run
 Without all bind options the preview is inspection-only; do not hand-edit
 contract digests because migrated active claims must be rebound atomically too.
 
-| Loop state | Route to | Notes |
+The phase router emits the following ordinary routes after its authority,
+source/ownership, scan-recovery, completion, and interruption guards. Guards
+can instead return `human-gate`, `complete`, or `task-continuation`; inspect the
+returned classification, execution mode, violations, and notices as well.
+
+| Input selector | Emitted route | Meaning |
 | --- | --- | --- |
-| One clear implementation task | `implementation-slice` semantics | Keep edits scoped, verify, inspect diff, and report residual risk. |
-| Docs-only or docs-dominant sync | `docs-update` | Update docs from verified specs, code, plans, or behavior. |
-| Need task classification or review/fix closure | `project-orchestrator` | Use the smallest primitive workflow and bounded review closure rounds. |
-| Bounded objective through PR readiness | `project-delivery` | Carry discovery, planning, implementation, verification, review, docs sync, and PR-readiness evidence to the next human gate. |
-| Repeated milestone wakeups | `milestone-continuation` | Use durable milestone/task state; runtime scheduling remains outside the shared skill. |
-| Next safe task or handoff prompt | `task-continuation` | Prepare continuation prompts, task briefs, or sequential execution paths from durable context. |
-| Independent bounded work packets | Shared subagent delegation through `project-orchestrator` or `project-delivery` | Available in current Desktop, CLI, and IDE runtimes; preserve disjoint ownership and main-agent integration. |
-| Ordinary code or mixed review | `code-review` or `code-review-deep` | Use deep review for security, data, packaging, migration, release, or cross-module risk. |
-| Ordinary docs review | `docs-review` | Use docs review for docs-only or docs-dominant changes. |
-| Formal readiness decision | `code-review-gate`, `docs-review-gate`, or `merge-readiness-gate` | Use only for commit readiness, PR readiness, merge readiness, or explicit repo-policy gates. |
-| User-owned Desktop task or thread handoff | `desktop-project-delivery` or `desktop-thread-delegation` | Desktop control-plane adapter; creating or mutating a task requires supported capability and authorization for the exact action. |
+| `implementation` | `implementation-slice` | One scoped implementation packet. |
+| `docs` | `docs-update` | Documentation sync from verified sources. |
+| `review:routine` | `code-review` | A review request with routine risk. |
+| `review:high` | `code-review-deep` | A review request with high risk. |
+| `delivery` | `project-delivery` | Bounded delivery; execution mode may use disjoint subagents. |
+| `continuation` | `task-continuation` | Select or prepare the next bounded packet or handoff. |
 
-## Security Scan Recovery
+Selectors use `request.kind`; review combines `kind: review` with `request.risk`.
+There is no milestone request kind. The upper-layer `milestone-continuation`
+owns repeated milestone progress. Within an existing durable loop, its
+`continuation` decision selects `task-continuation` for the next packet; after
+selection, materialize that packet's current input and run production `decide`
+again before executing it. Scheduling changes the supported continuation
+execution mode, not the route or task-selection authority.
 
-When a routed workflow invokes an installed Codex Security scan skill, keep
-three state projections separate:
-
-- scan-native status and phase are authoritative for whether the scan is
-  running, complete, failed, or cancelled;
-- Goal status is runtime progress projection only;
-- phase worker status is capability evidence only.
-
-If scan-native status is `running`, a blocked Goal or a worker
-`safety_refused` result must not fail or abandon the scan. Route through
-`task-continuation`, preserve scan-local artifacts, and continue as follows:
-
-1. On the first refusal in any scan phase, use one replacement worker when
-   supported or continue in the current session.
-2. After two refusals in the same phase, stop at a human gate unless the
-   current session has exact authorization for parent scan-phase fallback.
-3. Only after that authorization, pass `loopctl.py decide <decision-input.yaml>
-   --parent-security-scan-fallback-authorized --protected-history-sha256
-   <verified-digest-or-none>` and let the parent produce the required scan-local
-   artifacts under the active scan skill's phase contract. The legacy
-   `--parent-security-report-fallback-authorized` spelling remains an alias for
-   reporting-only compatibility.
-
-Never read fallback authorization from the repo decision YAML. Never call a
-terminal scan-failure operation merely because a worker refused, a Goal was
-blocked, artifacts are partial, or a turn ended. Use the active security skill
-as authority for phase updates, canonical artifacts, recovery exhaustion,
-completion, and the rare truly unrecoverable failure. If Goal projection is
-blocked while the scan remains running, resume the Goal when the runtime
-requires user action, then continue from scan-native context instead of
-restarting the scan.
-
-If the visible commentary channel suppresses a detailed progress message, do
-not treat the display failure as task or scan failure and do not retry the same
-payload with disguised wording. Persist details in repo-owned or scan-owned
-artifacts and switch visible updates to a fixed neutral heartbeat such as
-`running | phase 3/5 | completed 7/7`. Emit a heartbeat at meaningful phase
-changes and at least once per 60 seconds while actively working, use bounded
-polling, and continue through the current-session path when that remains safe.
-The host remains responsible for exposing a structured suppression reason and
-resume/control API; repository artifacts remain completion authority.
-
-During reporting, keep canonical JSON bytes and semantics aligned. Before the
-active scan completion call, serialize `scan-manifest.json` with the active
-security workflow's canonical writer; for the current JSON contract this is
-sorted keys, two-space indentation, and one trailing newline. If `report.md`
-was projected but scan-native status remains `running` with a sealed-manifest
-CAS error, do not restart or fail the scan. Compare the manifest to canonical
-JSON bytes, canonicalize it without changing semantics, verify sealed artifact
-hashes, and retry completion once on the same scan id.
+`project-orchestrator`, docs-specific review, formal gates, and runtime adapters
+remain owner/phase-specific workflows used when their requirements apply; they
+are not additional outputs from this phase router.
 
 ## Runtime Boundaries
 
-Shared loop behavior may read durable repository files, inspect git state, run local verification, prepare prompts or task briefs, and continue in the current session when safe.
+Subagent delegation is shared across supported Desktop, CLI, and IDE surfaces.
+Goal creation requires an explicit request and an exposed capability. Goal,
+worker, scheduler, and task status remain progress projections. A new or
+background Desktop task requires an explicit user request; exact runtime
+mutations require current documented capability, target, and authorization.
 
-Goal semantics are shared when the active runtime exposes Goal mode; use it only
-when explicitly requested and do not assume universal surface availability.
-Subagent delegation is shared across current Desktop, Codex CLI, and IDE
-surfaces. Treat goal status, subagent status, runtime summaries, and worker
-self-reports as progress or coordination evidence, not completion authority.
+Hooks are optional guardrails and are not complete enforcement. Safe operation
+must not depend on hooks or on intercepting every equivalent tool path. When a
+runtime capability is absent, use current-session sequential work, a manual
+invocation, task brief, or paste-ready continuation with the same gates.
 
-Scheduling and Desktop user-owned task/thread/worktree management are runtime
-control-plane capabilities. A Desktop action may be used only when the active
-runtime exposes a documented callable, the target and response semantics are
-clear, and the user has authorized the exact state-changing action. Creating a
-new or background Desktop task requires an explicit user request.
-
-Hooks are optional guardrails and are not complete enforcement. The loop must
-remain safe and correct when hooks are disabled, unavailable, or unable to
-intercept an equivalent tool path.
-
-The optional V2c-B GitNexus runner uses only documented `SessionStart` and
-`PostToolUse` events for `Bash` and `apply_patch`. It is notify-only by default,
-never parses the shell command, patch, tool response, or transcript, and
-treats those events as incomplete repository-change signals. Auto-on-demand
-requires separate machine-local opt-in and delegates only a clean eligible
-revision in the exact configured checkout to the qualified V2c-A controller.
-Each primary checkout or linked worktree requires its own exact machine-local
-root and worktree-bound index identity; a config for one checkout must reject
-events from another. Linked-worktree automatic refresh remains unqualified and
-fails closed without updating the primary checkout's index. After a merge, the
-primary checkout must first advance locally; its next `SessionStart` or
-completed `Bash`-matched shell/unified-exec event can then refresh that clean
-HEAD. A remote PR/MR result
-alone cannot update a local index. Controller failure installs a durable
-repository-bound circuit breaker so later hook events cannot retry
-automatically without operator clearance. Installing its templates does not
-activate hooks or grant trust. The shipped runner stays synchronous because
-background hook invocations may overlap and finish out of order.
-
-The GN-FU-01 `gitnexus-index-identity/v1` sidecar makes exactness content-bound,
-not HEAD-only. A qualified refresh writes it only after metadata postconditions;
-later status/hook checks require an exact repository, checkout/worktree,
-branch/HEAD, complete relevant content, tool/configuration, and freshness match.
-Missing/old evidence plus dirty tracked, untracked, mixed, detached, ignored-
-content-drifted, or cross-worktree state is advisory. PR base/head pair identity
-binds two clean committed contents but proves no review or gate. These documents
-remain non-authoritative and do not enable linked automatic refresh.
-
-In Codex CLI or any runtime without a scheduler or Desktop task-control
-capability, use the current session, manual invocation, a paste-ready prompt, a
-task brief, a continuation prompt, or a sequential execution path. The fallback
-preserves the same objective, authority, verification, review, and completion
-rules.
-
-`../../docs/native-runtime-capabilities.md` relative to this skill is the canonical runtime
-contract; filesystem installation also places it at
-`~/.codex/templates/docs/native-runtime-capabilities.md`. It defines authority
-mapping, current callable response semantics, and adapter fallbacks. The native
-loop path uses only documented capabilities exposed in its active runtime after
-call-site validation; a repository-local helper script is not a native control
-path and must not be imported, executed, or recommended.
+Follow `../../docs/native-runtime-capabilities.md` in source/plugin checkouts or
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/docs/native-runtime-capabilities.md`
+after filesystem installation. Use documented callables after call-site validation.
+A repository-local helper is not a native control path and must not be imported, executed, or
+recommended. Runtime adapters retain exact-action gates, including ownership
+and source stop-writing before any fresh rollover.
 
 ## Human Gates
 
@@ -567,6 +217,9 @@ If evidence is incomplete, weak, indirect, or contradictory, continue gathering 
 
 ## Output
 
+Report changes since the last verified baseline; link still-current evidence
+instead of repeating its contents. Include enough evidence for the next decision.
+
 - Loop objective and current classification
 - Source-of-truth files inspected
 - Facts, inferences, and uncertainty
@@ -577,28 +230,3 @@ If evidence is incomplete, weak, indirect, or contradictory, continue gathering 
 - Loop iteration result: `continue`, `handoff-prepared`, `blocked-by-human-gate`, or `complete`
 - Next selected task or required human decision
 - Residual risk
-
-## Memory M1 Local Pilot
-
-`memorypilotctl.py off` is the default route and has no adapter/filesystem
-touch. `memory-m1-local-pilot/v1` is an explicit local/manual/CI-only,
-advisory-only façade over the separately qualified SQLite/FTS5 adapter. It
-never runs automatically or makes repository, verification, review, authority,
-acceptance, promotion, merge, release, or activation decisions. Its four
-profile labels classify an already eligible `durable-lesson`; they do not add
-record kinds or mint authority.
-
-## Templates
-
-Use these templates when a target repository needs durable loop artifacts:
-
-- `../../templates/orchestration/loop-engineering-spec.template.md` or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/loop-engineering-spec.template.md`
-- `../../templates/orchestration/loop-decision-input.template.yaml` or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/loop-decision-input.template.yaml`
-- `../../templates/orchestration/loop-event.template.yaml` or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/loop-event.template.yaml`
-- `../../templates/orchestration/loop-iteration-report.template.md` or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/loop-iteration-report.template.md`
-- `../../templates/orchestration/loop-handoff-prompt.template.md` or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/loop-handoff-prompt.template.md`
-- `../../templates/orchestration/loop-state-ledger.template.yaml` or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/loop-state-ledger.template.yaml`
-- `../../templates/orchestration/task-claim-lease.template.yaml` or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/task-claim-lease.template.yaml`
-- `../../templates/orchestration/context-continuity.template.yaml` or `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/context-continuity.template.yaml`
-
-Reuse existing project, task, and review templates whenever they are sufficient instead of creating loop-specific duplicates.

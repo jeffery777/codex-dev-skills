@@ -1,5 +1,10 @@
 # Code Review Report
 
+<!-- Omit empty severity/question sections unless repo policy requires them.
+Always retain the verdict, reviewed revision/diff and scope, evidence, unresolved
+risk and verification limits. Every reported finding keeps a stable id and
+disposition; shared NIT rationale may reference multiple ids. -->
+
 ## Executive Summary
 
 ## MUST-FIX

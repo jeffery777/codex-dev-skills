@@ -15,7 +15,9 @@ Use this workflow in Codex Desktop when the user delegates a bounded project obj
    formal commit readiness, PR readiness, merge readiness, or another
    repo-policy blocking decision.
 8. Main agent prepares PR or merge readiness evidence.
-9. Main agent stops for human approval before external writes, including commit, push, PR creation, platform comments, review submissions, or final merge/deploy actions.
+9. Main agent stops before commits or external actions such as push, PR creation,
+   platform comments, review submissions or merge/deploy when the exact action
+   lacks authorization. Do not ask again for a still-valid explicit instruction.
 
 Desktop automation is a thin wakeup adapter. Use the active
 `automation_update` surface, default a recurring request in the current local
@@ -38,4 +40,5 @@ adapters. Sidebar organization remains separate from task creation and
 navigation. `desktop-spec-plan-gate`,
 `desktop-implementation-gate`, and `desktop-pr-merge-gate` remain installable
 only as deprecated compatibility aliases that route to shared skills; they do
-not add Desktop callable behavior.
+not add Desktop callable behavior. Their `agents/openai.yaml` disables implicit
+invocation; existing explicit prompts remain supported.

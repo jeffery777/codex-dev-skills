@@ -1,167 +1,88 @@
 # Loop Engineering Workflow
 
-Use this workflow when a maintainer wants Codex to keep a bounded objective moving through repeated plan, implementation, verification, review, continuation, and gate decisions.
+Use `skills/loop-engineering/SKILL.md` for an explicitly requested durable loop
+or an existing repo-owned loop spec, ledger, or production decision contract.
+Use `project-delivery` for ordinary bounded delivery and `implementation-slice`
+for one clear task. Autonomous progress alone does not activate a durable loop.
 
-The user-facing skill is `loop-engineering`. It is an entrypoint and router, not a new execution engine. The loop works by repeatedly choosing the smallest existing workflow that can advance the current state.
+This document is navigation. The skill owns the loop procedure; its triggered
+references retain detailed contracts. Load only the reference for the current
+action instead of repeatedly reading every optional subsystem.
 
-## Loop Cycle
+## Cycle
 
-1. **Bootstrap**
-   - Read repo instructions, policies, specs, plans, task manifests, repo-owned loop ledgers, loop specs, status docs, review evidence, verification commands, templates, and git state.
-   - Treat chat summaries and handoff prompts as context only.
-2. **Classify**
-   - Decide whether the next state is a single task, bounded delivery objective, review closure loop, milestone continuation, handoff, Desktop delegation, human gate, or completion audit.
-3. **Route**
-   - Use the production loop decision contract to select the smallest existing
-     skill that fits the classified state.
-   - When V2a characteristics are present, select an explainable capability
-     class and preflight its runtime profile without changing authority.
-4. **Act**
-   - Implement, update docs, review, prepare handoff, or stop according to the routed workflow.
-5. **Verify**
-   - Run the smallest relevant verification, inspect the diff, and check evidence against the objective and DoD.
-6. **Review Or Gate**
-   - Use review primitives for ordinary feedback.
-   - Use formal gates only for commit readiness, PR readiness, merge readiness, or explicit repo-policy blocking decisions.
-7. **Decide Next**
-   - Continue the loop, prepare a handoff, stop for human decision, or mark the objective complete only when evidence proves completion.
-8. **Assess Context Health When Triggered**
-   - After two unfinished review/fix rounds by default, run the versioned
-     context-health assessment. The threshold triggers assessment only.
-   - Choose exactly one of current-context continuation, regrounding, bounded
-     subagent delegation, fresh rollover preparation, or a human gate.
-   - Require checkpoint, source stop-writing, single destination writer,
-     lineage/idempotency/anti-recursion, and runtime capability before any
-     separately authorized fresh action.
+1. Bootstrap relevant repository instructions, specs, plans, task/loop state,
+   verification/review artifacts, and Git state.
+2. Revalidate repository/worktree identity, branch/HEAD, tracked/untracked
+   content, scope/ownership, phase, policy, environment, and evidence dependencies.
+   Reuse still-current reads; reground affected sources on drift or fully when
+   freshness/provenance is uncertain. An unchanged SHA is insufficient.
+3. Classify and route with production `loopctl.py decide`. Protected history
+   requires authoritative current-session inspection and the exact verified
+   `--protected-history-sha256`; repository YAML and replay cannot authorize it.
+4. Execute the smallest routed workflow, verify, inspect the diff, and integrate
+   evidence before continuing, handing off, stopping at a real gate, or completing.
+5. After two unfinished review/fix rounds by default (or a configured positive
+   threshold), assess context health. Assessment cannot create or roll over a task.
 
-When the loop owns an existing change request, apply
-`policies/exact-head-merge-review-contract.md`. Pre-commit review evidence may
-be reused as input but cannot supply the Merge Review verdict. Require the
-ordered change-request-created, exact-head-verification, exact-head-content-
-review, content-readiness, and separate merge-authorization states. Bind
-deterministic verification and code/documentation coherence to the complete
-range. Report provider enforcement separately and apply only the profile
-selected by repository policy. Relevant content drift returns content review
-to `REVIEW_REQUIRED`; provider drift invalidates only provider evidence.
+Repeated milestone progress remains owned by the upper-layer
+`milestone-continuation`. Within an existing durable loop, use the production
+`continuation` decision to select `task-continuation` for the next packet, then
+run `decide` again on the selected packet's current input before executing it.
+There is no milestone request kind or milestone-specific emitted route.
 
-After a remediation, rerun code review and Security Diff Scan over the
-smallest affected boundary that can prove closure, widening when prior
-assumptions changed. A new head always receives a complete base-to-head Merge
-Review. Clean read-only or already-authorized phases continue without an
-additional human stop.
+## Contract Navigation
 
-## Route Map
+Paths in this table are relative to `skills/loop-engineering/`, including after
+filesystem installation. Each reference states its exact trigger and boundaries.
 
-| Situation | Use |
+| Action | Read |
 | --- | --- |
-| One clear coding task | `implementation-slice` |
-| Documentation sync | `docs-update` |
-| Task classification or bounded review closure | `project-orchestrator` |
-| Bounded objective to PR readiness | `project-delivery` |
-| Repeated milestone progress across invocations | `milestone-continuation` |
-| Next-task selection or handoff artifact | `task-continuation` |
-| Separate or resumed Codex CLI session after handoff selection | `cli-session-handoff` |
-| Routine code or docs feedback | `code-review`, `docs-review`, or `code-review-deep` |
-| Formal readiness decision | `code-review-gate`, `docs-review-gate`, or `merge-readiness-gate` |
-| Shared bounded subagent packets | `project-orchestrator` or `project-delivery` |
-| Desktop user-owned task/thread/worktree handoff | `desktop-project-delivery` or `desktop-thread-delegation` |
-| Context continuity after unfinished review/fix threshold | `loopctl.py context-health` and `context-continuity-policy.md` |
+| Loop routing, completion, and human gates | `SKILL.md` |
+| Ledger/history/event operations and durable templates | `references/loop-state-and-authorization.md` |
+| Heterogeneous class/tier/profile routing and worker acceptance | `references/agent-routing.md` |
+| Ordinary candidate delegation in CLI or Desktop | `references/agent-qualification.md` directly |
+| Security scan continuation, recovery, and reporting | `references/security-scan-recovery.md` |
+| Context assessment or sequential ownership rollover | `references/context-continuity.md` |
+| Optional GitNexus hook/controller/index use | `references/gitnexus-runtime.md` |
+| Explicit evidence, improvement, or memory document families | `references/optional-evidence-memory.md`, then the matching contract |
 
-For heterogeneous subagent work, version 1 retains the nine V2a factors.
-Version 2 adds an explicit workload kind and selects a capability class plus an
-ordered tier. Record the selected class/tier/role, runtime mapping, fallback,
-scope/ownership, worker receipt, and main-agent disposition. If the exact
-profile is unavailable, select the lowest sufficient higher-tier profile in the
-same class, then use parent/default or sequential execution only with explicit
-class/tier evidence; stop when the risk or tier cannot safely degrade.
-The current parent sandbox is part of preflight evidence: never activate a
-profile whose `sandbox_mode` would widen it. Technical sandbox capability does
-not grant workflow mutation authority.
+Candidate qualification is parent-owned preparation: classify the actual task,
+read approved scope-bound evidence, collect current public runtime facts, and run
+`agent-route`. Missing qualification preserves baseline routing; explicit empty
+candidates retain opt-out. Neither qualification nor installed profiles prove
+native availability, widen a sandbox, or authorize writes.
 
-Delegate by disjoint ownership and useful parallelism, not by one worker per
-discipline. Keep implementation, focused tests, and directly related docs with
-one owner by default; preserve independent code review and risk-triggered
-security review. Dispatch a fixed independent set once, continue parent-owned
-work, then use one supported wait-for-any/mailbox wait. Do not poll unchanged
-worker status. Workers report only decision blockers and one final receipt;
-integrate completed receipts while unrelated workers continue and reuse the
-original worker for bounded follow-up when its assignment remains fresh.
-The executable contract is `loopctl.py agent-route <decision-input.yaml>
---runtime-facts <current-runtime-facts.json>` using the `agent_route` section of
-the installed decision-input template. Runtime facts are current-session CLI or Desktop
-evidence, not repository-controlled YAML, and the route registry must be the
-canonical registry shipped with the installed skill. Main-agent integration
-uses `agent-integrate` with explicit repository, worker-artifact, and
-verification roots plus assignment freshness; it independently reads those
-files, their SHA-256 digests, and exact branch/HEAD instead of trusting a
-receipt's self-attested current state.
+## Change-Request Closure
 
-The parent prepares and runs that command during normal delegation; it does
-not send the user back to a manual JSON/CLI step. Follow the automatic
-qualification procedure in `skills/loop-engineering/SKILL.md`: assess the
-task against approved evidence, set its qualified scope, collect fresh public
-runtime facts and omit `enabled_candidates` to let the router discover the
-user store. Explicit empty candidates retain opt-out. This integrates the
-shared CLI/Desktop workflow without inventing a daemon, private runtime
-reader, or global conversation hook. See `docs/agent-qualification-autoload.md`.
+When a change request exists, follow
+`policies/exact-head-merge-review-contract.md`. Reuse applicable pre-commit
+reviews as input only. Require exact-head deterministic verification, complete
+base-to-head content Merge Review, code/documentation coherence, content
+readiness, and separate merge authority. Every changed head requires a new
+complete Merge Review; after a fix, code/security re-review may be proportional
+to the affected boundary when prior assumptions remain valid.
 
-## State Model
+Report provider enforcement separately and apply only the profile selected by
+repository policy. Relevant content drift returns review to `REVIEW_REQUIRED`;
+provider drift invalidates provider evidence. Clean read-only or already-authorized
+stages continue without a new confirmation merely because a phase ended.
 
-A loop iteration should distinguish:
+## Runtime And Authority
 
-- **Durable source of truth**: repo instructions, specs, task manifests, loop specs, status docs, review evidence, git state, and PR state.
-- **Repo-owned loop ledger**: validated append-only events plus a reconstructable view of task status, claim and lease state, iteration evidence, next decision, and human gates.
-- **Working context**: chat summaries, current thread notes, task briefs, and previous assistant summaries.
-- **In-flight state**: worker or thread status, claims, leases, and heartbeat artifacts.
+Goal, worker, thread, memory, and ledger projections do not prove completion.
+Protected actions require exact current-session authorization and independently
+verified evidence. Optional memory stays default-off with no backend/filesystem
+touch. Runtime fallback preserves verification, review, and authority boundaries.
 
-The loop spec and task manifest control stable definitions; validated events
-control internally consistent operational transitions. Event replay does not
-authenticate actor identity or external approval. Git, verification, review, and accepted
-platform state control completion. Working context can help locate files but
-cannot prove completion. In-flight state can guide whether to wait, inspect,
-recover, or stop, but it cannot replace those authorities.
+Shared work runs in the current session or supported bounded subagents. Scheduling
+and user-owned Desktop task/thread/worktree mutations use documented runtime
+adapters and exact-action authority. New Desktop tasks and Goal creation require
+explicit requests. Fresh rollover requires a canonical checkpoint, source
+stop-writing, one destination writer, and lineage/idempotency/anti-recursion.
 
-Protected acceptance, gate, revocation, and completion writes require exact
-current-session action and receipt-digest authorization after external evidence
-verification. Never infer live authority from the repo ledger or decision YAML.
-Before routing from historical protected state or advancing its ledger,
-revalidate its external receipts and pass the exact protected-history digest;
-semantic replay alone is not origin authentication.
-
-## Security Scan Continuation
-
-When the selected workflow is a Codex Security scan, treat scan-native status,
-Goal status, and worker status as separate projections. A running scan remains
-resumable when Goal is blocked or a report worker returns `safety_refused`.
-Use a replacement worker or current session for the first refusal. After
-repeated refusals, preserve the scan and stop for explicit parent-report
-fallback authorization; only then continue reporting in the parent. Do not call
-a terminal scan-failure operation for worker refusal, partial artifacts, Goal
-projection conflict, or turn boundaries.
-
-When a ledger exists, each iteration should read it before selecting work and
-write or prepare a ledger update after verification. If ledger state conflicts
-with git state, task manifests, review evidence, or platform state, re-bootstrap
-and stop at a human gate when the conflict cannot be resolved cheaply.
-
-## Desktop And CLI Boundary
-
-Shared workflow behavior can run in Codex CLI or Codex Desktop using repository files, shell commands, git inspection, and durable artifacts.
-
-Native goal and bounded subagent behavior are shared across supported Codex
-clients. Creating a goal must be explicit, and neither goal nor subagent state
-proves repository completion.
-
-Desktop-only behavior includes Desktop task/thread/worktree UI actions and
-Desktop-managed scheduling. CLI does not provide the Scheduled management
-interface. Use runtime actions only through documented capabilities and the
-authorization required by the action.
-
-When goal, subagent, scheduler, or thread capabilities are unavailable, the
-fallback is a current-session sequential path, paste-ready prompt, task brief,
-or continuation prompt. The fallback must preserve the same source-of-truth,
-verification, review, and human-gate rules.
-
-## Stop Conditions
-
-Stop before proceeding when the next action would cross product ambiguity, source-of-truth conflict, scope expansion, destructive action, external write, commit, push, PR creation, release, deploy, merge, platform comment, review submission, material risk, unsupported Desktop runtime behavior, or insufficient verification for a high-risk change.
+Stop for unresolved product or source-of-truth ambiguity, scope expansion,
+unauthorized external writes, destructive actions without required confirmation,
+material risk, unclear ownership, unsupported runtime behavior, or insufficient
+high-risk verification. Completion requires current evidence for every requirement
+and applicable gate, never worker status, a summary, or passing tests alone.

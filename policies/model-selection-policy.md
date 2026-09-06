@@ -64,10 +64,35 @@ kind instead of inferring mechanical, exploration, implementation, review,
 security-review, or research/orchestration work from a task title.
 
 Select the lowest verified profile in the required class whose tier meets or
-exceeds the requirement. A higher tier is a recorded cost-degraded fallback;
-a lower tier cannot silently satisfy a higher-tier route. Reserve
-`exceptional` for explicit quality-first research or orchestration with
-multiple documented triggers. Use Terra-high `senior` for complex bounded work
+exceeds the requirement. A higher tier is a recorded cost-degraded fallback.
+The legacy `cost_degraded` field records an ordinal tier difference, not measured
+expense. Tier order and eval `latency`/`token_cost` proxies do not estimate model
+latency, actual tokens, price or savings.
+
+For V2, `task.quality_preference` accepts `balanced` or `quality-first`; omission
+means balanced. Exceptional classification requires explicit quality-first
+research/orchestration with at least three complexity triggers and no overriding
+safety trigger. Exceptional profile, parent and sequential fallback are eligible
+only when the required tier itself is exceptional; preference alone cannot
+escalate ordinary work into that tier. A preference never lowers safety minima.
+
+New V2 receipts bind these rules with
+`routing_policy_revision: "v2-2026-09-06"`, emitted by the production builder.
+Receipts without that field retain historical V2 validation semantics; they do
+not authorize a new route under the retired policy. Unknown revisions and mixed
+legacy/new fields are rejected. Preserve original historical receipt bytes and
+digests; rebuild a current assignment from current facts instead of retroactively
+adding a preference to old evidence. V1 behavior remains unchanged.
+
+Routine read-only review without high complexity or safety triggers retains the
+`deep-reviewer` class with an `everyday` requirement. Existing runtime profiles
+still resolve it to the read-only deep baseline as a higher-tier fallback; this
+does not activate a cheaper model. Do not substitute a workspace-write worker
+for a reviewer merely to satisfy the lower tier. Qualify any new reviewer
+profile independently before adding it to the registry.
+
+A lower tier cannot silently satisfy a higher-tier route. Use Terra-high
+`senior` for complex bounded work
 that exceeds the routine Terra-medium profile, and retain Sol-medium
 `advanced` for multi-trigger advanced work. Terra-xhigh and Luna-max are
 eval-first candidates, not defaults: compare them against the adjacent
@@ -85,7 +110,8 @@ profile that is not intrinsically read-only, and reject a mapping that would
 widen that sandbox. This technical check is separate from workflow write
 authorization. Degrade in this order:
 
-1. the lowest-cost available profile in the same class whose tier is sufficient;
+1. the lowest sufficient available tier in the same class, respecting explicit
+   quality preference; compare actual model cost only with measured evidence;
 2. the parent or default model when current facts prove the class and tier;
 3. sequential execution when current facts prove the class and tier;
 4. a human gate when high-risk work cannot degrade safely.

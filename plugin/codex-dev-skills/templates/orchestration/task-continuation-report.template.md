@@ -1,5 +1,9 @@
 # Task Continuation Report
 
+<!-- Include the selected next task, current evidence and limits. Omit empty
+sections and irrelevant candidate rows. Reference valid durable sources rather
+than reproducing the complete project history. -->
+
 ## Source Of Truth Read
 
 - `<path>`

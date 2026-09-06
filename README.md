@@ -488,7 +488,8 @@ Use the smallest entry point that matches the request:
 - `implementation-slice` for one clear coding task.
 - `planning` when the next action or DoD needs to be defined before editing.
 - `code-review` for ordinary read-only review of code or mixed diffs.
-- `loop-engineering` when Codex should own the repeated bootstrap, route, act, verify, review, continue, handoff, or stop cycle for a clear bounded objective.
+- `loop-engineering` when the user explicitly selects durable loop execution or
+  the repository requires its loop spec, ledger and production decision contract.
 - `project-orchestrator` when Codex should classify the task, choose the next safe action, or decide whether to continue, hand off, review, or stop.
 - `project-delivery` when the objective is larger than one task but still bounded.
 - `milestone-continuation` when a bounded milestone should be checked and advanced across repeated invocations until complete or blocked by a human gate.
@@ -496,13 +497,23 @@ Use the smallest entry point that matches the request:
   handoff and the user explicitly authorizes one new, resumed, forked,
   dashboard, or queued-message CLI session action.
 
-`loop-engineering` is a thin entrypoint over the existing phase skills. It should classify the current state, route to the smallest suitable workflow, verify evidence, and stop at human gates. It does not replace focused implementation, review primitives, formal gates, milestone continuation, task continuation, shared subagents, or Desktop user-owned task/thread/worktree controls.
+Ordinary bounded delivery and baseline subagent work do not require a loop
+ledger. The `loop-engineering`, CLI handoff and Desktop delegation entry points
+link operation-specific references; read the selected operation's contract and
+keep optional memory, qualification, GitNexus and recovery details unloaded
+unless their triggers apply. Full contracts remain available in both filesystem
+and plugin installations.
 
 If `project-orchestrator` receives a single clear implementation task, it should route to `implementation-slice` semantics and avoid unnecessary project-level planning.
 
-For automated review closure, let `project-orchestrator` or `project-delivery` compose the primitive shared workflows dynamically. A user or repo policy may set the maximum number of review/fix rounds; the default is 2.
-When work is still incomplete at that threshold, run context-health assessment;
-do not automatically replace the task. See
+For automated review closure, let `project-orchestrator` or `project-delivery`
+compose the primitive shared workflows. Two unfinished review/fix rounds are
+the default reassessment point, not an automatic stop. An explicit user or repo
+maximum is a hard limit. Reuse review evidence while its diff, scope and source
+assumptions remain valid; a formal gate alone does not require a second review.
+A changed change-request head still requires complete exact-head Merge Review.
+At the reassessment point, assess context health without automatically replacing
+the task. See
 [Context Continuity And Fresh-Context Rollover](docs/context-continuity.md).
 
 ### CLI And Desktop Entry Paths
@@ -595,7 +606,9 @@ The orchestrator uses the smallest shared primitives that fit the current state:
 
 ### Loop Engineering
 
-Use `loop-engineering` when the objective is clear and Codex should keep selecting the next safe workflow until the objective is complete or a human gate is reached:
+Use `loop-engineering` for an explicitly selected durable loop or an existing
+repo-owned loop contract. Ordinary bounded delivery uses `project-delivery`;
+autonomous progress alone does not require a ledger:
 
 ```text
 Use loop-engineering for issue #123.
@@ -1266,7 +1279,7 @@ thread:
 ```text
 Use desktop-thread-delegation for the bounded task already selected by shared orchestration.
 Choose only whether that selected task continues here or moves to a new Desktop task/thread/worktree.
-If a new Desktop task is appropriate, prepare the handoff prompt and ask before opening it.
+Prepare the handoff prompt and create the separate Desktop task only when that action is explicitly authorized.
 If thread creation is unavailable, return the prompt for me to paste manually.
 Keep review, commit, PR, merge, platform comments, and other external writes behind explicit authorization.
 ```
@@ -1275,12 +1288,14 @@ The main thread remains responsible for integrating returned work, checking the 
 
 Use `desktop-sidebar-organization` separately when the user explicitly asks to
 create or rename a sidebar section, move an exact task/project, or prepare a
-reorder/delete action. The skill discovers exact IDs with fresh
-`list_threads`/`list_projects` reads, emits a dry-run plan, validates the
+reorder/delete action. The skill discovers exact IDs from the registry needed
+for that action, prepares a dry-run plan, validates the
 callable response, and reads the result back. It never treats titles or
 summaries as identity, never substitutes a queued `clientThreadId` for a ready
-`threadId`, and never uses task creation or navigation as a fallback. Delete
-and complete-list reorder remain separate human gates; tests and CI use only
+`threadId`, and never uses task creation or navigation as a fallback. An explicit
+reversible rename/move/reorder request remains authorized after target resolution;
+complete-list membership must still match. Delete retains its destructive human
+gate, and changed scope or ambiguous effects require a decision. Tests and CI use only
 synthetic contract evidence and perform no live sidebar mutation.
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
@@ -1314,9 +1329,9 @@ Choose the Desktop action from the handoff intent: use a same-directory
 checkout/worktree; use a worktree `fork_thread` for the same task and completed
 history when a newly isolated checkout is required; for a fresh task use
 `create_thread` with the exact project
-ID and a concise non-empty safe `title`. Use only approved nonsensitive task
-metadata and preview the exact title; never copy prompt text or sensitive
-details, and use the fixed `Project task` fallback when safety is uncertain. A
+ID and a concise non-empty safe `title` derived from the user-approved objective.
+Ordinary descriptive titles are allowed; exclude sensitive details and use a
+neutral generic title such as `Project task` when needed. A
 Git project defaults to `worktree`; use `local` only when the user explicitly
 requests the saved project checkout.
 Non-Git projects default to `local`, and `projectless` remains limited to
@@ -1358,7 +1373,7 @@ at
 
 | Skill | Runtime | Purpose |
 | --- | --- | --- |
-| `loop-engineering` | shared | Explicit loop entrypoint for clear bounded objectives; routes through planning, implementation, verification, review, continuation, handoff, and gates until complete or stopped. |
+| `loop-engineering` | shared | Explicitly selected or repo-required durable loop; uses production decisions, current evidence and scoped phase skills. |
 | `cli-session-handoff` | cli | Start, resume, fork, or clean non-interactive fresh-continue one authorized bounded CLI session, or prepare one exact manual interactive fork, after shared orchestration selects the handoff. |
 | `planning` | shared | Produce scoped implementation plans with assumptions, risks, DoD, and verification. |
 | `milestone-continuation` | shared | Continue a bounded milestone across repeated invocations by checking task completion, choosing the next ready task, and stopping at human gates. |

@@ -18,12 +18,19 @@ For ordinary user-requested code review, use `code-review`. This skill is a thin
 1. Classify the diff as code, mixed, generated, or docs-dominant.
 2. Use `code-review` for routine risk.
 3. Escalate to `code-review-deep` for security, data, migration, packaging, dependency, external integration, or cross-module risk.
+   Reuse a matching primitive result when its revision or worktree diff identity,
+   scope, source assumptions and verification evidence remain valid; entering
+   this gate alone does not require another review.
 4. Give every MUST-FIX, SHOULD-FIX, and NIT a stable finding id and one disposition: `Fixed`, `Deferred`, `Rejected`, or `Needs Human Decision`.
 5. Record each disposition according to repo policy. A deferred finding requires a durable target, owner, reason, remaining risk, verification plan, and promotion trigger that says when it becomes blocking.
 6. Rerun the underlying review after fixes and verify the disposition record against the final diff.
 7. Block commit or merge readiness when any MUST-FIX remains unresolved, any finding lacks a durable disposition, a deferred item lacks its required follow-up fields, or a `Needs Human Decision` item remains open.
 
 NITS are non-blocking only after they are fixed, explicitly rejected with rationale, or durably deferred. They must not disappear from the gate result.
+
+Shared rationale may cover a batch of NITs while preserving every finding id.
+Reused pre-commit evidence cannot replace complete base-to-head exact-head Merge
+Review for a new change-request head.
 
 ## Output
 

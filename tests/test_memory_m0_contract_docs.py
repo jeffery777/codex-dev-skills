@@ -33,7 +33,8 @@ class MemoryM0ContractDocsTests(unittest.TestCase):
     def test_repository_entrypoints_keep_m1_default_disabled(self):
         required = {
             "README.md": ("loop-memory-operation/v0", "loop-memory-qualification/v0", "v0.14.0"),
-            "skills/loop-engineering/SKILL.md": ("memory-operation-v0.md", "memory-qualification-v0.md", "SQLite/FTS5"),
+            "skills/loop-engineering/SKILL.md": ("references/optional-evidence-memory.md", "memory-off"),
+            "skills/loop-engineering/references/optional-evidence-memory.md": ("memory-operation-v0.md", "memory-qualification-v0.md", "SQLite/FTS5"),
             "docs/roadmap.md": ("Issue #145", "Memory M0", "v0.14.0"),
             "docs/release-readiness.md": ("Memory M0", "zero backend/filesystem touch", "physical purge"),
             "docs/programs/operational-evidence/architecture-decisions.md": ("OE-016", "loop-memory-operation/v0", "loop-memory-qualification/v0"),

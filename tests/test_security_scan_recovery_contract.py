@@ -18,9 +18,13 @@ def read(relative_path: str) -> str:
 
 class SecurityScanRecoveryContractTests(unittest.TestCase):
     def test_skill_keeps_scan_goal_and_worker_state_separate(self) -> None:
-        skill = read("skills/loop-engineering/SKILL.md")
+        entrypoint = read("skills/loop-engineering/SKILL.md")
+        reference = "references/security-scan-recovery.md"
+        self.assertIn(reference, entrypoint)
+        self.assertIn("Security scan continuation, recovery, or reporting", entrypoint)
+        skill = read(f"skills/loop-engineering/{reference}")
         for phrase in (
-            "## Security Scan Recovery",
+            "# Security Scan Recovery",
             "scan-native status",
             "Goal status",
             "worker status",
@@ -44,9 +48,13 @@ class SecurityScanRecoveryContractTests(unittest.TestCase):
         self.assertIn("protected_history_sha256", template["input"]["state"])
 
     def test_protected_event_docs_separate_replay_from_live_write(self) -> None:
+        entrypoint = read("skills/loop-engineering/SKILL.md")
+        reference = "references/loop-state-and-authorization.md"
+        self.assertIn(reference, entrypoint)
         combined = "\n".join(
             (
-                read("skills/loop-engineering/SKILL.md"),
+                entrypoint,
+                read(f"skills/loop-engineering/{reference}"),
                 read("docs/loop-engineering.md"),
                 read("docs/loop-state-ledger.md"),
                 read("workflows/loop-engineering-workflow.md"),

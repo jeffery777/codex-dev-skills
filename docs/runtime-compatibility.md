@@ -273,12 +273,15 @@ not repository completion evidence and does not replace detailed reads,
 integration checks, verification, or review.
 
 Sidebar organization is a separate Desktop-only control plane. The
-`desktop-sidebar-organization` skill uses fresh `list_threads` and
-`list_projects` discovery, exact runtime IDs, a reviewed dry-run plan,
+`desktop-sidebar-organization` skill uses fresh discovery from only the needed
+`list_threads` or `list_projects` registry, exact runtime IDs, a dry-run plan,
 action-specific authorization, response validation, and post-mutation
 readback. It fails closed rather than guessing from display names, stale or
-partial snapshots, or queued `clientThreadId` values. Delete and complete-list
-reorder remain human gates; CLI fallback is an exact manual plan, not a live
+partial snapshots, or queued `clientThreadId` values. A concrete reversible
+create/rename/move/reorder request remains authorized after unambiguous identity
+resolution; complete-list membership must still match. Delete retains its
+destructive gate, and changed scope or ambiguous effects require a decision.
+CLI fallback is an exact manual plan, not a live
 sidebar mutation.
 
 ## Evidence

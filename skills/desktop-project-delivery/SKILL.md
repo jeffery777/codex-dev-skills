@@ -37,12 +37,16 @@ readiness stages.
 
 ## Workflow
 
-1. Run the shared `project-delivery` and `project-orchestrator` contract to
-   bootstrap, select work, define ownership, verify, review, and decide gates.
+1. Enter `project-delivery` once; it uses `project-orchestrator` for phase
+   selection. Reuse that bootstrap and evidence rather than running a second
+   delivery loop in this adapter.
 2. Use shared subagents for independent bounded work when useful. Keep writes
    disjoint or isolated and keep the main agent responsible for integration.
-   Apply the shared automatic qualification procedure before candidate
-   selection. Collect model, effort, custom-role and sandbox evidence from
+   For V2 candidate selection, read
+   `../loop-engineering/references/agent-qualification.md` and apply the shared
+   automatic qualification procedure. Ordinary baseline delegation does not
+   require the full Loop Engineering workflow. Collect model, effort,
+   custom-role and sandbox evidence from
    the active Desktop callable surface; pass `model_surface.runtime: desktop`.
    The parent prepares the router input. Do not ask the user to run a CLI
    command, reuse CLI availability, or read private Desktop state. If the
