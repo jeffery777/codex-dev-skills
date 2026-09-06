@@ -367,6 +367,20 @@ check_memory_m1_contracts() {
   ok "Memory M1 SQLite/FTS5 reference adapter and thin local pilot contracts pass"
 }
 
+check_memory_governance_g0() {
+  local fixture
+  for fixture in update prune-history erase-pending erase-complete continuation-pending continuation-complete audit audit-partial retention marker-retention; do
+    "$PROJECT_PYTHON" scripts/validate-memory-governance-g0.py \
+      "tests/fixtures/memory-governance-g0/$fixture.json" \
+      --context "tests/fixtures/memory-governance-g0/$fixture.context.json" \
+      >"$TMP_DIR/g0-$fixture.json"
+  done
+  "$PROJECT_PYTHON" scripts/validate-memory-governance-g0.py \
+    tests/fixtures/memory-governance-g0/off.json >"$TMP_DIR/g0-off.json"
+  run_unit_tests tests.test_memory_governance_g0
+  ok "MG1 G0 synthetic contract conformance passes without runtime authority"
+}
+
 check_loop_contract() {
   run_unit_tests tests.test_loop_engineering_core tests.test_loopctl
   ok "loop engineering event, transition, migration, and CLI contracts pass"
@@ -434,6 +448,7 @@ main() {
   check_candidate_evaluation_contract
   check_memory_m0_contracts
   check_memory_m1_contracts
+  check_memory_governance_g0
 }
 
 main "$@"

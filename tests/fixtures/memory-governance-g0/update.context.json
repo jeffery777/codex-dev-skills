@@ -1,0 +1,21 @@
+{
+  "contract_version": "mg1-g0-synthetic/v0",
+  "scope": {
+    "principal_id": "synthetic-principal",
+    "root_id": "synthetic-root"
+  },
+  "now": 1000,
+  "before_digest": "0b5a06a11f92478fd402b1569bf7e7245267eeb48a85137dedf0165f8d30bd69",
+  "profile_digest": "c195875b86f6b3fded59c62dcb301b772bbb0d3b468350fbfbf1918f8f891634",
+  "accepted_confirmations": [
+    "ea5bd3a4771100503b5a838acfbcc7bc66f5b3e2b0afe8f90139168c492d8159"
+  ],
+  "accepted_retention": [],
+  "capabilities": [
+    "audit",
+    "item-write",
+    "erase-content",
+    "root-maintenance"
+  ],
+  "accepted_continuations": []
+}

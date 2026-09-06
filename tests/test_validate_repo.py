@@ -31,7 +31,7 @@ class ValidateRepositoryArgumentsTests(unittest.TestCase):
         self.assertIn('parse_args "$@"', script)
         self.assertIn('run_unit_tests() {', script)
         self.assertIn("[SKIP] embedded unit-test group:", script)
-        self.assertEqual(17, script.count("run_unit_tests "))
+        self.assertEqual(18, script.count("run_unit_tests "))
         self.assertEqual(12, script.count('scripts/eval-'))
 
     def test_invalid_arguments_fail_before_validation(self) -> None:

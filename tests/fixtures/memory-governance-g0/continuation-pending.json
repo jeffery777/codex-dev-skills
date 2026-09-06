@@ -1,0 +1,113 @@
+{
+  "contract_version": "mg1-g0-synthetic/v0",
+  "case_id": "synthetic-continuation-pending",
+  "profile": {
+    "max_items": 10,
+    "max_versions": 3,
+    "history_seconds": 5000,
+    "max_payload_bytes": 1000,
+    "max_proofs": 10,
+    "proof_seconds": 500,
+    "confirmation_seconds": 60,
+    "max_scan_items": 10,
+    "budget_bytes": 100000,
+    "reserve_bytes": 10000,
+    "maintenance_proof_reserve": 2,
+    "marker_seconds": 500
+  },
+  "mode": "continuation",
+  "before": {
+    "scope": {
+      "principal_id": "synthetic-principal",
+      "root_id": "synthetic-root"
+    },
+    "epoch": 1,
+    "reject_before": 0,
+    "items": [
+      {
+        "item_id": "synthetic-item",
+        "status": "erased",
+        "current_revision": 1,
+        "indexed_revision": null,
+        "versions": [],
+        "identity_epoch": 1,
+        "erased_at": 1000
+      }
+    ],
+    "proofs": [
+      {
+        "operation_id": "synthetic-op",
+        "preview_digest": "b7276ff4a722ef03dabe71d2e4e7c6be17280a8eb5696217573646aca95ce82f",
+        "operation": "erase-content",
+        "item_id": "synthetic-item",
+        "issued_at": 980,
+        "recorded_at": 1000,
+        "epoch": 1,
+        "result": {
+          "transaction": "succeeded",
+          "sanitization": "pending",
+          "compaction": "not-requested",
+          "outcome": "sanitization-pending"
+        },
+        "identity_epoch": 1,
+        "reclaim_space": true
+      }
+    ],
+    "storage": {
+      "file_bytes": 8000,
+      "free_bytes": 64000,
+      "reclaimable_bytes": 2000
+    }
+  },
+  "after": {
+    "scope": {
+      "principal_id": "synthetic-principal",
+      "root_id": "synthetic-root"
+    },
+    "epoch": 1,
+    "reject_before": 0,
+    "items": [
+      {
+        "item_id": "synthetic-item",
+        "status": "erased",
+        "current_revision": 1,
+        "indexed_revision": null,
+        "versions": [],
+        "identity_epoch": 1,
+        "erased_at": 1000
+      }
+    ],
+    "proofs": [
+      {
+        "operation_id": "synthetic-op",
+        "preview_digest": "b7276ff4a722ef03dabe71d2e4e7c6be17280a8eb5696217573646aca95ce82f",
+        "operation": "erase-content",
+        "item_id": "synthetic-item",
+        "issued_at": 980,
+        "recorded_at": 1100,
+        "epoch": 1,
+        "result": {
+          "transaction": "succeeded",
+          "sanitization": "succeeded",
+          "compaction": "pending",
+          "outcome": "space-reclaim-pending"
+        },
+        "identity_epoch": 1,
+        "reclaim_space": true
+      }
+    ],
+    "storage": {
+      "file_bytes": 8000,
+      "free_bytes": 64000,
+      "reclaimable_bytes": 2000
+    }
+  },
+  "operation_id": "synthetic-op",
+  "confirmed_at": 1100,
+  "result": {
+    "transaction": "succeeded",
+    "sanitization": "succeeded",
+    "compaction": "pending",
+    "outcome": "space-reclaim-pending"
+  }
+}

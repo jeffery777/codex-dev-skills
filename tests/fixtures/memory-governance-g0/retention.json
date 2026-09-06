@@ -1,0 +1,110 @@
+{
+  "contract_version": "mg1-g0-synthetic/v0",
+  "case_id": "synthetic-retention",
+  "mode": "retention",
+  "profile": {
+    "max_items": 10,
+    "max_versions": 3,
+    "history_seconds": 5000,
+    "max_payload_bytes": 1000,
+    "max_proofs": 10,
+    "proof_seconds": 500,
+    "confirmation_seconds": 60,
+    "max_scan_items": 10,
+    "budget_bytes": 100000,
+    "reserve_bytes": 10000,
+    "maintenance_proof_reserve": 2,
+    "marker_seconds": 500
+  },
+  "before": {
+    "scope": {
+      "principal_id": "synthetic-principal",
+      "root_id": "synthetic-root"
+    },
+    "epoch": 1,
+    "reject_before": 0,
+    "items": [
+      {
+        "item_id": "synthetic-item",
+        "status": "active",
+        "current_revision": 1,
+        "indexed_revision": 1,
+        "versions": [
+          {
+            "revision": 1,
+            "created_at": 900,
+            "body": "synthetic: earlier fact",
+            "summary": "synthetic: earlier summary",
+            "cues": [
+              "synthetic-old-cue"
+            ],
+            "retired_at": null
+          }
+        ],
+        "identity_epoch": 1,
+        "erased_at": null
+      }
+    ],
+    "proofs": [
+      {
+        "operation_id": "synthetic-op",
+        "preview_digest": "6be5112444163a65031f4453545376247e7c11406d77652b0faf8f8f2ecb713e",
+        "operation": "stop",
+        "item_id": "synthetic-item",
+        "issued_at": 100,
+        "recorded_at": 120,
+        "epoch": 1,
+        "result": {
+          "transaction": "succeeded",
+          "sanitization": "not-requested",
+          "compaction": "not-requested",
+          "outcome": "complete"
+        },
+        "identity_epoch": 1,
+        "reclaim_space": false
+      }
+    ],
+    "storage": {
+      "file_bytes": 8000,
+      "free_bytes": 64000,
+      "reclaimable_bytes": 2000
+    }
+  },
+  "after": {
+    "scope": {
+      "principal_id": "synthetic-principal",
+      "root_id": "synthetic-root"
+    },
+    "epoch": 2,
+    "reject_before": 200,
+    "items": [
+      {
+        "item_id": "synthetic-item",
+        "status": "active",
+        "current_revision": 1,
+        "indexed_revision": 1,
+        "versions": [
+          {
+            "revision": 1,
+            "created_at": 900,
+            "body": "synthetic: earlier fact",
+            "summary": "synthetic: earlier summary",
+            "cues": [
+              "synthetic-old-cue"
+            ],
+            "retired_at": null
+          }
+        ],
+        "identity_epoch": 1,
+        "erased_at": null
+      }
+    ],
+    "proofs": [],
+    "storage": {
+      "file_bytes": 8000,
+      "free_bytes": 64000,
+      "reclaimable_bytes": 2000
+    }
+  },
+  "confirmed_at": 1000
+}

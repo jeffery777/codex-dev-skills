@@ -1,0 +1,162 @@
+{
+  "contract_version": "mg1-g0-synthetic/v0",
+  "case_id": "synthetic-update",
+  "mode": "maintenance",
+  "profile": {
+    "max_items": 10,
+    "max_versions": 3,
+    "history_seconds": 5000,
+    "max_payload_bytes": 1000,
+    "max_proofs": 10,
+    "proof_seconds": 500,
+    "confirmation_seconds": 60,
+    "max_scan_items": 10,
+    "budget_bytes": 100000,
+    "reserve_bytes": 10000,
+    "maintenance_proof_reserve": 2,
+    "marker_seconds": 500
+  },
+  "before": {
+    "scope": {
+      "principal_id": "synthetic-principal",
+      "root_id": "synthetic-root"
+    },
+    "epoch": 1,
+    "reject_before": 0,
+    "items": [
+      {
+        "item_id": "synthetic-item",
+        "status": "active",
+        "current_revision": 1,
+        "indexed_revision": 1,
+        "versions": [
+          {
+            "revision": 1,
+            "created_at": 900,
+            "body": "synthetic: earlier fact",
+            "summary": "synthetic: earlier summary",
+            "cues": [
+              "synthetic-old-cue"
+            ],
+            "retired_at": null
+          }
+        ],
+        "identity_epoch": 1,
+        "erased_at": null
+      }
+    ],
+    "proofs": [],
+    "storage": {
+      "file_bytes": 8000,
+      "free_bytes": 64000,
+      "reclaimable_bytes": 2000
+    }
+  },
+  "after": {
+    "scope": {
+      "principal_id": "synthetic-principal",
+      "root_id": "synthetic-root"
+    },
+    "epoch": 1,
+    "reject_before": 0,
+    "items": [
+      {
+        "item_id": "synthetic-item",
+        "status": "active",
+        "current_revision": 2,
+        "indexed_revision": 2,
+        "versions": [
+          {
+            "revision": 1,
+            "created_at": 900,
+            "body": "synthetic: earlier fact",
+            "summary": "synthetic: earlier summary",
+            "cues": [
+              "synthetic-old-cue"
+            ],
+            "retired_at": 1000
+          },
+          {
+            "revision": 2,
+            "created_at": 1000,
+            "body": "synthetic: corrected fact",
+            "summary": "synthetic: corrected summary",
+            "cues": [
+              "synthetic-new-cue"
+            ],
+            "retired_at": null
+          }
+        ],
+        "identity_epoch": 1,
+        "erased_at": null
+      }
+    ],
+    "proofs": [
+      {
+        "operation_id": "synthetic-op",
+        "preview_digest": "a8874037a215b7bc3e79660fa0821726edd81d9047cc3b94b5e5575c888612a8",
+        "operation": "update",
+        "item_id": "synthetic-item",
+        "issued_at": 980,
+        "recorded_at": 1000,
+        "epoch": 1,
+        "result": {
+          "transaction": "succeeded",
+          "sanitization": "not-requested",
+          "compaction": "not-requested",
+          "outcome": "complete"
+        },
+        "identity_epoch": 1,
+        "reclaim_space": false
+      }
+    ],
+    "storage": {
+      "file_bytes": 8000,
+      "free_bytes": 64000,
+      "reclaimable_bytes": 2000
+    }
+  },
+  "preview": {
+    "scope": {
+      "principal_id": "synthetic-principal",
+      "root_id": "synthetic-root"
+    },
+    "operation_id": "synthetic-op",
+    "nonce": "synthetic-nonce",
+    "issued_at": 980,
+    "expires_at": 1040,
+    "epoch": 1,
+    "operation": "update",
+    "item_id": "synthetic-item",
+    "expected_revision": 1,
+    "next_version": {
+      "revision": 2,
+      "created_at": 1000,
+      "body": "synthetic: corrected fact",
+      "summary": "synthetic: corrected summary",
+      "cues": [
+        "synthetic-new-cue"
+      ],
+      "retired_at": null
+    },
+    "restore_revision": null,
+    "erase_revisions": [],
+    "managed_files": [],
+    "unmanaged_copies": [],
+    "reclaim_space": false,
+    "before_digest": "0b5a06a11f92478fd402b1569bf7e7245267eeb48a85137dedf0165f8d30bd69",
+    "profile_digest": "c195875b86f6b3fded59c62dcb301b772bbb0d3b468350fbfbf1918f8f891634",
+    "identity_epoch": 1
+  },
+  "confirmation": {
+    "principal_id": "synthetic-principal",
+    "preview_digest": "a8874037a215b7bc3e79660fa0821726edd81d9047cc3b94b5e5575c888612a8",
+    "confirmed_at": 990
+  },
+  "result": {
+    "transaction": "succeeded",
+    "sanitization": "not-requested",
+    "compaction": "not-requested",
+    "outcome": "complete"
+  }
+}
