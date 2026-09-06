@@ -1,5 +1,10 @@
 # Loop Iteration Report
 
+<!-- Report the current delta and link still-valid evidence. Omit inapplicable
+optional sections; retain ledger identity when a durable loop is active. Include
+exact-head fields for change-request review, and provider fields only when a
+provider profile is selected (otherwise state NOT_CONFIGURED once). -->
+
 ## Objective
 
 - Loop objective: `<objective>`
@@ -57,7 +62,7 @@ Result: `<passed | failed | skipped>`
 ## Review Or Gate Evidence
 
 - Review primitive: `<none | code-review | code-review-deep | docs-review | merge-review | merge-review-deep>`
-- Formal gate: `<none | code-review-gate | docs-review-gate | merge-readiness-gate | desktop-implementation-gate | desktop-pr-merge-gate>`
+- Formal gate: `<none | code-review-gate | docs-review-gate | merge-readiness-gate>`
 - Findings:
   - `<finding-or-none>`
 - Exact-head content state: `<not-applicable | EXACT_RANGE_SELECTED | CHANGE_REQUEST_CREATED | EXACT_HEAD_VERIFICATION_PASSED | EXACT_HEAD_CONTENT_REVIEW_PASSED | CONTENT_READINESS_READY | HUMAN_MERGE_AUTHORIZED | REVIEW_REQUIRED>`

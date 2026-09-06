@@ -12,9 +12,9 @@ This compact guide helps new users choose the smallest skill or gate that matche
 | You need ordinary read-only feedback on docs-only or docs-dominant changes. | `docs-review` | Routine documentation review primitive for accuracy, stale names, links, unsupported claims, and structure. |
 | The code or mixed diff is security-sensitive, release-sensitive, packaging-related, migration-related, or cross-module. | `code-review-deep` | Higher-scrutiny review primitive for material risk. |
 | A workflow needs a formal blocking decision before commit readiness, PR readiness, merge readiness, or an explicit repo-policy gate. | `code-review-gate` or `docs-review-gate` | Formal gate adapters route to the right review primitive, record evidence, and block on unresolved MUST-FIX findings. |
-| A branch needs base-to-head merge quality review. | `merge-review` | Routine merge review primitive for scope, DoD alignment, test evidence, docs sync, and unresolved findings. For an existing PR it must bind exact-head platform evidence; pre-commit verdicts are input only. |
-| A branch needs a formal readiness decision before PR handoff, merge readiness, or final approval. | `merge-readiness-gate` | Formal branch readiness layer. Existing PRs require exact-head CI, Merge Review receipt publication/readback, and no stale bindings before READY. |
-| Codex should keep a clear bounded objective moving through repeated plan, implementation, verification, review, continuation, handoff, or gate decisions. | `loop-engineering` | Explicit loop entrypoint that repeatedly bootstraps from durable source of truth, routes to existing phase skills, verifies evidence, and stops at human gates. |
+| A branch needs base-to-head merge quality review. | `merge-review` | Reviews scope, DoD, verification and coherence for the exact content range. Provider enforcement follows the explicitly selected repo profile; pre-commit verdicts remain input only. |
+| A branch needs a formal readiness decision before PR handoff, merge readiness, or final approval. | `merge-readiness-gate` | Records exact-head content readiness separately from optional provider CI/receipt/readback requirements. |
+| The user explicitly selects a durable loop, or repo policy requires a loop spec, ledger and production decision contract. | `loop-engineering` | Routes from durable loop state through existing phase skills, verifies current evidence and stops at real human gates. |
 | Codex should classify the next safe action or run a bounded review/fix closure loop. | `project-orchestrator` | Routes between planning, implementation, docs update, review primitives, formal gates, continuation, or human decision. |
 | Codex should carry a bounded objective through discovery, implementation, verification, review, docs sync, and PR readiness. | `project-delivery` | Delivery workflow for multi-step but bounded objectives that still stop at the next human gate. |
 | A bounded milestone should be checked and advanced across repeated invocations until complete or blocked. | `milestone-continuation` | Upper-layer loop that checks task completion, selects the next ready task, and routes through existing workflows without owning runtime scheduling. |
@@ -32,7 +32,8 @@ compatibility aliases:
 | `desktop-implementation-gate` | `code-review`, `code-review-deep`, `docs-review`, then the matching shared formal gate when required | No Desktop callable or separate integration decision. |
 | `desktop-pr-merge-gate` | `merge-readiness-gate` | No Desktop callable or separate merge decision. |
 
-New workflows should not select these aliases. Use
+These aliases disable implicit invocation with `agents/openai.yaml` while
+retaining explicit use. New workflows should not select them. Use
 `desktop-project-delivery` only for the Desktop delivery entry point and
 `desktop-thread-delegation` only for the Desktop task/thread/worktree control
 plane. Use `desktop-sidebar-organization` only for an explicitly requested
@@ -73,7 +74,11 @@ Use formal gates only when the workflow needs a blocking readiness decision:
 - `docs-review-gate` for docs-only or docs-dominant commit readiness, PR readiness, merge readiness, or explicit repo-policy gates.
 - `merge-readiness-gate` for branch readiness before PR handoff, merge readiness, or final human approval.
 
-Formal gates are evidence and decision layers. They do not replace routine review primitives for every review pass, and their evidence does not authorize commit, push, merge, deploy, platform comments, review submissions, or other external writes.
+Formal gates are evidence and decision layers. Reuse a primitive result when its
+diff, scope, source assumptions and verification remain valid; entering a gate
+alone does not require another complete review. A changed request head still
+requires complete exact-head Merge Review. Gate evidence does not authorize
+commit, push, merge, deploy or other external actions.
 
 ## Routine Versus Deep Review
 
@@ -114,7 +119,7 @@ Use focused skills when the next action is already clear:
 
 Use orchestration or delivery skills when Codex must decide or coordinate multiple steps:
 
-- `loop-engineering` to own the repeated bootstrap, classify, route, act, verify, review, continue, handoff, stop, or complete cycle for a clear bounded objective.
+- `loop-engineering` for explicitly selected or repo-required durable loops.
 - `project-orchestrator` to choose the next safe action, route work, or run a bounded review closure loop.
 - `project-delivery` to advance a bounded objective through implementation, verification, review, docs sync, and PR readiness.
 - `milestone-continuation` to keep a bounded milestone moving across repeated invocations by checking the current task, selecting the next ready task, and stopping at human gates.
@@ -122,16 +127,25 @@ Use orchestration or delivery skills when Codex must decide or coordinate multip
   authorization and target validation.
 - `desktop-project-delivery` only when the Desktop runtime is intentionally part of the workflow.
 - `desktop-thread-delegation` when the Desktop runtime may open a new thread, but the main thread must still choose the next safe task and retain review or merge gates.
-- `desktop-sidebar-organization` only when the user names an exact Desktop
-  sidebar target and desired organization state; delete and complete-list
-  reorder remain separate human gates.
+- `desktop-sidebar-organization` for a concrete Desktop organization request.
+  Resolve IDs from the relevant registry; a reversible reorder needs current
+  complete membership where required, while deletion retains its destructive gate.
 
 Do not add a Desktop-prefixed gate after these entry points. Planning, ordinary
 review, formal review gates, merge readiness, Goal evidence, subagent
 delegation, and completion semantics remain shared. Goal state is coordination
 context, not repository completion proof.
 
-Use `loop-engineering` when the user wants the agent to own the whole repeated decision loop and dynamically choose among existing workflows as state changes. Use `project-delivery` directly when the request is one bounded delivery effort and does not need a named loop entrypoint. Use `milestone-continuation` instead of `project-delivery` when the distinctive need is repeated milestone progress from durable task state. Use `task-continuation` when the immediate goal is only to choose the next safe task or prepare a handoff prompt.
+Use `project-delivery` for ordinary bounded delivery; autonomous continuation
+and baseline subagents alone do not require a ledger. Use `loop-engineering`
+when its durable contract is explicitly selected or required. Use
+`milestone-continuation` for repeated milestone progress from task state, and
+`task-continuation` when the immediate goal is selecting a next task or handoff.
+
+Read only the selected operation references in the loop and runtime-adapter
+entry points. Candidate qualification, optional memory, GitNexus and scan
+recovery have separate triggers; moving them out of the entry point does not
+relax their contracts when applicable.
 
 `loop-engineering` must remain a thin entrypoint. It does not replace implementation, documentation, review, formal gate, continuation, milestone, or Desktop delegation skills. It should classify, route, report, and stop rather than invent a second execution engine.
 

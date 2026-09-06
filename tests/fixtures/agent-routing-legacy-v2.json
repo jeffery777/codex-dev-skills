@@ -1,0 +1,409 @@
+{
+  "cases": [
+    {
+      "id": "routine-review",
+      "main_agent_disposition": {
+        "disposition": "accepted",
+        "route_receipt_id": "492f0ce8d18b9f592332f97173555652b0d8ec24de84b7312e5083481c2a1560",
+        "verification": {
+          "artifact_digests": {
+            "fixture-verification.txt": "0efdba954d1066b1aea678c7fc4da61a6abd7f5d71cfda2925ef17880f0b7adf"
+          },
+          "artifacts": [
+            "fixture-verification.txt"
+          ],
+          "status": "passed"
+        },
+        "worker_validation_id": "15243a4a95a54ebf648657b83c9d8b5374e493caf68175acf227fcf85601ea32"
+      },
+      "route_receipt": {
+        "assigned_scope": [
+          "fixture/review.py"
+        ],
+        "assigned_scope_sha256": "8b322caeecd9dddfae8a7494ac196cab5b43cdd074253e9ca66b949868fdfaa8",
+        "authority_contract_sha256": "a3750f2bf5e369cdd2872ee1fa4628ad75bd0de1a086743f611df8dc9081d906",
+        "authority_invariants": {
+          "profile_cannot_expand_permissions": true,
+          "profile_cannot_expand_scope": true,
+          "profile_cannot_satisfy_human_gates": true,
+          "worker_receipt_cannot_prove_completion": true
+        },
+        "classification": {
+          "capability_class": "deep-reviewer",
+          "capability_tier": "deep",
+          "factor_effects": {
+            "ambiguity": "no-escalation",
+            "code_context_volume": "neutral",
+            "cost_token_sensitivity": "neutral",
+            "independence_parallelizability": "delegation-eligible",
+            "latency_sensitivity": "neutral",
+            "reasoning_depth": "no-escalation",
+            "security_data_migration_public_contract_risk": "no-hard-trigger",
+            "verification_burden": "no-escalation",
+            "write_blast_radius": "read-only-fast-eligible"
+          },
+          "factors": {
+            "ambiguity": "moderate",
+            "code_context_volume": "medium",
+            "cost_token_sensitivity": "medium",
+            "independence_parallelizability": "independent",
+            "latency_sensitivity": "medium",
+            "reasoning_depth": "balanced",
+            "security_data_migration_public_contract_risk": "routine",
+            "verification_burden": "medium",
+            "write_blast_radius": "none"
+          },
+          "hard_triggered": false,
+          "reasons": [
+            "deep-analysis-default"
+          ],
+          "selected_role": "loop_v2a_deep_reviewer",
+          "workload_kind": "review"
+        },
+        "config_evidence": {
+          "allowed_workflow_scope": [
+            "read",
+            "report-findings",
+            "report-receipt",
+            "search",
+            "verify"
+          ],
+          "capability_class": "deep-reviewer",
+          "capability_tier": "deep",
+          "config_valid": true,
+          "model_available": true,
+          "name": "legacy-fixture-reviewer",
+          "parent_sandbox_mode": "read-only",
+          "profile_digest": "ddff616ceb40ed3521fe18de2d1cf2aa3a971726047141ea60db6207a8cab662",
+          "reasoning_available": true,
+          "sandbox": "read-only",
+          "sandbox_non_widening": true
+        },
+        "config_evidence_sha256": "03f25dd8fc962957bbf3521eedcd65a137a43eef3d30bbbdb9bf6eda4613c514",
+        "contract_version": 2,
+        "cost_degraded": false,
+        "degraded": false,
+        "execution_mode": "custom-agent-profile",
+        "fallback": "none",
+        "ownership": {
+          "disjoint": true,
+          "owner": "fixture-reviewer"
+        },
+        "required_capability_tier": "deep",
+        "route_receipt_id": "492f0ce8d18b9f592332f97173555652b0d8ec24de84b7312e5083481c2a1560",
+        "routing_constraint": "independent-work-allows-delegation",
+        "runtime_mapping": "legacy-fixture-reviewer",
+        "selected_capability_tier": "deep",
+        "selected_profile_digest": "ddff616ceb40ed3521fe18de2d1cf2aa3a971726047141ea60db6207a8cab662",
+        "selected_role": "loop_v2a_deep_reviewer",
+        "source_revision": {
+          "head_sha": "fixture-source"
+        },
+        "source_revision_sha256": "d9419bbb492f95b220a8dc4835873dbca7e9dcfb4fb21c480d027ccdfa9b5a0a",
+        "task_id": "routine-review"
+      },
+      "validated_disposition": {
+        "completion_proven": false,
+        "disposition": "accepted",
+        "integration_accepted": true,
+        "issues": [],
+        "valid": true,
+        "worker_validation_id": "15243a4a95a54ebf648657b83c9d8b5374e493caf68175acf227fcf85601ea32"
+      },
+      "worker_receipt": {
+        "artifact_digests": {
+          "fixture-findings.txt": "ebb1e8eafbf6948c1a312c8a53edc6cfc50e6c486cd2e30a44b53e647c37398c"
+        },
+        "assigned_scope_sha256": "8b322caeecd9dddfae8a7494ac196cab5b43cdd074253e9ca66b949868fdfaa8",
+        "conflicts": [],
+        "output_artifacts": [
+          "fixture-findings.txt"
+        ],
+        "route_receipt_id": "492f0ce8d18b9f592332f97173555652b0d8ec24de84b7312e5083481c2a1560",
+        "source_revision_sha256": "d9419bbb492f95b220a8dc4835873dbca7e9dcfb4fb21c480d027ccdfa9b5a0a",
+        "status": "complete",
+        "task_id": "routine-review"
+      },
+      "worker_validation": {
+        "accepted_as_completion": false,
+        "artifact_digests_sha256": "722a7b629cbcc193a5bd8a10c155e0a143d44c7b0e600f91f6be07edf87e535c",
+        "issues": [],
+        "route_receipt_id": "492f0ce8d18b9f592332f97173555652b0d8ec24de84b7312e5083481c2a1560",
+        "valid_coordination_evidence": true,
+        "validation_receipt_id": "15243a4a95a54ebf648657b83c9d8b5374e493caf68175acf227fcf85601ea32",
+        "worker_receipt_sha256": "2dc240c1766bc62320f6e0fa3eb767877b8e28937ee3366c2ae1fd629a4a185f",
+        "worker_status": "complete"
+      }
+    },
+    {
+      "id": "implicit-exceptional-research",
+      "main_agent_disposition": {
+        "disposition": "accepted",
+        "route_receipt_id": "1733aad80856cde0fdf9d7c7d6645f79330bfd4c859a2e26702ca6022e1c006b",
+        "verification": {
+          "artifact_digests": {
+            "fixture-verification.txt": "0efdba954d1066b1aea678c7fc4da61a6abd7f5d71cfda2925ef17880f0b7adf"
+          },
+          "artifacts": [
+            "fixture-verification.txt"
+          ],
+          "status": "passed"
+        },
+        "worker_validation_id": "aca2c83825bb47c09255d406af4a4fbc38b263ccc3467f33a7f6ca133a852471"
+      },
+      "route_receipt": {
+        "assigned_scope": [
+          "fixture/review.py"
+        ],
+        "assigned_scope_sha256": "8b322caeecd9dddfae8a7494ac196cab5b43cdd074253e9ca66b949868fdfaa8",
+        "authority_contract_sha256": "a3750f2bf5e369cdd2872ee1fa4628ad75bd0de1a086743f611df8dc9081d906",
+        "authority_invariants": {
+          "profile_cannot_expand_permissions": true,
+          "profile_cannot_expand_scope": true,
+          "profile_cannot_satisfy_human_gates": true,
+          "worker_receipt_cannot_prove_completion": true
+        },
+        "classification": {
+          "capability_class": "deep-reviewer",
+          "capability_tier": "exceptional",
+          "factor_effects": {
+            "ambiguity": "deep-capability-trigger",
+            "code_context_volume": "fast-read-tie-break",
+            "cost_token_sensitivity": "neutral",
+            "independence_parallelizability": "delegation-eligible",
+            "latency_sensitivity": "neutral",
+            "reasoning_depth": "deep-capability-trigger",
+            "security_data_migration_public_contract_risk": "no-hard-trigger",
+            "verification_burden": "no-escalation",
+            "write_blast_radius": "read-only-fast-eligible"
+          },
+          "factors": {
+            "ambiguity": "high",
+            "code_context_volume": "large",
+            "cost_token_sensitivity": "medium",
+            "independence_parallelizability": "independent",
+            "latency_sensitivity": "medium",
+            "reasoning_depth": "deep",
+            "security_data_migration_public_contract_risk": "routine",
+            "verification_burden": "medium",
+            "write_blast_radius": "none"
+          },
+          "hard_triggered": false,
+          "reasons": [
+            "explicit-research-orchestration",
+            "quality-first-exceptional-trigger"
+          ],
+          "selected_role": "loop_v2a_exceptional_researcher",
+          "workload_kind": "research-orchestration"
+        },
+        "config_evidence": {
+          "allowed_workflow_scope": [
+            "read",
+            "report-findings",
+            "report-receipt",
+            "search",
+            "verify"
+          ],
+          "capability_class": "deep-reviewer",
+          "capability_tier": "exceptional",
+          "config_valid": true,
+          "model_available": true,
+          "name": "legacy-fixture-reviewer",
+          "parent_sandbox_mode": "read-only",
+          "profile_digest": "ddff616ceb40ed3521fe18de2d1cf2aa3a971726047141ea60db6207a8cab662",
+          "reasoning_available": true,
+          "sandbox": "read-only",
+          "sandbox_non_widening": true
+        },
+        "config_evidence_sha256": "54224c7b37418c495c49d9007690313b8252b544d649296b3986861c585a0ccc",
+        "contract_version": 2,
+        "cost_degraded": false,
+        "degraded": false,
+        "execution_mode": "custom-agent-profile",
+        "fallback": "none",
+        "ownership": {
+          "disjoint": true,
+          "owner": "fixture-reviewer"
+        },
+        "required_capability_tier": "exceptional",
+        "route_receipt_id": "1733aad80856cde0fdf9d7c7d6645f79330bfd4c859a2e26702ca6022e1c006b",
+        "routing_constraint": "independent-work-allows-delegation",
+        "runtime_mapping": "legacy-fixture-reviewer",
+        "selected_capability_tier": "exceptional",
+        "selected_profile_digest": "ddff616ceb40ed3521fe18de2d1cf2aa3a971726047141ea60db6207a8cab662",
+        "selected_role": "loop_v2a_exceptional_researcher",
+        "source_revision": {
+          "head_sha": "fixture-source"
+        },
+        "source_revision_sha256": "d9419bbb492f95b220a8dc4835873dbca7e9dcfb4fb21c480d027ccdfa9b5a0a",
+        "task_id": "implicit-exceptional-research"
+      },
+      "validated_disposition": {
+        "completion_proven": false,
+        "disposition": "accepted",
+        "integration_accepted": true,
+        "issues": [],
+        "valid": true,
+        "worker_validation_id": "aca2c83825bb47c09255d406af4a4fbc38b263ccc3467f33a7f6ca133a852471"
+      },
+      "worker_receipt": {
+        "artifact_digests": {
+          "fixture-findings.txt": "ebb1e8eafbf6948c1a312c8a53edc6cfc50e6c486cd2e30a44b53e647c37398c"
+        },
+        "assigned_scope_sha256": "8b322caeecd9dddfae8a7494ac196cab5b43cdd074253e9ca66b949868fdfaa8",
+        "conflicts": [],
+        "output_artifacts": [
+          "fixture-findings.txt"
+        ],
+        "route_receipt_id": "1733aad80856cde0fdf9d7c7d6645f79330bfd4c859a2e26702ca6022e1c006b",
+        "source_revision_sha256": "d9419bbb492f95b220a8dc4835873dbca7e9dcfb4fb21c480d027ccdfa9b5a0a",
+        "status": "complete",
+        "task_id": "implicit-exceptional-research"
+      },
+      "worker_validation": {
+        "accepted_as_completion": false,
+        "artifact_digests_sha256": "722a7b629cbcc193a5bd8a10c155e0a143d44c7b0e600f91f6be07edf87e535c",
+        "issues": [],
+        "route_receipt_id": "1733aad80856cde0fdf9d7c7d6645f79330bfd4c859a2e26702ca6022e1c006b",
+        "valid_coordination_evidence": true,
+        "validation_receipt_id": "aca2c83825bb47c09255d406af4a4fbc38b263ccc3467f33a7f6ca133a852471",
+        "worker_receipt_sha256": "0783e1114ec02669020eb8b692e649f11c95da43d5ef56ac72b55d58180fb6c6",
+        "worker_status": "complete"
+      }
+    },
+    {
+      "id": "exceptional-parent-fallback",
+      "main_agent_disposition": {
+        "disposition": "accepted",
+        "route_receipt_id": "547698ed75039075ed013fd57f4ba289edacdc38e67edc143de4ce5d41fcc245",
+        "verification": {
+          "artifact_digests": {
+            "fixture-verification.txt": "0efdba954d1066b1aea678c7fc4da61a6abd7f5d71cfda2925ef17880f0b7adf"
+          },
+          "artifacts": [
+            "fixture-verification.txt"
+          ],
+          "status": "passed"
+        },
+        "worker_validation_id": "6670670ebca1cc527ab2580c0c0bfdf004307c3349a5170fbf361acf3432544d"
+      },
+      "route_receipt": {
+        "assigned_scope": [
+          "fixture/review.py"
+        ],
+        "assigned_scope_sha256": "8b322caeecd9dddfae8a7494ac196cab5b43cdd074253e9ca66b949868fdfaa8",
+        "authority_contract_sha256": "a3750f2bf5e369cdd2872ee1fa4628ad75bd0de1a086743f611df8dc9081d906",
+        "authority_invariants": {
+          "profile_cannot_expand_permissions": true,
+          "profile_cannot_expand_scope": true,
+          "profile_cannot_satisfy_human_gates": true,
+          "worker_receipt_cannot_prove_completion": true
+        },
+        "classification": {
+          "capability_class": "deep-reviewer",
+          "capability_tier": "deep",
+          "factor_effects": {
+            "ambiguity": "no-escalation",
+            "code_context_volume": "neutral",
+            "cost_token_sensitivity": "neutral",
+            "independence_parallelizability": "delegation-eligible",
+            "latency_sensitivity": "neutral",
+            "reasoning_depth": "no-escalation",
+            "security_data_migration_public_contract_risk": "no-hard-trigger",
+            "verification_burden": "no-escalation",
+            "write_blast_radius": "read-only-fast-eligible"
+          },
+          "factors": {
+            "ambiguity": "moderate",
+            "code_context_volume": "medium",
+            "cost_token_sensitivity": "medium",
+            "independence_parallelizability": "independent",
+            "latency_sensitivity": "medium",
+            "reasoning_depth": "balanced",
+            "security_data_migration_public_contract_risk": "routine",
+            "verification_burden": "medium",
+            "write_blast_radius": "none"
+          },
+          "hard_triggered": false,
+          "reasons": [
+            "deep-analysis-default"
+          ],
+          "selected_role": "loop_v2a_deep_reviewer",
+          "workload_kind": "review"
+        },
+        "config_evidence": null,
+        "config_evidence_sha256": null,
+        "contract_version": 2,
+        "cost_degraded": true,
+        "degraded": true,
+        "execution_mode": "parent-default",
+        "fallback": "parent-default",
+        "fallback_capability_evidence": {
+          "capability_class": "deep-reviewer",
+          "capability_classes": [
+            "deep-reviewer"
+          ],
+          "capability_tiers": [
+            "exceptional"
+          ],
+          "class_membership_confirmed": true,
+          "selected_capability_tier": "exceptional",
+          "source": "parent-default"
+        },
+        "fallback_capability_evidence_sha256": "280d81fbe0b3617f4ec14f7312d17e86c1766c46efc623cb644d3d86698b4466",
+        "ownership": {
+          "disjoint": true,
+          "owner": "fixture-reviewer"
+        },
+        "required_capability_tier": "deep",
+        "route_receipt_id": "547698ed75039075ed013fd57f4ba289edacdc38e67edc143de4ce5d41fcc245",
+        "routing_constraint": "independent-work-allows-delegation",
+        "runtime_mapping": "parent/default",
+        "selected_capability_tier": "exceptional",
+        "selected_profile_digest": null,
+        "selected_role": "loop_v2a_deep_reviewer",
+        "source_revision": {
+          "head_sha": "fixture-source"
+        },
+        "source_revision_sha256": "d9419bbb492f95b220a8dc4835873dbca7e9dcfb4fb21c480d027ccdfa9b5a0a",
+        "task_id": "exceptional-parent-fallback"
+      },
+      "validated_disposition": {
+        "completion_proven": false,
+        "disposition": "accepted",
+        "integration_accepted": true,
+        "issues": [],
+        "valid": true,
+        "worker_validation_id": "6670670ebca1cc527ab2580c0c0bfdf004307c3349a5170fbf361acf3432544d"
+      },
+      "worker_receipt": {
+        "artifact_digests": {
+          "fixture-findings.txt": "ebb1e8eafbf6948c1a312c8a53edc6cfc50e6c486cd2e30a44b53e647c37398c"
+        },
+        "assigned_scope_sha256": "8b322caeecd9dddfae8a7494ac196cab5b43cdd074253e9ca66b949868fdfaa8",
+        "conflicts": [],
+        "output_artifacts": [
+          "fixture-findings.txt"
+        ],
+        "route_receipt_id": "547698ed75039075ed013fd57f4ba289edacdc38e67edc143de4ce5d41fcc245",
+        "source_revision_sha256": "d9419bbb492f95b220a8dc4835873dbca7e9dcfb4fb21c480d027ccdfa9b5a0a",
+        "status": "complete",
+        "task_id": "exceptional-parent-fallback"
+      },
+      "worker_validation": {
+        "accepted_as_completion": false,
+        "artifact_digests_sha256": "722a7b629cbcc193a5bd8a10c155e0a143d44c7b0e600f91f6be07edf87e535c",
+        "issues": [],
+        "route_receipt_id": "547698ed75039075ed013fd57f4ba289edacdc38e67edc143de4ce5d41fcc245",
+        "valid_coordination_evidence": true,
+        "validation_receipt_id": "6670670ebca1cc527ab2580c0c0bfdf004307c3349a5170fbf361acf3432544d",
+        "worker_receipt_sha256": "7e30bda2dc67b005d1f28dad9f688f5997e07279e9b65e33b087850d97ccca03",
+        "worker_status": "complete"
+      }
+    }
+  ],
+  "note": "Frozen outputs from the actual pre-policy-revision Git source; do not regenerate from the current builder.",
+  "source_path": "skills/loop-engineering/scripts/agent_routing.py",
+  "source_revision": "43e50dd4280c580276f5bd2383c056bd47931e0d",
+  "source_sha256": "cd15bc28819d683b231037cfa4842eecaac833713d9d6ce71dfe84487900d75e"
+}

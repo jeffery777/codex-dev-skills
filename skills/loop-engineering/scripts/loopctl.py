@@ -807,7 +807,7 @@ def command_agent_route(
             task,
             {"id", "factors"}
             if contract_version == 1
-            else {"id", "factors", "workload_kind", "qualification_scope"},
+            else {"id", "factors", "workload_kind", "qualification_scope", "quality_preference"},
             "agent route task",
         ),
         (
@@ -842,6 +842,7 @@ def command_agent_route(
             task.get("factors"),
             contract_version=contract_version,
             workload_kind=task.get("workload_kind"),
+            quality_preference=task.get("quality_preference"),
         )
         source_revision = assignment.get("source_revision")
         if not isinstance(source_revision, dict) or set(source_revision) != {
@@ -955,6 +956,10 @@ def command_agent_route(
                     and name not in profile_preflight.CANDIDATE_ROLES
                     and entry["capability_class"] == required["capability_class"]
                     and entry["tier_rank"] >= required["tier_rank"]
+                    and (
+                        entry["capability_tier"] != "exceptional"
+                        or classification["capability_tier"] == "exceptional"
+                    )
                 ),
                 key=lambda entry: (entry["tier_rank"], entry["name"]),
             )
@@ -1023,6 +1028,7 @@ def command_agent_route(
             authority_contract=assignment.get("authority_contract"),
             contract_version=contract_version,
             workload_kind=task.get("workload_kind"),
+            quality_preference=task.get("quality_preference"),
         )
     except (
         loop_core.LoopContractError,

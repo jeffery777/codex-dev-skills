@@ -6,7 +6,10 @@ The user-facing entrypoint is `loop-engineering`.
 
 ## What It Adds
 
-`loop-engineering` gives maintainers a clear way to ask Codex to keep a bounded objective moving when the objective, source of truth, Definition of Done, verification, and human gates are clear.
+Select `loop-engineering` when the user explicitly requests its durable loop
+workflow or repository policy already requires a loop spec, ledger or production
+decision contract. Ordinary bounded delivery uses `project-delivery`; autonomous
+progress or baseline subagent work alone does not activate the durable loop.
 
 It adds a shared loop vocabulary:
 
@@ -40,7 +43,12 @@ within the user's authority.
 - Use Desktop-specific skills directly when user-owned Desktop task, thread,
   worktree, or scheduling control is explicitly intended.
 
-Use `loop-engineering` when the user wants the agent to own the full repeated loop and choose among those skills as state changes.
+Use `loop-engineering` for that explicitly selected or repo-required durable
+contract. Its entry point loads only the selected operation references. A
+`milestone-continuation` owner may drive repeated wakeups; the production
+`continuation` phase selects `task-continuation` for the next bounded packet,
+then the next decision selects that packet's implementation/review route.
+There is no separate `milestone` request kind in the production router.
 
 ## Required Source Of Truth
 

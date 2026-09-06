@@ -12,7 +12,11 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 - Desktop Runtime Wrapper V1 is retired. Its non-executable historical record
   does not provide a compatibility or execution path; current behavior belongs
   to native runtime contracts and active runtime callables.
-- Loop engineering adds an explicit shared entrypoint for clear bounded objectives: bootstrap from durable source of truth, classify current state, route through existing phase skills, verify and review evidence, continue or hand off when safe, and stop at human gates. It preserves the independent use of implementation, documentation, review, formal gate, continuation, milestone, and Desktop-specific skills.
+- Loop engineering provides the explicitly selected or repository-required
+  durable loop and ledger workflow. Ordinary bounded delivery starts with
+  `project-delivery`; small changes may use `implementation-slice` directly.
+  Independent implementation, documentation, review, continuation, milestone
+  and Desktop-specific skills remain usable without entering a durable loop.
 - Issue #77 / PR #78 delivered repo-owned loop state and ledger support as a
   durable baseline, not a future task-selection target. The repository-owned
   contract, templates, validator, tests, and v0.4.0 point-in-time release note
@@ -51,6 +55,13 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 - Keep human gates explicit whenever a workflow approaches publication, release, merge, destructive action, or material risk.
 
 ## Backlog
+
+- Issue #223 separates optional workflow references from Skill entry points,
+  makes exceptional research routing preference explicit, and preserves
+  historical receipt validation. Future model/default changes require the
+  paired usage and quality trials in
+  `docs/loops/issue-223/model-evaluation-follow-up.md`; static instruction
+  reduction and synthetic routing tiers do not prove actual token savings.
 
 - Issue #205 / PR #206 completed the v0.22.0 provider-neutral exact-head Merge
   Review baseline. Content readiness binds the final complete range,

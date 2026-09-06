@@ -1,5 +1,9 @@
 # Next Session Prompt
 
+<!-- Fill only the next bounded packet. Link current source/evidence paths and
+the checkpoint instead of copying all prior reports. Omit empty optional
+sections; retain scope, ownership, DoD, verification and action boundaries. -->
+
 Use `task-continuation` for this bounded continuation task.
 
 ## Task

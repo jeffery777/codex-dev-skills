@@ -1,5 +1,10 @@
 # Current Task Summary
 
+<!-- Render only applicable sections. For a routine bounded task, omit formal
+ledger/claim fields. On continuation, report changed facts and link valid prior
+evidence rather than copying it. Keep objective, current scope/revision (including
+worktree changes), verification limits and next action self-contained. -->
+
 ## Objective
 
 `<bounded-objective>`

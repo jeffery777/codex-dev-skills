@@ -1,5 +1,9 @@
 # Integration Review Report
 
+<!-- Keep the outcome, ownership/overlap assessment, verification and residual
+risk. Omit empty sections; link each worker's evidence and report only the
+integration delta. Worker self-reports do not prove acceptance. -->
+
 ## Context
 
 ## Inputs Integrated

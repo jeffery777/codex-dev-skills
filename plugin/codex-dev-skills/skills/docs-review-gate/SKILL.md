@@ -18,13 +18,17 @@ This gate is a thin adapter around `docs-review`. It is responsible for evidence
 ## Workflow
 
 1. Confirm docs scope.
-2. Run `docs-review` as the underlying review primitive.
+2. Reuse an existing `docs-review` result when its revision or worktree diff identity, scope, source assumptions and verification evidence still match; otherwise run that primitive once.
 3. Give every MUST-FIX, SHOULD-FIX, and NIT a stable finding id and record one disposition: `Fixed`, `Deferred`, `Rejected`, or `Needs Human Decision`.
 4. For every deferred item, record a durable target, owner, reason, remaining risk, verification plan, and promotion trigger.
-5. Check for private paths, local runtime state, unsupported claims, and stale instructions, then rerun `docs-review` against the final diff.
+5. Ensure the review covers private paths, local runtime state, unsupported claims and stale instructions. After fixes or changed assumptions, rerun `docs-review` over the affected scope and verify dispositions against the final diff; unchanged evidence does not require a second review merely to enter this gate.
 6. Block commit, PR, or merge readiness when a MUST-FIX remains unresolved, any finding lacks a durable disposition, a deferred item lacks required follow-up fields, or a `Needs Human Decision` item remains open.
 
 NITS are non-blocking only after explicit disposition; they must not disappear from the gate evidence.
+
+Shared rationale may cover a batch of NITs when every finding id remains
+traceable. Reused pre-commit evidence never replaces complete base-to-head
+exact-head Merge Review for a new change-request head.
 
 ## Output
 

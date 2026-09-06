@@ -46,6 +46,9 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
 
 - If the task is already a single clear implementation slice, use `implementation-slice` semantics and do not over-plan.
 - If the user delegates a larger bounded delivery objective, select `project-delivery` as the outer workflow.
+- Select `loop-engineering` only for an explicitly requested durable loop or an
+  existing repo-owned loop spec, ledger, or production decision contract.
+  Ordinary delivery and candidate delegation do not require that entrypoint.
 - If already operating inside `project-delivery`, select the next phase or slice instead of routing back to `project-delivery`.
 - If source-of-truth or task order is unclear, use `planning`, `closure-triage`, or `task-continuation`.
 - If ordinary review evidence is needed, route code or mixed changes to `code-review`, high-risk code or mixed changes to `code-review-deep`, and docs-only or docs-dominant changes to `docs-review`.
@@ -61,7 +64,10 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
   smallest justified affected scope; widen when shared assumptions changed.
   Continue automatically after clean internal stages when the next action is
   read-only or already authorized.
-- Review closure loops default to 2 rounds unless the user or repo policy sets a different maximum. Reaching that threshold while work remains incomplete triggers the shared context-health assessment; it does not automatically create, fork, or roll over a task.
+- Two unfinished review/fix rounds trigger the default context-health
+  reassessment, not an automatic stop or task creation/fork/rollover. A user or
+  repo policy may set a different threshold or an explicit hard maximum; honor
+  that maximum and report unresolved work when reached.
 - Apply the context-continuity policy before choosing among current-context continuation, regrounding, bounded subagent delegation, fresh rollover preparation, or a human gate. Token/compaction pressure is advisory only.
 - If the next unit should move to another session or worker, prepare a bounded continuation prompt or task brief.
 - Stop when a human gate is required.
@@ -69,7 +75,8 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
 ## Delegation Economy
 
 Before selecting a custom-agent candidate, perform the shared automatic
-qualification procedure in `loop-engineering` (Agent Routing). The parent
+qualification procedure in `../loop-engineering/references/agent-qualification.md`
+(the same sibling path in source, plugin, and filesystem installation). The parent
 classifies the actual task, checks its qualified scope, gathers current public
 runtime facts and invokes the installed `agent-route` command itself. Do not
 ask the user to supply qualification JSON or repeat CLI arguments. The router
@@ -92,7 +99,11 @@ source revision remain valid.
 
 ## Workflow
 
-1. Discover source-of-truth files and current state.
+1. Discover source-of-truth files and current state. On continuation, revalidate
+   repository/worktree identity, branch/HEAD, tracked/untracked content, scope,
+   ownership, phase, policy, environment, and evidence dependencies. Reuse reads
+   and reviews only while those bindings match; re-read affected sources after
+   drift and reground fully when provenance or freshness is uncertain.
 2. Classify the request as a single task, bounded delivery objective, review, follow-up, continuation, or safety-blocked/ambiguous work.
 3. Select the smallest safe next action and the appropriate skill or workflow.
 4. Choose execution mode: current session, shared subagents, sequential fallback, Desktop control-plane handoff, or stop for human decision.

@@ -29,7 +29,7 @@ class ImprovementProposalContractDocsTests(unittest.TestCase):
 
     def test_skill_program_and_readme_expose_proposal_only_no_action_boundary(self):
         required_boundaries = {
-            "skills/loop-engineering/SKILL.md": (
+            "skills/loop-engineering/references/optional-evidence-memory.md": (
                 "proposal-only descriptions",
                 "Never apply,",
                 "independent human/platform promotion gate",
@@ -66,7 +66,11 @@ class ImprovementProposalContractDocsTests(unittest.TestCase):
             for boundary in boundaries:
                 self.assertIn(boundary, text, relative)
         skill = read("skills/loop-engineering/SKILL.md")
-        self.assertIn("scripts/proposalctl.py", skill)
+        reference = "references/optional-evidence-memory.md"
+        self.assertIn(reference, skill)
+        optional = read(f"skills/loop-engineering/{reference}")
+        self.assertIn("scripts/proposalctl.py", optional)
+        self.assertIn("improvement-proposal-v0.md", optional)
 
     def test_v0150_and_earlier_historical_release_metadata_remain(self):
         self.assertIn("docs/release-notes-v0.15.0.md", read("README.md"))

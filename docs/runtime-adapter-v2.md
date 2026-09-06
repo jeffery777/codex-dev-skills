@@ -95,11 +95,11 @@ for its Codex task and thread control plane:
   and requires additional explicit authorization. Cloud handoff is unsupported.
   `title`, `model`, and `thinking` are optional in the callable. The adapter
   nevertheless supplies a concise non-empty safe `title` on every create, for
-  stable display. Use only a maintainer-approved nonsensitive task identifier
-  plus a generic objective label; never copy prompt text, credentials, customer
-  or incident details, repository paths, or untrusted registry text. When a
-  safe specific title cannot be established, use the fixed generic title
-  `Project task`, and include the exact title in the call-site preview. That
+  stable display. Derive a descriptive title from the user-approved objective;
+  exclude credentials, customer or incident details, repository paths,
+  untrusted registry text and sensitive prompt excerpts. When a safe specific
+  title cannot be established, use a neutral generic title such as `Project task`.
+  Include the title in the call-site preview. That
   title is never project identity; only the selected `projectId` and a matching
   observed `projectId` establish project association. Model and thinking
   should generally be omitted unless explicitly requested and supported.
@@ -191,11 +191,15 @@ for its Codex task and thread control plane:
   `move_project_to_sidebar_section`, `reorder_section`,
   `reorder_sidebar_projects`, and `reorder_sidebar_sections`. The independent
   `desktop-sidebar-organization` skill is their thin control-plane adapter; it
-  does not extend `desktop-thread-delegation`. It requires fresh discovery,
+  does not extend `desktop-thread-delegation`. It requires fresh discovery from
+  only the registries needed for the action,
   exact identity, a reviewed dry-run plan, action-specific authority,
   response-shape validation, post-mutation readback, and fail-closed fallback.
   Complete-list semantics apply only where the active callable requires them;
-  delete and complete-list reorder retain separate high-risk human gates.
+  explicit reversible create/rename/move/reorder requests remain authorized
+  after IDs resolve unambiguously. Delete retains its destructive human gate;
+  changed scope, membership or effect requires rediscovery and, when outside
+  the original authorization, a new decision.
 - The Linux Desktop app is a preview with platform-specific gaps, including no
   Computer Use at the recorded date. Capability detection and CLI/manual
   fallback are required; macOS availability is not a universal contract.

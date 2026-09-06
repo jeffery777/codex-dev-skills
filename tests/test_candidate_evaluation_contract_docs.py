@@ -29,7 +29,10 @@ class CandidateEvaluationContractDocsTests(unittest.TestCase):
         required = {
             "README.md": ("V3-B", "evaluationctl.py", "v0.13.0"),
             "skills/loop-engineering/SKILL.md": (
-                "V3-B", "references/candidate-evaluation-v0.md", "memory-off"
+                "V3-B", "references/optional-evidence-memory.md", "memory-off"
+            ),
+            "skills/loop-engineering/references/optional-evidence-memory.md": (
+                "V3-B", "candidate-evaluation-v0.md", "memory-off"
             ),
             "docs/programs/operational-evidence/README.md": (
                 "V3-B", "isolated candidate evaluation", "cannot promote"

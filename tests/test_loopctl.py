@@ -3327,6 +3327,109 @@ class CliTests(unittest.TestCase):
                 )
             self.assertIn("must match the deterministic", rejected.getvalue())
 
+    def test_agent_route_v2_routine_review_preserves_existing_read_only_profile(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            document = agent_route_document({"branch": "fixture", "head_sha": "a" * 40})
+            payload = document["agent_route"]
+            payload["contract_version"] = 2
+            payload["task"]["workload_kind"] = "review"
+            payload["task"]["factors"]["write_blast_radius"] = "none"
+            payload["profile_preflight"]["role"] = "loop_v2a_deep_reviewer"
+            path, facts = root / "route.json", root / "facts.json"
+            path.write_text(json.dumps(document), encoding="utf-8")
+            facts.write_text(json.dumps({
+                "custom_agent_surface": "available",
+                "parent_sandbox_mode": "read-only",
+                "available_models": ["gpt-5.6-sol"],
+                "reasoning_efforts": {"gpt-5.6-sol": ["high"]},
+            }), encoding="utf-8")
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(0, loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts)]))
+            receipt = json.loads(output.getvalue())["route_receipt"]
+            self.assertEqual("loop_v2a_deep_reviewer", receipt["runtime_mapping"])
+            self.assertEqual("everyday", receipt["required_capability_tier"])
+            self.assertEqual("deep", receipt["selected_capability_tier"])
+            self.assertEqual("same-class-higher-tier", receipt["fallback"])
+            self.assertTrue(receipt["cost_degraded"])
+            self.assertEqual("read-only", receipt["config_evidence"]["sandbox"])
+
+            payload["profile_preflight"]["role"] = "loop_v2a_balanced_worker"
+            path.write_text(json.dumps(document), encoding="utf-8")
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(1, loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts)]))
+            self.assertIn("must match the deterministic", output.getvalue())
+
+    def test_agent_route_v2_quality_preference_controls_exceptional_and_binds_receipt(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            document = agent_route_document({"branch": "fixture", "head_sha": "a" * 40})
+            payload = document["agent_route"]
+            payload["contract_version"] = 2
+            payload["task"]["workload_kind"] = "research-orchestration"
+            payload["task"]["factors"].update({
+                "ambiguity": "high", "reasoning_depth": "deep",
+                "code_context_volume": "large", "write_blast_radius": "none",
+            })
+            path, facts = root / "route.json", root / "facts.json"
+            facts.write_text(json.dumps({
+                "custom_agent_surface": "available",
+                "parent_sandbox_mode": "read-only",
+                "available_models": ["gpt-5.6-sol"],
+                "reasoning_efforts": {"gpt-5.6-sol": ["high", "xhigh"]},
+            }), encoding="utf-8")
+            for preference in (None, "balanced", "quality-first"):
+                with self.subTest(preference=preference):
+                    if preference is not None:
+                        payload["task"]["quality_preference"] = preference
+                    role = "loop_v2a_exceptional_researcher" if preference == "quality-first" else "loop_v2a_deep_reviewer"
+                    payload["profile_preflight"]["role"] = role
+                    path.write_text(json.dumps(document), encoding="utf-8")
+                    output = StringIO()
+                    with redirect_stdout(output):
+                        self.assertEqual(0, loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts)]))
+                    receipt = json.loads(output.getvalue())["route_receipt"]
+                    self.assertEqual(role, receipt["runtime_mapping"])
+                    self.assertEqual(preference, receipt["classification"].get("quality_preference"))
+                    self.assertTrue(loopctl.agent_routing.validate_route_receipt(receipt)["valid"])
+
+            payload["contract_version"] = 1
+            payload["task"].pop("workload_kind")
+            path.write_text(json.dumps(document), encoding="utf-8")
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(1, loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts)]))
+            self.assertIn("quality_preference", output.getvalue())
+
+    def test_agent_route_v2_exceptional_fallback_requires_quality_opt_in(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            document = agent_route_document({"branch": "fixture", "head_sha": "a" * 40})
+            payload = document["agent_route"]
+            payload["contract_version"] = 2
+            payload["task"]["workload_kind"] = "review"
+            payload["task"]["factors"]["write_blast_radius"] = "none"
+            payload["profile_preflight"]["role"] = "loop_v2a_deep_reviewer"
+            path, facts = root / "route.json", root / "facts.json"
+            facts.write_text(json.dumps({
+                "custom_agent_surface": "available",
+                "parent_sandbox_mode": "read-only",
+                "available_models": ["gpt-5.6-sol"],
+                "reasoning_efforts": {"gpt-5.6-sol": ["xhigh"]},
+            }), encoding="utf-8")
+            for preference in (None, "balanced", "quality-first"):
+                with self.subTest(preference=preference):
+                    if preference is not None:
+                        payload["task"]["quality_preference"] = preference
+                    path.write_text(json.dumps(document), encoding="utf-8")
+                    output = StringIO()
+                    with redirect_stdout(output):
+                        self.assertEqual(2, loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts)]))
+                    result = json.loads(output.getvalue())
+                    self.assertEqual("human-gate", result["status"])
+
     def test_astra_candidate_selection_and_safe_degradation(self):
         # Synthetic qualification only: these tests do not measure model quality.
         with tempfile.TemporaryDirectory() as directory:

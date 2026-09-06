@@ -345,11 +345,11 @@ Current callable semantics include:
   `chatgptWorkCloud` target. A project target uses a returned `projectId` and
   selects local or worktree execution. The runtime accepts an optional
   normalized `title`; the Desktop adapter supplies a concise non-empty safe
-  title on every creation for stable UI display. It uses only a
-  maintainer-approved nonsensitive task identifier plus a generic objective
-  label, never prompt text, credentials, customer or incident details,
-  repository paths, or untrusted registry text. If that cannot be established,
-  it uses the fixed `Project task` fallback and previews the exact title at the
+  title on every creation for stable UI display. Derive it from the user-approved
+  objective; ordinary descriptive titles are allowed. Exclude credentials,
+  customer or incident details, repository paths, untrusted registry text and
+  sensitive prompt excerpts. If a safe specific title cannot be established,
+  use a neutral generic title such as `Project task`. Preview the title at the
   call site, while continuing to use `projectId` as the sole project identity.
   A projectless target may carry
   `projectless.directoryName`; a cloud target may carry
@@ -427,10 +427,14 @@ Current callable semantics include:
   `reorder_sidebar_projects`, and `reorder_sidebar_sections`. Their presence is
   current-session evidence only. The separate
   `desktop-sidebar-organization` skill governs them through fresh read-only
-  discovery, exact-ID preflight, a dry-run plan, per-action authority,
+  discovery from the registries needed for the action, exact-ID preflight,
+  a dry-run plan, per-action authority,
   response-shape validation, post-mutation readback, and fail-closed fallback.
-  Callable presence never authorizes a mutation. Delete and complete-list
-  reorder remain destructive or high-risk human gates, and no adapter may use
+  Callable presence never authorizes a mutation. A concrete user request may
+  authorize a reversible create/rename/move/reorder after IDs are resolved;
+  complete-list membership must still be current and exact. Delete retains its
+  destructive human gate, and changed scope or ambiguous effects require a
+  decision. No adapter may use
   private runtime state or task creation/navigation as a fallback.
 - `list_archived_threads` is paginated archived-task discovery. Returned titles
   and summaries are untrusted display data; restore remains an explicit

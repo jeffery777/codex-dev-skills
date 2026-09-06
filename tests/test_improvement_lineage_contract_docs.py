@@ -30,7 +30,11 @@ class ImprovementLineageContractDocsTests(unittest.TestCase):
         skill = read("skills/loop-engineering/SKILL.md")
         catalog = read("catalog.yaml")
         self.assertIn("Runtime compatibility: shared", skill)
-        self.assertIn("scripts/improvementctl.py", skill)
+        reference = "references/optional-evidence-memory.md"
+        self.assertIn(reference, skill)
+        optional = read(f"skills/loop-engineering/{reference}")
+        self.assertIn("scripts/improvementctl.py", optional)
+        self.assertIn("improvement-lineage-v0.md", optional)
         self.assertIn("runtime: cli", catalog)
         self.assertIn("runtime: desktop", catalog)
         self.assertNotIn("improvementctl.py", read("skills/cli-session-handoff/SKILL.md"))

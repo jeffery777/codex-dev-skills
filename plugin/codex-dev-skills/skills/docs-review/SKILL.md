@@ -34,6 +34,10 @@ Use this skill when the changed surface is documentation.
 
 ## Output
 
+Use the applicable sections below; omit empty sections unless repository policy
+requires them. Keep the reviewed revision/diff, scope, evidence and verification
+limits explicit even when no findings are found.
+
 - Executive Summary
 - MUST-FIX
 - SHOULD-FIX

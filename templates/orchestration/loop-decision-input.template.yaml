@@ -38,7 +38,11 @@ expect: {}
 # `loopctl.py agent-route <this-file> --runtime-facts <current-facts.json>`
 # consumes this separate V2a contract and emits a content-bound `route_receipt`.
 # Version 1 remains accepted for compatibility and omits `workload_kind`; use
-# version 2 for cost-aware class/tier selection.
+# version 2 for separate workflow-class and capability-tier selection.
+# Tier order is an ordinal policy, not measured token use, latency, or price.
+# The builder binds routing_policy_revision in new V2 receipts automatically;
+# this task input cannot select a legacy policy. Unversioned historical V2
+# receipts retain their original validation semantics without being rewritten.
 # Runtime/model facts are trusted current-session CLI or Desktop evidence and must not be
 # embedded in this repository-controlled document.
 agent_route:
@@ -46,6 +50,13 @@ agent_route:
   task:
     id: "<task-id>"
     workload_kind: "<mechanical | exploration | implementation | review | security-review | research-orchestration>"
+    # Optional V2 only; omission behaves as balanced. Set quality-first only
+    # when the task explicitly selects that preference. It is also required
+    # for exceptional research/orchestration; complexity alone is insufficient.
+    # Profiles and parent/current-session fallback may select exceptional only
+    # when the classified required tier is exceptional. This preference alone
+    # cannot escalate routine review. Other higher-tier fallbacks still apply.
+    # quality_preference: "<balanced | quality-first>"
     # Optional V2 only. Parent sets this after matching the actual task against
     # approved user qualification evidence; omit when no scope is qualified.
     # qualification_scope: "<reviewed-task-type>"

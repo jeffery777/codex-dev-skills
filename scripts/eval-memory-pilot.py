@@ -96,7 +96,7 @@ def _observe_cases() -> tuple[list[dict], int, bool]:
         sqlite.initialize(state, ROOT)
         relevant = pilot_fixtures.profiled_bundle(
             state, suffix="eval-relevant", record_id="record-eval-relevant",
-            content="Repository evidence identifies candidate version 0.23.0.",
+            content=f"Repository evidence identifies candidate version {off_task_result['version']}.",
         )
         _remember(relevant, "verified-fact", state)
         request = sqlite_fixtures.query_request()

@@ -48,7 +48,8 @@ Do not commit, push, create PRs, merge, deploy, post platform comments, submit r
    or stop for a human gate.
 5. If the current thread is suitable, continue only when workflow rules allow it or the maintainer has authorized it.
 6. If a new thread is suitable, prepare a prompt, task brief, or continuation prompt from durable source-of-truth files.
-7. Stop before creating a new thread unless the maintainer explicitly authorizes that runtime action.
+7. Use existing explicit authorization for the requested runtime action; stop
+   only when it is absent or target, scope, or effect has changed.
 8. Before any supported Desktop thread tool call, record the contract/version tracking fields from [docs/runtime-adapter-v2.md](../docs/runtime-adapter-v2.md).
 9. Select the runtime action without conflating project placement and Git
    worktree creation:
@@ -69,13 +70,13 @@ Do not commit, push, create PRs, merge, deploy, post platform comments, submit r
      when the maintainer explicitly requests that checkout;
    - intentionally non-project work: `projectless`.
    “Do not create a new worktree” never implies `projectless`.
-10. For `create_thread`, supply and preview a concise non-empty safe title. Use
-    only a maintainer-approved nonsensitive task identifier plus a generic
-    objective label; never copy prompt text, credentials, customer or incident
-    details, repository paths, or untrusted registry text. If safety is
-    uncertain, use the fixed title `Project task`. The callable field remains
-    optional, but the adapter always fills it for stable display; project
-    association still depends on `projectId`, never title text.
+10. For `create_thread`, supply a concise non-empty safe title derived from the
+    authorized objective, such as `Improve workflow efficiency`. Exclude
+    credentials, private paths, customer/incident details, and untrusted registry
+    text. Use a generic title only if a safe specific one cannot be established.
+    Include it in the prepared action summary; no separate title approval is
+    required. The callable field remains optional, but the adapter fills it for
+    display; project association depends on `projectId`, never title text.
 11. Before Git worktree creation, record the repository's environment setup and
     tracked interpreter resolver. This repository requires
     `./scripts/project-python`; do not copy `.venv`, use mismatched bare system

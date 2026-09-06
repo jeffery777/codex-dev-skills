@@ -385,8 +385,9 @@ class MemoryPilotTests(unittest.TestCase):
         self.assertEqual(suite["suite_digest"], result["suite_digest"])
         self.assertRegex(result["observation_digest"], r"^[0-9a-f]{64}$")
         baseline = subject._synthetic_task([])
-        self.assertEqual(baseline, subject._synthetic_task([{"content": "Candidate version 0.23.0."}]))
-        self.assertNotEqual(baseline, subject._synthetic_task([{"content": "Candidate version 9.9.9."}]))
+        self.assertEqual(baseline, subject._synthetic_task([{"content": f"Candidate version {baseline['version']}."}]))
+        conflict = "0.0.0" if baseline["version"] != "0.0.0" else "0.0.1"
+        self.assertNotEqual(baseline, subject._synthetic_task([{"content": f"Candidate version {conflict}."}]))
         tampered = copy.deepcopy(suite)
         tampered["cases"][0]["expected"]["adopted"] = False
         with self.assertRaises(ValueError):

@@ -70,30 +70,40 @@ is unsupported.
 
 ## CLI
 
+Resolve `LOOP_SKILL_DIR` to the absolute installed `loop-engineering` directory
+containing `SKILL.md`, and `LOOP_PYTHON` to the absolute interpreter already
+selected and verified for this environment. The commands below use those
+resolved values; they do not assume the target repository contains
+`./scripts/project-python` or this source tree. Follow the target repository's
+environment rules and do not install into or substitute another interpreter.
+Only when maintaining the **codex-dev-skills source checkout**, use its tracked
+`./scripts/project-python` instead of `"$LOOP_PYTHON"`; all checks, scripts,
+evals, and tests in that checkout must use its pinned resolver.
+
 ```bash
-./scripts/project-python <installed-loop-engineering>/scripts/sqlitectl.py probe
-./scripts/project-python <installed-loop-engineering>/scripts/sqlitectl.py initialize \
+"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/sqlitectl.py" probe
+"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/sqlitectl.py" initialize \
   --state-root /approved/local/root --repository-root /current/repository
-./scripts/project-python <installed-loop-engineering>/scripts/sqlitectl.py query \
+"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/sqlitectl.py" query \
   <query-request.json> --state-root /approved/local/root \
   --repository-root /current/repository
-./scripts/project-python <installed-loop-engineering>/scripts/sqlitectl.py execute \
+"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/sqlitectl.py" execute \
   <authority.json> <mutation-candidate.json> <eligibility-receipt.json> \
   --accepted-authority-receipts <accepted-authority.json> \
   --accepted-eligibility-receipts <accepted-eligibility.json> \
   --trusted-time <trusted-time.json> \
   --accepted-trusted-time-receipts <accepted-time.json> \
   --state-root /approved/local/root --repository-root /current/repository
-./scripts/project-python <installed-loop-engineering>/scripts/sqlitectl.py receipt \
+"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/sqlitectl.py" receipt \
   <authority.json> <mutation-candidate.json> <eligibility-receipt.json> \
   --accepted-authority-receipts <accepted-authority.json> \
   --accepted-eligibility-receipts <accepted-eligibility.json> \
   --trusted-time <trusted-time.json> \
   --accepted-trusted-time-receipts <accepted-time.json> \
   --state-root /approved/local/root --repository-root /current/repository
-./scripts/project-python <installed-loop-engineering>/scripts/sqlitectl.py integrity \
+"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/sqlitectl.py" integrity \
   --state-root /approved/local/root --repository-root /current/repository
-./scripts/project-python <installed-loop-engineering>/scripts/sqlitectl.py \
+"$LOOP_PYTHON" "$LOOP_SKILL_DIR/scripts/sqlitectl.py" \
   qualification-receipt <qualification-input.json> <safety-observation.json> \
   <execution-evidence.json>...
 ```

@@ -6,6 +6,7 @@ import pathlib
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -31,6 +32,64 @@ INSTALLER_ENV_OVERRIDES = (
 
 
 class PluginPackagingTests(unittest.TestCase):
+    def test_deprecated_aliases_are_explicit_only_in_source_and_package(self) -> None:
+        for name in (
+            "desktop-spec-plan-gate", "desktop-implementation-gate",
+            "desktop-pr-merge-gate",
+        ):
+            for root in (ROOT, PACKAGE_ROOT):
+                with self.subTest(skill=name, root=root):
+                    path = root / "skills" / name / "agents" / "openai.yaml"
+                    metadata = yaml.safe_load(path.read_text(encoding="utf-8"))
+                    self.assertIs(False, metadata["policy"]["allow_implicit_invocation"])
+                    self.assertTrue((path.parents[1] / "SKILL.md").is_file())
+
+    def test_installed_operation_references_and_commands_do_not_need_source_checkout(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="portable-skills-") as directory:
+            root = pathlib.Path(directory).resolve()
+            home, target = root / "home", root / "target"
+            home.mkdir()
+            target.mkdir()
+            env = os.environ.copy()
+            for name in INSTALLER_ENV_OVERRIDES:
+                env.pop(name, None)
+            env.update({"HOME": str(home), "XDG_STATE_HOME": str(root / "state")})
+            for group in ("codex-cli-session-handoff", "desktop-delivery-workflow"):
+                result = subprocess.run(
+                    [str(ROOT / "install.sh"), "install", group], cwd=ROOT,
+                    env=env, capture_output=True, text=True, check=False,
+                )
+                self.assertEqual(0, result.returncode, result.stderr)
+            installed = home / ".agents" / "skills"
+            self.assertFalse((target / "scripts").exists())
+            for skill in ("loop-engineering", "cli-session-handoff", "desktop-thread-delegation"):
+                entry = installed / skill / "SKILL.md"
+                text = entry.read_text(encoding="utf-8")
+                links = set(re.findall(r"\]\((references/[^)#]+\.md)(?:#[^)]*)?\)", text))
+                links.update(re.findall(r"`(references/[^`]+\.md)`", text))
+                self.assertTrue(links, entry)
+                for link in links:
+                    self.assertEqual(
+                        (ROOT / "skills" / skill / link).read_bytes(),
+                        (entry.parent / link).read_bytes(),
+                    )
+            for skill in ("desktop-spec-plan-gate", "desktop-implementation-gate", "desktop-pr-merge-gate"):
+                metadata = yaml.safe_load((installed / skill / "agents/openai.yaml").read_text())
+                self.assertIs(False, metadata["policy"]["allow_implicit_invocation"])
+            for script, argument in (
+                ("cli-session-handoff/scripts/cli_session_handoff.py", "--example"),
+                ("loop-engineering/scripts/operationctl.py", "--help"),
+                ("loop-engineering/scripts/qualificationctl.py", "--help"),
+                ("loop-engineering/scripts/sqlitectl.py", "--help"),
+            ):
+                with self.subTest(script=script):
+                    result = subprocess.run(
+                        [sys.executable, str(installed / script), argument], cwd=target,
+                        env=env, capture_output=True, text=True, check=False,
+                    )
+                    self.assertEqual(0, result.returncode, result.stderr)
+                    self.assertTrue(result.stdout)
+
     def test_manifest_packages_the_generated_skill_tree(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         catalog = yaml.safe_load((ROOT / "catalog.yaml").read_text(encoding="utf-8"))
