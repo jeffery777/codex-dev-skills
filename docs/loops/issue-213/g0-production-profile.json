@@ -1,0 +1,77 @@
+{
+  "contract_version": "mg1-production-profile-proposal/v0",
+  "profile_id": "synthetic-local-standard-v1",
+  "status": "proposed",
+  "profile": {
+    "max_items": 10000,
+    "max_versions": 10,
+    "history_seconds": 2592000,
+    "max_payload_bytes": 16384,
+    "max_proofs": 32768,
+    "maintenance_proof_reserve": 1024,
+    "proof_seconds": 2592000,
+    "marker_seconds": 2592000,
+    "confirmation_seconds": 300,
+    "max_scan_items": 256,
+    "data_limit_bytes": 4294967296,
+    "maintenance_max_bytes": 5368709120
+  },
+  "model": {
+    "kind": "synthetic-planning-estimate",
+    "warning_percent": 80,
+    "index_kind": "ordinary-current-only-projection",
+    "proof_bytes_ceiling": 2048,
+    "item_metadata_bytes_ceiling": 512,
+    "other_overhead_bytes": 8388608,
+    "witness_bytes_ceiling": 65536,
+    "journal_copies": 1,
+    "temp_bytes": 67108864,
+    "growth_bytes": 1048576
+  },
+  "workloads": [
+    {
+      "case_id": "synthetic-small",
+      "active_items": 100,
+      "stopped_items": 0,
+      "erased_markers": 0,
+      "versions_per_item": 3,
+      "version_bytes": 4096,
+      "index_bytes_per_active_item": 8192,
+      "proof_count": 1000,
+      "witness_count": 4
+    },
+    {
+      "case_id": "synthetic-ordinary",
+      "active_items": 2000,
+      "stopped_items": 500,
+      "erased_markers": 500,
+      "versions_per_item": 3,
+      "version_bytes": 4096,
+      "index_bytes_per_active_item": 8192,
+      "proof_count": 16000,
+      "witness_count": 32
+    },
+    {
+      "case_id": "synthetic-long-lived",
+      "active_items": 8000,
+      "stopped_items": 1000,
+      "erased_markers": 1000,
+      "versions_per_item": 5,
+      "version_bytes": 8192,
+      "index_bytes_per_active_item": 16384,
+      "proof_count": 30000,
+      "witness_count": 128
+    },
+    {
+      "case_id": "synthetic-count-ceilings",
+      "active_items": 10000,
+      "stopped_items": 0,
+      "erased_markers": 0,
+      "versions_per_item": 10,
+      "version_bytes": 16384,
+      "index_bytes_per_active_item": 32768,
+      "proof_count": 33792,
+      "witness_count": 1024
+    }
+  ]
+}

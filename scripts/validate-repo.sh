@@ -377,7 +377,12 @@ check_memory_governance_g0() {
   done
   "$PROJECT_PYTHON" scripts/validate-memory-governance-g0.py \
     tests/fixtures/memory-governance-g0/off.json >"$TMP_DIR/g0-off.json"
-  run_unit_tests tests.test_memory_governance_g0
+  "$PROJECT_PYTHON" scripts/evaluate-memory-governance-profile.py \
+    docs/loops/issue-213/g0-production-profile.json >"$TMP_DIR/g0-profile-proposal.json"
+  "$PROJECT_PYTHON" scripts/validate-memory-governance-proposal-cases.py \
+    docs/loops/issue-213/g0-production-cases.json \
+    --profile docs/loops/issue-213/g0-production-profile.json >"$TMP_DIR/g0-proposal-cases.json"
+  run_unit_tests tests.test_memory_governance_g0 tests.test_memory_governance_profile_proposal
   ok "MG1 G0 synthetic contract conformance passes without runtime authority"
 }
 
