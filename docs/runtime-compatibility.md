@@ -80,6 +80,11 @@ separate from the repository's default-disabled `loop-memory-sqlite/v0` Memory
 M1 adapter. Do not automatically copy app history or generated memory files
 into a repository, M1 state, verification evidence, or completion records.
 
+本專案的 memory-off、原生 Memories 與實驗性 context management 是分開的狀態。
+明確 fresh create 不複製來源對話，也不自動證明原生記憶未注入；CLI feature 狀態不能直接當作
+目前 Desktop 任務的有效設定。管理範圍、外部副本與受控評測要求見
+[原生記憶共存邊界](native-memory-coexistence.md)。
+
 ## Metadata
 
 Every skill should include a runtime line near the top:

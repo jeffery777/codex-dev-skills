@@ -372,6 +372,17 @@ revision／preview-confirmation 綁定、有限 profile、分段清除聲明及�
 #222 的歷史 annotation 追溯另見
 [來源分析](loops/issue-222/source-analysis.md)；不與 class-crowding 混為同一缺陷。
 
+#225 的 G0 已由 PR #226 合併；#213 延續
+[G0 接受資料](loops/issue-213/g0-acceptance.md)及
+[原生記憶共存邊界](native-memory-coexistence.md)。原生召回、本專案 backend 與
+交付證據分開，效益比較須控制原生記憶與 context management 狀態。
+G0 合成材料僅是部分交付；完整 G0 接受仍須先完成生產儲存／授權與 profile 決定，
+之後才進入 G1／G2 執行核心。這份補充不新增記憶 runtime、不變更 v0 schema，
+也不代表已接受生產參數或已滿足 G1 進入條件。
+
+#228 的 [流程審計](loops/issue-228/delivery-audit.md)補入 revision-bound 來源、
+驗證狀態與方法型知識前提的 G0 接受要求；本次只整合文件，#213 繼續追蹤完整 G0。
+
 ## Non-Goals
 
 - General prompt collection.
