@@ -1,0 +1,2994 @@
+{
+  "contract_version": "mg1-production-cases-proposal/v0",
+  "status": "oracle-only-not-executed",
+  "synthetic_only": true,
+  "production_parameters_accepted": false,
+  "runtime_proven": false,
+  "operation_authorized": false,
+  "source_note": "Synthetic fixture content only. The maximum-width witness checks shape and byte capacity only; full retention/continuation examples bind concrete before/after record sets. Fault entries document future runtime oracles, not executed fault tests.",
+  "version_examples": [
+    {
+      "revision": 1,
+      "created_at": 100,
+      "retired_at": null,
+      "kind": "fact",
+      "body": "Synthetic widget fixtures use the label blue.",
+      "summary": "Synthetic widget label",
+      "cues": [
+        "blue",
+        "widget"
+      ],
+      "applicability": {
+        "repository_id": "synthetic-repository",
+        "paths": [
+          "fixtures/widget.json"
+        ],
+        "conditions": [
+          "Only in the synthetic fixture repository."
+        ]
+      },
+      "procedure": null,
+      "provenance": [
+        {
+          "source_id": "synthetic-source",
+          "kind": "repo-artifact",
+          "reference": {
+            "repository_id": "synthetic-repository",
+            "path": "docs/synthetic-guide.md"
+          },
+          "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "source_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "attestation": null
+        }
+      ],
+      "validation": {
+        "content_digest": "28c413482d27a6c934c49098c84acf650ae3e87b8d7e2af6678987626acaaec0",
+        "evidence_id": "synthetic-validation",
+        "verified_at": 100,
+        "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "eligibility": "eligible",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      }
+    },
+    {
+      "revision": 1,
+      "created_at": 100,
+      "retired_at": null,
+      "kind": "procedure",
+      "body": "Check the synthetic widget fixture using its bounded validator.",
+      "summary": "Synthetic widget validation",
+      "cues": [
+        "validate",
+        "widget"
+      ],
+      "applicability": {
+        "repository_id": "synthetic-repository",
+        "paths": [
+          "fixtures/widget.json"
+        ],
+        "conditions": [
+          "Only in the synthetic fixture repository."
+        ]
+      },
+      "procedure": {
+        "prerequisites": [
+          "Use the synthetic fixture repository."
+        ],
+        "steps": [
+          "Read the fixture.",
+          "Run the fixture validator."
+        ],
+        "success_evidence": [
+          "synthetic-source"
+        ],
+        "invalidation_conditions": [
+          "The fixture schema revision changes."
+        ]
+      },
+      "provenance": [
+        {
+          "source_id": "synthetic-source",
+          "kind": "repo-artifact",
+          "reference": {
+            "repository_id": "synthetic-repository",
+            "path": "docs/synthetic-guide.md"
+          },
+          "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "source_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "attestation": null
+        }
+      ],
+      "validation": {
+        "content_digest": "12180cabc3af9adb479eec7137d0f985216200cd51f71b76ad8357641c6b56f9",
+        "evidence_id": "synthetic-validation",
+        "verified_at": 100,
+        "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "eligibility": "eligible",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      }
+    }
+  ],
+  "maximum_width_proof_example": {
+    "contract_version": "mg1-operation-proof/v1",
+    "operation_id": "ffffffff-ffff-4fff-bfff-ffffffffffff",
+    "item_id": "eeeeeeee-eeee-4eee-beee-eeeeeeeeeeee",
+    "identity_epoch": 9007199254740991,
+    "acceptance_epoch": 9007199254740991,
+    "before_revision": 9007199254740991,
+    "after_revision": 9007199254740991,
+    "recorded_at": 9007199254740991,
+    "operation": "prune",
+    "preview_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "before_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "after_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "projection_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "acceptance_evidence_id": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "phase": "sanitization-pending",
+    "sanitization": "pending",
+    "space_reclaim": "not-requested",
+    "restore_source_revision": null,
+    "target_revisions": [
+      9007199254740981,
+      9007199254740982,
+      9007199254740983,
+      9007199254740984,
+      9007199254740985,
+      9007199254740986,
+      9007199254740987,
+      9007199254740988,
+      9007199254740989,
+      9007199254740990
+    ],
+    "parent_operation_id": null,
+    "witness_kind": null,
+    "witness_digest": null
+  },
+  "fault_cases": [
+    {
+      "case_id": "G1-AUTH-01",
+      "trigger": "Candidate JSON self-asserts accepted=true.",
+      "expected": "Reject before opening a write connection.",
+      "required_evidence": "HostAuthorityPort negative fixture"
+    },
+    {
+      "case_id": "G1-SOURCE-01",
+      "trigger": "Source commit or applicability changes before execution.",
+      "expected": "Reject stale candidate; no write.",
+      "required_evidence": "Controlled source port revision change"
+    },
+    {
+      "case_id": "G1-SOURCE-02",
+      "trigger": "Source changes after commit but before readback.",
+      "expected": "Keep receipt; committed-but-not-adoptable; recall rejects.",
+      "required_evidence": "Post-commit source port revision change"
+    },
+    {
+      "case_id": "G1-CONTENT-01",
+      "trigger": "Procedure omits prerequisites or source evidence.",
+      "expected": "Reject candidate; do not store incomplete method.",
+      "required_evidence": "Schema validation negative fixtures"
+    },
+    {
+      "case_id": "G1-CONTENT-02",
+      "trigger": "Provenance makes complete version exceed 16384 bytes.",
+      "expected": "Reject without truncating provenance or body.",
+      "required_evidence": "Canonical UTF-8 boundary fixtures"
+    },
+    {
+      "case_id": "G1-ATOMIC-01",
+      "trigger": "Process exits before/during/after commit and reply is lost.",
+      "expected": "Fresh readback distinguishes applied/not-applied/unknown without replay.",
+      "required_evidence": "Subprocess crash injection; exception before commit alone is insufficient"
+    },
+    {
+      "case_id": "G1-AUDIT-01",
+      "trigger": "A nonempty journal exists before an audit.",
+      "expected": "Report recovery-required before opening DB; all files byte-identical.",
+      "required_evidence": "Synthetic hot/non-hot journal plus file inventory/hash comparison"
+    },
+    {
+      "case_id": "G1-AUDIT-02",
+      "trigger": "Two pages span a concurrent writer or closed snapshot.",
+      "expected": "Same snapshot remains consistent; expired cursor rejects; no mixed completeness.",
+      "required_evidence": "Two-process coordination-lock and cursor tests"
+    },
+    {
+      "case_id": "G1-INDEX-01",
+      "trigger": "Stop/update/restore changes current revision.",
+      "expected": "Current pointer, active-only exact-cue projection and proof agree atomically.",
+      "required_evidence": "Independent new connection reads all state components"
+    },
+    {
+      "case_id": "G1-LIMIT-01",
+      "trigger": "A write would exceed profile.max_items, profile.max_proofs or the measured data/growth limit.",
+      "expected": "Refuse capacity-increasing write; preserve history/markers; maintenance reserve is bounded.",
+      "required_evidence": "At-limit and one-over cases, including stopped items and pending proofs"
+    },
+    {
+      "case_id": "G1-CLOCK-01",
+      "trigger": "UTC or monotonic clock moves backwards, confirmation expires, or process restarts.",
+      "expected": "Reject mutation/retention; no extension of previous confirmation.",
+      "required_evidence": "Trusted clock port boundary and restart cases"
+    },
+    {
+      "case_id": "G2-ERASE-01",
+      "trigger": "Erase a canary-bearing item with history and derived cues.",
+      "expected": "No adoption after transaction; sanitization remains pending until all managed readable files and paths checked.",
+      "required_evidence": "Synthetic canary scan of main/journal/temp/history/index, not SQL absence alone"
+    },
+    {
+      "case_id": "G2-COMPACT-01",
+      "trigger": "Incremental vacuum reclaims zero/some pages, then is interrupted.",
+      "expected": "Preserve erase result; actual bytes reported; remaining space reclaim is pending.",
+      "required_evidence": "Bounded incremental_vacuum with subprocess interruption and independent readback"
+    },
+    {
+      "case_id": "G2-SPACE-01",
+      "trigger": "Filesystem runs out of space during transaction or compact.",
+      "expected": "Never claim success from exception; preserve unknown/pending states and recover under explicit authority.",
+      "required_evidence": "Restricted disposable filesystem or SQLite fault VFS, not a mock-only claim"
+    },
+    {
+      "case_id": "G2-RETENTION-01",
+      "trigger": "Proof/marker retention crosses 30-day boundary with an in-flight operation.",
+      "expected": "Protect pending/reference-bearing records; advance reject floor atomically before exact-set pruning.",
+      "required_evidence": "Boundary clock, crash and stale-operation replay cases"
+    },
+    {
+      "case_id": "G2-ENVELOPE-01",
+      "trigger": "Unexpected WAL/SHM or temp location, stale qualification/file binding, invalid J/T/G/R, or execution-time available space below R.",
+      "expected": "Do not open mutation transaction; incomplete coverage or qualification never authorizes operation. Preserve unknown files; fresh free-space changes still meeting R do not expand scope.",
+      "required_evidence": "Synthetic arithmetic/binding boundaries; later trusted registry, peak, preallocated maintenance capacity and execution-time filesystem qualification"
+    },
+    {
+      "case_id": "G1-SENSITIVE-01",
+      "trigger": "Sensitivity classification is unknown/prohibited or the policy fingerprint changes.",
+      "expected": "Reject storage/adoption; redaction requires a new complete candidate and preview.",
+      "required_evidence": "Trusted source/sensitivity port negative fixtures, not a keyword-only detector"
+    },
+    {
+      "case_id": "G2-PRUNE-01",
+      "trigger": "Historical versions are removed but process exits before canary verification.",
+      "expected": "Preserve current version and sanitization-pending proof; deleted history never returns.",
+      "required_evidence": "Transaction/crash plus main/journal/temp/history canary scan"
+    },
+    {
+      "case_id": "G2-PRUNE-02",
+      "trigger": "A prune continuation has only item permission but residue work needs root maintenance.",
+      "expected": "Reject remaining maintenance; keep precise pending phases without replaying SQL deletion.",
+      "required_evidence": "Scope/proof-digest/phase-bound continuation and fresh readback"
+    },
+    {
+      "case_id": "G0-ENVELOPE-01",
+      "trigger": "A scope, nonce, candidate, policy, state digest or confirmation expiry is changed.",
+      "expected": "Reject mismatched canonical binding; a matching synthetic JSON never grants authority.",
+      "required_evidence": "Offline envelope mutation cases and later qualified port tests"
+    },
+    {
+      "case_id": "G0-EXTERNAL-COPIES-01",
+      "trigger": "External-copy coverage or known copy set changes after confirmation.",
+      "expected": "Rebuild and reconfirm preview; unknown never becomes no external copies.",
+      "required_evidence": "Synthetic coverage/digest drift case; no external resource reads"
+    },
+    {
+      "case_id": "G0-RESTORE-SOURCE-01",
+      "trigger": "A restore source revision is omitted, changed or not retained.",
+      "expected": "Reject; preview and durable proof must bind the same exact retained source revision.",
+      "required_evidence": "Synthetic source-revision substitution negatives"
+    },
+    {
+      "case_id": "G1-CAPACITY-READBACK-01",
+      "trigger": "Content write commits but post-write storage is absent, over limit or incompletely measured.",
+      "expected": "Preserve committed proof; committed-capacity-unproven, not applied/not-applied; block growth.",
+      "required_evidence": "Synthetic byte/coverage boundaries plus later actual filesystem measurement"
+    },
+    {
+      "case_id": "G0-RETENTION-BATCH-01",
+      "trigger": "A retention target batch has 129 proofs or markers, or full encoded envelope exceeds 256 KiB.",
+      "expected": "Reject without truncation; each at-most-128 batch has its own preview/confirmation/proof.",
+      "required_evidence": "Maximum complete-envelope canonical encoding and one-over batch tests"
+    },
+    {
+      "case_id": "G2-CONTINUATION-01",
+      "trigger": "Valid new confirmation resumes exact pending sanitization on the original proof.",
+      "expected": "Atomically update only original phase fields and insert child proof with new acceptance metadata; fresh readback checks both.",
+      "required_evidence": "Positive synthetic before/after proof-set example and later crash/partial-write tests"
+    },
+    {
+      "case_id": "G0-PROOF-SET-01",
+      "trigger": "retention/continuation commit succeeds and the process loses its reply",
+      "expected": "fresh readback verifies durable witness manifest and before/after set roots without RAM preview; mismatch is never applied",
+      "required_evidence": "synthetic before/after records and exact-set/parent tamper negatives"
+    },
+    {
+      "case_id": "G0-COMPACT-PLAN-01",
+      "trigger": "compact has N=0, N exceeds freelist, N changes after confirmation, or durable freelist changes while its parent witness is still pending/null",
+      "expected": "reject invalid plans; pending with freelist drift is state-unknown and cannot replay N; qualified PRAGMA, metadata and phase effects must commit atomically",
+      "required_evidence": "bound plan with N=2 and actual=1 positive, invalid N and inconsistent pending negatives; G2 transaction/rollback and metadata allocation qualification"
+    },
+    {
+      "case_id": "G0-RESTORE-CONTENT-01",
+      "trigger": "restore points to a retained revision but substitutes semantic content",
+      "expected": "reject; changed semantics must use update and fresh validation",
+      "required_evidence": "retained source and new lifecycle/validation positive plus semantic substitution negative"
+    },
+    {
+      "case_id": "G0-WITNESS-CAPACITY-01",
+      "trigger": "retained witness or pending continuation liability exhausts reserved capacity",
+      "expected": "reject new admission without pruning; existing pending work retains reserved proof and witness slots",
+      "required_evidence": "64KiB witness limit, count/byte estimate and future runtime admission boundary tests"
+    },
+    {
+      "case_id": "G0-READBACK-FRESHNESS-01",
+      "trigger": "applied result reuses preflight external-copy observation or another filesystem capacity",
+      "expected": "reject stale or mismatched evidence; do not declare global erase",
+      "required_evidence": "fresh post observations and foreign-filesystem negative"
+    }
+  ],
+  "binding_examples": {
+    "policy": {
+      "policy_id": "mg1-content-safety/v1",
+      "prohibited": [
+        "credentials",
+        "pii",
+        "private-paths",
+        "raw-chats",
+        "raw-logs",
+        "raw-sessions",
+        "restricted-data",
+        "secrets",
+        "unredacted-config"
+      ],
+      "unknown_action": "reject",
+      "redaction": "new-candidate-and-preview"
+    },
+    "scope": {
+      "principal_id": "00000000-0000-4000-8000-000000000001",
+      "root_id": "00000000-0000-4000-8000-000000000002",
+      "repository_id": "synthetic-repository",
+      "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+      "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+    },
+    "before_state": {
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "epoch": 1,
+      "reject_before": 0,
+      "items": [
+        {
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "status": "active",
+          "current_revision": 1,
+          "revision_high_water": 1,
+          "erased_at": null,
+          "versions": [
+            {
+              "revision": 1,
+              "version_digest": "cae92fd49ab81e1f8529994c7d7beb2e7559df64e5738a3df76bb86b92953356"
+            }
+          ],
+          "projection_digest": "13d3c6104588dde4645bbde2afdb7d34d2a928e2162887f95b8cb21b48c9167c"
+        }
+      ]
+    },
+    "after_state": {
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "epoch": 1,
+      "reject_before": 0,
+      "items": [
+        {
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "status": "active",
+          "current_revision": 2,
+          "revision_high_water": 2,
+          "erased_at": null,
+          "versions": [
+            {
+              "revision": 1,
+              "version_digest": "df11a870eabfd1f7852e8211e73c25cdfa1c0479d35436c10a2a9b0026049474"
+            },
+            {
+              "revision": 2,
+              "version_digest": "8524f8545d149da50a70b13da22bbf504c3cc803398b7488b85e0f911f8a1913"
+            }
+          ],
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a"
+        }
+      ]
+    },
+    "preview": {
+      "contract_version": "mg1-preview/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000004",
+      "nonce": "00000000-0000-4000-8000-000000000005",
+      "operation": "update",
+      "item_id": "00000000-0000-4000-8000-000000000003",
+      "acceptance_epoch": 1,
+      "issued_at": 200,
+      "expires_at": 500,
+      "before": {
+        "kind": "logical-state",
+        "digest": "9c50be613e3985a5160cb7d2315cbbe3915f23d35cd761778c22c0047a66f4b4"
+      },
+      "expected_after_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+      "candidate": {
+        "revision": 2,
+        "created_at": 200,
+        "retired_at": null,
+        "kind": "fact",
+        "body": "Synthetic widget fixtures use the label blue.",
+        "summary": "Synthetic widget label",
+        "cues": [
+          "blue",
+          "widget"
+        ],
+        "applicability": {
+          "repository_id": "synthetic-repository",
+          "paths": [
+            "fixtures/widget.json"
+          ],
+          "conditions": [
+            "Only in the synthetic fixture repository."
+          ]
+        },
+        "procedure": null,
+        "provenance": [
+          {
+            "source_id": "synthetic-source",
+            "kind": "repo-artifact",
+            "reference": {
+              "repository_id": "synthetic-repository",
+              "path": "docs/synthetic-guide.md"
+            },
+            "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "source_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "attestation": null
+          }
+        ],
+        "validation": {
+          "content_digest": "8bf13eab8da4b64f57b7011dbcee624beccaf4b10a84e9dddfc2383b8c40dc9a",
+          "evidence_id": "synthetic-validation",
+          "verified_at": 200,
+          "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "eligibility": "eligible",
+          "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+        }
+      },
+      "target_revisions": [],
+      "target_proofs": [],
+      "target_markers": [],
+      "managed_files": [
+        {
+          "file_id": "synthetic-main",
+          "role": "main",
+          "bytes": 2097152,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "external_copies": {
+        "coverage": "unknown",
+        "observed_at": 200,
+        "copies": []
+      },
+      "phases": {
+        "content": "requested",
+        "sanitization": "not-requested",
+        "space_reclaim": "not-requested"
+      },
+      "authority": [
+        "content-write",
+        "readback"
+      ],
+      "continuation": null,
+      "storage": {
+        "filesystem_id": "synthetic-filesystem",
+        "managed_bytes": 2097152,
+        "available_work_bytes": 268435456,
+        "coverage": "complete",
+        "work_budget": {
+          "qualification_id": "synthetic-work-envelope-v1",
+          "file_snapshot_digest": "84bc9136ca71cd1034d36ad45c7de29a8999f52927e65d65843ce708bbab1727",
+          "journal_bound_bytes": 2097152,
+          "temp_bound_bytes": 67108864,
+          "growth_bound_bytes": 1048576,
+          "required_work_bytes": 70254592
+        }
+      },
+      "compact": null
+    },
+    "confirmation": {
+      "contract_version": "mg1-confirmation/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000004",
+      "nonce": "00000000-0000-4000-8000-000000000005",
+      "preview_digest": "1f83832c09cd3beeb8f679268b85fe703ad436dfb2035f5b06c38111983fa18f",
+      "confirmed_at": 201,
+      "expires_at": 500,
+      "host_evidence_id": "synthetic-confirmation"
+    },
+    "readback": {
+      "contract_version": "mg1-readback/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000004",
+      "preview_digest": "1f83832c09cd3beeb8f679268b85fe703ad436dfb2035f5b06c38111983fa18f",
+      "observed_at": 203,
+      "result": "applied",
+      "state_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+      "proof": {
+        "contract_version": "mg1-operation-proof/v1",
+        "operation_id": "00000000-0000-4000-8000-000000000004",
+        "item_id": "00000000-0000-4000-8000-000000000003",
+        "identity_epoch": 1,
+        "acceptance_epoch": 1,
+        "before_revision": 1,
+        "after_revision": 2,
+        "recorded_at": 202,
+        "operation": "update",
+        "preview_digest": "1f83832c09cd3beeb8f679268b85fe703ad436dfb2035f5b06c38111983fa18f",
+        "before_digest": "9c50be613e3985a5160cb7d2315cbbe3915f23d35cd761778c22c0047a66f4b4",
+        "after_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+        "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a",
+        "acceptance_evidence_id": "synthetic-confirmation",
+        "phase": "complete",
+        "sanitization": "not-requested",
+        "space_reclaim": "not-requested",
+        "restore_source_revision": null,
+        "target_revisions": [],
+        "parent_operation_id": null,
+        "witness_kind": null,
+        "witness_digest": null
+      },
+      "deleted_proofs": [],
+      "deleted_markers": [],
+      "managed_files": [
+        {
+          "file_id": "synthetic-main",
+          "role": "main",
+          "bytes": 2101248,
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ],
+      "external_copies": {
+        "coverage": "unknown",
+        "observed_at": 203,
+        "copies": []
+      },
+      "sanitization": "not-requested",
+      "space_reclaim": "not-requested",
+      "storage": {
+        "filesystem_id": "synthetic-filesystem",
+        "managed_bytes": 2101248,
+        "available_work_bytes": 268435456,
+        "coverage": "complete",
+        "work_budget": null
+      },
+      "related_proofs": [],
+      "related_witnesses": [],
+      "witness": null
+    }
+  },
+  "continuation_example": {
+    "before_state": {
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "epoch": 1,
+      "reject_before": 0,
+      "items": [
+        {
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "status": "active",
+          "current_revision": 2,
+          "revision_high_water": 2,
+          "erased_at": null,
+          "versions": [
+            {
+              "revision": 2,
+              "version_digest": "8524f8545d149da50a70b13da22bbf504c3cc803398b7488b85e0f911f8a1913"
+            }
+          ],
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a"
+        }
+      ]
+    },
+    "after_state": {
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "epoch": 1,
+      "reject_before": 0,
+      "items": [
+        {
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "status": "active",
+          "current_revision": 2,
+          "revision_high_water": 2,
+          "erased_at": null,
+          "versions": [
+            {
+              "revision": 2,
+              "version_digest": "8524f8545d149da50a70b13da22bbf504c3cc803398b7488b85e0f911f8a1913"
+            }
+          ],
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a"
+        }
+      ]
+    },
+    "parent_before": {
+      "contract_version": "mg1-operation-proof/v1",
+      "operation_id": "00000000-0000-4000-8000-000000000010",
+      "item_id": "00000000-0000-4000-8000-000000000003",
+      "identity_epoch": 1,
+      "acceptance_epoch": 1,
+      "before_revision": 2,
+      "after_revision": 2,
+      "recorded_at": 210,
+      "operation": "prune",
+      "preview_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "before_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+      "after_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+      "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a",
+      "acceptance_evidence_id": "synthetic-prune-confirmation",
+      "phase": "sanitization-pending",
+      "sanitization": "pending",
+      "space_reclaim": "not-requested",
+      "restore_source_revision": null,
+      "target_revisions": [
+        1
+      ],
+      "parent_operation_id": null,
+      "witness_kind": null,
+      "witness_digest": null
+    },
+    "preview": {
+      "contract_version": "mg1-preview/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000011",
+      "nonce": "00000000-0000-4000-8000-000000000012",
+      "operation": "continue-maintenance",
+      "item_id": "00000000-0000-4000-8000-000000000003",
+      "acceptance_epoch": 1,
+      "issued_at": 220,
+      "expires_at": 520,
+      "before": {
+        "kind": "logical-state",
+        "digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775"
+      },
+      "expected_after_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+      "candidate": null,
+      "target_revisions": [],
+      "target_proofs": [],
+      "target_markers": [],
+      "managed_files": [
+        {
+          "file_id": "synthetic-main",
+          "role": "main",
+          "bytes": 2101248,
+          "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+        }
+      ],
+      "external_copies": {
+        "coverage": "unknown",
+        "observed_at": 220,
+        "copies": []
+      },
+      "phases": {
+        "content": "not-requested",
+        "sanitization": "requested",
+        "space_reclaim": "not-requested"
+      },
+      "authority": [
+        "erase-content",
+        "readback",
+        "root-maintenance"
+      ],
+      "continuation": {
+        "operation_id": "00000000-0000-4000-8000-000000000010",
+        "proof_digest": "96458dad26ea2c1ad64278aebec1001490b713242b3c5e5e10a20cda5a6e1c51",
+        "remaining_phases": [
+          "sanitization"
+        ]
+      },
+      "storage": {
+        "filesystem_id": "synthetic-filesystem",
+        "managed_bytes": 2101248,
+        "available_work_bytes": 268435456,
+        "coverage": "complete",
+        "work_budget": {
+          "qualification_id": "synthetic-work-envelope-v1",
+          "file_snapshot_digest": "00aacc8e33ca89607be1c826e67b6cbc47e431f3ab299a72ba61fb0c2d4827e0",
+          "journal_bound_bytes": 2101248,
+          "temp_bound_bytes": 67108864,
+          "growth_bound_bytes": 1048576,
+          "required_work_bytes": 70258688
+        }
+      },
+      "compact": null
+    },
+    "confirmation": {
+      "contract_version": "mg1-confirmation/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000011",
+      "nonce": "00000000-0000-4000-8000-000000000012",
+      "preview_digest": "a92368a1f1dde968dee9e86eb11d9b0895f03a4dca3868bc6d9a5850fcddf77a",
+      "confirmed_at": 221,
+      "expires_at": 520,
+      "host_evidence_id": "synthetic-continuation-confirmation"
+    },
+    "parent_after": {
+      "contract_version": "mg1-operation-proof/v1",
+      "operation_id": "00000000-0000-4000-8000-000000000010",
+      "item_id": "00000000-0000-4000-8000-000000000003",
+      "identity_epoch": 1,
+      "acceptance_epoch": 1,
+      "before_revision": 2,
+      "after_revision": 2,
+      "recorded_at": 210,
+      "operation": "prune",
+      "preview_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "before_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+      "after_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+      "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a",
+      "acceptance_evidence_id": "synthetic-prune-confirmation",
+      "phase": "complete",
+      "sanitization": "complete",
+      "space_reclaim": "not-requested",
+      "restore_source_revision": null,
+      "target_revisions": [
+        1
+      ],
+      "parent_operation_id": null,
+      "witness_kind": null,
+      "witness_digest": null
+    },
+    "readback": {
+      "contract_version": "mg1-readback/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000011",
+      "preview_digest": "a92368a1f1dde968dee9e86eb11d9b0895f03a4dca3868bc6d9a5850fcddf77a",
+      "observed_at": 223,
+      "result": "applied",
+      "state_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+      "proof": {
+        "contract_version": "mg1-operation-proof/v1",
+        "operation_id": "00000000-0000-4000-8000-000000000011",
+        "item_id": "00000000-0000-4000-8000-000000000003",
+        "identity_epoch": 1,
+        "acceptance_epoch": 1,
+        "before_revision": 2,
+        "after_revision": 2,
+        "recorded_at": 222,
+        "operation": "continue-maintenance",
+        "preview_digest": "a92368a1f1dde968dee9e86eb11d9b0895f03a4dca3868bc6d9a5850fcddf77a",
+        "before_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+        "after_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+        "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a",
+        "acceptance_evidence_id": "synthetic-continuation-confirmation",
+        "phase": "complete",
+        "sanitization": "complete",
+        "space_reclaim": "not-requested",
+        "restore_source_revision": null,
+        "target_revisions": [],
+        "parent_operation_id": "00000000-0000-4000-8000-000000000010",
+        "witness_kind": "continuation",
+        "witness_digest": "36671949b8e37ac45c5a18eb8afd444aacaa12d44ed63270906a7da7d38b16af"
+      },
+      "deleted_proofs": [],
+      "deleted_markers": [],
+      "managed_files": [
+        {
+          "file_id": "synthetic-main",
+          "role": "main",
+          "bytes": 2101248,
+          "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        }
+      ],
+      "external_copies": {
+        "coverage": "unknown",
+        "observed_at": 223,
+        "copies": []
+      },
+      "sanitization": "complete",
+      "space_reclaim": "not-requested",
+      "storage": {
+        "filesystem_id": "synthetic-filesystem",
+        "managed_bytes": 2101248,
+        "available_work_bytes": 268435456,
+        "coverage": "complete",
+        "work_budget": null
+      },
+      "related_proofs": [
+        {
+          "contract_version": "mg1-operation-proof/v1",
+          "operation_id": "00000000-0000-4000-8000-000000000010",
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "acceptance_epoch": 1,
+          "before_revision": 2,
+          "after_revision": 2,
+          "recorded_at": 210,
+          "operation": "prune",
+          "preview_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "before_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+          "after_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a",
+          "acceptance_evidence_id": "synthetic-prune-confirmation",
+          "phase": "complete",
+          "sanitization": "complete",
+          "space_reclaim": "not-requested",
+          "restore_source_revision": null,
+          "target_revisions": [
+            1
+          ],
+          "parent_operation_id": null,
+          "witness_kind": null,
+          "witness_digest": null
+        }
+      ],
+      "related_witnesses": [
+        null
+      ],
+      "witness": {
+        "contract_version": "mg1-maintenance-witness/v1",
+        "kind": "continuation",
+        "operation_id": "00000000-0000-4000-8000-000000000011",
+        "parent_before_record": {
+          "proof": {
+            "contract_version": "mg1-operation-proof/v1",
+            "operation_id": "00000000-0000-4000-8000-000000000010",
+            "item_id": "00000000-0000-4000-8000-000000000003",
+            "identity_epoch": 1,
+            "acceptance_epoch": 1,
+            "before_revision": 2,
+            "after_revision": 2,
+            "recorded_at": 210,
+            "operation": "prune",
+            "preview_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            "before_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+            "after_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+            "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a",
+            "acceptance_evidence_id": "synthetic-prune-confirmation",
+            "phase": "sanitization-pending",
+            "sanitization": "pending",
+            "space_reclaim": "not-requested",
+            "restore_source_revision": null,
+            "target_revisions": [
+              1
+            ],
+            "parent_operation_id": null,
+            "witness_kind": null,
+            "witness_digest": null
+          },
+          "witness": null
+        },
+        "parent_after_record_digest": "4952cab8a1792711fb3844e683e497aab1c131350bf5ea570fee2411d6b03ca9",
+        "remaining_phases": [
+          "sanitization"
+        ],
+        "before_proof_set_digest": "e401f472fa3bfbf017813a52ba780b74300536c0ba4b4ce83863f440f6e9ad9a",
+        "after_proof_set_digest_without_self": "1f8b6109a2fb9c11e0eb2a62a4ab8855dc3936a441d509e995618acc87f3d7ec"
+      }
+    },
+    "proof_records_before": [
+      {
+        "proof": {
+          "contract_version": "mg1-operation-proof/v1",
+          "operation_id": "00000000-0000-4000-8000-000000000010",
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "acceptance_epoch": 1,
+          "before_revision": 2,
+          "after_revision": 2,
+          "recorded_at": 210,
+          "operation": "prune",
+          "preview_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "before_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+          "after_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a",
+          "acceptance_evidence_id": "synthetic-prune-confirmation",
+          "phase": "sanitization-pending",
+          "sanitization": "pending",
+          "space_reclaim": "not-requested",
+          "restore_source_revision": null,
+          "target_revisions": [
+            1
+          ],
+          "parent_operation_id": null,
+          "witness_kind": null,
+          "witness_digest": null
+        },
+        "witness": null
+      }
+    ],
+    "proof_records_after": [
+      {
+        "proof": {
+          "contract_version": "mg1-operation-proof/v1",
+          "operation_id": "00000000-0000-4000-8000-000000000010",
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "acceptance_epoch": 1,
+          "before_revision": 2,
+          "after_revision": 2,
+          "recorded_at": 210,
+          "operation": "prune",
+          "preview_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "before_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+          "after_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a",
+          "acceptance_evidence_id": "synthetic-prune-confirmation",
+          "phase": "complete",
+          "sanitization": "complete",
+          "space_reclaim": "not-requested",
+          "restore_source_revision": null,
+          "target_revisions": [
+            1
+          ],
+          "parent_operation_id": null,
+          "witness_kind": null,
+          "witness_digest": null
+        },
+        "witness": null
+      },
+      {
+        "proof": {
+          "contract_version": "mg1-operation-proof/v1",
+          "operation_id": "00000000-0000-4000-8000-000000000011",
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "acceptance_epoch": 1,
+          "before_revision": 2,
+          "after_revision": 2,
+          "recorded_at": 222,
+          "operation": "continue-maintenance",
+          "preview_digest": "a92368a1f1dde968dee9e86eb11d9b0895f03a4dca3868bc6d9a5850fcddf77a",
+          "before_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+          "after_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a",
+          "acceptance_evidence_id": "synthetic-continuation-confirmation",
+          "phase": "complete",
+          "sanitization": "complete",
+          "space_reclaim": "not-requested",
+          "restore_source_revision": null,
+          "target_revisions": [],
+          "parent_operation_id": "00000000-0000-4000-8000-000000000010",
+          "witness_kind": "continuation",
+          "witness_digest": "36671949b8e37ac45c5a18eb8afd444aacaa12d44ed63270906a7da7d38b16af"
+        },
+        "witness": {
+          "contract_version": "mg1-maintenance-witness/v1",
+          "kind": "continuation",
+          "operation_id": "00000000-0000-4000-8000-000000000011",
+          "parent_before_record": {
+            "proof": {
+              "contract_version": "mg1-operation-proof/v1",
+              "operation_id": "00000000-0000-4000-8000-000000000010",
+              "item_id": "00000000-0000-4000-8000-000000000003",
+              "identity_epoch": 1,
+              "acceptance_epoch": 1,
+              "before_revision": 2,
+              "after_revision": 2,
+              "recorded_at": 210,
+              "operation": "prune",
+              "preview_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+              "before_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+              "after_digest": "c8f36a187ad5edc3e2e2c82d7a53044734c048ac8cdc7077c70fb5d8922bb775",
+              "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a",
+              "acceptance_evidence_id": "synthetic-prune-confirmation",
+              "phase": "sanitization-pending",
+              "sanitization": "pending",
+              "space_reclaim": "not-requested",
+              "restore_source_revision": null,
+              "target_revisions": [
+                1
+              ],
+              "parent_operation_id": null,
+              "witness_kind": null,
+              "witness_digest": null
+            },
+            "witness": null
+          },
+          "parent_after_record_digest": "4952cab8a1792711fb3844e683e497aab1c131350bf5ea570fee2411d6b03ca9",
+          "remaining_phases": [
+            "sanitization"
+          ],
+          "before_proof_set_digest": "e401f472fa3bfbf017813a52ba780b74300536c0ba4b4ce83863f440f6e9ad9a",
+          "after_proof_set_digest_without_self": "1f8b6109a2fb9c11e0eb2a62a4ab8855dc3936a441d509e995618acc87f3d7ec"
+        }
+      }
+    ]
+  },
+  "retention_example": {
+    "preview": {
+      "contract_version": "mg1-preview/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000020",
+      "nonce": "00000000-0000-4000-8000-000000000021",
+      "operation": "retention",
+      "item_id": null,
+      "acceptance_epoch": 1,
+      "issued_at": 3000000,
+      "expires_at": 3000300,
+      "before": {
+        "kind": "logical-state",
+        "digest": "418398106acc44c437e67b713ee54320c8325dca6bfbdb1e895a103497e8b9a4"
+      },
+      "expected_after_digest": "40884d2495a0348184f8a0bea3882c0753667b149acd9a999bdcb3543bbf7eb9",
+      "candidate": null,
+      "target_revisions": [],
+      "target_proofs": [
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "digest": "e9130a6c939e2a3bd4e1ac72934b38782740b527018705d9d8403da5edf92376"
+        }
+      ],
+      "target_markers": [
+        {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "digest": "224a6c11b61b1cf740736073fc3cecd8fbfc44ac7ceeb79ca8b5388682ff9484"
+        }
+      ],
+      "managed_files": [
+        {
+          "file_id": "synthetic-main",
+          "role": "main",
+          "bytes": 2097152,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "external_copies": {
+        "coverage": "unknown",
+        "observed_at": 3000000,
+        "copies": []
+      },
+      "phases": {
+        "content": "not-requested",
+        "sanitization": "not-requested",
+        "space_reclaim": "not-requested"
+      },
+      "authority": [
+        "readback",
+        "root-maintenance"
+      ],
+      "continuation": null,
+      "storage": {
+        "filesystem_id": "synthetic-filesystem",
+        "managed_bytes": 2097152,
+        "available_work_bytes": 268435456,
+        "coverage": "complete",
+        "work_budget": {
+          "qualification_id": "synthetic-work-envelope-v1",
+          "file_snapshot_digest": "84bc9136ca71cd1034d36ad45c7de29a8999f52927e65d65843ce708bbab1727",
+          "journal_bound_bytes": 2097152,
+          "temp_bound_bytes": 67108864,
+          "growth_bound_bytes": 1048576,
+          "required_work_bytes": 70254592
+        }
+      },
+      "compact": null
+    },
+    "confirmation": {
+      "contract_version": "mg1-confirmation/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000020",
+      "nonce": "00000000-0000-4000-8000-000000000021",
+      "preview_digest": "85e81578008ce4de0038a3b60a1ebf4a097f5065554a93a8eeaf99995b59579d",
+      "confirmed_at": 3000001,
+      "expires_at": 3000300,
+      "host_evidence_id": "synthetic-retention-confirmation"
+    },
+    "readback": {
+      "contract_version": "mg1-readback/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000020",
+      "preview_digest": "85e81578008ce4de0038a3b60a1ebf4a097f5065554a93a8eeaf99995b59579d",
+      "observed_at": 3000003,
+      "result": "applied",
+      "state_digest": "40884d2495a0348184f8a0bea3882c0753667b149acd9a999bdcb3543bbf7eb9",
+      "proof": {
+        "contract_version": "mg1-operation-proof/v1",
+        "operation_id": "00000000-0000-4000-8000-000000000020",
+        "item_id": null,
+        "identity_epoch": 0,
+        "acceptance_epoch": 1,
+        "before_revision": 0,
+        "after_revision": 0,
+        "recorded_at": 3000002,
+        "operation": "retention",
+        "preview_digest": "85e81578008ce4de0038a3b60a1ebf4a097f5065554a93a8eeaf99995b59579d",
+        "before_digest": "418398106acc44c437e67b713ee54320c8325dca6bfbdb1e895a103497e8b9a4",
+        "after_digest": "40884d2495a0348184f8a0bea3882c0753667b149acd9a999bdcb3543bbf7eb9",
+        "projection_digest": "e943e1775f4c4c923f4b670083a9ad2fbfb15f5c2de099cbf5e66af55d4f2ea9",
+        "acceptance_evidence_id": "synthetic-retention-confirmation",
+        "phase": "complete",
+        "sanitization": "not-requested",
+        "space_reclaim": "not-requested",
+        "restore_source_revision": null,
+        "target_revisions": [],
+        "parent_operation_id": null,
+        "witness_kind": "retention",
+        "witness_digest": "bf8586cf24f05e134c5003aa7fb67be4d0c1f4ffba4d7113844d50031b54fb60"
+      },
+      "deleted_proofs": [
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "digest": "e9130a6c939e2a3bd4e1ac72934b38782740b527018705d9d8403da5edf92376"
+        }
+      ],
+      "deleted_markers": [
+        {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "digest": "224a6c11b61b1cf740736073fc3cecd8fbfc44ac7ceeb79ca8b5388682ff9484"
+        }
+      ],
+      "managed_files": [
+        {
+          "file_id": "synthetic-main",
+          "role": "main",
+          "bytes": 2101248,
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ],
+      "external_copies": {
+        "coverage": "unknown",
+        "observed_at": 3000003,
+        "copies": []
+      },
+      "sanitization": "not-requested",
+      "space_reclaim": "not-requested",
+      "storage": {
+        "filesystem_id": "synthetic-filesystem",
+        "managed_bytes": 2101248,
+        "available_work_bytes": 268435456,
+        "coverage": "complete",
+        "work_budget": null
+      },
+      "related_proofs": [],
+      "related_witnesses": [],
+      "witness": {
+        "contract_version": "mg1-maintenance-witness/v1",
+        "kind": "retention",
+        "operation_id": "00000000-0000-4000-8000-000000000020",
+        "target_proofs": [
+          {
+            "id": "00000000-0000-4000-8000-000000000004",
+            "digest": "e9130a6c939e2a3bd4e1ac72934b38782740b527018705d9d8403da5edf92376"
+          }
+        ],
+        "target_markers": [
+          {
+            "id": "00000000-0000-4000-8000-000000000006",
+            "digest": "224a6c11b61b1cf740736073fc3cecd8fbfc44ac7ceeb79ca8b5388682ff9484"
+          }
+        ],
+        "before_proof_set_digest": "783652b86f6e084d301d0ebfe611e90c549243adcb225c996ad0231384f87756",
+        "after_proof_set_digest_without_self": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "before_marker_set_digest": "8163778618f1f99d872859053276babf375b95b2298f0e6ec15e596ff18dd9a7",
+        "after_marker_set_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "before_state": {
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "epoch": 1,
+      "reject_before": 0,
+      "items": [
+        {
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "status": "active",
+          "current_revision": 2,
+          "revision_high_water": 2,
+          "erased_at": null,
+          "versions": [
+            {
+              "revision": 1,
+              "version_digest": "df11a870eabfd1f7852e8211e73c25cdfa1c0479d35436c10a2a9b0026049474"
+            },
+            {
+              "revision": 2,
+              "version_digest": "8524f8545d149da50a70b13da22bbf504c3cc803398b7488b85e0f911f8a1913"
+            }
+          ],
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a"
+        },
+        {
+          "item_id": "00000000-0000-4000-8000-000000000006",
+          "identity_epoch": 1,
+          "status": "erased",
+          "current_revision": null,
+          "revision_high_water": 10,
+          "erased_at": 202,
+          "versions": [],
+          "projection_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      ]
+    },
+    "after_state": {
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "epoch": 2,
+      "reject_before": 3000000,
+      "items": [
+        {
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "status": "active",
+          "current_revision": 2,
+          "revision_high_water": 2,
+          "erased_at": null,
+          "versions": [
+            {
+              "revision": 1,
+              "version_digest": "df11a870eabfd1f7852e8211e73c25cdfa1c0479d35436c10a2a9b0026049474"
+            },
+            {
+              "revision": 2,
+              "version_digest": "8524f8545d149da50a70b13da22bbf504c3cc803398b7488b85e0f911f8a1913"
+            }
+          ],
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a"
+        }
+      ]
+    },
+    "proof_records_before": [
+      {
+        "proof": {
+          "contract_version": "mg1-operation-proof/v1",
+          "operation_id": "00000000-0000-4000-8000-000000000004",
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "acceptance_epoch": 1,
+          "before_revision": 1,
+          "after_revision": 2,
+          "recorded_at": 202,
+          "operation": "update",
+          "preview_digest": "1f83832c09cd3beeb8f679268b85fe703ad436dfb2035f5b06c38111983fa18f",
+          "before_digest": "9c50be613e3985a5160cb7d2315cbbe3915f23d35cd761778c22c0047a66f4b4",
+          "after_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a",
+          "acceptance_evidence_id": "synthetic-confirmation",
+          "phase": "complete",
+          "sanitization": "not-requested",
+          "space_reclaim": "not-requested",
+          "restore_source_revision": null,
+          "target_revisions": [],
+          "parent_operation_id": null,
+          "witness_kind": null,
+          "witness_digest": null
+        },
+        "witness": null
+      }
+    ],
+    "proof_records_after": [
+      {
+        "proof": {
+          "contract_version": "mg1-operation-proof/v1",
+          "operation_id": "00000000-0000-4000-8000-000000000020",
+          "item_id": null,
+          "identity_epoch": 0,
+          "acceptance_epoch": 1,
+          "before_revision": 0,
+          "after_revision": 0,
+          "recorded_at": 3000002,
+          "operation": "retention",
+          "preview_digest": "85e81578008ce4de0038a3b60a1ebf4a097f5065554a93a8eeaf99995b59579d",
+          "before_digest": "418398106acc44c437e67b713ee54320c8325dca6bfbdb1e895a103497e8b9a4",
+          "after_digest": "40884d2495a0348184f8a0bea3882c0753667b149acd9a999bdcb3543bbf7eb9",
+          "projection_digest": "e943e1775f4c4c923f4b670083a9ad2fbfb15f5c2de099cbf5e66af55d4f2ea9",
+          "acceptance_evidence_id": "synthetic-retention-confirmation",
+          "phase": "complete",
+          "sanitization": "not-requested",
+          "space_reclaim": "not-requested",
+          "restore_source_revision": null,
+          "target_revisions": [],
+          "parent_operation_id": null,
+          "witness_kind": "retention",
+          "witness_digest": "bf8586cf24f05e134c5003aa7fb67be4d0c1f4ffba4d7113844d50031b54fb60"
+        },
+        "witness": {
+          "contract_version": "mg1-maintenance-witness/v1",
+          "kind": "retention",
+          "operation_id": "00000000-0000-4000-8000-000000000020",
+          "target_proofs": [
+            {
+              "id": "00000000-0000-4000-8000-000000000004",
+              "digest": "e9130a6c939e2a3bd4e1ac72934b38782740b527018705d9d8403da5edf92376"
+            }
+          ],
+          "target_markers": [
+            {
+              "id": "00000000-0000-4000-8000-000000000006",
+              "digest": "224a6c11b61b1cf740736073fc3cecd8fbfc44ac7ceeb79ca8b5388682ff9484"
+            }
+          ],
+          "before_proof_set_digest": "783652b86f6e084d301d0ebfe611e90c549243adcb225c996ad0231384f87756",
+          "after_proof_set_digest_without_self": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "before_marker_set_digest": "8163778618f1f99d872859053276babf375b95b2298f0e6ec15e596ff18dd9a7",
+          "after_marker_set_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      }
+    ]
+  },
+  "compact_example": {
+    "preview": {
+      "contract_version": "mg1-preview/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000030",
+      "nonce": "00000000-0000-4000-8000-000000000031",
+      "operation": "compact",
+      "item_id": null,
+      "acceptance_epoch": 1,
+      "issued_at": 300,
+      "expires_at": 600,
+      "before": {
+        "kind": "logical-state",
+        "digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641"
+      },
+      "expected_after_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+      "candidate": null,
+      "target_revisions": [],
+      "target_proofs": [],
+      "target_markers": [],
+      "managed_files": [
+        {
+          "file_id": "synthetic-main",
+          "role": "main",
+          "bytes": 2101248,
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ],
+      "external_copies": {
+        "coverage": "unknown",
+        "observed_at": 300,
+        "copies": []
+      },
+      "phases": {
+        "content": "not-requested",
+        "sanitization": "not-requested",
+        "space_reclaim": "requested"
+      },
+      "authority": [
+        "readback",
+        "root-maintenance"
+      ],
+      "continuation": null,
+      "storage": {
+        "filesystem_id": "synthetic-filesystem",
+        "managed_bytes": 2101248,
+        "available_work_bytes": 268435456,
+        "coverage": "complete",
+        "work_budget": {
+          "qualification_id": "synthetic-work-envelope-v1",
+          "file_snapshot_digest": "bf6d51db55734468340dd65bc037a9bb0283299753353b20b1020f4a90ce5130",
+          "journal_bound_bytes": 2101248,
+          "temp_bound_bytes": 67108864,
+          "growth_bound_bytes": 1048576,
+          "required_work_bytes": 70258688
+        }
+      },
+      "compact": {
+        "requested_pages": 2,
+        "page_size": 4096,
+        "freelist_pages_before": 5
+      }
+    },
+    "confirmation": {
+      "contract_version": "mg1-confirmation/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000030",
+      "nonce": "00000000-0000-4000-8000-000000000031",
+      "preview_digest": "6b86d82df43ffdc70c5343998dce24cabc3007595238ccdcac99d777685a6485",
+      "confirmed_at": 301,
+      "expires_at": 600,
+      "host_evidence_id": "synthetic-compact-confirmation"
+    },
+    "readback": {
+      "contract_version": "mg1-readback/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000030",
+      "preview_digest": "6b86d82df43ffdc70c5343998dce24cabc3007595238ccdcac99d777685a6485",
+      "observed_at": 303,
+      "result": "applied",
+      "state_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+      "proof": {
+        "contract_version": "mg1-operation-proof/v1",
+        "operation_id": "00000000-0000-4000-8000-000000000030",
+        "item_id": null,
+        "identity_epoch": 0,
+        "acceptance_epoch": 1,
+        "before_revision": 0,
+        "after_revision": 0,
+        "recorded_at": 302,
+        "operation": "compact",
+        "preview_digest": "6b86d82df43ffdc70c5343998dce24cabc3007595238ccdcac99d777685a6485",
+        "before_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+        "after_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+        "projection_digest": "e943e1775f4c4c923f4b670083a9ad2fbfb15f5c2de099cbf5e66af55d4f2ea9",
+        "acceptance_evidence_id": "synthetic-compact-confirmation",
+        "phase": "complete",
+        "sanitization": "not-requested",
+        "space_reclaim": "complete",
+        "restore_source_revision": null,
+        "target_revisions": [],
+        "parent_operation_id": null,
+        "witness_kind": "compact",
+        "witness_digest": "ff4cc32a4c259575a3ebf2e3a10f1618b1ff2395f334ac8b7cce3ffae43cdf9a"
+      },
+      "deleted_proofs": [],
+      "deleted_markers": [],
+      "managed_files": [
+        {
+          "file_id": "synthetic-main",
+          "role": "main",
+          "bytes": 2097152,
+          "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        }
+      ],
+      "external_copies": {
+        "coverage": "unknown",
+        "observed_at": 303,
+        "copies": []
+      },
+      "sanitization": "not-requested",
+      "space_reclaim": "complete",
+      "storage": {
+        "filesystem_id": "synthetic-filesystem",
+        "managed_bytes": 2097152,
+        "available_work_bytes": 268435456,
+        "coverage": "complete",
+        "work_budget": null
+      },
+      "related_proofs": [],
+      "related_witnesses": [],
+      "witness": {
+        "contract_version": "mg1-maintenance-witness/v1",
+        "kind": "compact",
+        "operation_id": "00000000-0000-4000-8000-000000000030",
+        "plan": {
+          "requested_pages": 2,
+          "page_size": 4096,
+          "freelist_pages_before": 5
+        },
+        "freelist_pages_after": 4,
+        "actual_pages_reclaimed": 1,
+        "file_snapshot_before_digest": "bf6d51db55734468340dd65bc037a9bb0283299753353b20b1020f4a90ce5130"
+      }
+    },
+    "before_state": {
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "epoch": 1,
+      "reject_before": 0,
+      "items": [
+        {
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "status": "active",
+          "current_revision": 2,
+          "revision_high_water": 2,
+          "erased_at": null,
+          "versions": [
+            {
+              "revision": 1,
+              "version_digest": "df11a870eabfd1f7852e8211e73c25cdfa1c0479d35436c10a2a9b0026049474"
+            },
+            {
+              "revision": 2,
+              "version_digest": "8524f8545d149da50a70b13da22bbf504c3cc803398b7488b85e0f911f8a1913"
+            }
+          ],
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a"
+        }
+      ]
+    },
+    "after_state": {
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "epoch": 1,
+      "reject_before": 0,
+      "items": [
+        {
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "status": "active",
+          "current_revision": 2,
+          "revision_high_water": 2,
+          "erased_at": null,
+          "versions": [
+            {
+              "revision": 1,
+              "version_digest": "df11a870eabfd1f7852e8211e73c25cdfa1c0479d35436c10a2a9b0026049474"
+            },
+            {
+              "revision": 2,
+              "version_digest": "8524f8545d149da50a70b13da22bbf504c3cc803398b7488b85e0f911f8a1913"
+            }
+          ],
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a"
+        }
+      ]
+    }
+  },
+  "restore_example": {
+    "preview": {
+      "contract_version": "mg1-preview/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000040",
+      "nonce": "00000000-0000-4000-8000-000000000041",
+      "operation": "restore",
+      "item_id": "00000000-0000-4000-8000-000000000003",
+      "acceptance_epoch": 1,
+      "issued_at": 250,
+      "expires_at": 550,
+      "before": {
+        "kind": "logical-state",
+        "digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641"
+      },
+      "expected_after_digest": "ee9a9a7e674fd5ce63846975006e96b86b30d8d4979dc6f4787831a9e486d49b",
+      "candidate": {
+        "revision": 3,
+        "created_at": 250,
+        "retired_at": null,
+        "kind": "fact",
+        "body": "Synthetic widget fixtures use the label blue.",
+        "summary": "Synthetic widget label",
+        "cues": [
+          "blue",
+          "widget"
+        ],
+        "applicability": {
+          "repository_id": "synthetic-repository",
+          "paths": [
+            "fixtures/widget.json"
+          ],
+          "conditions": [
+            "Only in the synthetic fixture repository."
+          ]
+        },
+        "procedure": null,
+        "provenance": [
+          {
+            "source_id": "synthetic-source",
+            "kind": "repo-artifact",
+            "reference": {
+              "repository_id": "synthetic-repository",
+              "path": "docs/synthetic-guide.md"
+            },
+            "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "source_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "attestation": null
+          }
+        ],
+        "validation": {
+          "content_digest": "b54fea2aa92aa3362439f528a621bd89793f8d3a5b9275ac25981f5c8cb27a63",
+          "evidence_id": "synthetic-restore-validation",
+          "verified_at": 250,
+          "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "eligibility": "eligible",
+          "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+        }
+      },
+      "target_revisions": [
+        1
+      ],
+      "target_proofs": [],
+      "target_markers": [],
+      "managed_files": [
+        {
+          "file_id": "synthetic-main",
+          "role": "main",
+          "bytes": 2097152,
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "external_copies": {
+        "coverage": "unknown",
+        "observed_at": 250,
+        "copies": []
+      },
+      "phases": {
+        "content": "requested",
+        "sanitization": "not-requested",
+        "space_reclaim": "not-requested"
+      },
+      "authority": [
+        "content-write",
+        "readback"
+      ],
+      "continuation": null,
+      "storage": {
+        "filesystem_id": "synthetic-filesystem",
+        "managed_bytes": 2097152,
+        "available_work_bytes": 268435456,
+        "coverage": "complete",
+        "work_budget": {
+          "qualification_id": "synthetic-work-envelope-v1",
+          "file_snapshot_digest": "84bc9136ca71cd1034d36ad45c7de29a8999f52927e65d65843ce708bbab1727",
+          "journal_bound_bytes": 2097152,
+          "temp_bound_bytes": 67108864,
+          "growth_bound_bytes": 1048576,
+          "required_work_bytes": 70254592
+        }
+      },
+      "compact": null
+    },
+    "confirmation": {
+      "contract_version": "mg1-confirmation/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000040",
+      "nonce": "00000000-0000-4000-8000-000000000041",
+      "preview_digest": "03a055c1c9c4cfc30c62eed3d84e3b5cb5f86d58e17bd02c1de888bf0f8ef722",
+      "confirmed_at": 251,
+      "expires_at": 550,
+      "host_evidence_id": "synthetic-restore-confirmation"
+    },
+    "readback": {
+      "contract_version": "mg1-readback/v1",
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "operation_id": "00000000-0000-4000-8000-000000000040",
+      "preview_digest": "03a055c1c9c4cfc30c62eed3d84e3b5cb5f86d58e17bd02c1de888bf0f8ef722",
+      "observed_at": 253,
+      "result": "applied",
+      "state_digest": "ee9a9a7e674fd5ce63846975006e96b86b30d8d4979dc6f4787831a9e486d49b",
+      "proof": {
+        "contract_version": "mg1-operation-proof/v1",
+        "operation_id": "00000000-0000-4000-8000-000000000040",
+        "item_id": "00000000-0000-4000-8000-000000000003",
+        "identity_epoch": 1,
+        "acceptance_epoch": 1,
+        "before_revision": 2,
+        "after_revision": 3,
+        "recorded_at": 252,
+        "operation": "restore",
+        "preview_digest": "03a055c1c9c4cfc30c62eed3d84e3b5cb5f86d58e17bd02c1de888bf0f8ef722",
+        "before_digest": "7b8c1e28601beedadb5fd56f0c263038adc5b999251c90873beec54f3e327641",
+        "after_digest": "ee9a9a7e674fd5ce63846975006e96b86b30d8d4979dc6f4787831a9e486d49b",
+        "projection_digest": "240d8a1c238cdfb1f89924877018eaac06b6999b34019bd365b12c20bd979e22",
+        "acceptance_evidence_id": "synthetic-restore-confirmation",
+        "phase": "complete",
+        "sanitization": "not-requested",
+        "space_reclaim": "not-requested",
+        "restore_source_revision": 1,
+        "target_revisions": [],
+        "parent_operation_id": null,
+        "witness_kind": null,
+        "witness_digest": null
+      },
+      "deleted_proofs": [],
+      "deleted_markers": [],
+      "managed_files": [
+        {
+          "file_id": "synthetic-main",
+          "role": "main",
+          "bytes": 2101248,
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ],
+      "external_copies": {
+        "coverage": "unknown",
+        "observed_at": 253,
+        "copies": []
+      },
+      "sanitization": "not-requested",
+      "space_reclaim": "not-requested",
+      "storage": {
+        "filesystem_id": "synthetic-filesystem",
+        "managed_bytes": 2101248,
+        "available_work_bytes": 268435456,
+        "coverage": "complete",
+        "work_budget": null
+      },
+      "related_proofs": [],
+      "related_witnesses": [],
+      "witness": null
+    },
+    "before_state": {
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "epoch": 1,
+      "reject_before": 0,
+      "items": [
+        {
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "status": "active",
+          "current_revision": 2,
+          "revision_high_water": 2,
+          "erased_at": null,
+          "versions": [
+            {
+              "revision": 1,
+              "version_digest": "df11a870eabfd1f7852e8211e73c25cdfa1c0479d35436c10a2a9b0026049474"
+            },
+            {
+              "revision": 2,
+              "version_digest": "8524f8545d149da50a70b13da22bbf504c3cc803398b7488b85e0f911f8a1913"
+            }
+          ],
+          "projection_digest": "afcb6f6f97e40610e52f66068b5e37b0aefcc85ac3ed0a1c2c58d1e2b619e19a"
+        }
+      ]
+    },
+    "after_state": {
+      "scope": {
+        "principal_id": "00000000-0000-4000-8000-000000000001",
+        "root_id": "00000000-0000-4000-8000-000000000002",
+        "repository_id": "synthetic-repository",
+        "schema_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "profile_digest": "aa9c5aa8b5cce2312e9da181b9e96b29e9c6c58e2e3df740229b4f8022f235d8",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      },
+      "epoch": 1,
+      "reject_before": 0,
+      "items": [
+        {
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "identity_epoch": 1,
+          "status": "active",
+          "current_revision": 3,
+          "revision_high_water": 3,
+          "erased_at": null,
+          "versions": [
+            {
+              "revision": 1,
+              "version_digest": "df11a870eabfd1f7852e8211e73c25cdfa1c0479d35436c10a2a9b0026049474"
+            },
+            {
+              "revision": 2,
+              "version_digest": "2f02da1874623452caca57b0e1b20b2a3a93f2f2875689871026e163e89246d7"
+            },
+            {
+              "revision": 3,
+              "version_digest": "fe5f068a98bbaaa29060c8e43e57679dadf83af6b42eeca291f774a0625fdac7"
+            }
+          ],
+          "projection_digest": "240d8a1c238cdfb1f89924877018eaac06b6999b34019bd365b12c20bd979e22"
+        }
+      ]
+    },
+    "source_version": {
+      "revision": 1,
+      "created_at": 100,
+      "retired_at": 200,
+      "kind": "fact",
+      "body": "Synthetic widget fixtures use the label blue.",
+      "summary": "Synthetic widget label",
+      "cues": [
+        "blue",
+        "widget"
+      ],
+      "applicability": {
+        "repository_id": "synthetic-repository",
+        "paths": [
+          "fixtures/widget.json"
+        ],
+        "conditions": [
+          "Only in the synthetic fixture repository."
+        ]
+      },
+      "procedure": null,
+      "provenance": [
+        {
+          "source_id": "synthetic-source",
+          "kind": "repo-artifact",
+          "reference": {
+            "repository_id": "synthetic-repository",
+            "path": "docs/synthetic-guide.md"
+          },
+          "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "source_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "attestation": null
+        }
+      ],
+      "validation": {
+        "content_digest": "28c413482d27a6c934c49098c84acf650ae3e87b8d7e2af6678987626acaaec0",
+        "evidence_id": "synthetic-validation",
+        "verified_at": 100,
+        "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "eligibility": "eligible",
+        "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e"
+      }
+    }
+  },
+  "maximum_width_witness_example": {
+    "contract_version": "mg1-maintenance-witness/v1",
+    "kind": "retention",
+    "operation_id": "00000000-0000-4000-8000-000000999999",
+    "target_proofs": [
+      {
+        "id": "00000000-0000-4000-8000-000000001000",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001001",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001002",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001003",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001004",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001005",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001006",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001007",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001008",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001009",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001010",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001011",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001012",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001013",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001014",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001015",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001016",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001017",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001018",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001019",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001020",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001021",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001022",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001023",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001024",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001025",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001026",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001027",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001028",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001029",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001030",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001031",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001032",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001033",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001034",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001035",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001036",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001037",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001038",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001039",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001040",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001041",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001042",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001043",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001044",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001045",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001046",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001047",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001048",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001049",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001050",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001051",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001052",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001053",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001054",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001055",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001056",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001057",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001058",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001059",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001060",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001061",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001062",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001063",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001064",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001065",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001066",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001067",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001068",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001069",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001070",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001071",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001072",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001073",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001074",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001075",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001076",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001077",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001078",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001079",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001080",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001081",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001082",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001083",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001084",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001085",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001086",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001087",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001088",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001089",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001090",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001091",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001092",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001093",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001094",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001095",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001096",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001097",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001098",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001099",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001100",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001101",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001102",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001103",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001104",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001105",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001106",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001107",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001108",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001109",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001110",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001111",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001112",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001113",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001114",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001115",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001116",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001117",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001118",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001119",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001120",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001121",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001122",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001123",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001124",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001125",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001126",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000001127",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+    ],
+    "target_markers": [
+      {
+        "id": "00000000-0000-4000-8000-000000002000",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002001",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002002",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002003",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002004",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002005",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002006",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002007",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002008",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002009",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002010",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002011",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002012",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002013",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002014",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002015",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002016",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002017",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002018",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002019",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002020",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002021",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002022",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002023",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002024",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002025",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002026",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002027",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002028",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002029",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002030",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002031",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002032",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002033",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002034",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002035",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002036",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002037",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002038",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002039",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002040",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002041",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002042",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002043",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002044",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002045",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002046",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002047",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002048",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002049",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002050",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002051",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002052",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002053",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002054",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002055",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002056",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002057",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002058",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002059",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002060",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002061",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002062",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002063",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002064",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002065",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002066",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002067",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002068",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002069",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002070",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002071",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002072",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002073",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002074",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002075",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002076",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002077",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002078",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002079",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002080",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002081",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002082",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002083",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002084",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002085",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002086",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002087",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002088",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002089",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002090",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002091",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002092",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002093",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002094",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002095",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002096",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002097",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002098",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002099",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002100",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002101",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002102",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002103",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002104",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002105",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002106",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002107",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002108",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002109",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002110",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002111",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002112",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002113",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002114",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002115",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002116",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002117",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002118",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002119",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002120",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002121",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002122",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002123",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002124",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002125",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002126",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000002127",
+        "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+    ],
+    "before_proof_set_digest": "783652b86f6e084d301d0ebfe611e90c549243adcb225c996ad0231384f87756",
+    "after_proof_set_digest_without_self": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "before_marker_set_digest": "8163778618f1f99d872859053276babf375b95b2298f0e6ec15e596ff18dd9a7",
+    "after_marker_set_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  }
+}

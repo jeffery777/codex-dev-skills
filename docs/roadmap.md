@@ -367,8 +367,8 @@ docs-only 研究與設計；實作須另開 Issue／分支，不以文件交付�
 #212 的文件已由 PR #214 合併；#213 追蹤 G0 契約接受，#225 提供
 [獨立合成格式與離線 checker](memory-governance-g0-contract.md)，包括精確 scope／
 revision／preview-confirmation 綁定、有限 profile、分段清除聲明及防重播案例。
-所有產品參數仍須顯式選擇；測試值不是預設。G0 不能證明真實交易、內容清除、
-容量回收或資料契約已接受，也不提供 G1／G2 執行核心。
+合成測試值不是產品預設。G0 合成證據不能證明真實交易、內容清除、
+容量回收或人類接受，也不提供 G1／G2 執行核心；產品接受見下述 #213 紀錄。
 #222 的歷史 annotation 追溯另見
 [來源分析](loops/issue-222/source-analysis.md)；不與 class-crowding 混為同一缺陷。
 
@@ -376,12 +376,19 @@ revision／preview-confirmation 綁定、有限 profile、分段清除聲明及�
 [G0 接受資料](loops/issue-213/g0-acceptance.md)及
 [原生記憶共存邊界](native-memory-coexistence.md)。原生召回、本專案 backend 與
 交付證據分開，效益比較須控制原生記憶與 context management 狀態。
-G0 合成材料僅是部分交付；完整 G0 接受仍須先完成生產儲存／授權與 profile 決定，
-之後才進入 G1／G2 執行核心。這份補充不新增記憶 runtime、不變更 v0 schema，
-也不代表已接受生產參數或已滿足 G1 進入條件。
+PR #226 的 G0 合成材料是部分交付；#213 另補生產儲存／授權與 profile 決定，
+與合成測試分別取得接受。原生共存補充不新增記憶 runtime，也不變更 v0 schema。
 
 #228 的 [流程審計](loops/issue-228/delivery-audit.md)補入 revision-bound 來源、
-驗證狀態與方法型知識前提的 G0 接受要求；本次只整合文件，#213 繼續追蹤完整 G0。
+驗證狀態與方法型知識前提的 G0 接受要求；#213 的生產契約將其具體化。
+
+#213 的[生產契約](loops/issue-213/g0-production-proposal.md)已具體列出
+fact／procedure 來源格式、十二項 profile、容量估算、可信 host/readback、普通索引與
+SQLite 故障邊界。依使用者後續提出的容量方向，預設硬上限調為 4 GiB，
+保留建立時可設定、80% 提醒與動態維護空間。2026-09-07 使用者明確接受其餘產品／
+資料條件並要求完成 G0；本包正式審查、CI 與合併完成後，可另立 G1 執行 Issue。
+合成計算與故障 oracle 不代表 runtime qualification。這是 repository 設計工具，
+不新增 installed 記憶能力；真實 host／來源／儲存與故障資格仍由 G1／G2 驗證。
 
 ## Non-Goals
 
