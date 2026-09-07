@@ -380,6 +380,9 @@ G0 合成材料僅是部分交付；完整 G0 接受仍須先完成生產儲存�
 之後才進入 G1／G2 執行核心。這份補充不新增記憶 runtime、不變更 v0 schema，
 也不代表已接受生產參數或已滿足 G1 進入條件。
 
+#228 的 [流程審計](loops/issue-228/delivery-audit.md)補入 revision-bound 來源、
+驗證狀態與方法型知識前提的 G0 接受要求；本次只整合文件，#213 繼續追蹤完整 G0。
+
 ## Non-Goals
 
 - General prompt collection.

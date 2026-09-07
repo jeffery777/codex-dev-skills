@@ -55,6 +55,7 @@ merge SHA，再以 local Git fetch 取得相同 origin/main。未以舊 main 或
 | --- | --- | --- |
 | MG1 管理範圍 | 維持單一 principal/root，原生生成檔案列為外部範圍。 | G0 的生產儲存與入口契約；G1 實作。 |
 | 可信來源 | 由獨立控制面提供身份、有效時間、來源 eligibility、前態及精確確認；不接受相互一致的 JSON 作真實授權。 | G0 定義可測試來源、readback 與失敗規則；G1 實作。 |
+| 內容與來源契約 | 明訂 fact／procedure 支援範圍，將 provenance、來源 revision、verified_at／eligibility 結果綁到內容 revision；方法型知識保留前提、成功證據與失效條件。 | G0 定義持久表示及 audit／readback／失效語意，納入刪除與容量計量；若首版不支援 procedure，須明確排除並同步 milestone。 |
 | 生產 profile | 十二項上限顯式提供並綁版本；保留 G0 測試值只供合成案例。 | G0 提供代表負載與容量計算後接受；不直接採用 10 版／30 日／80%。 |
 | 外部副本未知狀態 | 生產 preview 需能表示已知集合與未知覆蓋率；目前 G0 空清單不能表示沒有副本。 | G0 的新生產格式設計；不回填 v0 欄位。 |
 | G1 入口 | 先做本機可驗證核心，再接 audit／maintenance 自然語言入口。 | G0 列明 G1 精確檔案、操作及 review 計畫。 |
@@ -62,12 +63,17 @@ merge SHA，再以 local Git fetch 取得相同 origin/main。未以舊 main 或
 | 效益實驗 | 固定原生使用／生成與 context management，再比較本專案 backend。 | 獨立實驗範圍、種子與用量預算；未知條件不得稱乾淨對照。 |
 
 建議下一包仍是 **#213 的 G0 生產契約補完**：以已交付合成格式為參考，
-提出具體 profile 數值、容量計算、可信控制面／readback 及 storage failure model，
+提出 revision-bound 內容／來源與方法型知識契約、具體 profile 數值、容量計算、
+可信控制面／readback 及 storage failure model，
 完成資料／安全審查並取得完整 G0 接受後，才開始 G1 可執行管理核心。
 這些安全的設計準備不需要先把合成格式假定成完整接受。
 G1 實作屆時另開執行 Issue，取得其 ID 後另開分支；本次不混入資料庫或自動記憶整合。
 不得因 #222 原始 finding 身分未明就重做 G0；若要修改 M1 公開回傳契約或找到新證據，
 再觸發該項的精確追溯。
+
+#228 的流程審計另確認：合成 version 只有 body／summary／cues，不能被當作已涵蓋
+生產 provenance、驗證狀態或方法型知識前提。上述內容契約補入完整 G0 前置清單，
+不修改現有 v0 schema；處置與後續交付見 [流程審計](../issue-228/delivery-audit.md)。
 
 ## 驗證與審查
 
