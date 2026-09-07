@@ -244,6 +244,12 @@ off case 不含 profile/state，函式不接受 caller context。CLI 只讀使�
 這證明 checker 的該分支沒有額外 state/context I/O，不代表已證明未來 runtime
 memory-off 隔離。audit 亦只比較 JSON，不開啟或修復任何 backend。
 
+本專案 off 不代表原生 Codex Memories 或實驗性 context management 已關閉。
+原生歷史／筆記不提供此 checker 的 accepted context，也不能提升為真實操作授權。
+G0 的 `unmanaged_copies` 只描述顯式合成清單，不保證外部副本盤點完整；
+生產格式的未知狀態、全新上下文及效益對照組限制見
+[原生記憶共存邊界](native-memory-coexistence.md)。這些限制不改現有 v0 schema。
+
 所有既有 `loop-memory/v1`、M0 v0、M1 v0 文件與可安裝程式保持原樣。
 舊 M1 的 delete 仍為 logical delete；本獨立格式不改 enum、回傳值、資料庫版本、
 eligibility 或 authority chain。未知格式不得自動轉換或以 extensions 偷渡。
@@ -268,3 +274,6 @@ G0 接受條件：格式／資料與安全審查、正反案例、舊契約相�
 G3 整合各階段實證；每階段安全與故障測試隨實作交付。
 生產參數、真實 storage/authority contract、eligibility/readback、實際原子性與
 故障復原仍是後續接受與資格驗證事項。G0 合成格式不自動升為生產儲存 schema。
+
+#213 的既有交付證據、待接受範圍與 G1 前置決定見
+[G0 接受資料](loops/issue-213/g0-acceptance.md)。
