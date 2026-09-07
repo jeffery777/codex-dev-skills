@@ -99,6 +99,12 @@ scraping, app-server clients, daemons, or sidecars.
 - Graph lineage is optional. Missing or conflicting projections do not change
   canonical repository decisions.
 
+原生記憶共存時，fresh 僅描述未複製來源對話及既有交接語意，不自行保證目的端
+沒有 Local Memories 或其他歷史影響。`new_context` 不取代 checkpoint、來源停止
+寫入與目的端驗證。若評測要求只從指定 checkpoint 開始，還須確認目的端記憶狀態；
+無法確認時標示 unknown，不能當成已隔離對照組。見
+[原生記憶共存邊界](native-memory-coexistence.md)。
+
 Rollback removes the new assessment/template usage and continues with the
 v0.16.3 current-session, subagent, fork, and prompt paths. It does not delete
 tasks, sessions, worktrees, runtime state, or repository history.
