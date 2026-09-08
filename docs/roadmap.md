@@ -390,6 +390,17 @@ SQLite 故障邊界。依使用者後續提出的容量方向，預設硬上限�
 合成計算與故障 oracle 不代表 runtime qualification。這是 repository 設計工具，
 不新增 installed 記憶能力；真實 host／來源／儲存與故障資格仍由 G1／G2 驗證。
 
+## 技能執行相容性與記憶工作的順序
+
+[Issue #232](https://github.com/jeffery777/codex-dev-skills/issues/232)處理一般技能
+的契約相容執行方式選用；先完成其驗證、審查及獲准部署，再接續
+[#231](https://github.com/jeffery777/codex-dev-skills/issues/231)的記憶範圍路由、
+跨儲存刪除與專案退場設計，之後依已接受契約推進 G1 → G2 → G3。
+這是降低入口返工的工程排序，不新增 G0 的資料依賴，也不宣稱記憶 runtime
+已完成。#231 須在 G1／G2 自然語言入口定案前完成；本次不實作其功能。
+原生能力選用保留[原生記憶共存邊界](native-memory-coexistence.md)，不能自動
+替換 M1／MG1 backend、雙寫或啟用。版本判定與必要發行準備沿用 #232。
+
 ## Non-Goals
 
 - General prompt collection.

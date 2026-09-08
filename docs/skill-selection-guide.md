@@ -2,6 +2,22 @@
 
 This compact guide helps new users choose the smallest skill or gate that matches the work in front of them.
 
+## 選擇契約與執行方式
+
+下表選出適用技能的必要契約；一般規劃、實作、文件與審查可由模型直接完成，
+或採用符合契約的原生／內建／本地方式，不必因入口不同重做同一工作。
+先讀所選技能與[共用選用規則](../policies/reusable-workflow-contract.md#contract-preserving-capability-selection)，
+保留必要步驟、工具、證據、輸出及 gate。直接呼叫一般技能也適用，不必先啟動
+`project-orchestrator`；使用者指定技能或方法時仍依其要求。
+
+只檢查當次相關能力，不掃描整套環境，也不依模型自評認定品質等價。能力未知或
+不相容就使用既有安全流程；部分相容則保留有效證據並補足缺口。原生 review
+只有 PASS 時，不能藉由重排欄位取得 gate 通過。持久記憶的 scope、backend、
+寫入與刪除仍由專屬資料契約控制，不因可用原生 recall 而切換。
+
+這是執行自由度的相容性調整，不保證模型行為或效能。
+代表性[契約審查案例](loops/issue-232/selection-cases.md)區分預期判定與實測證據。
+
 ## Fast Decision Table
 
 | Situation | Use | Why |

@@ -32,6 +32,24 @@ INSTALLER_ENV_OVERRIDES = (
 
 
 class PluginPackagingTests(unittest.TestCase):
+    def test_capability_contract_resolves_from_direct_source_and_plugin_entries(self) -> None:
+        for root in (ROOT, PACKAGE_ROOT):
+            for name in (
+                "planning", "implementation-slice", "docs-update", "code-review",
+                "docs-review", "code-review-deep", "project-orchestrator",
+                "project-delivery", "code-review-gate", "docs-review-gate",
+            ):
+                with self.subTest(root=root, skill=name):
+                    entry = root / "skills" / name / "SKILL.md"
+                    reference = "../../policies/reusable-workflow-contract.md"
+                    self.assertIn(f"`{reference}`", entry.read_text(encoding="utf-8"))
+                    target = (entry.parent / reference).resolve(strict=True)
+                    self.assertTrue(target.is_relative_to(root.resolve()))
+                    self.assertEqual(
+                        (ROOT / "policies/reusable-workflow-contract.md").read_bytes(),
+                        target.read_bytes(),
+                    )
+
     def test_deprecated_aliases_are_explicit_only_in_source_and_package(self) -> None:
         for name in (
             "desktop-spec-plan-gate", "desktop-implementation-gate",
@@ -287,6 +305,18 @@ class PluginPackagingTests(unittest.TestCase):
             self.assertEqual(0, result.returncode, result.stderr)
 
             installed_skills = home / ".agents" / "skills"
+            policy_reference = "../../policies/reusable-workflow-contract.md"
+            policy_consumers = []
+            for entry in installed_skills.glob("*/SKILL.md"):
+                if f"`{policy_reference}`" in entry.read_text(encoding="utf-8"):
+                    policy_consumers.append(entry.parent.name)
+                    target = templates_root / "orchestration/policies/reusable-workflow-contract.md"
+                    self.assertEqual(
+                        (ROOT / "policies/reusable-workflow-contract.md").read_bytes(),
+                        target.read_bytes(),
+                    )
+            self.assertIn("planning", policy_consumers)
+            self.assertIn("code-review-gate", policy_consumers)
             source_pattern = re.compile(
                 r"`../../templates/orchestration/([^`]+)`"
             )
