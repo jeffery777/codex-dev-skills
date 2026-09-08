@@ -53,6 +53,13 @@ MG1 的人類入口應明示它管理的是專案儲存。當「記住」「修�
   找不到項目不能推定它從未被刪除；重新保存必須有新明確要求、來源驗證與新 identity。
 
 這些是 G1/G2 入口與報告的接受要求，尚未實作自動跨儲存失效或全域去重。
+
+[Issue #231 設計補充](memory-scope-lifecycle-design.md)將 global/project scope 與
+managed/document/native backend 分開，並以獨立合成 oracle 驗證固定刪除集合、
+逐儲存覆蓋、部分失敗及手動專案退場。它不查找真實記憶、不雙寫、不管理原生
+generated state，也不改變 G0 schema。無原生查詢能力時明列 unavailable／unknown；
+從 UI 移除、改名、離線或移除 worktree 均不是原生或 MG1 清除授權。
+
 G0 的 `unmanaged_copies` 只校驗顯式合成清單，沒有未知／完整性欄位，不能拿空陣列
 證明真實世界沒有副本。G1 的生產 preview 必須另行設計 known/unknown 與覆蓋率語意；
 不在現有 v0 加欄位，也不把合成格式默認升為生產格式。

@@ -397,9 +397,17 @@ SQLite 故障邊界。依使用者後續提出的容量方向，預設硬上限�
 [#231](https://github.com/jeffery777/codex-dev-skills/issues/231)的記憶範圍路由、
 跨儲存刪除與專案退場設計，之後依已接受契約推進 G1 → G2 → G3。
 這是降低入口返工的工程排序，不新增 G0 的資料依賴，也不宣稱記憶 runtime
-已完成。#231 須在 G1／G2 自然語言入口定案前完成；本次不實作其功能。
+已完成。#231 須在 G1／G2 自然語言入口定案前完成。
 原生能力選用保留[原生記憶共存邊界](native-memory-coexistence.md)，不能自動
 替換 M1／MG1 backend、雙寫或啟用。版本判定與必要發行準備沿用 #232。
+
+#231 的[範圍與生命週期設計](memory-scope-lifecycle-design.md)與獨立 metadata oracle
+提供路由、有界查詢聲明、精確 preview/confirmation、漂移／重播防護、逐目標結果
+及明確退場案例。這是 repository 合成驗證，尚未提供自然語言或儲存執行入口。
+全域 managed backend/quota、多儲存生產上限及退場事件契約另待接受；
+G0 單 root 與批次排除保持不變，#213 可獨立結案。
+後續 Issue-first 工作包依 G1 → G2 → G3 實作可信 host、儲存及故障資格；
+不得將 #231 驗證視為真實清除、跨儲存原子交易、發布或安裝證明。
 
 ## Non-Goals
 
