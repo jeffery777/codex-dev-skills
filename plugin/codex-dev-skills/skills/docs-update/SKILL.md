@@ -7,6 +7,11 @@ description: Update project documentation from verified code, specs, plans, or b
 
 Runtime compatibility: shared
 
+執行方式選用：先讀 `../../policies/reusable-workflow-contract.md` 的
+`Contract-Preserving Capability Selection`；本地安裝改讀
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/reusable-workflow-contract.md`。
+可重用契約相容的原生／內建／本地執行結果；本技能的必要步驟、證據與輸出仍適用。
+
 ## Purpose
 
 Use this skill when docs need to be aligned with implemented behavior, plans, or repository policy.
