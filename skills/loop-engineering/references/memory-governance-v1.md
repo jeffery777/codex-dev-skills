@@ -73,7 +73,11 @@ secure_delete=ON、temp_store=MEMORY、foreign_keys=ON、trusted_schema=OFF。
 
 writer 持 exclusive root lock 至獨立 readback 完成。新唯讀 connection 重算完整
 logical state、current projection、版本／proof 鏈與當次 proof；逐筆 proof replay
-item revision/status 及當時 projection，再量測檔案及 source。
+item revision/status 及當時 projection，還原當時 current version 尚未退休的摘要，
+並逐步重算完整 logical after-state digest；相鄰 proof 串接一致本身不算完整性證據。
+重播只保存 item／version digest descriptors，不保留全庫版本原文；每筆 proof
+仍需雜湊當時完整 item 集合，其 CPU 成本隨 proof 數乘 item 數成長，最大 profile
+的延遲資格尚未通過。完成重播後再量測檔案及 source。
 state digest 不含 proof、檔案布局或自身摘要，避免循環。例外不能推定未提交：
 有匹配 proof/後態才 applied；無 proof 且完整前態匹配才 not-applied；其餘 unknown。
 較晚合法操作使全庫狀態前進時，早先 readback 可回 unknown，不能重播原 mutation。

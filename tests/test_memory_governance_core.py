@@ -617,3 +617,37 @@ class CoreTests(unittest.TestCase):
             with sqlite3.connect(database) as connection:
                 connection.execute('UPDATE proofs SET document=? WHERE sequence=?', (originals[sequence], sequence))
         self.assertEqual(1, len(self.core.recall(['green'])['items']))
+
+    def test_paired_historical_state_digests_cannot_hide_in_a_consistent_chain(self):
+        import sqlite3
+        self.apply('add', fixture.version())
+        # 插入順序與 item_id 排序不同；重建完整歷史必須仍維持 canonical order。
+        other = '00000000-0000-4000-8000-000000000001'
+        preview = self.core.preview('add', other, fixture.version())
+        self.assertEqual('applied', self.core.execute(self.core.authorize(preview))['result'])
+        self.host.now = 200
+        self.apply('update', fixture.version(2, now=200, cue='green'))
+        for operation in ('stop', 'resume'):
+            preview = self.core.preview(operation, other)
+            self.assertEqual('applied', self.core.execute(self.core.authorize(preview))['result'])
+        with self.core.audit() as audit:
+            self.assertEqual(2, len(audit.page()['items']))
+        database = self.host.binding().root/db.MAIN
+        with sqlite3.connect(database) as connection:
+            originals = dict(connection.execute('SELECT sequence,document FROM proofs'))
+        for first in (1, 2, 3, 4):
+            with self.subTest(pair=(first, first+1)):
+                left, right = c.decode(originals[first]), c.decode(originals[first+1])
+                left['after_digest'] = right['before_digest'] = 'f'*64
+                with sqlite3.connect(database) as connection:
+                    connection.executemany('UPDATE proofs SET document=? WHERE sequence=?',
+                                           [(c.canonical(left), first), (c.canonical(right), first+1)])
+                before = self.inventory()
+                with self.assertRaisesRegex(c.ContractError, 'proof-state-mismatch'):
+                    self.core.audit()
+                self.assertEqual(before, self.inventory())
+                with sqlite3.connect(database) as connection:
+                    connection.executemany('UPDATE proofs SET document=? WHERE sequence=?',
+                                           [(originals[first], first), (originals[first+1], first+1)])
+        self.assertEqual(1, len(self.core.recall(['green'])['items']))
+        self.assertEqual(1, len(self.core.recall(['blue'])['items']))

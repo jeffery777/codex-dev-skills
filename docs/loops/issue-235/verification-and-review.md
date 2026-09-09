@@ -1,6 +1,6 @@
 # Issue #235：驗證與審查證據
 
-以下為 2026-09-09 本地 v1/v2 審查及 v3 修正階段的點時紀錄。
+以下為 2026-09-09 本地 v1/v2 審查、v3 修正及首次 PR exact-head 審查的點時紀錄。
 最終正式 review、Security Diff Scan 與 exact-head 合併證據另綁
 [Issue #235](https://github.com/jeffery777/codex-dev-skills/issues/235)的 PR／receipt；
 此檔案不是合併授權或平台 gate 的替代品。
@@ -31,6 +31,7 @@ gate 為 BLOCKED，並以 49 項 passing tests 未涵蓋的負例找出下列問
 | CR-MF-04-historical-proof-projection | Fixed：逐 proof replay item 存在、status、前後 revision 及該 revision projection；拒絕單筆歷史 proof 不一致。 |
 | CR-SF-01-precommit-crash-oracle | Fixed：明確 precommit 中斷只容許 unknown/not-applied；只有 commit-vm 保留三態。 |
 | CR-SF-02-confirmation-expiry-bool | Fixed：confirmation 到期值先驗嚴格整數，拒絕 True 等於 1 的型別混用；新增合法整數與 bool 負例。 |
+| MR-MF-01-historical-state-digest | Fixed：首次 PR exact-head review 找到相鄰 proof 配對竄改 digest 可繞過鏈接檢查；補逐步完整 logical state 重算、當時版本退休狀態還原，以及跨 item／歷史 update／stop／resume 的四組配對負例。 |
 
 初期 advisory 的 schema/runtime 分層已改為 `SCHEMA_OPERATIONS` 與 `g1_*` subset；
 fresh connection/state/proof 要求由核心及上述四項補強落實。已接受契約允許 `stop`
@@ -42,6 +43,11 @@ package parity 120 個生成檔案、offline validation、`git diff --check` 均
 完整 12 shards 共 1,133 項 PASS，其中 memory/package 在 v2 修正後執行；v3
 只新增到期值型別 guard、對應測試與本紀錄，受影響 shard 重跑及最終內容身分另記於 PR。
 這些 synthetic 測試不能替代真實 host、filesystem 或人類授權資格。
+
+首次 PR head `49c7b4585fc76a83a0d109fd05be3bce92d74f36` 的完整內容審查為
+BLOCKED；上述 MR-MF-01 不能由 pre-commit PASS 或零安全 findings 取代。
+修正後必須形成新 head，重跑受影響測試、安全掃描及完整 base-to-head Merge Review；
+最終證據綁新 head 的 PR receipt，不沿用首次 exact-head verdict。
 
 ## Security Diff Scan 的點時結果
 

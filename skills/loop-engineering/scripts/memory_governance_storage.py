@@ -266,32 +266,33 @@ def logical_item(item: dict) -> dict:
     return {**item, "versions": [{"revision": v["revision"], "version_digest": c.digest(v)} for v in item["versions"]]}
 
 
-def state_digest(connection: sqlite3.Connection, scope: dict, limits: dict, meta: dict,
-                 replacement: dict | None = None) -> str:
-    """以 canonical key/order 串流 logical state；不把 root 全文物化到 RAM。"""
+def _logical_state_digest(items, scope: dict, limits: dict, meta: dict) -> str:
+    """串流已排序的 compact logical items，不保存版本全文。"""
     hasher = hashlib.sha256()
     hasher.update(b'{"epoch":' + c.canonical(meta["epoch"]) + b',"items":[')
-    emitted = 0
-    replaced = False
-    def emit(item):
-        nonlocal emitted
+    for emitted, item in enumerate(items):
         c.require(emitted < limits["max_items"], "item-limit")
         if emitted:
             hasher.update(b",")
-        hasher.update(c.canonical(logical_item(item)))
-        emitted += 1
-    cursor = connection.execute("SELECT item_id FROM items ORDER BY item_id")
-    for (item_id,) in cursor:
-        if replacement is not None and not replaced and replacement["item_id"] <= item_id:
-            emit(replacement)
-            replaced = True
-        if replacement is not None and item_id == replacement["item_id"]:
-            continue
-        emit(load_item(connection, item_id, scope, limits))
-    if replacement is not None and not replaced:
-        emit(replacement)
+        hasher.update(c.canonical(item))
     hasher.update(b'],"reject_before":' + c.canonical(meta["reject_before"]) + b',"scope":' + c.canonical(scope) + b'}')
     return hasher.hexdigest()
+
+
+def state_digest(connection: sqlite3.Connection, scope: dict, limits: dict, meta: dict,
+                 replacement: dict | None = None) -> str:
+    """以 canonical key/order 串流 logical state；不把 root 全文物化到 RAM。"""
+    def items():
+        replaced = False
+        for (item_id,) in connection.execute("SELECT item_id FROM items ORDER BY item_id"):
+            if replacement is not None and not replaced and replacement["item_id"] <= item_id:
+                yield logical_item(replacement)
+                replaced = True
+            if replacement is None or item_id != replacement["item_id"]:
+                yield logical_item(load_item(connection, item_id, scope, limits))
+        if replacement is not None and not replaced:
+            yield logical_item(replacement)
+    return _logical_state_digest(items(), scope, limits, meta)
 
 
 @dataclass(frozen=True)
@@ -318,13 +319,13 @@ def snapshot(connection: sqlite3.Connection, scope: dict, limits: dict) -> Snaps
     last_per_item = {}
     versions_seen = {}
     status_seen = {}
+    replayed = {}
     for number, (sequence, operation_id, item_id, data) in enumerate(connection.execute("SELECT sequence,operation_id,item_id,document FROM proofs ORDER BY sequence"), 1):
         c.require(number <= counts["proofs"] and sequence == number, "proof-sequence-mismatch")
         record = c.g1_proof(c.decode(data, 2048))
         c.require(record["operation_id"] == operation_id and record["item_id"] == item_id
                   and record["before_digest"] == previous and record["recorded_at"] >= floor
                   and record["acceptance_epoch"] == meta["epoch"], "proof-chain-mismatch")
-        previous = record["after_digest"]
         floor = record["recorded_at"]
         operation = record["operation"]
         prior_revision = versions_seen.get(item_id, 0)
@@ -348,6 +349,27 @@ def snapshot(connection: sqlite3.Connection, scope: dict, limits: dict) -> Snaps
         version = c.validate_version(c.decode(version_row[0], limits["max_payload_bytes"]), scope, limits)
         c.require(record["projection_digest"] == c.digest(c.projection(version, status_seen[item_id])),
                   "proof-projection-mismatch")
+        if operation == "add":
+            replayed[item_id] = {"item_id": item_id, "identity_epoch": 1, "status": "active",
+                                 "current_revision": 1, "revision_high_water": 1,
+                                 "erased_at": None, "versions": []}
+        logical = replayed[item_id]
+        if operation in {"add", "update", "restore"}:
+            if prior_revision:
+                retired_row = connection.execute("SELECT document FROM versions WHERE item_id=? AND revision=?",
+                                                  (item_id, prior_revision)).fetchone()
+                c.require(retired_row is not None, "proof-version-mismatch")
+                retired = c.decode(retired_row[0], limits["max_payload_bytes"])
+                c.require(retired["retired_at"] == version["created_at"], "retirement-mismatch")
+                logical["versions"][-1]["version_digest"] = c.digest(retired)
+            # 後續 update 已在 stored version 填入 retired_at；歷史當時 current 尚未退休。
+            historical_current = {**version, "retired_at": None}
+            logical["versions"].append({"revision": record["after_revision"],
+                                         "version_digest": c.digest(historical_current)})
+        logical.update(status=status_seen[item_id], current_revision=record["after_revision"],
+                       revision_high_water=record["after_revision"], projection_digest=record["projection_digest"])
+        previous = _logical_state_digest((replayed[key] for key in sorted(replayed)), scope, limits, meta)
+        c.require(record["after_digest"] == previous, "proof-state-mismatch")
         last_per_item[item_id] = (record["after_revision"], record["projection_digest"])
     c.require(previous == current_digest and len(last_per_item) == counts["items"], "proof-state-mismatch")
     for (item_id,) in connection.execute("SELECT item_id FROM items ORDER BY item_id"):
