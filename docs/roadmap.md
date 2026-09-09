@@ -409,6 +409,12 @@ G0 單 root 與批次排除保持不變，#213 可獨立結案。
 後續 Issue-first 工作包依 G1 → G2 → G3 實作可信 host、儲存及故障資格；
 不得將 #231 驗證視為真實清除、跨儲存原子交易、發布或安裝證明。
 
+#235 的 G1 第一切片涵蓋單專案 schema、可信 ports／空 production registry、
+版本／current-only projection／proof 交易與隔離 synthetic tests；詳見
+[交付範圍](loops/issue-235/delivery-plan.md)及[驗證證據](loops/issue-235/verification-and-review.md)。
+這是部分核心，沒有真實 adapter、自然語言入口或 G2 清除資格，不能宣稱完整 MG1。
+M1 public API 保持不變，#222 與 #188 不併入。最終發版判斷仍在同一 Issue。
+
 ## Non-Goals
 
 - General prompt collection.

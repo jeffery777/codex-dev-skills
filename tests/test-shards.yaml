@@ -53,6 +53,10 @@ shards:
       - tests.test_eval_candidate_evaluation
       - tests.test_eval_memory_sqlite
       - tests.test_evaluationctl
+      - tests.test_governancectl
+      - tests.test_memory_governance_contract
+      - tests.test_memory_governance_core
+      - tests.test_memory_governance_faults
       - tests.test_memory_governance_g0
       - tests.test_memory_governance_profile_proposal
       - tests.test_memory_pilot
