@@ -44,6 +44,59 @@ This contract defines the shared shape for Codex CLI and Codex Desktop developme
 這是指引層的選用規則，不是 runtime 攔截器或模型品質資格證明。跨模型、
 token、延遲及成本改善須有代表性配對測量，不能由文字縮短或靜態案例推定。
 
+## Contextual Prompt Composition
+
+每次只組合適用的共用契約、角色責任與當次 task brief。模型特有的行為提示
+只在有實測依據時加入，不建立模型乘上 effort 的完整提示詞矩陣。
+
+- 先區分事實來源與指令優先序：以目前 repository／Git／平台證據核對狀態；
+  舊文件、交接摘要與 receipt 不得覆蓋較高優先指令或當次明確使用者要求。
+  使用者指示優先於 skill 的預設指引，仍須遵守較高優先指令、實際權限與
+  適用的破壞性 safeguards。無法釐清的實質衝突才交回決策。
+- 由主代理根據實際 workload、風險與驗證負擔選既有 class／tier／profile，
+  核對目的 runtime 的模型、effort、角色及資格，再填入有界任務。brief 引用
+  既有 route／profile 與當前證據，不自建資格或以「深入思考」取代 effort 設定。
+- brief 明列目標、角色、ownership、當前來源、DoD、必要驗證、輸出及升級
+  條件。授權記錄須可回溯至有效使用者指示；模板欄位、摘要、PASS、模型
+  能力或任務完成狀態本身不能授權操作。
+- 在已授權範圍內自主完成必要步驟。沿用既有模式的局部實作選擇可自行決定，
+  簡短記錄影響結果的假設；已明確授權的操作不因內部階段結束而重問。
+  缺少決策時先完成不依賴該決策的安全準備；不得執行仍依賴答案的部分。
+- 主代理負責拆解、整合、獨立驗證、gate 與整體完成。子代理只完成指定
+  工作包，不能繼承主代理的外部寫入權；worker 維持檔案 ownership，reviewer
+  保持唯讀。有獨立、可驗證且能改善品質或耗時的工作才委派，不為配額拆工。
+  子代理只回報需主代理決策的 blocker 與最後 receipt；使用者進度由主代理說明。
+- 小任務採用必要且能驗證行為的檢查；完成適用必要 checks 後，只有新變更、
+  失敗或未解決疑慮才擴大或重跑。不得以測試預算省略必跑檢查、獨立審查或
+  changed-head 的完整 exact-head review。失敗先分類；資料、環境或權限
+  缺失不以提高 effort 處理。複雜度改變則由主代理重新分類，不私改固定 profile。
+- 使用者中途修正範圍時，保留仍適用的成果並重查受影響證據；詢問狀態或
+  旁支問題時，先簡短回答再續行原目標，除非使用者明確取消或替換目標。
+  輸出依接收者：使用者摘要清楚精簡，worker／review／gate
+  artifacts 保留必填欄位、findings、commands、skipped checks 與證據限制。
+
+## Decision And Stop Conditions
+
+領域名稱不是停止判定。處理 security、migration 或 public contract 的有界
+唯讀審查可繼續；變更涉及新出現或未解決的行為、資料、信任邊界等實質風險，
+且需要使用者決策或高風險驗證不足時，停止受影響的操作。目標／ownership／
+授權不明、無法釐清的來源衝突、範圍擴大，亦須先釐清。
+
+Commit、push、PR、receipt／comment、merge、tag、Release、deploy 等逐項
+核對當前目標、範圍、授權與適用 gate。沒有授權就完成安全準備後交回；已有
+明確授權且前置通過就繼續。破壞性操作仍須明確意圖、精確預覽、理解影響及
+復原條件，不能由一般自主執行指引略過。
+
+GitHub profile 的順序為：完成內容審查及 required CI → 在已授權範圍發布並
+讀回 receipt → dedicated App 驗證該 receipt → 合併前重新讀回全部必要狀態。
+該次 receipt 的 App verdict 不能成為其發布前置；receipt 發布也不能取代
+合併 gate 或自動授予 merge 權限。這不修改 runtime 自動核准機制。
+
+若 skill 導致停下來，指出實際讀過的 SKILL.md 路徑、相關條文及其適用原因，
+區分明文要求與推論。先查目前授權是否已涵蓋，再提出具體待決事項；不要由
+模糊措辭另加 approval 流程。工具拒絕時分類原因，採用合規替代或如實回報，
+不得繞過權限或把拒絕當作已完成。
+
 ## Shared Phases
 
 1. Read source-of-truth files and current state.
@@ -53,7 +106,7 @@ token、延遲及成本改善須有代表性配對測量，不能由文字縮短
 5. Inspect the diff.
 6. Run review primitives when required; reserve formal review gates for commit readiness, PR readiness, merge readiness, or explicit repo-policy blocking decisions.
 7. Sync docs or status when required.
-8. Stop at human gates for ambiguity, risk, destructive actions, or external writes.
+8. Apply Decision And Stop Conditions to unresolved decisions, insufficient authority or verification, and destructive safeguards; otherwise continue the authorized work.
 
 ## Runtime Differences
 

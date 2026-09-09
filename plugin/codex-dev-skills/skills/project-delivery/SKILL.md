@@ -11,6 +11,8 @@ Runtime compatibility: shared
 `Contract-Preserving Capability Selection`；本地安裝改讀
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/reusable-workflow-contract.md`。
 可重用契約相容的原生／內建／本地執行結果；本技能的必要步驟、證據與輸出仍適用。
+同一契約的 Contextual Prompt Composition 與 Decision And Stop Conditions
+規範當次派工、驗證尺度、已授權續行及真正停止條件。
 
 GitHub control plane: when the target repository is hosted on GitHub and the
 workflow reads or mutates GitHub state, follow
@@ -115,9 +117,12 @@ continue, and reuse the original worker for bounded follow-up when safe.
 
 ## Stop Conditions
 
-Stop for product ambiguity, source-of-truth conflict, broad scope expansion,
-unauthorized external writes or destructive actions, material security or data
-risk, or insufficient verification for high-risk changes.
+Stop dependent actions for unresolved product, source, scope, ownership or
+authority conflicts, newly material or unresolved security/data risk requiring
+user judgment, or insufficient verification for high-risk changes. A risk-domain
+name alone does not block authorized, bounded work whose decisions and required
+verification are resolved. Preserve destructive intent, preview and recovery
+safeguards and exact action authority from the shared contract.
 
 Do not stop merely because one internal phase completed. When review and scan
 results are clean, continue to the next safe read-only or already-authorized

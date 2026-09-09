@@ -23,3 +23,12 @@ or a newly material risk requires a new decision; runtime capability alone is
 never authorization.
 
 When stopping, explain the decision needed, one concrete risk, and the lowest-risk next option.
+
+Apply `reusable-workflow-contract.md` Decision And Stop Conditions. A risk-domain
+name alone does not block assigned read-only work. Preserve exact authorization
+and required verification for actions; a passing test, scan or review is not
+authorization. When authorization is already valid, internal phase transitions
+do not create new approval requests. For the selected GitHub profile, authorized
+receipt publication/readback precedes that receipt's dedicated-App verdict;
+merge still requires the complete gate and fresh readback. This ordering neither
+changes the runtime approval system nor permits bypassing a tool rejection.

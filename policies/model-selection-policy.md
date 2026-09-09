@@ -102,6 +102,28 @@ model-by-effort profile matrix.
 
 ## Runtime Mapping And Fallback
 
+### Prompt Adaptation
+
+Keep shared authority and completion rules model-neutral. Compose role-specific
+instructions with a bounded current task brief; do not maintain a full
+model-by-effort prompt matrix. Match extraction output shape, implementation
+ownership, reviewer evidence and parent integration duties to the actual role.
+Prompt wording cannot change the effective runtime effort or qualify a model.
+
+Evaluate prompt changes with fixed model/effort and case/source inputs first;
+then compare supported model/effort configurations with the prompt held fixed.
+Retain representative success, false completion, authority, missed findings,
+unnecessary clarification, verification repetition and actual usage evidence.
+Static prompt cases are review oracles, not model behavior measurements.
+
+Changing profile instructions changes their digest and invalidates mismatched
+qualification. Shared skill/template changes may alter behavior without changing
+that digest: reassess applicable evidence against the loaded instructions too.
+Do not modify historical evidence or qualification records to make it match.
+Details and bounded examples are in `docs/main-agent-and-subagent-settings.md`.
+
+### Runtime Preflight
+
 Custom-agent roles and concrete model/reasoning mappings are runtime profiles,
 not shared workflow truth. Preflight the custom-agent surface, profile validity,
 model mapping, reasoning setting, sandbox expectation, and collisions before

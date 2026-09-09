@@ -46,6 +46,12 @@ Use this policy when a workflow delegates work to another agent, session, or wor
 
 ## Task Brief Requirements
 
+Compose only the applicable shared contract, role and current packet using
+`templates/orchestration/agent-task-brief.template.md`. Preserve the shared
+`reusable-workflow-contract.md` contextual prompting and decision rules. A
+brief references current routing/qualification evidence; it does not replace
+the router, confer authority or require a new receipt schema.
+
 Each delegated task should include:
 
 - objective
@@ -54,6 +60,11 @@ Each delegated task should include:
 - expected outputs
 - verification commands
 - stop conditions
+- receiving role, exclusive ownership, source revision and current diff evidence
+- verified runtime/model/effort and existing route/profile reference when applicable
+- assigned authority, routine decisions allowed, and unresolved parent decisions
+- required checks, acceptance evidence, and conditions to expand verification
+- escalation to parent for a capability mismatch; no in-place profile/effort changes
 - reporting contract: blockers needing a decision plus one final receipt; no
   routine progress messages
 

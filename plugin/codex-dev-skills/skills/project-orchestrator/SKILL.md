@@ -11,6 +11,8 @@ Runtime compatibility: shared
 `Contract-Preserving Capability Selection`；本地安裝改讀
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/reusable-workflow-contract.md`。
 可重用契約相容的原生／內建／本地執行結果；本技能的必要步驟、證據與輸出仍適用。
+同一契約的 Contextual Prompt Composition 與 Decision And Stop Conditions
+規範當次派工、驗證尺度、已授權續行及真正停止條件。
 
 GitHub control plane: when the target repository is hosted on GitHub and the
 workflow reads or mutates GitHub state, follow

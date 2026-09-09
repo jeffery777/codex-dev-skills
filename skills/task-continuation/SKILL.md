@@ -7,6 +7,10 @@ description: Select the next safe task from durable project context, prepare a b
 
 Runtime compatibility: shared
 
+當次交接遵循 `../../policies/reusable-workflow-contract.md` 的 Contextual
+Prompt Composition 與 Decision And Stop Conditions；filesystem 安裝改讀
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/reusable-workflow-contract.md`。
+
 Code Mode tool orchestration: follow
 `../../policies/code-mode-tool-orchestration-policy.md` relative to this skill in source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
@@ -46,7 +50,10 @@ distinct operations and must never be substituted silently.
    - `desktop-task-handoff`
    - `fresh-rollover-prompt`
    - `stop-for-human-gate`
-6. Prepare a continuation prompt or task brief when continuation is safe.
+6. Prepare a continuation prompt or task brief when continuation is safe. Include
+   the receiving role, exact ownership, current authority references, routine
+   decisions allowed, required verification and escalation conditions. Reuse
+   existing route/profile evidence when applicable; a summary creates no authority.
 7. Route `cli-session-handoff` only when the user explicitly authorized one
    bounded CLI session mutation and the active CLI adapter can validate the
    exact executable, worktree, Git head, sandbox, and session identifier.
@@ -60,7 +67,11 @@ distinct operations and must never be substituted silently.
 
 ## Stop Conditions
 
-Stop instead of preparing executable continuation when there is source-of-truth conflict, product ambiguity, scope expansion, destructive action, external write, public contract change, data model or migration risk, auth, permission, privacy, payment, security, deployment, or insufficient verification for a high-risk change.
+停止仍依賴未解決目標、產品、ownership、授權或範圍決策的操作；先釐清無法
+解決的來源衝突、新出現或未解決的實質風險，以及高風險驗證不足。領域名稱
+本身不阻擋已指派的唯讀審查或安全準備。既有有效授權不因階段切換失效；
+缺少授權則交回具體決策。保留破壞性 safeguards、runtime 操作 gate 與
+獨占 ownership 轉移要求，不把準備交接等同已派送或完成。
 
 ## Output
 

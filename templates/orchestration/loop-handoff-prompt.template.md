@@ -13,6 +13,7 @@ Use loop-engineering for <objective>.
 Repository: <repo>
 Branch: <branch>
 Issue/source of truth: <url-or-path>
+Receiving responsibility and ownership: <delivery owner | bounded worker | read-only reviewer; exact ownership>
 
 Before editing, read:
 - <repo instructions>
@@ -21,6 +22,17 @@ Before editing, read:
 - <task manifest>
 - <status or continuation report>
 - <review or gate evidence>
+- <applicable reusable-workflow contract: Contextual Prompt Composition and Decision And Stop Conditions>
+
+Repository evidence establishes current facts; follow instruction priority for
+requirements. A stale file or summary cannot override higher-priority instructions
+or explicit current user direction. Report substantive unresolved conflicts.
+
+Current authority:
+- <exact authorized actions/targets/scope and valid user-instruction source>
+- <pending decisions and routine choices allowed>
+Verify these references; this summary creates no authority or ownership transfer.
+Bounded workers cannot inherit the delivery owner's commit or external-write authority.
 
 Current verified state:
 - <fact>
@@ -45,8 +57,18 @@ Definition of Done:
 
 Verification:
 <command>
+Required acceptance evidence: <criteria/artifacts>
+Expand or repeat only for new changes, failures or unresolved concerns; keep required gates.
 
-Stop for product ambiguity, source-of-truth conflict, scope expansion, destructive action, external writes, commit/push/PR/merge/release/deploy/platform comments/review submissions without exact authorization, material risk, unsupported Desktop runtime behavior, or insufficient verification for high-risk changes.
+Continue authorized work across internal phases. Complete safe preparation that
+does not depend on a missing decision. Stop dependent actions for unresolved
+product, source, scope, ownership or authority conflicts, newly material or
+unresolved risk requiring user judgment, or insufficient high-risk verification.
+Risk-domain names alone do not block assigned read-only review. Retain destructive
+preview/intent/recovery safeguards and exact authority for commit/push/PR/receipt/
+merge/release/deploy/platform comments/review submissions; bounded workers cannot
+perform them. Reviewers remain read-only. Unsupported runtime behavior uses a
+contract-compatible fallback; report when no safe supported path remains.
 
 At completion, report files changed, verification evidence, review/gate needs, residual risk, and whether the loop should continue, hand off, stop for a human gate, or be marked complete.
 ```

@@ -38,6 +38,7 @@ class PluginPackagingTests(unittest.TestCase):
                 "planning", "implementation-slice", "docs-update", "code-review",
                 "docs-review", "code-review-deep", "project-orchestrator",
                 "project-delivery", "code-review-gate", "docs-review-gate",
+                "task-continuation",
             ):
                 with self.subTest(root=root, skill=name):
                     entry = root / "skills" / name / "SKILL.md"
