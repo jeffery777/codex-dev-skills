@@ -32,6 +32,9 @@ gate 為 BLOCKED，並以 49 項 passing tests 未涵蓋的負例找出下列問
 | CR-SF-01-precommit-crash-oracle | Fixed：明確 precommit 中斷只容許 unknown/not-applied；只有 commit-vm 保留三態。 |
 | CR-SF-02-confirmation-expiry-bool | Fixed：confirmation 到期值先驗嚴格整數，拒絕 True 等於 1 的型別混用；新增合法整數與 bool 負例。 |
 | MR-MF-01-historical-state-digest | Fixed：首次 PR exact-head review 找到相鄰 proof 配對竄改 digest 可繞過鏈接檢查；補逐步完整 logical state 重算、當時版本退休狀態還原，以及跨 item／歷史 update／stop／resume 的四組配對負例。 |
+| MR-MF-02-historical-restore-semantics | Fixed：歷史 restore proof 必須驗指定 retained source 與結果版本的語意／來源及新驗證，拒絕以合法較舊 revision 將不同內容的 update 偽裝成 restore。 |
+| MR-MF-03-historical-proof-time-binding | Fixed：每筆 proof 時間不得早於對應版本驗證時間；負例在前一 proof 與版本驗證之間改寫時間，不能被單純遞增鏈掩蓋。 |
+| MR-MF-04-integrity-readback-classification | Fixed：readback 以固定 schema/G1 snapshot 邊界將持久契約失敗分類為 integrity-failed；九組負例同時驗 audit 拒絕及 readback 完整性失敗，包含未列舉的 bool 型別診斷；host／clock／I/O 未知狀態仍分開。 |
 
 初期 advisory 的 schema/runtime 分層已改為 `SCHEMA_OPERATIONS` 與 `g1_*` subset；
 fresh connection/state/proof 要求由核心及上述四項補強落實。已接受契約允許 `stop`
@@ -48,6 +51,9 @@ package parity 120 個生成檔案、offline validation、`git diff --check` 均
 BLOCKED；上述 MR-MF-01 不能由 pre-commit PASS 或零安全 findings 取代。
 修正後必須形成新 head，重跑受影響測試、安全掃描及完整 base-to-head Merge Review；
 最終證據綁新 head 的 PR receipt，不沿用首次 exact-head verdict。
+後續 head `8b6ae36a3860c505a9bde132cc94ed51e4eee752` 已修 MR-MF-01，但完整
+review 另確認 MR-MF-02/03；同一 proof/row 邊界的修正與負例完成後仍需新 head
+的完整審查。上述 `Fixed` 不替代最終 gate。
 
 ## Security Diff Scan 的點時結果
 

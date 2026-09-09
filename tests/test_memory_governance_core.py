@@ -606,7 +606,10 @@ class CoreTests(unittest.TestCase):
                      (2, {'operation': 'add', 'before_revision': 0, 'after_revision': 1}),
                      (3, {'operation': 'resume'}),
                      (4, {'operation': 'stop'}),
-                     (2, {'operation': 'restore', 'restore_source_revision': 2})]
+                     (2, {'operation': 'restore', 'restore_source_revision': 2}),
+                     (2, {'operation': 'restore', 'restore_source_revision': 1}),
+                     (2, {'recorded_at': 150}),
+                     (2, {'before_revision': True})]
         for sequence, fields in mutations:
             changed = c.decode(originals[sequence])
             changed.update(fields)
@@ -614,6 +617,10 @@ class CoreTests(unittest.TestCase):
                 connection.execute('UPDATE proofs SET document=? WHERE sequence=?', (c.canonical(changed), sequence))
             with self.subTest(sequence=sequence, fields=fields), self.assertRaises(c.ContractError):
                 self.core.audit()
+            original = c.decode(originals[sequence])
+            readback = self.core.readback(original['operation_id'], original['preview_digest'])
+            self.assertEqual('integrity-failed', readback['result'])
+            self.assertIsNone(readback['proof'])
             with sqlite3.connect(database) as connection:
                 connection.execute('UPDATE proofs SET document=? WHERE sequence=?', (originals[sequence], sequence))
         self.assertEqual(1, len(self.core.recall(['green'])['items']))

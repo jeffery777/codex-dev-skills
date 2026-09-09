@@ -75,6 +75,11 @@ writer 持 exclusive root lock 至獨立 readback 完成。新唯讀 connection 
 logical state、current projection、版本／proof 鏈與當次 proof；逐筆 proof replay
 item revision/status 及當時 projection，還原當時 current version 尚未退休的摘要，
 並逐步重算完整 logical after-state digest；相鄰 proof 串接一致本身不算完整性證據。
+restore proof 另比對指定 retained source 的語意／來源與新 validation，所有 proof
+時間均不得早於對應版本的 validation.verified_at，不能只靠相鄰時間遞增自證。
+readback 將固定 schema/G1-only binding 內 snapshot 的持久契約失敗統一回
+integrity-failed，包含不相容的 epoch／G2 rows；不提供向前相容讀取。host、clock、
+外部副本與 I/O 的未知狀態仍分開處理，不以資料錯誤碼清單代替此驗證邊界。
 重播只保存 item／version digest descriptors，不保留全庫版本原文；每筆 proof
 仍需雜湊當時完整 item 集合，其 CPU 成本隨 proof 數乘 item 數成長，最大 profile
 的延遲資格尚未通過。完成重播後再量測檔案及 source。

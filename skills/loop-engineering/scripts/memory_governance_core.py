@@ -367,7 +367,12 @@ class GovernanceCore:
             c.require(db.JOURNAL not in entries or entries[db.JOURNAL].st_size == 0, "recovery-required")
             with contextlib.closing(db.connect(binding, limits)) as connection:
                 connection.execute("BEGIN")
-                actual = db.snapshot(connection, scope, limits)
+                try:
+                    actual = db.snapshot(connection, scope, limits)
+                except c.ContractError as exc:
+                    # 已 qualified 的固定 schema/G1-only binding；此純資料驗證邊界
+                    # 的契約失敗（含未支援 epoch/G2 rows）不是 host 或 I/O 不確定性。
+                    raise c.ContractError("integrity-failed") from exc
                 state = actual.digest
                 self._clock(actual.clock_floor)
                 row = connection.execute("SELECT document FROM proofs WHERE operation_id=?", (operation_id,)).fetchone()
@@ -412,7 +417,8 @@ class GovernanceCore:
             if str(exc) in {"schema-mismatch", "metadata-mismatch", "integrity-failed", "projection-mismatch",
                             "proof-chain-mismatch", "proof-state-mismatch", "proof-current-mismatch", "proof-binding-mismatch",
                             "proof-sequence-mismatch", "proof-version-mismatch", "proof-lifecycle-mismatch",
-                            "proof-projection-mismatch"}:
+                            "proof-projection-mismatch", "proof-time-mismatch", "restore-content-mismatch",
+                            "restore-source-mismatch", "restore-stale-attestation", "restore-stale-validation"}:
                 result = "integrity-failed"
                 record = None
             else:

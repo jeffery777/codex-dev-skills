@@ -347,6 +347,13 @@ def snapshot(connection: sqlite3.Connection, scope: dict, limits: dict) -> Snaps
                                          (item_id, record["after_revision"])).fetchone()
         c.require(version_row is not None, "proof-version-mismatch")
         version = c.validate_version(c.decode(version_row[0], limits["max_payload_bytes"]), scope, limits)
+        c.require(record["recorded_at"] >= version["validation"]["verified_at"], "proof-time-mismatch")
+        if operation == "restore":
+            source_row = connection.execute("SELECT document FROM versions WHERE item_id=? AND revision=?",
+                                            (item_id, record["restore_source_revision"])).fetchone()
+            c.require(source_row is not None, "proof-version-mismatch")
+            retained = c.validate_version(c.decode(source_row[0], limits["max_payload_bytes"]), scope, limits)
+            c.restore_content(version, retained)
         c.require(record["projection_digest"] == c.digest(c.projection(version, status_seen[item_id])),
                   "proof-projection-mismatch")
         if operation == "add":
