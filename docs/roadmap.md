@@ -415,6 +415,13 @@ G0 單 root 與批次排除保持不變，#213 可獨立結案。
 這是部分核心，沒有真實 adapter、自然語言入口或 G2 清除資格，不能宣稱完整 MG1。
 M1 public API 保持不變，#222 與 #188 不併入。最終發版判斷仍在同一 Issue。
 
+2026-09-09 使用者調整工程順序：[Issue #237](https://github.com/jeffery777/codex-dev-skills/issues/237)
+先校正共用派工、續行與交接提示詞，完成驗證、審查及適用發版，再續推 G1
+剩餘資格／G2／G3。#235 已合併的第一切片保留；此排序不回退已完成工作，
+也不啟用真實記憶。模型／effort 維持既有分層，當次內容依
+[提示詞組合指南](main-agent-and-subagent-settings.md#依當次工作組合提示詞)填寫。
+本優先工作包的 release 準備與結果依 #237 證據判斷，不另建立發版 Issue。
+
 ## Non-Goals
 
 - General prompt collection.

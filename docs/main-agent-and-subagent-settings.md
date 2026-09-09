@@ -97,3 +97,48 @@ fixed-profile route, or a separately validated profile change. Neither route may
 lower the required class/tier or widen sandbox and authority. Missing data,
 permissions or environment support require resolving those constraints rather
 than increasing reasoning effort.
+
+## 依當次工作組合提示詞
+
+使用 [共用契約](../policies/reusable-workflow-contract.md)的 Contextual Prompt
+Composition 與 [Agent Task Brief](../templates/orchestration/agent-task-brief.template.md)。
+主代理依任務先選既有路由，再填目標、ownership、來源、授權、DoD、必要
+驗證與升級條件。這是 workflow 指引，沒有新增動態 prompt engine、schema
+或 runtime 攔截器，也不會自動修改模型或 effort。
+
+| 角色／既有配置 | 當次 brief 的重點 |
+| --- | --- |
+| Mechanical reader／Luna-low | 有界輸入、明確輸出欄位、缺值處理；非機械語意交回主代理。 |
+| Explorer／Terra-low | 搜尋問題、證據位置、範圍與停止搜尋條件。 |
+| Worker／Terra-medium、Terra-high、Sol-medium | 依分類選角色；指定檔案 ownership、可自行決定的局部細節、行為驗收與必要測試。 |
+| Deep/security reviewer／Sol-high | 唯讀、反例與風險邊界、severity／檔案證據、漏測與限制；不得自行修正或合併。 |
+| Exceptional researcher／Sol-xhigh | 仍需 quality-first 與分類條件；列出比較問題、證據衝突及研究停止條件。 |
+| Delivery owner／可選 Astra-high | 拆解、必要委派、結果整合與整體完成；對已授權階段持續推進。 |
+| 已合格的 Astra candidates | 仍沿用對應角色責任；medium/high、runtime、scope 與 digest 需各自符合資格，主代理設定不能代替。 |
+
+例如：worker 可自行沿用現有 helper 完成已接受的行為與焦點測試；發現須改變
+public API 才回報主代理重新評估。reviewer 的既定工作若是 public API 審查，
+則應自主完成唯讀查證，不因該關鍵字停下來。主代理需要合併時，先查有效
+使用者授權與 exact-head gate；測試通過既不自授權，也不撤銷既有授權。
+
+OpenAI 的 [Astra prompting guidance](https://developers.openai.com/api/docs/guides/latest-model#prompting-best-practices)
+於 2026-09-09 查閱，提示稽核指令衝突、續行、委派、文字風格及驗證尺度。
+本專案將共通部分放在契約與 brief，保留各角色的權限、模型及資格邊界。
+沒有實測依據時不追加 Astra 專屬補丁；官方範例亦不替代本專案的必要 gates。
+
+### 配對評估與證據新鮮度
+
+先固定模型／effort、案例、來源版本、工具與權限，比較舊／新提示詞；再固定
+提示詞，比較既有 baseline、Astra 同 effort 與支援的較低 effort。使用隔離
+checkout、實際載入的 instructions／profile digest 與獨立評分。正式 gate
+仍使用已合格的角色，較低 effort 的試驗結果不能直接作高風險驗收。
+
+記錄成功、false completion、越權、漏報 blocker、非必要澄清、重複驗證、
+修正輪數、wall time 與實際 usage；缺值保持 unknown。受影響模型需代表性
+回歸案例，不能只測 Astra 後推論 Luna/Terra/Sol 也改善。案例 oracle 與離線
+tests 只驗證契約／套件，不能證明模型遵循或速度／成本優勢。
+
+變更 profile 文字會改 digest，不可沿用不相符資格；只改共用 skill/template
+也可能改行為，即使 profile digest 相同仍須檢查受影響 evidence。保留歷史
+pilot 原始紀錄；新增評估須有明確執行範圍與資源額度。本次交付不啟動新評測，
+既有八個 baseline、三個 candidates 與 qualification schema 保持不變。
