@@ -42,6 +42,53 @@ checked source-of-truth state, and established the authority required for the
 operation. Capability availability never grants broader filesystem, network,
 platform-write, destructive-action, or publication authority.
 
+## Thread Capability Discovery
+
+在選 thread adapter 前，先辨識當次控制入口：Desktop 本機、Desktop 連到
+遠端、或終端 CLI/TUI。記錄入口、目的 host（可觀察時）、版本來源與查核時間。
+OS、SSH、CLI executable 的版本或另一任務成功紀錄都不能證明當次工具存在。
+
+1. 查閱當次正式 callable 清單，保留完整 namespace、名稱、輸入 schema、
+   回應及操作語意。初始清單未列出只能記為 `initial-missing`。
+2. 若 runtime 提供正式 deferred discovery，依其公開 schema 搜尋
+   `create_thread`、`fork_thread` 及該操作必要的 read/send 工具；必要時以
+   thread/task 與已觀察 namespace 查找並讀完相關分頁。只使用實際提供的
+   搜尋介面；例如 Code Mode 正式提供 `ALL_TOOLS` 時，可篩選其 name 與
+   description 並讀取完整匹配項。不可虛構 `tool_search` 或把一般網頁搜尋、
+   MCP resource list 當作 callable catalog。
+3. 依下表記錄結果及搜尋覆蓋範圍。搜尋失敗、截斷、無法確認覆蓋範圍，或
+   只看到名稱而缺 schema 時，操作保持 `unknown`；不得宣稱平台未提供。
+4. 以完整 namespace、schema、cwd/target、回應 ID 及啟動語意比對所需操作，
+   才選 Desktop 或 CLI/TUI reference。執行前重查 callable 與精確操作授權；
+   同名異 schema 不能互換。工具可用並不授權 create、fork 或 send。
+
+| Discovery state | Evidence | Operation availability / next action |
+| --- | --- | --- |
+| `initial-present` | 當次初始 callable 與完整契約 | `available`；仍須核對語意與授權 |
+| `initial-missing/deferred-present` | 正式搜尋找到完整 callable 契約 | `available`；依實際 namespace/schema 分流 |
+| `searched-no-result` | 正式搜尋成功且相關範圍已完整覆蓋，無匹配 | `unavailable` 僅限當次入口與搜尋範圍；準備 fallback |
+| `unobservable` | 無完整清單或無法完成正式搜尋，缺少 schema | `unknown`；保留缺口與手動 prompt |
+| `incompatible` | 有完整契約，但無法滿足指定操作 | 能力存在但不相容；不送入另一 adapter 的 payload |
+
+沒有 deferred search 不代表 unavailable：完整的正式清單可證明該範圍內無工具；
+不完整清單則維持 unknown。失敗先分類；dispatch 結果不確定時先用公開讀回
+核對，不能因找不到 UI 或逾時重複建立。
+
+Skill progressive disclosure 是按操作讀取 reference；runtime deferred discovery
+是取得當次 callable。讀了 reference 不代表搜尋過工具，安裝 reference 也
+不能注入 runtime 未提供的工具。兩者必須分別驗證。
+
+| Selected family | Create payload and context | Fork and result |
+| --- | --- | --- |
+| Desktop `codex_app` | `prompt` + `target`；project 使用已讀回 `projectId` 與 `environment` | 可選 `threadId`、`environment`；ready `threadId` / queued `clientThreadId` 分開，保留 host 讀回；fork 後需要續行才另送已授權 follow-up |
+| CLI/TUI `codex_tui` | `prompt` 必填、`title/model` 選填；繼承來源 cwd，不接受 Desktop target 欄位 | 僅 `threadId` 選填；回傳 `threadId`、`sourceThreadId`、`environment`、`continuation`，fork 不啟動新 turn；另行驗證並授權 send |
+
+TUI 欄位、1,000 UTF-8 bytes 原始 prompt 與 1,256 bytes escape/envelope 後上限是
+[公開 rust-v0.153.4 原始碼](https://github.com/openai/codex/blob/rust-v0.153.4/codex-rs/tui/src/dynamic_tools.rs)
+的點時證據，不是永久 schema 或任何目的 runtime 的可用性證明。CLI/TUI 操作
+必讀 `cli-session-handoff/references/native-tui.md`；Desktop 操作必讀自己的
+create/fork reference。既有 shell executor 仍維持原契約，不模擬 TUI 工具。
+
 ## Authority Mapping
 
 | State or evidence | Authority | Not sufficient for |
@@ -186,7 +233,7 @@ value prompts. This is the CLI equivalent of choosing whether a continuation
 reuses an existing checkout/worktree; it is not a Desktop project or sidebar
 operation.
 
-The repo-owned `cli-session-handoff` adapter may use that surface only after
+The repo-owned `cli-session-handoff` shell executor may use that surface only after
 shared orchestration selects a bounded task and the user authorizes one exact
 session mutation. It:
 

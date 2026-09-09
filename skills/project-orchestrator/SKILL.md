@@ -79,6 +79,13 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
 - If the next unit should move to another session or worker, prepare a bounded continuation prompt or task brief.
 - Stop when a human gate is required.
 
+Thread adapter 選取前必須依 `../../docs/native-runtime-capabilities.md` 的
+Thread Capability Discovery 核對當次完整 namespace/schema 與 deferred discovery；
+filesystem 安裝使用 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/docs/native-runtime-capabilities.md`。
+Desktop 本機、Desktop 遠端與 CLI/TUI 是不同入口；initial-missing 不等於
+unavailable，清單不可觀察時保留 unknown。Skill reference 的 progressive
+disclosure 不取代 runtime 工具搜尋。不得只靠 basename 或 OS 選 adapter。
+
 ## Delegation Economy
 
 Before selecting a custom-agent candidate, perform the shared automatic

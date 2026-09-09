@@ -35,6 +35,9 @@ needed by the authorized task does not require a new approval. Return a
 
 - Re-read the selected brief, source files, ownership, review evidence, and Git
   state relevant to the operation. Return to orchestration if readiness changed.
+- 先完成 Thread Capability Discovery 的正式清單與 deferred discovery 查核。
+  初始缺少不是 unavailable；不可觀察時保留 unknown。以完整 namespace/schema
+  確認 Desktop 契約，不能將 `codex_tui` 同名工具送入此 adapter。
 - Active callable schema plus call-site validation governs native operations.
   `../../docs/native-runtime-capabilities.md` is the source/plugin reference;
   filesystem installation also places it at

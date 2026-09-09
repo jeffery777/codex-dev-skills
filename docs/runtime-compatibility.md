@@ -18,6 +18,11 @@ distinction between the deprecated
 `codex mcp-server`, Codex's MCP client configuration, connectors, plugins, and
 native Desktop task/thread tools.
 
+Thread 控制先依 [Thread Capability Discovery](native-runtime-capabilities.md#thread-capability-discovery)
+辨識 Desktop 本機、Desktop 遠端、CLI/TUI 入口，完成正式清單與 deferred
+搜尋，記錄完整 namespace/schema；不可觀察時保留 unknown。不能以 OS、SSH、
+basename 或技能已安裝推定工具存在。
+
 ## `shared`
 
 Works in Codex CLI, Codex Desktop, and supported IDE surfaces through repository
@@ -46,6 +51,13 @@ rollover degrades to a manual/current-session prompt without claiming success.
 CLI `/plugins`, `/import`, and `/memories` are runtime configuration and
 personalization controls. They are not `cli-session-handoff` operations and do
 not grant session-mutation, repository-write, or completion authority.
+
+CLI adapter 另有 `tui-thread-create`／`tui-thread-fork` 原生分支，僅在當次
+callable 與語意符合時使用。Create 繼承來源 cwd 並啟動 turn；fork 不啟動
+turn。它不接受 Desktop target/environment，不建立 private clone/worktree。
+1,000 UTF-8 bytes 原始 prompt、1,256 bytes 包裝後限制與其餘點時欄位
+必須在執行前重驗，詳見
+[Native TUI reference](../skills/cli-session-handoff/references/native-tui.md)。
 
 ## `desktop`
 
