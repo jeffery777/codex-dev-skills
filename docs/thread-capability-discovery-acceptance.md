@@ -30,7 +30,7 @@ TUI 是先前安裝指令的入口，不能把兩者合併成 TUI create/fork �
 | --- | --- | --- | --- |
 | Mac Desktop 本機 | 公開 app bundle metadata：26.901.51231，build 8109；正式 callable 宣告 | 在無專案隔離目錄 create 成功，唯讀任務完成；same-directory fork 回傳來源／子 ID、environment 與 continuation，公開讀回 cwd、idle 與已完成歷史 | fork 續行顯示 completed，但公開 readback 暫缺該輪 items；未驗證 Git worktree queued 分支 |
 | Desktop 主控端操作 Rocky | 公開 task registry 與 fork 回應 | 對既有 playground 任務 fork 成功，讀回遠端 host、相同 cwd 與 idle；續行完成並寫出指定測試證據 | playground 未登錄為可供 create 選取的遠端 project，未測遠端 create；此結果不代表遠端任務內部有相同 callable |
-| Rocky Desktop 任務內部 | 原任務新一輪 probe、隔離 fork 與部署後 probe | 正式 `functions.exec / ALL_TOOLS` 對全部 348 筆 metadata 的 name／description 查詢 `create_thread|fork_thread|send_message_to_thread|codex_tui`，無匹配；分類 `searched-no-result` | 只證明當輪查找範圍內未暴露工具，無法取得缺席工具的 schema；不能推論永久平台缺陷 |
+| Rocky Desktop 任務內部 | 原任務新一輪 probe、隔離 fork 與部署後 probe | 正式 `functions.exec / ALL_TOOLS` 對全部 348 筆 metadata 的 name／description 查詢 `create_thread\|fork_thread\|send_message_to_thread\|codex_tui`，無匹配；分類 `searched-no-result` | 只證明當輪查找範圍內未暴露工具，無法取得缺席工具的 schema；不能推論永久平台缺陷 |
 | Mac CLI 與 Rocky CLI | 公開 `codex --version`：均 0.153.4；公開 exec JSON 事件與隔離 executor receipt | 各自 start／fork 均 exit 0、`turn.completed`、不同 session UUID、來源 HEAD 不變；Rocky 部署後直接使用新裝 executor 重跑亦通過 | `codex exec` 不等同互動 TUI；receipt 依契約省略 child summary，不能據此推定模型一定遵循新指引 |
 | 互動 TUI | [公開 TUI 原始碼](https://github.com/openai/codex/blob/rust-v0.153.4/codex-rs/tui/src/dynamic_tools.rs) 與離線回歸案例 | 已查核 create／fork 不同輸入與 fork 不啟動語意 | 使用者接受實測延後；沒有當輪 TUI callable 或 live create/fork PASS |
 
