@@ -326,6 +326,11 @@ sha256_text() {
   python3 -c 'import hashlib, sys; print(hashlib.sha256(sys.argv[1].encode()).hexdigest())' "$1"
 }
 
+report_backup_collision() {
+  warn "Backup collision for installed artifact: $1 (managed slot: $2)"
+  warn "Preserve the existing backup and inspect both versions. See docs/troubleshooting.md (Managed backup collisions); --force does not overwrite backups."
+}
+
 safe_backup_path() {
   local target_root="$1" kind="$2" rel="$3" backup_root digest backup
   reject_suspicious_relpath "$rel"
@@ -335,7 +340,10 @@ safe_backup_path() {
   reject_symlink_components "$backup"
   reject_unsafe_parent_components "$backup"
   path_is_within "$backup" "$backup_root" || die "Managed backup path escapes its artifact root: $backup"
-  [[ ! -e "$backup" && ! -L "$backup" ]] || die "Refusing to overwrite existing managed backup path: $backup"
+  if [[ -e "$backup" || -L "$backup" ]]; then
+    report_backup_collision "$target_root/$rel" "$backup"
+    die "Refusing to overwrite existing managed backup path: $backup"
+  fi
   printf '%s\n' "$backup"
 }
 
@@ -379,6 +387,27 @@ for component in path.split(os.path.sep):
     trusted_sticky_root = st.st_uid == 0 and bool(mode & stat.S_ISVTX)
     if st.st_uid not in (0, os.getuid()):
         print(f"[ERROR] {label} has an untrusted owner on intermediate component: {current}", file=sys.stderr)
+        print(f"[INFO] Visible owner UID={st.st_uid}; current UID={os.getuid()}; mode={mode:04o}.", file=sys.stderr)
+        if sys.platform.startswith("linux"):
+            try:
+                with open("/proc/self/uid_map", encoding="ascii") as mapping_file:
+                    mapping = mapping_file.read(4097)
+                if len(mapping) > 4096:
+                    mapping = mapping[:4096]
+                    mapping = mapping[:mapping.rfind("\n")] if "\n" in mapping else ""
+                    print("[INFO] UID mapping diagnostic truncated to complete rows within 4096 bytes; run cat /proc/self/uid_map in this namespace for the full mapping.", file=sys.stderr)
+                print(f"[INFO] /proc/self/uid_map (inside outside length): {mapping.strip()!r}", file=sys.stderr)
+            except (OSError, UnicodeError) as exc:
+                print(f"[INFO] UID mapping unavailable: {exc}", file=sys.stderr)
+            try:
+                with open("/proc/sys/kernel/overflowuid", encoding="ascii") as overflow_file:
+                    overflow_uid = int(overflow_file.read(32).strip())
+                print(f"[INFO] Kernel overflow UID={overflow_uid}.", file=sys.stderr)
+                if st.st_uid == overflow_uid:
+                    print("[INFO] This UID may represent an unmapped owner; it does not prove the host owner or establish trust.", file=sys.stderr)
+            except (OSError, UnicodeError, ValueError) as exc:
+                print(f"[INFO] Overflow UID unavailable: {exc}", file=sys.stderr)
+            print("[INFO] Compare id -u, stat and /proc/self/uid_map in a trusted host shell and this namespace. Retry writes only through an authorized host context after verifying ownership; do not chmod/chown host ancestors to resolve UID mapping.", file=sys.stderr)
         raise SystemExit(1)
     if mode & 0o022 and not trusted_sticky_root:
         print(f"[ERROR] {label} has a group/world-writable intermediate component: {current}", file=sys.stderr)
@@ -1764,6 +1793,7 @@ stage_force_update_transaction() {
         return 1
       }
       [[ ! -e "$backup" && ! -L "$backup" ]] || {
+        report_backup_collision "$dst" "$backup"
         warn "Refusing to overwrite existing managed backup path: $backup"
         cleanup_transaction_staging || true
         return 1
@@ -1935,6 +1965,7 @@ apply_force_update_transaction() {
         return 1
       fi
       if [[ -e "$backup" || -L "$backup" ]]; then
+        report_backup_collision "$dst" "$backup"
         warn "Refusing to overwrite managed backup path created after preflight: $backup"
         recover_artifact_failure "$((index - 1))"
         return 1
@@ -2103,7 +2134,7 @@ diff_group() {
   local group="$1" item had_diff=0
   info "Diff $group"
   if [[ "$group" == "codex-agent-profiles" ]]; then
-    init_agent_target
+    preflight_agent_target || return 1
   fi
   for item in $(group_skills "$group"); do
     diff_skill "$item" || had_diff=1
@@ -2349,7 +2380,7 @@ main() {
       fi
       ;;
     diff)
-      init_targets
+      preflight_targets
       run_for_groups diff "$requested"
       ;;
     uninstall) cmd_uninstall "$@" ;;

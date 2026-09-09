@@ -93,8 +93,48 @@ Use a single-group diff first when you are trying to understand one workflow are
 If diff reports a missing installed skill or template, install or update the relevant group instead of forcing a broad update.
 If diff reports local differences, review the output before running any update command.
 
-Risk: diff is intended as inspection, but the installer initializes target directories before commands that inspect installed files.
-Avoid custom target overrides unless the target directory has already been confirmed.
+`diff` performs read-only target validation and comparison. Existing, partially
+missing and entirely missing targets are inspected without creating skills,
+templates, agent profiles, state, backups or locks, including on error exits.
+Missing installed artifacts are reported as `missing installed`; content
+differences are reported by `diff`. A missing repository source produces a
+source-path error from `diff` when the installed artifact exists. If both are
+missing, the installed artifact is reported missing first. None of these results
+proves that a runtime's native tools are available or unavailable.
+Custom-target opt-in and symlink/path checks still apply to inspection. Read
+permission errors remain errors; comparison does not repair permissions.
+
+### Linux UID Namespaces
+
+Install/update ownership failures report the visible owner UID, current UID
+and mode when an ancestor has an untrusted owner. On Linux they also report
+`/proc/self/uid_map` (inside UID, outside UID, range length) and the kernel's
+overflow UID when readable. Mapping output is bounded to complete rows within
+4096 bytes; a truncated diagnostic explicitly directs you to read the full
+mapping in that namespace. These values describe the current namespace;
+the outside column need not identify the ultimate host in nested namespaces.
+An overflow UID can represent an unmapped owner or a real account. It cannot
+prove that the directory is owned by host root, and is never trusted merely
+because it equals `65534`.
+
+Compare these read-only commands in the failing namespace and a trusted host
+shell, substituting the exact ancestor named by the error:
+
+```bash
+id -u
+stat -c '%u:%g %a %n' /home
+cat /proc/self/uid_map
+cat /proc/sys/kernel/overflowuid
+```
+
+If mapping prevents ownership verification, perform an already-authorized
+installation from the verified host context using its normal permissions.
+Do not `chmod` or `chown` host ancestors to compensate for UID mapping. Missing
+or unreadable mapping information does not relax the refusal. Symlinks,
+foreign owners, unsafe writable ancestors, target identity, backup and rollback
+checks remain in force for mutations. `diff` needs read access and safe paths,
+not mutation ownership; use it to distinguish installation drift from this
+write-preflight limitation.
 
 ## Update
 
@@ -180,6 +220,41 @@ successful rollback restores the prior complete state. If a restore step also
 fails, it emits a `CRITICAL` message that identifies the managed backup
 location; preserve the reported target, staged, and backup locations for manual
 recovery rather than assuming an atomic or no-partial result.
+
+### Managed Backup Collisions
+
+A collision reports the installed artifact and the occupied managed slot.
+`--force` does not overwrite that slot. Preserve both versions, inspect their
+contents and provenance, and confirm that no installer transaction is active.
+If a retry is needed, separately authorize moving the exact colliding backup
+to a unique archive outside skill discovery, verify that archive, and retain
+its original slot mapping for recovery. Never delete unknown backups or treat
+a lock alone as proof that no process is active. The existing runbook below
+describes the transaction and recovery boundaries.
+
+**Backup omission design decision:** this change retains local backups and
+does not add a skip-backup option. Matching a published tag can establish a
+potential reconstruction source, but does not establish that source's future
+availability or preserve immediate rollback. A future explicit omission mode
+would need all of the following before replacing any artifact:
+
+- Bind the repository, published release, immutable tag commit and complete
+  artifact manifest, including names, bytes and executable modes. A version
+  label or installer receipt alone is insufficient; extra local files also
+  count as modifications.
+- Verify every old artifact against that manifest and preserve a verified,
+  accessible restoration source for the required recovery period. A remote
+  URL alone cannot guarantee offline recovery or continued availability.
+- Retain the original locally until the whole update and receipt transaction
+  succeeds, so a network failure cannot disable rollback. Omitting a long-term
+  duplicate backup is distinct from omitting the transactional original.
+- Keep backups for local modifications, unknown provenance, incomplete
+  comparisons or unavailable restoration sources. Existing historical backups
+  remain untouched. Any later retirement requires its own explicit scope and
+  recovery decision.
+
+This evaluation does not authorize skipping protection for modified content
+or deleting an existing backup, even if another copy matches a formal tag.
 
 ### Managed Backup Runbook
 

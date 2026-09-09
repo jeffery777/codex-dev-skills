@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import ast
+import contextlib
 import hashlib
+import io
 import os
 import pathlib
 import re
@@ -77,6 +80,134 @@ class RuntimeGroupInstallerTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = pathlib.Path(self.temporary.name).resolve()
+
+    def test_diff_is_readonly_for_existing_partial_missing_and_error_targets(self) -> None:
+        for case in ("existing", "partial", "missing", "invalid-group", "invalid-root", "symlink", "profiles"):
+            with self.subTest(case=case):
+                home, env = self.installer_env(case)
+                skills = home / ".agents" / "skills"
+                templates = home / ".codex" / "templates"
+                if case in ("existing", "partial"):
+                    skills.mkdir(parents=True)
+                    shutil.copytree(ROOT / "skills" / "code-review", skills / "code-review")
+                if case == "existing":
+                    templates.mkdir(parents=True)
+                if case in ("invalid-root", "symlink"):
+                    templates.parent.mkdir()
+                    if case == "invalid-root":
+                        templates.write_text("not a directory", encoding="utf-8")
+                    else:
+                        templates.symlink_to(self.root, target_is_directory=True)
+                args = ["diff", "not-a-group" if case == "invalid-group" else
+                        "codex-agent-profiles" if case == "profiles" else "--all"]
+                before = tree_snapshot(home, pathlib.Path(env["XDG_STATE_HOME"]))
+                result = subprocess.run(
+                    ["bash", "-x", str(INSTALLER), *args], cwd=ROOT, env=env,
+                    text=True, capture_output=True, check=False,
+                )
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(before, tree_snapshot(home, pathlib.Path(env["XDG_STATE_HOME"])))
+                # Trace also detects transient shell writes removed before the snapshot.
+                self.assertNotRegex(result.stderr, r"(?m)^\++ (?:mkdir|mktemp|cp|mv|rm|touch|chmod|chown|tee)(?: |$)")
+                if case in ("existing", "partial", "missing", "profiles"):
+                    self.assertIn("missing installed", result.stderr)
+
+    def test_diff_reports_matching_different_and_missing_sources_without_writes(self) -> None:
+        home, env = self.installer_env("content-diff")
+        skills = home / ".agents" / "skills"
+        skills.mkdir(parents=True)
+        target = skills / "code-review"
+        shutil.copytree(ROOT / "skills" / "code-review", target)
+        # Exercise the real helper without modifying repository sources.
+        source = INSTALLER.read_text(encoding="utf-8").rsplit('main "$@"', 1)[0]
+        source = source.replace('ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"', 'ROOT_DIR="$1"')
+        source += '\ndiff_skill code-review\n'
+        for case in ("matching", "different", "source-missing"):
+            with self.subTest(case=case):
+                if case == "different":
+                    (target / "SKILL.md").write_text("local modification", encoding="utf-8")
+                before = tree_snapshot(home)
+                result = subprocess.run(
+                    ["bash", "-c", source, "installer-test", str(ROOT if case != "source-missing" else self.root / "absent-source")],
+                    env=env, text=True, capture_output=True, check=False,
+                )
+                self.assertEqual(result.returncode == 0, case == "matching", result.stderr)
+                self.assertEqual(before, tree_snapshot(home))
+                if case == "different":
+                    self.assertIn("differ", result.stdout)
+                if case == "source-missing":
+                    self.assertIn("No such file or directory", result.stderr)
+
+    def test_mutable_chain_uid_mapping_diagnostics_preserve_rejections(self) -> None:
+        source = INSTALLER.read_text(encoding="utf-8")
+        function = source.split("validate_mutable_directory_chain() {", 1)[1].split("\n}\n", 1)[0]
+        program = function.split("<<'PY'\n", 1)[1].rsplit("\nPY", 1)[0]
+        cases = (
+            ("root", 0, stat.S_IFDIR | 0o755, False),
+            ("current", 1000, stat.S_IFDIR | 0o700, False),
+            ("foreign", 2000, stat.S_IFDIR | 0o755, True),
+            ("overflow", 65534, stat.S_IFDIR | 0o755, True),
+            ("writable", 1000, stat.S_IFDIR | 0o777, True),
+            ("symlink", 1000, stat.S_IFLNK | 0o777, True),
+            ("sticky-root", 0, stat.S_IFDIR | 0o1777, False),
+            ("sticky-overflow", 65534, stat.S_IFDIR | 0o1777, True),
+        )
+        for name, owner, mode, rejected in cases:
+            with self.subTest(case=name):
+                output = io.StringIO()
+                metadata = mock.Mock(st_uid=owner, st_mode=mode)
+                def open_proc(path, **kwargs):
+                    return io.StringIO("1000 0 1\n" if path.endswith("uid_map") else "65534\n")
+                with mock.patch("sys.argv", ["validator", "/home", "audit"]), \
+                     mock.patch("sys.platform", "linux"), \
+                     mock.patch("os.getuid", return_value=1000), \
+                     mock.patch("os.lstat", return_value=metadata), \
+                     mock.patch("builtins.open", side_effect=open_proc), \
+                     contextlib.redirect_stderr(output):
+                    if rejected:
+                        with self.assertRaises(SystemExit):
+                            exec(program, {})
+                    else:
+                        exec(program, {})
+                if owner not in (0, 1000) and not stat.S_ISLNK(mode):
+                    self.assertIn("untrusted owner", output.getvalue())
+                    self.assertIn("1000 0 1", output.getvalue())
+                    self.assertIn("do not chmod/chown", output.getvalue())
+                if owner == 65534:
+                    self.assertIn("does not prove the host owner", output.getvalue())
+
+        long_mapping = "".join(f"{i:10d} {i:10d} {1:10d}\n" for i in range(340))
+        for case in ("long", "unreadable", "malformed-overflow"):
+            with self.subTest(proc_case=case):
+                output = io.StringIO()
+                def open_proc(path, **kwargs):
+                    if case == "unreadable":
+                        raise PermissionError("synthetic proc read denied")
+                    if path.endswith("uid_map"):
+                        return io.StringIO(long_mapping if case == "long" else "1000 0 1\n")
+                    return io.StringIO("invalid" if case == "malformed-overflow" else "65534\n")
+                with mock.patch("sys.argv", ["validator", "/home", "audit"]), \
+                     mock.patch("sys.platform", "linux"), \
+                     mock.patch("os.getuid", return_value=1000), \
+                     mock.patch("os.lstat", return_value=mock.Mock(st_uid=65534, st_mode=stat.S_IFDIR | 0o755)), \
+                     mock.patch("builtins.open", side_effect=open_proc), \
+                     contextlib.redirect_stderr(output), self.assertRaises(SystemExit):
+                    exec(program, {})
+                diagnostic = output.getvalue()
+                self.assertIn("untrusted owner", diagnostic)
+                if case == "long":
+                    self.assertIn("truncated to complete rows", diagnostic)
+                    line = next(line for line in diagnostic.splitlines() if "(inside outside length): " in line)
+                    shown = ast.literal_eval(line.split("(inside outside length): ", 1)[1])
+                    self.assertLessEqual(len(shown), 4096)
+                    self.assertGreater(len(shown), 0)
+                    expected_rows = [row.split() for row in long_mapping.splitlines()]
+                    self.assertTrue(all(row.split() in expected_rows for row in shown.splitlines()))
+                elif case == "unreadable":
+                    self.assertIn("UID mapping unavailable", diagnostic)
+                    self.assertIn("Overflow UID unavailable", diagnostic)
+                else:
+                    self.assertIn("Overflow UID unavailable", diagnostic)
 
     def installer_env(self, home_name: str) -> tuple[pathlib.Path, dict[str, str]]:
         home = self.root / home_name
@@ -1144,6 +1275,46 @@ class RuntimeGroupInstallerTests(unittest.TestCase):
             modified_template.read_text(encoding="utf-8"),
         )
 
+    def test_late_backup_collisions_report_artifact_slot_and_preserve_original(self) -> None:
+        for phase in ("stage", "apply"):
+            with self.subTest(phase=phase):
+                name = f"late-{phase}-collision"
+                home, installed = self.run_installer("install", "shared-review-gates", home_name=name)
+                self.assertEqual(0, installed.returncode, installed.stderr)
+                target = home / ".agents/skills/closure-triage"
+                (target / "SKILL.md").write_text("preserve local edit\n", encoding="utf-8")
+                state_root = self.root / f"{name}-state"
+                state_file = state_root / "codex-dev-skills/installed.jsonl"
+                before = tree_snapshot(home, state_file)
+                _, env = self.installer_env(name)
+                source = INSTALLER.read_text(encoding="utf-8").rsplit('main "$@"', 1)[0]
+                source = source.replace('ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"', 'ROOT_DIR="$1"')
+                function = f"{phase}_force_update_transaction"
+                source = source.replace(f"{function}() {{", f"original_{function}() {{", 1)
+                # Insert a foreign-to-this-transaction slot at the two race seams.
+                source += f'''\n{function}() {{
+  local slot="${{TX_BACKUPS[0]}}"
+  mkdir -p "$(dirname "$slot")"
+  mkdir "$slot"
+  printf 'preserve racing backup\\n' > "$slot/keep"
+  original_{function}
+}}
+main update shared-review-gates --force
+'''
+                result = subprocess.run(
+                    ["bash", "-c", source, "installer-test", str(ROOT)],
+                    cwd=ROOT, env=env, capture_output=True, text=True, check=False,
+                )
+                backup = managed_backup_path(state_root, home / ".agents/skills", "skills", "closure-triage")
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn(f"Backup collision for installed artifact: {target}", result.stderr)
+                self.assertIn(f"managed slot: {backup}", result.stderr)
+                self.assertIn("docs/troubleshooting.md", result.stderr)
+                self.assertEqual(before, tree_snapshot(home, state_file))
+                self.assertEqual("preserve racing backup\n", (backup / "keep").read_text(encoding="utf-8"))
+                self.assertFalse((state_root / "codex-dev-skills/backups/v1/.transaction.lock").exists())
+                self.assertFalse(list(home.rglob(".codex-dev-skills.*")))
+
     def test_force_update_backup_collisions_are_preflighted_for_all_artifacts(self) -> None:
         home, installed = self.run_installer(
             "install", "shared-review-gates", home_name="force-preflight-home"
@@ -1172,6 +1343,9 @@ class RuntimeGroupInstallerTests(unittest.TestCase):
 
         self.assertNotEqual(0, result.returncode)
         self.assertIn("existing managed backup path", result.stderr)
+        self.assertIn(f"Backup collision for installed artifact: {second.parent}", result.stderr)
+        self.assertIn(f"managed slot: {backup}", result.stderr)
+        self.assertIn("docs/troubleshooting.md", result.stderr)
         self.assertEqual("first local edit\n", first.read_text(encoding="utf-8"))
         self.assertEqual("second local edit\n", second.read_text(encoding="utf-8"))
         self.assertFalse(
