@@ -30,6 +30,10 @@ control-plane operations. Observation does not grant mutation authority;
 message queueing requires an exact session identity and bounded nonsensitive
 message, and dispatch/wakeup is not processing or completion evidence.
 
+CLI/TUI 原生 create/fork 依 active callable 選取獨立 reference，不套用 shell
+private-clone 或 Desktop payload 契約。繼承 cwd 的操作必須維持單一 writer，
+fork 是否啟動 turn 由該次公開語意決定。
+
 ## Desktop
 
 Desktop workflows may own Desktop UI and control-plane behavior such as
@@ -55,6 +59,10 @@ Plugin-dependent workflows must name the required plugin or connector and define
 Native Goal, subagent, CLI session, scheduler, Desktop thread, hook, and
 sequential fallback capabilities follow
 [Native Runtime Capability Contract](../docs/native-runtime-capabilities.md).
+Thread 能力須先完成該契約的 Thread Capability Discovery：初始未列出時使用
+runtime 正式提供的 deferred search；缺少完整清單、schema 或搜尋覆蓋時
+維持 unknown。完整 namespace/schema 與語意才決定 adapter，不能由 OS、
+SSH 或 basename 代換。Reference progressive disclosure 不能取代工具發現。
 Runtime availability changes the execution adapter, not source-of-truth or
 completion authority.
 

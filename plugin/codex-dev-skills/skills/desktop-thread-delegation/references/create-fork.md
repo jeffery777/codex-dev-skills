@@ -3,6 +3,10 @@
 Read the active callable schema before composing the request. Prepare the
 prompt before mutation, and honor the exact already-authorized execution mode.
 
+先完成主檔指向的 Thread Capability Discovery。本 reference 僅適用當次已確認
+的 Desktop `codex_app` 契約；TUI 同名 create/fork 必須回到 CLI adapter。
+僅有名稱或歷史 schema 時保持 unknown，不組合推測的 payload。
+
 ## Choose The Target
 
 - `desktop-thread-fork`: use `fork_thread` with
@@ -70,7 +74,8 @@ no caller-supplied `hostId` and does not guarantee `hostId` in its response.
 Retain a known source host, then resolve the child's runtime-returned host through a supported
 registry before a host-sensitive follow-up. Do not route an unresolved remote
 child as local. Send a follow-up only when work must continue and a queued
-child has resolved to a usable `threadId`.
+child has resolved to a usable `threadId`. Fork 本身不代表新 turn 已啟動；
+續行須重新核對 send callable、目標與既有授權。
 
 After successful `create_thread`, emit `::created-thread{threadId="..."}` for
 ready creation or `::created-thread{clientThreadId="..."}` for queued setup.

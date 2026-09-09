@@ -29,6 +29,10 @@ This contract defines the shared shape for Codex CLI and Codex Desktop developme
 6. 在既有報告中簡短交代所選方式、重用證據及尚缺要求；一般小任務不另建
    receipt、能力登錄表或完整技能盤點。契約已要求的 artifacts 則照常產出。
 
+Thread 操作另依 `docs/native-runtime-capabilities.md` 的 Thread Capability
+Discovery 完成正式清單/deferred discovery 與 namespace/schema 分流；
+初始缺少與不可觀察不應被簡化為 unavailable。共享義務不隨 Desktop/TUI 改變。
+
 ## Protected Boundaries
 
 - Formal gates 保留 findings、dispositions、blocking 與完成語意；符合契約的

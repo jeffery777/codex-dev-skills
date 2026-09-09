@@ -40,8 +40,15 @@ A future adapter may use only these sources:
 - caller-supplied documented metadata, such as an active tool list excerpt, connector metadata, or runtime-reported schema that has already been gathered and supplied to the wrapper;
 - ordinary repository files and git commands for repo state, branch checks, prompts, and evidence.
 
-If a source is not documented, not configured, or not visible as an installed capability, it is unavailable.
-Caller-supplied metadata is evidence to normalize, not permission to call the capability. If action classification, required request fields, response fields, version evidence, capability source, or `last_verified` is missing, the wrapper must stop or report the capability unavailable instead of guessing.
+先依 [Thread Capability Discovery](native-runtime-capabilities.md#thread-capability-discovery)
+查核初始清單與正式 deferred discovery。初始不可見不等於 unavailable；只有
+完整正式清單或覆蓋相關範圍的成功查找無結果，才可對當次範圍判定 unavailable。
+來源、schema 或搜尋覆蓋不可觀察時保持 unknown。
+Caller-supplied metadata is evidence to normalize, not permission to call the capability. If action classification, required request fields, response fields, version evidence, capability source, or `last_verified` is missing, the wrapper must stop or report the capability unknown instead of guessing.
+
+此文件僅定義 Desktop 契約。`codex_tui.create_thread`／`fork_thread` 必須使用
+CLI adapter 的 native TUI reference；相同 basename 不代表 payload 或啟動
+語意相同。讀 reference 與 runtime deferred discovery 是兩個獨立步驟。
 
 ## Contract Family Boundary
 

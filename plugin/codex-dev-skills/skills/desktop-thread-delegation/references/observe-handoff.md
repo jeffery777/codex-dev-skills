@@ -3,6 +3,11 @@
 Use only active runtime callables for their exposed purposes. Read-only
 inspection needed by an authorized task does not require renewed approval.
 
+公開 `read_thread` 摘要不是目的任務的完整 callable catalog。若需原任務的
+當次能力證據，先準備唯讀 probe（入口、搜尋介面/查詢、完整 namespace/schema、
+結果與限制）；送到該任務會啟動一輪，須核對 send 的精確授權。不能用另一
+入口的工具清單補齊，也不能從私人 session/cache 取得。
+
 ## Observation
 
 `list_threads` may mix Codex tasks, ChatGPT chats, and pinned items. Treat titles

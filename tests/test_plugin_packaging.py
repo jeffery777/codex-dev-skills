@@ -340,6 +340,24 @@ class PluginPackagingTests(unittest.TestCase):
     def test_custom_template_root_resolves_installed_skill_fallbacks(self) -> None:
         self._assert_isolated_filesystem_install_resolves_templates(True)
 
+    def test_native_tui_reference_is_packaged_and_installed(self) -> None:
+        relative = pathlib.Path("skills/cli-session-handoff/references/native-tui.md")
+        self.assertEqual((ROOT / relative).read_bytes(), (PACKAGE_ROOT / relative).read_bytes())
+        with tempfile.TemporaryDirectory(prefix="tui-reference-install-") as directory:
+            root = pathlib.Path(directory).resolve()
+            env = os.environ.copy()
+            for key in INSTALLER_ENV_OVERRIDES:
+                env.pop(key, None)
+            env.update({"HOME": str(root / "home"), "XDG_STATE_HOME": str(root / "state")})
+            (root / "home").mkdir()
+            result = subprocess.run([str(ROOT / "install.sh"), "install", "codex-cli-session-handoff"],
+                                    cwd=ROOT, env=env, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            installed = root / "home/.agents/skills/cli-session-handoff/references/native-tui.md"
+            self.assertEqual((ROOT / relative).read_bytes(), installed.read_bytes())
+            contract = root / "home/.codex/templates/docs/native-runtime-capabilities.md"
+            self.assertEqual((ROOT / "docs/native-runtime-capabilities.md").read_bytes(), contract.read_bytes())
+
     def test_manifest_catalog_and_installer_versions_agree(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         catalog = (ROOT / "catalog.yaml").read_text(encoding="utf-8")

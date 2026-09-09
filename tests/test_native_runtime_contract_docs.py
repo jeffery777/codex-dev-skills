@@ -383,6 +383,84 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertNotIn("exact full ordered ID list", skill)
         self.assertNotIn("Immediately before planning and immediately again", skill)
 
+    def test_thread_discovery_distinguishes_absence_from_unknown(self) -> None:
+        contract = read("docs/native-runtime-capabilities.md")
+        rows = {line.split("|")[1].strip(): line for line in contract.splitlines()
+                if line.startswith("| `")}
+        cases = {
+            "initial-present": ("available", "初始 callable"),
+            "initial-missing/deferred-present": ("available", "正式搜尋"),
+            "searched-no-result": ("unavailable", "完整覆蓋"),
+            "unobservable": ("unknown", "schema"),
+            "incompatible": ("不相容", "payload"),
+        }
+        for state, expected in cases.items():
+            with self.subTest(state=state):
+                for value in expected:
+                    self.assertIn(f"`{value}`" if value in ("available", "unavailable", "unknown") else value, rows[f"`{state}`"])
+        for skill in ("cli-session-handoff", "desktop-thread-delegation", "project-orchestrator"):
+            entry = read(f"skills/{skill}/SKILL.md")
+            for boundary in ("Thread Capability Discovery", "unknown", "namespace/schema"):
+                self.assertIn(boundary, entry)
+        self.assertIn("Skill progressive disclosure", contract)
+        self.assertIn("runtime deferred discovery", contract)
+        self.assertIn("不可虛構 `tool_search`", contract)
+        self.assertIn("搜尋失敗、截斷", contract)
+
+    def test_tui_payload_and_turn_contract_is_separate(self) -> None:
+        entry = read("skills/cli-session-handoff/SKILL.md")
+        self.assertIn("references/native-tui.md", entry)
+        tui = read("skills/cli-session-handoff/references/native-tui.md")
+        rows = {line.split("|")[1].strip(): [cell.strip() for cell in line.split("|")[2:-1]]
+                for line in tui.splitlines() if line.startswith("| `codex_tui.")}
+        self.assertEqual(["`prompt`", "`title`, `model`"], rows["`codex_tui.create_thread`"][:2])
+        self.assertEqual(["無", "`threadId`"], rows["`codex_tui.fork_thread`"][:2])
+        self.assertIn("立即啟動", rows["`codex_tui.create_thread`"][2])
+        self.assertIn("fork 不啟動", rows["`codex_tui.fork_thread`"][2])
+        for response_field in ("threadId", "sourceThreadId", "environment", "continuation"):
+            self.assertIn(f"`{response_field}`", rows["`codex_tui.fork_thread`"][2])
+        self.assertIn('`{"type":"same-directory"}`', tui)
+        self.assertIn("不能倒灌成 fork 輸入", tui)
+        for boundary in ("未知欄位會被拒絕", "`target`", "`projectId`", "`environment`",
+                         "`thinking`", "`hostId`", "單一 writer", "授權", "不重複 create",
+                         "不發明 `clientThreadId`", "recursive session dispatch"):
+            self.assertIn(boundary, tui)
+        self.assertNotIn("Automated operations require a clean worktree", entry)
+        desktop = read("skills/desktop-thread-delegation/references/create-fork.md")
+        self.assertIn("TUI 同名 create/fork 必須回到 CLI adapter", desktop)
+
+    def test_tui_prompt_examples_count_utf8_bytes(self) -> None:
+        tui = read("skills/cli-session-handoff/references/native-tui.md")
+        self.assertIn('len(prompt.encode("utf-8"))', tui)
+        # Validate the documented boundary examples without running a native tool.
+        for count, suffix, byte_count in ((333, "a", 1000), (334, "", 1002)):
+            prompt = "中" * count + suffix
+            with self.subTest(byte_count=byte_count):
+                self.assertEqual(byte_count, len(prompt.encode("utf-8")))
+                self.assertLess(len(prompt), 1000)
+                self.assertIn(f"{byte_count:,}", tui)
+        self.assertIn("不得截斷掉 scope、authority", tui)
+        self.assertIn("不可自動拆成多次 send", tui)
+
+    def test_tui_prompt_escape_expansion_has_a_separate_limit(self) -> None:
+        tui = read("skills/cli-session-handoff/references/native-tui.md")
+        self.assertIn("必要而非充分", tui)
+        self.assertIn("1,256 UTF-8 bytes", tui)
+        self.assertIn("送入工具的仍是原始 prompt", tui)
+        # Point-in-time upstream envelope: this fixture never dispatches a tool.
+        source_id = "00000000-0000-0000-0000-000000000000"
+        cases = (("&" * 224, 1252), ("&" * 225, 1257), ("&" * 300, 1632),
+                 ("<" * 281, 1256), (">" * 282, 1260), ("中" * 333 + "a", 1132))
+        for prompt, expected in cases:
+            with self.subTest(expected=expected):
+                escaped = prompt.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                envelope = (f"<codex_delegation>\n  <source_thread_id>{source_id}</source_thread_id>"
+                            f"\n  <input>{escaped}</input>\n</codex_delegation>")
+                self.assertLessEqual(len(prompt.encode("utf-8")), 1000)
+                self.assertEqual(expected, len(envelope.encode("utf-8")))
+        for documented_count in ("1,252", "1,257", "1,632"):
+            self.assertIn(documented_count, tui)
+
     def test_runtime_operation_references_are_reachable_and_preserve_boundaries(self) -> None:
         expected = {
             "cli-session-handoff": {
