@@ -2,6 +2,13 @@
 
 ## 狀態、目標與證據
 
+2026-09-09：[Issue #235 G1 第一切片](loops/issue-235/delivery-plan.md)承接已合併的
+G0／scope-lifecycle 設計，實作單專案管理核心及 synthetic roots 測試。
+[核心 reference](../skills/loop-engineering/references/memory-governance-v1.md)明示
+production registry 空、未 qualified、不含 G2 清除及自然語言入口；
+[交付證據](loops/issue-235/verification-and-review.md)另記實際驗證／審查。
+以下早期提案與部分交付敘述保留歷史角色，不能用來宣稱完整 MG1 已完成。
+
 2026-09-08 補充：[Issue #231 範圍路由與生命週期設計](memory-scope-lifecycle-design.md)
 提供獨立 metadata 合成 oracle，補足 scope/backend、跨儲存精確集合及手動退場。
 以下 #212 研究背景與生產提案仍不代表 runtime 已完成；#231 不改 G0 單 root
