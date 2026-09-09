@@ -9,8 +9,9 @@
 使用者透過 Rocky 上的 Codex TUI 要求更新至 v0.24.1，之後回到 MacBook
 Desktop 要求自動建立新對話交辦任務。原事件的交辦入口是 Desktop；
 TUI 是先前安裝指令的入口，不能把兩者合併成 TUI create/fork 故障。
-本次另外查核 CLI/TUI 契約以避免同名工具誤用；使用者已接受互動 TUI
-實測延後，未測項目不標記 PASS。
+本次另外查核 CLI/TUI 契約以避免同名工具誤用。互動 TUI 原先接受延後，
+後續已由使用者在 Rocky playground 實測，並透過公開任務讀回補充證據；未測項目
+仍不標記 PASS。
 
 ## 已實作的契約
 
@@ -32,7 +33,12 @@ TUI 是先前安裝指令的入口，不能把兩者合併成 TUI create/fork �
 | Desktop 主控端操作 Rocky | 公開 task registry 與 fork 回應 | 對既有 playground 任務 fork 成功，讀回遠端 host、相同 cwd 與 idle；續行完成並寫出指定測試證據 | playground 未登錄為可供 create 選取的遠端 project，未測遠端 create；此結果不代表遠端任務內部有相同 callable |
 | Rocky Desktop 任務內部 | 原任務新一輪 probe、隔離 fork 與部署後 probe | 正式 `functions.exec / ALL_TOOLS` 對全部 348 筆 metadata 的 name／description 查詢 `create_thread\|fork_thread\|send_message_to_thread\|codex_tui`，無匹配；分類 `searched-no-result` | 只證明當輪查找範圍內未暴露工具，無法取得缺席工具的 schema；不能推論永久平台缺陷 |
 | Mac CLI 與 Rocky CLI | 公開 `codex --version`：均 0.153.4；公開 exec JSON 事件與隔離 executor receipt | 各自 start／fork 均 exit 0、`turn.completed`、不同 session UUID、來源 HEAD 不變；Rocky 部署後直接使用新裝 executor 重跑亦通過 | `codex exec` 不等同互動 TUI；receipt 依契約省略 child summary，不能據此推定模型一定遵循新指引 |
-| 互動 TUI | [公開 TUI 原始碼](https://github.com/openai/codex/blob/rust-v0.153.4/codex-rs/tui/src/dynamic_tools.rs) 與離線回歸案例 | 已查核 create／fork 不同輸入與 fork 不啟動語意 | 使用者接受實測延後；沒有當輪 TUI callable 或 live create/fork PASS |
+| Rocky 互動 TUI | 同日使用者授權的 playground 測試、公開任務工具呼叫紀錄與兩個子任務讀回；契約另以 [公開 TUI 原始碼](https://github.com/openai/codex/blob/rust-v0.153.4/codex-rs/tui/src/dynamic_tools.rs) 查核 | 實際 `codex_tui.create_thread` 與 `codex_tui.fork_thread` 呼叫完成；create 子任務完成指定回覆，fork 子任務具有相同完成歷史且未新增 turn；兩者均在同一 Rocky playground cwd、idle | 任務讀回未提供原 create/fork 完整回應 payload 或當輪 CLI 版本；不能用先前版本讀數代替，也未測所有 prompt 邊界、send 或其他入口 |
+
+後續另一個 Desktop 遠端任務已讀取更新後技能，仍回報 create／fork／send
+工具缺席。但公開紀錄沒有呈現它所聲稱的完整 `ALL_TOOLS` 搜尋輸出；此項
+僅屬任務自報，不能另列為已驗證的 `searched-no-result`。它與上述有正式
+搜尋結果的 probe 分開，也不能用 TUI 的成功結果替代 Desktop 遠端驗收。
 
 原遠端事件的根因仍未確認。安裝 reference、讀取 reference 與 runtime deferred
 搜尋是不同證據；本次修正不宣稱能替 runtime 注入工具。
@@ -86,9 +92,10 @@ CLI version-probe timeout 個案首次整組執行曾出現非預期 status；�
   Rocky 安裝後比對與 CLI 重測。正式專案內容未因測試變更。
 - 平台未暴露工具時保留 `searched-no-result`，可使用已驗證的本機 Desktop
   主控 fork 或 CLI private-clone start/fork；仍須依各入口 scope 與授權選用。
-- 互動 TUI 實測由使用者接受延後；owner 為專案維護者，追蹤於本紀錄與
-  Issue #239。下次實際使用 TUI 或遇到相關問題時，先重讀當輪完整 callable，
-  在隔離目錄執行 create/fork 並保存 payload、回應與啟動狀態後再宣稱可用。
+- 已補入 Rocky 互動 TUI 的基本 create/fork 成功證據；剩餘的完整回應、
+  當輪版本與未測操作仍保留限制。後續 Desktop 遠端工具缺席追查由專案
+  維護者承接，需取得正式搜尋介面、查詢、覆蓋範圍與原始結果後再判定原因；
+  若 runtime 確實未提供工具，技能契約與 installer 修正不能補出該工具。
 - 遠端 Desktop create 與 queued worktree 路徑保持未驗證；追蹤 owner 同上，
   在取得已登錄且授權的隔離 project 後補測。本次不以正式專案代替測試目標。
 - Pre-commit review／Security Diff Scan 不取代 PR 後完整 exact-head Merge
