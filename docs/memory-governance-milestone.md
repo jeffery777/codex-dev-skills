@@ -2,6 +2,12 @@
 
 ## 狀態、目標與證據
 
+2026-09-10：[Issue #245 G1 第二切片](loops/issue-245/delivery-plan.md)新增本機
+clock／單 root registry／source binding 組合、synthetic Git E2E、程序中斷與
+容量觀察。[驗證證據](loops/issue-245/verification-and-review.md)區分 page-quota
+SQLITE_FULL、實際 APFS ENOSPC／CANTOPEN，以及未完成的恢復／上界資格。
+production registry 仍空，沒有正式 confirmation／source adapter；G1 仍是部分交付。
+
 2026-09-09：[Issue #235 G1 第一切片](loops/issue-235/delivery-plan.md)承接已合併的
 G0／scope-lifecycle 設計，實作單專案管理核心及 synthetic roots 測試。
 [核心 reference](../skills/loop-engineering/references/memory-governance-v1.md)明示

@@ -415,6 +415,12 @@ G0 單 root 與批次排除保持不變，#213 可獨立結案。
 這是部分核心，沒有真實 adapter、自然語言入口或 G2 清除資格，不能宣稱完整 MG1。
 M1 public API 保持不變，#222 與 #188 不併入。最終發版判斷仍在同一 Issue。
 
+#245 的 G1 第二切片補本機 clock、單 root registry、repo-artifact bytes 綁定及
+明確 port 組合；以新建 synthetic Git／SQLite 驗證完整操作與拒絕邊界。
+[範圍](loops/issue-245/delivery-plan.md)及[觀察證據](loops/issue-245/verification-and-review.md)
+保留實際 ENOSPC／CANTOPEN 與未完成恢復、temp／最壞 latency 資格的區別。
+未提供 production source／confirmation／qualification，不啟用真實記憶或 G2。
+
 2026-09-09 使用者調整工程順序：[Issue #237](https://github.com/jeffery777/codex-dev-skills/issues/237)
 先校正共用派工、續行與交接提示詞，完成驗證、審查及適用發版，再續推 G1
 剩餘資格／G2／G3。#235 已合併的第一切片保留；此排序不回退已完成工作，
