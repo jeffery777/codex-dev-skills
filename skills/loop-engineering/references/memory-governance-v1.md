@@ -1,6 +1,6 @@
-# MG1 G1 單專案管理核心第一切片
+# MG1 G1 單專案管理核心與本機組合介面
 
-此 reference 對應 Issue #235；它是尚未完成 production qualification 的開發核心，
+此 reference 對應 Issue #235／#245；它是尚未完成 production qualification 的開發核心，
 不是新的自然語言記憶技能、已啟用 backend 或完整 MG1。production adapter registry
 是不可變空映射。不得因 import、合成 port 回傳 true、SQLite 測試或本文件而啟用真實記憶。
 
@@ -17,6 +17,13 @@
 - `memory_governance_core.py`：預設 `enabled=False`；`initialize`、`audit`、
   `preview`、`authorize`、`execute`、`readback` 與人工 exact-cue `recall`。
   呼叫端只能提議 candidate，不能提供自己的 confirmation 當授權。
+- `memory_governance_local.py`：POSIX 本機 UTC／monotonic／process clock、單 root
+  host-owned RAM registry、初始化後獨立 identity readback 與 LocalHost port 組合。
+  RepositorySource 每次重讀完整 repo-artifact、核對 scope/revision/path/SHA-256；
+  每個 artifact 最多 64 KiB，沿用最多 8 筆 provenance。不快取或自行授予 eligibility。
+  reader 必須在 I/O 前限制範圍、bytes 與時間，source reviewer 另驗支持／敏感性。
+  缺 authority／qualification 就拒絕；source 缺失仍可依 G0 做精確 stop。
+  沒有通用 Git reader、human-decision attestation、production factory 或持久 registry。
 - `governancectl.py`：預設 off；`--enabled audit` 因缺合格 adapter 明確 unavailable。
   `--enabled proposal` 只讀有界 stdin 的 `{scope, profile, candidate}`，回 shape-only
   `proposal-only`，來源／敏感性仍 unavailable；不產生可執行 `mg1-preview/v1`。
@@ -49,7 +56,7 @@ Host 另須以目前 SQLite source ID、compile options、Python/OS、固定 sch
 profile、adapter 與 filesystem/temp 範圍核對 qualification，從實測前態重算 J/T/G。
 `qualification_id` 或 runtime 指紋相同仍不是 peak/維護空間的證明。根目錄檔案的
 實際 stat/hash、可用空間與 `ceil((J+T+G)/4096)*4096` 准入條件由 core 再比對；
-host 須扣除其承諾的並行工作預算。此首切片尚無任何 production 資格記錄。
+host 須扣除其承諾的並行工作預算。兩個切片均尚無任何 production 資格記錄。
 
 ## 操作、原子性與讀回
 
@@ -102,9 +109,14 @@ item 列舉完整性與每頁 source coverage 分開；source 不可採用時遮
 不寫回 stored status。一般查詢結果受數量／輸出 bytes 上限約束，超出明列 incomplete。
 
 合成 tests 在隔離 test-owned roots 注入 host；來源批准、confirmation、qualification
-均為 synthetic。subprocess interruption 只證明所測 SQLite/process 邊界，不證明
-power-loss、真實 ENOSPC、temp peak、維護預留、4 GiB 最壞 latency、共享主機隔離
-或人類授權 adapter。G2/G3 仍須獨立完成上述對應資格；未完成前不開放真實入口。
+均為 synthetic。#245 的 repository-only runner 記錄小型 workload 的檔案取樣及
+鎖定時間，不能把觀測最大值視為 J/T/G 上界；temp=0 只涵蓋該 test-owned 目錄，
+外部或 unnamed temp 覆蓋仍 unknown。實際 APFS image 已觀察 filler ENOSPC，
+SQLite 則為 CANTOPEN／not-applied；truncate filler 失敗但正常 detach 成功，
+實驗仍 incomplete。另有 test-only page quota 觸發 SQLITE_FULL，不能混稱物理磁碟滿。
+subprocess interruption 只證明所測 SQLite/process 邊界。沒有 power-loss、完整 temp、
+maintenance reserve、4 GiB 最壞 latency、共享主機隔離或人類授權 adapter 資格。
+G2/G3 仍須獨立完成上述對應資格；未完成前不開放真實入口。
 
 原生記憶、對話、匯出與備份是外部副本，coverage unknown 不等於沒有副本。
 本專案 memory-off 只表示這些管理核心操作不碰本專案 root／backend；不聲稱
