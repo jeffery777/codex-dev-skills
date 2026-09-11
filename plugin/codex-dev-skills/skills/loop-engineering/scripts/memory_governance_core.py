@@ -321,7 +321,7 @@ class GovernanceCore:
                 _checkpoint("after-item-write")
                 recorded = self._clock(snapshot.clock_floor)
                 c.confirmation(confirmation, preview, recorded)
-                record = {"contract_version": "mg1-operation-proof/v1", "operation_id": preview["operation_id"],
+                record = {"contract_version": db.PROOF_FAMILY, "operation_id": preview["operation_id"],
                           "item_id": preview["item_id"], "identity_epoch": after["identity_epoch"],
                           "acceptance_epoch": snapshot.epoch, "before_revision": before["current_revision"] if before else 0,
                           "after_revision": after["current_revision"], "recorded_at": recorded, "operation": operation,
@@ -329,7 +329,11 @@ class GovernanceCore:
                           "projection_digest": after["projection_digest"], "acceptance_evidence_id": confirmation["host_evidence_id"],
                           "phase": "complete", "sanitization": "not-requested", "space_reclaim": "not-requested",
                           "restore_source_revision": source_revision, "target_revisions": [], "parent_operation_id": None,
-                          "witness_kind": None, "witness_digest": None}
+                          "witness_kind": None, "witness_digest": None,
+                          "readback_basis": {"scope_digest": c.digest(scope), "binding_digest": db.binding_digest(binding),
+                                             "copies_digest": c.copies_digest(preview["external_copies"]),
+                                             "copies_observed_at": preview["external_copies"]["observed_at"],
+                                             "readback_until": c.integer(recorded + limits["proof_seconds"])}}
                 c.g1_proof(record, preview, confirmation)
                 connection.execute("INSERT INTO proofs(operation_id,item_id,document) VALUES (?,?,?)",
                                    (record["operation_id"], record["item_id"], c.canonical(record, 2048)))
@@ -375,15 +379,16 @@ class GovernanceCore:
                     raise c.ContractError("integrity-failed") from exc
                 state = actual.digest
                 self._clock(actual.clock_floor)
-                row = connection.execute("SELECT document FROM proofs WHERE operation_id=?", (operation_id,)).fetchone()
+                row = connection.execute("SELECT sequence,document FROM proofs WHERE operation_id=?", (operation_id,)).fetchone()
                 if row is not None:
-                    record = c.g1_proof(c.decode(row[0], 2048))
+                    record = c.g1_proof(c.decode(row[1], 2048))
                     c.require(record["operation_id"] == operation_id, "proof-binding-mismatch")
                     # caller 的錯誤 tuple 不證明 durable proof 自身已損壞。
                     c.require(record["preview_digest"] == preview_digest, "readback-binding")
                     c.g1_proof(record, preview)
                     item = db.load_item(connection, record["item_id"], scope, limits)
-                    if state == record["after_digest"]:
+                    # snapshot 已驗證 sequence 為完整連續鏈；狀態往返不能復活舊操作。
+                    if row[0] == actual.proofs and state == record["after_digest"]:
                         c.require(item is not None and item["current_revision"] == record["after_revision"]
                                   and item["identity_epoch"] == record["identity_epoch"]
                                   and item["projection_digest"] == record["projection_digest"], "proof-current-mismatch")
@@ -408,9 +413,11 @@ class GovernanceCore:
                 copies = self._copies(binding)
             except c.ContractError:
                 result = "state-unknown"
-            # digest 不能還原原始 preview 的外部集合；缺證據只回傳 proof/unknown。
-            if result == "applied" and (preview is None or not c.copies_match(copies, preview["external_copies"])):
-                result = "state-unknown"
+            # 只採已核准庫的 v2 proof；caller preview 不能補造遺失的持久比較證據。
+            if result in {"applied", "committed-but-not-adoptable", "committed-capacity-unproven"}:
+                if (record["readback_basis"]["binding_digest"] != db.binding_digest(binding)
+                        or not c.basis_matches(record, scope, copies, self._clock(actual.clock_floor))):
+                    result = "state-unknown"
         except c.ContractError as exc:
             if str(exc) == "readback-binding":
                 raise
@@ -426,7 +433,10 @@ class GovernanceCore:
         except (OSError, sqlite3.Error):
             result = "state-unknown"
         observed = self._clock()
-        value = {"contract_version": "mg1-readback/v1", "scope": scope, "operation_id": operation_id,
+        if (result in {"applied", "committed-but-not-adoptable", "committed-capacity-unproven"}
+                and observed >= record["readback_basis"]["readback_until"]):
+            result = "state-unknown"
+        value = {"contract_version": "mg1-readback/v2", "scope": scope, "operation_id": operation_id,
                  "preview_digest": preview_digest, "observed_at": observed, "result": result, "state_digest": state,
                  "proof": record, "related_proofs": [], "deleted_proofs": [], "deleted_markers": [],
                  "managed_files": files, "storage": storage, "external_copies": copies,
@@ -450,7 +460,7 @@ class GovernanceCore:
             # 非空 journal 時不開 DB、不恢復；仍不能把中斷推論為未提交。
             self._read_authority(binding, "readback", operation_id)
             copies = self._copies(binding)
-            result = {"contract_version": "mg1-readback/v1", "scope": scope, "operation_id": operation_id,
+            result = {"contract_version": "mg1-readback/v2", "scope": scope, "operation_id": operation_id,
                       "preview_digest": preview_digest, "observed_at": self._clock(), "result": "state-unknown",
                       "state_digest": None, "proof": None, "related_proofs": [], "deleted_proofs": [],
                       "deleted_markers": [], "managed_files": [],

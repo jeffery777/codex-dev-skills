@@ -234,12 +234,12 @@ class LocalTests(unittest.TestCase):
         with self.assertRaises(c.ContractError):
             no_source.preview('resume', ITEM)
 
-    def test_reopen_without_preview_only_reads_proof_and_cannot_replay(self):
+    def test_reopen_without_preview_reads_v2_basis_and_cannot_replay(self):
         preview, handle, result = self.apply('add', self.ports.candidate())
         fresh = GovernanceCore(self.ports.reopened().host, enabled=True)
         before = self.inventory()
         readback = fresh.readback(preview['operation_id'], c.digest(preview))
-        self.assertEqual('state-unknown', readback['result'])
+        self.assertEqual('applied', readback['result'])
         self.assertEqual(result['proof'], readback['proof'])
         self.assertEqual(before, self.inventory())
         with self.assertRaisesRegex(c.ContractError, 'preview-unrecognized'):

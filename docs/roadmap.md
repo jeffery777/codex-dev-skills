@@ -421,6 +421,12 @@ M1 public API 保持不變，#222 與 #188 不併入。最終發版判斷仍在�
 保留實際 ENOSPC／CANTOPEN 與未完成恢復、temp／最壞 latency 資格的區別。
 未提供 production source／confirmation／qualification，不啟用真實記憶或 G2。
 
+#247 補上 [G1 程序重啟讀回契約](loops/issue-247/process-loss-contract.md)：
+proof-v2 在原 2 KiB 上限內保存固定比較摘要，新 reader process 重新驗證權限、
+來源、root、外部副本與容量；不保留完整 preview、不恢復 mutation handle。
+僅限新建 synthetic roots，舊 schema 拒絕且不 migration；
+[驗證與審查狀態](loops/issue-247/verification-and-review.md)不代表 production 資格。
+
 2026-09-09 使用者調整工程順序：[Issue #237](https://github.com/jeffery777/codex-dev-skills/issues/237)
 先校正共用派工、續行與交接提示詞，完成驗證、審查及適用發版，再續推 G1
 剩餘資格／G2／G3。#235 已合併的第一切片保留；此排序不回退已完成工作，

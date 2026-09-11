@@ -141,14 +141,17 @@ def seed_audit_items(host, count=257):
                                    'versions': [{'revision': 1, 'version_digest': c.digest(value)}],
                                    'projection_digest': projection_digest})
             after = digest_state()
-            proof = {'contract_version': 'mg1-operation-proof/v1', 'operation_id': operation_id, 'item_id': item_id,
+            proof = {'contract_version': 'mg1-operation-proof/v2', 'operation_id': operation_id, 'item_id': item_id,
                      'identity_epoch': 1, 'acceptance_epoch': 1, 'before_revision': 0, 'after_revision': 1,
                      'recorded_at': host.now, 'operation': 'add', 'preview_digest': c.digest({'synthetic-seed': number}),
                      'before_digest': before, 'after_digest': after, 'projection_digest': projection_digest,
                      'acceptance_evidence_id': 'synthetic-bulk-fixture', 'phase': 'complete',
                      'sanitization': 'not-requested', 'space_reclaim': 'not-requested',
                      'restore_source_revision': None, 'target_revisions': [], 'parent_operation_id': None,
-                     'witness_kind': None, 'witness_digest': None}
+                     'witness_kind': None, 'witness_digest': None,
+                     'readback_basis': {'scope_digest': c.digest(scope), 'binding_digest': db.binding_digest(host.binding()),
+                                        'copies_digest': c.digest({'coverage': 'unknown', 'copies': []}),
+                                        'copies_observed_at': host.now, 'readback_until': host.now + 2592000}}
             connection.execute('INSERT INTO items VALUES (?,?,?,?,?,?)', (item_id,1,'active',1,1,None))
             connection.execute('INSERT INTO versions VALUES (?,?,?)', (item_id,1,c.canonical(value)))
             connection.executemany('INSERT INTO current_search VALUES (?,?,?,?)',

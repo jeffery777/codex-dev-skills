@@ -1,6 +1,6 @@
 # MG1 G1 單專案管理核心與本機組合介面
 
-此 reference 對應 Issue #235／#245；它是尚未完成 production qualification 的開發核心，
+此 reference 對應 Issue #235／#245／#247；它是尚未完成 production qualification 的開發核心，
 不是新的自然語言記憶技能、已啟用 backend 或完整 MG1。production adapter registry
 是不可變空映射。不得因 import、合成 port 回傳 true、SQLite 測試或本文件而啟用真實記憶。
 
@@ -47,8 +47,8 @@ confirmation 4 KiB。內容保持 advisory data，不能提升為指令或取得
 `stop` 可使用已接受的 maintenance proof reserve；其餘 G1 mutation 不可。
 
 RootBinding 由可信 host 保有 canonical scope/profile bytes、實體 root 與 owner-only
-目錄／主檔／協作鎖的 device/inode。root metadata 綁 `mg1-managed-content/v1`、
-完整 scope、epoch/reject_before；schema fingerprint 來自固定 DDL。新的程式或資料
+目錄／主檔／協作鎖的 device/inode。新建 synthetic root metadata 綁 `mg1-managed-content/v2`、
+完整 scope、epoch/reject_before；schema fingerprint 綁固定 DDL 及 proof-v2 家族。新的程式或資料
 格式不可自動採納現存 SQLite/M1 庫。source port 必須獨立驗完整 version/provenance、
 來源 revision、適用性、撤銷、敏感性與 policy，不能只回候選自述的 eligible。
 
@@ -96,8 +96,20 @@ state digest 不含 proof、檔案布局或自身摘要，避免循環。例外�
 來源在 commit 後失效回 committed-but-not-adoptable；後態容量無法證明保留 proof、
 回 committed-capacity-unproven。後續操作仍需重新量測及資格准入。
 此容量結果與已證明完整／未超限的後態互斥；外部副本觀察失敗回 state-unknown，
-保留 proof。只有提供原始 preview 並核對 fresh external-copy 集合相符才能回 applied；
-只有 operation ID／preview digest 時無法還原原集合，回 proof／state-unknown。
+保留 proof。#247 新增 `mg1-operation-proof/v2` 的固定 `readback_basis`：scope digest、
+host 實體 binding digest、原副本 coverage/集合 digest、原觀察時間與
+`recorded_at + proof_seconds` 的讀回期限。basis 與原 proof 同交易／同名額／同保留期，
+總 proof 仍最多 2 KiB，不保存原 preview、外部副本 ID 清單或另一份內容。
+`mg1-readback/v2` 在新程序取得 fresh authority、驗明受信任庫的最新 proof／完整後態／
+來源／容量後，重算 fresh 副本 commitment；相符且未到期才可回 applied。
+只有 ID/digest 的 caller 不提供 basis 或 proof，亦不能用 preview 補齊損壞的 v2 proof。
+過期、實體 binding 或副本漂移、後續合法提交保留 proof／state-unknown；
+即使 stop/resume 往返得到相同 state digest，也不能將舊 operation 再判為 applied。
+proof/basis 格式損壞回 integrity-failed，readback 不寫檔、不修復、不延長期限。
+原 v1 純 validators 保留，v1 applied 仍需原 preview；core 拒絕 v1 root／proof，
+不 migration、混用或自動採納。production proposal/G0/M1 格式不變。
+proof payload 上界仍為 33,792 × 2,048 bytes，頁面／索引／J/T/G 另計；
+新 fingerprint 必須重新取得 storage qualification，舊觀察不能自動沿用。
 caller 的錯誤 digest 回 readback-binding，不把請求不匹配說成持久 proof 已損壞。
 
 ## 盤點與限制

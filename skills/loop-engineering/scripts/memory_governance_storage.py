@@ -25,7 +25,17 @@ SQL = (
     "CREATE INDEX search_cue ON current_search(cue,item_id)",
     "CREATE TABLE proofs (sequence INTEGER PRIMARY KEY, operation_id TEXT NOT NULL UNIQUE, item_id TEXT NOT NULL REFERENCES items(item_id), document BLOB NOT NULL CHECK(length(document)<=2048)) STRICT",
 )
-SCHEMA_FINGERPRINT = c.digest({"schema": "mg1-managed-content/v1", "sql": list(SQL)})
+CONTENT_FAMILY = "mg1-managed-content/v2"
+PROOF_FAMILY = "mg1-operation-proof/v2"
+SCHEMA_FINGERPRINT = c.digest({"schema": CONTENT_FAMILY, "proof": PROOF_FAMILY, "sql": list(SQL)})
+
+
+def binding_digest(binding: RootBinding) -> str:
+    """只由 host-owned 實體 binding 重算；不輸出路徑或建立持久登錄。"""
+    material = {key: list(getattr(binding, key)) for key in
+                ("directory_identity", "main_identity", "lock_identity")}
+    return c.digest({**material, "scope_digest": c.digest(c.decode(binding.scope_bytes, 4096)),
+                     "filesystem_id": binding.filesystem_id, "adapter_fingerprint": binding.adapter_fingerprint})
 
 
 def runtime_facts() -> dict:
@@ -198,7 +208,7 @@ def initialize(binding: RootBinding, limits: dict, scope: dict, now: int) -> tup
         connection.execute("BEGIN IMMEDIATE")
         for statement in SQL:
             connection.execute(statement)
-        metadata = {"contract_version": "mg1-managed-content/v1", **scope, "epoch": 1, "reject_before": now}
+        metadata = {"contract_version": CONTENT_FAMILY, **scope, "epoch": 1, "reject_before": now}
         connection.execute("INSERT INTO root_meta VALUES (1,?)", (c.canonical(metadata),))
         connection.commit()
         connection.close()
@@ -224,7 +234,7 @@ def metadata(connection: sqlite3.Connection, scope: dict) -> dict:
     c.require(len(rows) == 1 and rows[0][0] == 1, "metadata-mismatch")
     data = c.decode(rows[0][1], 4096)
     c.fields(data, {"contract_version", *scope, "epoch", "reject_before"})
-    c.require(data["contract_version"] == "mg1-managed-content/v1"
+    c.require(data["contract_version"] == CONTENT_FAMILY
               and {k: data[k] for k in scope} == scope, "metadata-mismatch")
     # G1 不實作 retention；任何 epoch 切換均為不支援的 root。
     c.require(c.integer(data["epoch"], 1) == 1, "epoch-unavailable")
@@ -323,6 +333,8 @@ def snapshot(connection: sqlite3.Connection, scope: dict, limits: dict) -> Snaps
     for number, (sequence, operation_id, item_id, data) in enumerate(connection.execute("SELECT sequence,operation_id,item_id,document FROM proofs ORDER BY sequence"), 1):
         c.require(number <= counts["proofs"] and sequence == number, "proof-sequence-mismatch")
         record = c.g1_proof(c.decode(data, 2048))
+        c.require(record["contract_version"] == PROOF_FAMILY, "proof-version-unavailable")
+        c.require(record["readback_basis"]["scope_digest"] == c.digest(scope), "proof-basis-mismatch")
         c.require(record["operation_id"] == operation_id and record["item_id"] == item_id
                   and record["before_digest"] == previous and record["recorded_at"] >= floor
                   and record["acceptance_epoch"] == meta["epoch"], "proof-chain-mismatch")
