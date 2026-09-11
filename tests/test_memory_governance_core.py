@@ -140,9 +140,9 @@ class CoreTests(unittest.TestCase):
         with self.assertRaisesRegex(c.ContractError, 'handle-unrecognized'):
             another.execute(handle)
         result = self.core.execute(handle)
-        unknown = another.readback(result['operation_id'], result['preview_digest'])
-        self.assertEqual('state-unknown', unknown['result'])
-        self.assertEqual(result['proof'], unknown['proof'])
+        recovered = another.readback(result['operation_id'], result['preview_digest'])
+        self.assertEqual('applied', recovered['result'])
+        self.assertEqual(result['proof'], recovered['proof'])
         self.assertEqual('applied', another.readback(result['operation_id'], result['preview_digest'], preview=preview)['result'])
         result['proof']['after_digest'] = 'a'*64
         read = another.readback(preview['operation_id'], c.digest(preview), preview=preview)

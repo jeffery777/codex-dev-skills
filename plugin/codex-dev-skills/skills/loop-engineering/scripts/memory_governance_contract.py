@@ -336,6 +336,31 @@ def copies_match(observation: dict, original: dict) -> bool:
             and observation["observed_at"] >= original["observed_at"])
 
 
+def copies_digest(value: dict) -> str:
+    """有界副本比較 commitment，不保留原集合或把 unknown 升為 complete。"""
+    external_copies(value)
+    return digest({key: value[key] for key in ("coverage", "copies")})
+
+
+def readback_basis(value: object, recorded_at: int) -> dict:
+    fields(value, {"scope_digest", "binding_digest", "copies_digest", "copies_observed_at", "readback_until"})
+    for key in ("scope_digest", "binding_digest", "copies_digest"):
+        digest_text(value[key])
+    integer(value["copies_observed_at"], 0, recorded_at)
+    require(integer(value["readback_until"]) == integer(recorded_at + DEFAULT_PROFILE["proof_seconds"]),
+            "invalid-readback-window")
+    return value
+
+
+def basis_matches(record: dict, scope_value: dict, copies: dict, observed_at: int) -> bool:
+    """純資料比較；真實 root/source/read 權限由 core 另驗，不能以此建立授權。"""
+    basis = readback_basis(record["readback_basis"], record["recorded_at"])
+    return (basis["scope_digest"] == digest(scope_value)
+            and record["recorded_at"] <= copies["observed_at"] <= observed_at < basis["readback_until"]
+            and copies["observed_at"] >= basis["copies_observed_at"]
+            and copies_digest(copies) == basis["copies_digest"])
+
+
 def validate_version(value: object, expected_scope: dict, limits: dict, *, candidate: bool = False) -> dict:
     canonical(value, limits["max_payload_bytes"])
     version(value, limits, expected_scope["policy_fingerprint"])
@@ -439,14 +464,16 @@ def confirmation(value: object, preview_value: dict, now: int) -> dict:
 
 def g1_proof(value: object, preview_value: dict | None = None, confirmation_value: dict | None = None) -> dict:
     canonical(value, 2048)
+    require(type(value) is dict, "invalid-fields")
+    family = one_of(value.get("contract_version"), {"mg1-operation-proof/v1", "mg1-operation-proof/v2"},
+                    "invalid-proof-version")
     fields(value, {
         "contract_version", "operation_id", "item_id", "identity_epoch", "acceptance_epoch",
         "before_revision", "after_revision", "recorded_at", "operation", "preview_digest",
         "before_digest", "after_digest", "projection_digest", "acceptance_evidence_id", "phase",
         "sanitization", "space_reclaim", "restore_source_revision", "target_revisions",
         "parent_operation_id", "witness_kind", "witness_digest",
-    })
-    require(value["contract_version"] == "mg1-operation-proof/v1", "invalid-proof-version")
+    } | ({"readback_basis"} if family == "mg1-operation-proof/v2" else set()))
     uuid(value["operation_id"])
     uuid(value["item_id"])
     op = g1_operation(value["operation"])
@@ -455,6 +482,13 @@ def g1_proof(value: object, preview_value: dict | None = None, confirmation_valu
     before = integer(value["before_revision"])
     after = integer(value["after_revision"], 1)
     integer(value["recorded_at"])
+    if family == "mg1-operation-proof/v2":
+        basis = readback_basis(value["readback_basis"], value["recorded_at"])
+        if preview_value is not None:
+            require(basis["scope_digest"] == digest(preview_value["scope"])
+                    and basis["copies_digest"] == copies_digest(preview_value["external_copies"])
+                    and basis["copies_observed_at"] == preview_value["external_copies"]["observed_at"],
+                    "proof-basis-mismatch")
     require((before == 0 and after == 1) if op == "add" else
             (before >= 1 and (after > before if op in {"update", "restore"} else after == before)),
             "proof-revision-mismatch")
@@ -488,7 +522,7 @@ def g1_readback(value: object, expected_scope: dict, limits: dict, preview_value
     fields(value, {"contract_version", "scope", "operation_id", "preview_digest", "observed_at", "result",
                    "state_digest", "proof", "related_proofs", "deleted_proofs", "deleted_markers", "managed_files",
                    "storage", "external_copies", "sanitization", "space_reclaim", "witness", "related_witnesses"})
-    require(value["contract_version"] == "mg1-readback/v1", "invalid-readback-version")
+    family = one_of(value["contract_version"], {"mg1-readback/v1", "mg1-readback/v2"}, "invalid-readback-version")
     require(value["scope"] == expected_scope, "scope-mismatch")
     uuid(value["operation_id"])
     digest_text(value["preview_digest"])
@@ -508,16 +542,24 @@ def g1_readback(value: object, expected_scope: dict, limits: dict, preview_value
     record = value["proof"]
     if record is not None:
         g1_proof(record, preview_value)
+        require(record["contract_version"] == ("mg1-operation-proof/v2" if family == "mg1-readback/v2"
+                                                else "mg1-operation-proof/v1"), "readback-proof-version")
+        if family == "mg1-readback/v2":
+            require(record["readback_basis"]["scope_digest"] == digest(expected_scope), "readback-proof-mismatch")
         require(record["operation_id"] == value["operation_id"]
                 and record["preview_digest"] == value["preview_digest"]
                 and record["recorded_at"] <= value["external_copies"]["observed_at"], "readback-proof-mismatch")
     if result in {"applied", "committed-but-not-adoptable", "committed-capacity-unproven"}:
         require(record is not None and value["state_digest"] == record["after_digest"], "readback-state-mismatch")
+        if family == "mg1-readback/v2":
+            require(basis_matches(record, expected_scope, value["external_copies"], value["observed_at"]),
+                    "readback-copy-binding")
     if result == "applied":
         require(postflight_capacity_proven(value["storage"], limits)
                 and sum(f["role"] == "main" for f in value["managed_files"]) == 1, "readback-capacity-unproven")
-        require(preview_value is not None
-                and copies_match(value["external_copies"], preview_value["external_copies"]), "readback-copy-binding")
+        if family == "mg1-readback/v1":
+            require(preview_value is not None
+                    and copies_match(value["external_copies"], preview_value["external_copies"]), "readback-copy-binding")
     elif result == "committed-capacity-unproven":
         require(not postflight_capacity_proven(value["storage"], limits), "invalid-capacity-readback")
     if preview_value is not None:

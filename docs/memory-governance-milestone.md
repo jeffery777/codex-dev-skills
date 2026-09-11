@@ -2,6 +2,12 @@
 
 ## 狀態、目標與證據
 
+2026-09-10：[Issue #247 程序重啟讀回](loops/issue-247/process-loss-contract.md)
+以 bounded proof-v2 basis 保留外部副本比較 commitment，驗證獨立新程序只讀恢復、
+fresh authority/source、失效及重播拒絕。仍限新建 synthetic roots，不保存完整 preview，
+不 migration、不提供 journal recovery，也不提升 #245 的 APFS incomplete／J/T/G 資格。
+交付與審查狀態見 [本切片紀錄](loops/issue-247/verification-and-review.md)。
+
 2026-09-10：[Issue #245 G1 第二切片](loops/issue-245/delivery-plan.md)新增本機
 clock／單 root registry／source binding 組合、synthetic Git E2E、程序中斷與
 容量觀察。[驗證證據](loops/issue-245/verification-and-review.md)區分 page-quota
