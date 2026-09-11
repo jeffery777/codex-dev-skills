@@ -20,6 +20,11 @@ native Desktop task/thread tools. Standalone CLI 0.154.0 removed that server
 command; bundled CLI 0.153.4 still exposes it. The dated evidence distinguishes
 help checks, live session results and process-inventory limitations.
 
+Standalone fork 的後續調查見
+[2026-09-11 EPERM 調查](cli-fork-eperm-investigation-2026-09-11.md)：公開回報與
+候選 PR 尚未確認根因，本輪新 start 亦未完成；保留失敗與未知 session 狀態，
+不以公開 help 或 bundled 舊成功宣稱 standalone fork 已驗收。
+
 Thread 控制先依 [Thread Capability Discovery](native-runtime-capabilities.md#thread-capability-discovery)
 辨識 Desktop 本機、Desktop 遠端、CLI/TUI 入口，完成正式清單與 deferred
 搜尋，記錄完整 namespace/schema；不可觀察時保留 unknown。不能以 OS、SSH、

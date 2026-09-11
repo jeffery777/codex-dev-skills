@@ -995,13 +995,17 @@ class CliSessionHandoffTests(unittest.TestCase):
             ), mock.patch.object(handoff, "VERSION_TIMEOUT_SECONDS", 0.1):
                 response = handoff.execute_handoff(self.request())
 
-            self.assertEqual("fallback", response["status"])
-            self.assertEqual(
-                "capability_unavailable", response["failure_class"]
-            )
-            self.assertFalse(
-                response["boundaries"]["session_call_performed"]
-            )
+                diagnostic = {
+                    key: response[key]
+                    for key in ("status", "failure_class", "message")
+                }
+                self.assertEqual("fallback", response["status"], diagnostic)
+                self.assertEqual(
+                    "capability_unavailable", response["failure_class"], diagnostic
+                )
+                self.assertFalse(
+                    response["boundaries"]["session_call_performed"], diagnostic
+                )
 
     def test_non_posix_host_falls_back_before_runtime_probe(self) -> None:
         with mock.patch.object(handoff.os, "name", "nt"):
