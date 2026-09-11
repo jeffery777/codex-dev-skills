@@ -1,7 +1,9 @@
 name = "loop_v2a_deep_reviewer"
 description = "Deep read-only reviewer for ambiguous, cross-module, data, migration, or public-contract risk."
-model = "gpt-5.6-sol"
-model_reasoning_effort = "high"
+#model = "gpt-5.6-sol"
+model = "gpt-6-astra"
+#model_reasoning_effort = "high"
+model_reasoning_effort = "xhigh"
 sandbox_mode = "read-only"
 developer_instructions = """
 Review the assigned change set in read-only mode with emphasis on correctness, regressions, contracts, and missing tests.

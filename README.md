@@ -312,15 +312,19 @@ Route contract version 2 preserves the four workflow capability classes and
 adds ordered cost-aware tiers: Luna low for mechanical read-only work, Terra
 low for exploration, Terra medium for routine implementation, Terra high for
 complex bounded implementation, Sol medium for multi-trigger advanced bounded
-implementation, Sol high for deep/security review, and Sol xhigh for narrowly
+implementation, Astra xhigh for deep/security review and narrowly
 selected exceptional research. Terra xhigh and Luna max remain eval-only
 candidates rather than installed defaults. Exact model and reasoning
 availability remains current-session runtime evidence. Selection uses the
 lowest sufficient same-class tier, never alphabetical profile order, and never
 allows a lower tier to satisfy a higher-tier route silently.
 
-Three Astra profiles are opt-in candidates that require qualification: advanced worker at medium,
-and deep/security reviewers at high. The eight baseline mappings remain unchanged.
+Three separate Astra xhigh profiles are opt-in candidates that require qualification.
+Issue #249 adopts Astra xhigh for the three deep/security/exceptional baseline roles
+by explicit maintainer choice, while preserving their old model/effort values as
+TOML comments. The other five baseline mappings remain unchanged. This is not
+a claim of measured quality or weekly-usage improvement; see the
+[configuration decision and rollback record](docs/astra-xhigh-profile-decision.md).
 Installation alone does not enable candidate routing. The explicit version 2
 interface accepts `enabled_candidates` in current-session runtime facts, keyed by candidate name,
 with its exact `profile_sha256` and a non-empty `quality_evidence` reference to
@@ -1300,13 +1304,15 @@ synthetic contract evidence and perform no live sidebar mutation.
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-09-04)](docs/codex-runtime-compatibility-evidence-2026-09-04.md).
+[Codex runtime compatibility evidence (2026-09-11)](docs/codex-runtime-compatibility-evidence-2026-09-11.md).
 It records that `codex mcp-server`, the command that exposed Codex itself as an
-MCP server, is deprecated but not removed in observed standalone CLI 0.153.2.
-It also records Desktop 26.901.22334 build 7746 and its bundled CLI 0.153.0 as
+MCP server, was removed in observed standalone CLI 0.154.0.
+It also records Desktop 26.903.71938 build 8576 and its bundled CLI 0.153.4 as
 separate point-in-time observations rather than one global version. This does
 not deprecate Codex's external MCP client configuration, connectors, or native
-Desktop task/thread tools.
+Desktop task/thread tools. The comparison separates public-help tests, live
+start/resume/fork observations and their process-tracking limitations; earlier
+dated evidence remains unchanged.
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 Desktop Runtime Wrapper V1 is retired and provides no runnable or importable

@@ -3341,8 +3341,8 @@ class CliTests(unittest.TestCase):
             facts.write_text(json.dumps({
                 "custom_agent_surface": "available",
                 "parent_sandbox_mode": "read-only",
-                "available_models": ["gpt-5.6-sol"],
-                "reasoning_efforts": {"gpt-5.6-sol": ["high"]},
+                "available_models": ["gpt-6-astra"],
+                "reasoning_efforts": {"gpt-6-astra": ["xhigh"]},
             }), encoding="utf-8")
             output = StringIO()
             with redirect_stdout(output):
@@ -3377,8 +3377,8 @@ class CliTests(unittest.TestCase):
             facts.write_text(json.dumps({
                 "custom_agent_surface": "available",
                 "parent_sandbox_mode": "read-only",
-                "available_models": ["gpt-5.6-sol"],
-                "reasoning_efforts": {"gpt-5.6-sol": ["high", "xhigh"]},
+                "available_models": ["gpt-6-astra"],
+                "reasoning_efforts": {"gpt-6-astra": ["xhigh"]},
             }), encoding="utf-8")
             for preference in (None, "balanced", "quality-first"):
                 with self.subTest(preference=preference):
@@ -3412,12 +3412,18 @@ class CliTests(unittest.TestCase):
             payload["task"]["workload_kind"] = "review"
             payload["task"]["factors"]["write_blast_radius"] = "none"
             payload["profile_preflight"]["role"] = "loop_v2a_deep_reviewer"
+            # Only the exceptional role is installed. Model/effort now match
+            # the deep role, so model availability alone cannot isolate tiers.
+            destination = root / "installed"
+            destination.mkdir()
+            shutil.copy2(ROOT / "agent-profiles" / "loop_v2a_exceptional_researcher.toml", destination)
+            payload["profile_preflight"]["destination_root"] = str(destination)
             path, facts = root / "route.json", root / "facts.json"
             facts.write_text(json.dumps({
                 "custom_agent_surface": "available",
                 "parent_sandbox_mode": "read-only",
-                "available_models": ["gpt-5.6-sol"],
-                "reasoning_efforts": {"gpt-5.6-sol": ["xhigh"]},
+                "available_models": ["gpt-6-astra"],
+                "reasoning_efforts": {"gpt-6-astra": ["xhigh"]},
             }), encoding="utf-8")
             for preference in (None, "balanced", "quality-first"):
                 with self.subTest(preference=preference):
@@ -3446,7 +3452,7 @@ class CliTests(unittest.TestCase):
             facts = {
                 "custom_agent_surface": "available", "parent_sandbox_mode": "workspace-write",
                 "available_models": ["gpt-5.6-sol", "gpt-6-astra"],
-                "reasoning_efforts": {"gpt-5.6-sol": ["medium"], "gpt-6-astra": ["medium"]},
+                "reasoning_efforts": {"gpt-5.6-sol": ["medium"], "gpt-6-astra": ["xhigh"]},
                 "model_surface": {"runtime": "desktop", "source": "synthetic fixture", "observed_on": "2026-09-05"},
                 "enabled_candidates": {candidate: {"profile_sha256": digest, "quality_evidence": "synthetic-fixture-not-model-measurement"}},
             }

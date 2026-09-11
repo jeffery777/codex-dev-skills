@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import concurrent.futures
 import copy
+import ctypes
+import errno
 import importlib.util
 import json
 import os
 import pathlib
+import re
 import shutil
 import signal
 import stat
@@ -35,16 +38,157 @@ SPEC.loader.exec_module(handoff)
 SESSION_ID = "0199a213-81c0-7800-8aa1-bbab2a035a53"
 
 
+def public_help_executable() -> str:
+    override = os.environ.get("CODEX_PUBLIC_HELP_EXECUTABLE")
+    if override is not None:
+        path = pathlib.Path(override)
+        if not path.is_absolute() or not path.is_file() or not os.access(path, os.X_OK):
+            raise ValueError("CODEX_PUBLIC_HELP_EXECUTABLE must be an absolute executable file")
+        return str(path)
+    executable = shutil.which("codex")
+    if executable is None:
+        raise unittest.SkipTest("Codex CLI is unavailable; public-help compatibility smoke skipped")
+    return executable
+
+
+def assert_public_help_shape(
+    case: unittest.TestCase, result: subprocess.CompletedProcess[str], command: str
+) -> None:
+    case.assertEqual(0, result.returncode, result.stderr)
+    case.assertRegex(
+        result.stdout, rf"(?m)^Usage: {re.escape(command)}(?:\s+[\[<]|\s*$)"
+    )
+
+
+class PublicHelpContractTests(unittest.TestCase):
+    def test_zero_exit_root_or_parent_help_cannot_prove_subcommand(self) -> None:
+        for output in ("Usage: codex [OPTIONS] [PROMPT]\n", "Usage: codex exec [OPTIONS]\n"):
+            with self.subTest(output=output), self.assertRaises(AssertionError):
+                assert_public_help_shape(
+                    self, subprocess.CompletedProcess([], 0, output, ""), "codex exec resume"
+                )
+
+    def test_subcommand_help_cannot_prove_parent_and_nonzero_exit_is_rejected(self) -> None:
+        with self.assertRaises(AssertionError):
+            assert_public_help_shape(
+                self, subprocess.CompletedProcess([], 0, "Usage: codex exec fork <SESSION_ID>\n", ""),
+                "codex exec",
+            )
+        with self.assertRaises(AssertionError):
+            assert_public_help_shape(
+                self, subprocess.CompletedProcess([], 1, "Usage: codex exec [OPTIONS]\n", "failed"),
+                "codex exec",
+            )
+
+    def test_explicit_invalid_binary_fails_without_path_fallback(self) -> None:
+        for value in ("", "codex", "/nonexistent/issue-249-codex"):
+            with self.subTest(value=value), mock.patch.dict(os.environ, CODEX_PUBLIC_HELP_EXECUTABLE=value):
+                with mock.patch.object(shutil, "which") as which, self.assertRaises(ValueError):
+                    public_help_executable()
+                which.assert_not_called()
+
+    def test_explicit_binary_does_not_select_path_binary(self) -> None:
+        with mock.patch.dict(os.environ, CODEX_PUBLIC_HELP_EXECUTABLE=sys.executable):
+            with mock.patch.object(shutil, "which") as which:
+                self.assertEqual(sys.executable, public_help_executable())
+            which.assert_not_called()
+
+
+class ProcessInventoryContractTests(unittest.TestCase):
+    def list_children(self, count: int, number: int, *, exists: bool = True) -> set[int]:
+        def call(parent, buffer, size):
+            self.assertEqual(0, ctypes.get_errno())
+            ctypes.set_errno(number)
+            if 0 < count < handoff.MAX_TRACKED_DESCENDANTS:
+                buffer[0] = 42
+            return count
+
+        library = types.SimpleNamespace(proc_listchildpids=mock.Mock(side_effect=call))
+        with mock.patch.object(handoff.sys, "platform", "darwin"), mock.patch.object(
+            ctypes, "CDLL", return_value=library
+        ), mock.patch.object(handoff, "_pid_exists", return_value=exists):
+            return handoff._direct_child_pids(21)
+
+    def test_darwin_zero_with_permission_error_is_not_an_empty_inventory(self) -> None:
+        for number in (errno.EPERM, errno.EACCES):
+            with self.subTest(errno=number), self.assertRaises(OSError) as caught:
+                self.list_children(0, number)
+            self.assertEqual(number, caught.exception.errno)
+
+    def test_darwin_empty_success_clears_stale_errno_and_missing_pid_is_benign(self) -> None:
+        ctypes.set_errno(errno.EPERM)
+        self.assertEqual(set(), self.list_children(0, 0))
+        self.assertEqual(set(), self.list_children(0, errno.ESRCH))
+        self.assertEqual(set(), self.list_children(0, errno.EPERM, exists=False))
+        self.assertEqual({42}, self.list_children(1, 0))
+
+    def test_darwin_full_inventory_cannot_claim_complete_coverage(self) -> None:
+        for count in (handoff.MAX_TRACKED_DESCENDANTS, handoff.MAX_TRACKED_DESCENDANTS + 1):
+            with self.subTest(count=count), self.assertRaises(OSError) as caught:
+                self.list_children(count, 0)
+            self.assertEqual(errno.EOVERFLOW, caught.exception.errno)
+
+    def test_darwin_identity_error_preserves_errno_without_stale_values(self) -> None:
+        def call(*arguments):
+            self.assertEqual(0, ctypes.get_errno())
+            ctypes.set_errno(errno.EACCES)
+            return 0
+
+        library = types.SimpleNamespace(proc_pidinfo=mock.Mock(side_effect=call))
+        ctypes.set_errno(errno.ESRCH)
+        with mock.patch.object(handoff.sys, "platform", "darwin"), mock.patch.object(
+            ctypes, "CDLL", return_value=library
+        ), mock.patch.object(handoff, "_pid_exists", return_value=True):
+            with self.assertRaises(OSError) as caught:
+                handoff._process_identity(21)
+        self.assertEqual(errno.EACCES, caught.exception.errno)
+
+    def test_tracker_reports_first_error_stage_without_native_error_text(self) -> None:
+        cases = {
+            "root-identity": ([OSError(errno.EACCES, "private process data")], set()),
+            "parent-identity": ([(1, "root"), OSError(errno.EPERM, "private process data")], set()),
+            "child-list": ([(1, "root"), (1, "root")], OSError(errno.EPERM, "private process data")),
+            "child-identity": ([(1, "root"), (1, "root"), OSError(errno.EACCES, "private process data")], {42}),
+        }
+        for stage, (identities, children) in cases.items():
+            with self.subTest(stage=stage):
+                tracker = handoff.ProcessTreeTracker(21)
+                with mock.patch.object(handoff, "_process_identity", side_effect=identities), mock.patch.object(
+                    handoff, "_direct_child_pids", **(
+                        {"side_effect": children} if isinstance(children, OSError) else {"return_value": children}
+                    )
+                ):
+                    tracker.capture()
+                # Later benign disappearance cannot erase the first failed observation.
+                with mock.patch.object(handoff, "_process_identity", return_value=None):
+                    tracker.capture()
+                with self.assertRaises(handoff.HandoffValidationError) as caught:
+                    tracker.ensure_available()
+                self.assertIn(f"stage={stage}", str(caught.exception))
+                self.assertIn("errno=", str(caught.exception))
+                self.assertNotIn("private process data", str(caught.exception))
+
+    def test_tracker_live_readback_and_stop_timeout_are_distinct_and_fail_closed(self) -> None:
+        tracker = handoff.ProcessTreeTracker(21)
+        tracker._known[42] = "child-token"
+        with mock.patch.object(handoff, "_process_identity", side_effect=OSError(errno.EPERM, "private")):
+            self.assertEqual(set(), tracker.live_descendants())
+        with self.assertRaisesRegex(handoff.HandoffValidationError, "stage=live-readback"):
+            tracker.ensure_available()
+        tracker = handoff.ProcessTreeTracker(21)
+        tracker._thread = mock.Mock()
+        tracker._thread.is_alive.return_value = True
+        tracker.stop()
+        with self.assertRaisesRegex(handoff.HandoffValidationError, "stage=tracker-stop-timeout; errno=None"):
+            tracker.ensure_available()
+
+
 class CodexPublicHelpCompatibilityTests(unittest.TestCase):
     """Read-only public CLI shape checks; never starts or resumes a session."""
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.codex = shutil.which("codex")
-        if cls.codex is None:
-            raise unittest.SkipTest(
-                "Codex CLI is unavailable; public-help compatibility smoke skipped"
-            )
+        cls.codex = public_help_executable()
         cls.runtime_temp = tempfile.TemporaryDirectory(prefix="codex-public-help-")
         cls.addClassCleanup(cls.runtime_temp.cleanup)
         cls.runtime_root = pathlib.Path(cls.runtime_temp.name)
@@ -162,7 +306,8 @@ class CodexPublicHelpCompatibilityTests(unittest.TestCase):
             result = self.run_public_argv(argv)
 
             with self.subTest(operation=operation):
-                self.assertIn("Usage: codex exec", result.stdout)
+                command = "codex exec" if operation == "start" else f"codex exec {operation}"
+                assert_public_help_shape(self, result, command)
 
 
 FAKE_CODEX = r'''

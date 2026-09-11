@@ -10,10 +10,13 @@ The optional main-agent preset is separate from candidate qualification below.
 ## Contract
 
 The canonical registry retains Luna-low mechanical, Terra-low exploration,
-Terra-medium everyday, Terra-high senior, Sol-medium advanced, Sol-high
-independent deep/security review, and Sol-xhigh exceptional research baselines.
-Three separate Astra candidates target advanced/medium, deep/high and
-security/high. Their tiers describe qualification targets, not measured parity.
+Terra-medium everyday, Terra-high senior and Sol-medium advanced. Issue #249
+adopts Astra-xhigh for the deep/security and exceptional baseline roles and
+the three separate Astra candidates. This is an explicit maintainer configuration
+decision, not measured parity or weekly-usage savings. Previous values remain
+comments in each changed TOML. See the [decision and rollback record](astra-xhigh-profile-decision.md).
+The dated runtime evidence, comparison matrix and pilot results below describe
+the earlier medium/high profiles; they do not qualify these changed bytes.
 
 Class owns work and sandbox; tier owns minimum capability. Risk hard triggers
 remain non-compensatory. The deterministic role in a v2 route input remains the
@@ -56,8 +59,8 @@ surface for each session. Never reuse Desktop evidence to assert CLI/API support
 Remove the entry if quality fails or becomes unverified. Do not add a lower-tier
 qualification as a substitute. v1 rejects candidate opt-ins.
 
-Absent opt-in leaves baseline selection unchanged, even if Astra is installed and
-available. With qualification, model/effort support and matching installed bytes,
+Absent opt-in leaves baseline role selection unchanged, even if the candidate
+role is installed and its model is available. With qualification, model/effort support and matching installed bytes,
 the candidate for the exact baseline role is selected. Otherwise the baseline
 and existing sufficient-tier alternatives remain available. Unknown availability
 never becomes true by default. Parent/default and sequential require current

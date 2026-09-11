@@ -90,6 +90,26 @@ class AgentProfileValidationTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual("valid", json.loads(result.stdout)["status"])
 
+    def test_adopted_xhigh_profiles_preserve_inactive_rollback_values(self) -> None:
+        previous = {
+            "loop_v2a_deep_reviewer": {"model": "gpt-5.6-sol", "model_reasoning_effort": "high"},
+            "loop_v2a_security_reviewer": {"model": "gpt-5.6-sol", "model_reasoning_effort": "high"},
+            "loop_v2a_exceptional_researcher": {"model": "gpt-5.6-sol"},
+            "loop_v2a_astra_advanced_worker": {"model_reasoning_effort": "medium"},
+            "loop_v2a_astra_deep_reviewer": {"model_reasoning_effort": "high"},
+            "loop_v2a_astra_security_reviewer": {"model_reasoning_effort": "high"},
+        }
+        for name, former in previous.items():
+            with self.subTest(role=name):
+                path = PROFILE_DIR / f"{name}.toml"
+                profile = VALIDATOR.load_profile(path)
+                self.assertEqual("gpt-6-astra", profile["model"])
+                self.assertEqual("xhigh", profile["model_reasoning_effort"])
+                text = path.read_text()
+                for key, value in former.items():
+                    self.assertIn(f'#{key} = "{value}"', text)
+                    self.assertNotEqual(value, profile[key])
+
     def test_runtime_facts_reject_non_string_enum_shapes(self) -> None:
         malformed_facts = (
             {"custom_agent_surface": []},
@@ -302,9 +322,14 @@ class AgentProfilePreflightTests(unittest.TestCase):
                 self.assertEqual("ready", self.check(candidate, facts)["state"])
                 facts["reasoning_efforts"]["gpt-6-astra"] = ["low"]
                 self.assertEqual("unavailable", self.check(candidate, facts)["state"])
-                # Real canonical baseline bytes provide sufficient v2 same-class fallback.
-                facts["available_models"].append("gpt-5.6-sol")
-                facts["reasoning_efforts"]["gpt-5.6-sol"] = [effort]
+                # An unqualified role may fall back to real canonical baseline bytes,
+                # even when both roles now use the same model/effort. Qualification
+                # remains bound to role/profile identity, not model-name equality.
+                facts["enabled_candidates"] = {}
+                mapping = original["runtime_mapping"]
+                baseline_model = mapping["model"]
+                facts["available_models"] = [baseline_model]
+                facts["reasoning_efforts"][baseline_model] = [mapping["reasoning_effort"]]
                 facts["compatible_profiles"] = {entry["capability_class"]: [{
                     "name": baseline, "profile_path": str(PROFILE_DIR / original["file"]),
                     "capability_class": original["capability_class"], "capability_tier": original["capability_tier"],

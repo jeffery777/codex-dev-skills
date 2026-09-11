@@ -35,7 +35,7 @@ A future adapter may use only these sources:
   `send_message_to_thread`, `handoff_thread`, `get_handoff_status`,
   `share_thread`, `open_in_codex`, `read_thread_terminal`, or equivalent named tools when they
   are present in the active tool list. These native thread tools are not the
-  deprecated `codex mcp-server` command;
+  legacy `codex mcp-server` command, removed in CLI 0.154.0;
 - explicitly installed plugins or connectors that expose thread operations through a documented interface;
 - caller-supplied documented metadata, such as an active tool list excerpt, connector metadata, or runtime-reported schema that has already been gathered and supplied to the wrapper;
 - ordinary repository files and git commands for repo state, branch checks, prompts, and evidence.
@@ -52,10 +52,10 @@ CLI adapter 的 native TUI reference；相同 basename 不代表 payload 或啟�
 
 ## Contract Family Boundary
 
-Desktop callable facts were last verified on 2026-09-04. The
-[maintained point-in-time evidence](codex-runtime-compatibility-evidence-2026-09-04.md)
+Desktop callable facts were last verified on 2026-09-11. The
+[maintained point-in-time evidence](codex-runtime-compatibility-evidence-2026-09-11.md)
 records the independent CLI and Desktop runtime builds and confirms that the
-deprecated `codex mcp-server` does not change this Desktop contract or
+removal of `codex mcp-server` in standalone CLI does not change this Desktop contract or
 authorize a direct app-server integration. The current
 public product surface is the
 ChatGPT desktop app; this document retains `Desktop` as the compatibility label
@@ -83,12 +83,12 @@ for its Codex task and thread control plane:
   Git project's saved checkout; and use `projectless` only for intentionally
   non-project work. A prohibition on
   creating a new worktree is not a reason to choose `projectless`.
-- The 2026-09-01 read-only `list_projects` result used `schemaVersion: 2` and
+- The 2026-09-11 read-only `list_projects` result used `schemaVersion: 2` and
   supplied project and host routing fields. The same refresh's `list_threads`
   result used
   `schemaVersion: 4`, with pinned tasks in `pinnedThreads` carrying
   `pinnedIndex` and non-pinned tasks in `threads`; those response versions
-  were not live-revalidated on 2026-09-04.
+  were independently read back in the local Desktop caller.
 - Desktop `create_thread` requires `prompt` and `target`; `target` is a
   `project`, `projectless`, or `chatgptWorkCloud` union. Project targets carry a
   `projectId` plus a local or worktree `environment`. Worktree targets may
