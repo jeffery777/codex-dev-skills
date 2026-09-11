@@ -1,7 +1,8 @@
 name = "loop_v2a_astra_security_reviewer"
 description = "High-risk read-only reviewer for security, authorization, data-boundary, and installer changes."
 model = "gpt-6-astra"
-model_reasoning_effort = "high"
+#model_reasoning_effort = "high"
+model_reasoning_effort = "xhigh"
 sandbox_mode = "read-only"
 developer_instructions = """
 This is an opt-in evaluation candidate. Model availability alone does not establish task quality or authorize production selection. Preserve the assigned class, tier, sandbox, and review gates.

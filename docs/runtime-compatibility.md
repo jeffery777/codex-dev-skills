@@ -7,16 +7,18 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only. See the maintained
-[2026-09-04 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-04.md).
-The 2026-09-04 evidence records standalone CLI, Desktop application, and
+[2026-09-11 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-11.md).
+The 2026-09-11 evidence records standalone CLI, Desktop application, and
 Desktop-bundled CLI observations independently and rechecks the active Desktop
 callable boundary including sidebar organization, task metadata, account,
 voice, workspace, and plugin helper surfaces. The active
 `desktop-sidebar-organization` skill implements a separate thin mutation
 contract without collapsing the CLI and Desktop entry paths, and preserves the
-distinction between the deprecated
+distinction between the legacy
 `codex mcp-server`, Codex's MCP client configuration, connectors, plugins, and
-native Desktop task/thread tools.
+native Desktop task/thread tools. Standalone CLI 0.154.0 removed that server
+command; bundled CLI 0.153.4 still exposes it. The dated evidence distinguishes
+help checks, live session results and process-inventory limitations.
 
 Thread 控制先依 [Thread Capability Discovery](native-runtime-capabilities.md#thread-capability-discovery)
 辨識 Desktop 本機、Desktop 遠端、CLI/TUI 入口，完成正式清單與 deferred

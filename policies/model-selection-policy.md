@@ -160,11 +160,19 @@ availability has been verified in that environment.
 
 ## Qualified Astra Candidates
 
-Preserve the eight baseline roles. Astra medium for advanced bounded work and
-Astra high for deep/security review are opt-in evaluation candidates, not proven
-quality equivalents. Compare the same effort against the baseline and one lower
-Astra effort before qualifying each class/tier independently. Astra xhigh/high
-research comparisons remain a later batch; max/ultra are not defaults.
+Preserve the eight baseline role identities. Issue #249 adopts Astra-xhigh for
+the deep/security and exceptional baseline profiles by explicit maintainer
+configuration choice; the three separate Astra candidates also use xhigh.
+The decision is not a benchmark qualification or a claim of reduced weekly
+usage. Former model/effort values remain TOML comments. See
+`docs/astra-xhigh-profile-decision.md` for the role matrix, evidence limits and
+rollback procedure. The other five baseline mappings remain unchanged.
+
+Candidate roles remain opt-in evaluation targets, including when a candidate
+and baseline have the same model/effort. Compare representative same-scope work
+and a supported lower-effort setting before qualifying each class/tier and exact
+profile independently. Previous medium/high profile qualifications do not cover
+the new xhigh bytes; max/ultra are not defaults.
 
 Version 2 may select a candidate only for its canonical baseline role, after
 current caller facts explicitly enable its exact profile digest and reference

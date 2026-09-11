@@ -194,10 +194,22 @@ class ProcessTreeTracker:
         self._known: dict[int, str] = {}
         self._root_token: str | None = None
         self._error = False
+        self._error_detail: tuple[str, int | None] | None = None
         self._overflow = False
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
+
+    def _record_error(self, stage: str, error: OSError | None = None) -> None:
+        # Keep only a fixed call-site label and bounded numeric errno. Native
+        # error text can contain process/path data and is never persisted.
+        number = error.errno if error is not None else None
+        if type(number) is not int or not 0 < number <= 4095:
+            number = None
+        with self._lock:
+            self._error = True
+            if self._error_detail is None:
+                self._error_detail = (stage, number)
 
     def capture(self) -> None:
         with self._lock:
@@ -205,9 +217,8 @@ class ProcessTreeTracker:
         if self._root_token is None:
             try:
                 root_identity = _process_identity(self.root_pid)
-            except OSError:
-                with self._lock:
-                    self._error = True
+            except OSError as exc:
+                self._record_error("root-identity", exc)
                 return
             if root_identity is None:
                 return
@@ -215,9 +226,11 @@ class ProcessTreeTracker:
         parents = [(self.root_pid, self._root_token), *known.items()]
         visited: set[tuple[int, str]] = set()
         discovered: dict[int, str] = {}
+        stage = "parent-identity"
         try:
             while parents:
                 parent, parent_token = parents.pop()
+                stage = "parent-identity"
                 parent_identity = _process_identity(parent)
                 if (
                     parent_identity is None
@@ -226,9 +239,11 @@ class ProcessTreeTracker:
                 ):
                     continue
                 visited.add((parent, parent_token))
+                stage = "child-list"
                 for child in _direct_child_pids(parent):
                     if child <= 0 or child == self.root_pid:
                         continue
+                    stage = "child-identity"
                     child_identity = _process_identity(child)
                     if child_identity is None or child_identity[0] != parent:
                         continue
@@ -240,9 +255,8 @@ class ProcessTreeTracker:
                         with self._lock:
                             self._overflow = True
                         return
-        except OSError:
-            with self._lock:
-                self._error = True
+        except OSError as exc:
+            self._record_error(stage, exc)
             return
         with self._lock:
             self._known.update(discovered)
@@ -258,8 +272,7 @@ class ProcessTreeTracker:
         if self._thread is not None:
             self._thread.join(timeout=TERMINATION_GRACE_SECONDS)
             if self._thread.is_alive():
-                with self._lock:
-                    self._error = True
+                self._record_error("tracker-stop-timeout")
 
     def snapshot(self) -> dict[int, str]:
         with self._lock:
@@ -272,19 +285,20 @@ class ProcessTreeTracker:
                 identity = _process_identity(pid)
                 if identity is not None and identity[1] == token:
                     live.add(pid)
-        except OSError:
-            with self._lock:
-                self._error = True
+        except OSError as exc:
+            self._record_error("live-readback", exc)
         return live
 
     def ensure_available(self) -> None:
         with self._lock:
             error = self._error
+            detail = self._error_detail
             overflow = self._overflow
         if error:
+            diagnostic = "" if detail is None else f" (stage={detail[0]}; errno={detail[1]})"
             raise HandoffValidationError(
                 "termination_error",
-                "Process-tree inventory became unavailable.",
+                f"Process-tree inventory became unavailable{diagnostic}.",
             )
         if overflow:
             raise HandoffValidationError(
@@ -1388,6 +1402,7 @@ def _process_identity(pid: int) -> tuple[int, str] | None:
             ]
             process_info.restype = ctypes.c_int
             info = ProcBsdInfo()
+            ctypes.set_errno(0)
             size = process_info(
                 pid,
                 3,  # PROC_PIDTBSDINFO
@@ -1395,16 +1410,17 @@ def _process_identity(pid: int) -> tuple[int, str] | None:
                 ctypes.byref(info),
                 ctypes.sizeof(info),
             )
+            error_number = ctypes.get_errno()
         except (AttributeError, OSError) as exc:
-            raise OSError("libproc process identity unavailable") from exc
+            raise OSError(getattr(exc, "errno", None) or errno.ENOSYS, "libproc process identity unavailable") from exc
         if size <= 0:
-            if ctypes.get_errno() == errno.ESRCH:
+            if error_number == errno.ESRCH:
                 return None
             if not _pid_exists(pid):
                 return None
-            raise OSError("libproc process identity failed")
+            raise OSError(error_number or errno.EIO, "libproc process identity failed")
         if size != ctypes.sizeof(info) or int(info.pbi_pid) != pid:
-            raise OSError("libproc process identity was malformed")
+            raise OSError(errno.EIO, "libproc process identity was malformed")
         return (
             int(info.pbi_ppid),
             f"{int(info.pbi_start_tvsec)}:{int(info.pbi_start_tvusec)}",
@@ -1452,19 +1468,24 @@ def _direct_child_pids(parent_pid: int) -> set[int]:
             ]
             list_children.restype = ctypes.c_int
             buffer = (ctypes.c_int * MAX_TRACKED_DESCENDANTS)()
+            # Apple's wrapper converts syscall -1 to 0 and preserves errno.
+            # A successful empty list must not inherit errno from an earlier call.
+            ctypes.set_errno(0)
             count = list_children(
                 parent_pid, buffer, ctypes.sizeof(buffer)
             )
+            error_number = ctypes.get_errno()
         except (AttributeError, OSError) as exc:
-            raise OSError("libproc child inventory unavailable") from exc
-        if count < 0:
-            if ctypes.get_errno() == errno.ESRCH:
+            raise OSError(getattr(exc, "errno", None) or errno.ENOSYS, "libproc child inventory unavailable") from exc
+        if count < 0 or (count == 0 and error_number):
+            if error_number == errno.ESRCH:
                 return set()
             if not _pid_exists(parent_pid):
                 return set()
-            raise OSError("libproc child inventory failed")
-        if count > MAX_TRACKED_DESCENDANTS:
-            raise OSError("libproc child inventory exceeded its bound")
+            raise OSError(error_number or errno.EIO, "libproc child inventory failed")
+        if count >= MAX_TRACKED_DESCENDANTS:
+            # A full buffer cannot prove that every child fit in the inventory.
+            raise OSError(errno.EOVERFLOW, "libproc child inventory reached its bound")
         return {int(buffer[index]) for index in range(count) if buffer[index] > 0}
 
     if sys.platform.startswith("linux"):

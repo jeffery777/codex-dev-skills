@@ -20,8 +20,8 @@ Sol-high is an explicit alternative when Astra is unavailable. Do not silently
 substitute a model or infer capability from its name alone.
 
 For CLI/IDE, official precedence is explicit CLI overrides, trusted project
-configuration, a selected configuration profile, user configuration, system
-configuration, then built-in defaults. A user config is therefore not inherently
+configuration, a selected configuration profile, user configuration,
+cloud-managed defaults, system configuration, then built-in defaults. A user config is therefore not inherently
 project-specific. Desktop conversation selections must be verified through the
 active public client control; copying a file does not prove an existing Desktop
 conversation changed model or effort. See the official
@@ -38,16 +38,25 @@ Confirm the selected model/effort in the destination before delegating work.
 
 Child roles should receive explicit model/effort settings from their selected
 profile. Otherwise native inheritance can make a small child task inherit the
-main agent's stronger configuration unnecessarily. An explicit spawn override or configured
-subagent default can change native resolution; this repository cannot assume
-which wins without checking the actual runtime. See the official
+main agent's stronger configuration unnecessarily. Official custom-agent
+resolution first chooses explicit spawn values, configured subagent defaults,
+or parent settings; model/effort in the selected custom-agent file then take
+precedence over those resolved values.
+If a spawn/default selects a model without an effort, resolution uses that
+model's default effort; a custom file setting only model preserves the resolved
+effort. Verify support and effective settings
+in the destination runtime; an override argument cannot be assumed to replace
+a custom file's fixed mapping. See the official
 [subagent settings](https://learn.chatgpt.com/docs/agent-configuration/subagents#choosing-models-and-reasoning).
 
-The installed baseline profiles remain Luna-low mechanical, Terra-low explorer,
-Terra-medium everyday, Terra-high senior, Sol-medium advanced, Sol-high
-deep/security and Sol-xhigh exceptional. Astra-medium advanced and Astra-high
-deep/security profiles remain separately qualified opt-ins. Main-agent selection
-does not qualify these child profiles or bypass their gates.
+The repository baseline profiles are Luna-low mechanical, Terra-low explorer,
+Terra-medium everyday, Terra-high senior, Sol-medium advanced and Astra-xhigh
+deep/security/exceptional. The three separate Astra-xhigh candidates remain
+qualified opt-ins. Issue #249 records the maintainer's configuration adoption
+and preserves previous values as comments; it does not prove task-quality or
+weekly-usage superiority. See [the decision and rollback record](astra-xhigh-profile-decision.md).
+Installed bytes and runtime selection still require verification. Main-agent
+selection does not qualify child profiles or bypass their gates.
 
 Routine read-only review now has an everyday capability requirement, but the
 existing registry still supplies the read-only deep profile as its sufficient
@@ -79,13 +88,14 @@ bounded task assessment and select a supported, sufficient profile. Examples:
   reasoning should move to an appropriate Terra or stronger role.
 - Exploration starts at Terra-low; ordinary implementation at Terra-medium;
   complex bounded implementation may require the Terra-high senior tier.
-- Advanced work starts at Sol-medium or a qualified Astra-medium candidate.
+- Advanced work starts at Sol-medium or a qualified Astra-xhigh candidate.
   If deeper reasoning is needed, use an explicitly supported high-effort task
   configuration only where the runtime and workflow permit it. It is not an
-  existing high-effort implementation profile in the canonical registry.
-- Deep/security review starts at high. Multiple interacting trust boundaries,
-  unresolved cross-system causes or major architecture tradeoffs can justify
-  xhigh. Max/Ultra are not default escalation targets.
+  automatic effort-changing controller. The Astra-xhigh implementation candidate
+  still needs its own matching qualification.
+- Deep/security review uses the maintainer-adopted Astra-xhigh baseline. This
+  does not raise every task's required capability tier or qualify a candidate.
+  Max/Ultra are not default escalation targets.
 - A delivery main agent starts at Astra-high under this optional preset; xhigh
   requires the same concrete depth triggers and a supported client control.
 
@@ -111,10 +121,10 @@ Composition 與 [Agent Task Brief](../templates/orchestration/agent-task-brief.t
 | Mechanical reader／Luna-low | 有界輸入、明確輸出欄位、缺值處理；非機械語意交回主代理。 |
 | Explorer／Terra-low | 搜尋問題、證據位置、範圍與停止搜尋條件。 |
 | Worker／Terra-medium、Terra-high、Sol-medium | 依分類選角色；指定檔案 ownership、可自行決定的局部細節、行為驗收與必要測試。 |
-| Deep/security reviewer／Sol-high | 唯讀、反例與風險邊界、severity／檔案證據、漏測與限制；不得自行修正或合併。 |
-| Exceptional researcher／Sol-xhigh | 仍需 quality-first 與分類條件；列出比較問題、證據衝突及研究停止條件。 |
+| Deep/security reviewer／Astra-xhigh | 唯讀、反例與風險邊界、severity／檔案證據、漏測與限制；不得自行修正或合併。 |
+| Exceptional researcher／Astra-xhigh | 仍需 quality-first 與分類條件；列出比較問題、證據衝突及研究停止條件。 |
 | Delivery owner／可選 Astra-high | 拆解、必要委派、結果整合與整體完成；對已授權階段持續推進。 |
-| 已合格的 Astra candidates | 仍沿用對應角色責任；medium/high、runtime、scope 與 digest 需各自符合資格，主代理設定不能代替。 |
+| 已合格的 Astra candidates | 仍沿用對應角色責任；xhigh、runtime、scope 與 digest 需各自符合資格，舊 medium/high 資格及主代理設定不能代替。 |
 
 例如：worker 可自行沿用現有 helper 完成已接受的行為與焦點測試；發現須改變
 public API 才回報主代理重新評估。reviewer 的既定工作若是 public API 審查，
@@ -141,4 +151,5 @@ tests 只驗證契約／套件，不能證明模型遵循或速度／成本優�
 變更 profile 文字會改 digest，不可沿用不相符資格；只改共用 skill/template
 也可能改行為，即使 profile digest 相同仍須檢查受影響 evidence。保留歷史
 pilot 原始紀錄；新增評估須有明確執行範圍與資源額度。本次交付不啟動新評測，
-既有八個 baseline、三個 candidates 與 qualification schema 保持不變。
+八個 baseline 與三個 candidates 的角色數量及 qualification schema 保持不變；
+Issue #249 的六個 profile 內容變更與重新評估條件另見決策紀錄。

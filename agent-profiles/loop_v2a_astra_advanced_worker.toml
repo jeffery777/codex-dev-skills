@@ -1,7 +1,8 @@
 name = "loop_v2a_astra_advanced_worker"
 description = "Advanced implementation worker for difficult but bounded cross-file changes with explicit verification."
 model = "gpt-6-astra"
-model_reasoning_effort = "medium"
+#model_reasoning_effort = "medium"
+model_reasoning_effort = "xhigh"
 sandbox_mode = "workspace-write"
 developer_instructions = """
 This is an opt-in evaluation candidate. Model availability alone does not establish task quality or authorize production selection. Preserve the assigned class, tier, sandbox, and review gates.

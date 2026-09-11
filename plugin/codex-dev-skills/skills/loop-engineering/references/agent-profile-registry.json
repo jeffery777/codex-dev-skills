@@ -80,7 +80,7 @@
     {
       "name": "loop_v2a_deep_reviewer",
       "file": "loop_v2a_deep_reviewer.toml",
-      "profile_sha256": "7f594086933beba08cc4aa55e1d5e8b7e78f9cc98ceb6571015cc8046f640f3b",
+      "profile_sha256": "59e0b5f013fc5e05331c0ae022a97bda7a6f245cd1e69e6f48affbcaabecc6c1",
       "capability_class": "deep-reviewer",
       "capability_tier": "deep",
       "tier_rank": 5,
@@ -88,13 +88,13 @@
       "sandbox_expectation": "read-only",
       "allowed_workflow_scope": ["read", "search", "verify", "report-findings", "report-receipt"],
       "output_contract": ["assigned_scope", "findings", "verification", "skipped_checks", "risks", "open_questions"],
-      "runtime_mapping": {"model": "gpt-5.6-sol", "reasoning_effort": "high", "availability": "runtime-dependent", "last_verified": "2026-07-12", "replaceable": true},
+      "runtime_mapping": {"model": "gpt-6-astra", "reasoning_effort": "xhigh", "availability": "runtime-dependent", "last_verified": "2026-09-11", "replaceable": true},
       "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": true}
     },
     {
       "name": "loop_v2a_exceptional_researcher",
       "file": "loop_v2a_exceptional_researcher.toml",
-      "profile_sha256": "8482e7bd5ae11907d4c5b67c126353fa67d2c56ec13cc565cd365c81bb48d7cf",
+      "profile_sha256": "5cae673a335105f261177384e9fea423d2f7a5a6af6409895b963add476b4078",
       "capability_class": "deep-reviewer",
       "capability_tier": "exceptional",
       "tier_rank": 6,
@@ -102,13 +102,13 @@
       "sandbox_expectation": "read-only",
       "allowed_workflow_scope": ["read", "search", "verify", "report-findings", "report-receipt"],
       "output_contract": ["assigned_scope", "findings", "verification", "skipped_checks", "risks", "open_questions"],
-      "runtime_mapping": {"model": "gpt-5.6-sol", "reasoning_effort": "xhigh", "availability": "runtime-dependent", "last_verified": "2026-07-12", "replaceable": true},
+      "runtime_mapping": {"model": "gpt-6-astra", "reasoning_effort": "xhigh", "availability": "runtime-dependent", "last_verified": "2026-09-11", "replaceable": true},
       "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": true}
     },
     {
       "name": "loop_v2a_security_reviewer",
       "file": "loop_v2a_security_reviewer.toml",
-      "profile_sha256": "e87187a7df98b7c97cf085e7a829a037d9286d7d42bc59bc35ea2017b9754163",
+      "profile_sha256": "6df48c493a8d67e5dbdc152978e2fc6b886e5b7649e7534c9ad1b79dffe599f9",
       "capability_class": "security-reviewer",
       "capability_tier": "deep",
       "tier_rank": 5,
@@ -116,13 +116,13 @@
       "sandbox_expectation": "read-only",
       "allowed_workflow_scope": ["read", "search", "validate", "defensive-control-analysis", "report-findings", "report-receipt"],
       "output_contract": ["assigned_scope", "threats", "findings", "validation", "skipped_checks", "risks", "open_questions"],
-      "runtime_mapping": {"model": "gpt-5.6-sol", "reasoning_effort": "high", "availability": "runtime-dependent", "last_verified": "2026-07-12", "replaceable": true},
+      "runtime_mapping": {"model": "gpt-6-astra", "reasoning_effort": "xhigh", "availability": "runtime-dependent", "last_verified": "2026-09-11", "replaceable": true},
       "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": true}
     },
     {
       "name": "loop_v2a_astra_advanced_worker",
       "file": "loop_v2a_astra_advanced_worker.toml",
-      "profile_sha256": "bfdc71825efd3e904e24e10b16f102f39fc4e5fd9aa50ce98ea69c86402f1518",
+      "profile_sha256": "5c1d2f065ca7e2ef623e32630f56d22be9519ae6384db7981c3c75b0b677b951",
       "capability_class": "balanced-worker",
       "capability_tier": "advanced",
       "tier_rank": 4,
@@ -130,14 +130,14 @@
       "sandbox_expectation": "workspace-write",
       "allowed_workflow_scope": ["read", "search", "bounded-edit", "focused-verify", "report-receipt"],
       "output_contract": ["assigned_scope", "changed_files", "commands_run", "skipped_checks", "risks", "open_questions"],
-      "runtime_mapping": {"model": "gpt-6-astra", "reasoning_effort": "medium", "availability": "runtime-dependent", "last_verified": "2026-09-05", "replaceable": true},
+      "runtime_mapping": {"model": "gpt-6-astra", "reasoning_effort": "xhigh", "availability": "runtime-dependent", "last_verified": "2026-09-11", "replaceable": true},
       "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": false},
       "candidate_for": "loop_v2a_advanced_worker"
     },
     {
       "name": "loop_v2a_astra_deep_reviewer",
       "file": "loop_v2a_astra_deep_reviewer.toml",
-      "profile_sha256": "cd875285c26ade17817b4e19b101f270939998588d0d75b449810d2b5df94efa",
+      "profile_sha256": "ae4abf594e7bf5f1f76ee7cadc4a1fc9fbd49b2831342aa25f00a41e12c019d0",
       "capability_class": "deep-reviewer",
       "capability_tier": "deep",
       "tier_rank": 5,
@@ -145,14 +145,14 @@
       "sandbox_expectation": "read-only",
       "allowed_workflow_scope": ["read", "search", "verify", "report-findings", "report-receipt"],
       "output_contract": ["assigned_scope", "findings", "verification", "skipped_checks", "risks", "open_questions"],
-      "runtime_mapping": {"model": "gpt-6-astra", "reasoning_effort": "high", "availability": "runtime-dependent", "last_verified": "2026-09-05", "replaceable": true},
+      "runtime_mapping": {"model": "gpt-6-astra", "reasoning_effort": "xhigh", "availability": "runtime-dependent", "last_verified": "2026-09-11", "replaceable": true},
       "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": true},
       "candidate_for": "loop_v2a_deep_reviewer"
     },
     {
       "name": "loop_v2a_astra_security_reviewer",
       "file": "loop_v2a_astra_security_reviewer.toml",
-      "profile_sha256": "8d28409c1eea2568b5348facea829f00311e461a645c2caec0a567c4067a4838",
+      "profile_sha256": "e8aea0bb6d950c5c5a44c8e93f0cfb3ee2492601bccecbfdd2f46b3794eb30bf",
       "capability_class": "security-reviewer",
       "capability_tier": "deep",
       "tier_rank": 5,
@@ -160,7 +160,7 @@
       "sandbox_expectation": "read-only",
       "allowed_workflow_scope": ["read", "search", "validate", "defensive-control-analysis", "report-findings", "report-receipt"],
       "output_contract": ["assigned_scope", "threats", "findings", "validation", "skipped_checks", "risks", "open_questions"],
-      "runtime_mapping": {"model": "gpt-6-astra", "reasoning_effort": "high", "availability": "runtime-dependent", "last_verified": "2026-09-05", "replaceable": true},
+      "runtime_mapping": {"model": "gpt-6-astra", "reasoning_effort": "xhigh", "availability": "runtime-dependent", "last_verified": "2026-09-11", "replaceable": true},
       "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": true},
       "candidate_for": "loop_v2a_security_reviewer"
     }

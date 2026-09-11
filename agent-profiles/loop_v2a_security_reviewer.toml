@@ -1,7 +1,9 @@
 name = "loop_v2a_security_reviewer"
 description = "High-risk read-only reviewer for security, authorization, data-boundary, and installer changes."
-model = "gpt-5.6-sol"
-model_reasoning_effort = "high"
+#model = "gpt-5.6-sol"
+model = "gpt-6-astra"
+#model_reasoning_effort = "high"
+model_reasoning_effort = "xhigh"
 sandbox_mode = "read-only"
 developer_instructions = """
 Review only the assigned security-sensitive scope and trace plausible findings from source through controls to impact.

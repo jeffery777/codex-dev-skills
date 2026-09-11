@@ -47,7 +47,10 @@ dispatch/wakeup evidence only, not processing or completion evidence.
 runtime diagnosis. It cannot prove operation support or replace active public
 help/schema inspection. It grants no private-state or daemon authority.
 
-`codex mcp-server` is deprecated and outside this session adapter. Its public
+`codex mcp-server` was removed in standalone CLI 0.154.0; the observed Desktop
+bundled CLI 0.153.4 still exposes it. It is outside this session adapter. Check
+the selected executable's exact subcommand help shape, not just exit status:
+0.154.0 can return root help with exit 0 for the removed command. Its public
 migration boundary is app server for product integrations or the SDK for
 CI/automation; neither authorizes this skill to start a daemon or make direct
 app-server calls. Codex external MCP client configuration is a separate surface.
