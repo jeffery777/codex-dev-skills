@@ -1,0 +1,29 @@
+{
+  "attachment_state": "not-attempted",
+  "attempt_limit": 1,
+  "cause": "unknown; no retry or sandbox change",
+  "command_returncode": 1,
+  "contract_version": "mg1-g1-enospc-observation/v1",
+  "detached": false,
+  "diagnostic": "hdiutil: create failed - \u5c1a\u672a\u8a2d\u5b9a\u88dd\u7f6e\n",
+  "expected_mountpoint": "<retained-new-fixture>/volume",
+  "failed_command": [
+    "/usr/bin/hdiutil",
+    "create",
+    "-size",
+    "256m"
+  ],
+  "failure": "CalledProcessError",
+  "failure_stage": "image-create",
+  "fixture_sha256": "fae02ba83cb414975700b147503ed5e15511a9c870219b386816eb38c8ae3844",
+  "host_available_after": 337944829952,
+  "host_available_before": 337946185728,
+  "host_headroom_minimum": 1073741824,
+  "image_bytes_limit": 268435456,
+  "physical_enospc_observed": false,
+  "production_qualified": false,
+  "retained_fixture": "<retained-new-fixture>",
+  "sqlite_failure_observed": false,
+  "status": "incomplete",
+  "synthetic_only": true
+}
