@@ -1,0 +1,2003 @@
+{
+  "base_sha": "b7d245646568c0397f5c516e2f6972f1b4e91fa1",
+  "cases": [
+    {
+      "attempt_limit": 1,
+      "classification": "no-sqlite-error",
+      "committed_transaction_consistent": true,
+      "contract_version": "mg1-g1-storage-fault/v1",
+      "execution": {
+        "errors": [],
+        "filling": {},
+        "outcome": {
+          "proof": {
+            "acceptance_epoch": 1,
+            "acceptance_evidence_id": "synthetic-only-acceptance",
+            "after_digest": "adb287f524986c15227d593d3246eadc05ca783865c4c157ab191ed27d49eff3",
+            "after_revision": 2,
+            "before_digest": "de1dca7b8dad11938f1c722c1bd26ebe76d6bfe7f16fd55c8887ac1925f460ee",
+            "before_revision": 1,
+            "contract_version": "mg1-operation-proof/v2",
+            "identity_epoch": 1,
+            "item_id": "00000000-0000-4000-8000-000000000003",
+            "operation": "update",
+            "operation_id": "35b7a110-e8b4-46dc-994c-f17b3b65f370",
+            "parent_operation_id": null,
+            "phase": "complete",
+            "preview_digest": "a31e5adae08823ea09116ebfcff5b9b3a3c4cba7552a6b5397db9ea19216b144",
+            "projection_digest": "f2d2017fe2974680fbc9cb45ea4bd0b1cd50ef97cecc2e17c46ff7ade7e6555f",
+            "readback_basis": {
+              "binding_digest": "3fbe07908486f6e1744ebabd9bb839190645e3702df4331a5b821ae186c71750",
+              "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+              "copies_observed_at": 1789117572,
+              "readback_until": 1791709572,
+              "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+            },
+            "recorded_at": 1789117572,
+            "restore_source_revision": null,
+            "sanitization": "not-requested",
+            "space_reclaim": "not-requested",
+            "target_revisions": [],
+            "witness_digest": null,
+            "witness_kind": null
+          },
+          "result": "applied",
+          "state_digest": "adb287f524986c15227d593d3246eadc05ca783865c4c157ab191ed27d49eff3"
+        },
+        "quota": {
+          "effective_max_page_count": 1048576,
+          "page_count_before": 12,
+          "profile_max_page_count": 1048576
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed"
+      },
+      "executor_result_consistent": true,
+      "failed_transaction_unchanged": false,
+      "fault": "none",
+      "fresh_attempt": {
+        "after_files_digest": "e6d4406f9c222ba63675c70cbb3a1196813546328c35028ae9062f66501f8a41",
+        "audit": {
+          "page": {
+            "advisory_only": true,
+            "enumeration_complete": true,
+            "items": [
+              {
+                "assessment": "eligible",
+                "item_id": "00000000-0000-4000-8000-000000000003",
+                "retained_versions": 2,
+                "revision": 2,
+                "status": "active",
+                "summary": "Synthetic widget label"
+              }
+            ],
+            "next_cursor": null,
+            "snapshot_digest": "adb287f524986c15227d593d3246eadc05ca783865c4c157ab191ed27d49eff3",
+            "source_checked": 1,
+            "source_coverage": "complete",
+            "source_verified": 1
+          },
+          "result": "readable"
+        },
+        "before_files_digest": "e6d4406f9c222ba63675c70cbb3a1196813546328c35028ae9062f66501f8a41",
+        "calls": [
+          "artifact",
+          "qualify",
+          "read",
+          "review"
+        ],
+        "connections": [
+          "read-only",
+          "read-only",
+          "read-only",
+          "read-only"
+        ],
+        "diagnostic": "",
+        "files_unchanged": true,
+        "new_process": true,
+        "projection": {
+          "blue": [],
+          "green": [
+            {
+              "advisory_only": true,
+              "item_id": "00000000-0000-4000-8000-000000000003",
+              "version": {
+                "applicability": {
+                  "conditions": [
+                    "Only in the synthetic fixture repository."
+                  ],
+                  "paths": [
+                    "fixtures/widget.json"
+                  ],
+                  "repository_id": "synthetic-repository"
+                },
+                "body": "Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. ",
+                "created_at": 1789117572,
+                "cues": [
+                  "green",
+                  "widget"
+                ],
+                "kind": "fact",
+                "procedure": null,
+                "provenance": [
+                  {
+                    "attestation": null,
+                    "kind": "repo-artifact",
+                    "reference": {
+                      "path": "artifact.txt",
+                      "repository_id": "synthetic-repository"
+                    },
+                    "source_digest": "a1a61fcab19b83e8690d15adff576c22383d681f877add34e52734fa0ac5565d",
+                    "source_id": "synthetic-source",
+                    "source_revision": "8b60ff6d0160be37476d35d571216a745fde37cc"
+                  }
+                ],
+                "retired_at": null,
+                "revision": 2,
+                "summary": "Synthetic widget label",
+                "validation": {
+                  "content_digest": "d15834e0d470fc46d39a976e741095f2413d5744c5bc4392f66ae0521f19ba4e",
+                  "eligibility": "eligible",
+                  "evidence_id": "synthetic-validation-2",
+                  "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e",
+                  "verified_at": 1789117572,
+                  "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+                }
+              }
+            }
+          ]
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed",
+        "result": {
+          "proof": {
+            "acceptance_epoch": 1,
+            "acceptance_evidence_id": "synthetic-only-acceptance",
+            "after_digest": "adb287f524986c15227d593d3246eadc05ca783865c4c157ab191ed27d49eff3",
+            "after_revision": 2,
+            "before_digest": "de1dca7b8dad11938f1c722c1bd26ebe76d6bfe7f16fd55c8887ac1925f460ee",
+            "before_revision": 1,
+            "contract_version": "mg1-operation-proof/v2",
+            "identity_epoch": 1,
+            "item_id": "00000000-0000-4000-8000-000000000003",
+            "operation": "update",
+            "operation_id": "35b7a110-e8b4-46dc-994c-f17b3b65f370",
+            "parent_operation_id": null,
+            "phase": "complete",
+            "preview_digest": "a31e5adae08823ea09116ebfcff5b9b3a3c4cba7552a6b5397db9ea19216b144",
+            "projection_digest": "f2d2017fe2974680fbc9cb45ea4bd0b1cd50ef97cecc2e17c46ff7ade7e6555f",
+            "readback_basis": {
+              "binding_digest": "3fbe07908486f6e1744ebabd9bb839190645e3702df4331a5b821ae186c71750",
+              "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+              "copies_observed_at": 1789117572,
+              "readback_until": 1791709572,
+              "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+            },
+            "recorded_at": 1789117572,
+            "restore_source_revision": null,
+            "sanitization": "not-requested",
+            "space_reclaim": "not-requested",
+            "target_revisions": [],
+            "witness_digest": null,
+            "witness_kind": null
+          },
+          "result": "applied",
+          "state_digest": "adb287f524986c15227d593d3246eadc05ca783865c4c157ab191ed27d49eff3"
+        },
+        "returncode": 0,
+        "timed_out": false
+      },
+      "fresh_normal": {
+        "after_files_digest": "e6d4406f9c222ba63675c70cbb3a1196813546328c35028ae9062f66501f8a41",
+        "audit": {
+          "page": {
+            "advisory_only": true,
+            "enumeration_complete": true,
+            "items": [
+              {
+                "assessment": "eligible",
+                "item_id": "00000000-0000-4000-8000-000000000003",
+                "retained_versions": 2,
+                "revision": 2,
+                "status": "active",
+                "summary": "Synthetic widget label"
+              }
+            ],
+            "next_cursor": null,
+            "snapshot_digest": "adb287f524986c15227d593d3246eadc05ca783865c4c157ab191ed27d49eff3",
+            "source_checked": 1,
+            "source_coverage": "complete",
+            "source_verified": 1
+          },
+          "result": "readable"
+        },
+        "before_files_digest": "e6d4406f9c222ba63675c70cbb3a1196813546328c35028ae9062f66501f8a41",
+        "calls": [
+          "artifact",
+          "qualify",
+          "read",
+          "review"
+        ],
+        "connections": [
+          "read-only",
+          "read-only",
+          "read-only",
+          "read-only"
+        ],
+        "diagnostic": "",
+        "files_unchanged": true,
+        "new_process": true,
+        "projection": {
+          "blue": [],
+          "green": [
+            {
+              "advisory_only": true,
+              "item_id": "00000000-0000-4000-8000-000000000003",
+              "version": {
+                "applicability": {
+                  "conditions": [
+                    "Only in the synthetic fixture repository."
+                  ],
+                  "paths": [
+                    "fixtures/widget.json"
+                  ],
+                  "repository_id": "synthetic-repository"
+                },
+                "body": "Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. ",
+                "created_at": 1789117572,
+                "cues": [
+                  "green",
+                  "widget"
+                ],
+                "kind": "fact",
+                "procedure": null,
+                "provenance": [
+                  {
+                    "attestation": null,
+                    "kind": "repo-artifact",
+                    "reference": {
+                      "path": "artifact.txt",
+                      "repository_id": "synthetic-repository"
+                    },
+                    "source_digest": "a1a61fcab19b83e8690d15adff576c22383d681f877add34e52734fa0ac5565d",
+                    "source_id": "synthetic-source",
+                    "source_revision": "8b60ff6d0160be37476d35d571216a745fde37cc"
+                  }
+                ],
+                "retired_at": null,
+                "revision": 2,
+                "summary": "Synthetic widget label",
+                "validation": {
+                  "content_digest": "d15834e0d470fc46d39a976e741095f2413d5744c5bc4392f66ae0521f19ba4e",
+                  "eligibility": "eligible",
+                  "evidence_id": "synthetic-validation-2",
+                  "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e",
+                  "verified_at": 1789117572,
+                  "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+                }
+              }
+            }
+          ]
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed",
+        "result": {
+          "proof": {
+            "acceptance_epoch": 1,
+            "acceptance_evidence_id": "synthetic-only-acceptance",
+            "after_digest": "de1dca7b8dad11938f1c722c1bd26ebe76d6bfe7f16fd55c8887ac1925f460ee",
+            "after_revision": 1,
+            "before_digest": "b1ca2aa3a95fd1690eccf911c288f24f0beb460a82bd9157c8e7cdd509d137a9",
+            "before_revision": 0,
+            "contract_version": "mg1-operation-proof/v2",
+            "identity_epoch": 1,
+            "item_id": "00000000-0000-4000-8000-000000000003",
+            "operation": "add",
+            "operation_id": "40475ff3-9979-4068-97f5-cabcf76911d3",
+            "parent_operation_id": null,
+            "phase": "complete",
+            "preview_digest": "f43e1877c1edde1d0a5c639cc734ac28ed7574ea8caf8e1f7fe5f5ae7839ff93",
+            "projection_digest": "13d3c6104588dde4645bbde2afdb7d34d2a928e2162887f95b8cb21b48c9167c",
+            "readback_basis": {
+              "binding_digest": "3fbe07908486f6e1744ebabd9bb839190645e3702df4331a5b821ae186c71750",
+              "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+              "copies_observed_at": 1789117572,
+              "readback_until": 1791709572,
+              "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+            },
+            "recorded_at": 1789117572,
+            "restore_source_revision": null,
+            "sanitization": "not-requested",
+            "space_reclaim": "not-requested",
+            "target_revisions": [],
+            "witness_digest": null,
+            "witness_kind": null
+          },
+          "result": "state-unknown",
+          "state_digest": "adb287f524986c15227d593d3246eadc05ca783865c4c157ab191ed27d49eff3"
+        },
+        "returncode": 0,
+        "timed_out": false
+      },
+      "journal_requires_maintenance": false,
+      "measurement": {
+        "checkpoints": [
+          "after-commit",
+          "after-item-write",
+          "before-commit",
+          "before-readback",
+          "before-transaction"
+        ],
+        "coverage": {
+          "aggregate_snapshot_atomicity": "not-proven",
+          "excluded_fds": 0,
+          "fd_census_coverage": "bounded-census",
+          "fd_limit": 128,
+          "lock_intervals_complete": true,
+          "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+          "memory_temp_bytes": "unmeasured",
+          "production_qualified": false,
+          "short_lived_between_samples": "unknown",
+          "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+          "temporal_file_coverage": "sampled-lower-bound",
+          "timing_includes_instrumentation": true,
+          "workload_upper_bound_proven": false
+        },
+        "lock_intervals": [
+          {
+            "acquire_after_ns": 1445583,
+            "acquire_before_ns": 1443500,
+            "exclusive": false,
+            "held_ns_lower": 52213125,
+            "held_ns_upper": 52225458,
+            "release_after_ns": 53668958,
+            "release_before_ns": 53658708
+          },
+          {
+            "acquire_after_ns": 56160917,
+            "acquire_before_ns": 56158792,
+            "exclusive": true,
+            "held_ns_lower": 114117250,
+            "held_ns_upper": 114125583,
+            "release_after_ns": 170284375,
+            "release_before_ns": 170278167
+          },
+          {
+            "acquire_after_ns": 171330833,
+            "acquire_before_ns": 171328833,
+            "exclusive": false,
+            "held_ns_lower": 57258167,
+            "held_ns_upper": 57266084,
+            "release_after_ns": 228594917,
+            "release_before_ns": 228589000
+          },
+          {
+            "acquire_after_ns": 235152083,
+            "acquire_before_ns": 235150542,
+            "exclusive": true,
+            "held_ns_lower": 191117667,
+            "held_ns_upper": 191126083,
+            "release_after_ns": 426276625,
+            "release_before_ns": 426269750
+          }
+        ],
+        "main_growth_observed_bytes": 12288,
+        "measured_maxima": {
+          "journal_bytes": 41552,
+          "main_allocated_bytes": 61440,
+          "main_bytes": 61440,
+          "named_temp_bytes": 0,
+          "other_fd_bytes": 0,
+          "other_named_bytes": 0,
+          "sampled_unique_file_bytes": 90704,
+          "shm_bytes": 0,
+          "unlinked_fd_bytes": 0,
+          "wal_bytes": 0
+        },
+        "named_files_seen": [
+          "managed/coordination.lock",
+          "managed/managed.sqlite3",
+          "managed/managed.sqlite3-journal"
+        ],
+        "sample_count": 294,
+        "sample_errors": []
+      },
+      "normal_control_proof": {
+        "acceptance_epoch": 1,
+        "acceptance_evidence_id": "synthetic-only-acceptance",
+        "after_digest": "de1dca7b8dad11938f1c722c1bd26ebe76d6bfe7f16fd55c8887ac1925f460ee",
+        "after_revision": 1,
+        "before_digest": "b1ca2aa3a95fd1690eccf911c288f24f0beb460a82bd9157c8e7cdd509d137a9",
+        "before_revision": 0,
+        "contract_version": "mg1-operation-proof/v2",
+        "identity_epoch": 1,
+        "item_id": "00000000-0000-4000-8000-000000000003",
+        "operation": "add",
+        "operation_id": "40475ff3-9979-4068-97f5-cabcf76911d3",
+        "parent_operation_id": null,
+        "phase": "complete",
+        "preview_digest": "f43e1877c1edde1d0a5c639cc734ac28ed7574ea8caf8e1f7fe5f5ae7839ff93",
+        "projection_digest": "13d3c6104588dde4645bbde2afdb7d34d2a928e2162887f95b8cb21b48c9167c",
+        "readback_basis": {
+          "binding_digest": "3fbe07908486f6e1744ebabd9bb839190645e3702df4331a5b821ae186c71750",
+          "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+          "copies_observed_at": 1789117572,
+          "readback_until": 1791709572,
+          "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+        },
+        "recorded_at": 1789117572,
+        "restore_source_revision": null,
+        "sanitization": "not-requested",
+        "space_reclaim": "not-requested",
+        "target_revisions": [],
+        "witness_digest": null,
+        "witness_kind": null
+      },
+      "prepared": {
+        "before_digest": "de1dca7b8dad11938f1c722c1bd26ebe76d6bfe7f16fd55c8887ac1925f460ee",
+        "candidate_bytes": 13462,
+        "event": "prepared",
+        "expected_after_digest": "adb287f524986c15227d593d3246eadc05ca783865c4c157ab191ed27d49eff3",
+        "operation_id": "35b7a110-e8b4-46dc-994c-f17b3b65f370",
+        "pid": 5330,
+        "preview_digest": "a31e5adae08823ea09116ebfcff5b9b3a3c4cba7552a6b5397db9ea19216b144"
+      },
+      "production_qualified": false,
+      "raw_report_sha256": "287b130e58ad81f1079b2a932eeb6dabbe2b6ce3910c69734477217c869e4acf",
+      "read_timeout_seconds": 30,
+      "space_restoration": {
+        "reason": "no-physical-filler",
+        "result": "not-required"
+      },
+      "status": "observed",
+      "synthetic_only": true,
+      "worker_timeout_seconds": 90,
+      "writer": {
+        "diagnostic": "",
+        "returncode": 0,
+        "timed_out": false
+      }
+    },
+    {
+      "attempt_limit": 1,
+      "classification": "page-quota-sqlite-full",
+      "committed_transaction_consistent": false,
+      "contract_version": "mg1-g1-storage-fault/v1",
+      "execution": {
+        "errors": [
+          {
+            "code": 13,
+            "method": "execute",
+            "name": "SQLITE_FULL"
+          }
+        ],
+        "filling": {},
+        "outcome": {
+          "proof": null,
+          "result": "not-applied",
+          "state_digest": "e578b86f1c844916964c1383e2df1c507a007afc0e25f162f72f49f75109dae4"
+        },
+        "quota": {
+          "effective_max_page_count": 12,
+          "page_count_before": 12,
+          "profile_max_page_count": 1048576
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed"
+      },
+      "executor_result_consistent": true,
+      "failed_transaction_unchanged": true,
+      "fault": "page-quota",
+      "fresh_attempt": {
+        "after_files_digest": "3a2ff95212ced4c4452c24469b3d71cc70babf02689054e78545047616e5c668",
+        "audit": {
+          "page": {
+            "advisory_only": true,
+            "enumeration_complete": true,
+            "items": [
+              {
+                "assessment": "eligible",
+                "item_id": "00000000-0000-4000-8000-000000000003",
+                "retained_versions": 1,
+                "revision": 1,
+                "status": "active",
+                "summary": "Synthetic widget label"
+              }
+            ],
+            "next_cursor": null,
+            "snapshot_digest": "e578b86f1c844916964c1383e2df1c507a007afc0e25f162f72f49f75109dae4",
+            "source_checked": 1,
+            "source_coverage": "complete",
+            "source_verified": 1
+          },
+          "result": "readable"
+        },
+        "before_files_digest": "3a2ff95212ced4c4452c24469b3d71cc70babf02689054e78545047616e5c668",
+        "calls": [
+          "artifact",
+          "qualify",
+          "read",
+          "review"
+        ],
+        "connections": [
+          "read-only",
+          "read-only",
+          "read-only",
+          "read-only"
+        ],
+        "diagnostic": "",
+        "files_unchanged": true,
+        "new_process": true,
+        "projection": {
+          "blue": [
+            {
+              "advisory_only": true,
+              "item_id": "00000000-0000-4000-8000-000000000003",
+              "version": {
+                "applicability": {
+                  "conditions": [
+                    "Only in the synthetic fixture repository."
+                  ],
+                  "paths": [
+                    "fixtures/widget.json"
+                  ],
+                  "repository_id": "synthetic-repository"
+                },
+                "body": "Synthetic normal storage control.",
+                "created_at": 1789117573,
+                "cues": [
+                  "blue",
+                  "widget"
+                ],
+                "kind": "fact",
+                "procedure": null,
+                "provenance": [
+                  {
+                    "attestation": null,
+                    "kind": "repo-artifact",
+                    "reference": {
+                      "path": "artifact.txt",
+                      "repository_id": "synthetic-repository"
+                    },
+                    "source_digest": "a1a61fcab19b83e8690d15adff576c22383d681f877add34e52734fa0ac5565d",
+                    "source_id": "synthetic-source",
+                    "source_revision": "8f605a37c55d8022f3562bde167ee648ffca36cd"
+                  }
+                ],
+                "retired_at": null,
+                "revision": 1,
+                "summary": "Synthetic widget label",
+                "validation": {
+                  "content_digest": "c55a1ee7d8b0d6425117fec225dc72fb3067611bbe33d8f971b3fa4a1330d9d5",
+                  "eligibility": "eligible",
+                  "evidence_id": "synthetic-validation-1",
+                  "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e",
+                  "verified_at": 1789117573,
+                  "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+                }
+              }
+            }
+          ],
+          "green": []
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed",
+        "result": {
+          "proof": null,
+          "result": "state-unknown",
+          "state_digest": "e578b86f1c844916964c1383e2df1c507a007afc0e25f162f72f49f75109dae4"
+        },
+        "returncode": 0,
+        "timed_out": false
+      },
+      "fresh_normal": {
+        "after_files_digest": "3a2ff95212ced4c4452c24469b3d71cc70babf02689054e78545047616e5c668",
+        "audit": {
+          "page": {
+            "advisory_only": true,
+            "enumeration_complete": true,
+            "items": [
+              {
+                "assessment": "eligible",
+                "item_id": "00000000-0000-4000-8000-000000000003",
+                "retained_versions": 1,
+                "revision": 1,
+                "status": "active",
+                "summary": "Synthetic widget label"
+              }
+            ],
+            "next_cursor": null,
+            "snapshot_digest": "e578b86f1c844916964c1383e2df1c507a007afc0e25f162f72f49f75109dae4",
+            "source_checked": 1,
+            "source_coverage": "complete",
+            "source_verified": 1
+          },
+          "result": "readable"
+        },
+        "before_files_digest": "3a2ff95212ced4c4452c24469b3d71cc70babf02689054e78545047616e5c668",
+        "calls": [
+          "artifact",
+          "qualify",
+          "read",
+          "review"
+        ],
+        "connections": [
+          "read-only",
+          "read-only",
+          "read-only",
+          "read-only"
+        ],
+        "diagnostic": "",
+        "files_unchanged": true,
+        "new_process": true,
+        "projection": {
+          "blue": [
+            {
+              "advisory_only": true,
+              "item_id": "00000000-0000-4000-8000-000000000003",
+              "version": {
+                "applicability": {
+                  "conditions": [
+                    "Only in the synthetic fixture repository."
+                  ],
+                  "paths": [
+                    "fixtures/widget.json"
+                  ],
+                  "repository_id": "synthetic-repository"
+                },
+                "body": "Synthetic normal storage control.",
+                "created_at": 1789117573,
+                "cues": [
+                  "blue",
+                  "widget"
+                ],
+                "kind": "fact",
+                "procedure": null,
+                "provenance": [
+                  {
+                    "attestation": null,
+                    "kind": "repo-artifact",
+                    "reference": {
+                      "path": "artifact.txt",
+                      "repository_id": "synthetic-repository"
+                    },
+                    "source_digest": "a1a61fcab19b83e8690d15adff576c22383d681f877add34e52734fa0ac5565d",
+                    "source_id": "synthetic-source",
+                    "source_revision": "8f605a37c55d8022f3562bde167ee648ffca36cd"
+                  }
+                ],
+                "retired_at": null,
+                "revision": 1,
+                "summary": "Synthetic widget label",
+                "validation": {
+                  "content_digest": "c55a1ee7d8b0d6425117fec225dc72fb3067611bbe33d8f971b3fa4a1330d9d5",
+                  "eligibility": "eligible",
+                  "evidence_id": "synthetic-validation-1",
+                  "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e",
+                  "verified_at": 1789117573,
+                  "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+                }
+              }
+            }
+          ],
+          "green": []
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed",
+        "result": {
+          "proof": {
+            "acceptance_epoch": 1,
+            "acceptance_evidence_id": "synthetic-only-acceptance",
+            "after_digest": "e578b86f1c844916964c1383e2df1c507a007afc0e25f162f72f49f75109dae4",
+            "after_revision": 1,
+            "before_digest": "49deb4e440b12a3706849a72586ecccb4819263d312c33e804e3a0f6afe00d30",
+            "before_revision": 0,
+            "contract_version": "mg1-operation-proof/v2",
+            "identity_epoch": 1,
+            "item_id": "00000000-0000-4000-8000-000000000003",
+            "operation": "add",
+            "operation_id": "af5c2ea3-f5bb-4426-a95f-2466c04d5c3e",
+            "parent_operation_id": null,
+            "phase": "complete",
+            "preview_digest": "e739102ef77ef9857c2e97aa89d1dc7df5f8d89b3a13b4de97b713995c39baf1",
+            "projection_digest": "13d3c6104588dde4645bbde2afdb7d34d2a928e2162887f95b8cb21b48c9167c",
+            "readback_basis": {
+              "binding_digest": "da74f0661d4b7c41bd96e48ff5d3a18f59fdaee64cbb2a995e539f144d91bacf",
+              "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+              "copies_observed_at": 1789117573,
+              "readback_until": 1791709573,
+              "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+            },
+            "recorded_at": 1789117573,
+            "restore_source_revision": null,
+            "sanitization": "not-requested",
+            "space_reclaim": "not-requested",
+            "target_revisions": [],
+            "witness_digest": null,
+            "witness_kind": null
+          },
+          "result": "applied",
+          "state_digest": "e578b86f1c844916964c1383e2df1c507a007afc0e25f162f72f49f75109dae4"
+        },
+        "returncode": 0,
+        "timed_out": false
+      },
+      "journal_requires_maintenance": false,
+      "measurement": {
+        "checkpoints": [
+          "before-readback",
+          "before-transaction"
+        ],
+        "coverage": {
+          "aggregate_snapshot_atomicity": "not-proven",
+          "excluded_fds": 0,
+          "fd_census_coverage": "bounded-census",
+          "fd_limit": 128,
+          "lock_intervals_complete": true,
+          "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+          "memory_temp_bytes": "unmeasured",
+          "production_qualified": false,
+          "short_lived_between_samples": "unknown",
+          "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+          "temporal_file_coverage": "sampled-lower-bound",
+          "timing_includes_instrumentation": true,
+          "workload_upper_bound_proven": false
+        },
+        "lock_intervals": [
+          {
+            "acquire_after_ns": 1436667,
+            "acquire_before_ns": 1434875,
+            "exclusive": false,
+            "held_ns_lower": 58075750,
+            "held_ns_upper": 58087750,
+            "release_after_ns": 59522625,
+            "release_before_ns": 59512417
+          },
+          {
+            "acquire_after_ns": 62090458,
+            "acquire_before_ns": 62087833,
+            "exclusive": true,
+            "held_ns_lower": 119471084,
+            "held_ns_upper": 119482417,
+            "release_after_ns": 181570250,
+            "release_before_ns": 181561542
+          },
+          {
+            "acquire_after_ns": 182567417,
+            "acquire_before_ns": 182565417,
+            "exclusive": false,
+            "held_ns_lower": 58605541,
+            "held_ns_upper": 58613125,
+            "release_after_ns": 241178542,
+            "release_before_ns": 241172958
+          },
+          {
+            "acquire_after_ns": 247656417,
+            "acquire_before_ns": 247654583,
+            "exclusive": true,
+            "held_ns_lower": 131717583,
+            "held_ns_upper": 131728292,
+            "release_after_ns": 379382875,
+            "release_before_ns": 379374000
+          }
+        ],
+        "main_growth_observed_bytes": 0,
+        "measured_maxima": {
+          "journal_bytes": 29240,
+          "main_allocated_bytes": 49152,
+          "main_bytes": 49152,
+          "named_temp_bytes": 0,
+          "other_fd_bytes": 0,
+          "other_named_bytes": 0,
+          "sampled_unique_file_bytes": 78392,
+          "shm_bytes": 0,
+          "unlinked_fd_bytes": 0,
+          "wal_bytes": 0
+        },
+        "named_files_seen": [
+          "managed/coordination.lock",
+          "managed/managed.sqlite3",
+          "managed/managed.sqlite3-journal"
+        ],
+        "sample_count": 270,
+        "sample_errors": []
+      },
+      "newly_confirmed_control": {
+        "files_unchanged": true,
+        "new_preview_and_confirmation": true,
+        "new_process": true,
+        "proof": {
+          "acceptance_epoch": 1,
+          "acceptance_evidence_id": "synthetic-only-acceptance",
+          "after_digest": "9d4a120d0f6629b883cbc888d1814208c36e3978d1c19f6852444a75f570cb9f",
+          "after_revision": 2,
+          "before_digest": "e578b86f1c844916964c1383e2df1c507a007afc0e25f162f72f49f75109dae4",
+          "before_revision": 1,
+          "contract_version": "mg1-operation-proof/v2",
+          "identity_epoch": 1,
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "operation": "update",
+          "operation_id": "5dfa0d65-8733-4ae6-b0a7-31019dfbabc1",
+          "parent_operation_id": null,
+          "phase": "complete",
+          "preview_digest": "b6f3d1d80c7c71042c3d2240dd9c1881deeaad39b26c4359a1b1a600dc0150f3",
+          "projection_digest": "f2d2017fe2974680fbc9cb45ea4bd0b1cd50ef97cecc2e17c46ff7ade7e6555f",
+          "readback_basis": {
+            "binding_digest": "da74f0661d4b7c41bd96e48ff5d3a18f59fdaee64cbb2a995e539f144d91bacf",
+            "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+            "copies_observed_at": 1789117575,
+            "readback_until": 1791709575,
+            "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+          },
+          "recorded_at": 1789117575,
+          "restore_source_revision": null,
+          "sanitization": "not-requested",
+          "space_reclaim": "not-requested",
+          "target_revisions": [],
+          "witness_digest": null,
+          "witness_kind": null
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed",
+        "result": "applied",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "normal_control_proof": {
+        "acceptance_epoch": 1,
+        "acceptance_evidence_id": "synthetic-only-acceptance",
+        "after_digest": "e578b86f1c844916964c1383e2df1c507a007afc0e25f162f72f49f75109dae4",
+        "after_revision": 1,
+        "before_digest": "49deb4e440b12a3706849a72586ecccb4819263d312c33e804e3a0f6afe00d30",
+        "before_revision": 0,
+        "contract_version": "mg1-operation-proof/v2",
+        "identity_epoch": 1,
+        "item_id": "00000000-0000-4000-8000-000000000003",
+        "operation": "add",
+        "operation_id": "af5c2ea3-f5bb-4426-a95f-2466c04d5c3e",
+        "parent_operation_id": null,
+        "phase": "complete",
+        "preview_digest": "e739102ef77ef9857c2e97aa89d1dc7df5f8d89b3a13b4de97b713995c39baf1",
+        "projection_digest": "13d3c6104588dde4645bbde2afdb7d34d2a928e2162887f95b8cb21b48c9167c",
+        "readback_basis": {
+          "binding_digest": "da74f0661d4b7c41bd96e48ff5d3a18f59fdaee64cbb2a995e539f144d91bacf",
+          "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+          "copies_observed_at": 1789117573,
+          "readback_until": 1791709573,
+          "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+        },
+        "recorded_at": 1789117573,
+        "restore_source_revision": null,
+        "sanitization": "not-requested",
+        "space_reclaim": "not-requested",
+        "target_revisions": [],
+        "witness_digest": null,
+        "witness_kind": null
+      },
+      "prepared": {
+        "before_digest": "e578b86f1c844916964c1383e2df1c507a007afc0e25f162f72f49f75109dae4",
+        "candidate_bytes": 13462,
+        "event": "prepared",
+        "expected_after_digest": "d630244d5c1b86471d32f169c909646f68bdb6b9f609dbf80e56a5c62a0f76b3",
+        "operation_id": "26c3d7d4-f0f5-485e-b76d-97cfe4606454",
+        "pid": 5599,
+        "preview_digest": "37a88a14accdbbb38b2a5c1dc5ef1e8b2149be56f526b9c6bbba6c29b24cc151"
+      },
+      "production_qualified": false,
+      "raw_report_sha256": "65093894f6c15e32341e8fb876b008b7247d5b679ee91991edcdaa6749f3408f",
+      "read_timeout_seconds": 30,
+      "space_restoration": {
+        "reason": "no-physical-filler",
+        "result": "not-required"
+      },
+      "status": "observed",
+      "synthetic_only": true,
+      "worker_timeout_seconds": 90,
+      "writer": {
+        "diagnostic": "",
+        "returncode": 0,
+        "timed_out": false
+      }
+    },
+    {
+      "attempt_limit": 1,
+      "classification": "sqlite-cantopen",
+      "committed_transaction_consistent": false,
+      "contract_version": "mg1-g1-storage-fault/v1",
+      "execution": {
+        "errors": [
+          {
+            "code": 14,
+            "method": "connect",
+            "name": "SQLITE_CANTOPEN"
+          }
+        ],
+        "filling": {},
+        "outcome": {
+          "proof": null,
+          "result": "not-applied",
+          "state_digest": "afe63db57901286e663e9c0091df4457937062bd2a12e2f0568d1ef273bbfcab"
+        },
+        "quota": {},
+        "replay_rejection": "handle-unrecognized-or-consumed"
+      },
+      "executor_result_consistent": true,
+      "failed_transaction_unchanged": true,
+      "fault": "missing-path-cantopen",
+      "fresh_attempt": {
+        "after_files_digest": "951ae514f426d9dad80647aab24354b7d99ac2de84e46c536bd7e410b4ccd738",
+        "audit": {
+          "page": {
+            "advisory_only": true,
+            "enumeration_complete": true,
+            "items": [
+              {
+                "assessment": "eligible",
+                "item_id": "00000000-0000-4000-8000-000000000003",
+                "retained_versions": 1,
+                "revision": 1,
+                "status": "active",
+                "summary": "Synthetic widget label"
+              }
+            ],
+            "next_cursor": null,
+            "snapshot_digest": "afe63db57901286e663e9c0091df4457937062bd2a12e2f0568d1ef273bbfcab",
+            "source_checked": 1,
+            "source_coverage": "complete",
+            "source_verified": 1
+          },
+          "result": "readable"
+        },
+        "before_files_digest": "951ae514f426d9dad80647aab24354b7d99ac2de84e46c536bd7e410b4ccd738",
+        "calls": [
+          "artifact",
+          "qualify",
+          "read",
+          "review"
+        ],
+        "connections": [
+          "read-only",
+          "read-only",
+          "read-only",
+          "read-only"
+        ],
+        "diagnostic": "",
+        "files_unchanged": true,
+        "new_process": true,
+        "projection": {
+          "blue": [
+            {
+              "advisory_only": true,
+              "item_id": "00000000-0000-4000-8000-000000000003",
+              "version": {
+                "applicability": {
+                  "conditions": [
+                    "Only in the synthetic fixture repository."
+                  ],
+                  "paths": [
+                    "fixtures/widget.json"
+                  ],
+                  "repository_id": "synthetic-repository"
+                },
+                "body": "Synthetic normal storage control.",
+                "created_at": 1789117576,
+                "cues": [
+                  "blue",
+                  "widget"
+                ],
+                "kind": "fact",
+                "procedure": null,
+                "provenance": [
+                  {
+                    "attestation": null,
+                    "kind": "repo-artifact",
+                    "reference": {
+                      "path": "artifact.txt",
+                      "repository_id": "synthetic-repository"
+                    },
+                    "source_digest": "a1a61fcab19b83e8690d15adff576c22383d681f877add34e52734fa0ac5565d",
+                    "source_id": "synthetic-source",
+                    "source_revision": "eaa7ad8cff08a320831dde559259df4b07eb1627"
+                  }
+                ],
+                "retired_at": null,
+                "revision": 1,
+                "summary": "Synthetic widget label",
+                "validation": {
+                  "content_digest": "7e5d2d06a679202af9b301c70f70c3e24b152ce9cba94115574781213c197e98",
+                  "eligibility": "eligible",
+                  "evidence_id": "synthetic-validation-1",
+                  "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e",
+                  "verified_at": 1789117576,
+                  "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+                }
+              }
+            }
+          ],
+          "green": []
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed",
+        "result": {
+          "proof": null,
+          "result": "state-unknown",
+          "state_digest": "afe63db57901286e663e9c0091df4457937062bd2a12e2f0568d1ef273bbfcab"
+        },
+        "returncode": 0,
+        "timed_out": false
+      },
+      "fresh_normal": {
+        "after_files_digest": "951ae514f426d9dad80647aab24354b7d99ac2de84e46c536bd7e410b4ccd738",
+        "audit": {
+          "page": {
+            "advisory_only": true,
+            "enumeration_complete": true,
+            "items": [
+              {
+                "assessment": "eligible",
+                "item_id": "00000000-0000-4000-8000-000000000003",
+                "retained_versions": 1,
+                "revision": 1,
+                "status": "active",
+                "summary": "Synthetic widget label"
+              }
+            ],
+            "next_cursor": null,
+            "snapshot_digest": "afe63db57901286e663e9c0091df4457937062bd2a12e2f0568d1ef273bbfcab",
+            "source_checked": 1,
+            "source_coverage": "complete",
+            "source_verified": 1
+          },
+          "result": "readable"
+        },
+        "before_files_digest": "951ae514f426d9dad80647aab24354b7d99ac2de84e46c536bd7e410b4ccd738",
+        "calls": [
+          "artifact",
+          "qualify",
+          "read",
+          "review"
+        ],
+        "connections": [
+          "read-only",
+          "read-only",
+          "read-only",
+          "read-only"
+        ],
+        "diagnostic": "",
+        "files_unchanged": true,
+        "new_process": true,
+        "projection": {
+          "blue": [
+            {
+              "advisory_only": true,
+              "item_id": "00000000-0000-4000-8000-000000000003",
+              "version": {
+                "applicability": {
+                  "conditions": [
+                    "Only in the synthetic fixture repository."
+                  ],
+                  "paths": [
+                    "fixtures/widget.json"
+                  ],
+                  "repository_id": "synthetic-repository"
+                },
+                "body": "Synthetic normal storage control.",
+                "created_at": 1789117576,
+                "cues": [
+                  "blue",
+                  "widget"
+                ],
+                "kind": "fact",
+                "procedure": null,
+                "provenance": [
+                  {
+                    "attestation": null,
+                    "kind": "repo-artifact",
+                    "reference": {
+                      "path": "artifact.txt",
+                      "repository_id": "synthetic-repository"
+                    },
+                    "source_digest": "a1a61fcab19b83e8690d15adff576c22383d681f877add34e52734fa0ac5565d",
+                    "source_id": "synthetic-source",
+                    "source_revision": "eaa7ad8cff08a320831dde559259df4b07eb1627"
+                  }
+                ],
+                "retired_at": null,
+                "revision": 1,
+                "summary": "Synthetic widget label",
+                "validation": {
+                  "content_digest": "7e5d2d06a679202af9b301c70f70c3e24b152ce9cba94115574781213c197e98",
+                  "eligibility": "eligible",
+                  "evidence_id": "synthetic-validation-1",
+                  "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e",
+                  "verified_at": 1789117576,
+                  "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+                }
+              }
+            }
+          ],
+          "green": []
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed",
+        "result": {
+          "proof": {
+            "acceptance_epoch": 1,
+            "acceptance_evidence_id": "synthetic-only-acceptance",
+            "after_digest": "afe63db57901286e663e9c0091df4457937062bd2a12e2f0568d1ef273bbfcab",
+            "after_revision": 1,
+            "before_digest": "df8c07e144b5c5e7d91ee924d1c6463a192f4a50ec3b578ad6b68a5323650d8e",
+            "before_revision": 0,
+            "contract_version": "mg1-operation-proof/v2",
+            "identity_epoch": 1,
+            "item_id": "00000000-0000-4000-8000-000000000003",
+            "operation": "add",
+            "operation_id": "30f91cd9-eb2e-485f-9c88-79f76c90abb0",
+            "parent_operation_id": null,
+            "phase": "complete",
+            "preview_digest": "b6f3d9c4e2b13d34e1926877ee04c5df64787fb71205d8bf307afc34e0df96d0",
+            "projection_digest": "13d3c6104588dde4645bbde2afdb7d34d2a928e2162887f95b8cb21b48c9167c",
+            "readback_basis": {
+              "binding_digest": "753a968a8c210256c8ca92f3fc9711aec4b25c66ab9c0775a7d9db6c85652378",
+              "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+              "copies_observed_at": 1789117576,
+              "readback_until": 1791709576,
+              "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+            },
+            "recorded_at": 1789117576,
+            "restore_source_revision": null,
+            "sanitization": "not-requested",
+            "space_reclaim": "not-requested",
+            "target_revisions": [],
+            "witness_digest": null,
+            "witness_kind": null
+          },
+          "result": "applied",
+          "state_digest": "afe63db57901286e663e9c0091df4457937062bd2a12e2f0568d1ef273bbfcab"
+        },
+        "returncode": 0,
+        "timed_out": false
+      },
+      "journal_requires_maintenance": false,
+      "measurement": {
+        "checkpoints": [
+          "before-readback",
+          "before-transaction"
+        ],
+        "coverage": {
+          "aggregate_snapshot_atomicity": "not-proven",
+          "excluded_fds": 0,
+          "fd_census_coverage": "bounded-census",
+          "fd_limit": 128,
+          "lock_intervals_complete": true,
+          "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+          "memory_temp_bytes": "unmeasured",
+          "production_qualified": false,
+          "short_lived_between_samples": "unknown",
+          "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+          "temporal_file_coverage": "sampled-lower-bound",
+          "timing_includes_instrumentation": true,
+          "workload_upper_bound_proven": false
+        },
+        "lock_intervals": [
+          {
+            "acquire_after_ns": 1533792,
+            "acquire_before_ns": 1532334,
+            "exclusive": false,
+            "held_ns_lower": 55157458,
+            "held_ns_upper": 55168958,
+            "release_after_ns": 56701292,
+            "release_before_ns": 56691250
+          },
+          {
+            "acquire_after_ns": 59289375,
+            "acquire_before_ns": 59287167,
+            "exclusive": true,
+            "held_ns_lower": 121587959,
+            "held_ns_upper": 121597000,
+            "release_after_ns": 180884167,
+            "release_before_ns": 180877334
+          },
+          {
+            "acquire_after_ns": 181961209,
+            "acquire_before_ns": 181958834,
+            "exclusive": false,
+            "held_ns_lower": 59163041,
+            "held_ns_upper": 59171791,
+            "release_after_ns": 241130625,
+            "release_before_ns": 241124250
+          },
+          {
+            "acquire_after_ns": 247558959,
+            "acquire_before_ns": 247556500,
+            "exclusive": true,
+            "held_ns_lower": 110561166,
+            "held_ns_upper": 110569709,
+            "release_after_ns": 358126209,
+            "release_before_ns": 358120125
+          }
+        ],
+        "main_growth_observed_bytes": 0,
+        "measured_maxima": {
+          "journal_bytes": 29240,
+          "main_allocated_bytes": 49152,
+          "main_bytes": 49152,
+          "named_temp_bytes": 0,
+          "other_fd_bytes": 0,
+          "other_named_bytes": 0,
+          "sampled_unique_file_bytes": 78392,
+          "shm_bytes": 0,
+          "unlinked_fd_bytes": 0,
+          "wal_bytes": 0
+        },
+        "named_files_seen": [
+          "managed/coordination.lock",
+          "managed/managed.sqlite3",
+          "managed/managed.sqlite3-journal"
+        ],
+        "sample_count": 182,
+        "sample_errors": []
+      },
+      "newly_confirmed_control": {
+        "files_unchanged": true,
+        "new_preview_and_confirmation": true,
+        "new_process": true,
+        "proof": {
+          "acceptance_epoch": 1,
+          "acceptance_evidence_id": "synthetic-only-acceptance",
+          "after_digest": "a0f5f60acad12cb9615d6267861240d4510557c8dc35897b1b666d20071b4061",
+          "after_revision": 2,
+          "before_digest": "afe63db57901286e663e9c0091df4457937062bd2a12e2f0568d1ef273bbfcab",
+          "before_revision": 1,
+          "contract_version": "mg1-operation-proof/v2",
+          "identity_epoch": 1,
+          "item_id": "00000000-0000-4000-8000-000000000003",
+          "operation": "update",
+          "operation_id": "f94e5a79-7dd4-4da4-847b-4f6fffdd5f98",
+          "parent_operation_id": null,
+          "phase": "complete",
+          "preview_digest": "e43e0d18f8b81a6c6f965c360c2738ae82911a8beb1f6bdb4cd996af340654f7",
+          "projection_digest": "f2d2017fe2974680fbc9cb45ea4bd0b1cd50ef97cecc2e17c46ff7ade7e6555f",
+          "readback_basis": {
+            "binding_digest": "753a968a8c210256c8ca92f3fc9711aec4b25c66ab9c0775a7d9db6c85652378",
+            "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+            "copies_observed_at": 1789117577,
+            "readback_until": 1791709578,
+            "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+          },
+          "recorded_at": 1789117578,
+          "restore_source_revision": null,
+          "sanitization": "not-requested",
+          "space_reclaim": "not-requested",
+          "target_revisions": [],
+          "witness_digest": null,
+          "witness_kind": null
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed",
+        "result": "applied",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "normal_control_proof": {
+        "acceptance_epoch": 1,
+        "acceptance_evidence_id": "synthetic-only-acceptance",
+        "after_digest": "afe63db57901286e663e9c0091df4457937062bd2a12e2f0568d1ef273bbfcab",
+        "after_revision": 1,
+        "before_digest": "df8c07e144b5c5e7d91ee924d1c6463a192f4a50ec3b578ad6b68a5323650d8e",
+        "before_revision": 0,
+        "contract_version": "mg1-operation-proof/v2",
+        "identity_epoch": 1,
+        "item_id": "00000000-0000-4000-8000-000000000003",
+        "operation": "add",
+        "operation_id": "30f91cd9-eb2e-485f-9c88-79f76c90abb0",
+        "parent_operation_id": null,
+        "phase": "complete",
+        "preview_digest": "b6f3d9c4e2b13d34e1926877ee04c5df64787fb71205d8bf307afc34e0df96d0",
+        "projection_digest": "13d3c6104588dde4645bbde2afdb7d34d2a928e2162887f95b8cb21b48c9167c",
+        "readback_basis": {
+          "binding_digest": "753a968a8c210256c8ca92f3fc9711aec4b25c66ab9c0775a7d9db6c85652378",
+          "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+          "copies_observed_at": 1789117576,
+          "readback_until": 1791709576,
+          "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+        },
+        "recorded_at": 1789117576,
+        "restore_source_revision": null,
+        "sanitization": "not-requested",
+        "space_reclaim": "not-requested",
+        "target_revisions": [],
+        "witness_digest": null,
+        "witness_kind": null
+      },
+      "prepared": {
+        "before_digest": "afe63db57901286e663e9c0091df4457937062bd2a12e2f0568d1ef273bbfcab",
+        "candidate_bytes": 13462,
+        "event": "prepared",
+        "expected_after_digest": "384a5147f14590e4f2f0f3573c3149269086167afa1b9252248c62c4a0b6b720",
+        "operation_id": "16ff45c8-1028-4b6f-a299-ee3b1a426698",
+        "pid": 6030,
+        "preview_digest": "fe13472ec9145c28c474a4d66c73ce94be27ba996b466196eb9b237f70fac64e"
+      },
+      "production_qualified": false,
+      "raw_report_sha256": "d1c66b4c590cf8802bb53dc9d1d9d2ac69ade1202af5f23009966370d9f8c293",
+      "read_timeout_seconds": 30,
+      "space_restoration": {
+        "reason": "no-physical-filler",
+        "result": "not-required"
+      },
+      "status": "observed",
+      "synthetic_only": true,
+      "worker_timeout_seconds": 90,
+      "writer": {
+        "diagnostic": "",
+        "returncode": 0,
+        "timed_out": false
+      }
+    },
+    {
+      "attempt_limit": 1,
+      "classification": "injected-enospc-reply-loss",
+      "committed_transaction_consistent": true,
+      "contract_version": "mg1-g1-storage-fault/v1",
+      "execution": {
+        "errors": [],
+        "filling": {
+          "injected_errno": 28
+        },
+        "outcome": {
+          "proof": {
+            "acceptance_epoch": 1,
+            "acceptance_evidence_id": "synthetic-only-acceptance",
+            "after_digest": "d71ed299c4cf88b3668993d59a004acd223ba0f72cb9c5dc9f7494b4d995d67b",
+            "after_revision": 2,
+            "before_digest": "04159ff1b43d4b912648cdc5de75aa26aeb6f69032442041e3da64ec4a82d80f",
+            "before_revision": 1,
+            "contract_version": "mg1-operation-proof/v2",
+            "identity_epoch": 1,
+            "item_id": "00000000-0000-4000-8000-000000000003",
+            "operation": "update",
+            "operation_id": "09ede09d-c240-43cb-a031-c85d0cc511ca",
+            "parent_operation_id": null,
+            "phase": "complete",
+            "preview_digest": "915cddacfe6d5b070e82239799e08163e34e621897721dd350540dc3ec994451",
+            "projection_digest": "f2d2017fe2974680fbc9cb45ea4bd0b1cd50ef97cecc2e17c46ff7ade7e6555f",
+            "readback_basis": {
+              "binding_digest": "40234ac7572cb34a27112c594ab9faafdb0f50d1b5230efac713761bd8ee5901",
+              "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+              "copies_observed_at": 1789117579,
+              "readback_until": 1791709579,
+              "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+            },
+            "recorded_at": 1789117579,
+            "restore_source_revision": null,
+            "sanitization": "not-requested",
+            "space_reclaim": "not-requested",
+            "target_revisions": [],
+            "witness_digest": null,
+            "witness_kind": null
+          },
+          "result": "applied",
+          "state_digest": "d71ed299c4cf88b3668993d59a004acd223ba0f72cb9c5dc9f7494b4d995d67b"
+        },
+        "quota": {
+          "effective_max_page_count": 1048576,
+          "page_count_before": 12,
+          "profile_max_page_count": 1048576
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed"
+      },
+      "executor_result_consistent": true,
+      "failed_transaction_unchanged": false,
+      "fault": "reply-loss",
+      "fresh_attempt": {
+        "after_files_digest": "de80cb6f26424174bdffa92745235ab2d1b3b0c734186651fea36a9ed9aa294a",
+        "audit": {
+          "page": {
+            "advisory_only": true,
+            "enumeration_complete": true,
+            "items": [
+              {
+                "assessment": "eligible",
+                "item_id": "00000000-0000-4000-8000-000000000003",
+                "retained_versions": 2,
+                "revision": 2,
+                "status": "active",
+                "summary": "Synthetic widget label"
+              }
+            ],
+            "next_cursor": null,
+            "snapshot_digest": "d71ed299c4cf88b3668993d59a004acd223ba0f72cb9c5dc9f7494b4d995d67b",
+            "source_checked": 1,
+            "source_coverage": "complete",
+            "source_verified": 1
+          },
+          "result": "readable"
+        },
+        "before_files_digest": "de80cb6f26424174bdffa92745235ab2d1b3b0c734186651fea36a9ed9aa294a",
+        "calls": [
+          "artifact",
+          "qualify",
+          "read",
+          "review"
+        ],
+        "connections": [
+          "read-only",
+          "read-only",
+          "read-only",
+          "read-only"
+        ],
+        "diagnostic": "",
+        "files_unchanged": true,
+        "new_process": true,
+        "projection": {
+          "blue": [],
+          "green": [
+            {
+              "advisory_only": true,
+              "item_id": "00000000-0000-4000-8000-000000000003",
+              "version": {
+                "applicability": {
+                  "conditions": [
+                    "Only in the synthetic fixture repository."
+                  ],
+                  "paths": [
+                    "fixtures/widget.json"
+                  ],
+                  "repository_id": "synthetic-repository"
+                },
+                "body": "Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. ",
+                "created_at": 1789117579,
+                "cues": [
+                  "green",
+                  "widget"
+                ],
+                "kind": "fact",
+                "procedure": null,
+                "provenance": [
+                  {
+                    "attestation": null,
+                    "kind": "repo-artifact",
+                    "reference": {
+                      "path": "artifact.txt",
+                      "repository_id": "synthetic-repository"
+                    },
+                    "source_digest": "a1a61fcab19b83e8690d15adff576c22383d681f877add34e52734fa0ac5565d",
+                    "source_id": "synthetic-source",
+                    "source_revision": "4fec62bdeb75c7df1770dfcc32345badd55b8afc"
+                  }
+                ],
+                "retired_at": null,
+                "revision": 2,
+                "summary": "Synthetic widget label",
+                "validation": {
+                  "content_digest": "84f6ccf2a717572033ca6abe8c3c9e6b96705fea29845e4064464c73dba69880",
+                  "eligibility": "eligible",
+                  "evidence_id": "synthetic-validation-2",
+                  "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e",
+                  "verified_at": 1789117579,
+                  "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+                }
+              }
+            }
+          ]
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed",
+        "result": {
+          "proof": {
+            "acceptance_epoch": 1,
+            "acceptance_evidence_id": "synthetic-only-acceptance",
+            "after_digest": "d71ed299c4cf88b3668993d59a004acd223ba0f72cb9c5dc9f7494b4d995d67b",
+            "after_revision": 2,
+            "before_digest": "04159ff1b43d4b912648cdc5de75aa26aeb6f69032442041e3da64ec4a82d80f",
+            "before_revision": 1,
+            "contract_version": "mg1-operation-proof/v2",
+            "identity_epoch": 1,
+            "item_id": "00000000-0000-4000-8000-000000000003",
+            "operation": "update",
+            "operation_id": "09ede09d-c240-43cb-a031-c85d0cc511ca",
+            "parent_operation_id": null,
+            "phase": "complete",
+            "preview_digest": "915cddacfe6d5b070e82239799e08163e34e621897721dd350540dc3ec994451",
+            "projection_digest": "f2d2017fe2974680fbc9cb45ea4bd0b1cd50ef97cecc2e17c46ff7ade7e6555f",
+            "readback_basis": {
+              "binding_digest": "40234ac7572cb34a27112c594ab9faafdb0f50d1b5230efac713761bd8ee5901",
+              "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+              "copies_observed_at": 1789117579,
+              "readback_until": 1791709579,
+              "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+            },
+            "recorded_at": 1789117579,
+            "restore_source_revision": null,
+            "sanitization": "not-requested",
+            "space_reclaim": "not-requested",
+            "target_revisions": [],
+            "witness_digest": null,
+            "witness_kind": null
+          },
+          "result": "applied",
+          "state_digest": "d71ed299c4cf88b3668993d59a004acd223ba0f72cb9c5dc9f7494b4d995d67b"
+        },
+        "returncode": 0,
+        "timed_out": false
+      },
+      "fresh_normal": {
+        "after_files_digest": "de80cb6f26424174bdffa92745235ab2d1b3b0c734186651fea36a9ed9aa294a",
+        "audit": {
+          "page": {
+            "advisory_only": true,
+            "enumeration_complete": true,
+            "items": [
+              {
+                "assessment": "eligible",
+                "item_id": "00000000-0000-4000-8000-000000000003",
+                "retained_versions": 2,
+                "revision": 2,
+                "status": "active",
+                "summary": "Synthetic widget label"
+              }
+            ],
+            "next_cursor": null,
+            "snapshot_digest": "d71ed299c4cf88b3668993d59a004acd223ba0f72cb9c5dc9f7494b4d995d67b",
+            "source_checked": 1,
+            "source_coverage": "complete",
+            "source_verified": 1
+          },
+          "result": "readable"
+        },
+        "before_files_digest": "de80cb6f26424174bdffa92745235ab2d1b3b0c734186651fea36a9ed9aa294a",
+        "calls": [
+          "artifact",
+          "qualify",
+          "read",
+          "review"
+        ],
+        "connections": [
+          "read-only",
+          "read-only",
+          "read-only",
+          "read-only"
+        ],
+        "diagnostic": "",
+        "files_unchanged": true,
+        "new_process": true,
+        "projection": {
+          "blue": [],
+          "green": [
+            {
+              "advisory_only": true,
+              "item_id": "00000000-0000-4000-8000-000000000003",
+              "version": {
+                "applicability": {
+                  "conditions": [
+                    "Only in the synthetic fixture repository."
+                  ],
+                  "paths": [
+                    "fixtures/widget.json"
+                  ],
+                  "repository_id": "synthetic-repository"
+                },
+                "body": "Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. Synthetic storage growth. ",
+                "created_at": 1789117579,
+                "cues": [
+                  "green",
+                  "widget"
+                ],
+                "kind": "fact",
+                "procedure": null,
+                "provenance": [
+                  {
+                    "attestation": null,
+                    "kind": "repo-artifact",
+                    "reference": {
+                      "path": "artifact.txt",
+                      "repository_id": "synthetic-repository"
+                    },
+                    "source_digest": "a1a61fcab19b83e8690d15adff576c22383d681f877add34e52734fa0ac5565d",
+                    "source_id": "synthetic-source",
+                    "source_revision": "4fec62bdeb75c7df1770dfcc32345badd55b8afc"
+                  }
+                ],
+                "retired_at": null,
+                "revision": 2,
+                "summary": "Synthetic widget label",
+                "validation": {
+                  "content_digest": "84f6ccf2a717572033ca6abe8c3c9e6b96705fea29845e4064464c73dba69880",
+                  "eligibility": "eligible",
+                  "evidence_id": "synthetic-validation-2",
+                  "policy_fingerprint": "721afbed7cea7b892516291cb79f0c968c348182060b05957347cecc670cd38e",
+                  "verified_at": 1789117579,
+                  "verifier_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+                }
+              }
+            }
+          ]
+        },
+        "replay_rejection": "handle-unrecognized-or-consumed",
+        "result": {
+          "proof": {
+            "acceptance_epoch": 1,
+            "acceptance_evidence_id": "synthetic-only-acceptance",
+            "after_digest": "04159ff1b43d4b912648cdc5de75aa26aeb6f69032442041e3da64ec4a82d80f",
+            "after_revision": 1,
+            "before_digest": "7825713eeb78dc849d75111bb53c3fe111249370bb376d9adb15a03d1339a532",
+            "before_revision": 0,
+            "contract_version": "mg1-operation-proof/v2",
+            "identity_epoch": 1,
+            "item_id": "00000000-0000-4000-8000-000000000003",
+            "operation": "add",
+            "operation_id": "472012e8-f02a-49a8-8384-5216f3913cb0",
+            "parent_operation_id": null,
+            "phase": "complete",
+            "preview_digest": "f8ef28d0d80b3142a643d988f2d883c9df6afc948a11e276fca6536ff1c17461",
+            "projection_digest": "13d3c6104588dde4645bbde2afdb7d34d2a928e2162887f95b8cb21b48c9167c",
+            "readback_basis": {
+              "binding_digest": "40234ac7572cb34a27112c594ab9faafdb0f50d1b5230efac713761bd8ee5901",
+              "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+              "copies_observed_at": 1789117579,
+              "readback_until": 1791709579,
+              "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+            },
+            "recorded_at": 1789117579,
+            "restore_source_revision": null,
+            "sanitization": "not-requested",
+            "space_reclaim": "not-requested",
+            "target_revisions": [],
+            "witness_digest": null,
+            "witness_kind": null
+          },
+          "result": "state-unknown",
+          "state_digest": "d71ed299c4cf88b3668993d59a004acd223ba0f72cb9c5dc9f7494b4d995d67b"
+        },
+        "returncode": 0,
+        "timed_out": false
+      },
+      "journal_requires_maintenance": false,
+      "measurement": {
+        "checkpoints": [
+          "after-commit",
+          "after-item-write",
+          "before-commit",
+          "before-readback",
+          "before-transaction"
+        ],
+        "coverage": {
+          "aggregate_snapshot_atomicity": "not-proven",
+          "excluded_fds": 0,
+          "fd_census_coverage": "bounded-census",
+          "fd_limit": 128,
+          "lock_intervals_complete": true,
+          "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+          "memory_temp_bytes": "unmeasured",
+          "production_qualified": false,
+          "short_lived_between_samples": "unknown",
+          "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+          "temporal_file_coverage": "sampled-lower-bound",
+          "timing_includes_instrumentation": true,
+          "workload_upper_bound_proven": false
+        },
+        "lock_intervals": [
+          {
+            "acquire_after_ns": 1493084,
+            "acquire_before_ns": 1491750,
+            "exclusive": false,
+            "held_ns_lower": 53931916,
+            "held_ns_upper": 53942667,
+            "release_after_ns": 55434417,
+            "release_before_ns": 55425000
+          },
+          {
+            "acquire_after_ns": 57891875,
+            "acquire_before_ns": 57889375,
+            "exclusive": true,
+            "held_ns_lower": 112136542,
+            "held_ns_upper": 112146292,
+            "release_after_ns": 170035667,
+            "release_before_ns": 170028417
+          },
+          {
+            "acquire_after_ns": 171121459,
+            "acquire_before_ns": 171119250,
+            "exclusive": false,
+            "held_ns_lower": 58807166,
+            "held_ns_upper": 58815417,
+            "release_after_ns": 229934667,
+            "release_before_ns": 229928625
+          },
+          {
+            "acquire_after_ns": 236390625,
+            "acquire_before_ns": 236388792,
+            "exclusive": true,
+            "held_ns_lower": 200044459,
+            "held_ns_upper": 200052375,
+            "release_after_ns": 436441167,
+            "release_before_ns": 436435084
+          }
+        ],
+        "main_growth_observed_bytes": 12288,
+        "measured_maxima": {
+          "journal_bytes": 41552,
+          "main_allocated_bytes": 61440,
+          "main_bytes": 61440,
+          "named_temp_bytes": 0,
+          "other_fd_bytes": 0,
+          "other_named_bytes": 0,
+          "sampled_unique_file_bytes": 90704,
+          "shm_bytes": 0,
+          "unlinked_fd_bytes": 0,
+          "wal_bytes": 0
+        },
+        "named_files_seen": [
+          "managed/coordination.lock",
+          "managed/managed.sqlite3",
+          "managed/managed.sqlite3-journal"
+        ],
+        "sample_count": 294,
+        "sample_errors": []
+      },
+      "normal_control_proof": {
+        "acceptance_epoch": 1,
+        "acceptance_evidence_id": "synthetic-only-acceptance",
+        "after_digest": "04159ff1b43d4b912648cdc5de75aa26aeb6f69032442041e3da64ec4a82d80f",
+        "after_revision": 1,
+        "before_digest": "7825713eeb78dc849d75111bb53c3fe111249370bb376d9adb15a03d1339a532",
+        "before_revision": 0,
+        "contract_version": "mg1-operation-proof/v2",
+        "identity_epoch": 1,
+        "item_id": "00000000-0000-4000-8000-000000000003",
+        "operation": "add",
+        "operation_id": "472012e8-f02a-49a8-8384-5216f3913cb0",
+        "parent_operation_id": null,
+        "phase": "complete",
+        "preview_digest": "f8ef28d0d80b3142a643d988f2d883c9df6afc948a11e276fca6536ff1c17461",
+        "projection_digest": "13d3c6104588dde4645bbde2afdb7d34d2a928e2162887f95b8cb21b48c9167c",
+        "readback_basis": {
+          "binding_digest": "40234ac7572cb34a27112c594ab9faafdb0f50d1b5230efac713761bd8ee5901",
+          "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+          "copies_observed_at": 1789117579,
+          "readback_until": 1791709579,
+          "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+        },
+        "recorded_at": 1789117579,
+        "restore_source_revision": null,
+        "sanitization": "not-requested",
+        "space_reclaim": "not-requested",
+        "target_revisions": [],
+        "witness_digest": null,
+        "witness_kind": null
+      },
+      "prepared": {
+        "before_digest": "04159ff1b43d4b912648cdc5de75aa26aeb6f69032442041e3da64ec4a82d80f",
+        "candidate_bytes": 13462,
+        "event": "prepared",
+        "expected_after_digest": "d71ed299c4cf88b3668993d59a004acd223ba0f72cb9c5dc9f7494b4d995d67b",
+        "operation_id": "09ede09d-c240-43cb-a031-c85d0cc511ca",
+        "pid": 6480,
+        "preview_digest": "915cddacfe6d5b070e82239799e08163e34e621897721dd350540dc3ec994451"
+      },
+      "production_qualified": false,
+      "raw_report_sha256": "5678d1da2ca748b0d78feed579a8c26e38eea99ae0202551b5093b5aea9c3807",
+      "read_timeout_seconds": 30,
+      "space_restoration": {
+        "reason": "no-physical-filler",
+        "result": "not-required"
+      },
+      "status": "observed",
+      "synthetic_only": true,
+      "worker_timeout_seconds": 90,
+      "writer": {
+        "diagnostic": "",
+        "returncode": 0,
+        "timed_out": false
+      }
+    },
+    {
+      "attempt_limit": 1,
+      "classification": "no-completed-observation",
+      "committed_transaction_consistent": false,
+      "contract_version": "mg1-g1-storage-fault/v1",
+      "executor_result_consistent": false,
+      "failed_transaction_unchanged": false,
+      "fault": "precommit-loss",
+      "fresh_attempt": {
+        "after_files_digest": "78ce8a6435c67d9f24bd7701eadc30aeb52102c278ed04b736174ae287e39d4e",
+        "audit": {
+          "reason": "recovery-required",
+          "result": "rejected"
+        },
+        "before_files_digest": "78ce8a6435c67d9f24bd7701eadc30aeb52102c278ed04b736174ae287e39d4e",
+        "calls": [
+          "qualify",
+          "read"
+        ],
+        "connections": [],
+        "diagnostic": "",
+        "files_unchanged": true,
+        "new_process": true,
+        "projection": {},
+        "replay_rejection": "handle-unrecognized-or-consumed",
+        "result": {
+          "proof": null,
+          "result": "state-unknown",
+          "state_digest": null
+        },
+        "returncode": 0,
+        "timed_out": false
+      },
+      "fresh_normal": {
+        "after_files_digest": "78ce8a6435c67d9f24bd7701eadc30aeb52102c278ed04b736174ae287e39d4e",
+        "audit": {
+          "reason": "recovery-required",
+          "result": "rejected"
+        },
+        "before_files_digest": "78ce8a6435c67d9f24bd7701eadc30aeb52102c278ed04b736174ae287e39d4e",
+        "calls": [
+          "qualify",
+          "read"
+        ],
+        "connections": [],
+        "diagnostic": "",
+        "files_unchanged": true,
+        "new_process": true,
+        "projection": {},
+        "replay_rejection": "handle-unrecognized-or-consumed",
+        "result": {
+          "proof": null,
+          "result": "state-unknown",
+          "state_digest": null
+        },
+        "returncode": 0,
+        "timed_out": false
+      },
+      "incomplete_reason": "nonempty-journal-preserved; G2-maintenance-required",
+      "journal_requires_maintenance": true,
+      "normal_control_proof": {
+        "acceptance_epoch": 1,
+        "acceptance_evidence_id": "synthetic-only-acceptance",
+        "after_digest": "36f508cdab87e08601b65f70e6c1b63e5227294fe8da098decba29b921dd76dd",
+        "after_revision": 1,
+        "before_digest": "30c318c0b0b79b5fccce43e13c49e4f2fb468bcf2885ff1fc6ee03814af7ad91",
+        "before_revision": 0,
+        "contract_version": "mg1-operation-proof/v2",
+        "identity_epoch": 1,
+        "item_id": "00000000-0000-4000-8000-000000000003",
+        "operation": "add",
+        "operation_id": "97e6c8be-ea17-4895-bdab-2ce79d27acba",
+        "parent_operation_id": null,
+        "phase": "complete",
+        "preview_digest": "86cc7455d7dbe20a3fd5274582ea8cb7fc2b345a72eeba47f152e0558fe6aaa5",
+        "projection_digest": "13d3c6104588dde4645bbde2afdb7d34d2a928e2162887f95b8cb21b48c9167c",
+        "readback_basis": {
+          "binding_digest": "2f8fe78385d76391fc8216515e7f6570000df3e7563090cc1795749f71b0ca59",
+          "copies_digest": "6198a937227f468b8c4d9e509c20416ec31bf04bc1c5df19da5d7e60a8936893",
+          "copies_observed_at": 1789117580,
+          "readback_until": 1791709580,
+          "scope_digest": "2ac6c6fa6ad8f23388caccdc4658877d238ce915df0f7c1c5d5111d6a8ed2965"
+        },
+        "recorded_at": 1789117580,
+        "restore_source_revision": null,
+        "sanitization": "not-requested",
+        "space_reclaim": "not-requested",
+        "target_revisions": [],
+        "witness_digest": null,
+        "witness_kind": null
+      },
+      "prepared": {
+        "before_digest": "36f508cdab87e08601b65f70e6c1b63e5227294fe8da098decba29b921dd76dd",
+        "candidate_bytes": 13462,
+        "event": "prepared",
+        "expected_after_digest": "f8c8376e81af48cb4148ae3a46fda18a0f7cec5cfab2c7f84bb53661eea83cb9",
+        "operation_id": "b776e65d-b6f2-4a7a-b2a2-ffc687092def",
+        "pid": 6834,
+        "preview_digest": "2631181d68fdee1e183e6995caf3e53b03c968cccd39c3a47d95b1c66ca27c7c"
+      },
+      "production_qualified": false,
+      "raw_report_sha256": "2d73702a0ba1eca6a4128cb6e8a513c540192b76ee727e18d31ba5ab0e0e0f65",
+      "read_timeout_seconds": 30,
+      "space_restoration": {
+        "reason": "no-physical-filler",
+        "result": "not-required"
+      },
+      "status": "incomplete",
+      "synthetic_only": true,
+      "worker_timeout_seconds": 90,
+      "writer": {
+        "diagnostic": "",
+        "returncode": 73,
+        "timed_out": false
+      }
+    }
+  ],
+  "contract_version": "mg1-g1-storage-evidence/v1",
+  "production_qualified": false,
+  "runtime": {
+    "compile_options": [
+      "ATOMIC_INTRINSICS=1",
+      "BUG_COMPATIBLE_20160819",
+      "CCCRYPT256",
+      "CODEC=see-cccrypt",
+      "COMPILER=clang-21.0.0",
+      "DEFAULT_AUTOVACUUM",
+      "DEFAULT_CACHE_SIZE=2000",
+      "DEFAULT_CKPTFULLFSYNC",
+      "DEFAULT_FILE_FORMAT=4",
+      "DEFAULT_JOURNAL_SIZE_LIMIT=32768",
+      "DEFAULT_LOOKASIDE=1200,102",
+      "DEFAULT_MEMSTATUS=0",
+      "DEFAULT_MMAP_SIZE=0",
+      "DEFAULT_PAGE_SIZE=4096",
+      "DEFAULT_PCACHE_INITSZ=20",
+      "DEFAULT_RECURSIVE_TRIGGERS",
+      "DEFAULT_SECTOR_SIZE=4096",
+      "DEFAULT_SYNCHRONOUS=2",
+      "DEFAULT_WAL_AUTOCHECKPOINT=1000",
+      "DEFAULT_WAL_SYNCHRONOUS=1",
+      "DEFAULT_WORKER_THREADS=0",
+      "DIRECT_OVERFLOW_READ",
+      "DQS=3",
+      "ENABLE_API_ARMOR",
+      "ENABLE_BYTECODE_VTAB",
+      "ENABLE_COLUMN_METADATA",
+      "ENABLE_DBSTAT_VTAB",
+      "ENABLE_FTS3",
+      "ENABLE_FTS3_PARENTHESIS",
+      "ENABLE_FTS3_TOKENIZER",
+      "ENABLE_FTS4",
+      "ENABLE_FTS5",
+      "ENABLE_LOCKING_STYLE=1",
+      "ENABLE_MATH_FUNCTIONS",
+      "ENABLE_NORMALIZE",
+      "ENABLE_PREUPDATE_HOOK",
+      "ENABLE_RTREE",
+      "ENABLE_SESSION",
+      "ENABLE_SETLK_TIMEOUT",
+      "ENABLE_SNAPSHOT",
+      "ENABLE_SQLLOG",
+      "ENABLE_STMT_SCANSTATUS",
+      "ENABLE_UNKNOWN_SQL_FUNCTION",
+      "ENABLE_UPDATE_DELETE_LIMIT",
+      "HAS_CODEC_RESTRICTED",
+      "HAVE_ISNAN",
+      "MALLOC_SOFT_LIMIT=1024",
+      "MAX_ATTACHED=10",
+      "MAX_COLUMN=2000",
+      "MAX_COMPOUND_SELECT=500",
+      "MAX_DEFAULT_PAGE_SIZE=8192",
+      "MAX_EXPR_DEPTH=1000",
+      "MAX_FUNCTION_ARG=127",
+      "MAX_LENGTH=2147483645",
+      "MAX_LIKE_PATTERN_LENGTH=50000",
+      "MAX_MMAP_SIZE=1073741824",
+      "MAX_PAGE_COUNT=1073741823",
+      "MAX_PAGE_SIZE=65536",
+      "MAX_SQL_LENGTH=1000000000",
+      "MAX_TRIGGER_DEPTH=1000",
+      "MAX_VARIABLE_NUMBER=500000",
+      "MAX_VDBE_OP=250000000",
+      "MAX_WORKER_THREADS=8",
+      "MUTEX_UNFAIR",
+      "OMIT_AUTORESET",
+      "OMIT_LOAD_EXTENSION",
+      "STMTJRNL_SPILL=131072",
+      "SYSTEM_MALLOC",
+      "TEMP_STORE=1",
+      "THREADSAFE=2",
+      "USE_URI"
+    ],
+    "journal_mode": "delete",
+    "os_release": "25.6.0",
+    "page_size": 4096,
+    "platform": "Darwin",
+    "python_version": "3.12.9",
+    "schema_fingerprint": "cab3ce3180ac986d97d7f93c54acc9b3f689df35294b3a093fe03066c77adeb6",
+    "sql_fingerprint": "26873c40b5fa48c44655eee01d6905d8837021874e4ee140897ccb08630eb856",
+    "sqlite_source_id": "2025-06-12 13:14:41 f0ca7bba1c5e232e5d279fad6338121ab55af0c8c68c84cdfb18ba5114dcaapl",
+    "sqlite_version": "3.51.0",
+    "temp_store": "memory"
+  },
+  "runtime_digest": "c1b31eadba946b2c31c8f860cc57eca97fcada90df3ef460ff55348f3cf1d0a6",
+  "source_sha256": {
+    "skills/loop-engineering/scripts/memory_governance_contract.py": "ada264d469f60b67641d7f338419eddc7ca9c3e0f91c6b8770081f7bad4dd377",
+    "skills/loop-engineering/scripts/memory_governance_core.py": "6ac334bf7ff39e27ffda0eb5a4e57ac3d88111d1aaca60fceff433fff591ab5b",
+    "skills/loop-engineering/scripts/memory_governance_host.py": "32247bfbf629f8e07c93095ad20b8451f9e624c18bec22a0c994f295b7c344df",
+    "skills/loop-engineering/scripts/memory_governance_local.py": "d9034b5493ea7e6122fff9575a3f5b6e34efa81a9c36d6d020eaf4e142bf8f1a",
+    "skills/loop-engineering/scripts/memory_governance_storage.py": "91c9190c630f175732af7094a78ebb4d1e23e9cf67d5202dde602c4d5e9add8e",
+    "tests/fixtures/memory-governance/enospc_image.py": "fae02ba83cb414975700b147503ed5e15511a9c870219b386816eb38c8ae3844",
+    "tests/fixtures/memory-governance/local_ports.py": "29d7f4c9477bd3eace09718252ad99cd4423bc2d5977f2ec3a450360479f43ee",
+    "tests/fixtures/memory-governance/process_readback_worker.py": "421b3df087ef9520fdec32b0267d51b7bcfd70c4459b73ccb2f862a672c8390c",
+    "tests/fixtures/memory-governance/storage_fault_case.py": "52a93d8675b89ff2bdcfa2702bb9d8d810b4ce8c6b91a2d51b2816a0b2936788",
+    "tests/fixtures/memory-governance/storage_fault_worker.py": "746ccd220618e77bb60fe0a34a0eb6b4b2a4cc6312ee841c0e87cba34c5b302e",
+    "tests/fixtures/memory-governance/storage_observer.py": "8499c21ae8e93cfcabef069abec0208d6a87e13c42ce7536449707027a4ed35e"
+  },
+  "synthetic_only": true
+}

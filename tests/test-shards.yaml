@@ -62,6 +62,7 @@ shards:
       - tests.test_memory_governance_local_faults
       - tests.test_memory_governance_process_readback
       - tests.test_memory_governance_profile_proposal
+      - tests.test_memory_governance_storage_faults
       - tests.test_memory_pilot
       - tests.test_memory_scope_lifecycle
       - tests.test_memory_sqlite

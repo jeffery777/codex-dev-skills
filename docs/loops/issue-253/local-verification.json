@@ -1,0 +1,144 @@
+{
+  "after_independent_review_fixes": {
+    "combined_test_coverage": 1208,
+    "command": "PYTHONDONTWRITEBYTECODE=1 ./scripts/project-python scripts/test-shards.py run memory-m1-and-evaluation",
+    "duration_seconds": 77.836,
+    "exit_code": 0,
+    "focused": {
+      "duration_seconds": 22.485,
+      "exit_code": 0,
+      "stdout_stderr_sha256": "fd096ec53963ac1cd1fed6521a5701182a342d978290e74942633a60b8eb3e16",
+      "test_count": 16
+    },
+    "offline_validation": {
+      "command": "./scripts/validate-repo.sh --skip-unit-tests",
+      "exit_code": 0,
+      "stdout_stderr_sha256": "2f5af5c504385bdb0cab1e3628d9391abc926fbd9e53422206cdfa25eb9fcfd8"
+    },
+    "reuse_basis": "Only storage_fault_case.py, its test module and associated evidence/docs changed after baseline; no shared production code, test runner, dependencies, manifest or unaffected module changed.",
+    "reused_unaffected_shards": [
+      "exact-head-merge",
+      "gitnexus",
+      "installer-agent-profiles",
+      "installer-runtime",
+      "loop-context",
+      "loop-control",
+      "memory-m0",
+      "native-runtime",
+      "operational-improvement",
+      "plugin-packaging",
+      "repository-policy"
+    ],
+    "shard": "memory-m1-and-evaluation",
+    "source_sha256": {
+      "tests/fixtures/memory-governance/enospc_image.py": "fae02ba83cb414975700b147503ed5e15511a9c870219b386816eb38c8ae3844",
+      "tests/fixtures/memory-governance/storage_fault_case.py": "52a93d8675b89ff2bdcfa2702bb9d8d810b4ce8c6b91a2d51b2816a0b2936788",
+      "tests/fixtures/memory-governance/storage_fault_worker.py": "746ccd220618e77bb60fe0a34a0eb6b4b2a4cc6312ee841c0e87cba34c5b302e",
+      "tests/fixtures/memory-governance/storage_observer.py": "8499c21ae8e93cfcabef069abec0208d6a87e13c42ce7536449707027a4ed35e",
+      "tests/test-shards.yaml": "9d2ad30252848965637a676a2eabbc7c2334b26fb1bd534c0c9472e07f62d47d",
+      "tests/test_memory_governance_storage_faults.py": "82e51a85073c960aab4d45e3bf520deefe322d2c95d10a53924fd8944a35d741"
+    },
+    "stdout_stderr_sha256": "4d03067aea2f43e93cbae2da407ad3d0c39a44f3993764ea22a5ad96ad66f180",
+    "test_count": 339
+  },
+  "base_sha": "b7d245646568c0397f5c516e2f6972f1b4e91fa1",
+  "branch": "codex/issue-253-g1-storage-faults",
+  "command": "PYTHONDONTWRITEBYTECODE=1 ./scripts/project-python scripts/test-shards.py run-all",
+  "contract_version": "issue-253-local-verification/v1",
+  "exit_code": 0,
+  "focused_after_classifier_fix": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 ./scripts/project-python -m unittest tests.test_memory_governance_storage_faults",
+    "duration_seconds": 10.385,
+    "exit_code": 0,
+    "stdout_stderr_sha256": "e8a59613cef39e65fb6a2089d5d5e4fe1aff8191cd63c03df7c0e14aeff2f728",
+    "test_count": 14
+  },
+  "production_qualified": false,
+  "python_version": "3.12.9",
+  "shard_count": 12,
+  "shards": [
+    {
+      "duration_seconds": 0.684,
+      "id": "exact-head-merge",
+      "result": "OK",
+      "test_count": 78
+    },
+    {
+      "duration_seconds": 97.445,
+      "id": "gitnexus",
+      "result": "OK",
+      "test_count": 138
+    },
+    {
+      "duration_seconds": 251.361,
+      "id": "installer-agent-profiles",
+      "result": "OK",
+      "test_count": 61
+    },
+    {
+      "duration_seconds": 749.701,
+      "id": "installer-runtime",
+      "result": "OK",
+      "test_count": 53
+    },
+    {
+      "duration_seconds": 0.393,
+      "id": "loop-context",
+      "result": "OK",
+      "test_count": 100
+    },
+    {
+      "duration_seconds": 25.842,
+      "id": "loop-control",
+      "result": "OK",
+      "test_count": 87
+    },
+    {
+      "duration_seconds": 3.407,
+      "id": "memory-m0",
+      "result": "OK",
+      "test_count": 67
+    },
+    {
+      "duration_seconds": 63.773,
+      "id": "memory-m1-and-evaluation",
+      "result": "OK",
+      "test_count": 337
+    },
+    {
+      "duration_seconds": 47.137,
+      "id": "native-runtime",
+      "result": "OK",
+      "test_count": 106
+    },
+    {
+      "duration_seconds": 6.438,
+      "id": "operational-improvement",
+      "result": "OK",
+      "test_count": 87
+    },
+    {
+      "duration_seconds": 34.663,
+      "id": "plugin-packaging",
+      "result": "OK",
+      "test_count": 16
+    },
+    {
+      "duration_seconds": 67.493,
+      "id": "repository-policy",
+      "result": "OK",
+      "test_count": 76
+    }
+  ],
+  "source_sha256": {
+    "tests/fixtures/memory-governance/enospc_image.py": "fae02ba83cb414975700b147503ed5e15511a9c870219b386816eb38c8ae3844",
+    "tests/fixtures/memory-governance/storage_fault_case.py": "08320cec6f315553e6cee5d725a560fc11ebd6c5918a7bea6e2ebf9e0ee915f0",
+    "tests/fixtures/memory-governance/storage_fault_worker.py": "746ccd220618e77bb60fe0a34a0eb6b4b2a4cc6312ee841c0e87cba34c5b302e",
+    "tests/fixtures/memory-governance/storage_observer.py": "8499c21ae8e93cfcabef069abec0208d6a87e13c42ce7536449707027a4ed35e",
+    "tests/test-shards.yaml": "9d2ad30252848965637a676a2eabbc7c2334b26fb1bd534c0c9472e07f62d47d",
+    "tests/test_memory_governance_storage_faults.py": "838113bb2213be0e354c277daf93805fecd6fef8f03feed83a9f16d7f6d49c86"
+  },
+  "stdout_stderr_sha256": "013ac800419bb60181fe7f5cc9d410666ac25df0bff2e5d5ba10961293b8d4bf",
+  "total_tests": 1206,
+  "verification_scope": "local deterministic tests only; no review, hosted CI or production qualification verdict"
+}

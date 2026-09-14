@@ -130,6 +130,12 @@ subprocess interruption 只證明所測 SQLite/process 邊界。沒有 power-los
 maintenance reserve、4 GiB 最壞 latency、共享主機隔離或人類授權 adapter 資格。
 G2/G3 仍須獨立完成上述對應資格；未完成前不開放真實入口。
 
+#253 的 repository-only storage fixtures 補上 fresh-process 故障對照與完整 flock
+持有區間的 syscall bracketing，並取樣 named sidecars／temp 及測試子程序的 bounded
+fd metadata。數值仍限小型 workload；取樣間隙、記憶體 temp 與完整 J/T/G 上界未證明。
+新 APFS 嘗試在 image-create 階段失敗，沒有新的物理 ENOSPC／SQLite FULL 恢復證據。
+非空 journal 的新程序讀回維持 unknown／recovery-required，不自行 repair。
+
 原生記憶、對話、匯出與備份是外部副本，coverage unknown 不等於沒有副本。
 本專案 memory-off 只表示這些管理核心操作不碰本專案 root／backend；不聲稱
 Codex 原生記憶或 context management 已關閉。不得把本 reference 用作私有資料存取授權。

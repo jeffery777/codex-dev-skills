@@ -2,6 +2,12 @@
 
 ## 狀態、目標與證據
 
+2026-09-11：[Issue #253 儲存故障切片](loops/issue-253/verification-and-review.md)
+補上 quota FULL／CANTOPEN／回覆遺失對照、故障後的新程序一致性與新確認正常操作，
+以及完整持鎖區間的量測 bracket、named/own-fd 暫存取樣。物理 APFS 嘗試在
+image-create 失敗，沒有新增物理 ENOSPC／SQLite FULL 證據；journal recovery、
+完整 J/T/G、power-loss 與 4 GiB qualification 仍未完成，production registry 維持空。
+
 2026-09-10：[Issue #247 程序重啟讀回](loops/issue-247/process-loss-contract.md)
 以 bounded proof-v2 basis 保留外部副本比較 commitment，驗證獨立新程序只讀恢復、
 fresh authority/source、失效及重播拒絕。仍限新建 synthetic roots，不保存完整 preview，

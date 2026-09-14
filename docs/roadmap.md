@@ -427,6 +427,11 @@ proof-v2 在原 2 KiB 上限內保存固定比較摘要，新 reader process 重
 僅限新建 synthetic roots，舊 schema 拒絕且不 migration；
 [驗證與審查狀態](loops/issue-247/verification-and-review.md)不代表 production 資格。
 
+#253 的[儲存故障切片](loops/issue-253/verification-and-review.md)補上明確分開的
+quota FULL／CANTOPEN／reply-loss 對照、fresh readback 一致性與完整持鎖區間量測。
+APFS 新映像在建立階段失敗，本輪物理 ENOSPC／SQLite FULL 恢復仍 incomplete；
+named/own-fd 取樣不證明完整 temp 或 J/T/G 上界，沒有 production code／registry 變更。
+
 2026-09-09 使用者調整工程順序：[Issue #237](https://github.com/jeffery777/codex-dev-skills/issues/237)
 先校正共用派工、續行與交接提示詞，完成驗證、審查及適用發版，再續推 G1
 剩餘資格／G2／G3。#235 已合併的第一切片保留；此排序不回退已完成工作，
