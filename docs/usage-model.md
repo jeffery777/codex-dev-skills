@@ -57,14 +57,18 @@ Poor fits without more human direction:
 
 ## Human Gates
 
-The workflows can carry local work to PR readiness, but they intentionally stop before:
+工作流程在有效授權與已確認範圍內，通過適用 gates 後持續交付。
+只有下列尚未解決的邊界才停止相依操作，並先完成可獨立進行的安全準備：
 
-- product ambiguity
-- scope expansion
-- destructive actions
-- external writes
-- commit, push, PR creation, release, deploy, merge, platform comments, or review submissions
-- material security, privacy, data, migration, payment, or permission risk
+- 需要使用者決定的產品歧義、scope／ownership 衝突或超出授權的範圍擴大。
+- 破壞性操作缺少明確意圖、精確目標、影響預覽或復原 safeguards。
+- commit、push、PR creation、release、deploy、merge、platform comments、
+  review submissions 或其他外部寫入缺少當次目標／範圍的有效授權，或必要 gate 尚未通過。
+- 新出現或仍未解決的 security、privacy、data、migration、payment、permission
+  風險需要決策，或高風險變更的驗證不足。
+
+風險領域名稱、內部階段結束或已授權操作本身不新增核准要求。返工依
+`policies/model-selection-policy.md` 重評方法與能力；達到重評門檻不代表停止任務。
 
 Machine-local executable selection is runtime control-plane state. Repository
 Git probes ignore ambient `PATH` and executable-path environment variables,

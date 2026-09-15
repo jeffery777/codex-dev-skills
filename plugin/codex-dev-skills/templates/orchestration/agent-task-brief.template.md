@@ -38,6 +38,8 @@ existing route rather than duplicating its schema. This brief grants no authorit
 需產品決策的未解決風險或高風險驗證不足，回報主代理；不得自行擴權。
 風險領域名稱本身不阻擋已指派的唯讀審查。複雜度超出所選角色時要求主代理
 重新分類，不修改固定 profile／effort 或沿用不相符資格。reviewer 不實作修正。
+驗收失敗時記錄核心檢查、原因與修正假設；按共用契約的返工政策回報能力重評，
+不以工具呼叫數當修正輪次，不因重評門檻放棄已指派工作。
 ## Do Not
 
 - Do not commit.

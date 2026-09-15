@@ -110,6 +110,31 @@ class AgentProfileValidationTests(unittest.TestCase):
                     self.assertIn(f'#{key} = "{value}"', text)
                     self.assertNotEqual(value, profile[key])
 
+    def test_task_fallback_tier_preserves_profile_identity_and_standalone_default(self) -> None:
+        _, entries = VALIDATOR.validate(PROFILE_DIR, REGISTRY)
+        entry = entries["loop_v2a_deep_reviewer"]
+        original = json.dumps(entry, sort_keys=True)
+        facts = {
+            "custom_agent_surface": "unavailable",
+            "parent_default": {
+                "available": True,
+                "capability_classes": ["deep-reviewer"],
+                "capability_tiers": {"deep-reviewer": ["everyday"]},
+            },
+        }
+        standalone = VALIDATOR.preflight(entry, facts, [])
+        self.assertEqual("human-gate", standalone["decision"])
+        task = VALIDATOR.preflight(entry, facts, [], fallback_required_tier="everyday")
+        self.assertEqual("fallback-safe", task["decision"])
+        self.assertEqual("parent-default", task["fallback_tier"])
+        self.assertEqual("deep", task["capability_tier"])
+        self.assertEqual(original, json.dumps(entry, sort_keys=True))
+        for invalid in ("unknown", [], 1):
+            with self.subTest(tier=invalid), self.assertRaises(VALIDATOR.ProfileValidationError):
+                VALIDATOR.preflight(entry, facts, [], fallback_required_tier=invalid)
+        with self.assertRaises(VALIDATOR.ProfileValidationError):
+            VALIDATOR.preflight(entry, facts, [], enforce_tier=False, fallback_required_tier="everyday")
+
     def test_runtime_facts_reject_non_string_enum_shapes(self) -> None:
         malformed_facts = (
             {"custom_agent_surface": []},

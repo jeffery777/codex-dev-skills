@@ -41,6 +41,22 @@ unmeasured performance tradeoff, not permission to drop review requirements.
    Report median and spread. Account usage and API dollar cost are different
    measures; use current verified pricing only for a relevant API cost analysis.
 
+### Issue #255：當前 runtime 與返工比較
+
+- 每批記錄 Desktop app/build、實際 CLI／內附 runtime、模型／effort、可驗證的
+  service tier、source/diff、完整已載入的 profile／skill／prompt 身分與權限。
+  CLI 與 Desktop 分開；共享 skill 改變時，不能只看 profile digest 沒變。
+- harness／工具／授權／壓縮或技能載入更新後，重跑受影響的成對案例；
+  不把更新前後樣本混合當成模型優劣。歷史試跑維持原始條件與限制。
+- 納入[返工語意案例](../issue-255/prompt-cases.md)，再以代表性實作驗證
+  同錯誤反覆發生、不同錯誤累積、能力升級及父代理續行；情境回答不能
+  代替實際返工或長任務完成證據。
+- 對完整工作包計入失敗、重試、交接、父代理整合與驗收的用量及時間。
+  保留不可用、未完成、漏報與升級後更慢的結果；不只比較成功 child。
+- 優先比較日常唯讀 reviewer 的合適較小模型，以及主代理／深度角色的
+  Astra-high 與現有 xhigh。各自使用相同品質與續行要求，不建立全模型矩陣。
+  單案例 screening 不授權修改 baseline、安裝 profile 或建立 production 資格。
+
 ## Acceptance And Recovery
 
 Prefer the lower-usage condition only when it meets the same task-quality and

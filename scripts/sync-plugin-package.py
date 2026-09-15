@@ -21,6 +21,7 @@ SHARED_FILES = {
     "policies/exact-head-merge-review-contract.md",
     "policies/github-exact-head-enforcement-profile.md",
     "policies/github-control-plane-policy.md",
+    "policies/model-selection-policy.md",
     "policies/release-state-contract.md",
     "policies/reusable-workflow-contract.md",
     "scripts/validate-exact-head-merge-review.py",

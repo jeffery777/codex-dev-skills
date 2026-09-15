@@ -417,6 +417,7 @@ def _validated_same_class(
     *,
     enforce_tier: bool,
     trusted_profiles: dict[str, dict[str, Any]] | None,
+    required_tier: str,
 ) -> dict[str, Any] | None:
     compatible = facts.get("compatible_profiles", {})
     if not isinstance(compatible, dict):
@@ -501,7 +502,11 @@ def _validated_same_class(
                     isinstance(candidate.get("capability_tier"), str)
                     and candidate.get("capability_tier") in TIER_RANK
                     and TIER_RANK[candidate["capability_tier"]]
-                    >= TIER_RANK[entry["capability_tier"]]
+                    >= TIER_RANK[required_tier]
+                    and (
+                        candidate["capability_tier"] != "exceptional"
+                        or required_tier == "exceptional"
+                    )
                 )
             )
             and candidate.get("sandbox") == entry["sandbox_expectation"]
@@ -544,6 +549,7 @@ def _fallback(
     custom_surface_available: bool,
     enforce_tier: bool,
     trusted_profiles: dict[str, dict[str, Any]] | None,
+    required_tier: str,
 ) -> tuple[str, str | None, str, dict[str, Any] | None]:
     capability = entry["capability_class"]
     if custom_surface_available:
@@ -552,6 +558,7 @@ def _fallback(
             facts,
             enforce_tier=enforce_tier,
             trusted_profiles=trusted_profiles,
+            required_tier=required_tier,
         )
         if candidate:
             return "fallback-safe", candidate["name"], "same-capability-profile", {**candidate, "available": True}
@@ -565,7 +572,7 @@ def _fallback(
         compatible = (
             capability in classes
             and _tier_evidence_satisfies(
-                evidence, capability, entry["capability_tier"]
+                evidence, capability, required_tier
             )
             if enforce_tier
             else (not fallback["human_gate_if_unresolved"] or capability in classes)
@@ -582,7 +589,17 @@ def preflight(
     *,
     enforce_tier: bool = True,
     trusted_profiles: dict[str, dict[str, Any]] | None = None,
+    fallback_required_tier: str | None = None,
 ) -> dict[str, Any]:
+    # The production classifier owns task requirements. Keep the validated
+    # profile's identity/tier/digest intact while checking alternative execution.
+    # Standalone profile checks retain the profile tier unless explicitly given
+    # the current V2 task requirement by their trusted caller.
+    required_tier = entry["capability_tier"] if fallback_required_tier is None else fallback_required_tier
+    if not isinstance(required_tier, str) or required_tier not in TIER_RANK:
+        raise ProfileValidationError("fallback required tier must be a known capability tier")
+    if fallback_required_tier is not None and not enforce_tier:
+        raise ProfileValidationError("task fallback required tier needs tier enforcement")
     conflicts = collision_report.get("conflicts", []) if isinstance(collision_report, dict) else collision_report
     base = {"profile": entry["name"], "capability_class": entry["capability_class"], "capability_tier": entry["capability_tier"], "tier_rank": entry["tier_rank"], "runtime_mapping": entry["runtime_mapping"], "collisions": conflicts}
     if conflicts:
@@ -593,6 +610,7 @@ def preflight(
         decision, selected, tier, evidence = _fallback(
             entry, facts, custom_surface_available=facts.get("custom_agent_surface") == "available", enforce_tier=True,
             trusted_profiles=trusted_profiles,
+            required_tier=required_tier,
         )
         return {**base, "state": "candidate-not-qualified-or-disabled", "decision": decision,
                 "selected": selected, "fallback_tier": tier, "fallback_evidence": evidence}
@@ -603,6 +621,7 @@ def preflight(
         decision, selected, tier, evidence = _fallback(
             entry, facts, custom_surface_available=False, enforce_tier=enforce_tier,
             trusted_profiles=trusted_profiles,
+            required_tier=required_tier,
         )
         return {**base, "state": "custom-surface-unavailable" if surface == "unavailable" else "unknown", "decision": decision, "selected": selected, "fallback_tier": tier, "fallback_evidence": evidence}
     models, efforts = facts.get("available_models"), facts.get("reasoning_efforts")
@@ -610,6 +629,7 @@ def preflight(
         decision, selected, tier, evidence = _fallback(
             entry, facts, custom_surface_available=True, enforce_tier=enforce_tier,
             trusted_profiles=trusted_profiles,
+            required_tier=required_tier,
         )
         return {**base, "state": "unknown", "decision": decision, "selected": selected, "fallback_tier": tier, "fallback_evidence": evidence}
     if (
@@ -629,6 +649,7 @@ def preflight(
         decision, selected, tier, evidence = _fallback(
             entry, facts, custom_surface_available=True, enforce_tier=enforce_tier,
             trusted_profiles=trusted_profiles,
+            required_tier=required_tier,
         )
         return {**base, "state": "unavailable", "decision": decision, "selected": selected, "fallback_tier": tier, "fallback_evidence": evidence}
     sandbox_evidence = _sandbox_evidence(entry["sandbox_expectation"], facts)
@@ -636,6 +657,7 @@ def preflight(
         decision, selected, tier, evidence = _fallback(
             entry, facts, custom_surface_available=True, enforce_tier=enforce_tier,
             trusted_profiles=trusted_profiles,
+            required_tier=required_tier,
         )
         return {**base, "state": "sandbox-constraint-unknown-or-widening", "decision": decision, "selected": selected, "fallback_tier": tier, "fallback_evidence": evidence}
     route_profile_evidence = {
