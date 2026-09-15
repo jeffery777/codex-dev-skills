@@ -3362,6 +3362,172 @@ class CliTests(unittest.TestCase):
                 self.assertEqual(1, loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts)]))
             self.assertIn("must match the deterministic", output.getvalue())
 
+    def test_agent_route_v2_routine_review_uses_task_tier_for_current_session_fallback(self):
+        for surface in ("available", "unavailable", "unknown"):
+            for mode, execution in (("parent_default", "parent-default"), ("sequential", "sequential-current-session")):
+                with self.subTest(surface=surface, mode=mode), tempfile.TemporaryDirectory() as directory:
+                    root = pathlib.Path(directory)
+                    document = agent_route_document({"branch": "fixture", "head_sha": "a" * 40})
+                    payload = document["agent_route"]
+                    payload["contract_version"] = 2
+                    payload["task"]["workload_kind"] = "review"
+                    payload["task"]["factors"]["write_blast_radius"] = "none"
+                    payload["profile_preflight"]["role"] = "loop_v2a_deep_reviewer"
+                    current_facts = {
+                        "custom_agent_surface": surface,
+                        "available_models": [],
+                        "reasoning_efforts": {},
+                        "enabled_candidates": {},
+                        "parent_default": {"available": False},
+                        "sequential": {"available": False},
+                    }
+                    current_facts[mode] = {
+                        "available": True,
+                        "capability_classes": ["deep-reviewer"],
+                        "capability_tiers": {"deep-reviewer": ["everyday"]},
+                    }
+                    path, facts = root / "route.json", root / "facts.json"
+                    path.write_text(json.dumps(document), encoding="utf-8")
+                    facts.write_text(json.dumps(current_facts), encoding="utf-8")
+                    output = StringIO()
+                    with redirect_stdout(output):
+                        self.assertEqual(0, loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts)]))
+                    result = json.loads(output.getvalue())
+                    receipt = result["route_receipt"]
+                    self.assertEqual("everyday", receipt["required_capability_tier"])
+                    self.assertEqual("everyday", receipt["selected_capability_tier"])
+                    self.assertEqual(execution, receipt["execution_mode"])
+                    self.assertEqual("deep", result["profile_preflight"]["capability_tier"])
+
+    def test_agent_route_v2_review_fallback_retains_class_tier_and_collision_guards(self):
+        cases = (
+            ("routine", "deep-reviewer", ["efficient"], False),
+            ("routine", "balanced-worker", ["everyday"], False),
+            ("routine", "deep-reviewer", [], False),
+            ("public-contract", "deep-reviewer", ["everyday"], False),
+            ("security", "security-reviewer", ["everyday"], False),
+            ("routine", "deep-reviewer", ["everyday"], True),
+        )
+        for risk, capability, tiers, collision in cases:
+            with self.subTest(risk=risk, capability=capability, tiers=tiers, collision=collision), tempfile.TemporaryDirectory() as directory:
+                root = pathlib.Path(directory)
+                document = agent_route_document({"branch": "fixture", "head_sha": "a" * 40})
+                payload = document["agent_route"]
+                payload["contract_version"] = 2
+                payload["task"]["workload_kind"] = "review"
+                payload["task"]["factors"]["write_blast_radius"] = "none"
+                payload["task"]["factors"]["security_data_migration_public_contract_risk"] = risk
+                role = "loop_v2a_security_reviewer" if risk == "security" else "loop_v2a_deep_reviewer"
+                payload["profile_preflight"]["role"] = role
+                if collision:
+                    destination = root / "installed"
+                    destination.mkdir()
+                    (destination / f"{role}.toml").write_text(
+                        (ROOT / "agent-profiles" / f"{role}.toml").read_text() + "\n# local drift\n",
+                        encoding="utf-8",
+                    )
+                    payload["profile_preflight"]["destination_root"] = str(destination)
+                path, facts = root / "route.json", root / "facts.json"
+                path.write_text(json.dumps(document), encoding="utf-8")
+                facts.write_text(json.dumps({
+                    "custom_agent_surface": "unavailable",
+                    "available_models": [],
+                    "reasoning_efforts": {},
+                    "enabled_candidates": {},
+                    "parent_default": {
+                        "available": True,
+                        "capability_classes": [capability],
+                        "capability_tiers": {capability: tiers},
+                    },
+                    "sequential": {"available": False},
+                }), encoding="utf-8")
+                output = StringIO()
+                with redirect_stdout(output):
+                    self.assertEqual(2, loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts)]))
+                result = json.loads(output.getvalue())
+                self.assertEqual("human-gate", result["status"])
+                self.assertNotIn("route_receipt", result)
+                if collision:
+                    self.assertEqual("profile-name-collision", result["profile_preflight"]["reason"])
+
+    def test_agent_route_v2_routine_review_missing_installed_profile_retains_safe_fallback(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            document = agent_route_document({"branch": "fixture", "head_sha": "a" * 40})
+            payload = document["agent_route"]
+            payload["contract_version"] = 2
+            payload["task"]["workload_kind"] = "review"
+            payload["task"]["factors"]["write_blast_radius"] = "none"
+            payload["profile_preflight"]["role"] = "loop_v2a_deep_reviewer"
+            destination = root / "empty-installed"
+            destination.mkdir()
+            payload["profile_preflight"]["destination_root"] = str(destination)
+            path, facts = root / "route.json", root / "facts.json"
+            path.write_text(json.dumps(document), encoding="utf-8")
+            facts.write_text(json.dumps({
+                "custom_agent_surface": "available",
+                "parent_sandbox_mode": "read-only",
+                "available_models": ["gpt-6-astra"],
+                "reasoning_efforts": {"gpt-6-astra": ["xhigh"]},
+                "enabled_candidates": {},
+                "parent_default": {
+                    "available": True,
+                    "capability_classes": ["deep-reviewer"],
+                    "capability_tiers": {"deep-reviewer": ["everyday"]},
+                },
+                "sequential": {"available": False},
+            }), encoding="utf-8")
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(0, loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts)]))
+            receipt = json.loads(output.getvalue())["route_receipt"]
+            self.assertEqual("parent-default", receipt["execution_mode"])
+            self.assertEqual("everyday", receipt["selected_capability_tier"])
+
+    def test_agent_route_coupled_review_reports_final_gate_or_sequential_route(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            document = agent_route_document({"branch": "fixture", "head_sha": "a" * 40})
+            payload = document["agent_route"]
+            payload["task"]["factors"].update(
+                write_blast_radius="none", independence_parallelizability="coupled")
+            payload["profile_preflight"]["role"] = "loop_v2a_deep_reviewer"
+            path, facts_path = root / "route.json", root / "facts.json"
+            for version in (1, 2):
+                payload["contract_version"] = version
+                if version == 2:
+                    payload["task"]["workload_kind"] = "review"
+                for sequential_available in (False, True):
+                    with self.subTest(version=version, sequential=sequential_available):
+                        facts = {
+                            "custom_agent_surface": "unavailable",
+                            "enabled_candidates": {},
+                            "parent_default": {
+                                "available": True,
+                                "capability_classes": ["deep-reviewer"],
+                                "capability_tiers": {"deep-reviewer": ["everyday"]},
+                            },
+                            "sequential": {
+                                "available": sequential_available,
+                                "capability_classes": ["deep-reviewer"],
+                                "capability_tiers": {"deep-reviewer": ["everyday"]},
+                            },
+                        }
+                        path.write_text(json.dumps(document), encoding="utf-8")
+                        facts_path.write_text(json.dumps(facts), encoding="utf-8")
+                        output = StringIO()
+                        with redirect_stdout(output):
+                            rc = loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts_path)])
+                        result = json.loads(output.getvalue())
+                        self.assertEqual(0 if sequential_available else 2, rc)
+                        self.assertEqual("routed" if sequential_available else "human-gate", result["status"])
+                        receipt = result["route_receipt"]
+                        self.assertEqual(
+                            "sequential-current-session" if sequential_available else "stop-for-human-gate",
+                            receipt["execution_mode"],
+                        )
+                        self.assertTrue(loopctl.agent_routing.validate_route_receipt(receipt)["valid"])
+
     def test_agent_route_v2_quality_preference_controls_exceptional_and_binds_receipt(self):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)

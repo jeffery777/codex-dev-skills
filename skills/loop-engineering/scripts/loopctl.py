@@ -894,6 +894,7 @@ def command_agent_route(
                 facts, role=role, entries=entries, scope=task.get("qualification_scope")
             )
         collision_report = profile_preflight.detect_collisions(profile_dir, roots, destination)
+        fallback_required_tier = classification["capability_tier"] if contract_version == 2 else None
         def destination_matches(candidate: dict[str, Any]) -> bool:
             if not destination.is_dir():
                 return False
@@ -917,6 +918,7 @@ def command_agent_route(
             collision_report,
             enforce_tier=contract_version == 2,
             trusted_profiles=entries,
+            fallback_required_tier=fallback_required_tier,
         )
         selection = {"policy": "baseline", "requested_profile": role, "candidate": None}
         if contract_version == 2:
@@ -929,6 +931,7 @@ def command_agent_route(
                 candidate_result = profile_preflight.preflight(
                     candidate_entry, facts, collision_report, enforce_tier=True,
                     trusted_profiles=entries,
+                    fallback_required_tier=fallback_required_tier,
                 )
                 candidate_evidence = candidate_result.get("route_profile_evidence")
                 installed = isinstance(candidate_evidence, dict) and destination_matches(candidate_evidence)
@@ -955,7 +958,7 @@ def command_agent_route(
                     if name != role
                     and name not in profile_preflight.CANDIDATE_ROLES
                     and entry["capability_class"] == required["capability_class"]
-                    and entry["tier_rank"] >= required["tier_rank"]
+                    and entry["tier_rank"] >= profile_preflight.TIER_RANK[classification["capability_tier"]]
                     and (
                         entry["capability_tier"] != "exceptional"
                         or classification["capability_tier"] == "exceptional"
@@ -970,6 +973,7 @@ def command_agent_route(
                     collision_report,
                     enforce_tier=True,
                     trusted_profiles=entries,
+                    fallback_required_tier=fallback_required_tier,
                 )
                 candidate_evidence = candidate_result.get("route_profile_evidence")
                 if (
@@ -999,6 +1003,7 @@ def command_agent_route(
                 collision_report,
                 enforce_tier=contract_version == 2,
                 trusted_profiles=entries,
+                fallback_required_tier=fallback_required_tier,
             )
             evidence = None
             facts = degraded_facts
@@ -1037,8 +1042,13 @@ def command_agent_route(
     ) as exc:
         render({"status": "rejected", "errors": [str(exc)]})
         return 1
-    render({"status": "routed", "profile_preflight": preflight_result, "route_receipt": receipt})
-    return 0
+    needs_human_gate = receipt["execution_mode"] == "stop-for-human-gate"
+    render({
+        "status": "human-gate" if needs_human_gate else "routed",
+        "profile_preflight": preflight_result,
+        "route_receipt": receipt,
+    })
+    return 2 if needs_human_gate else 0
 
 
 def _current_git_revision(
