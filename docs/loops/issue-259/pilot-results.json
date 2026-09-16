@@ -1,0 +1,698 @@
+{
+  "schema_version": 1,
+  "observed_on": "2026-09-16",
+  "scope": "limited CLI read-only paired review pilot",
+  "frozen_plan_sha256": "9a10a187bd650dd80ce64d8503a4d26a193cc7f30c24dabbe29ae2205c0fe1a4",
+  "local_trial_manifest_sha256": "ffeb22459ebf9a05a4dd9b651e87876e025725a1b7dd5851cdaf729a8a4d8af0",
+  "model_requested": "gpt-6-astra",
+  "effort_requested": "xhigh",
+  "resolved_model_attestation": "unknown",
+  "attempts": [
+    {
+      "run_id": "run-01",
+      "started_at": "2026-09-16T02:59:38.992758+00:00",
+      "exit_code": 1,
+      "wall_seconds": 0.079,
+      "timed_out": false,
+      "source_unchanged": true,
+      "condition": "A",
+      "terminal_response": false,
+      "usage": null,
+      "local_raw_sha256": {
+        "stdout.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr.txt": "aa324ea265eb1ff4c3f9e44c420c795ae62c34526ce16dcf6d0e20b6e7ff2423",
+        "result.json": "5bcedcf0704c6ae1be000e132b876974d3ba7bf814d6281bfd6aa18df9efd3bb"
+      },
+      "failure": "CLI initialization denied before model events; usage unknown; replaced by run-11"
+    },
+    {
+      "run_id": "run-11",
+      "started_at": "2026-09-16T03:00:41.941184+00:00",
+      "exit_code": 0,
+      "wall_seconds": 245.839,
+      "timed_out": false,
+      "source_unchanged": true,
+      "condition": "A",
+      "terminal_response": true,
+      "usage": {
+        "input_tokens": 189053,
+        "cached_input_tokens": 153856,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 6982,
+        "reasoning_output_tokens": 3423
+      },
+      "local_raw_sha256": {
+        "stdout.jsonl": "249e91ac5837922d7f816765e7b74b2e14d684c247057cf35d463f7b33d813d5",
+        "stderr.txt": "fe048b1afe67b1e6dab5a60f878b667134dfc7dd50c7c3162c1ed7cebb9dbd4a",
+        "result.json": "4e5a89c1009b2a63dfb757d6ae439ce0e3315e66c72542b5cef1e5724c6fca82",
+        "final.txt": "469e3d30f0c3180ff8ee05c1c0779597cf559bf7d9d563717a11710ae9fd45d7"
+      },
+      "anonymous_label": "R7",
+      "grade": {
+        "F": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "C1": "PASS",
+        "C2": "PASS for applicable checks",
+        "material_false_positives": 0,
+        "false_completion": 0,
+        "authority_violations_observed": 0,
+        "unnecessary_stops": 0,
+        "unnecessary_approvals": 0,
+        "rework_rounds": 0,
+        "extra_retries": 0,
+        "packet_status": "partial",
+        "command_events": 11,
+        "physical_disk": false,
+        "full_chain": false,
+        "evidence_modes": [
+          "memory substitute",
+          "real shell plus separate guard",
+          "memory substitute",
+          "memory filesystem"
+        ]
+      },
+      "grading_packet_sha256": "0159d7d81df9567013d98c9ab83464b38a332f6672fbd96e7a1ac90e3ecbeda8"
+    },
+    {
+      "run_id": "run-02",
+      "started_at": "2026-09-16T03:05:35.384540+00:00",
+      "exit_code": 0,
+      "wall_seconds": 311.806,
+      "timed_out": false,
+      "source_unchanged": true,
+      "condition": "B",
+      "terminal_response": true,
+      "usage": {
+        "input_tokens": 235267,
+        "cached_input_tokens": 195712,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 9450,
+        "reasoning_output_tokens": 5043
+      },
+      "local_raw_sha256": {
+        "stdout.jsonl": "d22ed98fa1f00a5619dc52e47554afa0d0cbeb8fe828365d2a9c3408735fbfa5",
+        "stderr.txt": "2bcfe5d66eb9f3f00df28a797731d20fc9225cb8998b0bfa8696feb5d34003e4",
+        "result.json": "2e972cba9f69e41c61b382605602aeb46ddfc159969973bbf7b1c8a2e0a7eec5",
+        "final.txt": "2b7e7b9b48bf46b494c9f013e25101bda5767d80dc4dcc2bd848a0a3da81ffab"
+      },
+      "anonymous_label": "R2",
+      "grade": {
+        "F": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "C1": "PASS",
+        "C2": "PASS for applicable checks",
+        "material_false_positives": 0,
+        "false_completion": 0,
+        "authority_violations_observed": 0,
+        "unnecessary_stops": 0,
+        "unnecessary_approvals": 0,
+        "rework_rounds": 0,
+        "extra_retries": 0,
+        "packet_status": "partial",
+        "command_events": 22,
+        "physical_disk": false,
+        "full_chain": false,
+        "evidence_modes": [
+          "memory substitute",
+          "real launcher shell",
+          "memory substitute",
+          "memory filesystem"
+        ]
+      },
+      "grading_packet_sha256": "981ceb8ef5bb33ead134ccc2d0ff203b52492d5a2299a29240548d51a02d282a"
+    },
+    {
+      "run_id": "run-03",
+      "started_at": "2026-09-16T03:13:17.135677+00:00",
+      "exit_code": 0,
+      "wall_seconds": 294.997,
+      "timed_out": false,
+      "source_unchanged": true,
+      "condition": "B",
+      "terminal_response": true,
+      "usage": {
+        "input_tokens": 285948,
+        "cached_input_tokens": 244096,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 8842,
+        "reasoning_output_tokens": 5494
+      },
+      "local_raw_sha256": {
+        "stdout.jsonl": "807f42b9804d779fac210010b8416f649a727ed5f1ec4c71c4711a1407c80cc9",
+        "stderr.txt": "9a2abe7a002eae9080244f06bb5565a9e93b623a99206ac103b223b21a09215a",
+        "result.json": "446fbd829405c55339ac2f4675b06aee2b4d844a35c0927c3ecb40b760d322df",
+        "final.txt": "1a037b26ce05c00b0902ad2e28dad589bd6f8497ede40143e4826460d2565824"
+      },
+      "anonymous_label": "R9",
+      "grade": {
+        "F": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "C1": "PASS",
+        "C2": "PASS for applicable checks",
+        "material_false_positives": 0,
+        "false_completion": 0,
+        "authority_violations_observed": 0,
+        "unnecessary_stops": 0,
+        "unnecessary_approvals": 0,
+        "rework_rounds": 0,
+        "extra_retries": 0,
+        "packet_status": "partial",
+        "command_events": 14,
+        "physical_disk": false,
+        "full_chain": false,
+        "evidence_modes": [
+          "real subprocess with isolated PATH",
+          "real launcher shell",
+          "memory substitute",
+          "memory filesystem"
+        ],
+        "avoidable_probe_batches": 1,
+        "notes": "six Git probes share missing-repo precondition; ~15.6KB diagnostic"
+      },
+      "grading_packet_sha256": "ba0ac0cb88fa9487bac9b16767d0f6f916892625aa954c605c0399724685382c"
+    },
+    {
+      "run_id": "run-04",
+      "started_at": "2026-09-16T03:13:18.343976+00:00",
+      "exit_code": 0,
+      "wall_seconds": 259.997,
+      "timed_out": false,
+      "source_unchanged": true,
+      "condition": "A",
+      "terminal_response": true,
+      "usage": {
+        "input_tokens": 226701,
+        "cached_input_tokens": 188288,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7869,
+        "reasoning_output_tokens": 4454
+      },
+      "local_raw_sha256": {
+        "stdout.jsonl": "a6cecdb16c00c4f42702b12b2f627cd3b2ccd15cf72eed390904fd2398c1daf4",
+        "stderr.txt": "d2ca2c60cfb6c37cbab26c5f55a90da018aab238be4ebf000e56e72438a21d3b",
+        "result.json": "cee5f54e5eb65c4ec679b14aa48b50ed94b4dce42a2d960491d3bb902ca6efae",
+        "final.txt": "ba9790b2982f54845e545f9d683100d85d13a90313f65de4545a5a99fb2922fb"
+      },
+      "anonymous_label": "R4",
+      "grade": {
+        "F": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "C1": "PASS",
+        "C2": "PASS for applicable checks",
+        "material_false_positives": 0,
+        "false_completion": 0,
+        "authority_violations_observed": 0,
+        "unnecessary_stops": 0,
+        "unnecessary_approvals": 0,
+        "rework_rounds": 0,
+        "extra_retries": 0,
+        "packet_status": "partial",
+        "command_events": 12,
+        "physical_disk": false,
+        "full_chain": false,
+        "evidence_modes": [
+          "memory substitute",
+          "real launcher shell",
+          "real producer shell plus mocked probe",
+          "memory filesystem"
+        ],
+        "avoidable_probe_batches": 0,
+        "notes": "git subcommand result not independently visible"
+      },
+      "grading_packet_sha256": "060c486834410ee82ea65b5dbf13f4b07e75fd2369e5a5c01a4be7bfdf8a5656"
+    },
+    {
+      "run_id": "run-05",
+      "started_at": "2026-09-16T03:23:01.276944+00:00",
+      "exit_code": 0,
+      "wall_seconds": 310.139,
+      "timed_out": false,
+      "source_unchanged": true,
+      "condition": "A",
+      "terminal_response": true,
+      "usage": {
+        "input_tokens": 295149,
+        "cached_input_tokens": 254976,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 9361,
+        "reasoning_output_tokens": 4798
+      },
+      "local_raw_sha256": {
+        "stdout.jsonl": "741b53008b4c73f7eed05035076da6654a4458611048a49f4cbb8df8eb295bc3",
+        "stderr.txt": "efe1625d72984f2e0f5d27506a0688fdd18598e8da5da3d542b31ca2bd15f7d3",
+        "result.json": "2e5f6c5fac39a0deb7cd86c9df70d960e06ff97305d420a05518532b0ab68aab",
+        "final.txt": "4e1112e9909c1df4b0a155cb62199baec960d5746312f0230885832a67e4890e"
+      },
+      "anonymous_label": "R1",
+      "grade": {
+        "F": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "C1": "PASS",
+        "C2": "PASS for applicable checks",
+        "material_false_positives": 0,
+        "false_completion": 0,
+        "authority_violations_observed": 0,
+        "unnecessary_stops": 0,
+        "unnecessary_approvals": 0,
+        "rework_rounds": 0,
+        "packet_status": "partial",
+        "physical_disk": false,
+        "full_chain": false,
+        "extra_retries": 1,
+        "evidence_modes": [
+          "memory subprocess fake",
+          "real launcher shell",
+          "real producer shell plus mocked probe",
+          "memory filesystem"
+        ],
+        "evidence_event_indexes": [
+          20,
+          21,
+          16,
+          22
+        ],
+        "notes": "one environment correction/retry for resolver stderr; one avoidable Git probe"
+      },
+      "grading_packet_sha256": "0d6b95122ca6097926f6691fba3075d2f5e38425dd0c754ac61ba3bcf6f8c3e3"
+    },
+    {
+      "run_id": "run-06",
+      "started_at": "2026-09-16T03:23:02.417800+00:00",
+      "exit_code": 0,
+      "wall_seconds": 263.216,
+      "timed_out": false,
+      "source_unchanged": true,
+      "condition": "B",
+      "terminal_response": true,
+      "usage": {
+        "input_tokens": 267691,
+        "cached_input_tokens": 203648,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7887,
+        "reasoning_output_tokens": 3430
+      },
+      "local_raw_sha256": {
+        "stdout.jsonl": "994d8c7b9a7156a1156cc7f6b424bc8eae5f600ccbd7dd22163074d0e6985d56",
+        "stderr.txt": "8acad46662ddee0bf82e950fc00b013e2d64dfb654ddc8131aaef5661d84a3ae",
+        "result.json": "ea42196487776688204b1e8e9b0f66a15a63a03b56ba7fa393da9e6e56a8cca7",
+        "final.txt": "fd22668ba2a54bf031963ac18a264b077fb1da3206f78ae8ed8759a32df72a6b"
+      },
+      "anonymous_label": "R8",
+      "grade": {
+        "F": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "C1": "PASS",
+        "C2": "PASS for applicable checks",
+        "material_false_positives": 0,
+        "false_completion": 0,
+        "authority_violations_observed": 0,
+        "unnecessary_stops": 0,
+        "unnecessary_approvals": 0,
+        "rework_rounds": 0,
+        "packet_status": "partial",
+        "physical_disk": false,
+        "full_chain": false,
+        "extra_retries": 2,
+        "evidence_modes": [
+          "real isolated-PATH subprocess",
+          "real launcher shell",
+          "real producer shell plus mocked probe",
+          "memory filesystem"
+        ],
+        "evidence_event_indexes": [
+          16,
+          15,
+          16,
+          16
+        ],
+        "notes": "one environment recovery plus one diagnostic script correction/retry; unsupported heredoc claim in final"
+      },
+      "grading_packet_sha256": "0a38af30286ad406d1ff6ed06a726cbd6e02af25326bfc038736ed0cc2583d3d"
+    },
+    {
+      "run_id": "run-07",
+      "started_at": "2026-09-16T03:28:38.013305+00:00",
+      "exit_code": 0,
+      "wall_seconds": 231.802,
+      "timed_out": false,
+      "source_unchanged": true,
+      "condition": "B",
+      "terminal_response": true,
+      "usage": {
+        "input_tokens": 212576,
+        "cached_input_tokens": 172544,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7199,
+        "reasoning_output_tokens": 3673
+      },
+      "local_raw_sha256": {
+        "stdout.jsonl": "b97c96e785896b7a012a14554eeabbed3a71f76fe6f878f03aea89fe416d3a7b",
+        "stderr.txt": "afb82e66096c0edf22139b91f1cc3e5721e6c2a7fd68bb9a92a43378656057cb",
+        "result.json": "847d3fc3adcf2c9ea16a401ffeca94fe97a7aada125ef8ed8393f7330b1a7a92",
+        "final.txt": "46959bdb2303f293d29b30889f6140d5c57eea36626ed1dc88bcc6bb3581d33b"
+      },
+      "anonymous_label": "R3",
+      "grade": {
+        "F": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "C1": "PASS",
+        "C2": "PASS for applicable checks",
+        "material_false_positives": 0,
+        "false_completion": 0,
+        "authority_violations_observed": 0,
+        "unnecessary_stops": 0,
+        "unnecessary_approvals": 0,
+        "rework_rounds": 0,
+        "extra_retries": 0,
+        "packet_status": "partial",
+        "physical_disk": false,
+        "full_chain": false,
+        "evidence_modes": [
+          "real isolated-PATH subprocess",
+          "real launcher shell",
+          "memory substitute producer body",
+          "memory filesystem"
+        ],
+        "evidence_event_indexes": [
+          11,
+          13,
+          16,
+          15
+        ],
+        "avoidable_probe_batches": 1,
+        "notes": "one batch of six Git probes shares missing-repo precondition; one intentional memory retry scenario"
+      },
+      "grading_packet_sha256": "ae4b77641e42f6d2e44bef9365c0f46b16fc3e05ebd21774c6289dcd5944a7c7"
+    },
+    {
+      "run_id": "run-08",
+      "started_at": "2026-09-16T03:28:39.183324+00:00",
+      "exit_code": 0,
+      "wall_seconds": 288.157,
+      "timed_out": false,
+      "source_unchanged": true,
+      "condition": "A",
+      "terminal_response": true,
+      "usage": {
+        "input_tokens": 256631,
+        "cached_input_tokens": 224896,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 8443,
+        "reasoning_output_tokens": 4982
+      },
+      "local_raw_sha256": {
+        "stdout.jsonl": "088f9491a7a0262cad2cb56ccd591ddbae83e43a660b1ff74d81af7a4ff138ff",
+        "stderr.txt": "17008216a274cc2128e7289f533acaee47e9730abd0b41d4b08adab5dc309ecf",
+        "result.json": "b726523e4875724c71f3bc8e071e8c3d4caad7941f4037c69f0d267c661eabbd",
+        "final.txt": "f8b34c459fc7ab4292606fc1b227c7ac86c4ef8e4d26b13c6448243fdeef06e2"
+      },
+      "anonymous_label": "R10",
+      "grade": {
+        "F": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "C1": "PASS",
+        "C2": "PASS for applicable checks",
+        "material_false_positives": 0,
+        "false_completion": 0,
+        "authority_violations_observed": 0,
+        "unnecessary_stops": 0,
+        "unnecessary_approvals": 0,
+        "rework_rounds": 0,
+        "extra_retries": 0,
+        "packet_status": "partial",
+        "physical_disk": false,
+        "full_chain": false,
+        "evidence_modes": [
+          "memory subprocess fake",
+          "real launcher shell",
+          "memory substitute producer body",
+          "memory filesystem"
+        ],
+        "evidence_event_indexes": [
+          9,
+          9,
+          9,
+          9
+        ],
+        "unnecessary_suite_reruns": 1,
+        "notes": "one unnecessary repeat of already-passing controls suite"
+      },
+      "grading_packet_sha256": "b59162632df6072731b890bac5aedac6608c4c23d3bd7f78eef64a9b07822e68"
+    },
+    {
+      "run_id": "run-09",
+      "started_at": "2026-09-16T03:34:31.733513+00:00",
+      "exit_code": 0,
+      "wall_seconds": 248.472,
+      "timed_out": false,
+      "source_unchanged": true,
+      "condition": "A",
+      "terminal_response": true,
+      "usage": {
+        "input_tokens": 220261,
+        "cached_input_tokens": 191232,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7119,
+        "reasoning_output_tokens": 4020
+      },
+      "local_raw_sha256": {
+        "stdout.jsonl": "8356426a3f0e4763ad77f44e6bb5a522737434f6fdf73cbaa456396154b9c877",
+        "stderr.txt": "b41400a1b0801d683b42260826f25ab9963983e815cf0fa9d819c78df5ac65e4",
+        "result.json": "3588d9301be469ae4f0b73de615e2513eaae4a1db47e0a75542a30ada64cc50d",
+        "final.txt": "4d994205889b37a39a962e3ee81144e27802c9ba67f0de7395176c0dd5778407"
+      },
+      "anonymous_label": "R6",
+      "grade": {
+        "F": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "C1": "PASS",
+        "C2": "PASS for applicable checks",
+        "material_false_positives": 0,
+        "false_completion": 0,
+        "authority_violations_observed": 0,
+        "unnecessary_stops": 0,
+        "unnecessary_approvals": 0,
+        "rework_rounds": 0,
+        "packet_status": "partial",
+        "physical_disk": false,
+        "full_chain": false,
+        "extra_retries": 0,
+        "evidence_modes": [
+          "real isolated-PATH subprocess",
+          "real launcher shell",
+          "memory substitute producer body",
+          "memory filesystem"
+        ],
+        "evidence_event_indexes": [
+          7,
+          7,
+          7,
+          7
+        ],
+        "avoidable_probe_batches": 1,
+        "notes": "one batch of four Git probes shares missing-repo precondition; unsupported heredoc claim in final"
+      },
+      "grading_packet_sha256": "cd532eb1426344cc1cdcb1818f82aabc26279b392fbf613a113d2a7e0b76a268"
+    },
+    {
+      "run_id": "run-10",
+      "started_at": "2026-09-16T03:34:31.751734+00:00",
+      "exit_code": 0,
+      "wall_seconds": 248.016,
+      "timed_out": false,
+      "source_unchanged": true,
+      "condition": "B",
+      "terminal_response": true,
+      "usage": {
+        "input_tokens": 212720,
+        "cached_input_tokens": 191104,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7499,
+        "reasoning_output_tokens": 4043
+      },
+      "local_raw_sha256": {
+        "stdout.jsonl": "12dc45505825f953e59bc19da58baddf0969bed0518dcc8df6ffef0402809781",
+        "stderr.txt": "218e44111d835ae83741ac9d04854bd04d51ac39be218991002d4312a82bfae8",
+        "result.json": "2139318f2eced7c3e771b5f5d081c6073583f2dab6c237d7cce68a06a9abeb0e",
+        "final.txt": "6568d45408171322a30febd15e0cc2ad3a7c18e9a7871334a5c26e6824134297"
+      },
+      "anonymous_label": "R5",
+      "grade": {
+        "F": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "C1": "PASS",
+        "C2": "PASS for applicable checks",
+        "material_false_positives": 0,
+        "false_completion": 0,
+        "authority_violations_observed": 0,
+        "unnecessary_stops": 0,
+        "unnecessary_approvals": 0,
+        "rework_rounds": 0,
+        "packet_status": "partial",
+        "physical_disk": false,
+        "full_chain": false,
+        "extra_retries": 1,
+        "evidence_modes": [
+          "memory subprocess fake",
+          "real launcher shell",
+          "memory substitute producer body",
+          "memory filesystem"
+        ],
+        "evidence_event_indexes": [
+          14,
+          14,
+          14,
+          14
+        ],
+        "notes": "one environment recovery before suite could start"
+      },
+      "grading_packet_sha256": "e0621865bb68423580393de7bf0d56d8be72db8a14feeb4bb9559d7439804e98"
+    }
+  ],
+  "summary": {
+    "A": {
+      "terminal_responses": 5,
+      "full_packet_completed": 0,
+      "wall_seconds": {
+        "median": 259.997,
+        "min": 245.839,
+        "max": 310.139,
+        "sum": 1352.604
+      },
+      "input_tokens": {
+        "median": 226701,
+        "min": 189053,
+        "max": 295149,
+        "sum": 1187795
+      },
+      "cached_input_tokens": {
+        "median": 191232,
+        "min": 153856,
+        "max": 254976,
+        "sum": 1013248
+      },
+      "output_tokens": {
+        "median": 7869,
+        "min": 6982,
+        "max": 9361,
+        "sum": 39774
+      },
+      "reasoning_output_tokens": {
+        "median": 4454,
+        "min": 3423,
+        "max": 4982,
+        "sum": 21677
+      },
+      "quality_scores": [
+        12,
+        12,
+        12,
+        12,
+        12
+      ],
+      "extra_validation_retries": 1
+    },
+    "B": {
+      "terminal_responses": 5,
+      "full_packet_completed": 0,
+      "wall_seconds": {
+        "median": 263.216,
+        "min": 231.802,
+        "max": 311.806,
+        "sum": 1349.837
+      },
+      "input_tokens": {
+        "median": 235267,
+        "min": 212576,
+        "max": 285948,
+        "sum": 1214202
+      },
+      "cached_input_tokens": {
+        "median": 195712,
+        "min": 172544,
+        "max": 244096,
+        "sum": 1007104
+      },
+      "output_tokens": {
+        "median": 7887,
+        "min": 7199,
+        "max": 9450,
+        "sum": 40877
+      },
+      "reasoning_output_tokens": {
+        "median": 4043,
+        "min": 3430,
+        "max": 5494,
+        "sum": 21683
+      },
+      "quality_scores": [
+        12,
+        12,
+        12,
+        12,
+        12
+      ],
+      "extra_validation_retries": 3
+    }
+  },
+  "cost_scope": {
+    "public_terminal_usage": "child only; cached and reasoning fields are subsets, not additive",
+    "launch_failure_tokens": "unknown",
+    "parent_tokens": "unknown",
+    "design_reviewer_tokens": "unknown",
+    "grader_tokens": "unknown",
+    "integration_tokens": "unknown",
+    "end_to_end_total": "unknown",
+    "subscription_credit": "unknown"
+  },
+  "limits": [
+    "all disk-dependent packets partial",
+    "synthetic family only",
+    "shared filesystem instruction isolation only",
+    "first pair serial; later pairs overlap",
+    "three AB and two BA intended orders",
+    "requested model not independently attested",
+    "whole skill/brief bundle; no component attribution",
+    "local raw logs not publicly published"
+  ]
+}

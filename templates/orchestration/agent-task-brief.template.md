@@ -30,6 +30,12 @@ existing route rather than duplicating its schema. This brief grants no authorit
 - Required checks: `<commands and acceptance criteria>`
 - Expand or repeat only for: `<new changes, failures or unresolved concerns>`
 - Evidence required for parent acceptance: `<artifacts; retain all applicable gates>`
+- Execution evidence (optional): `<applicable required suites/scenarios; run/skip/fail, result and reason, or equivalent structured evidence; confirm what actually ran>`
+- Boundary evidence (optional): `<mocked boundaries; actual or representative environment/input evidence; unverified scope>`
+
+省略不相關欄位，可引用既有測試報告，不強制框架、固定格式或 attestation。
+Skip 依適用判準及原因判讀，不一律算失敗；必跑情境未執行時明列驗收缺口，
+不能以收集到測試、命令 exit 0 或其他 suite 通過宣稱已驗證。
 
 ## Continue And Escalate
 

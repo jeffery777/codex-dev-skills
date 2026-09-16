@@ -39,6 +39,9 @@ Use this skill for routine review of working-tree, branch, or patch changes.
 依變更風險檢查受影響的完整執行路徑與上下游契約；必要時包含有效配置、
 實際執行環境、失敗／部分成功、重試及恢復情境。專案特定矩陣採按需 overlay，
 不要求每個小改動執行全套情境。
+受影響路徑涉及外部命令、環境傳遞、輸入 loader/builder 或產物
+producer/consumer 時，按需讀取 [整合接點參考表](references/integration-boundaries.md)，
+只採用相關列；單純局部變更不額外載入。
 找到第一個問題後繼續其餘獨立檢查，集中回報已查證 findings；受阻或缺少環境的
 項目標示未驗證。可引用仍有效的必要測試證據，依新變更、失敗或疑慮補最小
 安全驗證；靜態、mock 或本機結果不能代替尚未驗證的實際 runtime 行為。
