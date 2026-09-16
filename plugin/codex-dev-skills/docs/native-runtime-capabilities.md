@@ -6,17 +6,19 @@ shared contract owns objective, task, evidence, review, and completion
 semantics. Runtime capabilities may start, coordinate, observe, or wake work,
 but they do not become completion authority.
 
-Facts in the current capability table were last verified on 2026-09-11 from
+The CLI/Desktop interface facts were refreshed on 2026-09-16 from
 the active callable schemas, the public Codex documentation, and the maintained
 source-repository compatibility evidence at
-`docs/codex-runtime-compatibility-evidence-2026-09-11.md`. Every adapter
+`docs/codex-runtime-compatibility-evidence-2026-09-16.md`. Unrelated capabilities
+retain their separately dated evidence below. Every adapter
 must still inspect the capability exposed by its active runtime instead of
 assuming that a recorded schema is permanently available.
 
 The maintained evidence records standalone CLI, Desktop application, and
 Desktop-bundled CLI observations independently. It confirms that
-`codex mcp-server` was removed in standalone CLI 0.154.0 while still present
-in observed bundled CLI 0.153.4. This does not deprecate Codex's MCP client
+`codex mcp-server` is absent from standalone CLI 0.154.0 and observed bundled
+CLI 0.154.0-alpha.6.2. The older bundled 0.153.4 observation remains historical.
+This does not deprecate Codex's MCP client
 configuration, connectors, plugins, or native thread tools. A zero help exit
 status alone is insufficient: inspect the exact selected subcommand's usage.
 

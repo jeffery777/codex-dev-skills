@@ -52,10 +52,10 @@ CLI adapter 的 native TUI reference；相同 basename 不代表 payload 或啟�
 
 ## Contract Family Boundary
 
-Desktop callable facts were last verified on 2026-09-11. The
-[maintained point-in-time evidence](codex-runtime-compatibility-evidence-2026-09-11.md)
+Desktop callable facts were last verified on 2026-09-16. The
+[maintained point-in-time evidence](codex-runtime-compatibility-evidence-2026-09-16.md)
 records the independent CLI and Desktop runtime builds and confirms that the
-removal of `codex mcp-server` in standalone CLI does not change this Desktop contract or
+absence of `codex mcp-server` in both observed CLI binaries does not change this Desktop contract or
 authorize a direct app-server integration. The current
 public product surface is the
 ChatGPT desktop app; this document retains `Desktop` as the compatibility label
@@ -83,7 +83,7 @@ for its Codex task and thread control plane:
   Git project's saved checkout; and use `projectless` only for intentionally
   non-project work. A prohibition on
   creating a new worktree is not a reason to choose `projectless`.
-- The 2026-09-11 read-only `list_projects` result used `schemaVersion: 2` and
+- The 2026-09-16 read-only `list_projects` result used `schemaVersion: 2` and
   supplied project and host routing fields. The same refresh's `list_threads`
   result used
   `schemaVersion: 4`, with pinned tasks in `pinnedThreads` carrying

@@ -47,8 +47,9 @@ dispatch/wakeup evidence only, not processing or completion evidence.
 runtime diagnosis. It cannot prove operation support or replace active public
 help/schema inspection. It grants no private-state or daemon authority.
 
-`codex mcp-server` was removed in standalone CLI 0.154.0; the observed Desktop
-bundled CLI 0.153.4 still exposes it. It is outside this session adapter. Check
+`codex mcp-server` is absent from observed standalone CLI 0.154.0 and Desktop
+bundled CLI 0.154.0-alpha.6.2 (2026-09-16). The older bundled 0.153.4 observation
+is historical. It is outside this session adapter. Check
 the selected executable's exact subcommand help shape, not just exit status:
 0.154.0 can return root help with exit 0 for the removed command. Its public
 migration boundary is app server for product integrations or the SDK for

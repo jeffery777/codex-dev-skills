@@ -80,6 +80,16 @@ gh pr checks
 
 If `gh` is unauthenticated, classify that as a platform-auth failure instead of retrying with unrelated tools.
 
+For a justified API fallback, keep the API invocation simple and save its
+complete returned output in a separate authorized local operation. If approval
+prompts recur, follow the canonical policy's
+[shell-shape diagnosis](../policies/github-control-plane-policy.md#shell-shape-and-repeated-approval-prompts):
+inspect the exact executable/argv and relevant saved and effective rules,
+without expanding permissions. Redirection may prevent a prefix from matching;
+it is not the only possible cause. A static `execpolicy check` result does not
+prove the live Desktop approval outcome. Never replay a mutation merely to
+save an uncertain response.
+
 ## Merge Readiness Pattern
 
 For a PR merge readiness task:
