@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "source_base": "476d2437519965e44e97de3423041852104c80e5",
+  "plan_sha256": "9a10a187bd650dd80ce64d8503a4d26a193cc7f30c24dabbe29ae2205c0fe1a4",
+  "model_requested": "gpt-6-astra",
+  "effort_requested": "xhigh",
+  "model_resolved_attestation": "unknown",
+  "profile_sha256": "59e0b5f013fc5e05331c0ae022a97bda7a6f245cd1e69e6f48affbcaabecc6c1",
+  "profile_activation": "developer instructions supplied; native custom role not invoked",
+  "global_agents_sha256": "044bd15de09fb7c738c38e01a35dd7e09d96dd86fc242bdb3776471e2b925c6b",
+  "cli_executable_sha256": "4f85982624b3898c8991cb80c0981b2aa71070e3537046c9a95950318a95afcc",
+  "order": [
+    "A",
+    "B",
+    "B",
+    "A",
+    "A",
+    "B",
+    "B",
+    "A",
+    "A",
+    "B"
+  ],
+  "prompt_sha256": "bc6de0c7a2c4aeae79718bdf4128ee2c5bfeb45b2b51cb164397c5ba8b6ff069",
+  "conditions": {
+    "A": {
+      "files": {
+        ".python-version": "7c31b8cce5796f169ade750a43dfa5f9fb4c326e90aab5c8e83189b0f6011eb8",
+        "AGENTS.md": "67ffde3950b4435c4a80c035fcbdcf525d8e3f1a73d5dc2e55bbafa993510655",
+        "README.md": "8f057555985497164f73007c1e934810d3a89f617152a31d8a246bb6919c3761",
+        "control.py": "ab69ce58b1c6346688fddce47316dd7539dffea3282b4fc41b83985e6c31b194",
+        "input.json": "13b5210a954f02bd478daca48ec7a820a2cd7a5fd723a27bc60b56e066caf759",
+        "instructions/policies/code-mode-tool-orchestration-policy.md": "73a769385c013af68b5fc1f07bc7e535d78a645aaf8953c069409e6d1bfba815",
+        "instructions/policies/model-selection-policy.md": "e86dec4a9e2aa40df6bcea9ff4a5176025b4b32e37ec41ac5f13cc7e0f51c058",
+        "instructions/policies/reusable-workflow-contract.md": "07361a0ae0887d101e231a2be618cdc79456ae8a8cf1a1aba7272d3ecca80d4d",
+        "instructions/skills/code-review/SKILL.md": "f30c526952c99d43bd0a6bc47732410d4ec7a88cd1df950711d1eb28aec902c5",
+        "instructions/skills/code-review-deep/SKILL.md": "6b75359b0663728ec76d5a991aca54384e96333afd97d3a80296ced93d4fc9e3",
+        "instructions/templates/orchestration/agent-task-brief.template.md": "337b16d1c56be042aeb6b887093acaa0f88eca928cb5523c818f141d68681303",
+        "launch.sh": "7f72a446222c72da0dff83be9b38f3771ffa08ffd2d1c4ea3a259271f9f81732",
+        "pipeline.py": "5f7fc087adcd636f58c53f87c98e4f345c89619f6f63c8b16e76e278d115e04a",
+        "producer.py": "012c8301eb9101e7f410c7f9eb49aac0cb2e106e10ee802c669b09a290e3f876",
+        "scripts/project-python": "c35f9e4782e14a8705ba28c83130f5a89a577734818d5fd9eb9d0b25f774db87",
+        "shell-profile.sh": "7e083d60b49c2872e2daa0a0a2f03aebef978afac903e071375e95ea46ad8140",
+        "verify.py": "80e80076e1da9e630e86afb1d5d08f0f494909dc38b4770c4c1e775f5ead0cae",
+        "verify_control.py": "6bb41efdc64713b932bba4e791aeb2d9fae99caf0b0afcd6a500724ca9282dba"
+      }
+    },
+    "B": {
+      "files": {
+        ".python-version": "7c31b8cce5796f169ade750a43dfa5f9fb4c326e90aab5c8e83189b0f6011eb8",
+        "AGENTS.md": "67ffde3950b4435c4a80c035fcbdcf525d8e3f1a73d5dc2e55bbafa993510655",
+        "README.md": "8f057555985497164f73007c1e934810d3a89f617152a31d8a246bb6919c3761",
+        "control.py": "ab69ce58b1c6346688fddce47316dd7539dffea3282b4fc41b83985e6c31b194",
+        "input.json": "13b5210a954f02bd478daca48ec7a820a2cd7a5fd723a27bc60b56e066caf759",
+        "instructions/policies/code-mode-tool-orchestration-policy.md": "73a769385c013af68b5fc1f07bc7e535d78a645aaf8953c069409e6d1bfba815",
+        "instructions/policies/model-selection-policy.md": "e86dec4a9e2aa40df6bcea9ff4a5176025b4b32e37ec41ac5f13cc7e0f51c058",
+        "instructions/policies/reusable-workflow-contract.md": "07361a0ae0887d101e231a2be618cdc79456ae8a8cf1a1aba7272d3ecca80d4d",
+        "instructions/skills/code-review/SKILL.md": "24d122efc8a77d669a6a8a2123df813f86096643daebe4f05cf8b14429876a90",
+        "instructions/skills/code-review/references/integration-boundaries.md": "9d73414070d13bbee77ed04e2e81afaec15ee78fe4c76a55eb09ca69d26b7366",
+        "instructions/skills/code-review-deep/SKILL.md": "fcc3ec28cc27d79f193a9ceea3795d844622f4d53408eb88f789dd6fbb38689f",
+        "instructions/templates/orchestration/agent-task-brief.template.md": "017e1cdd5bf46ef2bae14ad4b5f2430fa9b39bf1a8c3fa34481043cd3b8f2db5",
+        "launch.sh": "7f72a446222c72da0dff83be9b38f3771ffa08ffd2d1c4ea3a259271f9f81732",
+        "pipeline.py": "5f7fc087adcd636f58c53f87c98e4f345c89619f6f63c8b16e76e278d115e04a",
+        "producer.py": "012c8301eb9101e7f410c7f9eb49aac0cb2e106e10ee802c669b09a290e3f876",
+        "scripts/project-python": "c35f9e4782e14a8705ba28c83130f5a89a577734818d5fd9eb9d0b25f774db87",
+        "shell-profile.sh": "7e083d60b49c2872e2daa0a0a2f03aebef978afac903e071375e95ea46ad8140",
+        "verify.py": "80e80076e1da9e630e86afb1d5d08f0f494909dc38b4770c4c1e775f5ead0cae",
+        "verify_control.py": "6bb41efdc64713b932bba4e791aeb2d9fae99caf0b0afcd6a500724ca9282dba"
+      }
+    }
+  },
+  "runtime_observation": {
+    "observed_on": "2026-09-16",
+    "selected_surface": "standalone CLI",
+    "cli_public_version": "codex-cli 0.154.0",
+    "os": "Darwin 25.6.0",
+    "shell": "zsh 5.9 (arm64-apple-darwin25.0)",
+    "python": "3.12.9",
+    "yaml": "6.0.3",
+    "parent_desktop_build": "unknown",
+    "private_harness_version": "unknown",
+    "service_tier": "unknown",
+    "sandbox": "read-only",
+    "oracle_isolation": "instruction boundary only; no filesystem deny isolation"
+  }
+}

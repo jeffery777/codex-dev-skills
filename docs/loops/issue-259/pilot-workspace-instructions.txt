@@ -1,0 +1,1 @@
+此為離線合成 review fixture。只讀此 workspace 的來源與 instructions；不得讀其他目錄的業務或試驗資料。唯一 Python 入口為 ./scripts/project-python。無外部寫入或修正授權。

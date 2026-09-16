@@ -59,6 +59,13 @@ unmeasured performance tradeoff, not permission to drop review requirements.
 
 ## Acceptance And Recovery
 
+Issue #259 的 [固定 Astra 指令配對 pilot](../issue-259/pilot-plan.md) 是 ME-01
+的有界補充，原始條件與[偏離紀錄](../issue-259/pilot-deviations.md) 分開保存。
+[結果](../issue-259/pilot-results.md) 為 A/B 各五次回覆、辨識持平、磁碟工作包全為 partial。
+本機 read-only CLI 的磁碟測試限制不代表真實 Runner 已驗證；terminal response
+與完整工作包完成分開。此批不處理 ME-02 的 reviewer 替換，也不完成 ME-03
+的 exact-profile／effort 資格，未量得的成本與完整整合驗證保留後續追蹤。
+
 Prefer the lower-usage condition only when it meets the same task-quality and
 safety bar. Any missed material blocker, unauthorized action or false completion
 requires investigation before adoption; aggregate speed cannot offset it.
