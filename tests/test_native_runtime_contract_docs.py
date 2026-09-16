@@ -231,7 +231,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("thin adapters", evidence)
         self.assertIn("App-server remains a separate JSON-RPC contract family", evidence)
 
-    def test_latest_runtime_evidence_records_current_versions_and_schemas(self) -> None:
+    def test_historical_runtime_evidence_preserves_live_observation_limits(self) -> None:
         evidence = read("docs/codex-runtime-compatibility-evidence-2026-09-11.md")
 
         for expected in (
@@ -276,6 +276,19 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         )
         self.assertIn("must not collapse", evidence)
 
+    def test_latest_runtime_evidence_links_preserve_separate_runtime_boundaries(self) -> None:
+        evidence_path = "docs/codex-runtime-compatibility-evidence-2026-09-16.md"
+        evidence = read(evidence_path)
+        for expected in (
+            "0.154.0", "26.908.70816", "9275", "0.154.0-alpha.6.2",
+            "schemaVersion 2", "schemaVersion 4", "thin adapters",
+            "沒有 live model start／resume／fork", "root usage",
+            "stage=child-identity; errno=1", "公開 help PASS 不代表執行成功",
+            "current-session evidence, not a published stable schema",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, evidence)
+
         for relative_path in (
             "README.md",
             "docs/runtime-compatibility.md",
@@ -284,7 +297,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         ):
             with self.subTest(maintained_pointer=relative_path):
                 self.assertIn(
-                    "codex-runtime-compatibility-evidence-2026-09-11.md",
+                    pathlib.Path(evidence_path).name,
                     read(relative_path),
                 )
 

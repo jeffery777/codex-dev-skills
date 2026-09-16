@@ -1304,15 +1304,17 @@ synthetic contract evidence and perform no live sidebar mutation.
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-09-11)](docs/codex-runtime-compatibility-evidence-2026-09-11.md).
+[Codex runtime compatibility evidence (2026-09-16)](docs/codex-runtime-compatibility-evidence-2026-09-16.md).
 It records that `codex mcp-server`, the command that exposed Codex itself as an
-MCP server, was removed in observed standalone CLI 0.154.0.
-It also records Desktop 26.903.71938 build 8576 and its bundled CLI 0.153.4 as
+MCP server, is absent from observed standalone CLI 0.154.0 and bundled CLI
+0.154.0-alpha.6.2.
+It also records Desktop 26.908.70816 build 9275 and its bundled CLI as
 separate point-in-time observations rather than one global version. This does
 not deprecate Codex's external MCP client configuration, connectors, or native
-Desktop task/thread tools. The comparison separates public-help tests, live
-start/resume/fork observations and their process-tracking limitations; earlier
-dated evidence remains unchanged.
+Desktop task/thread tools. The refresh covers public-help tests, callable
+schemas, and read-only registry observations. It does not rerun live
+start/resume/fork or resolve their earlier process-tracking limitations;
+earlier dated evidence remains unchanged.
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 Desktop Runtime Wrapper V1 is retired and provides no runnable or importable

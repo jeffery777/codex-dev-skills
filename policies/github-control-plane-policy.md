@@ -37,6 +37,56 @@ pull-request number, branch/head SHA when relevant, authentication context,
 and result that the connector path would have required. Report the fallback
 reason in the delivery or readiness evidence.
 
+## Shell Shape And Repeated Approval Prompts
+
+After a justified `gh` fallback, prefer one simple command for each API call.
+Keep the API call separate from saving its returned output locally. Shell
+redirection (`>`, `>>`, `<`), substitutions, environment assignments, or other
+compound syntax can change the command submitted for policy matching. A
+previously approved `gh` prefix may then no longer match the shell invocation.
+This is a possible cause, not a diagnosis of every approval prompt.
+
+When saving evidence, use a separate authorized local file operation on the
+complete returned output. Preserve its bytes and verify completeness; a
+truncated tool response is not a complete API artifact. Do not reconstruct
+missing JSON, embed untrusted output in executable shell text, or repeat a
+GitHub mutation merely to recover or save its response. Unknown mutation
+results require readback before any retry.
+
+If approval prompts recur, stop repeating the same command shape and inspect:
+
+1. The exact executable and argument vector, including basename versus
+   absolute path, flag order, shell wrapper, redirection, and substitutions.
+   Do not change executable identity solely to obtain a different rule match.
+2. The relevant saved rules and their source, plus which layers the current
+   runtime actually loads when observable. A saved rule is not proof that an
+   already-running or different session loaded it. Keep secrets, private
+   paths, and unrelated saved commands out of public evidence.
+3. The active runtime's public diagnostic interface. When supported, use
+   `codex execpolicy check --rules <rule-file> -- <exact-command-arguments>`
+   with the relevant rule files. Inspect `matchedRules` and any decision;
+   absence of a match is not an explicit denial or permission to run.
+   A direct-argv check does not reproduce the shell parser or the complete
+   Desktop approval path. Do not infer live approval solely from this check.
+4. Remaining controls: sandbox and network restrictions, managed rules,
+   approval mode/reviewer, GitHub authentication and permissions, and the
+   exact operation's user authorization. If their effective state cannot be
+   observed, retain that uncertainty rather than blaming `AGENTS.md` or
+   promising that a command rewrite will remove prompts.
+
+Keep necessary approvals. Do not widen a prefix rule, add blanket `gh api` or
+shell allowances, modify saved rules or global instructions, disable the
+sandbox, or conceal side effects to avoid prompts. `gh api` can perform both
+reads and writes; its prefix alone does not establish read-only intent.
+Command simplification changes execution shape, not operation authority.
+
+The [official Codex rules documentation](https://learn.chatgpt.com/docs/agent-configuration/rules)
+describes argument-prefix matching and conservative treatment of shell
+redirection. These runtime details remain version-scoped; inspect the current
+public help and reported behavior before relying on them.
+
+## Exact-Head Provider Evidence
+
 For provider-neutral exact-head content review, follow
 `policies/exact-head-merge-review-contract.md`. Only when repository policy selects
 the GitHub hosted enforcement model, also follow
