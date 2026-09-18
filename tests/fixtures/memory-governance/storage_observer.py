@@ -40,6 +40,8 @@ class StorageObserver:
         self.checkpoints = []
         self.intervals = []
         self.held = {}
+        self.connections = []
+        self.capacity = {}
         self.peak = {key: 0 for key in (
             'main_bytes', 'journal_bytes', 'wal_bytes', 'shm_bytes', 'named_temp_bytes',
             'other_named_bytes', 'unlinked_fd_bytes', 'other_fd_bytes',
@@ -52,6 +54,14 @@ class StorageObserver:
         try:
             unique, sizes, temp_sizes = {}, {}, {}
             for directory, target in ((self.root, sizes), (self.temporary, temp_sizes)):
+                role = 'managed' if directory == self.root else 'temporary'
+                fs = os.statvfs(directory)
+                available = fs.f_bavail * fs.f_frsize
+                capacity = self.capacity.setdefault(role, {
+                    'available_bytes_min': available, 'available_bytes_max': available,
+                    'same_filesystem_as_managed': directory.stat().st_dev == self.root.stat().st_dev})
+                capacity['available_bytes_min'] = min(capacity['available_bytes_min'], available)
+                capacity['available_bytes_max'] = max(capacity['available_bytes_max'], available)
                 with os.scandir(directory) as entries:
                     for entry in entries:
                         if len(target) >= 32:
@@ -142,6 +152,16 @@ class StorageObserver:
 
         def connect(*args, **kwargs):
             connection = connect_original(*args, **kwargs)
+            try:
+                if len(self.connections) >= 64:
+                    raise RuntimeError('connection-observation-limit')
+                settings = {key: connection.execute('PRAGMA ' + key).fetchone()[0]
+                            for key in ('temp_store', 'query_only', 'journal_mode', 'page_size',
+                                        'synchronous', 'max_page_count')}
+                self.connections.append({'writer': bool(kwargs.get('writer')), 'effective_pragmas': settings})
+            except BaseException:
+                connection.close()
+                raise
             connection.set_progress_handler(self.sample, 50)
             self.sample()
             return connection
@@ -168,6 +188,7 @@ class StorageObserver:
             'main_growth_observed_bytes': max(0, self.peak['main_bytes'] - self.first_main),
             'named_files_seen': sorted(self.names), 'checkpoints': sorted(set(self.checkpoints)),
             'lock_intervals': intervals,
+            'connections': self.connections, 'filesystem_capacity_samples': self.capacity,
             'coverage': {
                 'size_method': 'named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops',
                 'fd_limit': self.fd_limit, 'fd_census_coverage': 'bounded-census' if self.fd_limit else 'not-run',
@@ -178,6 +199,11 @@ class StorageObserver:
                 'lock_intervals_complete': bool(intervals) and not self.held
                     and all(event['release_after_ns'] is not None for event in intervals),
                 'timing_includes_instrumentation': True, 'workload_upper_bound_proven': False,
+                'effective_settings_scope': 'successful-db.connect-return-before-fixture-fault-overrides',
+                'connection_initialization_resources': 'not-sampled-inside-connect',
+                'temp_environment_matches': all(os.environ.get(key) == str(self.temporary)
+                                                for key in ('TMPDIR', 'SQLITE_TMPDIR')),
+                'temp_location_guaranteed': False,
                 'production_qualified': False,
             },
         }

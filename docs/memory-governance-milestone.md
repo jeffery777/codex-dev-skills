@@ -2,6 +2,11 @@
 
 ## 狀態、目標與證據
 
+2026-09-18：[Issue #265 儲存可靠性切片](loops/issue-265/verification-and-review.md)
+補 reader/control 的隔離 temp、有效連線設定、容量取樣及完整鎖區間；修正 filler
+恢復失敗後仍繼續讀回的測試協調器。合成對照不提升物理 FULL/recovery 或完整
+J/T/G 資格；公開材料去識別，production core／空 registry 不變。
+
 2026-09-11：[Issue #253 儲存故障切片](loops/issue-253/verification-and-review.md)
 補上 quota FULL／CANTOPEN／回覆遺失對照、故障後的新程序一致性與新確認正常操作，
 以及完整持鎖區間的量測 bracket、named/own-fd 暫存取樣。物理 APFS 嘗試在

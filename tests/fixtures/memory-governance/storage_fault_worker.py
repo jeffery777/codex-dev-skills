@@ -6,6 +6,7 @@ import hashlib
 import os
 from pathlib import Path
 import sqlite3
+import stat
 import sys
 import time
 from unittest import mock
@@ -90,10 +91,25 @@ def replay_rejection(core, handle):
     raise RuntimeError('consumed-handle-replayed')
 
 
-def read(request):
+def configure_temporary(root, name):
+    """Use only the sibling directory created by this trial's originating worker."""
+    temporary = root.parent / name
+    info = temporary.lstat()
+    if (not stat.S_ISDIR(info.st_mode) or temporary.resolve(strict=True) != temporary
+            or info.st_dev != root.stat().st_dev or info.st_uid != os.getuid()
+            or stat.S_IMODE(info.st_mode) != 0o700):
+        raise RuntimeError('temporary-directory-unconfirmed')
+    os.environ['SQLITE_TMPDIR'] = os.environ['TMPDIR'] = str(temporary)
+    return temporary
+
+
+def read(request, fd_limit):
     c.fields(request, {'mode', 'host', 'operation_id', 'preview_digest'})
+    temporary = configure_temporary(Path(request['host']['root']), 'reader-temp')
     ports = compose(request['host'])
     core = core_module.GovernanceCore(ports.host, enabled=True)
+    observer = StorageObserver(ports.registry.binding().root, temporary, ports.registry.binding(),
+                               fd_limit=fd_limit)
     original = db.connect
     connects = []
 
@@ -102,7 +118,7 @@ def read(request):
         connects.append('read-only')
         return original(*args, **kwargs)
 
-    with mock.patch.object(db, 'connect', side_effect=readonly):
+    with mock.patch.object(db, 'connect', side_effect=readonly), observer.observing():
         rejected = replay_rejection(core, core_module.ExecutionHandle(request['operation_id']))
         result = core.readback(request['operation_id'], request['preview_digest'])
         try:
@@ -116,21 +132,25 @@ def read(request):
             for cue in ('blue', 'green'):
                 projection[cue] = core.recall([cue])['items']
     emit('read', result=result, audit=audit_result, projection=projection, calls=ports.calls,
-         connections=connects, replay_rejection=rejected, pid=os.getpid())
+         connections=connects, replay_rejection=rejected, pid=os.getpid(), measurement=observer.report())
 
 
-def continue_control(request):
+def continue_control(request, fd_limit):
     """A separately confirmed normal update, never replay the failed request or old handle."""
     c.fields(request, {'mode', 'host', 'failed_operation_id'})
+    temporary = configure_temporary(Path(request['host']['root']), 'control-temp')
     ports = compose(request['host'])
     core = core_module.GovernanceCore(ports.host, enabled=True)
-    rejected = replay_rejection(core, core_module.ExecutionHandle(request['failed_operation_id']))
-    preview = core.preview('update', ITEM, ports.candidate(2, cue='green',
-                           body='Synthetic newly confirmed recovery control. ' * 260))
-    assert preview['operation_id'] != request['failed_operation_id']
-    result = core.execute(core.authorize(preview))
+    observer = StorageObserver(ports.registry.binding().root, temporary, ports.registry.binding(),
+                               fd_limit=fd_limit)
+    with observer.observing():
+        rejected = replay_rejection(core, core_module.ExecutionHandle(request['failed_operation_id']))
+        preview = core.preview('update', ITEM, ports.candidate(2, cue='green',
+                               body='Synthetic newly confirmed recovery control. ' * 260))
+        assert preview['operation_id'] != request['failed_operation_id']
+        result = core.execute(core.authorize(preview))
     emit('control', host=host_descriptor(ports), result=result, pid=os.getpid(),
-         replay_rejection=rejected, calls=ports.calls)
+         replay_rejection=rejected, calls=ports.calls, measurement=observer.report())
 
 
 def create(request, fd_limit):
@@ -143,8 +163,9 @@ def create(request, fd_limit):
     root, temporary = parent / 'managed', parent / 'sqlite-temp'
     # No adoption, overwrite, repair or cleanup of an existing test root.
     root.mkdir(mode=0o700)
-    temporary.mkdir(mode=0o700)
-    os.environ['SQLITE_TMPDIR'] = os.environ['TMPDIR'] = str(temporary)
+    for name in ('sqlite-temp', 'reader-temp', 'control-temp'):
+        (parent / name).mkdir(mode=0o700)
+    temporary = configure_temporary(root, 'sqlite-temp')
     ports = SyntheticLocalPorts(root, git_root=parent / 'source')
     core = core_module.GovernanceCore(ports.host, enabled=True)
     core.initialize()
@@ -246,9 +267,9 @@ def main():
     fd_limit = bound_worker_descriptors()
     request = c.decode(sys.stdin.buffer.read(c.MAX_ENVELOPE + 1))
     if request['mode'] == 'read':
-        read(request)
+        read(request, fd_limit)
     elif request['mode'] == 'continue':
-        continue_control(request)
+        continue_control(request, fd_limit)
     elif request['mode'] == 'restore':
         c.fields(request, {'mode', 'physical'})
         from enospc_image import restore_filler

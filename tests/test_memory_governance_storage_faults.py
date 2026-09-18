@@ -46,6 +46,11 @@ class StorageFaultTests(unittest.TestCase):
         self.assertTrue(value['new_process'])
         self.assertEqual('handle-unrecognized-or-consumed', value['observation']['replay_rejection'])
         self.assertNotIn('accept', value['observation']['calls'])
+        measurement = value['observation']['measurement']
+        self.assertTrue(case.fresh_read_complete(value))
+        self.assertTrue(all(not entry['writer'] and entry['effective_pragmas']['query_only'] == 1
+                            for entry in measurement['connections']))
+        self.assertTrue(all(not entry['exclusive'] for entry in measurement['lock_intervals']))
 
     def test_page_quota_full_preserves_revision_projection_and_proof_after_reopen(self):
         report = self.run_case('page-quota')
@@ -53,6 +58,16 @@ class StorageFaultTests(unittest.TestCase):
         self.assertEqual('page-quota-sqlite-full', report['classification'])
         self.assertEqual([{'code': 13, 'method': 'execute', 'name': 'SQLITE_FULL'}], report['completed']['errors'])
         self.assertTrue(report['failed_transaction_unchanged'])
+        writer_measurement = report['completed']['measurement']
+        self.assertEqual('successful-db.connect-return-before-fixture-fault-overrides',
+                         writer_measurement['coverage']['effective_settings_scope'])
+        snapshots = [entry['effective_pragmas']['max_page_count']
+                     for entry in writer_measurement['connections'] if entry['writer']]
+        self.assertTrue(snapshots)
+        quota = report['completed']['quota']
+        self.assertTrue(all(value == quota['profile_max_page_count'] for value in snapshots))
+        self.assertEqual(quota['page_count_before'], quota['effective_max_page_count'])
+        self.assertGreater(quota['profile_max_page_count'], quota['effective_max_page_count'])
         self.assert_fresh_read(report['fresh_attempt'])
         self.assert_fresh_read(report['fresh_normal'])
         value = report['fresh_attempt']['observation']['result']
@@ -65,6 +80,18 @@ class StorageFaultTests(unittest.TestCase):
         self.assert_fresh_read(control['fresh_read'])
         self.assertNotEqual(report['prepared']['operation_id'], control['observation']['result']['operation_id'])
         self.assertEqual(2, control['observation']['result']['proof']['after_revision'])
+        measurement = control['observation']['measurement']
+        self.assertTrue(case.measurement_complete(measurement))
+        self.assertEqual(1, sum(entry['exclusive'] for entry in measurement['lock_intervals']))
+        writers = [entry for entry in measurement['connections'] if entry['writer']]
+        self.assertEqual(1, len(writers))
+        self.assertEqual(2, writers[0]['effective_pragmas']['temp_store'])
+        self.assertEqual(0, writers[0]['effective_pragmas']['query_only'])
+        for role in ('managed', 'temporary'):
+            capacity = measurement['filesystem_capacity_samples'][role]
+            self.assertGreaterEqual(capacity['available_bytes_min'], 0)
+            self.assertGreaterEqual(capacity['available_bytes_max'], capacity['available_bytes_min'])
+            self.assertTrue(capacity['same_filesystem_as_managed'])
 
     def test_actual_cantopen_is_a_separate_missing_path_control(self):
         report = self.run_case('missing-path-cantopen')
@@ -188,6 +215,144 @@ class StorageFaultTests(unittest.TestCase):
             self.assertEqual(report, json.loads((retained / 'observation.json').read_text()))
             self.assertTrue(report['fresh_attempt']['files_unchanged'])
 
+    def test_reader_and_control_measurement_failures_cannot_report_observed(self):
+        original = case.worker
+        for mode in ('read', 'continue'):
+            for defect in ('missing', 'sample-error', 'open-lock', 'wrong-temp',
+                           'connections', 'lock_intervals', 'measured_maxima', 'invalid-lock'):
+                with self.subTest(mode=mode, defect=defect):
+                    def damaged(request, **kwargs):
+                        value = original(request, **kwargs)
+                        if request['mode'] == mode:
+                            for event in value['events']:
+                                measurement = event['measurement']
+                                if defect == 'missing':
+                                    del event['measurement']
+                                elif defect == 'sample-error':
+                                    measurement['sample_errors'] = [{'type': 'OSError'}]
+                                elif defect == 'open-lock':
+                                    measurement['coverage']['lock_intervals_complete'] = False
+                                elif defect == 'wrong-temp':
+                                    measurement['coverage']['temp_environment_matches'] = False
+                                elif defect == 'invalid-lock':
+                                    measurement['lock_intervals'][0]['release_after_ns'] = None
+                                else:
+                                    del measurement[defect]
+                        return value
+                    with mock.patch.object(case, 'worker', side_effect=damaged):
+                        report = self.run_case('page-quota')
+                    self.assertEqual('incomplete', report['status'])
+                    self.assertEqual('fresh-readback-incomplete-or-mutated' if mode == 'read' else
+                                     'newly-confirmed-control-failed', report['incomplete_reason'])
+
+    def test_malformed_measurement_payloads_fail_closed(self):
+        valid = self.run_case('page-quota')['fresh_attempt']['observation']['measurement']
+        self.assertTrue(case.measurement_complete(valid))
+        for value in (None, [], True):
+            self.assertFalse(case.measurement_complete(value))
+        defects = [
+            (('sample_count',), True),
+            (('coverage',), []),
+            (('measured_maxima', 'main_bytes'), -1),
+            (('measured_maxima', 'journal_bytes'), True),
+            (('filesystem_capacity_samples', 'temporary'), {}),
+            (('filesystem_capacity_samples', 'managed', 'available_bytes_min'), -1),
+            (('filesystem_capacity_samples', 'temporary', 'same_filesystem_as_managed'), False),
+            (('connections',), None),
+            (('connections', 0, 'writer'), 0),
+            (('connections', 0, 'effective_pragmas'), {}),
+            (('lock_intervals',), []),
+            (('lock_intervals', 0, 'exclusive'), 0),
+            (('lock_intervals', 0, 'release_after_ns'), None),
+            (('lock_intervals', 0, 'release_after_ns'), 0),
+            (('lock_intervals', 0, 'held_ns_lower'), -1),
+            (('lock_intervals', 0, 'held_ns_upper'), 0),
+            (('lock_intervals', 0, 'release_uncertain'), True),
+        ]
+        for path, replacement in defects:
+            with self.subTest(path=path, replacement=replacement):
+                damaged = copy.deepcopy(valid)
+                node = damaged
+                for key in path[:-1]:
+                    node = node[key]
+                node[path[-1]] = replacement
+                self.assertFalse(case.measurement_complete(damaged))
+        damaged = copy.deepcopy(valid)
+        del damaged['measured_maxima']['named_temp_bytes']
+        self.assertFalse(case.measurement_complete(damaged))
+        damaged = copy.deepcopy(valid)
+        capacity = damaged['filesystem_capacity_samples']['temporary']
+        capacity['available_bytes_min'] = capacity['available_bytes_max'] + 1
+        self.assertFalse(case.measurement_complete(damaged))
+
+    def test_successful_roles_require_connection_evidence_matching_their_role(self):
+        original = case.worker
+        for mode in ('create', 'read', 'continue'):
+            for defect in ('empty', 'wrong-role', 'wrong-query-only'):
+                with self.subTest(mode=mode, defect=defect):
+                    def damaged(request, **kwargs):
+                        value = original(request, **kwargs)
+                        if request['mode'] == mode:
+                            for event in value['events']:
+                                if 'measurement' not in event:
+                                    continue
+                                entries = event['measurement']['connections']
+                                if defect == 'empty':
+                                    entries.clear()
+                                elif defect == 'wrong-role':
+                                    for entry in entries:
+                                        entry['writer'] = mode == 'read'
+                                        entry['effective_pragmas']['query_only'] = 0 if entry['writer'] else 1
+                                else:
+                                    for entry in entries:
+                                        entry['effective_pragmas']['query_only'] = 1 if entry['writer'] else 0
+                        return value
+                    with mock.patch.object(case, 'worker', side_effect=damaged):
+                        report = self.run_case('page-quota')
+                    self.assertEqual('incomplete', report['status'])
+
+    def test_reader_refuses_replaced_temp_directory_without_managed_mutation(self):
+        original = case.worker
+        for replacement in ('symlink', 'wrong-mode'):
+            with self.subTest(replacement=replacement), tempfile.TemporaryDirectory() as temporary:
+                parent = Path(temporary).resolve()
+                def replace_temporary(request, **kwargs):
+                    value = original(request, **kwargs)
+                    if request['mode'] == 'create':
+                        target = parent / 'reader-temp'
+                        if replacement == 'symlink':
+                            target.rename(parent / 'original-reader-temp')
+                            target.symlink_to(parent / 'control-temp')
+                        else:
+                            target.chmod(0o755)
+                    return value
+                with mock.patch.object(case, 'worker', side_effect=replace_temporary):
+                    if replacement == 'symlink':
+                        with self.assertRaisesRegex(RuntimeError, 'fixture-symlink'):
+                            case.run_case(parent, 'none')
+                    else:
+                        report = case.run_case(parent, 'none')
+                        self.assertEqual('incomplete', report['status'])
+                        self.assertTrue(report['fresh_attempt']['files_unchanged'])
+                        self.assertNotEqual(0, report['fresh_attempt']['returncode'])
+                        self.assertIn('temporary-directory-unconfirmed', report['fresh_attempt']['diagnostic'])
+
+    def test_restoration_failure_stops_all_dependent_readback_and_control(self):
+        for result in ('failed', 'refused', 'unproven'):
+            with self.subTest(result=result), tempfile.TemporaryDirectory() as temporary:
+                restoration = {'result': result, 'reason': 'synthetic-restoration-failure'}
+                with mock.patch.object(case, 'worker', return_value={
+                        'events': [], 'returncode': 0, 'timed_out': False}) as worker, \
+                     mock.patch.object(case, 'fresh_read', side_effect=AssertionError('unsafe readback')):
+                    report = case.run_case(Path(temporary).resolve(), 'physical',
+                                           physical={'fd': 3}, recover=lambda: restoration)
+                self.assertEqual('incomplete', report['status'])
+                self.assertEqual('own-filler-space-restoration-failed', report['incomplete_reason'])
+                self.assertEqual(restoration, report['space_restoration'])
+                worker.assert_called_once()
+                self.assertNotIn('fresh_attempt', report)
+                self.assertNotIn('recovery_control', report)
+
 
 class MeasurementBoundaryTests(unittest.TestCase):
     def test_lock_measurement_encloses_entry_and_exit_inventory(self):
@@ -264,6 +429,41 @@ with tempfile.TemporaryDirectory(prefix='mg1-253-fd-') as temporary:
 
 
 class ImageSafetyTests(unittest.TestCase):
+    def test_command_failure_retains_stage_stdout_timeout_and_truncation(self):
+        for stage in ('image-create', 'image-attach'):
+            command = ['hdiutil', stage, '-fs', 'APFS', '-layout', 'GPTSPUD', '<new-image>']
+            errors = (
+                subprocess.CalledProcessError(1, command, output=b'only stdout'),
+                subprocess.TimeoutExpired(command, 60, output=b'timed stdout', stderr=b'x' * 9000),
+            )
+            for error in errors:
+                with self.subTest(stage=stage, error=type(error).__name__):
+                    evidence = image_fixture.command_failure(error, stage)
+                    self.assertEqual(stage, evidence['failure_stage'])
+                    self.assertEqual(command, evidence['command'])
+                    self.assertTrue(evidence['stdout'])
+                    self.assertLessEqual(len(evidence['stderr']), image_fixture.DIAGNOSTIC_BYTES)
+                    self.assertEqual(isinstance(error, subprocess.TimeoutExpired), evidence['command_timed_out'])
+                    self.assertEqual(isinstance(error, subprocess.TimeoutExpired), evidence['stderr_truncated'])
+
+    def test_image_binding_refuses_replaced_image_or_wrong_association(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            image = Path(temporary) / 'synthetic.dmg'
+            image.write_bytes(b'synthetic')
+            identity = db.identity(image.stat())
+            mount = Path(temporary) / 'volume'
+            association = {'images': [{'image-path': str(image), 'system-entities': [
+                {'mount-point': str(mount), 'dev-entry': '/dev/disk99s1'}]}]}
+            image_fixture.confirm_image_attachment(image, identity, mount, '/dev/disk99s1', association)
+            for changed in ({'images': []}, {'images': association['images'] * 2}):
+                with self.assertRaisesRegex(RuntimeError, 'image-attachment-binding-unconfirmed'):
+                    image_fixture.confirm_image_attachment(image, identity, mount, '/dev/disk99s1', changed)
+            with self.assertRaisesRegex(RuntimeError, 'image-attachment-binding-unconfirmed'):
+                image_fixture.confirm_image_attachment(image, (identity[0], identity[1] + 1), mount,
+                                                       '/dev/disk99s1', association)
+            with self.assertRaisesRegex(RuntimeError, 'image-attachment-binding-unconfirmed'):
+                image_fixture.confirm_image_attachment(image, identity, mount, '/dev/disk99s2', association)
+
     def test_dry_run_cannot_create_or_attach(self):
         with mock.patch.object(image_fixture, 'command', side_effect=AssertionError('dry run command')), \
              mock.patch.object(image_fixture.tempfile, 'mkdtemp', side_effect=AssertionError('dry run mkdir')), \
@@ -320,12 +520,12 @@ class ImageSafetyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='mg1-253-detach-') as temporary:
             parent = Path(temporary).resolve()
             mount = parent / 'volume'
-            mount.mkdir()
             def command(*args):
                 if args[1] == 'create':
                     Path(args[-1]).write_bytes(b'synthetic-image-marker')
                     return b''
                 if args[1] == 'attach':
+                    mount.mkdir()
                     return plistlib.dumps({})
                 if args[1] == 'info':
                     return plistlib.dumps({'FilesystemType': 'apfs', 'TotalSize': 268435456})
@@ -333,7 +533,9 @@ class ImageSafetyTests(unittest.TestCase):
             with mock.patch.object(image_fixture.sys, 'platform', 'darwin'), \
                  mock.patch.object(image_fixture.tempfile, 'mkdtemp', return_value=str(parent)), \
                  mock.patch.object(image_fixture, 'available', return_value=2 * 1024**3), \
-                 mock.patch.object(image_fixture, 'confirm_mount', return_value=(db.identity(mount.stat()), '/dev/disk99s1')), \
+                 mock.patch.object(image_fixture, 'confirm_mount', side_effect=lambda *args:
+                                   (db.identity(mount.stat()), '/dev/disk99s1')), \
+                 mock.patch.object(image_fixture, 'confirm_image_attachment'), \
                  mock.patch.object(os.path, 'ismount', return_value=True), \
                  mock.patch.object(image_fixture, 'command', side_effect=command) as calls, \
                  mock.patch.object(image_fixture, 'run_case', return_value={'status': 'observed'}), \
