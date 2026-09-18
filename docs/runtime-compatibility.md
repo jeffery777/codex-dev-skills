@@ -6,20 +6,20 @@ In current product naming, the Desktop control surface runs inside the ChatGPT
 desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
-is Desktop-only. See the maintained
-[2026-09-16 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-16.md).
-The 2026-09-16 evidence records standalone CLI, Desktop application, and
-Desktop-bundled CLI observations independently and rechecks the active Desktop
-callable boundary including sidebar organization, task metadata, account,
-voice, workspace, and plugin helper surfaces. The active
+is Desktop-only.
+最新的 [2026-09-17 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-17.md)
+分開記錄 standalone CLI、Desktop application 與 Desktop-bundled CLI，核對
+原生工具契約與唯讀 registry 回傳，沒有發現需要改動入口或共享架構的差異。
+前次 [2026-09-16 紀錄](codex-runtime-compatibility-evidence-2026-09-16.md) 仍保留
+其點時角色。The active
 `desktop-sidebar-organization` skill implements a separate thin mutation
 contract without collapsing the CLI and Desktop entry paths, and preserves the
 distinction between the legacy
 `codex mcp-server`, Codex's MCP client configuration, connectors, plugins, and
-native Desktop task/thread tools. The server command is absent from standalone
-CLI 0.154.0 and observed bundled CLI 0.154.0-alpha.6.2. Earlier bundled 0.153.4
-and live session observations remain in the dated 2026-09-11 record. The new
-refresh distinguishes help/schema checks from unperformed live qualification.
+native Desktop task/thread tools. 在 9 月 17 日觀測的 standalone CLI 0.154.0
+與 bundled CLI 0.155.0-alpha.2.6 中，該 server command 的 help 只回傳 root
+usage，不能當作 subcommand 仍受支援。更早的 bundled 0.153.4 與 live session
+結果保留於 2026-09-11 紀錄；本次 help／schema 檢查不代表 live qualification。
 
 Thread 控制先依 [Thread Capability Discovery](native-runtime-capabilities.md#thread-capability-discovery)
 辨識 Desktop 本機、Desktop 遠端、CLI/TUI 入口，完成正式清單與 deferred
