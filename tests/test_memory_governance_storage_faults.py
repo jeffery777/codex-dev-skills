@@ -47,7 +47,7 @@ class StorageFaultTests(unittest.TestCase):
         self.assertEqual('handle-unrecognized-or-consumed', value['observation']['replay_rejection'])
         self.assertNotIn('accept', value['observation']['calls'])
         measurement = value['observation']['measurement']
-        self.assertTrue(case.measurement_complete(measurement))
+        self.assertTrue(case.fresh_read_complete(value))
         self.assertTrue(all(not entry['writer'] and entry['effective_pragmas']['query_only'] == 1
                             for entry in measurement['connections']))
         self.assertTrue(all(not entry['exclusive'] for entry in measurement['lock_intervals']))
@@ -284,6 +284,32 @@ class StorageFaultTests(unittest.TestCase):
         capacity = damaged['filesystem_capacity_samples']['temporary']
         capacity['available_bytes_min'] = capacity['available_bytes_max'] + 1
         self.assertFalse(case.measurement_complete(damaged))
+
+    def test_successful_roles_require_connection_evidence_matching_their_role(self):
+        original = case.worker
+        for mode in ('create', 'read', 'continue'):
+            for defect in ('empty', 'wrong-role', 'wrong-query-only'):
+                with self.subTest(mode=mode, defect=defect):
+                    def damaged(request, **kwargs):
+                        value = original(request, **kwargs)
+                        if request['mode'] == mode:
+                            for event in value['events']:
+                                if 'measurement' not in event:
+                                    continue
+                                entries = event['measurement']['connections']
+                                if defect == 'empty':
+                                    entries.clear()
+                                elif defect == 'wrong-role':
+                                    for entry in entries:
+                                        entry['writer'] = mode == 'read'
+                                        entry['effective_pragmas']['query_only'] = 0 if entry['writer'] else 1
+                                else:
+                                    for entry in entries:
+                                        entry['effective_pragmas']['query_only'] = 1 if entry['writer'] else 0
+                        return value
+                    with mock.patch.object(case, 'worker', side_effect=damaged):
+                        report = self.run_case('page-quota')
+                    self.assertEqual('incomplete', report['status'])
 
     def test_reader_refuses_replaced_temp_directory_without_managed_mutation(self):
         original = case.worker

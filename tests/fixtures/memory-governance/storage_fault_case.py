@@ -107,7 +107,7 @@ def fresh_read(parent, prepared, operation):
             'new_process': event is not None and event['pid'] != prepared['pid'] and event['pid'] != os.getpid()}
 
 
-def measurement_complete(measurement):
+def measurement_complete(measurement, *, role=None, preopen_rejection=False):
     """Check the actual sampled payload, not only its self-reported coverage flags."""
     if not isinstance(measurement, dict):
         return False
@@ -137,7 +137,11 @@ def measurement_complete(measurement):
                 or value['available_bytes_min'] > value['available_bytes_max']
                 or value.get('same_filesystem_as_managed') is not True):
             return False
-    # An empty list is legitimate when a nonempty journal refuses DB open under a lock.
+    if role not in {None, 'writer', 'reader', 'control'}:
+        return False
+    # Only the caller's verified pre-open reader refusal permits no connection evidence.
+    if not connections and not (role == 'reader' and preopen_rejection is True):
+        return False
     for entry in connections:
         if not isinstance(entry, dict) or type(entry.get('writer')) is not bool:
             return False
@@ -148,8 +152,13 @@ def measurement_complete(measurement):
                 or settings['temp_store'] not in {0, 1, 2} or settings['query_only'] not in {0, 1}
                 or settings['page_size'] == 0 or settings['max_page_count'] == 0
                 or settings['synchronous'] not in {0, 1, 2, 3}
-                or settings.get('journal_mode') != 'delete'):
+                or settings.get('journal_mode') != 'delete'
+                or settings['query_only'] != (0 if entry['writer'] else 1)):
             return False
+    if role == 'reader' and any(entry['writer'] for entry in connections):
+        return False
+    if role in {'writer', 'control'} and not any(entry['writer'] for entry in connections):
+        return False
     for event in intervals:
         keys = ('acquire_before_ns', 'acquire_after_ns', 'release_before_ns', 'release_after_ns')
         if (not isinstance(event, dict) or type(event.get('exclusive')) is not bool
@@ -165,11 +174,21 @@ def measurement_complete(measurement):
             return False
     return True
 
+
 def fresh_read_complete(observation):
+    event = observation['observation']
+    if not isinstance(event, dict):
+        return False
+    result = event.get('result', {})
+    preopen_rejection = (
+        event.get('audit') == {'result': 'rejected', 'reason': 'recovery-required'}
+        and event.get('connections') == [] and event.get('projection') == {}
+        and result.get('result') == 'state-unknown' and result.get('proof') is None
+        and result.get('state_digest') is None and result.get('storage', {}).get('coverage') == 'unknown')
     return (observation['returncode'] == 0 and observation['timed_out'] is False
             and observation['files_unchanged'] and observation['new_process']
-            and observation['observation'] is not None
-            and measurement_complete(observation['observation'].get('measurement', {})))
+            and measurement_complete(event.get('measurement', {}), role='reader',
+                                     preopen_rejection=preopen_rejection))
 
 
 def run_case(parent, fault, *, physical=None, recover=None):
@@ -246,7 +265,7 @@ def run_case(parent, fault, *, physical=None, recover=None):
         report['incomplete_reason'] = 'nonempty-journal-preserved; G2-maintenance-required'
     elif (completed is not None and not child['timed_out'] and child['returncode'] == 0 and clean_reads
           and completed['replay_rejection'] == 'handle-unrecognized-or-consumed'
-          and measurement_complete(completed['measurement'])
+          and measurement_complete(completed['measurement'], role='writer')
           and report['executor_result_consistent']
           and report['classification'] == expected.get(fault)
           and (report['failed_transaction_unchanged'] if fault in {
@@ -265,7 +284,7 @@ def run_case(parent, fault, *, physical=None, recover=None):
         if (event is None or control['returncode'] != 0 or control['timed_out'] is not False
                 or event['pid'] in {prepared['pid'], os.getpid()}
                 or event['replay_rejection'] != 'handle-unrecognized-or-consumed'
-                or not measurement_complete(event.get('measurement', {}))
+                or not measurement_complete(event.get('measurement', {}), role='control')
                 or event['result']['result'] != 'applied'):
             report.update(status='incomplete', incomplete_reason='newly-confirmed-control-failed')
         else:

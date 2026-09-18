@@ -15,6 +15,7 @@
 | CR-265-01 / MUST-FIX | Fixed | 量測 gate 不能只信 coverage flags；現要求完整 payload、有效型別／數值、capacity 順序與實際 acquire/close 時序及 held bracket 一致。reader/control 刪除 connections、lock_intervals、maxima 或破壞區間均 incomplete；開庫前拒絕仍可有空 connections。 |
 | CR-265-02 / SHOULD-FIX | Fixed | pragma 明示為 db.connect 返回、fixture fault override 前的快照；公開摘要另列故障注入後 quota。page-quota 正例比對 profile snapshot 與实际縮小 quota，避免把不同時點混為一談。 |
 | AR-265-01 / SHOULD-FIX | Fixed | temp 驗證未保存 originating inode；修正文案，明示只驗證當前目錄屬性，私有 trial 不被同權限程序替換是前提，不宣稱 inode 連續性或跨使用者隔離。 |
+| MR-265-01 / MUST-FIX | Fixed | 成功 writer／reader／control 不得以空 connections 通過；依角色核對 writer 標記與 query_only。僅 reader 的 audit 明確 recovery-required、unknown/null proof/state、空 projection／開庫紀錄時允許空清單；三角色空清單／角色不符／query_only 不符負例及 journal 拒絕正例均保留。 |
 
 映像使用文件列出的 GPTSPUD／UDIF 配置與 verbose 診斷。實際寫入前保存新資源
 preview，檢查目的 image／mount 不存在；attach 後除了原有獨立 filesystem／容量／
@@ -58,7 +59,7 @@ pragma 只描述該連線在該時點的設定；page-quota 的 writer 快照仍
 | 正常 writer，1 item、2 versions、2 proofs | 330 samples；main 61,440 bytes；journal 41,552 bytes；逐筆去重 file aggregate 90,704 bytes。 |
 | 正常 fresh reader | 35 samples；main 61,440 bytes；journal/temp/sidecar/other-fd 均取樣到 0。 |
 | Quota 後新確認 control | 35 samples；main 61,440 bytes；journal 33,344 bytes；aggregate 82,496 bytes。 |
-| 上述 control exclusive lock | 完整 syscall bracket 174,467,416…174,479,125 ns，含 instrumentation。 |
+| 上述 control exclusive lock | 完整 syscall bracket 170,672,291…170,683,250 ns，含 instrumentation。 |
 
 所有角色均取樣 managed/temp 的可用 filesystem capacity 及是否同 filesystem，
 原始可用 bytes 僅留本地。持鎖量測從成功 flock syscall 前後到 lock-fd close 前後，
@@ -66,7 +67,8 @@ pragma 只描述該連線在該時點的設定；page-quota 的 writer 快照仍
 的 exclusive lock 分別記錄；非空 journal 的拒絕仍有完整 acquire/close 區間。
 
 量測缺失、payload 型別／數值無效、sample error、未閉合／不一致 lock 或 temp 環境
-不符不能回 observed；reader/control 各有缺欄位與損壞區間負例。既有 sidecar/unlinked own-fd 正例與 entry/exit 實際鎖競爭測試保留。
+不符不能回 observed；reader/control 各有缺欄位與損壞區間負例。成功角色必須
+有連線設定證據且符合角色；只有已證明開庫前因 journal 拒絕的 reader 可空清單。既有 sidecar/unlinked own-fd 正例與 entry/exit 實際鎖競爭測試保留。
 fd census 只查 fresh worker 的有限 descriptors metadata，不讀其他程序或內容。
 
 取樣 maxima 不是連續峰值或已證明上界；stat/fstat 加總不是 atomic snapshot。

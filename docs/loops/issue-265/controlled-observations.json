@@ -81,23 +81,23 @@
           "lock_intervals": [
             {
               "exclusive": false,
-              "held_ns_lower": 90249750,
-              "held_ns_upper": 90260834
+              "held_ns_lower": 83931459,
+              "held_ns_upper": 83940667
             },
             {
               "exclusive": false,
-              "held_ns_lower": 83536875,
-              "held_ns_upper": 83548041
+              "held_ns_lower": 78552750,
+              "held_ns_upper": 78563000
             },
             {
               "exclusive": false,
-              "held_ns_lower": 7051667,
-              "held_ns_upper": 7059708
+              "held_ns_lower": 6626125,
+              "held_ns_upper": 6633833
             },
             {
               "exclusive": false,
-              "held_ns_lower": 85811375,
-              "held_ns_upper": 85823834
+              "held_ns_lower": 80874917,
+              "held_ns_upper": 80883417
             }
           ],
           "main_growth_observed_bytes": 0,
@@ -197,23 +197,23 @@
           "lock_intervals": [
             {
               "exclusive": false,
-              "held_ns_lower": 10036917,
-              "held_ns_upper": 10045833
+              "held_ns_lower": 10273292,
+              "held_ns_upper": 10288000
             },
             {
               "exclusive": false,
-              "held_ns_lower": 81687667,
-              "held_ns_upper": 81700250
+              "held_ns_lower": 83339084,
+              "held_ns_upper": 83353000
             },
             {
               "exclusive": false,
-              "held_ns_lower": 6379167,
-              "held_ns_upper": 6388208
+              "held_ns_lower": 6905708,
+              "held_ns_upper": 6915833
             },
             {
               "exclusive": false,
-              "held_ns_lower": 81583750,
-              "held_ns_upper": 81597917
+              "held_ns_lower": 83227292,
+              "held_ns_upper": 83236834
             }
           ],
           "main_growth_observed_bytes": 0,
@@ -358,23 +358,23 @@
         "lock_intervals": [
           {
             "exclusive": false,
-            "held_ns_lower": 81268792,
-            "held_ns_upper": 81284791
+            "held_ns_lower": 75481833,
+            "held_ns_upper": 75496291
           },
           {
             "exclusive": true,
-            "held_ns_lower": 172368750,
-            "held_ns_upper": 172385875
+            "held_ns_lower": 167918333,
+            "held_ns_upper": 167932917
           },
           {
             "exclusive": false,
-            "held_ns_lower": 85409250,
-            "held_ns_upper": 85422750
+            "held_ns_lower": 86080583,
+            "held_ns_upper": 86092916
           },
           {
             "exclusive": true,
-            "held_ns_lower": 281737666,
-            "held_ns_upper": 281753416
+            "held_ns_lower": 284848209,
+            "held_ns_upper": 284864333
           }
         ],
         "main_growth_observed_bytes": 12288,
@@ -481,23 +481,23 @@
           "lock_intervals": [
             {
               "exclusive": false,
-              "held_ns_lower": 5356500,
-              "held_ns_upper": 5366334
+              "held_ns_lower": 5683583,
+              "held_ns_upper": 5693625
             },
             {
               "exclusive": false,
-              "held_ns_lower": 76625792,
-              "held_ns_upper": 76637083
+              "held_ns_lower": 89516584,
+              "held_ns_upper": 89528750
             },
             {
               "exclusive": false,
-              "held_ns_lower": 80865708,
-              "held_ns_upper": 80878875
+              "held_ns_lower": 80762083,
+              "held_ns_upper": 80775333
             },
             {
               "exclusive": false,
-              "held_ns_lower": 4934416,
-              "held_ns_upper": 4946458
+              "held_ns_lower": 4534625,
+              "held_ns_upper": 4544208
             }
           ],
           "main_growth_observed_bytes": 0,
@@ -597,23 +597,23 @@
           "lock_intervals": [
             {
               "exclusive": false,
-              "held_ns_lower": 83277500,
-              "held_ns_upper": 83290708
+              "held_ns_lower": 86374958,
+              "held_ns_upper": 86391000
             },
             {
               "exclusive": false,
-              "held_ns_lower": 83149375,
-              "held_ns_upper": 83164958
+              "held_ns_lower": 84969042,
+              "held_ns_upper": 84984208
             },
             {
               "exclusive": false,
-              "held_ns_lower": 82188709,
-              "held_ns_upper": 82200333
+              "held_ns_lower": 81039791,
+              "held_ns_upper": 81054542
             },
             {
               "exclusive": false,
-              "held_ns_lower": 4875708,
-              "held_ns_upper": 4886792
+              "held_ns_lower": 5502958,
+              "held_ns_upper": 5513708
             }
           ],
           "main_growth_observed_bytes": 0,
@@ -716,23 +716,23 @@
             "lock_intervals": [
               {
                 "exclusive": false,
-                "held_ns_lower": 88670834,
-                "held_ns_upper": 88686833
+                "held_ns_lower": 89982917,
+                "held_ns_upper": 89999209
               },
               {
                 "exclusive": false,
-                "held_ns_lower": 86487375,
-                "held_ns_upper": 86503875
+                "held_ns_lower": 87293208,
+                "held_ns_upper": 87314875
               },
               {
                 "exclusive": false,
-                "held_ns_lower": 7227959,
-                "held_ns_upper": 7241958
+                "held_ns_lower": 6615291,
+                "held_ns_upper": 6624583
               },
               {
                 "exclusive": false,
-                "held_ns_lower": 87538833,
-                "held_ns_upper": 87550542
+                "held_ns_lower": 86704584,
+                "held_ns_upper": 86713625
               }
             ],
             "main_growth_observed_bytes": 0,
@@ -829,13 +829,13 @@
           "lock_intervals": [
             {
               "exclusive": false,
-              "held_ns_lower": 83949709,
-              "held_ns_upper": 83960916
+              "held_ns_lower": 78984708,
+              "held_ns_upper": 78997875
             },
             {
               "exclusive": true,
-              "held_ns_lower": 174467416,
-              "held_ns_upper": 174479125
+              "held_ns_lower": 170672291,
+              "held_ns_upper": 170683250
             }
           ],
           "main_growth_observed_bytes": 12288,
@@ -976,23 +976,23 @@
         "lock_intervals": [
           {
             "exclusive": false,
-            "held_ns_lower": 77083542,
-            "held_ns_upper": 77099125
+            "held_ns_lower": 83217666,
+            "held_ns_upper": 83232166
           },
           {
             "exclusive": true,
-            "held_ns_lower": 163659459,
-            "held_ns_upper": 163672458
+            "held_ns_lower": 164179833,
+            "held_ns_upper": 164194875
           },
           {
             "exclusive": false,
-            "held_ns_lower": 82927333,
-            "held_ns_upper": 82940917
+            "held_ns_lower": 82371625,
+            "held_ns_upper": 82387209
           },
           {
             "exclusive": true,
-            "held_ns_lower": 203150750,
-            "held_ns_upper": 203165416
+            "held_ns_lower": 188923125,
+            "held_ns_upper": 188934833
           }
         ],
         "main_growth_observed_bytes": 0,
@@ -1099,23 +1099,23 @@
           "lock_intervals": [
             {
               "exclusive": false,
-              "held_ns_lower": 5836833,
-              "held_ns_upper": 5846000
+              "held_ns_lower": 4941416,
+              "held_ns_upper": 4950750
             },
             {
               "exclusive": false,
-              "held_ns_lower": 83842334,
-              "held_ns_upper": 83853458
+              "held_ns_lower": 77642125,
+              "held_ns_upper": 77650875
             },
             {
               "exclusive": false,
-              "held_ns_lower": 82436959,
-              "held_ns_upper": 82447500
+              "held_ns_lower": 77275292,
+              "held_ns_upper": 77288625
             },
             {
               "exclusive": false,
-              "held_ns_lower": 4950667,
-              "held_ns_upper": 4964208
+              "held_ns_lower": 5178625,
+              "held_ns_upper": 5193709
             }
           ],
           "main_growth_observed_bytes": 0,
@@ -1215,23 +1215,23 @@
           "lock_intervals": [
             {
               "exclusive": false,
-              "held_ns_lower": 82456292,
-              "held_ns_upper": 82473583
+              "held_ns_lower": 74815125,
+              "held_ns_upper": 74825000
             },
             {
               "exclusive": false,
-              "held_ns_lower": 79903000,
-              "held_ns_upper": 79918708
+              "held_ns_lower": 71635625,
+              "held_ns_upper": 71644542
             },
             {
               "exclusive": false,
-              "held_ns_lower": 81451000,
-              "held_ns_upper": 81462125
+              "held_ns_lower": 78031167,
+              "held_ns_upper": 78039875
             },
             {
               "exclusive": false,
-              "held_ns_lower": 4933083,
-              "held_ns_upper": 4947792
+              "held_ns_lower": 4884792,
+              "held_ns_upper": 4897792
             }
           ],
           "main_growth_observed_bytes": 0,
@@ -1334,23 +1334,23 @@
             "lock_intervals": [
               {
                 "exclusive": false,
-                "held_ns_lower": 88560875,
-                "held_ns_upper": 88580708
+                "held_ns_lower": 88192375,
+                "held_ns_upper": 88203750
               },
               {
                 "exclusive": false,
-                "held_ns_lower": 89962000,
-                "held_ns_upper": 89977375
+                "held_ns_lower": 85092792,
+                "held_ns_upper": 85103666
               },
               {
                 "exclusive": false,
-                "held_ns_lower": 7152042,
-                "held_ns_upper": 7161791
+                "held_ns_lower": 6414500,
+                "held_ns_upper": 6423709
               },
               {
                 "exclusive": false,
-                "held_ns_lower": 85549708,
-                "held_ns_upper": 85562834
+                "held_ns_lower": 84151709,
+                "held_ns_upper": 84165458
               }
             ],
             "main_growth_observed_bytes": 0,
@@ -1447,13 +1447,13 @@
           "lock_intervals": [
             {
               "exclusive": false,
-              "held_ns_lower": 85926750,
-              "held_ns_upper": 85941500
+              "held_ns_lower": 84502083,
+              "held_ns_upper": 84514333
             },
             {
               "exclusive": true,
-              "held_ns_lower": 175564292,
-              "held_ns_upper": 175577834
+              "held_ns_lower": 183535292,
+              "held_ns_upper": 183550833
             }
           ],
           "main_growth_observed_bytes": 12288,
@@ -1583,23 +1583,23 @@
         "lock_intervals": [
           {
             "exclusive": false,
-            "held_ns_lower": 76849125,
-            "held_ns_upper": 76868542
+            "held_ns_lower": 81350834,
+            "held_ns_upper": 81363000
           },
           {
             "exclusive": true,
-            "held_ns_lower": 166846667,
-            "held_ns_upper": 166864583
+            "held_ns_lower": 172447750,
+            "held_ns_upper": 172462250
           },
           {
             "exclusive": false,
-            "held_ns_lower": 80154875,
-            "held_ns_upper": 80171000
+            "held_ns_lower": 91185750,
+            "held_ns_upper": 91200209
           },
           {
             "exclusive": true,
-            "held_ns_lower": 147184833,
-            "held_ns_upper": 147199000
+            "held_ns_lower": 153633291,
+            "held_ns_upper": 153644416
           }
         ],
         "main_growth_observed_bytes": 0,
@@ -1702,23 +1702,23 @@
           "lock_intervals": [
             {
               "exclusive": false,
-              "held_ns_lower": 85445209,
-              "held_ns_upper": 85461292
+              "held_ns_lower": 84409959,
+              "held_ns_upper": 84425333
             },
             {
               "exclusive": false,
-              "held_ns_lower": 85811833,
-              "held_ns_upper": 85832500
+              "held_ns_lower": 80613500,
+              "held_ns_upper": 80625750
             },
             {
               "exclusive": false,
-              "held_ns_lower": 7159666,
-              "held_ns_upper": 7168917
+              "held_ns_lower": 6218125,
+              "held_ns_upper": 6230292
             },
             {
               "exclusive": false,
-              "held_ns_lower": 82660625,
-              "held_ns_upper": 82672916
+              "held_ns_lower": 78301167,
+              "held_ns_upper": 78310625
             }
           ],
           "main_growth_observed_bytes": 0,
@@ -1818,23 +1818,23 @@
           "lock_intervals": [
             {
               "exclusive": false,
-              "held_ns_lower": 10049209,
-              "held_ns_upper": 10061083
+              "held_ns_lower": 10069292,
+              "held_ns_upper": 10080917
             },
             {
               "exclusive": false,
-              "held_ns_lower": 91648292,
-              "held_ns_upper": 91663375
+              "held_ns_lower": 84431416,
+              "held_ns_upper": 84441958
             },
             {
               "exclusive": false,
-              "held_ns_lower": 6628500,
-              "held_ns_upper": 6639459
+              "held_ns_lower": 6976834,
+              "held_ns_upper": 6985834
             },
             {
               "exclusive": false,
-              "held_ns_lower": 84441333,
-              "held_ns_upper": 84452833
+              "held_ns_lower": 84178250,
+              "held_ns_upper": 84190000
             }
           ],
           "main_growth_observed_bytes": 0,
@@ -1979,23 +1979,23 @@
         "lock_intervals": [
           {
             "exclusive": false,
-            "held_ns_lower": 88939917,
-            "held_ns_upper": 88957292
+            "held_ns_lower": 83325334,
+            "held_ns_upper": 83338833
           },
           {
             "exclusive": true,
-            "held_ns_lower": 171765375,
-            "held_ns_upper": 171780000
+            "held_ns_lower": 169505833,
+            "held_ns_upper": 169527334
           },
           {
             "exclusive": false,
-            "held_ns_lower": 84367125,
-            "held_ns_upper": 84381541
+            "held_ns_lower": 82826917,
+            "held_ns_upper": 82837875
           },
           {
             "exclusive": true,
-            "held_ns_lower": 275513416,
-            "held_ns_upper": 275526334
+            "held_ns_lower": 288599125,
+            "held_ns_upper": 288613875
           }
         ],
         "main_growth_observed_bytes": 12288,
@@ -2057,13 +2057,13 @@
           "lock_intervals": [
             {
               "exclusive": false,
-              "held_ns_lower": 904292,
-              "held_ns_upper": 915334
+              "held_ns_lower": 926292,
+              "held_ns_upper": 937083
             },
             {
               "exclusive": false,
-              "held_ns_lower": 994417,
-              "held_ns_upper": 1009333
+              "held_ns_lower": 871333,
+              "held_ns_upper": 934500
             }
           ],
           "main_growth_observed_bytes": 0,
@@ -2118,13 +2118,13 @@
           "lock_intervals": [
             {
               "exclusive": false,
-              "held_ns_lower": 815042,
-              "held_ns_upper": 826458
+              "held_ns_lower": 882459,
+              "held_ns_upper": 896208
             },
             {
               "exclusive": false,
-              "held_ns_lower": 895375,
-              "held_ns_upper": 904792
+              "held_ns_lower": 1060541,
+              "held_ns_upper": 1070042
             }
           ],
           "main_growth_observed_bytes": 0,
@@ -2162,9 +2162,9 @@
   "privacy": "allowlisted synthetic results; raw host identities and diagnostics retained locally",
   "source_sha256": {
     "tests/fixtures/memory-governance/enospc_image.py": "b10d8aec11a0ae981cc934fffde4ee907ee47e9abe29fa4d980f528312eb944f",
-    "tests/fixtures/memory-governance/storage_fault_case.py": "8d9bff2823cbb61063cfa1a81eca7d7118a718a07569a7185d4fa591236c73a8",
+    "tests/fixtures/memory-governance/storage_fault_case.py": "681b6161f057daf6c1f5a01599851468e4b7d4e3480986256d93eb0470a52acf",
     "tests/fixtures/memory-governance/storage_fault_worker.py": "ea90e2e4b5d2e98d5664a8b3ced7d5102730278903612306ea382887e6030b93",
     "tests/fixtures/memory-governance/storage_observer.py": "21a0b8be30294a4ffe4a68daef3cbff93cb89b29644790ce932845b516434ba8",
-    "tests/test_memory_governance_storage_faults.py": "a7a18d0d19665fbfe343b49308eff06208b9d60a6774eee30574341e083d2e03"
+    "tests/test_memory_governance_storage_faults.py": "9cccce064486adb17fc5d4f8b7a58c02dc2c96fc9a908e05191e9f312f6fad69"
   }
 }
