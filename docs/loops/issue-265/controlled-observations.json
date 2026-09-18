@@ -1,0 +1,2170 @@
+{
+  "contract_version": "mg1-g1-public-storage-summary/v1",
+  "observations": [
+    {
+      "classification": "no-sqlite-error",
+      "committed_transaction_consistent": true,
+      "executor_result_consistent": true,
+      "failed_transaction_unchanged": false,
+      "fault": "none",
+      "fresh_attempt": {
+        "accept_called": false,
+        "files_unchanged": true,
+        "measurement": {
+          "capacity_measured": true,
+          "capacity_values": "retained-locally; machine-specific values not published",
+          "connections": [
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            }
+          ],
+          "coverage": {
+            "aggregate_snapshot_atomicity": "not-proven",
+            "connection_initialization_resources": "not-sampled-inside-connect",
+            "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+            "excluded_fds": 0,
+            "fd_census_coverage": "bounded-census",
+            "fd_limit": 128,
+            "lock_intervals_complete": true,
+            "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+            "memory_temp_bytes": "unmeasured",
+            "production_qualified": false,
+            "short_lived_between_samples": "unknown",
+            "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+            "temp_environment_matches": true,
+            "temp_location_guaranteed": false,
+            "temporal_file_coverage": "sampled-lower-bound",
+            "timing_includes_instrumentation": true,
+            "workload_upper_bound_proven": false
+          },
+          "lock_intervals": [
+            {
+              "exclusive": false,
+              "held_ns_lower": 90249750,
+              "held_ns_upper": 90260834
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 83536875,
+              "held_ns_upper": 83548041
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 7051667,
+              "held_ns_upper": 7059708
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 85811375,
+              "held_ns_upper": 85823834
+            }
+          ],
+          "main_growth_observed_bytes": 0,
+          "measured_maxima": {
+            "journal_bytes": 0,
+            "main_allocated_bytes": 61440,
+            "main_bytes": 61440,
+            "named_temp_bytes": 0,
+            "other_fd_bytes": 0,
+            "other_named_bytes": 0,
+            "sampled_unique_file_bytes": 61440,
+            "shm_bytes": 0,
+            "unlinked_fd_bytes": 0,
+            "wal_bytes": 0
+          },
+          "same_filesystem": true,
+          "sample_count": 35,
+          "sample_errors_count": 0
+        },
+        "new_process": true,
+        "replay_rejected": true,
+        "result": "applied",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "fresh_normal": {
+        "accept_called": false,
+        "files_unchanged": true,
+        "measurement": {
+          "capacity_measured": true,
+          "capacity_values": "retained-locally; machine-specific values not published",
+          "connections": [
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            }
+          ],
+          "coverage": {
+            "aggregate_snapshot_atomicity": "not-proven",
+            "connection_initialization_resources": "not-sampled-inside-connect",
+            "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+            "excluded_fds": 0,
+            "fd_census_coverage": "bounded-census",
+            "fd_limit": 128,
+            "lock_intervals_complete": true,
+            "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+            "memory_temp_bytes": "unmeasured",
+            "production_qualified": false,
+            "short_lived_between_samples": "unknown",
+            "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+            "temp_environment_matches": true,
+            "temp_location_guaranteed": false,
+            "temporal_file_coverage": "sampled-lower-bound",
+            "timing_includes_instrumentation": true,
+            "workload_upper_bound_proven": false
+          },
+          "lock_intervals": [
+            {
+              "exclusive": false,
+              "held_ns_lower": 10036917,
+              "held_ns_upper": 10045833
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 81687667,
+              "held_ns_upper": 81700250
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 6379167,
+              "held_ns_upper": 6388208
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 81583750,
+              "held_ns_upper": 81597917
+            }
+          ],
+          "main_growth_observed_bytes": 0,
+          "measured_maxima": {
+            "journal_bytes": 0,
+            "main_allocated_bytes": 61440,
+            "main_bytes": 61440,
+            "named_temp_bytes": 0,
+            "other_fd_bytes": 0,
+            "other_named_bytes": 0,
+            "sampled_unique_file_bytes": 61440,
+            "shm_bytes": 0,
+            "unlinked_fd_bytes": 0,
+            "wal_bytes": 0
+          },
+          "same_filesystem": true,
+          "sample_count": 35,
+          "sample_errors_count": 0
+        },
+        "new_process": true,
+        "replay_rejected": true,
+        "result": "state-unknown",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "journal_requires_maintenance": false,
+      "production_qualified": false,
+      "status": "observed",
+      "synthetic_only": true,
+      "writer_measurement": {
+        "capacity_measured": true,
+        "capacity_values": "retained-locally; machine-specific values not published",
+        "connections": [
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1048576,
+              "page_size": 4096,
+              "query_only": 0,
+              "synchronous": 3,
+              "temp_store": 2
+            },
+            "writer": true
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1048576,
+              "page_size": 4096,
+              "query_only": 0,
+              "synchronous": 3,
+              "temp_store": 2
+            },
+            "writer": true
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          }
+        ],
+        "coverage": {
+          "aggregate_snapshot_atomicity": "not-proven",
+          "connection_initialization_resources": "not-sampled-inside-connect",
+          "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+          "excluded_fds": 0,
+          "fd_census_coverage": "bounded-census",
+          "fd_limit": 128,
+          "lock_intervals_complete": true,
+          "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+          "memory_temp_bytes": "unmeasured",
+          "production_qualified": false,
+          "short_lived_between_samples": "unknown",
+          "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+          "temp_environment_matches": true,
+          "temp_location_guaranteed": false,
+          "temporal_file_coverage": "sampled-lower-bound",
+          "timing_includes_instrumentation": true,
+          "workload_upper_bound_proven": false
+        },
+        "lock_intervals": [
+          {
+            "exclusive": false,
+            "held_ns_lower": 81268792,
+            "held_ns_upper": 81284791
+          },
+          {
+            "exclusive": true,
+            "held_ns_lower": 172368750,
+            "held_ns_upper": 172385875
+          },
+          {
+            "exclusive": false,
+            "held_ns_lower": 85409250,
+            "held_ns_upper": 85422750
+          },
+          {
+            "exclusive": true,
+            "held_ns_lower": 281737666,
+            "held_ns_upper": 281753416
+          }
+        ],
+        "main_growth_observed_bytes": 12288,
+        "measured_maxima": {
+          "journal_bytes": 41552,
+          "main_allocated_bytes": 61440,
+          "main_bytes": 61440,
+          "named_temp_bytes": 0,
+          "other_fd_bytes": 0,
+          "other_named_bytes": 0,
+          "sampled_unique_file_bytes": 90704,
+          "shm_bytes": 0,
+          "unlinked_fd_bytes": 0,
+          "wal_bytes": 0
+        },
+        "same_filesystem": true,
+        "sample_count": 330,
+        "sample_errors_count": 0
+      },
+      "writer_quota_after_fault_override": {
+        "effective_max_page_count": 1048576,
+        "page_count_before": 12,
+        "profile_max_page_count": 1048576
+      },
+      "writer_returncode": 0
+    },
+    {
+      "classification": "page-quota-sqlite-full",
+      "committed_transaction_consistent": false,
+      "executor_result_consistent": true,
+      "failed_transaction_unchanged": true,
+      "fault": "page-quota",
+      "fresh_attempt": {
+        "accept_called": false,
+        "files_unchanged": true,
+        "measurement": {
+          "capacity_measured": true,
+          "capacity_values": "retained-locally; machine-specific values not published",
+          "connections": [
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            }
+          ],
+          "coverage": {
+            "aggregate_snapshot_atomicity": "not-proven",
+            "connection_initialization_resources": "not-sampled-inside-connect",
+            "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+            "excluded_fds": 0,
+            "fd_census_coverage": "bounded-census",
+            "fd_limit": 128,
+            "lock_intervals_complete": true,
+            "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+            "memory_temp_bytes": "unmeasured",
+            "production_qualified": false,
+            "short_lived_between_samples": "unknown",
+            "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+            "temp_environment_matches": true,
+            "temp_location_guaranteed": false,
+            "temporal_file_coverage": "sampled-lower-bound",
+            "timing_includes_instrumentation": true,
+            "workload_upper_bound_proven": false
+          },
+          "lock_intervals": [
+            {
+              "exclusive": false,
+              "held_ns_lower": 5356500,
+              "held_ns_upper": 5366334
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 76625792,
+              "held_ns_upper": 76637083
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 80865708,
+              "held_ns_upper": 80878875
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 4934416,
+              "held_ns_upper": 4946458
+            }
+          ],
+          "main_growth_observed_bytes": 0,
+          "measured_maxima": {
+            "journal_bytes": 0,
+            "main_allocated_bytes": 49152,
+            "main_bytes": 49152,
+            "named_temp_bytes": 0,
+            "other_fd_bytes": 0,
+            "other_named_bytes": 0,
+            "sampled_unique_file_bytes": 49152,
+            "shm_bytes": 0,
+            "unlinked_fd_bytes": 0,
+            "wal_bytes": 0
+          },
+          "same_filesystem": true,
+          "sample_count": 32,
+          "sample_errors_count": 0
+        },
+        "new_process": true,
+        "replay_rejected": true,
+        "result": "state-unknown",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "fresh_normal": {
+        "accept_called": false,
+        "files_unchanged": true,
+        "measurement": {
+          "capacity_measured": true,
+          "capacity_values": "retained-locally; machine-specific values not published",
+          "connections": [
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            }
+          ],
+          "coverage": {
+            "aggregate_snapshot_atomicity": "not-proven",
+            "connection_initialization_resources": "not-sampled-inside-connect",
+            "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+            "excluded_fds": 0,
+            "fd_census_coverage": "bounded-census",
+            "fd_limit": 128,
+            "lock_intervals_complete": true,
+            "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+            "memory_temp_bytes": "unmeasured",
+            "production_qualified": false,
+            "short_lived_between_samples": "unknown",
+            "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+            "temp_environment_matches": true,
+            "temp_location_guaranteed": false,
+            "temporal_file_coverage": "sampled-lower-bound",
+            "timing_includes_instrumentation": true,
+            "workload_upper_bound_proven": false
+          },
+          "lock_intervals": [
+            {
+              "exclusive": false,
+              "held_ns_lower": 83277500,
+              "held_ns_upper": 83290708
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 83149375,
+              "held_ns_upper": 83164958
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 82188709,
+              "held_ns_upper": 82200333
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 4875708,
+              "held_ns_upper": 4886792
+            }
+          ],
+          "main_growth_observed_bytes": 0,
+          "measured_maxima": {
+            "journal_bytes": 0,
+            "main_allocated_bytes": 49152,
+            "main_bytes": 49152,
+            "named_temp_bytes": 0,
+            "other_fd_bytes": 0,
+            "other_named_bytes": 0,
+            "sampled_unique_file_bytes": 49152,
+            "shm_bytes": 0,
+            "unlinked_fd_bytes": 0,
+            "wal_bytes": 0
+          },
+          "same_filesystem": true,
+          "sample_count": 35,
+          "sample_errors_count": 0
+        },
+        "new_process": true,
+        "replay_rejected": true,
+        "result": "applied",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "journal_requires_maintenance": false,
+      "production_qualified": false,
+      "recovery_control": {
+        "fresh_read": {
+          "accept_called": false,
+          "files_unchanged": true,
+          "measurement": {
+            "capacity_measured": true,
+            "capacity_values": "retained-locally; machine-specific values not published",
+            "connections": [
+              {
+                "effective_pragmas": {
+                  "journal_mode": "delete",
+                  "max_page_count": 1073741823,
+                  "page_size": 4096,
+                  "query_only": 1,
+                  "synchronous": 2,
+                  "temp_store": 0
+                },
+                "writer": false
+              },
+              {
+                "effective_pragmas": {
+                  "journal_mode": "delete",
+                  "max_page_count": 1073741823,
+                  "page_size": 4096,
+                  "query_only": 1,
+                  "synchronous": 2,
+                  "temp_store": 0
+                },
+                "writer": false
+              },
+              {
+                "effective_pragmas": {
+                  "journal_mode": "delete",
+                  "max_page_count": 1073741823,
+                  "page_size": 4096,
+                  "query_only": 1,
+                  "synchronous": 2,
+                  "temp_store": 0
+                },
+                "writer": false
+              },
+              {
+                "effective_pragmas": {
+                  "journal_mode": "delete",
+                  "max_page_count": 1073741823,
+                  "page_size": 4096,
+                  "query_only": 1,
+                  "synchronous": 2,
+                  "temp_store": 0
+                },
+                "writer": false
+              }
+            ],
+            "coverage": {
+              "aggregate_snapshot_atomicity": "not-proven",
+              "connection_initialization_resources": "not-sampled-inside-connect",
+              "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+              "excluded_fds": 0,
+              "fd_census_coverage": "bounded-census",
+              "fd_limit": 128,
+              "lock_intervals_complete": true,
+              "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+              "memory_temp_bytes": "unmeasured",
+              "production_qualified": false,
+              "short_lived_between_samples": "unknown",
+              "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+              "temp_environment_matches": true,
+              "temp_location_guaranteed": false,
+              "temporal_file_coverage": "sampled-lower-bound",
+              "timing_includes_instrumentation": true,
+              "workload_upper_bound_proven": false
+            },
+            "lock_intervals": [
+              {
+                "exclusive": false,
+                "held_ns_lower": 88670834,
+                "held_ns_upper": 88686833
+              },
+              {
+                "exclusive": false,
+                "held_ns_lower": 86487375,
+                "held_ns_upper": 86503875
+              },
+              {
+                "exclusive": false,
+                "held_ns_lower": 7227959,
+                "held_ns_upper": 7241958
+              },
+              {
+                "exclusive": false,
+                "held_ns_lower": 87538833,
+                "held_ns_upper": 87550542
+              }
+            ],
+            "main_growth_observed_bytes": 0,
+            "measured_maxima": {
+              "journal_bytes": 0,
+              "main_allocated_bytes": 61440,
+              "main_bytes": 61440,
+              "named_temp_bytes": 0,
+              "other_fd_bytes": 0,
+              "other_named_bytes": 0,
+              "sampled_unique_file_bytes": 61440,
+              "shm_bytes": 0,
+              "unlinked_fd_bytes": 0,
+              "wal_bytes": 0
+            },
+            "same_filesystem": true,
+            "sample_count": 35,
+            "sample_errors_count": 0
+          },
+          "new_process": true,
+          "replay_rejected": true,
+          "result": "applied",
+          "returncode": 0,
+          "timed_out": false
+        },
+        "measurement": {
+          "capacity_measured": true,
+          "capacity_values": "retained-locally; machine-specific values not published",
+          "connections": [
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1048576,
+                "page_size": 4096,
+                "query_only": 0,
+                "synchronous": 3,
+                "temp_store": 2
+              },
+              "writer": true
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            }
+          ],
+          "coverage": {
+            "aggregate_snapshot_atomicity": "not-proven",
+            "connection_initialization_resources": "not-sampled-inside-connect",
+            "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+            "excluded_fds": 0,
+            "fd_census_coverage": "bounded-census",
+            "fd_limit": 128,
+            "lock_intervals_complete": true,
+            "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+            "memory_temp_bytes": "unmeasured",
+            "production_qualified": false,
+            "short_lived_between_samples": "unknown",
+            "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+            "temp_environment_matches": true,
+            "temp_location_guaranteed": false,
+            "temporal_file_coverage": "sampled-lower-bound",
+            "timing_includes_instrumentation": true,
+            "workload_upper_bound_proven": false
+          },
+          "lock_intervals": [
+            {
+              "exclusive": false,
+              "held_ns_lower": 83949709,
+              "held_ns_upper": 83960916
+            },
+            {
+              "exclusive": true,
+              "held_ns_lower": 174467416,
+              "held_ns_upper": 174479125
+            }
+          ],
+          "main_growth_observed_bytes": 12288,
+          "measured_maxima": {
+            "journal_bytes": 33344,
+            "main_allocated_bytes": 61440,
+            "main_bytes": 61440,
+            "named_temp_bytes": 0,
+            "other_fd_bytes": 0,
+            "other_named_bytes": 0,
+            "sampled_unique_file_bytes": 82496,
+            "shm_bytes": 0,
+            "unlinked_fd_bytes": 0,
+            "wal_bytes": 0
+          },
+          "same_filesystem": true,
+          "sample_count": 35,
+          "sample_errors_count": 0
+        },
+        "new_preview_and_confirmation": true,
+        "result": "applied",
+        "revision": 2
+      },
+      "status": "observed",
+      "synthetic_only": true,
+      "writer_measurement": {
+        "capacity_measured": true,
+        "capacity_values": "retained-locally; machine-specific values not published",
+        "connections": [
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1048576,
+              "page_size": 4096,
+              "query_only": 0,
+              "synchronous": 3,
+              "temp_store": 2
+            },
+            "writer": true
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1048576,
+              "page_size": 4096,
+              "query_only": 0,
+              "synchronous": 3,
+              "temp_store": 2
+            },
+            "writer": true
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          }
+        ],
+        "coverage": {
+          "aggregate_snapshot_atomicity": "not-proven",
+          "connection_initialization_resources": "not-sampled-inside-connect",
+          "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+          "excluded_fds": 0,
+          "fd_census_coverage": "bounded-census",
+          "fd_limit": 128,
+          "lock_intervals_complete": true,
+          "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+          "memory_temp_bytes": "unmeasured",
+          "production_qualified": false,
+          "short_lived_between_samples": "unknown",
+          "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+          "temp_environment_matches": true,
+          "temp_location_guaranteed": false,
+          "temporal_file_coverage": "sampled-lower-bound",
+          "timing_includes_instrumentation": true,
+          "workload_upper_bound_proven": false
+        },
+        "lock_intervals": [
+          {
+            "exclusive": false,
+            "held_ns_lower": 77083542,
+            "held_ns_upper": 77099125
+          },
+          {
+            "exclusive": true,
+            "held_ns_lower": 163659459,
+            "held_ns_upper": 163672458
+          },
+          {
+            "exclusive": false,
+            "held_ns_lower": 82927333,
+            "held_ns_upper": 82940917
+          },
+          {
+            "exclusive": true,
+            "held_ns_lower": 203150750,
+            "held_ns_upper": 203165416
+          }
+        ],
+        "main_growth_observed_bytes": 0,
+        "measured_maxima": {
+          "journal_bytes": 29240,
+          "main_allocated_bytes": 49152,
+          "main_bytes": 49152,
+          "named_temp_bytes": 0,
+          "other_fd_bytes": 0,
+          "other_named_bytes": 0,
+          "sampled_unique_file_bytes": 78392,
+          "shm_bytes": 0,
+          "unlinked_fd_bytes": 0,
+          "wal_bytes": 0
+        },
+        "same_filesystem": true,
+        "sample_count": 306,
+        "sample_errors_count": 0
+      },
+      "writer_quota_after_fault_override": {
+        "effective_max_page_count": 12,
+        "page_count_before": 12,
+        "profile_max_page_count": 1048576
+      },
+      "writer_returncode": 0
+    },
+    {
+      "classification": "sqlite-cantopen",
+      "committed_transaction_consistent": false,
+      "executor_result_consistent": true,
+      "failed_transaction_unchanged": true,
+      "fault": "missing-path-cantopen",
+      "fresh_attempt": {
+        "accept_called": false,
+        "files_unchanged": true,
+        "measurement": {
+          "capacity_measured": true,
+          "capacity_values": "retained-locally; machine-specific values not published",
+          "connections": [
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            }
+          ],
+          "coverage": {
+            "aggregate_snapshot_atomicity": "not-proven",
+            "connection_initialization_resources": "not-sampled-inside-connect",
+            "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+            "excluded_fds": 0,
+            "fd_census_coverage": "bounded-census",
+            "fd_limit": 128,
+            "lock_intervals_complete": true,
+            "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+            "memory_temp_bytes": "unmeasured",
+            "production_qualified": false,
+            "short_lived_between_samples": "unknown",
+            "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+            "temp_environment_matches": true,
+            "temp_location_guaranteed": false,
+            "temporal_file_coverage": "sampled-lower-bound",
+            "timing_includes_instrumentation": true,
+            "workload_upper_bound_proven": false
+          },
+          "lock_intervals": [
+            {
+              "exclusive": false,
+              "held_ns_lower": 5836833,
+              "held_ns_upper": 5846000
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 83842334,
+              "held_ns_upper": 83853458
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 82436959,
+              "held_ns_upper": 82447500
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 4950667,
+              "held_ns_upper": 4964208
+            }
+          ],
+          "main_growth_observed_bytes": 0,
+          "measured_maxima": {
+            "journal_bytes": 0,
+            "main_allocated_bytes": 49152,
+            "main_bytes": 49152,
+            "named_temp_bytes": 0,
+            "other_fd_bytes": 0,
+            "other_named_bytes": 0,
+            "sampled_unique_file_bytes": 49152,
+            "shm_bytes": 0,
+            "unlinked_fd_bytes": 0,
+            "wal_bytes": 0
+          },
+          "same_filesystem": true,
+          "sample_count": 32,
+          "sample_errors_count": 0
+        },
+        "new_process": true,
+        "replay_rejected": true,
+        "result": "state-unknown",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "fresh_normal": {
+        "accept_called": false,
+        "files_unchanged": true,
+        "measurement": {
+          "capacity_measured": true,
+          "capacity_values": "retained-locally; machine-specific values not published",
+          "connections": [
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            }
+          ],
+          "coverage": {
+            "aggregate_snapshot_atomicity": "not-proven",
+            "connection_initialization_resources": "not-sampled-inside-connect",
+            "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+            "excluded_fds": 0,
+            "fd_census_coverage": "bounded-census",
+            "fd_limit": 128,
+            "lock_intervals_complete": true,
+            "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+            "memory_temp_bytes": "unmeasured",
+            "production_qualified": false,
+            "short_lived_between_samples": "unknown",
+            "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+            "temp_environment_matches": true,
+            "temp_location_guaranteed": false,
+            "temporal_file_coverage": "sampled-lower-bound",
+            "timing_includes_instrumentation": true,
+            "workload_upper_bound_proven": false
+          },
+          "lock_intervals": [
+            {
+              "exclusive": false,
+              "held_ns_lower": 82456292,
+              "held_ns_upper": 82473583
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 79903000,
+              "held_ns_upper": 79918708
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 81451000,
+              "held_ns_upper": 81462125
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 4933083,
+              "held_ns_upper": 4947792
+            }
+          ],
+          "main_growth_observed_bytes": 0,
+          "measured_maxima": {
+            "journal_bytes": 0,
+            "main_allocated_bytes": 49152,
+            "main_bytes": 49152,
+            "named_temp_bytes": 0,
+            "other_fd_bytes": 0,
+            "other_named_bytes": 0,
+            "sampled_unique_file_bytes": 49152,
+            "shm_bytes": 0,
+            "unlinked_fd_bytes": 0,
+            "wal_bytes": 0
+          },
+          "same_filesystem": true,
+          "sample_count": 35,
+          "sample_errors_count": 0
+        },
+        "new_process": true,
+        "replay_rejected": true,
+        "result": "applied",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "journal_requires_maintenance": false,
+      "production_qualified": false,
+      "recovery_control": {
+        "fresh_read": {
+          "accept_called": false,
+          "files_unchanged": true,
+          "measurement": {
+            "capacity_measured": true,
+            "capacity_values": "retained-locally; machine-specific values not published",
+            "connections": [
+              {
+                "effective_pragmas": {
+                  "journal_mode": "delete",
+                  "max_page_count": 1073741823,
+                  "page_size": 4096,
+                  "query_only": 1,
+                  "synchronous": 2,
+                  "temp_store": 0
+                },
+                "writer": false
+              },
+              {
+                "effective_pragmas": {
+                  "journal_mode": "delete",
+                  "max_page_count": 1073741823,
+                  "page_size": 4096,
+                  "query_only": 1,
+                  "synchronous": 2,
+                  "temp_store": 0
+                },
+                "writer": false
+              },
+              {
+                "effective_pragmas": {
+                  "journal_mode": "delete",
+                  "max_page_count": 1073741823,
+                  "page_size": 4096,
+                  "query_only": 1,
+                  "synchronous": 2,
+                  "temp_store": 0
+                },
+                "writer": false
+              },
+              {
+                "effective_pragmas": {
+                  "journal_mode": "delete",
+                  "max_page_count": 1073741823,
+                  "page_size": 4096,
+                  "query_only": 1,
+                  "synchronous": 2,
+                  "temp_store": 0
+                },
+                "writer": false
+              }
+            ],
+            "coverage": {
+              "aggregate_snapshot_atomicity": "not-proven",
+              "connection_initialization_resources": "not-sampled-inside-connect",
+              "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+              "excluded_fds": 0,
+              "fd_census_coverage": "bounded-census",
+              "fd_limit": 128,
+              "lock_intervals_complete": true,
+              "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+              "memory_temp_bytes": "unmeasured",
+              "production_qualified": false,
+              "short_lived_between_samples": "unknown",
+              "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+              "temp_environment_matches": true,
+              "temp_location_guaranteed": false,
+              "temporal_file_coverage": "sampled-lower-bound",
+              "timing_includes_instrumentation": true,
+              "workload_upper_bound_proven": false
+            },
+            "lock_intervals": [
+              {
+                "exclusive": false,
+                "held_ns_lower": 88560875,
+                "held_ns_upper": 88580708
+              },
+              {
+                "exclusive": false,
+                "held_ns_lower": 89962000,
+                "held_ns_upper": 89977375
+              },
+              {
+                "exclusive": false,
+                "held_ns_lower": 7152042,
+                "held_ns_upper": 7161791
+              },
+              {
+                "exclusive": false,
+                "held_ns_lower": 85549708,
+                "held_ns_upper": 85562834
+              }
+            ],
+            "main_growth_observed_bytes": 0,
+            "measured_maxima": {
+              "journal_bytes": 0,
+              "main_allocated_bytes": 61440,
+              "main_bytes": 61440,
+              "named_temp_bytes": 0,
+              "other_fd_bytes": 0,
+              "other_named_bytes": 0,
+              "sampled_unique_file_bytes": 61440,
+              "shm_bytes": 0,
+              "unlinked_fd_bytes": 0,
+              "wal_bytes": 0
+            },
+            "same_filesystem": true,
+            "sample_count": 35,
+            "sample_errors_count": 0
+          },
+          "new_process": true,
+          "replay_rejected": true,
+          "result": "applied",
+          "returncode": 0,
+          "timed_out": false
+        },
+        "measurement": {
+          "capacity_measured": true,
+          "capacity_values": "retained-locally; machine-specific values not published",
+          "connections": [
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1048576,
+                "page_size": 4096,
+                "query_only": 0,
+                "synchronous": 3,
+                "temp_store": 2
+              },
+              "writer": true
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            }
+          ],
+          "coverage": {
+            "aggregate_snapshot_atomicity": "not-proven",
+            "connection_initialization_resources": "not-sampled-inside-connect",
+            "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+            "excluded_fds": 0,
+            "fd_census_coverage": "bounded-census",
+            "fd_limit": 128,
+            "lock_intervals_complete": true,
+            "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+            "memory_temp_bytes": "unmeasured",
+            "production_qualified": false,
+            "short_lived_between_samples": "unknown",
+            "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+            "temp_environment_matches": true,
+            "temp_location_guaranteed": false,
+            "temporal_file_coverage": "sampled-lower-bound",
+            "timing_includes_instrumentation": true,
+            "workload_upper_bound_proven": false
+          },
+          "lock_intervals": [
+            {
+              "exclusive": false,
+              "held_ns_lower": 85926750,
+              "held_ns_upper": 85941500
+            },
+            {
+              "exclusive": true,
+              "held_ns_lower": 175564292,
+              "held_ns_upper": 175577834
+            }
+          ],
+          "main_growth_observed_bytes": 12288,
+          "measured_maxima": {
+            "journal_bytes": 33344,
+            "main_allocated_bytes": 61440,
+            "main_bytes": 61440,
+            "named_temp_bytes": 0,
+            "other_fd_bytes": 0,
+            "other_named_bytes": 0,
+            "sampled_unique_file_bytes": 82496,
+            "shm_bytes": 0,
+            "unlinked_fd_bytes": 0,
+            "wal_bytes": 0
+          },
+          "same_filesystem": true,
+          "sample_count": 35,
+          "sample_errors_count": 0
+        },
+        "new_preview_and_confirmation": true,
+        "result": "applied",
+        "revision": 2
+      },
+      "status": "observed",
+      "synthetic_only": true,
+      "writer_measurement": {
+        "capacity_measured": true,
+        "capacity_values": "retained-locally; machine-specific values not published",
+        "connections": [
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1048576,
+              "page_size": 4096,
+              "query_only": 0,
+              "synchronous": 3,
+              "temp_store": 2
+            },
+            "writer": true
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          }
+        ],
+        "coverage": {
+          "aggregate_snapshot_atomicity": "not-proven",
+          "connection_initialization_resources": "not-sampled-inside-connect",
+          "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+          "excluded_fds": 0,
+          "fd_census_coverage": "bounded-census",
+          "fd_limit": 128,
+          "lock_intervals_complete": true,
+          "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+          "memory_temp_bytes": "unmeasured",
+          "production_qualified": false,
+          "short_lived_between_samples": "unknown",
+          "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+          "temp_environment_matches": true,
+          "temp_location_guaranteed": false,
+          "temporal_file_coverage": "sampled-lower-bound",
+          "timing_includes_instrumentation": true,
+          "workload_upper_bound_proven": false
+        },
+        "lock_intervals": [
+          {
+            "exclusive": false,
+            "held_ns_lower": 76849125,
+            "held_ns_upper": 76868542
+          },
+          {
+            "exclusive": true,
+            "held_ns_lower": 166846667,
+            "held_ns_upper": 166864583
+          },
+          {
+            "exclusive": false,
+            "held_ns_lower": 80154875,
+            "held_ns_upper": 80171000
+          },
+          {
+            "exclusive": true,
+            "held_ns_lower": 147184833,
+            "held_ns_upper": 147199000
+          }
+        ],
+        "main_growth_observed_bytes": 0,
+        "measured_maxima": {
+          "journal_bytes": 29240,
+          "main_allocated_bytes": 49152,
+          "main_bytes": 49152,
+          "named_temp_bytes": 0,
+          "other_fd_bytes": 0,
+          "other_named_bytes": 0,
+          "sampled_unique_file_bytes": 78392,
+          "shm_bytes": 0,
+          "unlinked_fd_bytes": 0,
+          "wal_bytes": 0
+        },
+        "same_filesystem": true,
+        "sample_count": 206,
+        "sample_errors_count": 0
+      },
+      "writer_quota_after_fault_override": {},
+      "writer_returncode": 0
+    },
+    {
+      "classification": "injected-enospc-reply-loss",
+      "committed_transaction_consistent": true,
+      "executor_result_consistent": true,
+      "failed_transaction_unchanged": false,
+      "fault": "reply-loss",
+      "fresh_attempt": {
+        "accept_called": false,
+        "files_unchanged": true,
+        "measurement": {
+          "capacity_measured": true,
+          "capacity_values": "retained-locally; machine-specific values not published",
+          "connections": [
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            }
+          ],
+          "coverage": {
+            "aggregate_snapshot_atomicity": "not-proven",
+            "connection_initialization_resources": "not-sampled-inside-connect",
+            "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+            "excluded_fds": 0,
+            "fd_census_coverage": "bounded-census",
+            "fd_limit": 128,
+            "lock_intervals_complete": true,
+            "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+            "memory_temp_bytes": "unmeasured",
+            "production_qualified": false,
+            "short_lived_between_samples": "unknown",
+            "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+            "temp_environment_matches": true,
+            "temp_location_guaranteed": false,
+            "temporal_file_coverage": "sampled-lower-bound",
+            "timing_includes_instrumentation": true,
+            "workload_upper_bound_proven": false
+          },
+          "lock_intervals": [
+            {
+              "exclusive": false,
+              "held_ns_lower": 85445209,
+              "held_ns_upper": 85461292
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 85811833,
+              "held_ns_upper": 85832500
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 7159666,
+              "held_ns_upper": 7168917
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 82660625,
+              "held_ns_upper": 82672916
+            }
+          ],
+          "main_growth_observed_bytes": 0,
+          "measured_maxima": {
+            "journal_bytes": 0,
+            "main_allocated_bytes": 61440,
+            "main_bytes": 61440,
+            "named_temp_bytes": 0,
+            "other_fd_bytes": 0,
+            "other_named_bytes": 0,
+            "sampled_unique_file_bytes": 61440,
+            "shm_bytes": 0,
+            "unlinked_fd_bytes": 0,
+            "wal_bytes": 0
+          },
+          "same_filesystem": true,
+          "sample_count": 35,
+          "sample_errors_count": 0
+        },
+        "new_process": true,
+        "replay_rejected": true,
+        "result": "applied",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "fresh_normal": {
+        "accept_called": false,
+        "files_unchanged": true,
+        "measurement": {
+          "capacity_measured": true,
+          "capacity_values": "retained-locally; machine-specific values not published",
+          "connections": [
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            },
+            {
+              "effective_pragmas": {
+                "journal_mode": "delete",
+                "max_page_count": 1073741823,
+                "page_size": 4096,
+                "query_only": 1,
+                "synchronous": 2,
+                "temp_store": 0
+              },
+              "writer": false
+            }
+          ],
+          "coverage": {
+            "aggregate_snapshot_atomicity": "not-proven",
+            "connection_initialization_resources": "not-sampled-inside-connect",
+            "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+            "excluded_fds": 0,
+            "fd_census_coverage": "bounded-census",
+            "fd_limit": 128,
+            "lock_intervals_complete": true,
+            "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+            "memory_temp_bytes": "unmeasured",
+            "production_qualified": false,
+            "short_lived_between_samples": "unknown",
+            "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+            "temp_environment_matches": true,
+            "temp_location_guaranteed": false,
+            "temporal_file_coverage": "sampled-lower-bound",
+            "timing_includes_instrumentation": true,
+            "workload_upper_bound_proven": false
+          },
+          "lock_intervals": [
+            {
+              "exclusive": false,
+              "held_ns_lower": 10049209,
+              "held_ns_upper": 10061083
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 91648292,
+              "held_ns_upper": 91663375
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 6628500,
+              "held_ns_upper": 6639459
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 84441333,
+              "held_ns_upper": 84452833
+            }
+          ],
+          "main_growth_observed_bytes": 0,
+          "measured_maxima": {
+            "journal_bytes": 0,
+            "main_allocated_bytes": 61440,
+            "main_bytes": 61440,
+            "named_temp_bytes": 0,
+            "other_fd_bytes": 0,
+            "other_named_bytes": 0,
+            "sampled_unique_file_bytes": 61440,
+            "shm_bytes": 0,
+            "unlinked_fd_bytes": 0,
+            "wal_bytes": 0
+          },
+          "same_filesystem": true,
+          "sample_count": 35,
+          "sample_errors_count": 0
+        },
+        "new_process": true,
+        "replay_rejected": true,
+        "result": "state-unknown",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "journal_requires_maintenance": false,
+      "production_qualified": false,
+      "status": "observed",
+      "synthetic_only": true,
+      "writer_measurement": {
+        "capacity_measured": true,
+        "capacity_values": "retained-locally; machine-specific values not published",
+        "connections": [
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1048576,
+              "page_size": 4096,
+              "query_only": 0,
+              "synchronous": 3,
+              "temp_store": 2
+            },
+            "writer": true
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1048576,
+              "page_size": 4096,
+              "query_only": 0,
+              "synchronous": 3,
+              "temp_store": 2
+            },
+            "writer": true
+          },
+          {
+            "effective_pragmas": {
+              "journal_mode": "delete",
+              "max_page_count": 1073741823,
+              "page_size": 4096,
+              "query_only": 1,
+              "synchronous": 2,
+              "temp_store": 0
+            },
+            "writer": false
+          }
+        ],
+        "coverage": {
+          "aggregate_snapshot_atomicity": "not-proven",
+          "connection_initialization_resources": "not-sampled-inside-connect",
+          "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+          "excluded_fds": 0,
+          "fd_census_coverage": "bounded-census",
+          "fd_limit": 128,
+          "lock_intervals_complete": true,
+          "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+          "memory_temp_bytes": "unmeasured",
+          "production_qualified": false,
+          "short_lived_between_samples": "unknown",
+          "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+          "temp_environment_matches": true,
+          "temp_location_guaranteed": false,
+          "temporal_file_coverage": "sampled-lower-bound",
+          "timing_includes_instrumentation": true,
+          "workload_upper_bound_proven": false
+        },
+        "lock_intervals": [
+          {
+            "exclusive": false,
+            "held_ns_lower": 88939917,
+            "held_ns_upper": 88957292
+          },
+          {
+            "exclusive": true,
+            "held_ns_lower": 171765375,
+            "held_ns_upper": 171780000
+          },
+          {
+            "exclusive": false,
+            "held_ns_lower": 84367125,
+            "held_ns_upper": 84381541
+          },
+          {
+            "exclusive": true,
+            "held_ns_lower": 275513416,
+            "held_ns_upper": 275526334
+          }
+        ],
+        "main_growth_observed_bytes": 12288,
+        "measured_maxima": {
+          "journal_bytes": 41552,
+          "main_allocated_bytes": 61440,
+          "main_bytes": 61440,
+          "named_temp_bytes": 0,
+          "other_fd_bytes": 0,
+          "other_named_bytes": 0,
+          "sampled_unique_file_bytes": 90704,
+          "shm_bytes": 0,
+          "unlinked_fd_bytes": 0,
+          "wal_bytes": 0
+        },
+        "same_filesystem": true,
+        "sample_count": 330,
+        "sample_errors_count": 0
+      },
+      "writer_quota_after_fault_override": {
+        "effective_max_page_count": 1048576,
+        "page_count_before": 12,
+        "profile_max_page_count": 1048576
+      },
+      "writer_returncode": 0
+    },
+    {
+      "classification": "no-completed-observation",
+      "committed_transaction_consistent": false,
+      "executor_result_consistent": false,
+      "failed_transaction_unchanged": false,
+      "fault": "precommit-loss",
+      "fresh_attempt": {
+        "accept_called": false,
+        "files_unchanged": true,
+        "measurement": {
+          "capacity_measured": true,
+          "capacity_values": "retained-locally; machine-specific values not published",
+          "connections": [],
+          "coverage": {
+            "aggregate_snapshot_atomicity": "not-proven",
+            "connection_initialization_resources": "not-sampled-inside-connect",
+            "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+            "excluded_fds": 0,
+            "fd_census_coverage": "bounded-census",
+            "fd_limit": 128,
+            "lock_intervals_complete": true,
+            "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+            "memory_temp_bytes": "unmeasured",
+            "production_qualified": false,
+            "short_lived_between_samples": "unknown",
+            "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+            "temp_environment_matches": true,
+            "temp_location_guaranteed": false,
+            "temporal_file_coverage": "sampled-lower-bound",
+            "timing_includes_instrumentation": true,
+            "workload_upper_bound_proven": false
+          },
+          "lock_intervals": [
+            {
+              "exclusive": false,
+              "held_ns_lower": 904292,
+              "held_ns_upper": 915334
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 994417,
+              "held_ns_upper": 1009333
+            }
+          ],
+          "main_growth_observed_bytes": 0,
+          "measured_maxima": {
+            "journal_bytes": 41552,
+            "main_allocated_bytes": 49152,
+            "main_bytes": 49152,
+            "named_temp_bytes": 0,
+            "other_fd_bytes": 0,
+            "other_named_bytes": 0,
+            "sampled_unique_file_bytes": 90704,
+            "shm_bytes": 0,
+            "unlinked_fd_bytes": 0,
+            "wal_bytes": 0
+          },
+          "same_filesystem": true,
+          "sample_count": 6,
+          "sample_errors_count": 0
+        },
+        "new_process": true,
+        "replay_rejected": true,
+        "result": "state-unknown",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "fresh_normal": {
+        "accept_called": false,
+        "files_unchanged": true,
+        "measurement": {
+          "capacity_measured": true,
+          "capacity_values": "retained-locally; machine-specific values not published",
+          "connections": [],
+          "coverage": {
+            "aggregate_snapshot_atomicity": "not-proven",
+            "connection_initialization_resources": "not-sampled-inside-connect",
+            "effective_settings_scope": "successful-db.connect-return-before-fixture-fault-overrides",
+            "excluded_fds": 0,
+            "fd_census_coverage": "bounded-census",
+            "fd_limit": 128,
+            "lock_intervals_complete": true,
+            "lock_scope": "flock-acquire-syscall-through-lock-fd-close-syscall",
+            "memory_temp_bytes": "unmeasured",
+            "production_qualified": false,
+            "short_lived_between_samples": "unknown",
+            "size_method": "named-files-and-own-fd-metadata-at-boundaries-checkpoints-every-50-VM-ops",
+            "temp_environment_matches": true,
+            "temp_location_guaranteed": false,
+            "temporal_file_coverage": "sampled-lower-bound",
+            "timing_includes_instrumentation": true,
+            "workload_upper_bound_proven": false
+          },
+          "lock_intervals": [
+            {
+              "exclusive": false,
+              "held_ns_lower": 815042,
+              "held_ns_upper": 826458
+            },
+            {
+              "exclusive": false,
+              "held_ns_lower": 895375,
+              "held_ns_upper": 904792
+            }
+          ],
+          "main_growth_observed_bytes": 0,
+          "measured_maxima": {
+            "journal_bytes": 41552,
+            "main_allocated_bytes": 49152,
+            "main_bytes": 49152,
+            "named_temp_bytes": 0,
+            "other_fd_bytes": 0,
+            "other_named_bytes": 0,
+            "sampled_unique_file_bytes": 90704,
+            "shm_bytes": 0,
+            "unlinked_fd_bytes": 0,
+            "wal_bytes": 0
+          },
+          "same_filesystem": true,
+          "sample_count": 6,
+          "sample_errors_count": 0
+        },
+        "new_process": true,
+        "replay_rejected": true,
+        "result": "state-unknown",
+        "returncode": 0,
+        "timed_out": false
+      },
+      "journal_requires_maintenance": true,
+      "production_qualified": false,
+      "status": "incomplete",
+      "synthetic_only": true,
+      "writer_measurement": null,
+      "writer_quota_after_fault_override": null,
+      "writer_returncode": 73
+    }
+  ],
+  "privacy": "allowlisted synthetic results; raw host identities and diagnostics retained locally",
+  "source_sha256": {
+    "tests/fixtures/memory-governance/enospc_image.py": "b10d8aec11a0ae981cc934fffde4ee907ee47e9abe29fa4d980f528312eb944f",
+    "tests/fixtures/memory-governance/storage_fault_case.py": "8d9bff2823cbb61063cfa1a81eca7d7118a718a07569a7185d4fa591236c73a8",
+    "tests/fixtures/memory-governance/storage_fault_worker.py": "ea90e2e4b5d2e98d5664a8b3ced7d5102730278903612306ea382887e6030b93",
+    "tests/fixtures/memory-governance/storage_observer.py": "21a0b8be30294a4ffe4a68daef3cbff93cb89b29644790ce932845b516434ba8",
+    "tests/test_memory_governance_storage_faults.py": "a7a18d0d19665fbfe343b49308eff06208b9d60a6774eee30574341e083d2e03"
+  }
+}

@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 import plistlib
 import re
+import stat
 import subprocess
 import sys
 import tempfile
@@ -24,6 +25,7 @@ from storage_fault_case import run_case, worker
 
 IMAGE_BYTES = 256 * 1024 * 1024
 HOST_HEADROOM = 1024 * 1024 * 1024
+DIAGNOSTIC_BYTES = 8192
 
 
 def command(*args):
@@ -33,6 +35,29 @@ def command(*args):
 def available(path):
     value = os.statvfs(path)
     return value.f_bavail * value.f_frsize
+
+
+def command_failure(error, stage):
+    """Local-only evidence. Never publish raw command/output or resource identities."""
+    result = {'failure_stage': stage, 'command': list(error.cmd),
+              'command_returncode': getattr(error, 'returncode', None),
+              'command_timed_out': isinstance(error, subprocess.TimeoutExpired)}
+    for name in ('stdout', 'stderr'):
+        value = getattr(error, name, None) or b''
+        if isinstance(value, str):
+            value = value.encode('utf-8')
+        result[name] = value[:DIAGNOSTIC_BYTES].decode(errors='replace')
+        result[name + '_truncated'] = len(value) > DIAGNOSTIC_BYTES
+    return result
+
+
+def confirm_image_attachment(image, image_identity, mount, device, image_info):
+    info = image.lstat()
+    matches = [entry for entry in image_info.get('images', []) if entry.get('image-path') == str(image)]
+    if (not stat.S_ISREG(info.st_mode) or db.identity(info) != image_identity or len(matches) != 1
+            or not any(entry.get('mount-point') == str(mount) and entry.get('dev-entry') == device
+                       for entry in matches[0].get('system-entities', []))):
+        raise RuntimeError('image-attachment-binding-unconfirmed')
 
 
 def confirm_mount(parent, mount, attached, info):
@@ -72,7 +97,7 @@ def restore_filler(fd, identity, mount, mount_identity):
 def bounded_restore(physical):
     child = worker({'mode': 'restore', 'physical': physical}, pass_fds=(physical['fd'],), timeout=30)
     events = child['events']
-    if child['returncode'] != 0 or len(events) != 1 or events[0].get('event') != 'restore':
+    if child['timed_out'] or child['returncode'] != 0 or len(events) != 1 or events[0].get('event') != 'restore':
         return {'result': 'unproven', 'reason': 'restoration-worker-incomplete',
                 'timed_out': child['timed_out'], 'returncode': child['returncode']}
     return events[0]['result']
@@ -81,22 +106,35 @@ def bounded_restore(physical):
 def run():
     if sys.platform != 'darwin':
         raise RuntimeError('macOS-only')
-    parent = Path(tempfile.mkdtemp(prefix='mg1-253-enospc-', dir='/private/tmp')).resolve()
+    parent = Path(tempfile.mkdtemp(prefix='mg1-g1-enospc-', dir='/private/tmp')).resolve()
     os.chmod(parent, 0o700)
     image, mount = parent / 'synthetic.dmg', parent / 'volume'
     report = {'contract_version': 'mg1-g1-enospc-observation/v1', 'synthetic_only': True,
               'production_qualified': False, 'retained_fixture': str(parent), 'image_bytes_limit': IMAGE_BYTES,
               'host_headroom_minimum': HOST_HEADROOM, 'attempt_limit': 1,
               'expected_mountpoint': str(mount), 'attachment_state': 'not-attempted',
-              'status': 'incomplete', 'detached': False}
+              'status': 'incomplete', 'detached': False,
+              'create_configuration': {'size_mib': 256, 'filesystem': 'APFS', 'layout': 'GPTSPUD',
+                                       'image_type': 'UDIF', 'verbose': True}}
     mount_identity = filler = filler_identity = physical = None
     restoration_attempted = False
+    stage = 'resource-preview'
     try:
         report['host_available_before'] = available(parent)
         if report['host_available_before'] < HOST_HEADROOM + IMAGE_BYTES + 1048576:
             raise RuntimeError('insufficient-host-headroom')
-        command('/usr/bin/hdiutil', 'create', '-size', '256m', '-fs', 'APFS', '-layout', 'NONE',
-                '-volname', 'MG1Synthetic253', '-nospotlight', '-type', 'UDIF', str(image))
+        create_command = ('/usr/bin/hdiutil', 'create', '-size', '256m', '-fs', 'APFS', '-layout', 'GPTSPUD',
+                          '-volname', 'MG1Synthetic', '-nospotlight', '-type', 'UDIF', '-verbose', str(image))
+        preview = {'command': list(create_command), 'parent_identity': list(db.identity(parent.stat())),
+                   'image_must_be_absent': str(image), 'mount_must_be_absent': str(mount),
+                   'image_bytes_limit': IMAGE_BYTES, 'host_headroom_minimum': HOST_HEADROOM,
+                   'host_available_before': report['host_available_before'], 'attempt_limit': 1}
+        if os.path.lexists(image) or os.path.lexists(mount):
+            raise RuntimeError('new-resource-already-exists')
+        with (parent / 'resource-preview.json').open('x', encoding='utf-8') as output:
+            output.write(json.dumps(preview, sort_keys=True, indent=2) + '\n')
+        stage = 'image-create'
+        command(*create_command)
         if not image.is_file() or image.is_symlink() or image.stat().st_size > IMAGE_BYTES + 1048576:
             raise RuntimeError('unexpected-image')
         report['image_identity'] = list(db.identity(image.stat()))
@@ -104,15 +142,22 @@ def run():
         if report['host_available_after_create'] < HOST_HEADROOM:
             raise RuntimeError('insufficient-host-headroom-after-create')
         report['attachment_state'] = 'unknown'
+        stage = 'image-attach'
         attached = plistlib.loads(command('/usr/bin/hdiutil', 'attach', '-plist', '-nobrowse',
                                          '-noautoopen', '-noautofsck', '-owners', 'on',
                                          '-mountpoint', str(mount), str(image)))
+        stage = 'mount-identity'
         info = plistlib.loads(command('/usr/sbin/diskutil', 'info', '-plist', str(mount)))
-        mount_identity, device = confirm_mount(parent, mount, attached, info)
+        candidate_identity, device = confirm_mount(parent, mount, attached, info)
+        stage = 'image-attachment-binding'
+        confirm_image_attachment(image, tuple(report['image_identity']), mount, device,
+                                 plistlib.loads(command('/usr/bin/hdiutil', 'info', '-plist')))
+        mount_identity = candidate_identity
         report['attachment_state'] = 'confirmed-mounted'
         report['mount_identity'] = list(mount_identity)
         report['device_node'] = device
         report['filesystem'] = {'type': info['FilesystemType'], 'total_bytes': info['TotalSize']}
+        stage = 'filler-create'
         filler = os.open(mount / 'synthetic-filler', os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_NOFOLLOW, 0o600)
         filler_identity = db.identity(os.fstat(filler))
         if filler_identity[0] != mount_identity[0]:
@@ -128,17 +173,19 @@ def run():
             report['space_restoration'] = bounded_restore(physical)
             return report['space_restoration']
 
+        stage = 'storage-experiment'
         report['experiment'] = run_case(scenario, 'physical', physical=physical, recover=recover)
         report['status'] = report['experiment']['status']
     except Exception as error:
         report['status'] = 'incomplete'
         report['failure'] = type(error).__name__
-        if isinstance(error, subprocess.CalledProcessError):
-            report['failed_command'] = list(error.cmd[:4])
-            report['command_returncode'] = error.returncode
-            report['diagnostic'] = error.stderr.decode(errors='replace')[:1000]
+        report['failure_stage'] = stage
+        if isinstance(error, (subprocess.CalledProcessError, subprocess.TimeoutExpired)):
+            report.update(command_failure(error, stage))
         else:
             report['diagnostic'] = str(error)[:1000]
+        if stage == 'image-create':
+            report['creation_internal_attachment'] = 'unknown; outer attach not attempted; no unverified detach'
     finally:
         if filler is not None:
             if not restoration_attempted:
@@ -181,8 +228,9 @@ def main():
     parser.add_argument('--run', action='store_true')
     args = parser.parse_args()
     if not args.run:
-        report = {'status': 'dry-run', 'creates': 'new /private/tmp/mg1-253-enospc-*/synthetic.dmg',
+        report = {'status': 'dry-run', 'creates': 'new /private/tmp/mg1-g1-enospc-*/synthetic.dmg',
                   'filesystem': 'APFS', 'image_bytes': IMAGE_BYTES, 'host_headroom_minimum': HOST_HEADROOM,
+                  'layout': 'GPTSPUD', 'image_type': 'UDIF', 'create_verbose': True,
                   'fault_stage': 'before-commit', 'attempt_limit': 1, 'worker_timeout_seconds': 90,
                   'fills': 'own inherited filler fd on confirmed new mount only; at most image_bytes',
                   'recovery': 'truncate own filler once; fresh readback without repair; normal detach; retain image',
