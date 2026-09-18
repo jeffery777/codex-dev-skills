@@ -52,11 +52,13 @@ CLI adapter 的 native TUI reference；相同 basename 不代表 payload 或啟�
 
 ## Contract Family Boundary
 
-Desktop callable facts were last verified on 2026-09-16. The
-[maintained point-in-time evidence](codex-runtime-compatibility-evidence-2026-09-16.md)
-records the independent CLI and Desktop runtime builds and confirms that the
-absence of `codex mcp-server` in both observed CLI binaries does not change this Desktop contract or
-authorize a direct app-server integration. The current
+Desktop callable 的最新比對見
+[2026-09-17 點時證據](codex-runtime-compatibility-evidence-2026-09-17.md)：
+Desktop 26.911.61220／bundled CLI 0.155.0-alpha.2.6 與 standalone CLI
+0.154.0 分開驗證，未發現需修改本契約的差異。
+[2026-09-16 紀錄](codex-runtime-compatibility-evidence-2026-09-16.md) 保留原貌；
+兩次觀測都不能以 `codex mcp-server --help` 的 exit 0 證明該命令仍受支援，
+也不授權新增 direct app-server integration。The current
 public product surface is the
 ChatGPT desktop app; this document retains `Desktop` as the compatibility label
 for its Codex task and thread control plane:

@@ -1303,18 +1303,16 @@ gate, and changed scope or ambiguous effects require a decision. Tests and CI us
 synthetic contract evidence and perform no live sidebar mutation.
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
-The latest maintained comparison is
-[Codex runtime compatibility evidence (2026-09-16)](docs/codex-runtime-compatibility-evidence-2026-09-16.md).
-It records that `codex mcp-server`, the command that exposed Codex itself as an
-MCP server, is absent from observed standalone CLI 0.154.0 and bundled CLI
-0.154.0-alpha.6.2.
-It also records Desktop 26.908.70816 build 9275 and its bundled CLI as
-separate point-in-time observations rather than one global version. This does
-not deprecate Codex's external MCP client configuration, connectors, or native
-Desktop task/thread tools. The refresh covers public-help tests, callable
-schemas, and read-only registry observations. It does not rerun live
-start/resume/fork or resolve their earlier process-tracking limitations;
-earlier dated evidence remains unchanged.
+最新維護的比對見
+[Codex runtime compatibility evidence (2026-09-17)](docs/codex-runtime-compatibility-evidence-2026-09-17.md)。
+它分開記錄 Desktop 26.911.61220 build 9647、bundled CLI 0.155.0-alpha.2.6
+與 standalone CLI 0.154.0，並核對公開 help、callable schema 及唯讀 registry
+回傳；沒有發現需要修改 CLI／Desktop 獨立入口或共享分層的差異。
+兩個 CLI 的 `codex mcp-server --help` 都只回傳 root usage，不能視為該命令
+仍受支援；外部 MCP client 設定、connectors 與原生 Desktop 工具是不同介面。
+[2026-09-16 紀錄](docs/codex-runtime-compatibility-evidence-2026-09-16.md) 與更早
+證據保留原貌。本次未重跑 live start/resume/fork 或遠端 caller，不能據此
+宣稱先前的 process-tracking 限制已修復。
 Use only a callable exposed by the current runtime, validate its target and
 response at the call site, and preserve the same CLI fallback. The
 Desktop Runtime Wrapper V1 is retired and provides no runnable or importable
