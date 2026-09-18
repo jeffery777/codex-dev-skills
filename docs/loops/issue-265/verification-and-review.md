@@ -11,7 +11,6 @@
 | --- | --- | --- |
 | PF-265-01 / MUST-FIX | Fixed | 原協調器在 filler 恢復 failed/refused/unproven 後仍呼叫 fresh reader，可能對未確認 mount 做遍歷，並覆蓋原失敗理由。現於 reader 前停止；三種結果的負例確認 reader/control 均未啟動。 |
 | PF-265-02 / SHOULD-FIX | Fixed | 原診斷只存前四個 argv 及 stderr 前段，遺失配置、stdout 與 timeout 階段。現本地保存完整 argv、階段、exit/timeout、stdout/stderr 各最多 8 KiB 及截斷旗標；create/attach timeout 與 stdout-only 負例可重跑。 |
-
 | CR-265-01 / MUST-FIX | Fixed | 量測 gate 不能只信 coverage flags；現要求完整 payload、有效型別／數值、capacity 順序與實際 acquire/close 時序及 held bracket 一致。reader/control 刪除 connections、lock_intervals、maxima 或破壞區間均 incomplete；開庫前拒絕仍可有空 connections。 |
 | CR-265-02 / SHOULD-FIX | Fixed | pragma 明示為 db.connect 返回、fixture fault override 前的快照；公開摘要另列故障注入後 quota。page-quota 正例比對 profile snapshot 與实际縮小 quota，避免把不同時點混為一談。 |
 | AR-265-01 / SHOULD-FIX | Fixed | temp 驗證未保存 originating inode；修正文案，明示只驗證當前目錄屬性，私有 trial 不被同權限程序替換是前提，不宣稱 inode 連續性或跨使用者隔離。 |
