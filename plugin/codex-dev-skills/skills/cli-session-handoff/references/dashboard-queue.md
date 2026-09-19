@@ -23,6 +23,12 @@ token. Do not send it from this manual adapter.
 - Dashboard discovery or viewing is observation. Starting, opening, renaming,
   or stopping a task is a distinct runtime-state action and requires exact
   authority at selection time.
+- CLI 0.155.0 的公開更新另列出 hide、archive、delete 與 clean managed-worktree
+  deletion。Hide／archive 是整理 runtime 狀態，不代表刪除或完成；是否可逆
+  依當次公開操作查證。Task delete 與 managed-worktree delete 分開核對精確
+  目標、影響範圍、preview 與復原方式，取得明確刪除授權；clean 不代表可
+  任意刪除。只回傳已核對的手動步驟，不擴大 private-clone executor 或把一種
+  刪除授權當作另一種。參考 [官方 changelog](https://learn.chatgpt.com/docs/changelog)。
 - Prepare `codex queue` only with a canonical UUID. Do not use a session name,
   `--last`, private state, or dashboard display text as identity authority.
 - Preview and validate the full queued message. It must be bounded,

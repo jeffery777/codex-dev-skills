@@ -49,6 +49,9 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Maintenance Approach
 
+- Issue #269 的 runtime 相容性維護限於 Desktop sidebar 內建 headings、目前
+  任務的 worktree reference 與 CLI dashboard 操作分類；維持獨立入口和共享
+  完成契約。其 patch 發版評估見 [v0.24.7 候選紀錄](release-notes-v0.24.7.md)。
 - Let real project usage reveal which skills need to be added or corrected.
 - Prefer small, reusable workflow improvements over speculative workflow packs.
 - Keep repo documentation aligned with installer groups, skill names, templates, and validation.

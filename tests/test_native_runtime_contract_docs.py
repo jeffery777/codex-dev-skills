@@ -386,6 +386,70 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             with self.subTest(disallowed=disallowed):
                 self.assertIn(disallowed, skill)
 
+    def test_sidebar_heading_reorder_does_not_require_builtin_custom_identity(self) -> None:
+        skill = read("skills/desktop-sidebar-organization/SKILL.md")
+        for marker in (
+            "every current custom `sectionId` exactly once",
+            "`pinned`、",
+            "`agents`、`chats`、`projects`",
+            "省略者保留原位置",
+            "自訂區塊不可省略",
+            "整份 payload 不可有重複 ID",
+            "`threads` 與 `null` 不屬於此排序操作",
+            "registry 分類也不是排序 payload 清單",
+            "不能因此取得 rename／delete 權限",
+            "不把 registry 分類順序當作成功",
+            "不補送另一輪排序",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, skill)
+        self.assertNotIn("`sectionId` before deletion, rename, or reorder", skill)
+        self.assertIn('["section-b", "section-a"]', skill)
+        self.assertIn("省略 `section-a`、重複 `projects` 或加入 `threads` 都不能送出", skill)
+
+    def test_current_task_worktree_has_an_independent_desktop_reference(self) -> None:
+        entry = read("skills/desktop-project-delivery/SKILL.md")
+        reference_path = "skills/desktop-project-delivery/references/current-worktree.md"
+        body = read(reference_path)
+        self.assertIn("references/current-worktree.md", entry)
+        self.assertIn(reference_path, read("README.md"))
+        for marker in (
+            "`create_worktree`",
+            "選填 `name` 與 `ref`",
+            "省略 `ref` 從目前 repository 的 HEAD",
+            "未提交修改不會複製",
+            "不執行 environment setup scripts",
+            "不改變目前",
+            "cwd 或 sandbox permissions",
+            "後續工具明確使用回傳目錄",
+            "不要為登錄失敗再次呼叫 `create_worktree`",
+            "不猜測未公開的 response 欄位名稱",
+            "不是新 task、history fork 或 handoff",
+            "scripts/project-python",
+            "不自動建立 live 工作樹",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, body)
+        # Checkout isolation does not add a user-task dispatch mode or payload.
+        thread_entry = read("skills/desktop-thread-delegation/SKILL.md")
+        self.assertNotIn("current-worktree.md", thread_entry)
+        self.assertIn("不新增共享任務模式", entry)
+        self.assertIn("CLI 依其 Git／shell 路徑處理", body)
+
+    def test_cli_dashboard_deletion_keeps_separate_manual_authority(self) -> None:
+        body = read("skills/cli-session-handoff/references/dashboard-queue.md")
+        for marker in (
+            "hide、archive、delete",
+            "managed-worktree",
+            "Task delete 與 managed-worktree delete 分開核對精確",
+            "preview 與復原方式",
+            "取得明確刪除授權",
+            "clean 不代表可",
+            "不擴大 private-clone executor",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, body)
+
     def test_sidebar_authority_and_discovery_are_action_scoped(self) -> None:
         skill = read("skills/desktop-sidebar-organization/SKILL.md")
         self.assertIn("the user does not need to provide raw IDs or callable names", skill)

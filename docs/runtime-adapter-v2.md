@@ -53,7 +53,11 @@ CLI adapter 的 native TUI reference；相同 basename 不代表 payload 或啟�
 ## Contract Family Boundary
 
 Desktop callable 的最新比對見
-[2026-09-17 點時證據](codex-runtime-compatibility-evidence-2026-09-17.md)：
+[2026-09-19 點時證據](codex-runtime-compatibility-evidence-2026-09-19.md)：
+sidebar 可排序內建 headings；`create_worktree` 是目前任務的 checkout 操作，
+由 `desktop-project-delivery` 的按需 reference 處理，不是本 thread adapter
+的 create／fork／handoff，也不新增共享模式。
+[2026-09-17 點時證據](codex-runtime-compatibility-evidence-2026-09-17.md) 記錄
 Desktop 26.911.61220／bundled CLI 0.155.0-alpha.2.6 與 standalone CLI
 0.154.0 分開驗證，未發現需修改本契約的差異。
 [2026-09-16 紀錄](codex-runtime-compatibility-evidence-2026-09-16.md) 保留原貌；

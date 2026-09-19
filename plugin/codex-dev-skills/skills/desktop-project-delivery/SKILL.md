@@ -53,7 +53,10 @@ readiness stages.
    selected native role cannot be dispatched through the current callable,
    reground availability and reroute; installation alone does not prove it.
 3. Invoke `desktop-thread-delegation` only when the user explicitly wants a
-   separate user-owned Desktop task, thread, or worktree.
+   separate user-owned Desktop task or thread, including a child task's worktree.
+   若已授權工作只需要在目前任務使用隔離 checkout，先讀
+   [目前任務的工作樹](references/current-worktree.md)，依當次 `create_worktree`
+   契約處理；不需為此建立另一任務或複製歷史，也不新增共享任務模式。
    Invoke `desktop-sidebar-organization` separately only when the user
    explicitly requests an exact sidebar organization change; never use it to
    infer task creation, navigation, registration, or completion.
