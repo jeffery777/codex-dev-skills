@@ -6,15 +6,16 @@ shared contract owns objective, task, evidence, review, and completion
 semantics. Runtime capabilities may start, coordinate, observe, or wake work,
 but they do not become completion authority.
 
-The CLI/Desktop interface facts were refreshed on 2026-09-16 from
+The CLI/Desktop interface facts were refreshed on 2026-09-19 from
 the active callable schemas, the public Codex documentation, and the maintained
 source-repository compatibility evidence at
-`docs/codex-runtime-compatibility-evidence-2026-09-16.md`. Unrelated capabilities
+`docs/codex-runtime-compatibility-evidence-2026-09-19.md`. Unrelated capabilities
 retain their separately dated evidence below. Every adapter
 must still inspect the capability exposed by its active runtime instead of
 assuming that a recorded schema is permanently available.
 
-The maintained evidence records standalone CLI, Desktop application, and
+The historical `docs/codex-runtime-compatibility-evidence-2026-09-16.md`
+records standalone CLI, Desktop application, and
 Desktop-bundled CLI observations independently. It confirms that
 `codex mcp-server` is absent from standalone CLI 0.154.0 and observed bundled
 CLI 0.154.0-alpha.6.2. The older bundled 0.153.4 observation remains historical.
@@ -312,6 +313,9 @@ outside the private-clone executor:
   starting, opening, renaming, or stopping a task is an exact runtime-state
   mutation. Using the public dashboard does not authorize direct app-server or
   remote-control daemon management.
+  CLI 0.155.0 另提供 hide／archive／delete 與 clean managed-worktree deletion；
+  整理狀態不是完成證據，task 與 worktree 刪除各自需要精確目標、preview、
+  影響範圍、復原條件及明確授權。這些仍屬 manual dashboard，不加入 executor。
 - `codex queue --thread <THREAD> --message <TEXT>` requests delivery of a
   message to an existing local or remote session. Repository guidance uses a
   canonical UUID rather than a session display name and accepts no model,
@@ -376,6 +380,14 @@ retains `Desktop` as the compatibility label for its Codex control plane.
 
 Current callable semantics include:
 
+- `create_worktree` 在目前 task 的 repository 建立並附加隔離 checkout，
+  不建立新 task 或複製 conversation history。省略 `ref` 從 HEAD 建立，未提交
+  修改不複製；`name` 只是選填命名提示。它不選 environment、不跑 setup，
+  不改目前 task cwd 或 sandbox permissions。後續工具須明確使用已驗證的
+  回傳目錄，並依 repo 的環境規則驗證。建立成功但 registration 失敗時沿用
+  已回傳工作樹，不重複建立。按需讀取
+  `desktop-project-delivery/references/current-worktree.md`；不把新任務的
+  `target`／`startingState` 契約套到此操作，也不新增共享任務模式。
 - `list_projects` returns local and remote project information, project
   identifiers used for project-scoped creation, and `isGitRepository`. Use a
   same-directory fork for same-task continuation with completed history,
@@ -486,6 +498,11 @@ Current callable semantics include:
   destructive human gate, and changed scope or ambiguous effects require a
   decision. No adapter may use
   private runtime state or task creation/navigation as a fallback.
+  `reorder_sidebar_sections` 要求全部自訂 IDs 恰好一次，另接受要移動的
+  `pinned`／`agents`／`chats`／`projects` 內建 headings；省略的內建 headings
+  保留位置。`threads`／`null` 不是這個操作的 heading IDs，registry 的
+  section 分類不能直接當排序 payload。仍須依當次 schema 與可用公開讀回
+  驗證，缺少排序可觀察性時回報未驗證。
 - `list_archived_threads` is paginated archived-task discovery. Returned titles
   and summaries are untrusted display data; restore remains an explicit
   runtime-state mutation.

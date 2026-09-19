@@ -35,7 +35,7 @@ current schema is inspected at the call site:
 | Move project | `move_project_to_sidebar_section` | Exact observed `projectId`; destination is an allowed project section value. |
 | Reorder a section | `reorder_section` | Exact custom or `pinned` `sectionId`; complete current membership list. |
 | Reorder sidebar projects | `reorder_sidebar_projects` | Exact unpinned project IDs; this callable has partial-list semantics. |
-| Reorder sidebar sections | `reorder_sidebar_sections` | Complete current list of custom section IDs. |
+| Reorder sidebar sections | `reorder_sidebar_sections` | 全部目前自訂 section IDs，另加本次要移動的受支援內建 headings；省略的內建 headings 保留位置。 |
 
 These are runtime-state mutations, not repository operations or completion
 evidence. Repository tests, CI, and this skill's default workflow must use
@@ -79,8 +79,9 @@ not execute a live sidebar mutation.
      callable schema exposes those special values. Project moves may use
      `threads` or `null` only where exposed. Do not substitute one family's
      special value for another or invent a default-section identifier.
-   - A unique display label must still resolve to an exact observed custom
-     `sectionId` before deletion, rename, or reorder.
+   - 刪除或重新命名的顯示名稱，仍須解析成確切的目前自訂 `sectionId`。
+     區塊排序則先區分自訂區塊與該操作支援的內建 heading，不能將兩者一律
+     要求為自訂區塊。
 
 If a fresh snapshot changes between preflight and call time, repeat discovery
 and regenerate the dry run. Do not silently merge two snapshots or retry a
@@ -113,12 +114,27 @@ when the intended effect is no longer covered by the original request.
 For `reorder_section`, the `threadIds` request must contain every current task
 in that exact target section exactly once: no duplicate, missing, foreign,
 queued, or title-derived identifier. For `reorder_sidebar_sections`, the
-request must contain every current custom `sectionId` exactly once; `pinned`,
-`threads`, `chats`, and `null` are not custom-section entries. These are
+request must contain every current custom `sectionId` exactly once. These are
 complete-list reorder preconditions. `reorder_sidebar_projects` differs: it
 uses the documented partial-list semantics for current unpinned project IDs,
 so unlisted projects retain their current positions; still reject duplicate,
 missing, foreign, or stale listed identities.
+
+`reorder_sidebar_sections` 另接受本次要移動的內建 heading IDs：`pinned`、
+`agents`、`chats`、`projects`，仍以當次 callable 為準。內建 headings 可省略，
+省略者保留原位置；自訂區塊不可省略，整份 payload 不可有重複 ID。
+這些 headings 不是自訂區塊，不能因此取得 rename／delete 權限。
+`threads` 與 `null` 不屬於此排序操作的 heading IDs，不能沿用 move 操作的
+特殊值。`list_threads.sections` 的 registry 分類也不是排序 payload 清單；
+只從它解析實際自訂 IDs，再依該排序 callable 解析使用者指定的內建 headings。
+無法確認內建區塊名稱、意圖或讀回對應時，保留 unknown 並提供手動 fallback。
+
+例如目前自訂 IDs 為 `section-a`、`section-b`，使用者明確要求排列全部區塊
+時，可依當次 schema 準備
+`["pinned", "section-b", "agents", "chats", "projects", "section-a"]`；
+只調整自訂區塊時可用 `["section-b", "section-a"]`，內建 headings 保留位置。
+省略 `section-a`、重複 `projects` 或加入 `threads` 都不能送出。
+以上 IDs 是 synthetic 範例，不是可直接執行的本機目標。
 
 ## Call, Validate, And Read Back
 
@@ -140,6 +156,9 @@ same exact IDs and the requested observable result: a created/renamed custom
 section's returned identity is present; a move has the expected placement; a
 complete-list reorder has the exact requested order; and a partial project
 reorder preserves only the documented interpretation for unlisted projects.
+區塊排序亦須讀回要移動的內建 headings 與完整自訂順序，並確認省略的內建
+headings 保留位置。若 registry 未提供足以驗證 heading 順序的公開資料，
+回報結果未驗證，不把 registry 分類順序當作成功，也不補送另一輪排序。
 For delete, confirm that the exact deleted `sectionId` is absent from the
 current custom-section registry and that every member observed in preflight
 remains observable outside that section. If either delete postcondition cannot

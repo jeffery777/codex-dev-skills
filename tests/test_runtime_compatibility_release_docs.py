@@ -15,6 +15,33 @@ def read(relative: str) -> str:
 
 
 class RuntimeCompatibilityReleaseDocsTests(unittest.TestCase):
+    def test_v0247_runtime_refresh_preserves_evidence_and_release_roles(self) -> None:
+        notes = read("docs/release-notes-v0.24.7.md")
+        evidence_path = "docs/codex-runtime-compatibility-evidence-2026-09-19.md"
+        evidence = read(evidence_path)
+        for marker in (
+            "Issue #269",
+            "值得發行 patch",
+            "目前任務工作樹 reference",
+            "省略內建 headings 時保留位置",
+            "不擴大 private-clone executor",
+            "不宣稱合併、發布",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, notes)
+        for marker in (
+            "0.155.1", "26.915.31945", "9922", "0.155.0-alpha.9.2",
+            "current-session evidence", "不是 published stable schema",
+            "完整 installer suite 因耗時中止，不列 PASS",
+            "#242／#251 仍是獨立未解範圍",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, evidence)
+        self.assertIn(evidence_path, read("README.md"))
+        for path in ("docs/runtime-compatibility.md", "docs/runtime-adapter-v2.md"):
+            self.assertIn(pathlib.Path(evidence_path).name, read(path))
+        self.assertIn("release-notes-v0.24.7.md", read("docs/roadmap.md"))
+
     def test_v0162_historical_notes_and_traceability_remain(self) -> None:
         notes = read("docs/release-notes-v0.16.2.md")
         for expected in (

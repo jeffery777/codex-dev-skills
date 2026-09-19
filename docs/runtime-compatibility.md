@@ -7,7 +7,10 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only.
-最新的 [2026-09-17 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-17.md)
+最新的 [2026-09-19 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-19.md)
+記錄 sidebar 內建 headings 排序與目前任務 `create_worktree` 的契約補充；
+CLI executor 及共享完成語意維持不變。
+[2026-09-17 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-17.md)
 分開記錄 standalone CLI、Desktop application 與 Desktop-bundled CLI，核對
 原生工具契約與唯讀 registry 回傳，沒有發現需要改動入口或共享架構的差異。
 前次 [2026-09-16 紀錄](codex-runtime-compatibility-evidence-2026-09-16.md) 仍保留
@@ -63,6 +66,11 @@ turn。它不接受 Desktop target/environment，不建立 private clone/worktre
 [Native TUI reference](../skills/cli-session-handoff/references/native-tui.md)。
 
 ## `desktop`
+
+`desktop-project-delivery` 的按需 worktree reference 支援目前任務附加隔離
+checkout；它與另開任務、history fork 及 handoff 分開。`create_worktree`
+不執行 setup、不改 cwd 或 permissions，也不複製未提交修改；必須使用回傳
+目錄與 repo 的環境驗證，registration 失敗不能重複建立。
 
 Requires Codex Desktop user-owned task, thread, worktree, UI, or scheduling
 control. Shared main-agent reasoning and subagent delegation are not, by

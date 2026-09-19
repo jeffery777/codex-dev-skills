@@ -1272,6 +1272,11 @@ Use `desktop-project-delivery` when shared project delivery also needs Desktop
 task, thread, worktree, or scheduling controls. Ordinary subagent delegation is
 shared and does not require this Desktop adapter:
 
+已授權工作只需要在目前任務隔離 checkout 時，使用
+[目前任務的工作樹 reference](skills/desktop-project-delivery/references/current-worktree.md)。
+`create_worktree` 不建立另一任務、不複製未提交修改、不跑 setup，也不改 cwd
+或權限；後續工作明確使用已驗證的回傳目錄。新 task／history fork 保留各自入口。
+
 ```text
 Use desktop-project-delivery to prepare this feature for PR readiness.
 Coordinate implementation and review, integrate the output, run verification, and stop for product ambiguity, destructive actions, external writes, or final merge approval.
@@ -1307,6 +1312,10 @@ synthetic contract evidence and perform no live sidebar mutation.
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 最新維護的比對見
+[Codex runtime compatibility evidence (2026-09-19)](docs/codex-runtime-compatibility-evidence-2026-09-19.md)：
+Desktop sidebar 支援選填的內建 headings 排序，並補上目前任務的 worktree
+契約與 CLI dashboard 刪除分類；CLI executor 與共享完成語意維持不變。
+前次
 [Codex runtime compatibility evidence (2026-09-17)](docs/codex-runtime-compatibility-evidence-2026-09-17.md)。
 它分開記錄 Desktop 26.911.61220 build 9647、bundled CLI 0.155.0-alpha.2.6
 與 standalone CLI 0.154.0，並核對公開 help、callable schema 及唯讀 registry
