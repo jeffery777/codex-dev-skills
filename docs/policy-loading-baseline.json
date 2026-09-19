@@ -1,0 +1,24 @@
+{
+  "source_revision": "b3c195b69a0f5c948627d16cfd5fb154dcaf609e",
+  "source": "policies/reusable-workflow-contract.md",
+  "section_body_sha256": {
+    "Contract-Preserving Capability Selection": "c5c26c92a00b60f8b77c4da8d515dadd9c65ab1a01d4aae0b04a8a40b01316d4",
+    "Protected Boundaries": "2f6a4111ded9fb2b17776350b37c3f8fa4128b05c80def1c352aebdd1cf88247",
+    "Contextual Prompt Composition": "fcc1f0c1bb2031d6f98c1104b5b4995ae60df9235dc92ae4605f283230bb1249",
+    "Decision And Stop Conditions": "bad564a3985ff6883ea38ffe8697e3fe6923b9805d452695be8dee0ff2fb393d",
+    "Shared Phases": "3386eba01111190a650b409cefed28ef924f6be9ca66b3d63bfeac334871d49c",
+    "Runtime Differences": "b34b05b3c9d7f04aa94d0e3294ba23451a52923e51d9f46da4df2fc26077340c",
+    "Review And Merge": "e6c31f356e77f9495f7dcaba87992ab7b0e36aac6ac573793ec65ecfdf09acb1"
+  },
+  "bytes": {
+    "policies/reusable-workflow-contract.md": 9603,
+    "policies/code-mode-tool-orchestration-policy.md": 5916,
+    "skills/docs-review/SKILL.md": 1613,
+    "skills/implementation-slice/SKILL.md": 1767
+  },
+  "named_section_bytes": {
+    "Contract-Preserving Capability Selection": 2376,
+    "Contextual Prompt Composition": 2657,
+    "Decision And Stop Conditions": 1783
+  }
+}

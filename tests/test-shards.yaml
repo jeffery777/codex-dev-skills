@@ -94,6 +94,7 @@ shards:
     modules:
       - tests.test_code_mode_tool_policy
       - tests.test_github_control_plane_policy
+      - tests.test_policy_loading
       - tests.test_pr_issue_link
       - tests.test_project_python
       - tests.test_release_state_contract
