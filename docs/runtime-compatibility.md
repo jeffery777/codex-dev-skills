@@ -21,6 +21,11 @@ native Desktop task/thread tools. 在 9 月 17 日觀測的 standalone CLI 0.154
 usage，不能當作 subcommand 仍受支援。更早的 bundled 0.153.4 與 live session
 結果保留於 2026-09-11 紀錄；本次 help／schema 檢查不代表 live qualification。
 
+Standalone fork 的後續調查見
+[2026-09-11 EPERM 調查](cli-fork-eperm-investigation-2026-09-11.md)：公開回報與
+候選 PR 尚未確認根因，本輪新 start 亦未完成；保留失敗與未知 session 狀態，
+不以公開 help 或 bundled 舊成功宣稱 standalone fork 已驗收。
+
 Thread 控制先依 [Thread Capability Discovery](native-runtime-capabilities.md#thread-capability-discovery)
 辨識 Desktop 本機、Desktop 遠端、CLI/TUI 入口，完成正式清單與 deferred
 搜尋，記錄完整 namespace/schema；不可觀察時保留 unknown。不能以 OS、SSH、
