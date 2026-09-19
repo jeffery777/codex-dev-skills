@@ -4,7 +4,7 @@
 # skill. routes_to is always a list and is required only for deprecated aliases.
 
 name: codex-dev-skills
-version: "0.24.5"
+version: "0.24.6"
 platforms:
   - codex
   - codex-desktop
@@ -36,6 +36,7 @@ groups:
       - source: policies/projectspec-alignment-policy.md
       - source: policies/release-state-contract.md
       - source: policies/reusable-workflow-contract.md
+      - source: policies/reusable-workflow-details.md
       - source: policies/review-artifact-policy.md
       - source: policies/runtime-compatibility-policy.md
       - source: policies/security-review-escalation-policy.md

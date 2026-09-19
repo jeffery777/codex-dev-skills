@@ -7,14 +7,14 @@ description: Implement a bounded software change after read-only inspection, the
 
 Runtime compatibility: shared
 
-執行方式選用：先讀 `../../policies/reusable-workflow-contract.md` 的
-`Contract-Preserving Capability Selection`；本地安裝改讀
+執行方式選用：先讀 `../../policies/reusable-workflow-contract.md` 完整核心與觸發表；本地安裝改讀
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/reusable-workflow-contract.md`。
 可重用契約相容的原生／內建／本地執行結果；本技能的必要步驟、證據與輸出仍適用。
 同一契約的 Contextual Prompt Composition 與 Decision And Stop Conditions
 規範當次工作包、驗證尺度、已授權續行及真正停止條件。
 
-Code Mode tool orchestration: follow
+Code Mode tool orchestration: before batching/concurrent tool calls or substantial
+tool-driven orchestration, read
 `../../policies/code-mode-tool-orchestration-policy.md` relative to this skill in source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
 after filesystem installation.

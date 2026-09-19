@@ -316,6 +316,11 @@ class PluginPackagingTests(unittest.TestCase):
                         (ROOT / "policies/reusable-workflow-contract.md").read_bytes(),
                         target.read_bytes(),
                     )
+            for policy in ("reusable-workflow-contract.md", "reusable-workflow-details.md"):
+                self.assertEqual(
+                    (ROOT / "policies" / policy).read_bytes(),
+                    (templates_root / "orchestration/policies" / policy).read_bytes(),
+                )
             self.assertIn("planning", policy_consumers)
             self.assertIn("code-review-gate", policy_consumers)
             source_pattern = re.compile(

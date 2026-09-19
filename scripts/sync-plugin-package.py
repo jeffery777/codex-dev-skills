@@ -24,6 +24,7 @@ SHARED_FILES = {
     "policies/model-selection-policy.md",
     "policies/release-state-contract.md",
     "policies/reusable-workflow-contract.md",
+    "policies/reusable-workflow-details.md",
     "scripts/validate-exact-head-merge-review.py",
     "scripts/collect-exact-head-merge-readiness.py",
     "docs/native-runtime-capabilities.md",

@@ -19,7 +19,7 @@ DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
-VERSION="0.24.5"
+VERSION="0.24.6"
 
 case "$CODEX_DEV_SKILLS_TARGET" in
   legacy) DEFAULT_CODEX_SKILLS_DIR="$DEFAULT_CODEX_LEGACY_SKILLS_DIR" ;;
@@ -894,6 +894,7 @@ group_templates() {
         policies/projectspec-alignment-policy.md \
         policies/release-state-contract.md \
         policies/reusable-workflow-contract.md \
+        policies/reusable-workflow-details.md \
         policies/review-artifact-policy.md \
         policies/runtime-compatibility-policy.md \
         policies/security-review-escalation-policy.md \

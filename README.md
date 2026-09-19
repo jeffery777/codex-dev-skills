@@ -587,6 +587,9 @@ The gate is a thin adapter: it routes routine diffs to `code-review`, escalates 
 
 ### Routine Documentation Review
 
+一般文件審查與局部實作先讀共用核心，再依 gate、返工、委派及工具編排情境載入細則；
+來源對照、安裝相容與量測限制見 [政策載入說明](docs/policy-loading.md)。
+
 Use `docs-review` when you want read-only feedback on docs-only or docs-dominant changes. This is the normal user-facing entry point for documentation review:
 
 ```text

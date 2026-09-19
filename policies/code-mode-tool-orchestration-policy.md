@@ -6,6 +6,10 @@ mechanics only. It does not change the selected workflow or any tool's
 semantics, authority, approval requirement, sandbox, source of truth, or
 completion contract.
 
+一般 `docs-review`／`implementation-slice` 先讀共用核心；在批次／並行工具
+呼叫或大量工具驅動工作需編排時，才讀本檔完整細則。單一或簡單循序呼叫
+仍遵守原工具契約、相依順序、授權與有界輸出；條件載入不豁免這些義務。
+
 ## Runtime Boundary
 
 - Apply the Code Mode guidance below only when the active runtime exposes

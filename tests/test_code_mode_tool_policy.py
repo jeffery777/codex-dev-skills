@@ -151,6 +151,9 @@ class CodeModeToolPolicyTests(unittest.TestCase):
                 target = home / ".codex" / "templates" / INSTALLED_POLICY
                 self.assertTrue(target.is_file(), target)
                 self.assertEqual(POLICY_SOURCE.read_bytes(), target.read_bytes())
+                for policy in ("reusable-workflow-contract.md", "reusable-workflow-details.md"):
+                    deployed = target.parent / policy
+                    self.assertEqual((ROOT / "policies" / policy).read_bytes(), deployed.read_bytes())
 
     def test_installed_skills_resolve_the_installed_policy_reference(self) -> None:
         home, env = self.isolated_env("all-home")
