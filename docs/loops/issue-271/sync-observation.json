@@ -1,0 +1,143 @@
+{
+  "attempt_limit": 1,
+  "attempts": 1,
+  "authorization": "one additional bounded trial after reviewed filler-sync preparation",
+  "classification": "os-enospc-only",
+  "committed_transaction_consistent": true,
+  "contract_version": "mg1-g1-public-physical-summary/v1",
+  "create_configuration": {
+    "filesystem": "APFS",
+    "image_type": "UDIF",
+    "layout": "GPTSPUD",
+    "size_mib": 256,
+    "verbose": true
+  },
+  "cumulative_attempts": 3,
+  "detached": true,
+  "exact_image_attachment_matches": 0,
+  "executor_result_consistent": true,
+  "failed_transaction_unchanged": false,
+  "filler": {
+    "byte_limit": 268435456,
+    "deadline_enforcement": "worker-default-SIGALRM",
+    "deadline_seconds": 30,
+    "journal_before_fill": {
+      "bytes": null,
+      "state": "absent"
+    },
+    "os_errors": [
+      {
+        "block_size": 1048576,
+        "errno": 28,
+        "operation": "write"
+      },
+      {
+        "block_size": 65536,
+        "errno": 28,
+        "operation": "write"
+      },
+      {
+        "block_size": 4096,
+        "errno": 28,
+        "operation": "write"
+      }
+    ],
+    "stage": "before-transaction",
+    "sync": {
+      "result": "succeeded"
+    },
+    "write_attempts": 251,
+    "written_bytes": 260046848
+  },
+  "fresh_confirmation_control": "not-run; failed-transaction precondition absent",
+  "fresh_readback": {
+    "accept_called": false,
+    "attempt_result": "applied",
+    "current_projection": {
+      "blue_count": 0,
+      "green_count": 1
+    },
+    "files_unchanged": true,
+    "historical_add_result": "state-unknown",
+    "historical_proof_preserved": true,
+    "new_processes": true,
+    "proof_matches_writer": true,
+    "replay_rejected": true,
+    "revision": 2
+  },
+  "host_headroom_checks_passed": true,
+  "host_headroom_minimum": 1073741824,
+  "image_bytes_limit": 268435456,
+  "image_identity_matches": true,
+  "image_within_limit": true,
+  "incomplete_reason": "expected-error-or-state-consistency-not-established",
+  "journal_requires_maintenance": false,
+  "mount_is_attached": false,
+  "physical_enospc_observed": true,
+  "physical_sqlite_full_observed": false,
+  "preflight_ready": true,
+  "pressure_observations": {
+    "available_after_sync_positive": true,
+    "logical_equals_allocated_before_and_after_sync": true,
+    "phases": [
+      "before_fill",
+      "before_sync",
+      "after_sync"
+    ],
+    "raw_capacity": "retained-locally; point-in-time samples, not reservation or root-cause proof"
+  },
+  "previous_observation": "pretransaction-observation.json",
+  "prior_attempts": 2,
+  "production_qualified": false,
+  "quota": {
+    "effective_max_page_count": 1048576,
+    "page_count_before": 12,
+    "profile_max_page_count": 1048576
+  },
+  "raw_diagnostics": "retained-locally; machine identities not published",
+  "remaining_acceptance": "physical SQLite FULL and fresh-authority normal control after that failure",
+  "retained_image_regular": true,
+  "retried": false,
+  "runtime": {
+    "journal_mode": "delete",
+    "page_size": 4096,
+    "python_version": "3.12.9",
+    "schema_fingerprint": "cab3ce3180ac986d97d7f93c54acc9b3f689df35294b3a093fe03066c77adeb6",
+    "sql_fingerprint": "26873c40b5fa48c44655eee01d6905d8837021874e4ee140897ccb08630eb856",
+    "sqlite_source_id": "2024-11-25 12:07:48 b95d11e958643b969c47a8e5857f3793b9e69700b8f1469371386369a26e577e",
+    "sqlite_version": "3.47.1",
+    "temp_store": "memory"
+  },
+  "source_head": "53444093b5ba1d064809583ddee4a7fdd8ce17a6",
+  "source_sha256": {
+    ".python-version": "7c31b8cce5796f169ade750a43dfa5f9fb4c326e90aab5c8e83189b0f6011eb8",
+    "docs/loops/issue-213/g0-production-cases.json": "fbf641405c716af48f21cc47f3e3ec8b63d52615c2345f2945fe179bd0ce7aa5",
+    "scripts/project-python": "c35f9e4782e14a8705ba28c83130f5a89a577734818d5fd9eb9d0b25f774db87",
+    "skills/loop-engineering/scripts/memory_governance_contract.py": "ada264d469f60b67641d7f338419eddc7ca9c3e0f91c6b8770081f7bad4dd377",
+    "skills/loop-engineering/scripts/memory_governance_core.py": "6ac334bf7ff39e27ffda0eb5a4e57ac3d88111d1aaca60fceff433fff591ab5b",
+    "skills/loop-engineering/scripts/memory_governance_host.py": "32247bfbf629f8e07c93095ad20b8451f9e624c18bec22a0c994f295b7c344df",
+    "skills/loop-engineering/scripts/memory_governance_local.py": "d9034b5493ea7e6122fff9575a3f5b6e34efa81a9c36d6d020eaf4e142bf8f1a",
+    "skills/loop-engineering/scripts/memory_governance_storage.py": "91c9190c630f175732af7094a78ebb4d1e23e9cf67d5202dde602c4d5e9add8e",
+    "tests/fixtures/memory-governance/crash_worker.py": "c8216b24b76514706a9529cf13cae03a6aede28ddf26ad2bb21c768d6227e9ef",
+    "tests/fixtures/memory-governance/enospc_image.py": "9a2048147446ccb14a75a8db801974945f3cb64bfaea2a16a808e7133c5d777b",
+    "tests/fixtures/memory-governance/local_crash_worker.py": "af20790786b33118ed4d5f3dc89e0332cc28594970ea6ac3797b0ac4f1b6297a",
+    "tests/fixtures/memory-governance/local_ports.py": "29d7f4c9477bd3eace09718252ad99cd4423bc2d5977f2ec3a450360479f43ee",
+    "tests/fixtures/memory-governance/process_readback_worker.py": "421b3df087ef9520fdec32b0267d51b7bcfd70c4459b73ccb2f862a672c8390c",
+    "tests/fixtures/memory-governance/storage_fault_case.py": "7ec3f4c1837a67e35034e9ba0922e3b7220f23e52b10ac006cbbc34f38146364",
+    "tests/fixtures/memory-governance/storage_fault_worker.py": "bee57497008417f1ab10a6a9a458dc212fe7bb6fe2d22fc4418d0f30bcc4fdbd",
+    "tests/fixtures/memory-governance/storage_observer.py": "21a0b8be30294a4ffe4a68daef3cbff93cb89b29644790ce932845b516434ba8",
+    "tests/fixtures/memory-governance/synthetic_host.py": "74bea56a125cbb5ac0d1a54b5ae63c19f6aa412f46190c257b5587af7c62f3b5"
+  },
+  "space_restoration": {
+    "available_space_increased": true,
+    "operation": "truncate-own-filler",
+    "raw_capacity": "retained-locally",
+    "released_logical_bytes": 260046848,
+    "result": "restored"
+  },
+  "sqlite_errors": [],
+  "status": "incomplete",
+  "synthetic_only": true,
+  "writer_exited_normally": true,
+  "writer_result": "applied"
+}

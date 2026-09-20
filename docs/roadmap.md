@@ -442,13 +442,16 @@ temp／sidecar、有效 pragma、容量與完整鎖區間，並在 filler 恢復
 #271 的[第一次容量恢復觀察](loops/issue-271/verification-and-review.md)與
 [追加交易前觀察](loops/issue-271/pretransaction-verification-and-review.md)各自完成
 新 APFS image 的 OS ENOSPC、own filler 空間釋放與 fresh readback；第二次填充時
-journal 不存在，但 SQLite 仍成功提交，兩次均無 physical FULL。Issue 部分完成、
-PR 維持 draft；兩次額度已耗用，先重評方法，再為新的有界試驗取得新增授權。
+journal 不存在，但 SQLite 仍成功提交，兩次均無 physical FULL。該兩次額度已耗用，
+其後完成同步準備及另行授權的第三次試驗，結果如下。Issue 部分完成、PR 維持 draft。
 不自動重試或擴容，不以局部實證宣稱 G1/MG1 qualified，也不另發版。
 
 後續[填充同步準備](loops/issue-271/filler-sync-preparation.md)補同步與容量觀測、
-worker deadline／partial-output 回歸。這是第三次實測前的準備；兩次額度不重設，
-新的精確資源／恢復預覽仍須新增授權，physical FULL／control 驗收仍未完成。
+worker deadline／partial-output 回歸；其後的[第三次觀察](loops/issue-271/sync-verification-and-review.md)
+確認同步成功，但 SQLite 仍 applied，physical FULL／失敗後 control 驗收仍未完成。
+容量恢復、fresh readback 與正常 detach 已核對；三次額度均已用完，不啟動第四次。
+先重評 filler 與目標交易配置差異，不推定 APFS 根因或原樣重跑；新實測方案或
+驗收範圍調整須另行決定，不能以同步成功取代 physical FULL。
 
 2026-09-09 使用者調整工程順序：[Issue #237](https://github.com/jeffery777/codex-dev-skills/issues/237)
 先校正共用派工、續行與交接提示詞，完成驗證、審查及適用發版，再續推 G1

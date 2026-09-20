@@ -2,16 +2,19 @@
 
 ## 狀態、目標與證據
 
-2026-09-20：[填充同步準備](loops/issue-271/filler-sync-preparation.md)補足 write ENOSPC
-後的同步、容量快照與 timeout／截斷輸出處理；僅無物理回歸與候選方案準備，
-第三次實測尚未授權或執行，physical FULL／失敗後 control 的驗收缺口保持。
+2026-09-20：[第三次同步後觀察](loops/issue-271/sync-verification-and-review.md)
+在新增單次授權後完成：write ENOSPC 後 fsync 成功，但 SQLite 仍 applied／revision 2，
+沒有 physical FULL。own filler 容量恢復、fresh readback 與正常 detach 均完成，
+本次仍 incomplete，失敗後 control 未執行。累計三次額度已用完，不自動重試；
+先重評 filler／目標交易配置差異，任何新方案或驗收範圍調整須另行決定。
+[填充同步準備](loops/issue-271/filler-sync-preparation.md)保留實測前的歷史狀態。
 
 2026-09-20：Issue #271 的[第一次實體試驗](loops/issue-271/verification-and-review.md)
 與[追加交易前試驗](loops/issue-271/pretransaction-verification-and-review.md)各自
 完成新 APFS image、own filler OS ENOSPC、截短釋放容量及 fresh readback。
 第二次在目標 writer 開啟前填充且 journal 不存在，SQLite 仍成功提交；兩次皆未
-觀察 physical FULL，整體驗收保持 incomplete。已耗用兩次授權額度，下一步先
-重評方法；新物理試驗須另有有界方案與授權。Issue open／PR draft、不另發版，
+觀察 physical FULL，該兩包驗收保持 incomplete；當時兩次額度已耗用，後續同步
+準備與第三次結果見上方紀錄。Issue open／PR draft、不另發版，
 局部實證不提升完整 G1/MG1 或 production 資格。
 
 2026-09-18：[Issue #265 儲存可靠性切片](loops/issue-265/verification-and-review.md)
