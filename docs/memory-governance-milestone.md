@@ -2,12 +2,20 @@
 
 ## 狀態、目標與證據
 
+2026-09-20：使用者在第四次觀察後明確同意將 #271 轉為
+[儲存失敗處理驗收](loops/issue-271/failure-handling-acceptance.md)：以真實 page-quota
+SQLITE_FULL、結果判定、防重播、失敗停止及重新確認後的正常操作作為本包驗收。
+使用者進一步澄清實體耗盡研究不列入需求或後續待辦；[範圍決定紀錄](https://github.com/jeffery777/codex-dev-skills/issues/273)
+以 not_planned 結束。MR-272-01／FOURTH-EVIDENCE-01 作為本包 blocker 的要求為
+Rejected（不適用現行需求），未標為 Fixed；四次 incomplete 事實保留。新 DoD 仍須正式
+完整版本審查與平台 gates，不自動結案、合併或啟用 production。以下為範圍調整前的紀錄。
+
 2026-09-20：[第四次補壓與恢復失敗觀察](loops/issue-271/pressure-pool-verification-and-review.md)
 在精確方案另行取得單次授權後完成。同步後原大檔仍寫不進去，另一個小檔可再寫
 896 KiB；SQLite 回報 CANTOPEN／not-applied，沒有 physical FULL。
 第 0、1 filler 恢復流程也回報 ENOSPC，全組容量恢復未證明，故停止 fresh readback
 與正常 control；正常卸載已獨立確認，映像及證據保留。累計四次額度已使用，
-不安排第五次；先重評壓力方法的可恢復性。Issue open／PR draft，原 DoD 保持未完成。
+不安排第五次；先重評壓力方法的可恢復性。當時 Issue open／PR draft，原實體 DoD 未完成。
 
 2026-09-20：[同步後探測與小檔補壓準備](loops/issue-271/pressure-pool-preparation.md)
 在方法研究及使用者同意後，準備三個已綁定 filler 的固定補壓／完整恢復流程；

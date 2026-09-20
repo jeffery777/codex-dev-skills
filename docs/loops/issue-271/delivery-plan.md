@@ -1,5 +1,9 @@
 # Issue #271：有界實體儲存驗收
 
+> 2026-09-20 範圍更新：使用者已同意改以[儲存失敗處理驗收](failure-handling-acceptance.md)
+> 為 Issue #271／PR #272 的現行 DoD，APFS 實體耗盡研究不列入需求或後續待辦。
+> 下方保留最初實體試驗的計畫、額度與當時 gate，屬歷史紀錄，不再定義本包結案條件。
+
 ## 基準與順序
 
 2026-09-20 透過 GitHub connector 重新讀回 open Issue #271 與遠端
