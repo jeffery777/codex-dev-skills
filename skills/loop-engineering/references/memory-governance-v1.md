@@ -1,6 +1,6 @@
 # MG1 G1 單專案管理核心與本機組合介面
 
-此 reference 對應 Issue #235／#245／#247／#274；它是尚未完成 production qualification 的開發核心。
+此 reference 對應 Issue #235／#245／#247／#274／#276；它是尚未完成 production qualification 的開發核心。
 #274 新增 memory-audit 技能與可注入可信 host 的唯讀報告，不是已啟用 backend 或完整 MG1。production adapter registry
 是不可變空映射。不得因 import、合成 port 回傳 true、SQLite 測試或本文件而啟用真實記憶。
 
@@ -27,6 +27,10 @@
 - `memory_audit.py`：重用 core 的單 snapshot 盤點，回結構化及人類可讀報告；
   每次呼叫新 core，不接受外部 cursor／root。40 頁、最多 256 KiB 報告、預設 10 秒
   （可信呼叫端可在 1–30 秒內選擇），來源遮蔽與列舉完整性分開；容量／外部副本未知。
+- `memory_audit_adapter.py`／`memory_audit_source.py`：單次要求的 audit-only host、
+  獨立來源接受資料及固定 loose Git reader；資格逐項比對，缺正式接受仍拒絕。
+  只採 256 MiB profile，host 收緊整次讀取 deadline 為 10 秒。
+  詳見 [adapter reference](memory-audit-adapter.md)。
 - `governancectl.py`：預設 off；`audit --enabled --format text` 共用 report runner，
   因缺合格 production adapter 明確 unavailable。
   `--enabled proposal` 只讀有界 stdin 的 `{scope, profile, candidate}`，回 shape-only
@@ -138,7 +142,9 @@ G2/G3 仍須獨立完成上述對應資格；未完成前不開放真實入口�
 monotonic deadline；逐頁重查權限與 root/file identity，例外會關閉 reader／lock。
 可信 host ports 必須自行約束 I/O bytes／時間；不能強制中止任意 host 程式或 OS
 阻塞 syscall。分頁失敗不拼接新 snapshot；權限／身分／完整性失效清空待輸出內容，
-一般 I/O／時間失敗可保留先前完整頁並標 partial。來源資格失效遮蔽摘要及來源詳情。
+一般 I/O／時間失敗可保留先前完整頁並標 partial。#276 在回傳前另重查
+授權與 main／lock 的 inode、size、mtime、ctime；無法證明仍有效就清空。
+來源資格失效遮蔽摘要及來源詳情；已揭露來源的撤銷／身分漂移則清空結果。
 來源覆蓋只對本次列出項目成立，版本數是 metadata，不會回傳歷史正文。
 新期限檢查不變更持久 schema／M0/M1 語意，也不授予任何 adapter 資格。
 

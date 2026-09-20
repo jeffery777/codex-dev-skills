@@ -474,6 +474,12 @@ class GovernanceCore:
     @_boundary
     def audit(self, *, timeout_seconds: int = 10) -> "AuditSnapshot":
         c.integer(timeout_seconds, 1, 30)
+        c.require(self._enabled and self._host is not None, "memory-disabled")
+        c.require(os.getpid() == self._process, "process-changed")
+        # 已接受的 host 可收緊 deadline；不能擴大 caller 或核心上限。
+        host_timeout = getattr(self._host, "audit_timeout_seconds", timeout_seconds)
+        c.integer(host_timeout, 1, 30)
+        timeout_seconds = min(timeout_seconds, host_timeout)
         deadline = time.monotonic() + timeout_seconds
         binding, scope, limits = self._root("audit", "audit")
         self._read_authority(binding, "audit")
@@ -532,10 +538,11 @@ class AuditSnapshot:
         try:
             self._check_time()
             self._directory = self._stack.enter_context(db.locked(binding))
+            self._file_state = self._files(db.inventory(self._directory, binding))
             self._connection = self._stack.enter_context(contextlib.closing(db.connect(binding, limits)))
             self._connection.set_progress_handler(lambda: int(time.monotonic() >= self._deadline), 1000)
             self._connection.execute("BEGIN")
-            self._snapshot = db.snapshot(self._connection, scope, limits, check=self._check_time)
+            self._snapshot = db.snapshot(self._connection, scope, limits, check=self._check_read)
             self._expires = core._clock(self._snapshot.clock_floor) + limits["confirmation_seconds"]
             self._check_access()
         except BaseException:
@@ -555,15 +562,28 @@ class AuditSnapshot:
     def _check_time(self):
         c.require(time.monotonic() < self._deadline, "audit-timeout")
 
-    def _check_access(self):
+    def _check_read(self):
         self._check_time()
+        self._core._read_authority(self._binding, "audit")
+
+    @staticmethod
+    def _files(entries):
+        return {name: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+                for name, s in entries.items()}
+
+    def validate_disclosure(self):
+        """已關閉 snapshot 仍可重查揭露權與檔案未漂移；不重開 DB 或延長讀取期限。"""
         c.require(self._core._port("binding") == self._binding, "root-binding-drift")
         self._core._read_authority(self._binding, "audit")
         directory = db.root_fd(self._binding)
         try:
-            db.inventory(directory, self._binding)
+            c.require(self._files(db.inventory(directory, self._binding)) == self._file_state, "file-drift")
         finally:
             os.close(directory)
+
+    def _check_access(self):
+        self._check_time()
+        self.validate_disclosure()
         self._check_time()
 
     @_boundary

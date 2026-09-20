@@ -19,6 +19,7 @@ MESSAGES = {
     "busy": "記憶儲存正在使用中；本次盤點已停止。",
     "timeout": "盤點時間已到，未完成的部分保持未知。",
     "storage-full": "儲存空間不足，無法完成讀取；未執行清理。",
+    "resource-limit": "可用記憶體不足，本次盤點已停止。",
     "storage-io": "儲存讀取失敗，未完成的部分保持未知。",
     "recovery-required": "儲存需要另外確認復原方式；本次沒有修改資料。",
     "page-limit": "已達本次頁數上限，仍有項目未盤點。",
@@ -36,12 +37,16 @@ def _reason(exc: BaseException) -> str:
     for _ in range(8):
         if cause is None:
             break
+        if isinstance(cause, MemoryError):
+            return "resource-limit"
         if isinstance(cause, sqlite3.Error):
             code = getattr(cause, "sqlite_errorcode", 0) & 255
             if code in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED):
                 return "busy"
             if code == sqlite3.SQLITE_FULL:
                 return "storage-full"
+            if code == sqlite3.SQLITE_NOMEM:
+                return "resource-limit"
             if code == sqlite3.SQLITE_INTERRUPT:
                 return "timeout"
             if code in (sqlite3.SQLITE_IOERR, sqlite3.SQLITE_CANTOPEN):
@@ -51,6 +56,8 @@ def _reason(exc: BaseException) -> str:
                 return "read-unavailable"
             if cause.errno == errno.ENOSPC:
                 return "storage-full"
+            if cause.errno == errno.ENOMEM:
+                return "resource-limit"
             return "storage-io"
         cause = cause.__cause__
     code = str(exc) if isinstance(exc, c.ContractError) else "unavailable"
@@ -86,6 +93,7 @@ def audit_report(*, enabled: bool = False, host=None, max_pages: int = 40,
     c.integer(max_output_bytes, 4096, 262144)
     c.integer(timeout_seconds, 1, 30)
     verified = 0
+    snapshot = None
     # 留固定 envelope／原因文案餘裕；每筆 canonical bytes 在收錄前計算。
     remaining = max_output_bytes - 2048
     try:
@@ -112,13 +120,22 @@ def audit_report(*, enabled: bool = False, host=None, max_pages: int = 40,
                 cursor = page["next_cursor"]
             else:
                 report["reason"] = "page-limit"
-    except (c.ContractError, OSError, sqlite3.Error) as exc:
+    except (c.ContractError, OSError, sqlite3.Error, MemoryError) as exc:
         reason = _reason(exc)
         # 授權／身分／完整性不再可信時，不保留已讀內容。I/O／時間中斷可保留先前完整頁。
-        if reason not in {"busy", "timeout", "storage-full", "storage-io", "page-limit", "cursor-unavailable"}:
+        if reason not in {"busy", "timeout", "storage-full", "storage-io", "resource-limit", "page-limit", "cursor-unavailable"}:
             report = _empty()
             verified = 0
         report.update(reason=reason, enumeration_complete=False)
+    # 即使 I/O 錯誤或正常達上限，也不能靠錯誤分類推定仍有揭露權。
+    # 不重試讀取；只重驗先前 snapshot 的授權及未變動的持久檔案。
+    if report["snapshot_digest"] is not None and snapshot is not None:
+        try:
+            snapshot.validate_disclosure()
+        except (c.ContractError, OSError, sqlite3.Error, MemoryError) as exc:
+            report = _empty()
+            report["reason"] = _reason(exc)
+            verified = 0
     items = report["items"]
     report["counts"] = {"listed": len(items), "active": sum(i["status"] == "active" for i in items),
                         "stopped": sum(i["status"] == "stopped" for i in items),
