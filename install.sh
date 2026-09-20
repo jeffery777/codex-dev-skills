@@ -849,7 +849,7 @@ group_skills() {
     codex-review-workflow)
       printf '%s\n' code-review code-review-deep docs-review merge-review merge-review-deep ;;
     codex-delivery-workflow)
-      printf '%s\n' loop-engineering planning milestone-continuation project-delivery project-orchestrator implementation-slice docs-update ;;
+      printf '%s\n' loop-engineering memory-audit planning milestone-continuation project-delivery project-orchestrator implementation-slice docs-update ;;
     codex-cli-session-handoff)
       printf '%s\n' cli-session-handoff ;;
     desktop-delivery-workflow)

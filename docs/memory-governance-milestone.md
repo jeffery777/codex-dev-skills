@@ -2,6 +2,12 @@
 
 ## 狀態、目標與證據
 
+Issue #274 正在交付單專案唯讀 memory-audit 入口及錯誤處置，
+[範圍與驗收](loops/issue-274/delivery-plan.md)承接已合併的 #271／PR #272。
+實際報告重用 core snapshot，production registry 仍空；真實資料讀取與正式啟用
+須另有可信 host／權限／唯讀資格。本包不做 G2，也不重開實體滿載研究。
+以下依時間保留的舊階段與「下一包 G0」屬歷史提案，不能取代 #274 的現行範圍。
+
 2026-09-20：使用者在第四次觀察後明確同意將 #271 轉為
 [儲存失敗處理驗收](loops/issue-271/failure-handling-acceptance.md)：以真實 page-quota
 SQLITE_FULL、結果判定、防重播、失敗停止及重新確認後的正常操作作為本包驗收。

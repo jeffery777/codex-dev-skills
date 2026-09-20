@@ -78,6 +78,7 @@ groups:
     depends_on: [shared-review-gates]
     skills:
       - source: skills/loop-engineering
+      - source: skills/memory-audit
       - source: skills/planning
       - source: skills/milestone-continuation
       - source: skills/project-delivery

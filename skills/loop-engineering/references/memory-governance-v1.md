@@ -1,7 +1,7 @@
 # MG1 G1 單專案管理核心與本機組合介面
 
-此 reference 對應 Issue #235／#245／#247；它是尚未完成 production qualification 的開發核心，
-不是新的自然語言記憶技能、已啟用 backend 或完整 MG1。production adapter registry
+此 reference 對應 Issue #235／#245／#247／#274；它是尚未完成 production qualification 的開發核心。
+#274 新增 memory-audit 技能與可注入可信 host 的唯讀報告，不是已啟用 backend 或完整 MG1。production adapter registry
 是不可變空映射。不得因 import、合成 port 回傳 true、SQLite 測試或本文件而啟用真實記憶。
 
 ## 邊界與介面
@@ -24,7 +24,11 @@
   reader 必須在 I/O 前限制範圍、bytes 與時間，source reviewer 另驗支持／敏感性。
   缺 authority／qualification 就拒絕；source 缺失仍可依 G0 做精確 stop。
   沒有通用 Git reader、human-decision attestation、production factory 或持久 registry。
-- `governancectl.py`：預設 off；`--enabled audit` 因缺合格 adapter 明確 unavailable。
+- `memory_audit.py`：重用 core 的單 snapshot 盤點，回結構化及人類可讀報告；
+  每次呼叫新 core，不接受外部 cursor／root。40 頁、最多 256 KiB 報告、預設 10 秒
+  （可信呼叫端可在 1–30 秒內選擇），來源遮蔽與列舉完整性分開；容量／外部副本未知。
+- `governancectl.py`：預設 off；`audit --enabled --format text` 共用 report runner，
+  因缺合格 production adapter 明確 unavailable。
   `--enabled proposal` 只讀有界 stdin 的 `{scope, profile, candidate}`，回 shape-only
   `proposal-only`，來源／敏感性仍 unavailable；不產生可執行 `mg1-preview/v1`。
   不接受 root/path、adapter import、confirmation 檔案或 mutation flags。
@@ -61,7 +65,7 @@ host 須扣除其承諾的並行工作預算。兩個切片均尚無任何 produ
 ## 操作、原子性與讀回
 
 新增／修改／恢復版本把完整 version、current pointer、active-only summary/cue
-投影與 proof 放在同一交易。停止項目没有一般投影；修改或 restore stopped item
+投影與 proof 放在同一交易。停止項目沒有一般投影；修改或 restore stopped item
 保持 stopped。resume 重驗目前版本來源，不新增 revision。restore 產生更大 revision，
 精確保留來源語意與 provenance identity/order，重新驗證並更換 evidence ID／human token。
 cue 採 NFC/casefold/strip、最多 16 個，普通 SQL 相等 AND 查詢且依 item ID 排序；
@@ -129,6 +133,14 @@ SQLite 則為 CANTOPEN／not-applied；truncate filler 失敗但正常 detach �
 subprocess interruption 只證明所測 SQLite/process 邊界。沒有 power-loss、完整 temp、
 maintenance reserve、4 GiB 最壞 latency、共享主機隔離或人類授權 adapter 資格。
 G2/G3 仍須獨立完成上述對應資格；未完成前不開放真實入口。
+
+#274 的 audit 在完整性重播、SQLite progress handler 與每筆來源觀察前後檢查
+monotonic deadline；逐頁重查權限與 root/file identity，例外會關閉 reader／lock。
+可信 host ports 必須自行約束 I/O bytes／時間；不能強制中止任意 host 程式或 OS
+阻塞 syscall。分頁失敗不拼接新 snapshot；權限／身分／完整性失效清空待輸出內容，
+一般 I/O／時間失敗可保留先前完整頁並標 partial。來源資格失效遮蔽摘要及來源詳情。
+來源覆蓋只對本次列出項目成立，版本數是 metadata，不會回傳歷史正文。
+新期限檢查不變更持久 schema／M0/M1 語意，也不授予任何 adapter 資格。
 
 #253 的 repository-only storage fixtures 補上 fresh-process 故障對照與完整 flock
 持有區間的 syscall bracketing，並取樣 named sidecars／temp 及測試子程序的 bounded

@@ -84,11 +84,23 @@ class FaultTests(unittest.TestCase):
                 first = audit.page()
                 self.assertEqual(256, len(first['items']))
                 self.assertFalse(first['enumeration_complete'])
-                with self.assertRaisesRegex(c.ContractError, 'cursor-unavailable'):
-                    audit.page()
                 second = audit.page(first['next_cursor'])
                 self.assertEqual(1, len(second['items']))
                 self.assertEqual(first['snapshot_digest'], second['snapshot_digest'])
                 self.assertTrue(second['enumeration_complete'])
                 with self.assertRaisesRegex(c.ContractError, 'cursor-unavailable'):
                     audit.page(first['next_cursor'])
+            with core.audit() as audit:
+                cursor = audit.page()['next_cursor']
+                with self.assertRaisesRegex(c.ContractError, 'cursor-unavailable'):
+                    audit.page()
+                with self.assertRaisesRegex(c.ContractError, 'cursor-unavailable'):
+                    audit.page(cursor)
+                # A page error releases resources immediately, even before context exit.
+                with db.locked(host.binding(), exclusive=True):
+                    pass
+            with core.audit() as fresh:
+                first = fresh.page()
+                second = fresh.page(first['next_cursor'])
+                self.assertEqual(257, len(first['items']) + len(second['items']))
+                self.assertTrue(second['enumeration_complete'])
