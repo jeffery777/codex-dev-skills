@@ -2,16 +2,23 @@
 
 ## 狀態、目標與證據
 
+2026-09-20：[第四次補壓與恢復失敗觀察](loops/issue-271/pressure-pool-verification-and-review.md)
+在精確方案另行取得單次授權後完成。同步後原大檔仍寫不進去，另一個小檔可再寫
+896 KiB；SQLite 回報 CANTOPEN／not-applied，沒有 physical FULL。
+第 0、1 filler 恢復流程也回報 ENOSPC，全組容量恢復未證明，故停止 fresh readback
+與正常 control；正常卸載已獨立確認，映像及證據保留。累計四次額度已使用，
+不安排第五次；先重評壓力方法的可恢復性。Issue open／PR draft，原 DoD 保持未完成。
+
 2026-09-20：[同步後探測與小檔補壓準備](loops/issue-271/pressure-pool-preparation.md)
 在方法研究及使用者同意後，準備三個已綁定 filler 的固定補壓／完整恢復流程；
 共用原 256 MiB／30 秒上限，最後階段 ENOSPC 與同步完成才交給目標交易。
-這是離線準備，沒有第四次實體試驗，亦不證明 APFS 根因或 physical FULL。
-新實測仍須精確資源／恢復方案及新增單次授權；原驗收缺口保持。
+該階段只有離線準備，未執行第四次，亦不證明 APFS 根因或 physical FULL；
+其後另行授權的第四次結果見上方，不能將事前恢復設計當成實際恢復成功。
 
 2026-09-20：[第三次同步後觀察](loops/issue-271/sync-verification-and-review.md)
 在新增單次授權後完成：write ENOSPC 後 fsync 成功，但 SQLite 仍 applied／revision 2，
 沒有 physical FULL。own filler 容量恢復、fresh readback 與正常 detach 均完成，
-本次仍 incomplete，失敗後 control 未執行。累計三次額度已用完，不自動重試；
+本次仍 incomplete，失敗後 control 未執行。當時累計三次額度已用完，不自動重試；
 先重評 filler／目標交易配置差異，任何新方案或驗收範圍調整須另行決定。
 [填充同步準備](loops/issue-271/filler-sync-preparation.md)保留實測前的歷史狀態。
 

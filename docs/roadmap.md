@@ -449,14 +449,22 @@ journal 不存在，但 SQLite 仍成功提交，兩次均無 physical FULL。�
 後續[填充同步準備](loops/issue-271/filler-sync-preparation.md)補同步與容量觀測、
 worker deadline／partial-output 回歸；其後的[第三次觀察](loops/issue-271/sync-verification-and-review.md)
 確認同步成功，但 SQLite 仍 applied，physical FULL／失敗後 control 驗收仍未完成。
-容量恢復、fresh readback 與正常 detach 已核對；三次額度均已用完，不啟動第四次。
+容量恢復、fresh readback 與正常 detach 已核對；當時三次額度均已用完，未啟動第四次。
 先重評 filler 與目標交易配置差異，不推定 APFS 根因或原樣重跑；新實測方案或
 驗收範圍調整須另行決定，不能以同步成功取代 physical FULL。
 
 方法研究後，使用者同意[同步後探測與小檔補壓準備](loops/issue-271/pressure-pool-preparation.md)：
 固定三個 own filler，共用原容量／時間上限，增加 EOF／短寫及分階段觀測，
-確認全部 filler 恢復後才允許讀回。這是離線候選方法準備，未啟動第四次實測；
-保留 physical FULL／失敗後 control 缺口、Issue open／PR draft 與另行授權門檻。
+確認全部 filler 恢復後才允許讀回。該階段只有離線候選方法準備，未啟動第四次實測；
+其後另行授權的結果如下，事前設計不能替代物理恢復證據。
+
+[第四次補壓觀察](loops/issue-271/pressure-pool-verification-and-review.md)在新增單次授權後
+執行：同 fd 同步後無法延伸，但另一個小檔仍可寫入 896 KiB；SQLite 回報
+CANTOPEN／not-applied，沒有 physical FULL。第 0、1 filler 的恢復流程也回報
+ENOSPC，全組恢復 unproven，故 fresh readback／control 未執行；已正常卸載，
+保留映像及證據。累計四次額度已使用，不預排第五次；先研究可恢復的壓力控制
+與錯誤位置，再決定新方案或驗收範圍。Issue open／PR draft、原 DoD 與未 qualified
+界線保持，不以 CANTOPEN、writer 回報或正常 detach 宣告驗收完成。
 
 2026-09-09 使用者調整工程順序：[Issue #237](https://github.com/jeffery777/codex-dev-skills/issues/237)
 先校正共用派工、續行與交接提示詞，完成驗證、審查及適用發版，再續推 G1
