@@ -17,6 +17,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+from xml.parsers.expat import ExpatError
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path[:0] = [str(ROOT / 'skills/loop-engineering/scripts'), str(Path(__file__).parent)]
@@ -48,6 +49,38 @@ def command_failure(error, stage):
             value = value.encode('utf-8')
         result[name] = value[:DIAGNOSTIC_BYTES].decode(errors='replace')
         result[name + '_truncated'] = len(value) > DIAGNOSTIC_BYTES
+    return result
+
+
+def preflight():
+    """Read-only service/headroom probe; readiness does not prove image creation."""
+    result = {'status': 'incomplete', 'creates_resources': False,
+              'physical_attempt_started': False, 'production_qualified': False}
+    stage = 'platform'
+    try:
+        if sys.platform != 'darwin':
+            raise RuntimeError('macOS-only')
+        stage = 'host-headroom'
+        result['host_available_bytes'] = available(Path('/private/tmp'))
+        if result['host_available_bytes'] < HOST_HEADROOM + IMAGE_BYTES + 1048576:
+            raise RuntimeError('insufficient-host-headroom')
+        stage = 'disk-management-query'
+        info = plistlib.loads(command('/usr/sbin/diskutil', 'info', '-plist', '/'))
+        if not isinstance(info, dict) or info.get('Error') or not info.get('DeviceNode'):
+            raise RuntimeError('disk-management-response-unconfirmed')
+        stage = 'image-framework-query'
+        images = plistlib.loads(command('/usr/bin/hdiutil', 'info', '-plist'))
+        if not isinstance(images, dict) or not isinstance(images.get('images'), list):
+            raise RuntimeError('image-framework-response-unconfirmed')
+        result.update(status='ready', disk_management_query_passed=True,
+                      image_framework_query_passed=True,
+                      image_creation_proven=False)
+    except (OSError, RuntimeError, ValueError, ExpatError, subprocess.SubprocessError) as error:
+        result.update(failure_stage=stage, failure=type(error).__name__)
+        if isinstance(error, (subprocess.CalledProcessError, subprocess.TimeoutExpired)):
+            result.update(command_failure(error, stage))
+        else:
+            result['diagnostic'] = str(error)[:1000]
     return result
 
 
@@ -104,8 +137,11 @@ def bounded_restore(physical):
 
 
 def run():
-    if sys.platform != 'darwin':
-        raise RuntimeError('macOS-only')
+    readiness = preflight()
+    if readiness['status'] != 'ready':
+        return {'status': 'incomplete', 'detached': False, 'preflight': readiness,
+                'failure_stage': 'preflight', 'physical_attempt_started': False,
+                'synthetic_only': True, 'production_qualified': False}
     parent = Path(tempfile.mkdtemp(prefix='mg1-g1-enospc-', dir='/private/tmp')).resolve()
     os.chmod(parent, 0o700)
     image, mount = parent / 'synthetic.dmg', parent / 'volume'
@@ -113,7 +149,7 @@ def run():
               'production_qualified': False, 'retained_fixture': str(parent), 'image_bytes_limit': IMAGE_BYTES,
               'host_headroom_minimum': HOST_HEADROOM, 'attempt_limit': 1,
               'expected_mountpoint': str(mount), 'attachment_state': 'not-attempted',
-              'status': 'incomplete', 'detached': False,
+              'status': 'incomplete', 'detached': False, 'preflight': readiness,
               'create_configuration': {'size_mib': 256, 'filesystem': 'APFS', 'layout': 'GPTSPUD',
                                        'image_type': 'UDIF', 'verbose': True}}
     mount_identity = filler = filler_identity = physical = None
@@ -225,9 +261,13 @@ def run():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--run', action='store_true')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--run', action='store_true')
+    mode.add_argument('--preflight', action='store_true', help='read-only service/headroom checks; no image created')
     args = parser.parse_args()
-    if not args.run:
+    if args.preflight:
+        report = preflight()
+    elif not args.run:
         report = {'status': 'dry-run', 'creates': 'new /private/tmp/mg1-g1-enospc-*/synthetic.dmg',
                   'filesystem': 'APFS', 'image_bytes': IMAGE_BYTES, 'host_headroom_minimum': HOST_HEADROOM,
                   'layout': 'GPTSPUD', 'image_type': 'UDIF', 'create_verbose': True,
@@ -238,7 +278,7 @@ def main():
     else:
         report = run()
     print(json.dumps(report, indent=2, sort_keys=True))
-    return 0 if report['status'] == 'dry-run' or (report['status'] == 'observed' and report['detached']) else 2
+    return 0 if report['status'] in {'dry-run', 'ready'} or (report['status'] == 'observed' and report['detached']) else 2
 
 
 if __name__ == '__main__':

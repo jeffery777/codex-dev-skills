@@ -429,6 +429,46 @@ with tempfile.TemporaryDirectory(prefix='mg1-253-fd-') as temporary:
 
 
 class ImageSafetyTests(unittest.TestCase):
+    def test_failed_service_preflight_does_not_allocate_or_start_physical_trial(self):
+        error = subprocess.CalledProcessError(1, ['diskutil', 'info'], stderr=b'framework unavailable')
+        with mock.patch.object(image_fixture.sys, 'platform', 'darwin'), \
+             mock.patch.object(image_fixture, 'available', return_value=2 * 1024**3), \
+             mock.patch.object(image_fixture, 'command', side_effect=error) as commands, \
+             mock.patch.object(image_fixture.tempfile, 'mkdtemp', side_effect=AssertionError('must not allocate')):
+            report = image_fixture.run()
+        self.assertEqual('incomplete', report['status'])
+        self.assertFalse(report['physical_attempt_started'])
+        self.assertEqual('disk-management-query', report['preflight']['failure_stage'])
+        self.assertIn('framework unavailable', report['preflight']['stderr'])
+        commands.assert_called_once_with('/usr/sbin/diskutil', 'info', '-plist', '/')
+
+    def test_preflight_is_read_only_and_does_not_claim_creation(self):
+        replies = [plistlib.dumps({'DeviceNode': '/dev/disk99s1'}), plistlib.dumps({'images': []})]
+        with mock.patch.object(image_fixture.sys, 'platform', 'darwin'), \
+             mock.patch.object(image_fixture, 'available', return_value=2 * 1024**3), \
+             mock.patch.object(image_fixture, 'command', side_effect=replies) as commands, \
+             mock.patch.object(image_fixture.tempfile, 'mkdtemp', side_effect=AssertionError('must not allocate')):
+            report = image_fixture.preflight()
+        self.assertEqual('ready', report['status'])
+        self.assertFalse(report['image_creation_proven'])
+        self.assertFalse(report['creates_resources'])
+        self.assertEqual([mock.call('/usr/sbin/diskutil', 'info', '-plist', '/'),
+                          mock.call('/usr/bin/hdiutil', 'info', '-plist')], commands.call_args_list)
+
+    def test_preflight_refuses_headroom_and_malformed_service_evidence(self):
+        for capacity, replies in [(1, []), (2 * 1024**3, [plistlib.dumps({'Error': True})]),
+                                 (2 * 1024**3, [b'<?xml version="1.0"?><plist><dict>']),
+                                 (2 * 1024**3, [plistlib.dumps({'DeviceNode': '/dev/disk99'}),
+                                                plistlib.dumps({})]),
+                                 (2 * 1024**3, [plistlib.dumps({'DeviceNode': '/dev/disk99'}),
+                                                b'<?xml version="1.0"?><plist><dict>'])]:
+            with self.subTest(capacity=capacity, replies=replies), \
+                 mock.patch.object(image_fixture.sys, 'platform', 'darwin'), \
+                 mock.patch.object(image_fixture, 'available', return_value=capacity), \
+                 mock.patch.object(image_fixture, 'command', side_effect=replies), \
+                 mock.patch.object(image_fixture.tempfile, 'mkdtemp', side_effect=AssertionError('must not allocate')):
+                self.assertEqual('incomplete', image_fixture.run()['status'])
+
     def test_command_failure_retains_stage_stdout_timeout_and_truncation(self):
         for stage in ('image-create', 'image-attach'):
             command = ['hdiutil', stage, '-fs', 'APFS', '-layout', 'GPTSPUD', '<new-image>']
@@ -504,6 +544,7 @@ class ImageSafetyTests(unittest.TestCase):
                     return b''
                 raise subprocess.TimeoutExpired(args, 60)
             with mock.patch.object(image_fixture.sys, 'platform', 'darwin'), \
+                 mock.patch.object(image_fixture, 'preflight', return_value={'status': 'ready'}), \
                  mock.patch.object(image_fixture.tempfile, 'mkdtemp', return_value=str(parent)), \
                  mock.patch.object(image_fixture, 'available', return_value=2 * 1024**3), \
                  mock.patch.object(image_fixture, 'command', side_effect=command), \
@@ -531,6 +572,7 @@ class ImageSafetyTests(unittest.TestCase):
                     return plistlib.dumps({'FilesystemType': 'apfs', 'TotalSize': 268435456})
                 raise subprocess.CalledProcessError(1, args, stderr=b'synthetic busy')
             with mock.patch.object(image_fixture.sys, 'platform', 'darwin'), \
+                 mock.patch.object(image_fixture, 'preflight', return_value={'status': 'ready'}), \
                  mock.patch.object(image_fixture.tempfile, 'mkdtemp', return_value=str(parent)), \
                  mock.patch.object(image_fixture, 'available', return_value=2 * 1024**3), \
                  mock.patch.object(image_fixture, 'confirm_mount', side_effect=lambda *args:
