@@ -22,6 +22,7 @@ import memory_governance_storage as db
 from local_ports import SyntheticLocalPorts
 from process_readback_worker import compose
 from storage_observer import StorageObserver, bound_worker_descriptors
+import physical_pressure as pressure
 
 IMAGE_BYTES = 256 * 1024 * 1024
 FILL_SECONDS = 30
@@ -68,74 +69,129 @@ def fill_deadline():
 
 
 def fill_owned_image(data, *, observation=None):
-    """Only an inherited descriptor from this run's image owner; never opens a caller path."""
-    c.fields(data, {'fd', 'identity', 'mount', 'mount_identity', 'parent_device'})
-    fd, mount = data['fd'], Path(data['mount'])
-    expected = tuple(data['identity'])
-
-    def owned():
-        info, mounted = os.fstat(fd), mount.stat()
-        if not (3 <= fd < 128 and os.path.ismount(mount) and not mount.is_symlink()
-                and db.identity(mounted) == tuple(data['mount_identity'])
-                and mounted.st_dev != data['parent_device']
-                and db.identity(info) == expected and expected[0] == mounted.st_dev
-                and stat.S_ISREG(info.st_mode) and info.st_nlink == 1):
-            raise RuntimeError('physical-fixture-identity-unconfirmed')
-        return info
-
+    """One bounded sequence on pre-bound descriptors; no retries of the target transaction."""
+    pool = pressure.entries(data, complete=True)
+    offsets = [0] * len(pool)
     observation = {} if observation is None else observation
     observation.update(written_bytes=0, os_errors=[], stage=PHYSICAL_STAGE,
                        write_attempts=0, byte_limit=IMAGE_BYTES, deadline_seconds=FILL_SECONDS,
+                       write_attempt_limit=pressure.WRITE_ATTEMPTS,
                        deadline_enforcement='worker-default-SIGALRM', os_enospc_observed=False,
-                       sync={'result': 'not-attempted'}, pressure_samples={})
+                       sync={'result': 'not-attempted'}, pressure_samples={}, stages=[],
+                       pressure_ready=False, filler_count=len(pool))
     with fill_deadline() as deadline:
-        if owned().st_size != 0:
-            raise RuntimeError('physical-filler-not-empty')
+        for entry in pool:
+            if pressure.owned(data, entry).st_size != 0:
+                raise RuntimeError('physical-filler-not-empty')
+
+        def check():
+            if time.monotonic() >= deadline:
+                raise TimeoutError('filler-deadline')
 
         def sample(stage):
-            info = owned()
-            fs = os.fstatvfs(fd)
-            owned()
+            check()
+            files = []
+            for index, entry in enumerate(pool):
+                info = pressure.owned(data, entry)
+                if info.st_size != offsets[index]:
+                    raise RuntimeError('filler-offset-drift')
+                files.append({'index': index, 'logical_bytes': info.st_size,
+                              'allocated_bytes': info.st_blocks * 512})
+            fs = os.fstatvfs(pool[0]['fd'])
+            for entry in pool:
+                pressure.owned(data, entry)
             observation['pressure_samples'][stage] = {
-                'available_bytes': fs.f_bavail * fs.f_frsize,
-                'filler_logical_bytes': info.st_size,
-                'filler_allocated_bytes': info.st_blocks * 512}
+                'available_bytes': fs.f_bavail * fs.f_frsize, 'files': files,
+                'filler_logical_bytes': sum(value['logical_bytes'] for value in files),
+                'filler_allocated_bytes': sum(value['allocated_bytes'] for value in files)}
             observation['phase'] = stage
             emit('filling', observation=observation)
+            check()
+
+        def write_stage(index, name, block_sizes, maximum):
+            entry = pool[index]
+            start = offsets[index]
+            if pressure.owned(data, entry).st_size != start:
+                raise RuntimeError('filler-offset-drift')
+            stage = {'name': name, 'filler_index': index, 'offset_before': start, 'next_offset': start,
+                     'written_bytes': 0, 'write_attempts': 0, 'short_writes': 0,
+                     'byte_limit': maximum, 'stop': None, 'sync': {'result': 'not-attempted'}}
+            observation['stages'].append(stage)
+            for block_size in block_sizes:
+                block = b'\x5a' * block_size
+                while stage['written_bytes'] < maximum and observation['written_bytes'] < IMAGE_BYTES:
+                    check()
+                    if observation['write_attempts'] >= pressure.WRITE_ATTEMPTS:
+                        raise RuntimeError('filler-write-attempt-limit')
+                    info = pressure.owned(data, entry)
+                    if info.st_size != stage['next_offset']:
+                        raise RuntimeError('filler-offset-drift')
+                    requested = min(block_size, maximum - stage['written_bytes'],
+                                    IMAGE_BYTES - observation['written_bytes'])
+                    stage['write_attempts'] += 1
+                    observation['write_attempts'] += 1
+                    stage['last_requested_bytes'] = requested
+                    try:
+                        if name == 'bulk':
+                            if os.lseek(entry['fd'], 0, os.SEEK_CUR) != stage['next_offset']:
+                                raise RuntimeError('filler-offset-drift')
+                            count = os.write(entry['fd'], block[:requested])
+                        else:
+                            count = os.pwrite(entry['fd'], block[:requested], stage['next_offset'])
+                    except OSError as error:
+                        stage['errno'] = error.errno
+                        stage['stop'] = 'enospc' if error.errno == errno.ENOSPC else 'write-error'
+                        if error.errno != errno.ENOSPC:
+                            raise
+                        observation['os_errors'].append({'operation': 'write' if name == 'bulk' else 'pwrite', 'errno': error.errno,
+                            'block_size': block_size, 'filler_index': index, 'stage': name,
+                            'offset': stage['next_offset']})
+                        observation['os_enospc_observed'] = True
+                        break
+                    if type(count) is not int or not 0 < count <= requested:
+                        raise RuntimeError('filler-no-progress')
+                    stage['short_writes'] += int(count < requested)
+                    stage['written_bytes'] += count
+                    stage['next_offset'] += count
+                    offsets[index] += count
+                    observation['written_bytes'] += count
+                    stage['stop'] = None
+            if observation['written_bytes'] >= IMAGE_BYTES:
+                stage['stop'] = 'total-byte-limit'
+            elif stage['written_bytes'] >= maximum:
+                stage['stop'] = 'stage-byte-limit'
+            return stage
+
+        def sync_stage(stage, before, after):
+            sample(before)
+            check()
+            entry = pool[stage['filler_index']]
+            pressure.owned(data, entry)
+            stage['sync'] = {'result': 'started'}
+            if stage['name'] == 'bulk':
+                observation['sync'] = stage['sync']
+            try:
+                os.fsync(entry['fd'])
+            except OSError as error:
+                stage['sync'].update(result='failed', errno=error.errno)
+                raise
+            stage['sync']['result'] = 'succeeded'
+            sample(after)
 
         sample('before_fill')
-        for block_size in (1048576, 65536, 4096):
-            block = b'\x5a' * block_size
-            while observation['written_bytes'] < IMAGE_BYTES:
-                if time.monotonic() >= deadline:
-                    raise TimeoutError('filler-deadline')
-                owned()
-                observation['write_attempts'] += 1
-                try:
-                    count = os.write(fd, block[:min(block_size, IMAGE_BYTES - observation['written_bytes'])])
-                except OSError as error:
-                    if error.errno != errno.ENOSPC:
-                        raise
-                    observation['os_errors'].append({'operation': 'write', 'errno': error.errno,
-                                                     'block_size': block_size})
-                    observation['os_enospc_observed'] = True
-                    break
-                if count <= 0:
-                    raise RuntimeError('filler-no-progress')
-                observation['written_bytes'] += count
-        sample('before_sync')
-        if time.monotonic() >= deadline:
-            raise TimeoutError('filler-deadline')
-        owned()
-        observation['sync'] = {'result': 'started'}
-        try:
-            os.fsync(fd)
-        except OSError as error:
-            observation['sync'] = {'result': 'failed', 'errno': error.errno}
-            raise
-        observation['sync'] = {'result': 'succeeded'}
-        sample('after_sync')
-        observation['available_bytes_after'] = observation['pressure_samples']['after_sync']['available_bytes']
+        bulk = write_stage(0, 'bulk', (1048576, 65536, 4096), IMAGE_BYTES)
+        sync_stage(bulk, 'before_sync', 'after_sync')
+        for index, name, maximum in ((0, 'tail', pressure.TAIL_BYTES),
+                                      (1, 'small_1', pressure.SMALL_BYTES),
+                                      (2, 'small_2', pressure.SMALL_BYTES)):
+            if observation['written_bytes'] >= IMAGE_BYTES:
+                raise RuntimeError('pressure-byte-budget-exhausted')
+            stage = write_stage(index, name, (4096,), maximum)
+            sync_stage(stage, name + '_before_sync', name + '_after_sync')
+        if stage['stop'] != 'enospc':
+            raise RuntimeError('pressure-final-probe-not-exhausted')
+        observation['available_bytes_after'] = observation['pressure_samples']['small_2_after_sync']['available_bytes']
+        observation['pressure_ready'] = True
     return observation
 
 
@@ -238,7 +294,7 @@ def create(request, fd_limit):
     core.initialize()
     physical = request['physical']
     observer = StorageObserver(root, temporary, ports.registry.binding(), fd_limit=fd_limit,
-                               excluded=(() if physical is None else (physical['fd'],)))
+                               excluded=(() if physical is None else pressure.descriptors(physical)))
     with observer.observing():
         normal_preview = core.preview('add', ITEM, ports.candidate(body='Synthetic normal storage control.'))
         normal = core.execute(core.authorize(normal_preview))
@@ -344,10 +400,8 @@ def main():
         continue_control(request, fd_limit)
     elif request['mode'] == 'restore':
         c.fields(request, {'mode', 'physical'})
-        from enospc_image import restore_filler
-        data = request['physical']
-        result = restore_filler(data['fd'], tuple(data['identity']), Path(data['mount']),
-                                tuple(data['mount_identity']))
+        from enospc_image import restore_pool
+        result = restore_pool(request['physical'])
         emit('restore', result=result, pid=os.getpid())
     else:
         assert request['mode'] == 'create'

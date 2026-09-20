@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path[:0] = [str(ROOT / 'skills/loop-engineering/scripts'), str(Path(__file__).parent)]
 import memory_governance_contract as c
 import memory_governance_storage as db
+import physical_pressure as pressure
 
 WORKER = Path(__file__).with_name('storage_fault_worker.py')
 
@@ -206,7 +207,7 @@ def run_case(parent, fault, *, physical=None, recover=None):
               'worker_timeout_seconds': 90, 'read_timeout_seconds': 30}
     try:
         child = worker({'mode': 'create', 'parent': str(parent), 'fault': fault, 'physical': physical},
-                       pass_fds=(() if physical is None else (physical['fd'],)))
+                       pass_fds=(() if physical is None else pressure.descriptors(physical)))
     finally:
         # Restoring capacity is separate from database repair, and must run even after child failure.
         if recover is not None:
@@ -220,7 +221,7 @@ def run_case(parent, fault, *, physical=None, recover=None):
                                       if event.get('event') == 'filling']
         phases = [entry.get('phase') if isinstance(entry, dict) else None
                   for entry in report['filling_progress']]
-        if len(phases) > 3 or phases != ['before_fill', 'before_sync', 'after_sync'][:len(phases)]:
+        if len(phases) > len(pressure.PROGRESS_PHASES) or phases != list(pressure.PROGRESS_PHASES[:len(phases)]):
             raise RuntimeError('filling-progress-sequence-invalid')
     report['writer'] = child
     prepared = next((event for event in events if event.get('event') == 'prepared'), None)

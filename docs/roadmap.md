@@ -453,6 +453,11 @@ worker deadline／partial-output 回歸；其後的[第三次觀察](loops/issue
 先重評 filler 與目標交易配置差異，不推定 APFS 根因或原樣重跑；新實測方案或
 驗收範圍調整須另行決定，不能以同步成功取代 physical FULL。
 
+方法研究後，使用者同意[同步後探測與小檔補壓準備](loops/issue-271/pressure-pool-preparation.md)：
+固定三個 own filler，共用原容量／時間上限，增加 EOF／短寫及分階段觀測，
+確認全部 filler 恢復後才允許讀回。這是離線候選方法準備，未啟動第四次實測；
+保留 physical FULL／失敗後 control 缺口、Issue open／PR draft 與另行授權門檻。
+
 2026-09-09 使用者調整工程順序：[Issue #237](https://github.com/jeffery777/codex-dev-skills/issues/237)
 先校正共用派工、續行與交接提示詞，完成驗證、審查及適用發版，再續推 G1
 剩餘資格／G2／G3。#235 已合併的第一切片保留；此排序不回退已完成工作，

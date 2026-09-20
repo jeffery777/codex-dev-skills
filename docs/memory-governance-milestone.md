@@ -2,6 +2,12 @@
 
 ## 狀態、目標與證據
 
+2026-09-20：[同步後探測與小檔補壓準備](loops/issue-271/pressure-pool-preparation.md)
+在方法研究及使用者同意後，準備三個已綁定 filler 的固定補壓／完整恢復流程；
+共用原 256 MiB／30 秒上限，最後階段 ENOSPC 與同步完成才交給目標交易。
+這是離線準備，沒有第四次實體試驗，亦不證明 APFS 根因或 physical FULL。
+新實測仍須精確資源／恢復方案及新增單次授權；原驗收缺口保持。
+
 2026-09-20：[第三次同步後觀察](loops/issue-271/sync-verification-and-review.md)
 在新增單次授權後完成：write ENOSPC 後 fsync 成功，但 SQLite 仍 applied／revision 2，
 沒有 physical FULL。own filler 容量恢復、fresh readback 與正常 detach 均完成，
