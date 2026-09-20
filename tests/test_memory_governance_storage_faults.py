@@ -32,6 +32,7 @@ def load(name):
 case = load('storage_fault_case')
 observer_module = load('storage_observer')
 image_fixture = load('enospc_image')
+worker_fixture = load('storage_fault_worker')
 
 
 class StorageFaultTests(unittest.TestCase):
@@ -354,6 +355,127 @@ class StorageFaultTests(unittest.TestCase):
                 self.assertNotIn('recovery_control', report)
 
 
+class PhysicalTimingTests(unittest.TestCase):
+    def observe_worker(self, parent, failure, calls):
+        program = """
+import json, sys
+from pathlib import Path
+from tests.test_memory_governance_storage_faults import PhysicalTimingTests
+calls = []
+result = PhysicalTimingTests()._observe_worker(Path(sys.argv[1]), sys.argv[2], calls)
+print(json.dumps({'result': result, 'calls': calls}))
+"""
+        child = subprocess.run([str(ROOT / 'scripts/project-python'), '-c', program,
+                                str(parent), failure or 'none'], cwd=ROOT,
+                               text=True, capture_output=True, timeout=30)
+        self.assertEqual(0, child.returncode, child.stderr)
+        value = json.loads(child.stdout)
+        calls.extend(value['calls'])
+        return value['result']
+
+    def _observe_worker(self, parent, failure, calls):
+        fd_limit = worker_fixture.bound_worker_descriptors()
+        events = []
+        original_connect = worker_fixture.db.connect
+        filled = False
+
+        def connect(*args, **kwargs):
+            if kwargs.get('writer'):
+                calls.append('writer')
+                if filled and failure == 'writer-open':
+                    raise OSError(errno.EIO, 'synthetic writer-open failure')
+            return original_connect(*args, **kwargs)
+
+        def fill(_physical):
+            nonlocal filled
+            calls.append('fill')
+            filled = True
+            self.assertFalse((parent / 'managed' / db.JOURNAL).exists())
+            if failure == 'fill-os':
+                raise OSError(errno.EIO, 'synthetic filler failure')
+            if failure == 'fill-runtime':
+                raise RuntimeError('synthetic filler identity drift')
+            return {'os_enospc_observed': False, 'written_bytes': 0}
+
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch.dict(os.environ))
+            stack.enter_context(mock.patch.object(worker_fixture.db, 'connect', side_effect=connect))
+            stack.enter_context(mock.patch.object(worker_fixture, 'fill_owned_image', side_effect=fill))
+            stack.enter_context(mock.patch.object(worker_fixture, 'emit',
+                side_effect=lambda event, **data: events.append({'event': event, **data})))
+            if failure == 'journal-probe':
+                stack.enter_context(mock.patch.object(worker_fixture, 'journal_before_fill',
+                    side_effect=PermissionError(errno.EACCES, 'synthetic journal probe failure')))
+            if failure == 'nonempty-journal':
+                stack.enter_context(mock.patch.object(worker_fixture, 'journal_before_fill',
+                    return_value={'state': 'present', 'bytes': 1}))
+            worker_fixture.create({'mode': 'create', 'parent': str(parent),
+                'fault': 'physical', 'physical': {'fd': 127}}, fd_limit)
+        return {'events': events, 'returncode': 0, 'timed_out': False, 'diagnostic': ''}
+
+    def test_physical_fill_precedes_target_writer_and_retains_normal_quota(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            calls = []
+            result = self.observe_worker(Path(temporary).resolve(), None, calls)
+        self.assertEqual(['writer', 'fill', 'writer'], calls)
+        completed = result['events'][-1]
+        self.assertEqual('completed', completed['event'])
+        self.assertEqual('before-transaction', completed['filling']['stage'])
+        self.assertEqual({'state': 'absent', 'bytes': None}, completed['filling']['journal_before_fill'])
+        self.assertEqual(completed['quota']['profile_max_page_count'], completed['quota']['effective_max_page_count'])
+        self.assertEqual('applied', completed['outcome']['result'])
+        self.assertEqual('no-sqlite-error', case.classify('physical', completed))
+
+    def test_journal_probe_distinguishes_absence_empty_and_invalid_entries(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            journal = root / db.JOURNAL
+            self.assertEqual({'state': 'absent', 'bytes': None}, worker_fixture.journal_before_fill(root))
+            journal.touch()
+            self.assertEqual({'state': 'present', 'bytes': 0}, worker_fixture.journal_before_fill(root))
+            journal.rename(root / 'retained-empty-journal')
+            journal.symlink_to(root / 'retained-empty-journal')
+            with self.assertRaisesRegex(RuntimeError, 'journal-not-regular'):
+                worker_fixture.journal_before_fill(root)
+            with mock.patch.object(Path, 'lstat', side_effect=PermissionError(errno.EACCES, 'probe')):
+                with self.assertRaises(PermissionError):
+                    worker_fixture.journal_before_fill(root)
+
+    def test_early_failures_restore_before_readback_and_never_start_control(self):
+        for failure in ('fill-os', 'fill-runtime', 'writer-open', 'journal-probe', 'nonempty-journal'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                parent, calls = Path(temporary).resolve(), []
+                original_worker = case.worker
+                def worker(request, **kwargs):
+                    if request['mode'] == 'create':
+                        return self.observe_worker(parent, failure, calls)
+                    self.assertIn('restored', calls)
+                    self.assertEqual('read', request['mode'], 'incomplete trial must not start control')
+                    calls.append('read')
+                    return original_worker(request, **kwargs)
+                def restore():
+                    calls.append('restored')
+                    return {'result': 'restored'}
+                with mock.patch.object(case, 'worker', side_effect=worker):
+                    report = case.run_case(parent, 'physical', physical={'fd': 127}, recover=restore)
+                self.assertEqual('incomplete', report['status'])
+                self.assertEqual(1, calls.count('restored'))
+                self.assertLess(calls.index('restored'), calls.index('read'))
+                self.assertNotIn('recovery_control', report)
+                self.assertEqual({}, report['completed']['quota'])
+                self.assertEqual('handle-unrecognized-or-consumed', report['completed']['replay_rejection'])
+                self.assertTrue(report['failed_transaction_unchanged'])
+                for key in ('fresh_attempt', 'fresh_normal'):
+                    self.assertTrue(report[key]['files_unchanged'])
+                filling = report['completed']['filling']
+                self.assertEqual('before-transaction', filling['stage'])
+                if failure != 'writer-open':
+                    self.assertIn('failure', filling)
+                    self.assertEqual(1, calls.count('writer'))
+                if failure in {'journal-probe', 'nonempty-journal'}:
+                    self.assertNotIn('fill', calls)
+
+
 class MeasurementBoundaryTests(unittest.TestCase):
     def test_lock_measurement_encloses_entry_and_exit_inventory(self):
         with tempfile.TemporaryDirectory(prefix='mg1-253-lock-') as temporary:
@@ -513,6 +635,7 @@ class ImageSafetyTests(unittest.TestCase):
         self.assertEqual(268435456, report['image_bytes'])
         self.assertEqual(1073741824, report['host_headroom_minimum'])
         self.assertEqual(1, report['attempt_limit'])
+        self.assertEqual('before-transaction', report['fault_stage'])
         self.assertFalse(report['existing_data_access'])
 
     def test_mount_requires_independent_device_exact_node_and_capacity(self):

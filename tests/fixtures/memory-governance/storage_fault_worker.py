@@ -21,6 +21,7 @@ from process_readback_worker import compose
 from storage_observer import StorageObserver, bound_worker_descriptors
 
 IMAGE_BYTES = 256 * 1024 * 1024
+PHYSICAL_STAGE = 'before-transaction'
 ITEM = '00000000-0000-4000-8000-000000000003'
 FAULTS = {'none', 'page-quota', 'missing-path-cantopen', 'physical', 'reply-loss', 'precommit-loss'}
 
@@ -58,7 +59,7 @@ def fill_owned_image(data):
             and os.fstat(fd).st_size == 0 and os.fstat(fd).st_nlink == 1):
         raise RuntimeError('physical-fixture-identity-unconfirmed')
     deadline = time.monotonic() + 30
-    observation = {'written_bytes': 0, 'os_errors': [], 'stage': 'before-commit',
+    observation = {'written_bytes': 0, 'os_errors': [], 'stage': PHYSICAL_STAGE,
                    'write_attempts': 0, 'byte_limit': IMAGE_BYTES, 'deadline_seconds': 30}
     for block_size in (1048576, 65536, 4096):
         block = b'\x5a' * block_size
@@ -81,6 +82,17 @@ def fill_owned_image(data):
     observation['available_bytes_after'] = os.statvfs(mount).f_bavail * os.statvfs(mount).f_frsize
     observation['os_enospc_observed'] = bool(observation['os_errors'])
     return observation
+
+
+def journal_before_fill(root):
+    """Absence is an observed state, not a zero-byte measurement or a suppressed error."""
+    try:
+        info = (root / db.JOURNAL).lstat()
+    except FileNotFoundError:
+        return {'state': 'absent', 'bytes': None}
+    if not stat.S_ISREG(info.st_mode):
+        raise RuntimeError('journal-not-regular')
+    return {'state': 'present', 'bytes': info.st_size}
 
 
 def replay_rejection(core, handle):
@@ -234,15 +246,18 @@ def create(request, fd_limit):
 
         def checkpoint(stage):
             observer.checkpoint(stage)
-            if stage == 'before-commit' and fault == 'physical':
+            if stage == PHYSICAL_STAGE and fault == 'physical':
                 if filling:
                     raise RuntimeError('physical-fault-repeated')
-                filling['journal_bytes_before_fill'] = (root / db.JOURNAL).stat().st_size
+                filling['stage'] = stage
                 try:
+                    filling['journal_before_fill'] = journal_before_fill(root)
+                    if filling['journal_before_fill']['bytes'] not in {None, 0}:
+                        raise RuntimeError('nonempty-journal-before-fill; recovery-required')
                     filling.update(fill_owned_image(physical))
                 except (OSError, RuntimeError) as error:
                     filling['failure'] = {'type': type(error).__name__, 'errno': getattr(error, 'errno', None),
-                                          'reason': str(error)}
+                                          'reason': str(error)[:1000]}
                     raise
                 observer.sample()
             if stage == 'after-commit' and fault == 'reply-loss':
@@ -256,8 +271,10 @@ def create(request, fd_limit):
              mock.patch.object(core_module, '_checkpoint', side_effect=checkpoint):
             try:
                 result = core.execute(handle)
-            except c.ContractError as error:
-                result = {'result': str(error), 'proof': None, 'state_digest': None}
+            except (c.ContractError, RuntimeError) as error:
+                # The physical checkpoint precedes the core's transaction try block.
+                # Preserve fixture failures without manufacturing a transaction outcome.
+                result = {'result': str(error)[:1000], 'proof': None, 'state_digest': None}
         rejected = replay_rejection(core, handle)
     emit('completed', outcome=result, errors=errors, quota=quota, filling=filling,
          replay_rejection=rejected, measurement=observer.report(), runtime=db.runtime_facts(), pid=os.getpid())

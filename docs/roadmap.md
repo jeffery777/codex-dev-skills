@@ -439,10 +439,12 @@ named/own-fd 取樣不證明完整 temp 或 J/T/G 上界，沒有 production cod
 temp／sidecar、有效 pragma、容量與完整鎖區間，並在 filler 恢復失敗時停止依賴讀回。
 仍為 synthetic-only；物理試驗、完整 J/T/G 與 production 資格分開記錄，不啟用 backend。
 
-#271 的[實體容量恢復觀察](loops/issue-271/verification-and-review.md)完成一次新 APFS
-image 的 OS ENOSPC、own filler 空間釋放與 fresh readback；SQLite 在該次條件下
-成功提交，沒有 physical FULL。Issue 仍為部分完成，下一次試驗須另有有界方法與
-新增授權；不重試、不擴容、不以局部實證宣稱 G1/MG1 qualified，也不另發版。
+#271 的[第一次容量恢復觀察](loops/issue-271/verification-and-review.md)與
+[追加交易前觀察](loops/issue-271/pretransaction-verification-and-review.md)各自完成
+新 APFS image 的 OS ENOSPC、own filler 空間釋放與 fresh readback；第二次填充時
+journal 不存在，但 SQLite 仍成功提交，兩次均無 physical FULL。Issue 部分完成、
+PR 維持 draft；兩次額度已耗用，先重評方法，再為新的有界試驗取得新增授權。
+不自動重試或擴容，不以局部實證宣稱 G1/MG1 qualified，也不另發版。
 
 2026-09-09 使用者調整工程順序：[Issue #237](https://github.com/jeffery777/codex-dev-skills/issues/237)
 先校正共用派工、續行與交接提示詞，完成驗證、審查及適用發版，再續推 G1

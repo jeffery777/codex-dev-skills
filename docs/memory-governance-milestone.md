@@ -2,10 +2,13 @@
 
 ## 狀態、目標與證據
 
-2026-09-20：[Issue #271 實體試驗](loops/issue-271/verification-and-review.md)
-透過正常核准介面完成新 APFS image、own filler OS ENOSPC、截短釋放容量及
-fresh readback；SQLite 仍成功提交，未觀察 physical FULL，整體驗收保持 incomplete。
-Issue 保持 open，不另發版；局部實證不提升完整 G1/MG1 或 production 資格。
+2026-09-20：Issue #271 的[第一次實體試驗](loops/issue-271/verification-and-review.md)
+與[追加交易前試驗](loops/issue-271/pretransaction-verification-and-review.md)各自
+完成新 APFS image、own filler OS ENOSPC、截短釋放容量及 fresh readback。
+第二次在目標 writer 開啟前填充且 journal 不存在，SQLite 仍成功提交；兩次皆未
+觀察 physical FULL，整體驗收保持 incomplete。已耗用兩次授權額度，下一步先
+重評方法；新物理試驗須另有有界方案與授權。Issue open／PR draft、不另發版，
+局部實證不提升完整 G1/MG1 或 production 資格。
 
 2026-09-18：[Issue #265 儲存可靠性切片](loops/issue-265/verification-and-review.md)
 補 reader/control 的隔離 temp、有效連線設定、容量取樣及完整鎖區間；修正 filler

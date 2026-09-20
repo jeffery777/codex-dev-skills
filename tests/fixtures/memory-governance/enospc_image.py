@@ -271,7 +271,7 @@ def main():
         report = {'status': 'dry-run', 'creates': 'new /private/tmp/mg1-g1-enospc-*/synthetic.dmg',
                   'filesystem': 'APFS', 'image_bytes': IMAGE_BYTES, 'host_headroom_minimum': HOST_HEADROOM,
                   'layout': 'GPTSPUD', 'image_type': 'UDIF', 'create_verbose': True,
-                  'fault_stage': 'before-commit', 'attempt_limit': 1, 'worker_timeout_seconds': 90,
+                  'fault_stage': 'before-transaction', 'attempt_limit': 1, 'worker_timeout_seconds': 90,
                   'fills': 'own inherited filler fd on confirmed new mount only; at most image_bytes',
                   'recovery': 'truncate own filler once; fresh readback without repair; normal detach; retain image',
                   'existing_data_access': False, 'production_qualified': False}
