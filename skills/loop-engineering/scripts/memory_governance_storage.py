@@ -174,7 +174,10 @@ def connect(binding: RootBinding, limits: dict, *, writer: bool = False) -> sqli
                                   ("max_page_count", limits["data_limit_bytes"] // 4096)):
                 c.require(connection.execute("PRAGMA " + key).fetchone()[0] == expected, "pragma-mismatch")
         else:
+            # Connection-local only: readers must honor the runtime temp policy too.
+            connection.execute("PRAGMA temp_store=MEMORY")
             connection.execute("PRAGMA query_only=ON")
+            c.require(connection.execute("PRAGMA temp_store").fetchone()[0] == 2, "pragma-mismatch")
         for key, expected in (("trusted_schema", 0), ("foreign_keys", 1)):
             c.require(connection.execute("PRAGMA " + key).fetchone()[0] == expected, "pragma-mismatch")
         return connection
@@ -276,11 +279,12 @@ def logical_item(item: dict) -> dict:
     return {**item, "versions": [{"revision": v["revision"], "version_digest": c.digest(v)} for v in item["versions"]]}
 
 
-def _logical_state_digest(items, scope: dict, limits: dict, meta: dict) -> str:
+def _logical_state_digest(items, scope: dict, limits: dict, meta: dict, check=lambda: None) -> str:
     """串流已排序的 compact logical items，不保存版本全文。"""
     hasher = hashlib.sha256()
     hasher.update(b'{"epoch":' + c.canonical(meta["epoch"]) + b',"items":[')
     for emitted, item in enumerate(items):
+        check()
         c.require(emitted < limits["max_items"], "item-limit")
         if emitted:
             hasher.update(b",")
@@ -290,7 +294,7 @@ def _logical_state_digest(items, scope: dict, limits: dict, meta: dict) -> str:
 
 
 def state_digest(connection: sqlite3.Connection, scope: dict, limits: dict, meta: dict,
-                 replacement: dict | None = None) -> str:
+                 replacement: dict | None = None, *, check=lambda: None) -> str:
     """以 canonical key/order 串流 logical state；不把 root 全文物化到 RAM。"""
     def items():
         replaced = False
@@ -302,7 +306,7 @@ def state_digest(connection: sqlite3.Connection, scope: dict, limits: dict, meta
                 yield logical_item(load_item(connection, item_id, scope, limits))
         if replacement is not None and not replaced:
             yield logical_item(replacement)
-    return _logical_state_digest(items(), scope, limits, meta)
+    return _logical_state_digest(items(), scope, limits, meta, check)
 
 
 @dataclass(frozen=True)
@@ -315,7 +319,8 @@ class Snapshot:
     proofs: int
 
 
-def snapshot(connection: sqlite3.Connection, scope: dict, limits: dict) -> Snapshot:
+def snapshot(connection: sqlite3.Connection, scope: dict, limits: dict, *, check=lambda: None) -> Snapshot:
+    check()
     meta = metadata(connection, scope)
     counts = {table: connection.execute("SELECT count(*) FROM " + table).fetchone()[0]
               for table in ("items", "versions", "current_search", "proofs")}
@@ -323,7 +328,7 @@ def snapshot(connection: sqlite3.Connection, scope: dict, limits: dict) -> Snaps
               and counts["current_search"] <= counts["items"] * 16
               and counts["proofs"] <= limits["max_proofs"] + limits["maintenance_proof_reserve"], "storage-count-limit")
     c.require(connection.execute("PRAGMA foreign_key_check").fetchone() is None, "integrity-failed")
-    current_digest = state_digest(connection, scope, limits, meta)
+    current_digest = state_digest(connection, scope, limits, meta, check=check)
     previous = c.digest({"scope": scope, "epoch": meta["epoch"], "reject_before": meta["reject_before"], "items": []})
     floor = meta["reject_before"]
     last_per_item = {}
@@ -331,6 +336,7 @@ def snapshot(connection: sqlite3.Connection, scope: dict, limits: dict) -> Snaps
     status_seen = {}
     replayed = {}
     for number, (sequence, operation_id, item_id, data) in enumerate(connection.execute("SELECT sequence,operation_id,item_id,document FROM proofs ORDER BY sequence"), 1):
+        check()
         c.require(number <= counts["proofs"] and sequence == number, "proof-sequence-mismatch")
         record = c.g1_proof(c.decode(data, 2048))
         c.require(record["contract_version"] == PROOF_FAMILY, "proof-version-unavailable")
@@ -387,11 +393,12 @@ def snapshot(connection: sqlite3.Connection, scope: dict, limits: dict) -> Snaps
                                          "version_digest": c.digest(historical_current)})
         logical.update(status=status_seen[item_id], current_revision=record["after_revision"],
                        revision_high_water=record["after_revision"], projection_digest=record["projection_digest"])
-        previous = _logical_state_digest((replayed[key] for key in sorted(replayed)), scope, limits, meta)
+        previous = _logical_state_digest((replayed[key] for key in sorted(replayed)), scope, limits, meta, check)
         c.require(record["after_digest"] == previous, "proof-state-mismatch")
         last_per_item[item_id] = (record["after_revision"], record["projection_digest"])
     c.require(previous == current_digest and len(last_per_item) == counts["items"], "proof-state-mismatch")
     for (item_id,) in connection.execute("SELECT item_id FROM items ORDER BY item_id"):
+        check()
         item = load_item(connection, item_id, scope, limits)
         c.require(status_seen[item_id] == item["status"]
                   and last_per_item.get(item_id) == (item["current_revision"], item["projection_digest"]), "proof-current-mismatch")

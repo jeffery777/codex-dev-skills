@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from functools import wraps
 import os
 import sqlite3
+import time
 import unicodedata
 import uuid
 
@@ -471,10 +472,12 @@ class GovernanceCore:
             return c.g1_readback(result, scope, limits, preview)
 
     @_boundary
-    def audit(self) -> "AuditSnapshot":
+    def audit(self, *, timeout_seconds: int = 10) -> "AuditSnapshot":
+        c.integer(timeout_seconds, 1, 30)
+        deadline = time.monotonic() + timeout_seconds
         binding, scope, limits = self._root("audit", "audit")
         self._read_authority(binding, "audit")
-        return AuditSnapshot(self, binding, scope, limits)
+        return AuditSnapshot(self, binding, scope, limits, deadline)
 
     @_boundary
     def recall(self, cues: list[str]) -> dict:
@@ -517,7 +520,8 @@ class GovernanceCore:
 
 class AuditSnapshot:
     """單一唯讀 snapshot 的有界分頁；cursor 不可跨 close/process 或重送。"""
-    def __init__(self, core, binding, scope, limits):
+    def __init__(self, core, binding, scope, limits, deadline):
+        self._deadline = deadline
         self._core, self._binding, self._scope, self._limits = core, binding, scope, limits
         self._stack = contextlib.ExitStack()
         self._closed = False
@@ -526,11 +530,14 @@ class AuditSnapshot:
         self._last_item = ""
         self._pages = self._count = 0
         try:
-            self._stack.enter_context(db.locked(binding))
+            self._check_time()
+            self._directory = self._stack.enter_context(db.locked(binding))
             self._connection = self._stack.enter_context(contextlib.closing(db.connect(binding, limits)))
+            self._connection.set_progress_handler(lambda: int(time.monotonic() >= self._deadline), 1000)
             self._connection.execute("BEGIN")
-            self._snapshot = db.snapshot(self._connection, scope, limits)
+            self._snapshot = db.snapshot(self._connection, scope, limits, check=self._check_time)
             self._expires = core._clock(self._snapshot.clock_floor) + limits["confirmation_seconds"]
+            self._check_access()
         except BaseException:
             self.close()
             raise
@@ -545,19 +552,41 @@ class AuditSnapshot:
         self._closed = True
         self._stack.close()
 
+    def _check_time(self):
+        c.require(time.monotonic() < self._deadline, "audit-timeout")
+
+    def _check_access(self):
+        self._check_time()
+        c.require(self._core._port("binding") == self._binding, "root-binding-drift")
+        self._core._read_authority(self._binding, "audit")
+        directory = db.root_fd(self._binding)
+        try:
+            db.inventory(directory, self._binding)
+        finally:
+            os.close(directory)
+        self._check_time()
+
     @_boundary
     def page(self, cursor: str | None = None) -> dict:
+        try:
+            return self._page(cursor)
+        except BaseException:
+            self.close()
+            raise
+
+    def _page(self, cursor: str | None = None) -> dict:
         c.require(not self._closed and os.getpid() == self._process and cursor == self._cursor, "cursor-unavailable")
         if self._core._clock(self._snapshot.clock_floor) >= self._expires:
             self.close()
             raise c.ContractError("cursor-expired")
-        self._core._read_authority(self._binding, "audit")
+        self._check_access()
         c.require(self._pages < 40, "audit-page-limit")
         rows = self._connection.execute("SELECT item_id FROM items WHERE item_id>? ORDER BY item_id LIMIT ?",
                                         (self._last_item, self._limits["max_scan_items"])).fetchall()
         output = []
         verified = 0
         for (item_id,) in rows:
+            self._check_time()
             item = db.load_item(self._connection, item_id, self._scope, self._limits)
             try:
                 self._core._source(self._binding, self._scope, item["versions"][-1])
@@ -566,8 +595,14 @@ class AuditSnapshot:
                 verified += 1
             except c.ContractError:
                 summary, assessment = None, "source-unavailable"
+            self._check_time()
+            sources = None if summary is None else [
+                {"kind": entry["kind"], "revision": entry["source_revision"]}
+                for entry in item["versions"][-1]["provenance"]]
             output.append({"item_id": item_id, "revision": item["current_revision"], "status": item["status"],
-                           "retained_versions": len(item["versions"]), "summary": summary, "assessment": assessment})
+                           "retained_versions": len(item["versions"]), "summary": summary,
+                           "assessment": assessment, "sources": sources})
+        self._check_access()
         self._count += len(rows)
         self._pages += 1
         complete = self._count == self._snapshot.items

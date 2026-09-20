@@ -7,8 +7,7 @@ import json
 import sys
 
 import memory_governance_contract as contract
-from memory_governance_host import production_host
-from memory_governance_core import GovernanceCore
+from memory_audit import audit_report, render_report
 from memory_governance_storage import SCHEMA_FINGERPRINT
 
 
@@ -16,7 +15,15 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="MG1 G1 default-off governance boundary")
     parser.add_argument("command", choices=("status", "audit", "proposal"), nargs="?", default="status")
     parser.add_argument("--enabled", action="store_true")
+    parser.add_argument("--format", choices=("json", "text"), default="json")
     args = parser.parse_args(argv)
+    if args.command == "audit":
+        report = audit_report(enabled=args.enabled)
+        if args.format == "text":
+            print(render_report(report), end="")
+        else:
+            print(contract.canonical(report).decode("utf-8"))
+        return 0 if report["status"] in {"complete", "disabled"} else 2
     result = {"operation_authorized": False, "runtime_proven": False, "write_performed": False}
     if not args.enabled:
         result["status"] = "disabled"
@@ -34,10 +41,6 @@ def main(argv=None) -> int:
                 contract.validate_version(value["candidate"], scope, limits, candidate=True)
                 result.update(status="proposal-only", schema_consistent=True,
                               source_verification="unavailable", sensitivity_verification="unavailable")
-            else:
-                core = GovernanceCore(production_host("local"), enabled=True)
-                with core.audit() as snapshot:
-                    result.update(status="audit", page=snapshot.page())
         except contract.ContractError as exc:
             result.update(status="unavailable", reason=str(exc))
             print(json.dumps(result, sort_keys=True))

@@ -54,6 +54,7 @@ shards:
       - tests.test_eval_memory_sqlite
       - tests.test_evaluationctl
       - tests.test_governancectl
+      - tests.test_memory_audit
       - tests.test_memory_governance_contract
       - tests.test_memory_governance_core
       - tests.test_memory_governance_faults
