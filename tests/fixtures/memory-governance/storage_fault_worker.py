@@ -1,13 +1,16 @@
 """Fresh, bounded synthetic storage worker. Not an installed host or authority API."""
 from __future__ import annotations
 
+import contextlib
 import errno
 import hashlib
 import os
 from pathlib import Path
+import signal
 import sqlite3
 import stat
 import sys
+import threading
 import time
 from unittest import mock
 
@@ -19,8 +22,11 @@ import memory_governance_storage as db
 from local_ports import SyntheticLocalPorts
 from process_readback_worker import compose
 from storage_observer import StorageObserver, bound_worker_descriptors
+import physical_pressure as pressure
 
 IMAGE_BYTES = 256 * 1024 * 1024
+FILL_SECONDS = 30
+PHYSICAL_STAGE = 'before-transaction'
 ITEM = '00000000-0000-4000-8000-000000000003'
 FAULTS = {'none', 'page-quota', 'missing-path-cantopen', 'physical', 'reply-loss', 'precommit-loss'}
 
@@ -46,41 +52,158 @@ def host_descriptor(ports):
     }
 
 
-def fill_owned_image(data):
-    """Only an inherited descriptor from this run's image owner; never opens a caller path."""
-    c.fields(data, {'fd', 'identity', 'mount', 'mount_identity', 'parent_device'})
-    fd, mount = data['fd'], Path(data['mount'])
-    expected = tuple(data['identity'])
-    if not (3 <= fd < 128 and os.path.ismount(mount)
-            and db.identity(mount.stat()) == tuple(data['mount_identity'])
-            and mount.stat().st_dev != data['parent_device']
-            and db.identity(os.fstat(fd)) == expected and expected[0] == mount.stat().st_dev
-            and os.fstat(fd).st_size == 0 and os.fstat(fd).st_nlink == 1):
-        raise RuntimeError('physical-fixture-identity-unconfirmed')
-    deadline = time.monotonic() + 30
-    observation = {'written_bytes': 0, 'os_errors': [], 'stage': 'before-commit',
-                   'write_attempts': 0, 'byte_limit': IMAGE_BYTES, 'deadline_seconds': 30}
-    for block_size in (1048576, 65536, 4096):
-        block = b'\x5a' * block_size
-        try:
-            while observation['written_bytes'] < IMAGE_BYTES:
-                if time.monotonic() >= deadline:
-                    raise TimeoutError('filler-deadline')
-                if db.identity(os.fstat(fd)) != expected:
-                    raise RuntimeError('filler-identity-drift')
-                observation['write_attempts'] += 1
-                count = os.write(fd, block[:min(block_size, IMAGE_BYTES - observation['written_bytes'])])
-                if count <= 0:
-                    raise RuntimeError('filler-no-progress')
-                observation['written_bytes'] += count
-            os.fsync(fd)
-        except OSError as error:
-            if error.errno != errno.ENOSPC:
+@contextlib.contextmanager
+def fill_deadline():
+    """One terminating timer in this fresh worker, including blocked write/fsync calls."""
+    if (threading.current_thread() is not threading.main_thread()
+            or signal.getsignal(signal.SIGALRM) != signal.SIG_DFL
+            or signal.getitimer(signal.ITIMER_REAL) != (0.0, 0.0)
+            or signal.SIGALRM in signal.pthread_sigmask(signal.SIG_BLOCK, set())
+            or signal.SIGALRM in signal.sigpending()):
+        raise RuntimeError('filler-deadline-unavailable')
+    signal.setitimer(signal.ITIMER_REAL, FILL_SECONDS)
+    try:
+        yield time.monotonic() + FILL_SECONDS
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+
+
+def fill_owned_image(data, *, observation=None):
+    """One bounded sequence on pre-bound descriptors; no retries of the target transaction."""
+    pool = pressure.entries(data, complete=True)
+    offsets = [0] * len(pool)
+    observation = {} if observation is None else observation
+    observation.update(written_bytes=0, os_errors=[], stage=PHYSICAL_STAGE,
+                       write_attempts=0, byte_limit=IMAGE_BYTES, deadline_seconds=FILL_SECONDS,
+                       write_attempt_limit=pressure.WRITE_ATTEMPTS,
+                       deadline_enforcement='worker-default-SIGALRM', os_enospc_observed=False,
+                       sync={'result': 'not-attempted'}, pressure_samples={}, stages=[],
+                       pressure_ready=False, filler_count=len(pool))
+    with fill_deadline() as deadline:
+        for entry in pool:
+            if pressure.owned(data, entry).st_size != 0:
+                raise RuntimeError('physical-filler-not-empty')
+
+        def check():
+            if time.monotonic() >= deadline:
+                raise TimeoutError('filler-deadline')
+
+        def sample(stage):
+            check()
+            files = []
+            for index, entry in enumerate(pool):
+                info = pressure.owned(data, entry)
+                if info.st_size != offsets[index]:
+                    raise RuntimeError('filler-offset-drift')
+                files.append({'index': index, 'logical_bytes': info.st_size,
+                              'allocated_bytes': info.st_blocks * 512})
+            fs = os.fstatvfs(pool[0]['fd'])
+            for entry in pool:
+                pressure.owned(data, entry)
+            observation['pressure_samples'][stage] = {
+                'available_bytes': fs.f_bavail * fs.f_frsize, 'files': files,
+                'filler_logical_bytes': sum(value['logical_bytes'] for value in files),
+                'filler_allocated_bytes': sum(value['allocated_bytes'] for value in files)}
+            observation['phase'] = stage
+            emit('filling', observation=observation)
+            check()
+
+        def write_stage(index, name, block_sizes, maximum):
+            entry = pool[index]
+            start = offsets[index]
+            if pressure.owned(data, entry).st_size != start:
+                raise RuntimeError('filler-offset-drift')
+            stage = {'name': name, 'filler_index': index, 'offset_before': start, 'next_offset': start,
+                     'written_bytes': 0, 'write_attempts': 0, 'short_writes': 0,
+                     'byte_limit': maximum, 'stop': None, 'sync': {'result': 'not-attempted'}}
+            observation['stages'].append(stage)
+            for block_size in block_sizes:
+                block = b'\x5a' * block_size
+                while stage['written_bytes'] < maximum and observation['written_bytes'] < IMAGE_BYTES:
+                    check()
+                    if observation['write_attempts'] >= pressure.WRITE_ATTEMPTS:
+                        raise RuntimeError('filler-write-attempt-limit')
+                    info = pressure.owned(data, entry)
+                    if info.st_size != stage['next_offset']:
+                        raise RuntimeError('filler-offset-drift')
+                    requested = min(block_size, maximum - stage['written_bytes'],
+                                    IMAGE_BYTES - observation['written_bytes'])
+                    stage['write_attempts'] += 1
+                    observation['write_attempts'] += 1
+                    stage['last_requested_bytes'] = requested
+                    try:
+                        if name == 'bulk':
+                            if os.lseek(entry['fd'], 0, os.SEEK_CUR) != stage['next_offset']:
+                                raise RuntimeError('filler-offset-drift')
+                            count = os.write(entry['fd'], block[:requested])
+                        else:
+                            count = os.pwrite(entry['fd'], block[:requested], stage['next_offset'])
+                    except OSError as error:
+                        stage['errno'] = error.errno
+                        stage['stop'] = 'enospc' if error.errno == errno.ENOSPC else 'write-error'
+                        if error.errno != errno.ENOSPC:
+                            raise
+                        observation['os_errors'].append({'operation': 'write' if name == 'bulk' else 'pwrite', 'errno': error.errno,
+                            'block_size': block_size, 'filler_index': index, 'stage': name,
+                            'offset': stage['next_offset']})
+                        observation['os_enospc_observed'] = True
+                        break
+                    if type(count) is not int or not 0 < count <= requested:
+                        raise RuntimeError('filler-no-progress')
+                    stage['short_writes'] += int(count < requested)
+                    stage['written_bytes'] += count
+                    stage['next_offset'] += count
+                    offsets[index] += count
+                    observation['written_bytes'] += count
+                    stage['stop'] = None
+            if observation['written_bytes'] >= IMAGE_BYTES:
+                stage['stop'] = 'total-byte-limit'
+            elif stage['written_bytes'] >= maximum:
+                stage['stop'] = 'stage-byte-limit'
+            return stage
+
+        def sync_stage(stage, before, after):
+            sample(before)
+            check()
+            entry = pool[stage['filler_index']]
+            pressure.owned(data, entry)
+            stage['sync'] = {'result': 'started'}
+            if stage['name'] == 'bulk':
+                observation['sync'] = stage['sync']
+            try:
+                os.fsync(entry['fd'])
+            except OSError as error:
+                stage['sync'].update(result='failed', errno=error.errno)
                 raise
-            observation['os_errors'].append({'errno': error.errno, 'block_size': block_size})
-    observation['available_bytes_after'] = os.statvfs(mount).f_bavail * os.statvfs(mount).f_frsize
-    observation['os_enospc_observed'] = bool(observation['os_errors'])
+            stage['sync']['result'] = 'succeeded'
+            sample(after)
+
+        sample('before_fill')
+        bulk = write_stage(0, 'bulk', (1048576, 65536, 4096), IMAGE_BYTES)
+        sync_stage(bulk, 'before_sync', 'after_sync')
+        for index, name, maximum in ((0, 'tail', pressure.TAIL_BYTES),
+                                      (1, 'small_1', pressure.SMALL_BYTES),
+                                      (2, 'small_2', pressure.SMALL_BYTES)):
+            if observation['written_bytes'] >= IMAGE_BYTES:
+                raise RuntimeError('pressure-byte-budget-exhausted')
+            stage = write_stage(index, name, (4096,), maximum)
+            sync_stage(stage, name + '_before_sync', name + '_after_sync')
+        if stage['stop'] != 'enospc':
+            raise RuntimeError('pressure-final-probe-not-exhausted')
+        observation['available_bytes_after'] = observation['pressure_samples']['small_2_after_sync']['available_bytes']
+        observation['pressure_ready'] = True
     return observation
+
+
+def journal_before_fill(root):
+    """Absence is an observed state, not a zero-byte measurement or a suppressed error."""
+    try:
+        info = (root / db.JOURNAL).lstat()
+    except FileNotFoundError:
+        return {'state': 'absent', 'bytes': None}
+    if not stat.S_ISREG(info.st_mode):
+        raise RuntimeError('journal-not-regular')
+    return {'state': 'present', 'bytes': info.st_size}
 
 
 def replay_rejection(core, handle):
@@ -171,7 +294,7 @@ def create(request, fd_limit):
     core.initialize()
     physical = request['physical']
     observer = StorageObserver(root, temporary, ports.registry.binding(), fd_limit=fd_limit,
-                               excluded=(() if physical is None else (physical['fd'],)))
+                               excluded=(() if physical is None else pressure.descriptors(physical)))
     with observer.observing():
         normal_preview = core.preview('add', ITEM, ports.candidate(body='Synthetic normal storage control.'))
         normal = core.execute(core.authorize(normal_preview))
@@ -234,15 +357,18 @@ def create(request, fd_limit):
 
         def checkpoint(stage):
             observer.checkpoint(stage)
-            if stage == 'before-commit' and fault == 'physical':
+            if stage == PHYSICAL_STAGE and fault == 'physical':
                 if filling:
                     raise RuntimeError('physical-fault-repeated')
-                filling['journal_bytes_before_fill'] = (root / db.JOURNAL).stat().st_size
+                filling['stage'] = stage
                 try:
-                    filling.update(fill_owned_image(physical))
+                    filling['journal_before_fill'] = journal_before_fill(root)
+                    if filling['journal_before_fill']['bytes'] not in {None, 0}:
+                        raise RuntimeError('nonempty-journal-before-fill; recovery-required')
+                    filling.update(fill_owned_image(physical, observation=filling))
                 except (OSError, RuntimeError) as error:
                     filling['failure'] = {'type': type(error).__name__, 'errno': getattr(error, 'errno', None),
-                                          'reason': str(error)}
+                                          'reason': str(error)[:1000]}
                     raise
                 observer.sample()
             if stage == 'after-commit' and fault == 'reply-loss':
@@ -256,8 +382,10 @@ def create(request, fd_limit):
              mock.patch.object(core_module, '_checkpoint', side_effect=checkpoint):
             try:
                 result = core.execute(handle)
-            except c.ContractError as error:
-                result = {'result': str(error), 'proof': None, 'state_digest': None}
+            except (c.ContractError, RuntimeError) as error:
+                # The physical checkpoint precedes the core's transaction try block.
+                # Preserve fixture failures without manufacturing a transaction outcome.
+                result = {'result': str(error)[:1000], 'proof': None, 'state_digest': None}
         rejected = replay_rejection(core, handle)
     emit('completed', outcome=result, errors=errors, quota=quota, filling=filling,
          replay_rejection=rejected, measurement=observer.report(), runtime=db.runtime_facts(), pid=os.getpid())
@@ -272,10 +400,8 @@ def main():
         continue_control(request, fd_limit)
     elif request['mode'] == 'restore':
         c.fields(request, {'mode', 'physical'})
-        from enospc_image import restore_filler
-        data = request['physical']
-        result = restore_filler(data['fd'], tuple(data['identity']), Path(data['mount']),
-                                tuple(data['mount_identity']))
+        from enospc_image import restore_pool
+        result = restore_pool(request['physical'])
         emit('restore', result=result, pid=os.getpid())
     else:
         assert request['mode'] == 'create'

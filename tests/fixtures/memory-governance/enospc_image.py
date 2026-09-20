@@ -2,7 +2,7 @@
 """macOS-only physical ENOSPC fixture; dry-run unless --run is explicit.
 
 Creates one new 256 MiB APFS image. Never accepts an existing image/volume/root.
-Restores space only by truncating its own filler; never repairs SQLite journals.
+Restores space only by truncating its own bound filler pool; never repairs SQLite journals.
 Normal detach only; retain every image and report, including incomplete trials.
 """
 from __future__ import annotations
@@ -17,11 +17,13 @@ import stat
 import subprocess
 import sys
 import tempfile
+from xml.parsers.expat import ExpatError
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path[:0] = [str(ROOT / 'skills/loop-engineering/scripts'), str(Path(__file__).parent)]
 import memory_governance_storage as db
 from storage_fault_case import run_case, worker
+import physical_pressure as pressure
 
 IMAGE_BYTES = 256 * 1024 * 1024
 HOST_HEADROOM = 1024 * 1024 * 1024
@@ -51,6 +53,38 @@ def command_failure(error, stage):
     return result
 
 
+def preflight():
+    """Read-only service/headroom probe; readiness does not prove image creation."""
+    result = {'status': 'incomplete', 'creates_resources': False,
+              'physical_attempt_started': False, 'production_qualified': False}
+    stage = 'platform'
+    try:
+        if sys.platform != 'darwin':
+            raise RuntimeError('macOS-only')
+        stage = 'host-headroom'
+        result['host_available_bytes'] = available(Path('/private/tmp'))
+        if result['host_available_bytes'] < HOST_HEADROOM + IMAGE_BYTES + 1048576:
+            raise RuntimeError('insufficient-host-headroom')
+        stage = 'disk-management-query'
+        info = plistlib.loads(command('/usr/sbin/diskutil', 'info', '-plist', '/'))
+        if not isinstance(info, dict) or info.get('Error') or not info.get('DeviceNode'):
+            raise RuntimeError('disk-management-response-unconfirmed')
+        stage = 'image-framework-query'
+        images = plistlib.loads(command('/usr/bin/hdiutil', 'info', '-plist'))
+        if not isinstance(images, dict) or not isinstance(images.get('images'), list):
+            raise RuntimeError('image-framework-response-unconfirmed')
+        result.update(status='ready', disk_management_query_passed=True,
+                      image_framework_query_passed=True,
+                      image_creation_proven=False)
+    except (OSError, RuntimeError, ValueError, ExpatError, subprocess.SubprocessError) as error:
+        result.update(failure_stage=stage, failure=type(error).__name__)
+        if isinstance(error, (subprocess.CalledProcessError, subprocess.TimeoutExpired)):
+            result.update(command_failure(error, stage))
+        else:
+            result['diagnostic'] = str(error)[:1000]
+    return result
+
+
 def confirm_image_attachment(image, image_identity, mount, device, image_info):
     info = image.lstat()
     matches = [entry for entry in image_info.get('images', []) if entry.get('image-path') == str(image)]
@@ -74,7 +108,7 @@ def confirm_mount(parent, mount, attached, info):
     return db.identity(mount.stat()), device
 
 
-def restore_filler(fd, identity, mount, mount_identity):
+def restore_filler(fd, identity, mount, mount_identity, *, require_capacity_increase=True):
     try:
         if (not os.path.ismount(mount) or db.identity(mount.stat()) != mount_identity
                 or db.identity(os.fstat(fd)) != identity or identity[0] != mount_identity[0]
@@ -85,7 +119,8 @@ def restore_filler(fd, identity, mount, mount_identity):
         os.ftruncate(fd, 0)
         os.fsync(fd)
         after = available(mount)
-        if os.fstat(fd).st_size != 0 or (size and after <= before):
+        if (os.fstat(fd).st_size != 0 or os.fstat(fd).st_blocks != 0
+                or require_capacity_increase and size and after <= before):
             return {'result': 'unproven', 'reason': 'space-not-observed-restored',
                     'available_before': before, 'available_after': after}
         return {'result': 'restored', 'operation': 'truncate-own-filler', 'released_logical_bytes': size,
@@ -94,8 +129,48 @@ def restore_filler(fd, identity, mount, mount_identity):
         return {'result': 'failed', 'operation': 'truncate-own-filler', 'errno': error.errno}
 
 
+def restore_pool(physical):
+    """Attempt each safe bound member once, even if another member cannot be restored."""
+    pool = pressure.entries(physical)
+    mount = Path(physical['mount'])
+    if (not os.path.ismount(mount) or mount.is_symlink()
+            or db.identity(mount.stat()) != tuple(physical['mount_identity'])
+            or mount.stat().st_dev == physical['parent_device']):
+        return {'result': 'refused', 'reason': 'filler-or-mount-identity-drift'}
+    before = available(mount)
+    results = []
+    for index, entry in enumerate(pool):
+        try:
+            pressure.owned(physical, entry)
+            result = restore_filler(entry['fd'], tuple(entry['identity']), Path(physical['mount']),
+                                    tuple(physical['mount_identity']), require_capacity_increase=False)
+            pressure.owned(physical, entry)
+        except (OSError, RuntimeError) as error:
+            result = {'result': 'refused', 'reason': 'filler-or-mount-identity-drift',
+                      'errno': getattr(error, 'errno', None)}
+        results.append({'index': index, **result})
+    after = available(mount)
+    released = sum(value.get('released_logical_bytes', 0) for value in results)
+    final_verified = True
+    for entry in pool:
+        try:
+            info = pressure.owned(physical, entry)
+            final_verified &= info.st_size == 0 and info.st_blocks == 0
+        except (OSError, RuntimeError):
+            final_verified = False
+    restored = (all(value['result'] == 'restored' for value in results)
+                and final_verified and (not released or after > before))
+    return {'result': 'restored' if restored else 'unproven',
+            'operation': 'truncate-own-filler-pool', 'fillers': results,
+            'final_files_verified_empty': final_verified,
+            'released_logical_bytes': released, 'available_before': before, 'available_after': after}
+
+
 def bounded_restore(physical):
-    child = worker({'mode': 'restore', 'physical': physical}, pass_fds=(physical['fd'],), timeout=30)
+    try:
+        child = worker({'mode': 'restore', 'physical': physical}, pass_fds=pressure.descriptors(physical), timeout=30)
+    except (OSError, RuntimeError, ValueError) as error:
+        return {'result': 'unproven', 'reason': 'restoration-worker-failed', 'failure': type(error).__name__}
     events = child['events']
     if child['timed_out'] or child['returncode'] != 0 or len(events) != 1 or events[0].get('event') != 'restore':
         return {'result': 'unproven', 'reason': 'restoration-worker-incomplete',
@@ -104,8 +179,11 @@ def bounded_restore(physical):
 
 
 def run():
-    if sys.platform != 'darwin':
-        raise RuntimeError('macOS-only')
+    readiness = preflight()
+    if readiness['status'] != 'ready':
+        return {'status': 'incomplete', 'detached': False, 'preflight': readiness,
+                'failure_stage': 'preflight', 'physical_attempt_started': False,
+                'synthetic_only': True, 'production_qualified': False}
     parent = Path(tempfile.mkdtemp(prefix='mg1-g1-enospc-', dir='/private/tmp')).resolve()
     os.chmod(parent, 0o700)
     image, mount = parent / 'synthetic.dmg', parent / 'volume'
@@ -113,10 +191,11 @@ def run():
               'production_qualified': False, 'retained_fixture': str(parent), 'image_bytes_limit': IMAGE_BYTES,
               'host_headroom_minimum': HOST_HEADROOM, 'attempt_limit': 1,
               'expected_mountpoint': str(mount), 'attachment_state': 'not-attempted',
-              'status': 'incomplete', 'detached': False,
+              'status': 'incomplete', 'detached': False, 'preflight': readiness,
               'create_configuration': {'size_mib': 256, 'filesystem': 'APFS', 'layout': 'GPTSPUD',
                                        'image_type': 'UDIF', 'verbose': True}}
-    mount_identity = filler = filler_identity = physical = None
+    mount_identity = physical = None
+    filler_fds = []
     restoration_attempted = False
     stage = 'resource-preview'
     try:
@@ -128,7 +207,13 @@ def run():
         preview = {'command': list(create_command), 'parent_identity': list(db.identity(parent.stat())),
                    'image_must_be_absent': str(image), 'mount_must_be_absent': str(mount),
                    'image_bytes_limit': IMAGE_BYTES, 'host_headroom_minimum': HOST_HEADROOM,
-                   'host_available_before': report['host_available_before'], 'attempt_limit': 1}
+                   'host_available_before': report['host_available_before'], 'attempt_limit': 1,
+                   'filler_sync': 'bulk then tail then two small files; one sync per stage; any failure aborts target',
+                   'filler_count': pressure.FILLER_COUNT, 'write_attempt_limit': pressure.WRITE_ATTEMPTS,
+                   'tail_byte_limit': pressure.TAIL_BYTES, 'small_file_byte_limit': pressure.SMALL_BYTES,
+                   'total_filler_byte_limit': IMAGE_BYTES,
+                   'fill_timeout_seconds': 30,
+                   'fill_timeout_action': 'terminate exact writer; restore only after confirmed exit'}
         if os.path.lexists(image) or os.path.lexists(mount):
             raise RuntimeError('new-resource-already-exists')
         with (parent / 'resource-preview.json').open('x', encoding='utf-8') as output:
@@ -158,14 +243,18 @@ def run():
         report['device_node'] = device
         report['filesystem'] = {'type': info['FilesystemType'], 'total_bytes': info['TotalSize']}
         stage = 'filler-create'
-        filler = os.open(mount / 'synthetic-filler', os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_NOFOLLOW, 0o600)
-        filler_identity = db.identity(os.fstat(filler))
-        if filler_identity[0] != mount_identity[0]:
-            raise RuntimeError('filler-filesystem-mismatch')
+        physical = {'fillers': [], 'mount': str(mount), 'mount_identity': list(mount_identity),
+                    'parent_device': parent.stat().st_dev}
+        for index in range(pressure.FILLER_COUNT):
+            fd = os.open(mount / ('synthetic-filler-' + str(index)),
+                         os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+            filler_fds.append(fd)
+            entry = {'fd': fd, 'identity': list(db.identity(os.fstat(fd)))}
+            pressure.owned(physical, entry)
+            physical['fillers'].append(entry)
+        pressure.entries(physical, complete=True)
         scenario = mount / 'scenario'
         scenario.mkdir(mode=0o700)
-        physical = {'fd': filler, 'identity': list(filler_identity), 'mount': str(mount),
-                    'mount_identity': list(mount_identity), 'parent_device': parent.stat().st_dev}
 
         def recover():
             nonlocal restoration_attempted
@@ -187,16 +276,17 @@ def run():
         if stage == 'image-create':
             report['creation_internal_attachment'] = 'unknown; outer attach not attempted; no unverified detach'
     finally:
-        if filler is not None:
+        if filler_fds:
             if not restoration_attempted:
                 # A failure before constructing the verified descriptor forbids even filler mutation.
-                report['space_restoration'] = (bounded_restore(physical) if physical is not None else
+                report['space_restoration'] = (bounded_restore(physical) if physical and physical['fillers'] else
                                                 {'result': 'refused', 'reason': 'filler-binding-incomplete'})
-            try:
-                os.close(filler)
-            except OSError as error:
-                report['filler_close_failure'] = {'errno': error.errno}
-                report['status'] = 'incomplete'
+            for index, fd in enumerate(filler_fds):
+                try:
+                    os.close(fd)
+                except OSError as error:
+                    report.setdefault('filler_close_failures', []).append({'index': index, 'errno': error.errno})
+                    report['status'] = 'incomplete'
         if mount_identity is not None:
             try:
                 if not os.path.ismount(mount) or db.identity(mount.stat()) != mount_identity:
@@ -225,20 +315,30 @@ def run():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--run', action='store_true')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--run', action='store_true')
+    mode.add_argument('--preflight', action='store_true', help='read-only service/headroom checks; no image created')
     args = parser.parse_args()
-    if not args.run:
+    if args.preflight:
+        report = preflight()
+    elif not args.run:
         report = {'status': 'dry-run', 'creates': 'new /private/tmp/mg1-g1-enospc-*/synthetic.dmg',
                   'filesystem': 'APFS', 'image_bytes': IMAGE_BYTES, 'host_headroom_minimum': HOST_HEADROOM,
                   'layout': 'GPTSPUD', 'image_type': 'UDIF', 'create_verbose': True,
-                  'fault_stage': 'before-commit', 'attempt_limit': 1, 'worker_timeout_seconds': 90,
-                  'fills': 'own inherited filler fd on confirmed new mount only; at most image_bytes',
-                  'recovery': 'truncate own filler once; fresh readback without repair; normal detach; retain image',
+                  'fault_stage': 'before-transaction', 'attempt_limit': 1, 'worker_timeout_seconds': 90,
+                  'filler_sync': 'bulk then tail then two small files; one sync per stage; any failure aborts target',
+                  'filler_count': pressure.FILLER_COUNT, 'write_attempt_limit': pressure.WRITE_ATTEMPTS,
+                  'tail_byte_limit': pressure.TAIL_BYTES, 'small_file_byte_limit': pressure.SMALL_BYTES,
+                  'total_filler_byte_limit': IMAGE_BYTES,
+                  'fill_timeout_seconds': 30,
+                  'fill_timeout_action': 'terminate exact writer; restore only after confirmed exit',
+                  'fills': 'three own inherited filler fds on confirmed new mount; one shared image_bytes limit',
+                  'recovery': 'truncate and sync each bound own filler once; fresh readback without repair; normal detach; retain image',
                   'existing_data_access': False, 'production_qualified': False}
     else:
         report = run()
     print(json.dumps(report, indent=2, sort_keys=True))
-    return 0 if report['status'] == 'dry-run' or (report['status'] == 'observed' and report['detached']) else 2
+    return 0 if report['status'] in {'dry-run', 'ready'} or (report['status'] == 'observed' and report['detached']) else 2
 
 
 if __name__ == '__main__':

@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path[:0] = [str(ROOT / 'skills/loop-engineering/scripts'), str(Path(__file__).parent)]
 import memory_governance_contract as c
 import memory_governance_storage as db
+import physical_pressure as pressure
 
 WORKER = Path(__file__).with_name('storage_fault_worker.py')
 
@@ -31,8 +32,15 @@ def worker(request, *, pass_fds=(), timeout=90):
         output, code, diagnostic, timed_out = error.stdout or b'', None, b'worker-timeout', True
     if len(output) > c.MAX_ENVELOPE:
         raise RuntimeError('worker-output-limit')
-    events = [c.decode(line) for line in output.splitlines() if line]
+    lines = output.split(b'\n')
+    truncated = 0
+    if output and not output.endswith(b'\n'):
+        c.require(timed_out or code != 0, 'worker-output-frame-incomplete')
+        # A terminated progress emit cannot invalidate earlier complete prepared frames.
+        truncated = len(lines.pop())
+    events = [c.decode(line) for line in lines if line]
     return {'events': events, 'returncode': code, 'timed_out': timed_out,
+            'truncated_final_frame_bytes': truncated,
             'diagnostic': diagnostic.decode(errors='replace')[:1000]}
 
 
@@ -199,7 +207,7 @@ def run_case(parent, fault, *, physical=None, recover=None):
               'worker_timeout_seconds': 90, 'read_timeout_seconds': 30}
     try:
         child = worker({'mode': 'create', 'parent': str(parent), 'fault': fault, 'physical': physical},
-                       pass_fds=(() if physical is None else (physical['fd'],)))
+                       pass_fds=(() if physical is None else pressure.descriptors(physical)))
     finally:
         # Restoring capacity is separate from database repair, and must run even after child failure.
         if recover is not None:
@@ -207,6 +215,14 @@ def run_case(parent, fault, *, physical=None, recover=None):
         else:
             report['space_restoration'] = {'result': 'not-required', 'reason': 'no-physical-filler'}
     events = child.pop('events')
+    if fault == 'physical':
+        # Retain the last completed sample even if the fill deadline terminates the writer.
+        report['filling_progress'] = [event['observation'] for event in events
+                                      if event.get('event') == 'filling']
+        phases = [entry.get('phase') if isinstance(entry, dict) else None
+                  for entry in report['filling_progress']]
+        if len(phases) > len(pressure.PROGRESS_PHASES) or phases != list(pressure.PROGRESS_PHASES[:len(phases)]):
+            raise RuntimeError('filling-progress-sequence-invalid')
     report['writer'] = child
     prepared = next((event for event in events if event.get('event') == 'prepared'), None)
     completed = next((event for event in events if event.get('event') == 'completed'), None)

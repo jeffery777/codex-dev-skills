@@ -2,6 +2,42 @@
 
 ## 狀態、目標與證據
 
+2026-09-20：使用者在第四次觀察後明確同意將 #271 轉為
+[儲存失敗處理驗收](loops/issue-271/failure-handling-acceptance.md)：以真實 page-quota
+SQLITE_FULL、結果判定、防重播、失敗停止及重新確認後的正常操作作為本包驗收。
+使用者進一步澄清實體耗盡研究不列入需求或後續待辦；[範圍決定紀錄](https://github.com/jeffery777/codex-dev-skills/issues/273)
+以 not_planned 結束。MR-272-01／FOURTH-EVIDENCE-01 作為本包 blocker 的要求為
+Rejected（不適用現行需求），未標為 Fixed；四次 incomplete 事實保留。新 DoD 仍須正式
+完整版本審查與平台 gates，不自動結案、合併或啟用 production。以下為範圍調整前的紀錄。
+
+2026-09-20：[第四次補壓與恢復失敗觀察](loops/issue-271/pressure-pool-verification-and-review.md)
+在精確方案另行取得單次授權後完成。同步後原大檔仍寫不進去，另一個小檔可再寫
+896 KiB；SQLite 回報 CANTOPEN／not-applied，沒有 physical FULL。
+第 0、1 filler 恢復流程也回報 ENOSPC，全組容量恢復未證明，故停止 fresh readback
+與正常 control；正常卸載已獨立確認，映像及證據保留。累計四次額度已使用，
+不安排第五次；先重評壓力方法的可恢復性。當時 Issue open／PR draft，原實體 DoD 未完成。
+
+2026-09-20：[同步後探測與小檔補壓準備](loops/issue-271/pressure-pool-preparation.md)
+在方法研究及使用者同意後，準備三個已綁定 filler 的固定補壓／完整恢復流程；
+共用原 256 MiB／30 秒上限，最後階段 ENOSPC 與同步完成才交給目標交易。
+該階段只有離線準備，未執行第四次，亦不證明 APFS 根因或 physical FULL；
+其後另行授權的第四次結果見上方，不能將事前恢復設計當成實際恢復成功。
+
+2026-09-20：[第三次同步後觀察](loops/issue-271/sync-verification-and-review.md)
+在新增單次授權後完成：write ENOSPC 後 fsync 成功，但 SQLite 仍 applied／revision 2，
+沒有 physical FULL。own filler 容量恢復、fresh readback 與正常 detach 均完成，
+本次仍 incomplete，失敗後 control 未執行。當時累計三次額度已用完，不自動重試；
+先重評 filler／目標交易配置差異，任何新方案或驗收範圍調整須另行決定。
+[填充同步準備](loops/issue-271/filler-sync-preparation.md)保留實測前的歷史狀態。
+
+2026-09-20：Issue #271 的[第一次實體試驗](loops/issue-271/verification-and-review.md)
+與[追加交易前試驗](loops/issue-271/pretransaction-verification-and-review.md)各自
+完成新 APFS image、own filler OS ENOSPC、截短釋放容量及 fresh readback。
+第二次在目標 writer 開啟前填充且 journal 不存在，SQLite 仍成功提交；兩次皆未
+觀察 physical FULL，該兩包驗收保持 incomplete；當時兩次額度已耗用，後續同步
+準備與第三次結果見上方紀錄。Issue open／PR draft、不另發版，
+局部實證不提升完整 G1/MG1 或 production 資格。
+
 2026-09-18：[Issue #265 儲存可靠性切片](loops/issue-265/verification-and-review.md)
 補 reader/control 的隔離 temp、有效連線設定、容量取樣及完整鎖區間；修正 filler
 恢復失敗後仍繼續讀回的測試協調器。合成對照不提升物理 FULL/recovery 或完整

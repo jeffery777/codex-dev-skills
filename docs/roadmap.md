@@ -439,6 +439,41 @@ named/own-fd 取樣不證明完整 temp 或 J/T/G 上界，沒有 production cod
 temp／sidecar、有效 pragma、容量與完整鎖區間，並在 filler 恢復失敗時停止依賴讀回。
 仍為 synthetic-only；物理試驗、完整 J/T/G 與 production 資格分開記錄，不啟用 backend。
 
+#271 在第四次觀察後，經使用者明確同意改以
+[儲存失敗處理驗收](loops/issue-271/failure-handling-acceptance.md)為現行 DoD：
+真實 page-quota FULL、正確結果判定、防重播、失敗停止及重新確認後的正常操作。
+使用者進一步澄清實體耗盡研究不列入需求或後續待辦；[範圍決定紀錄](https://github.com/jeffery777/codex-dev-skills/issues/273)
+以 not_planned 結束。原 MR-272-01／FOURTH-EVIDENCE-01 作為本包 blocker 的要求為
+Rejected（不適用現行需求），也未宣稱實體限制已修復。正式 review 仍須
+核對新範圍、證據及 provider gates；完整 G1/MG1 qualification 維持未完成。
+
+以下保留範圍調整前的點時紀錄。#271 的[第一次容量恢復觀察](loops/issue-271/verification-and-review.md)與
+[追加交易前觀察](loops/issue-271/pretransaction-verification-and-review.md)各自完成
+新 APFS image 的 OS ENOSPC、own filler 空間釋放與 fresh readback；第二次填充時
+journal 不存在，但 SQLite 仍成功提交，兩次均無 physical FULL。該兩次額度已耗用，
+其後完成同步準備及另行授權的第三次試驗，結果如下。當時 Issue 部分完成、PR 維持 draft。
+不自動重試或擴容，不以局部實證宣稱 G1/MG1 qualified，也不另發版。
+
+後續[填充同步準備](loops/issue-271/filler-sync-preparation.md)補同步與容量觀測、
+worker deadline／partial-output 回歸；其後的[第三次觀察](loops/issue-271/sync-verification-and-review.md)
+確認同步成功，但 SQLite 仍 applied，physical FULL／失敗後 control 驗收仍未完成。
+容量恢復、fresh readback 與正常 detach 已核對；當時三次額度均已用完，未啟動第四次。
+先重評 filler 與目標交易配置差異，不推定 APFS 根因或原樣重跑；新實測方案或
+驗收範圍調整須另行決定，不能以同步成功取代 physical FULL。
+
+方法研究後，使用者同意[同步後探測與小檔補壓準備](loops/issue-271/pressure-pool-preparation.md)：
+固定三個 own filler，共用原容量／時間上限，增加 EOF／短寫及分階段觀測，
+確認全部 filler 恢復後才允許讀回。該階段只有離線候選方法準備，未啟動第四次實測；
+其後另行授權的結果如下，事前設計不能替代物理恢復證據。
+
+[第四次補壓觀察](loops/issue-271/pressure-pool-verification-and-review.md)在新增單次授權後
+執行：同 fd 同步後無法延伸，但另一個小檔仍可寫入 896 KiB；SQLite 回報
+CANTOPEN／not-applied，沒有 physical FULL。第 0、1 filler 的恢復流程也回報
+ENOSPC，全組恢復 unproven，故 fresh readback／control 未執行；已正常卸載，
+保留映像及證據。累計四次額度已使用，不預排第五次；先研究可恢復的壓力控制
+與錯誤位置，再決定新方案或驗收範圍。當時 Issue open／PR draft、原 DoD 未完成；
+四次觀察至今仍不證明實體恢復或 qualification，後續範圍決定見上方現行契約。
+
 2026-09-09 使用者調整工程順序：[Issue #237](https://github.com/jeffery777/codex-dev-skills/issues/237)
 先校正共用派工、續行與交接提示詞，完成驗證、審查及適用發版，再續推 G1
 剩餘資格／G2／G3。#235 已合併的第一切片保留；此排序不回退已完成工作，
