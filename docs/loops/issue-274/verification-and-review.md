@@ -29,6 +29,7 @@
 | CR274-02 | 引述文字仍可保留 C1／Unicode 行分隔控制；統一轉義 Cc、Cf、Zl、Zp，新增顯示 regression。 | Fixed |
 | CR274-03 | reader 的 temp_store 未實施已宣告的 memory 設定；連線設定 MEMORY 並讀回驗證，測試設定與唯讀性。 | Fixed |
 | CR274-04 | adapter 評估的繁體字誤植；修正「後續」。 | Fixed |
+| CR274-05 | CI 揭露既有分頁測試在失效 cursor 後仍沿用已關閉 snapshot；分開驗證正常分頁、錯誤立即釋放 lock、拒絕舊 cursor 與 fresh snapshot 復原。 | Fixed |
 
 Codex Security Diff Scan 完整覆蓋原始 diff，再對上述修正與受影響邊界比例複查；
 兩次均已完成並讀回 sealed artifacts，沒有已驗證漏洞，也沒有 deferred candidate。
