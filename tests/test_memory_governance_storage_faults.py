@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import plistlib
+import signal
 import subprocess
 import tempfile
 import time
@@ -386,11 +387,19 @@ print(json.dumps({'result': result, 'calls': calls}))
                     raise OSError(errno.EIO, 'synthetic writer-open failure')
             return original_connect(*args, **kwargs)
 
-        def fill(_physical):
+        def fill(_physical, *, observation=None):
             nonlocal filled
             calls.append('fill')
             filled = True
             self.assertFalse((parent / 'managed' / db.JOURNAL).exists())
+            if failure == 'sync-error':
+                observation.update(os_enospc_observed=True, sync={'result': 'failed', 'errno': errno.EIO})
+                raise OSError(errno.EIO, 'synthetic filler sync failure')
+            if failure == 'progress-cutoff':
+                worker_fixture.emit('filling', observation={'phase': 'before_fill'})
+                with mock.patch.object(worker_fixture, 'FILL_SECONDS', 0.05), worker_fixture.fill_deadline():
+                    os.write(1, b'{"event":"filling","observation":')
+                    time.sleep(10)
             if failure == 'fill-os':
                 raise OSError(errno.EIO, 'synthetic filler failure')
             if failure == 'fill-runtime':
@@ -401,8 +410,12 @@ print(json.dumps({'result': result, 'calls': calls}))
             stack.enter_context(mock.patch.dict(os.environ))
             stack.enter_context(mock.patch.object(worker_fixture.db, 'connect', side_effect=connect))
             stack.enter_context(mock.patch.object(worker_fixture, 'fill_owned_image', side_effect=fill))
-            stack.enter_context(mock.patch.object(worker_fixture, 'emit',
-                side_effect=lambda event, **data: events.append({'event': event, **data})))
+            original_emit = worker_fixture.emit
+            def emit(event, **data):
+                events.append(copy.deepcopy({'event': event, **data}))
+                if failure == 'progress-cutoff':
+                    original_emit(event, **data)
+            stack.enter_context(mock.patch.object(worker_fixture, 'emit', side_effect=emit))
             if failure == 'journal-probe':
                 stack.enter_context(mock.patch.object(worker_fixture, 'journal_before_fill',
                     side_effect=PermissionError(errno.EACCES, 'synthetic journal probe failure')))
@@ -442,7 +455,7 @@ print(json.dumps({'result': result, 'calls': calls}))
                     worker_fixture.journal_before_fill(root)
 
     def test_early_failures_restore_before_readback_and_never_start_control(self):
-        for failure in ('fill-os', 'fill-runtime', 'writer-open', 'journal-probe', 'nonempty-journal'):
+        for failure in ('fill-os', 'fill-runtime', 'writer-open', 'journal-probe', 'nonempty-journal', 'sync-error'):
             with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
                 parent, calls = Path(temporary).resolve(), []
                 original_worker = case.worker
@@ -474,6 +487,242 @@ print(json.dumps({'result': result, 'calls': calls}))
                     self.assertEqual(1, calls.count('writer'))
                 if failure in {'journal-probe', 'nonempty-journal'}:
                     self.assertNotIn('fill', calls)
+                if failure == 'sync-error':
+                    self.assertEqual({'result': 'failed', 'errno': errno.EIO}, filling['sync'])
+                    self.assertTrue(filling['os_enospc_observed'])
+
+    def test_terminated_partial_progress_retains_prepared_and_restores_before_reads(self):
+        program = """
+import sys
+from pathlib import Path
+from tests.test_memory_governance_storage_faults import PhysicalTimingTests, worker_fixture
+request = worker_fixture.c.decode(sys.stdin.buffer.read())
+if request['mode'] == 'create':
+    PhysicalTimingTests()._observe_worker(Path(request['parent']), 'progress-cutoff', [])
+else:
+    assert request['mode'] == 'read'
+    worker_fixture.read(request, worker_fixture.bound_worker_descriptors())
+"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            parent = root / 'scenario'
+            parent.mkdir()
+            script = root / 'partial-worker.py'
+            script.write_text('import sys\nsys.path.insert(0, ' + repr(str(ROOT)) + ')\n' + program)
+            calls, original = [], case.worker
+            def traced(request, **kwargs):
+                calls.append(request['mode'])
+                if request['mode'] == 'create':
+                    kwargs['pass_fds'] = ()  # This worker uses a mocked fill, with no physical descriptor.
+                if request['mode'] == 'read':
+                    self.assertIn('restore', calls)
+                return original(request, **kwargs)
+            def restore():
+                calls.append('restore')
+                return {'result': 'restored'}
+            with mock.patch.object(case, 'WORKER', script), mock.patch.object(case, 'worker', side_effect=traced):
+                report = case.run_case(parent, 'physical', physical={'fd': 127}, recover=restore)
+        self.assertEqual(['create', 'restore', 'read', 'read'], calls)
+        self.assertEqual(-signal.SIGALRM, report['writer']['returncode'])
+        self.assertGreater(report['writer']['truncated_final_frame_bytes'], 0)
+        self.assertEqual([{'phase': 'before_fill'}], report['filling_progress'])
+        self.assertIsNone(report['completed'])
+        self.assertEqual('incomplete', report['status'])
+        self.assertEqual('no-completed-observation', report['classification'])
+        self.assertTrue(report['failed_transaction_unchanged'])
+        self.assertNotIn('recovery_control', report)
+
+
+class FillerSyncTests(unittest.TestCase):
+    def observe(self, parent, failure=None):
+        program = """
+import json, sys
+from pathlib import Path
+from tests.test_memory_governance_storage_faults import FillerSyncTests
+print(json.dumps(FillerSyncTests().exercise(Path(sys.argv[1]), json.loads(sys.argv[2]))))
+"""
+        child = subprocess.run([str(ROOT / 'scripts/project-python'), '-c', program,
+                                str(parent), json.dumps(failure)], cwd=ROOT,
+                               capture_output=True, text=True, timeout=5)
+        self.assertEqual(0, child.returncode, child.stderr)
+        return json.loads(child.stdout)
+
+    def exercise(self, parent, failure=None):
+        """At most 1 KiB in a test-owned ordinary file; only the mount/error evidence is mocked."""
+        filler = parent / 'filler'
+        events, order, observation = [], [], {}
+        with filler.open('xb+') as stream:
+            fd = stream.fileno()
+            data = {'fd': fd, 'identity': list(db.identity(os.fstat(fd))), 'mount': str(parent),
+                    'mount_identity': list(db.identity(parent.stat())), 'parent_device': parent.stat().st_dev + 1}
+            original_write, original_sync = os.write, os.fsync
+            writes = 0
+            def write(actual_fd, block):
+                nonlocal writes
+                order.append('write')
+                writes += 1
+                if failure == 'blocked-write':
+                    time.sleep(10)
+                if writes == 1:
+                    return original_write(actual_fd, block[:1024])
+                if failure == 'write-eio':
+                    raise OSError(errno.EIO, 'synthetic filler write failure')
+                if failure == 'no-progress':
+                    return 0
+                raise OSError(errno.ENOSPC, 'synthetic filler write ENOSPC')
+            def sync(actual_fd):
+                order.append('sync')
+                if failure == 'blocked-sync':
+                    time.sleep(10)
+                if failure in {errno.ENOSPC, errno.EIO}:
+                    raise OSError(failure, 'synthetic filler sync failure')
+                return original_sync(actual_fd)
+            def emit(event, **value):
+                events.append(copy.deepcopy(value['observation']))
+                order.append(value['observation']['phase'])
+                if failure == 'identity-drift' and value['observation']['phase'] == 'before_sync':
+                    os.link(filler, parent / 'retained-test-hardlink')
+            with mock.patch.object(worker_fixture.os.path, 'ismount', return_value=True), \
+                 mock.patch.object(worker_fixture.os, 'write', side_effect=write), \
+                 mock.patch.object(worker_fixture.os, 'fsync', side_effect=sync), \
+                 mock.patch.object(worker_fixture, 'emit', side_effect=emit), \
+                 mock.patch.object(worker_fixture, 'IMAGE_BYTES', 1024 if failure == 'byte-cap' else 256 * 1024**2), \
+                 mock.patch.object(worker_fixture, 'FILL_SECONDS', 0.1 if failure in {'blocked-write', 'blocked-sync'} else 30):
+                error = None
+                try:
+                    worker_fixture.fill_owned_image(data, observation=observation)
+                except (OSError, RuntimeError) as exc:
+                    error = {'type': type(exc).__name__, 'errno': getattr(exc, 'errno', None), 'reason': str(exc)}
+        return {'observation': observation, 'order': order, 'events': events, 'error': error,
+                'timer': signal.getitimer(signal.ITIMER_REAL)}
+
+    def test_partial_write_enospc_still_syncs_once_and_samples_both_sides(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            result = self.observe(Path(temporary).resolve())
+        self.assertIsNone(result['error'])
+        self.assertEqual(['before_fill', 'write', 'write', 'write', 'write', 'before_sync', 'sync', 'after_sync'], result['order'])
+        value = result['observation']
+        self.assertEqual(1024, value['written_bytes'])
+        self.assertEqual({'result': 'succeeded'}, value['sync'])
+        self.assertEqual([{'operation': 'write', 'errno': errno.ENOSPC, 'block_size': size}
+                          for size in (1048576, 65536, 4096)], value['os_errors'])
+        self.assertEqual(0, value['pressure_samples']['before_fill']['filler_logical_bytes'])
+        for stage in ('before_sync', 'after_sync'):
+            self.assertEqual(1024, value['pressure_samples'][stage]['filler_logical_bytes'])
+            self.assertGreaterEqual(value['pressure_samples'][stage]['filler_allocated_bytes'], 0)
+        self.assertEqual('not-attempted', result['events'][1]['sync']['result'])
+        self.assertEqual([0.0, 0.0], result['timer'])
+
+    def test_sync_errors_remain_separate_from_write_enospc_and_preserve_partial_evidence(self):
+        for error in (errno.ENOSPC, errno.EIO):
+            with self.subTest(errno=error), tempfile.TemporaryDirectory() as temporary:
+                result = self.observe(Path(temporary).resolve(), error)
+            value = result['observation']
+            self.assertEqual(error, result['error']['errno'])
+            self.assertEqual({'result': 'failed', 'errno': error}, value['sync'])
+            self.assertTrue(value['os_enospc_observed'])
+            self.assertEqual(3, len(value['os_errors']))
+            self.assertNotIn('after_sync', value['pressure_samples'])
+            self.assertEqual([0.0, 0.0], result['timer'])
+
+    def test_identity_drift_refuses_sync_after_write_evidence(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            result = self.observe(Path(temporary).resolve(), 'identity-drift')
+        self.assertIn('identity-unconfirmed', result['error']['reason'])
+        self.assertNotIn('sync', result['order'])
+        self.assertEqual('not-attempted', result['observation']['sync']['result'])
+
+    def test_byte_cap_syncs_once_without_manufacturing_enospc(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            result = self.observe(Path(temporary).resolve(), 'byte-cap')
+        self.assertIsNone(result['error'])
+        self.assertEqual(['before_fill', 'write', 'before_sync', 'sync', 'after_sync'], result['order'])
+        self.assertEqual(1024, result['observation']['written_bytes'])
+        self.assertFalse(result['observation']['os_enospc_observed'])
+        self.assertEqual([], result['observation']['os_errors'])
+
+    def test_unexpected_write_failure_keeps_partial_bytes_and_never_syncs(self):
+        for failure in ('write-eio', 'no-progress'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                result = self.observe(Path(temporary).resolve(), failure)
+            self.assertIsNotNone(result['error'])
+            self.assertEqual(1024, result['observation']['written_bytes'])
+            self.assertFalse(result['observation']['os_enospc_observed'])
+            self.assertEqual('not-attempted', result['observation']['sync']['result'])
+            self.assertNotIn('sync', result['order'])
+            self.assertEqual([0.0, 0.0], result['timer'])
+
+    def test_deadline_refuses_existing_handler_timer_or_blocked_signal_without_altering_them(self):
+        for target, value in (('getsignal', signal.SIG_IGN), ('getsignal', lambda *_: None),
+                              ('getitimer', (2.0, 0.0)),
+                              ('pthread_sigmask', {signal.SIGALRM}), ('sigpending', {signal.SIGALRM})):
+            with self.subTest(target=target), mock.patch.object(worker_fixture.signal, target, return_value=value), \
+                 mock.patch.object(worker_fixture.signal, 'setitimer') as timer:
+                with self.assertRaisesRegex(RuntimeError, 'deadline-unavailable'), worker_fixture.fill_deadline():
+                    self.fail('deadline refusal must precede work')
+                timer.assert_not_called()
+
+    def test_blocked_write_and_sync_terminate_the_exact_fresh_worker(self):
+        program = """
+import sys
+from pathlib import Path
+from tests.test_memory_governance_storage_faults import FillerSyncTests
+FillerSyncTests().exercise(Path(sys.argv[1]), sys.argv[2])
+raise AssertionError('blocking I/O escaped the terminating timer')
+"""
+        for failure in ('blocked-write', 'blocked-sync'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                child = subprocess.run([str(ROOT / 'scripts/project-python'), '-c', program,
+                                        str(Path(temporary).resolve()), failure], cwd=ROOT,
+                                       capture_output=True, timeout=5)
+            self.assertEqual(-signal.SIGALRM, child.returncode, child.stderr)
+
+    def test_inherited_blocked_alarm_is_refused_without_unblocking_or_arming(self):
+        inner = """
+import signal
+from tests.test_memory_governance_storage_faults import worker_fixture
+assert signal.SIGALRM in signal.pthread_sigmask(signal.SIG_BLOCK, set())
+try:
+    with worker_fixture.fill_deadline():
+        raise AssertionError('blocked alarm accepted')
+except RuntimeError as error:
+    assert str(error) == 'filler-deadline-unavailable'
+assert signal.SIGALRM in signal.pthread_sigmask(signal.SIG_BLOCK, set())
+assert signal.getitimer(signal.ITIMER_REAL) == (0.0, 0.0)
+"""
+        outer = ('import os, signal, sys\n'
+                 'signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGALRM})\n'
+                 'os.execv(sys.executable, [sys.executable, "-c", ' + repr(inner) + '])\n')
+        child = subprocess.run([str(ROOT / 'scripts/project-python'), '-c', outer], cwd=ROOT,
+                               capture_output=True, timeout=5)
+        self.assertEqual(0, child.returncode, child.stderr)
+
+    def test_abnormal_partial_output_only_discards_the_unterminated_tail(self):
+        frame = c.canonical({'event': 'prepared'}) + b'\n'
+        for code, output, accepted in ((-signal.SIGALRM, frame + b'{"event":', True),
+                                       (0, frame + b'{"event":', False),
+                                       (0, c.canonical({'event': 'prepared'}), False),
+                                       (-signal.SIGALRM, frame + b'{"event":\n', False)):
+            with self.subTest(code=code, output=output), mock.patch.object(case.subprocess, 'run',
+                    return_value=SimpleNamespace(stdout=output, stderr=b'', returncode=code)):
+                if accepted:
+                    result = case.worker({'mode': 'test'})
+                    self.assertEqual([{'event': 'prepared'}], result['events'])
+                    self.assertEqual(len(b'{"event":'), result['truncated_final_frame_bytes'])
+                else:
+                    with self.assertRaises(c.ContractError):
+                        case.worker({'mode': 'test'})
+
+    def test_progress_sequence_is_bounded_and_invalid_evidence_still_restores(self):
+        for phases in (['before_sync'], ['before_fill'] * 4):
+            with self.subTest(phases=phases), tempfile.TemporaryDirectory() as temporary:
+                result = {'events': [{'event': 'filling', 'observation': {'phase': p}} for p in phases],
+                          'returncode': -signal.SIGALRM, 'timed_out': False, 'diagnostic': ''}
+                restore = mock.Mock(return_value={'result': 'restored'})
+                with mock.patch.object(case, 'worker', return_value=result), \
+                     self.assertRaisesRegex(RuntimeError, 'progress-sequence-invalid'):
+                    case.run_case(Path(temporary).resolve(), 'physical', physical={'fd': 127}, recover=restore)
+                restore.assert_called_once_with()
 
 
 class MeasurementBoundaryTests(unittest.TestCase):
@@ -636,6 +885,8 @@ class ImageSafetyTests(unittest.TestCase):
         self.assertEqual(1073741824, report['host_headroom_minimum'])
         self.assertEqual(1, report['attempt_limit'])
         self.assertEqual('before-transaction', report['fault_stage'])
+        self.assertEqual(30, report['fill_timeout_seconds'])
+        self.assertEqual('once after bounded writes; failure aborts target writer', report['filler_sync'])
         self.assertFalse(report['existing_data_access'])
 
     def test_mount_requires_independent_device_exact_node_and_capacity(self):

@@ -446,6 +446,10 @@ journal 不存在，但 SQLite 仍成功提交，兩次均無 physical FULL。Is
 PR 維持 draft；兩次額度已耗用，先重評方法，再為新的有界試驗取得新增授權。
 不自動重試或擴容，不以局部實證宣稱 G1/MG1 qualified，也不另發版。
 
+後續[填充同步準備](loops/issue-271/filler-sync-preparation.md)補同步與容量觀測、
+worker deadline／partial-output 回歸。這是第三次實測前的準備；兩次額度不重設，
+新的精確資源／恢復預覽仍須新增授權，physical FULL／control 驗收仍未完成。
+
 2026-09-09 使用者調整工程順序：[Issue #237](https://github.com/jeffery777/codex-dev-skills/issues/237)
 先校正共用派工、續行與交接提示詞，完成驗證、審查及適用發版，再續推 G1
 剩餘資格／G2／G3。#235 已合併的第一切片保留；此排序不回退已完成工作，

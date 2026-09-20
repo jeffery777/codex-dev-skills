@@ -1,13 +1,16 @@
 """Fresh, bounded synthetic storage worker. Not an installed host or authority API."""
 from __future__ import annotations
 
+import contextlib
 import errno
 import hashlib
 import os
 from pathlib import Path
+import signal
 import sqlite3
 import stat
 import sys
+import threading
 import time
 from unittest import mock
 
@@ -21,6 +24,7 @@ from process_readback_worker import compose
 from storage_observer import StorageObserver, bound_worker_descriptors
 
 IMAGE_BYTES = 256 * 1024 * 1024
+FILL_SECONDS = 30
 PHYSICAL_STAGE = 'before-transaction'
 ITEM = '00000000-0000-4000-8000-000000000003'
 FAULTS = {'none', 'page-quota', 'missing-path-cantopen', 'physical', 'reply-loss', 'precommit-loss'}
@@ -47,40 +51,91 @@ def host_descriptor(ports):
     }
 
 
-def fill_owned_image(data):
+@contextlib.contextmanager
+def fill_deadline():
+    """One terminating timer in this fresh worker, including blocked write/fsync calls."""
+    if (threading.current_thread() is not threading.main_thread()
+            or signal.getsignal(signal.SIGALRM) != signal.SIG_DFL
+            or signal.getitimer(signal.ITIMER_REAL) != (0.0, 0.0)
+            or signal.SIGALRM in signal.pthread_sigmask(signal.SIG_BLOCK, set())
+            or signal.SIGALRM in signal.sigpending()):
+        raise RuntimeError('filler-deadline-unavailable')
+    signal.setitimer(signal.ITIMER_REAL, FILL_SECONDS)
+    try:
+        yield time.monotonic() + FILL_SECONDS
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+
+
+def fill_owned_image(data, *, observation=None):
     """Only an inherited descriptor from this run's image owner; never opens a caller path."""
     c.fields(data, {'fd', 'identity', 'mount', 'mount_identity', 'parent_device'})
     fd, mount = data['fd'], Path(data['mount'])
     expected = tuple(data['identity'])
-    if not (3 <= fd < 128 and os.path.ismount(mount)
-            and db.identity(mount.stat()) == tuple(data['mount_identity'])
-            and mount.stat().st_dev != data['parent_device']
-            and db.identity(os.fstat(fd)) == expected and expected[0] == mount.stat().st_dev
-            and os.fstat(fd).st_size == 0 and os.fstat(fd).st_nlink == 1):
-        raise RuntimeError('physical-fixture-identity-unconfirmed')
-    deadline = time.monotonic() + 30
-    observation = {'written_bytes': 0, 'os_errors': [], 'stage': PHYSICAL_STAGE,
-                   'write_attempts': 0, 'byte_limit': IMAGE_BYTES, 'deadline_seconds': 30}
-    for block_size in (1048576, 65536, 4096):
-        block = b'\x5a' * block_size
-        try:
+
+    def owned():
+        info, mounted = os.fstat(fd), mount.stat()
+        if not (3 <= fd < 128 and os.path.ismount(mount) and not mount.is_symlink()
+                and db.identity(mounted) == tuple(data['mount_identity'])
+                and mounted.st_dev != data['parent_device']
+                and db.identity(info) == expected and expected[0] == mounted.st_dev
+                and stat.S_ISREG(info.st_mode) and info.st_nlink == 1):
+            raise RuntimeError('physical-fixture-identity-unconfirmed')
+        return info
+
+    observation = {} if observation is None else observation
+    observation.update(written_bytes=0, os_errors=[], stage=PHYSICAL_STAGE,
+                       write_attempts=0, byte_limit=IMAGE_BYTES, deadline_seconds=FILL_SECONDS,
+                       deadline_enforcement='worker-default-SIGALRM', os_enospc_observed=False,
+                       sync={'result': 'not-attempted'}, pressure_samples={})
+    with fill_deadline() as deadline:
+        if owned().st_size != 0:
+            raise RuntimeError('physical-filler-not-empty')
+
+        def sample(stage):
+            info = owned()
+            fs = os.fstatvfs(fd)
+            owned()
+            observation['pressure_samples'][stage] = {
+                'available_bytes': fs.f_bavail * fs.f_frsize,
+                'filler_logical_bytes': info.st_size,
+                'filler_allocated_bytes': info.st_blocks * 512}
+            observation['phase'] = stage
+            emit('filling', observation=observation)
+
+        sample('before_fill')
+        for block_size in (1048576, 65536, 4096):
+            block = b'\x5a' * block_size
             while observation['written_bytes'] < IMAGE_BYTES:
                 if time.monotonic() >= deadline:
                     raise TimeoutError('filler-deadline')
-                if db.identity(os.fstat(fd)) != expected:
-                    raise RuntimeError('filler-identity-drift')
+                owned()
                 observation['write_attempts'] += 1
-                count = os.write(fd, block[:min(block_size, IMAGE_BYTES - observation['written_bytes'])])
+                try:
+                    count = os.write(fd, block[:min(block_size, IMAGE_BYTES - observation['written_bytes'])])
+                except OSError as error:
+                    if error.errno != errno.ENOSPC:
+                        raise
+                    observation['os_errors'].append({'operation': 'write', 'errno': error.errno,
+                                                     'block_size': block_size})
+                    observation['os_enospc_observed'] = True
+                    break
                 if count <= 0:
                     raise RuntimeError('filler-no-progress')
                 observation['written_bytes'] += count
+        sample('before_sync')
+        if time.monotonic() >= deadline:
+            raise TimeoutError('filler-deadline')
+        owned()
+        observation['sync'] = {'result': 'started'}
+        try:
             os.fsync(fd)
         except OSError as error:
-            if error.errno != errno.ENOSPC:
-                raise
-            observation['os_errors'].append({'errno': error.errno, 'block_size': block_size})
-    observation['available_bytes_after'] = os.statvfs(mount).f_bavail * os.statvfs(mount).f_frsize
-    observation['os_enospc_observed'] = bool(observation['os_errors'])
+            observation['sync'] = {'result': 'failed', 'errno': error.errno}
+            raise
+        observation['sync'] = {'result': 'succeeded'}
+        sample('after_sync')
+        observation['available_bytes_after'] = observation['pressure_samples']['after_sync']['available_bytes']
     return observation
 
 
@@ -254,7 +309,7 @@ def create(request, fd_limit):
                     filling['journal_before_fill'] = journal_before_fill(root)
                     if filling['journal_before_fill']['bytes'] not in {None, 0}:
                         raise RuntimeError('nonempty-journal-before-fill; recovery-required')
-                    filling.update(fill_owned_image(physical))
+                    filling.update(fill_owned_image(physical, observation=filling))
                 except (OSError, RuntimeError) as error:
                     filling['failure'] = {'type': type(error).__name__, 'errno': getattr(error, 'errno', None),
                                           'reason': str(error)[:1000]}

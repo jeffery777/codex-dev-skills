@@ -2,6 +2,10 @@
 
 ## 狀態、目標與證據
 
+2026-09-20：[填充同步準備](loops/issue-271/filler-sync-preparation.md)補足 write ENOSPC
+後的同步、容量快照與 timeout／截斷輸出處理；僅無物理回歸與候選方案準備，
+第三次實測尚未授權或執行，physical FULL／失敗後 control 的驗收缺口保持。
+
 2026-09-20：Issue #271 的[第一次實體試驗](loops/issue-271/verification-and-review.md)
 與[追加交易前試驗](loops/issue-271/pretransaction-verification-and-review.md)各自
 完成新 APFS image、own filler OS ENOSPC、截短釋放容量及 fresh readback。

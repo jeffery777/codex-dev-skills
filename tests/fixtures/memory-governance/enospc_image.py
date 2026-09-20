@@ -164,7 +164,10 @@ def run():
         preview = {'command': list(create_command), 'parent_identity': list(db.identity(parent.stat())),
                    'image_must_be_absent': str(image), 'mount_must_be_absent': str(mount),
                    'image_bytes_limit': IMAGE_BYTES, 'host_headroom_minimum': HOST_HEADROOM,
-                   'host_available_before': report['host_available_before'], 'attempt_limit': 1}
+                   'host_available_before': report['host_available_before'], 'attempt_limit': 1,
+                   'filler_sync': 'once after bounded writes; failure aborts target writer',
+                   'fill_timeout_seconds': 30,
+                   'fill_timeout_action': 'terminate exact writer; restore only after confirmed exit'}
         if os.path.lexists(image) or os.path.lexists(mount):
             raise RuntimeError('new-resource-already-exists')
         with (parent / 'resource-preview.json').open('x', encoding='utf-8') as output:
@@ -272,6 +275,9 @@ def main():
                   'filesystem': 'APFS', 'image_bytes': IMAGE_BYTES, 'host_headroom_minimum': HOST_HEADROOM,
                   'layout': 'GPTSPUD', 'image_type': 'UDIF', 'create_verbose': True,
                   'fault_stage': 'before-transaction', 'attempt_limit': 1, 'worker_timeout_seconds': 90,
+                  'filler_sync': 'once after bounded writes; failure aborts target writer',
+                  'fill_timeout_seconds': 30,
+                  'fill_timeout_action': 'terminate exact writer; restore only after confirmed exit',
                   'fills': 'own inherited filler fd on confirmed new mount only; at most image_bytes',
                   'recovery': 'truncate own filler once; fresh readback without repair; normal detach; retain image',
                   'existing_data_access': False, 'production_qualified': False}
