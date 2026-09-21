@@ -39,5 +39,8 @@ host 必須滿足 [治理介面與資格邊界](../loop-engineering/references/m
 `governancectl.main(..., audit_dispatch=...)`。只有 host 的獨立控制面能提供
 已接受且原子消耗的 grant；不可把自然語言要求或 request ID 自行轉成權限。
 每次盤點建立新 dispatch，失敗不重送；CLI flags 不提供此注入能力。
+Host 可組合 [本機授權 provider](../loop-engineering/references/memory-audit-authority.md)
+保存獨立 lifecycle；磁碟紀錄不恢復 grant，撤銷限原 owner provider，儲存結果不明
+時停用該 instance。盤點資料唯讀不代表 authority bookkeeping 完全零寫入。
 隔離異常處置驗收不要求讀取真實專案或物理耗盡資源。
 本技能不提供新增、修改、停止、恢復、清除或 G2 維護能力。

@@ -108,7 +108,9 @@ permits、source acceptance 與 qualification，以及 host 的 clock／撤銷 c
 不是讀取授權。`take_grant(request)` 是 host 另行實作的可信控制面：原子取得並消耗
 當次已接受的 `ReadGrant`，沒有授權就拒絕，不能因收到 request 自行批准。
 必須拒絕相同 request 跨 dispatch／factory／程序的再次發放；後續資格、建構或
-讀取失敗不會恢復 grant。此包不提供持久 authority store 或 production provider。
+讀取失敗不會恢復 grant。dispatch 本身不提供持久 authority store；
+可由可信 host 組合 [本機單次授權 provider](memory-audit-authority.md)。
+該 provider 保存 lifecycle，但不從磁碟恢復 grant，也不代表 production 啟用。
 
 每個要求建立 `AuditDispatch(factory, request)`，再由可信程式呼叫
 `governancectl.main(['audit', '--enabled', '--format', 'text'], audit_dispatch=dispatch)`，
