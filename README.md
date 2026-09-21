@@ -1392,7 +1392,7 @@ at
 | Skill | Runtime | Purpose |
 | --- | --- | --- |
 | `loop-engineering` | shared | Explicitly selected or repo-required durable loop; uses production decisions, current evidence and scoped phase skills. |
-| `memory-audit` | shared | 單專案 MG1 唯讀盤點、有界報告與 audit-only host 組合元件；production adapter 仍未啟用。 |
+| `memory-audit` | shared | 單專案 MG1 唯讀盤點、有界報告與單次要求的可信 host factory／dispatch；production adapter 仍未啟用。 |
 | `cli-session-handoff` | cli | Start, resume, fork, or clean non-interactive fresh-continue one authorized bounded CLI session, or prepare one exact manual interactive fork, after shared orchestration selects the handoff. |
 | `planning` | shared | Produce scoped implementation plans with assumptions, risks, DoD, and verification. |
 | `milestone-continuation` | shared | Continue a bounded milestone across repeated invocations by checking task completion, choosing the next ready task, and stopping at human gates. |

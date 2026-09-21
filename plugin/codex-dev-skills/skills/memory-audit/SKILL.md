@@ -35,4 +35,9 @@ host 必須滿足 [治理介面與資格邊界](../loop-engineering/references/m
 遇到 busy、權限拒絕、身分漂移、逾時或 I/O 等錯誤，採用回報的安全文案。
 不自動重試、修復、清理或串接失效 cursor。使用者重新提出盤點時重新取得
 權限及 snapshot；不需要重新確認同一個已清楚授權且條件未變的唯讀範圍。
+可信 host 可用 `AuditHostFactory` 與單次 `AuditDispatch` 串接
+`governancectl.main(..., audit_dispatch=...)`。只有 host 的獨立控制面能提供
+已接受且原子消耗的 grant；不可把自然語言要求或 request ID 自行轉成權限。
+每次盤點建立新 dispatch，失敗不重送；CLI flags 不提供此注入能力。
+隔離異常處置驗收不要求讀取真實專案或物理耗盡資源。
 本技能不提供新增、修改、停止、恢復、清除或 G2 維護能力。
