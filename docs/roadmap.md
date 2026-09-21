@@ -440,6 +440,11 @@ named/own-fd 取樣不證明完整 temp 或 J/T/G 上界，沒有 production cod
 可信 factory／dispatch、CLI 報告及異常後恢復；production registry 仍空。
 驗收重點為異常處置，允許受控注入經實際路徑，不要求物理耗盡或真實專案。
 
+#280 接續[持久授權 provider](loops/issue-280/delivery-plan.md)：獨立 lifecycle
+紀錄、原子單次消耗及原 owner 撤銷；磁碟不恢復 grant，結果不明停用 provider。
+隔離驗收包含 commit 前後失敗、程序中斷、重播及最後揭露撤銷；
+盤點資料仍唯讀，authority bookkeeping 另有寫入，正式啟用保持獨立接受。
+
 #265 的[儲存可靠性切片](loops/issue-265/verification-and-review.md)補 reader/control
 temp／sidecar、有效 pragma、容量與完整鎖區間，並在 filler 恢復失敗時停止依賴讀回。
 仍為 synthetic-only；物理試驗、完整 J/T/G 與 production 資格分開記錄，不啟用 backend。

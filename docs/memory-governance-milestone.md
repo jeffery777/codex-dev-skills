@@ -7,6 +7,9 @@
 消耗 grant、CLI 程式入口與異常處置。隔離測試專案即可完成本包驗收，
 不要求真實專案或物理耗盡；production registry 維持空值。
 真實資料啟用另需指定目標、可信授權／撤銷來源與環境資格。本包不做 G2。
+#280 的[持久授權 provider](loops/issue-280/delivery-plan.md)接續單次 dispatch：
+保存獨立 lifecycle，原 owner 撤銷，交易不明停用 provider，restart 不恢復 grant。
+盤點資料唯讀；授權紀錄另有寫入，仍以隔離資料驗收，未啟用 production。
 以下依時間保留的舊階段與「下一包 G0」屬歷史提案，不能取代現行範圍。
 
 2026-09-20：使用者在第四次觀察後明確同意將 #271 轉為

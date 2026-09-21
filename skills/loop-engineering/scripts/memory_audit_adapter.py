@@ -25,7 +25,7 @@ AUDIT_ENVELOPE = MappingProxyType({
     'max_items': 10000, 'max_versions': 10, 'max_proofs': 33792,
     'data_limit_bytes': 268435456,
 })
-PORT_FILES = ('memory_audit_dispatch.py', 'governancectl.py', 'memory_audit_adapter.py', 'memory_audit_source.py', 'memory_audit.py',
+PORT_FILES = ('memory_audit_authority.py', 'memory_audit_dispatch.py', 'governancectl.py', 'memory_audit_adapter.py', 'memory_audit_source.py', 'memory_audit.py',
               'memory_governance_core.py', 'memory_governance_contract.py',
               'memory_governance_host.py', 'memory_governance_local.py', 'memory_governance_storage.py')
 
