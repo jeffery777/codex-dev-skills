@@ -11,14 +11,14 @@ from memory_audit import audit_report, render_report
 from memory_governance_storage import SCHEMA_FINGERPRINT
 
 
-def main(argv=None) -> int:
+def main(argv=None, *, audit_dispatch=None) -> int:
     parser = argparse.ArgumentParser(description="MG1 G1 default-off governance boundary")
     parser.add_argument("command", choices=("status", "audit", "proposal"), nargs="?", default="status")
     parser.add_argument("--enabled", action="store_true")
     parser.add_argument("--format", choices=("json", "text"), default="json")
     args = parser.parse_args(argv)
     if args.command == "audit":
-        report = audit_report(enabled=args.enabled)
+        report = audit_report(enabled=args.enabled, dispatch=audit_dispatch)
         if args.format == "text":
             print(render_report(report), end="")
         else:

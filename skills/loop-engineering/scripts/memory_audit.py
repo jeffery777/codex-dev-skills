@@ -78,11 +78,12 @@ def _empty() -> dict:
             "advisory_only": True, "write_performed": False, "production_qualified": False}
 
 
-def audit_report(*, enabled: bool = False, host=None, max_pages: int = 40,
+def audit_report(*, enabled: bool = False, host=None, dispatch=None, max_pages: int = 40,
                  max_output_bytes: int = 262144, timeout_seconds: int = 10) -> dict:
     """每次新 core／snapshot；不接受 cursor、root、confirmation 或持久設定。
 
-    程式注入 host 是 TCB 整合介面，不是使用者輸入或 production qualification。
+    程式注入 host／dispatch 是 TCB 整合介面，不是使用者輸入或 production qualification。
+    未預期的 host/control-plane 例外也回固定 unavailable；不攔截 BaseException。
     disabled 在驗參數、host discovery 與任何 backend 接觸前返回。
     """
     report = _empty()
@@ -97,6 +98,10 @@ def audit_report(*, enabled: bool = False, host=None, max_pages: int = 40,
     # 留固定 envelope／原因文案餘裕；每筆 canonical bytes 在收錄前計算。
     remaining = max_output_bytes - 2048
     try:
+        if dispatch is not None:
+            from memory_audit_dispatch import AuditDispatch
+            c.require(host is None and type(dispatch) is AuditDispatch, "read-unavailable")
+            host = dispatch.acquire()
         core = GovernanceCore(production_host("local") if host is None else host, enabled=True)
         with core.audit(timeout_seconds=timeout_seconds) as snapshot:
             cursor = None
@@ -120,7 +125,7 @@ def audit_report(*, enabled: bool = False, host=None, max_pages: int = 40,
                 cursor = page["next_cursor"]
             else:
                 report["reason"] = "page-limit"
-    except (c.ContractError, OSError, sqlite3.Error, MemoryError) as exc:
+    except Exception as exc:
         reason = _reason(exc)
         # 授權／身分／完整性不再可信時，不保留已讀內容。I/O／時間中斷可保留先前完整頁。
         if reason not in {"busy", "timeout", "storage-full", "storage-io", "resource-limit", "page-limit", "cursor-unavailable"}:
@@ -132,7 +137,7 @@ def audit_report(*, enabled: bool = False, host=None, max_pages: int = 40,
     if report["snapshot_digest"] is not None and snapshot is not None:
         try:
             snapshot.validate_disclosure()
-        except (c.ContractError, OSError, sqlite3.Error, MemoryError) as exc:
+        except Exception as exc:
             report = _empty()
             report["reason"] = _reason(exc)
             verified = 0

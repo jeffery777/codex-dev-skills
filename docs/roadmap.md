@@ -435,6 +435,11 @@ quota FULL／CANTOPEN／reply-loss 對照、fresh readback 一致性與完整持
 APFS 新映像在建立階段失敗，本輪物理 ENOSPC／SQLite FULL 恢復仍 incomplete；
 named/own-fd 取樣不證明完整 temp 或 J/T/G 上界，沒有 production code／registry 變更。
 
+#274／PR #275 及 #276／PR #277 已加入唯讀報告與 audit-only adapter。
+#278 接續[單次要求整合](loops/issue-278/delivery-plan.md)，以隔離資料驗證
+可信 factory／dispatch、CLI 報告及異常後恢復；production registry 仍空。
+驗收重點為異常處置，允許受控注入經實際路徑，不要求物理耗盡或真實專案。
+
 #265 的[儲存可靠性切片](loops/issue-265/verification-and-review.md)補 reader/control
 temp／sidecar、有效 pragma、容量與完整鎖區間，並在 filler 恢復失敗時停止依賴讀回。
 仍為 synthetic-only；物理試驗、完整 J/T/G 與 production 資格分開記錄，不啟用 backend。

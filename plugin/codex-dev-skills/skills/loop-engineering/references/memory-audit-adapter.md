@@ -99,3 +99,31 @@ snapshot；舊 cursor、已關閉 snapshot 或已 claim 的 host 不能續接。
 不得改成任意 import-path 或 JSON plugin loader。Repository 工作區／agent 可改檔案
 不是正式 authority store。啟用 preview 必須列 target、接受證據、factory/registry 精確 diff、
 可回退停用方式及唯讀 canary；待這些實際值指定後才有可批准的 activation payload。
+
+## 單次要求的固定 factory／dispatch
+
+`memory_audit_dispatch.AuditHostFactory` 保存上述已接受的 binding、repository、
+permits、source acceptance 與 qualification，以及 host 的 clock／撤銷 callbacks。
+`AuditRequest` 僅含 principal UUID、request UUID 與完整 scope digest；request 本身
+不是讀取授權。`take_grant(request)` 是 host 另行實作的可信控制面：原子取得並消耗
+當次已接受的 `ReadGrant`，沒有授權就拒絕，不能因收到 request 自行批准。
+必須拒絕相同 request 跨 dispatch／factory／程序的再次發放；後續資格、建構或
+讀取失敗不會恢復 grant。此包不提供持久 authority store 或 production provider。
+
+每個要求建立 `AuditDispatch(factory, request)`，再由可信程式呼叫
+`governancectl.main(['audit', '--enabled', '--format', 'text'], audit_dispatch=dispatch)`，
+或 `audit_report(enabled=True, dispatch=dispatch)`。這是同程序 TCB 整合，
+不是 shell 可載入的參數。dispatch 的非等待鎖保護單次消耗，先標記已使用才呼叫
+factory；跨程序使用、重播與同時使用都拒絕。新 request 使用新的 dispatch、grant、
+authority 與 host。關閉模式不消耗 dispatch，也不探測 factory 或讀取資料。
+原有 `host=` 程式介面保持相容，但不可與 `dispatch=` 同時使用。
+
+factory 核對完整 binding、principal/request 及 scope，並建立既有 `AuditOnlyHost`。
+整合點及 CLI 程式 bytes 已納入 qualification fingerprint。控制面與 host 一般例外
+轉成固定安全報告，未知錯誤清空內容，不回顯 traceback／原始例外；`BaseException`
+不被吞掉。錯誤處理不自動重試、不修復、不寫入 production registry。
+
+啟用預覽需要：精確目標與來源接受、provider 的原子消耗／撤銷契約、實際環境
+qualification、固定 factory/CLI dispatch 的精確 diff、唯讀 canary、停用及回退步驟。
+停用方式是在可信入口停止提供 dispatch 並撤銷已核發要求；未配置入口維持原先
+adapter-unavailable，不刪資料。僅這份串接程式及隔離測試通過不能批准真實讀取。
