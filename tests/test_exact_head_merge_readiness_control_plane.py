@@ -21,6 +21,106 @@ SPEC.loader.exec_module(control)
 
 
 class ExactHeadControlPlaneTests(unittest.TestCase):
+    def exercise_cli_block(self, directory: str, *, collection_error=None,
+                           publication_error=None, readback_error=None,
+                           latest_error=None, existing_output=False):
+        root = pathlib.Path(directory)
+        event = root / "event.json"
+        event.write_text('{"pull_request":{"number":185}}', encoding="utf-8")
+        output = root / "out.json"
+        if existing_output:
+            output.write_text(json.dumps(valid_v2_payload()), encoding="utf-8")
+        argv = [
+            "--repository", "jeffery777/codex-dev-skills",
+            "--event-path", str(event), "--output", str(output),
+            "--policy", str(ROOT / ".github/exact-head-merge-readiness-policy.json"),
+            "--workflow-name", "Exact-Head Merge Readiness Controller",
+            "--workflow-run-id", "900",
+            "--run-url", "https://github.com/jeffery777/codex-dev-skills/actions/runs/900",
+            "--expected-head", "b" * 40,
+            "--expected-app-id", "100001", "--expected-app-slug", "exact-head-gate",
+        ]
+        client = mock.Mock()
+        client.json.return_value = {"head": {"sha": "b" * 40}}
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with (
+            mock.patch.dict("os.environ", {"EXACT_HEAD_GATE_TOKEN": "app", "REPOSITORY_READ_TOKEN": "reader"}),
+            mock.patch.object(control, "GitHubClient", return_value=client) as factory,
+            mock.patch.object(control, "find_gate_check", return_value=None),
+            mock.patch.object(control, "start_check", return_value={"id": 901, "app": {"id": 100001, "slug": "exact-head-gate"}}) as start,
+            mock.patch.object(control, "confirm_gate_check"),
+            mock.patch.object(control, "confirm_latest_gate_check", side_effect=[None, None, latest_error]) as latest,
+            mock.patch.object(control, "require_unique_open_pr_for_head"),
+            mock.patch.object(control, "select_current_receipt", return_value=(None, None), side_effect=collection_error),
+            mock.patch.object(control, "set_check_pointer"),
+            mock.patch.object(control, "build_envelope") as build,
+            mock.patch.object(control, "update_check", side_effect=publication_error) as update,
+            mock.patch.object(control, "confirm_completed_gate_check", side_effect=readback_error) as readback,
+            contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr),
+        ):
+            result = control.main(argv)
+        build.assert_not_called()
+        return result, stdout.getvalue(), stderr.getvalue(), output, update, readback, latest, factory, start
+
+    def test_missing_receipt_exits_zero_only_after_authoritative_failure_readback(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            result, out, err, output, update, readback, latest, _, _ = self.exercise_cli_block(directory)
+            self.assertEqual(0, result)
+            self.assertIn("readiness blocked; dedicated App failure verified", out)
+            self.assertIn("no current exact-head receipt", out)
+            self.assertEqual("", err)
+            self.assertFalse(output.exists())
+            update.assert_called_once()
+            self.assertEqual("failure", update.call_args.args[2])
+            readback.assert_called_once()
+            self.assertEqual("failure", readback.call_args.args[4])
+            self.assertEqual(3, latest.call_count)
+
+    def test_block_publication_and_readback_faults_never_report_success(self) -> None:
+        for stage in ("publication_error", "readback_error", "latest_error"):
+            with self.subTest(stage=stage), tempfile.TemporaryDirectory() as directory:
+                result, out, err, output, update, *_ = self.exercise_cli_block(
+                    directory, **{stage: control.ControlPlaneError("injected failure")})
+                self.assertEqual(1, result)
+                self.assertNotIn("failure verified", out)
+                self.assertIn("failed to publish authoritative gate failure", err)
+                self.assertFalse(output.exists())
+                # No blind retries, and no success conclusion even on ambiguous publication.
+                update.assert_called_once()
+                self.assertEqual("failure", update.call_args.args[2])
+
+    def test_other_abnormalities_remain_errors_even_after_failure_publication(self) -> None:
+        for error in (
+            control.ControlPlaneError("API unavailable"),
+            control.ControlPlaneError("no current exact-head receipt is bound to this PR head"),
+            control.ControlPlaneError("receipt drifted"),
+            control.validator.ExactHeadMergeReviewError("invalid receipt schema"),
+            OSError(28, "controlled output/storage error"),
+        ):
+            with self.subTest(error=error), tempfile.TemporaryDirectory() as directory:
+                result, out, err, output, update, readback, *_ = self.exercise_cli_block(directory, collection_error=error)
+                self.assertEqual(1, result)
+                self.assertNotIn("failure verified", out)
+                self.assertIn(str(error), err)
+                self.assertFalse(output.exists())
+                update.assert_called_once()
+                readback.assert_called_once()
+
+    def test_stale_output_is_rejected_before_any_platform_access(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            result, _, err, output, update, _, _, factory, start = self.exercise_cli_block(directory, existing_output=True)
+            self.assertEqual(1, result)
+            self.assertIn("output path already exists", err)
+            self.assertEqual(valid_v2_payload(), json.loads(output.read_text()))
+            factory.assert_not_called()
+            start.assert_not_called()
+            update.assert_not_called()
+
+    def test_unverified_block_is_not_a_successful_controller_result(self) -> None:
+        with mock.patch.object(control, "parse_args"), mock.patch.object(control, "run", side_effect=control.ReadinessBlocked("unverified")):
+            with contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(1, control.main([]))
+
     def test_event_resolution_uses_pr_identity_not_event_sha(self) -> None:
         self.assertEqual(185, control.event_pr_number({"pull_request": {"number": 185}, "after": "a" * 40}))
         self.assertEqual(185, control.event_pr_number({"issue": {"number": 185, "pull_request": {"url": "x"}}}))
@@ -229,6 +329,7 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
             ) -> None:
                 self.collection_path = ""
                 self.conclusion = conclusion
+                self.status = "in_progress" if conclusion is None else "completed"
                 self.canonical_name = canonical_name
 
             def repo_path(self, suffix: str) -> str:
@@ -248,6 +349,7 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                             "display_title": f"Repository Validation PR #185 @ {head}",
                             "head_sha": head,
                             "conclusion": self.conclusion,
+                            "status": self.status,
                             "html_url": "https://github.com/jeffery777/codex-dev-skills/actions/runs/456",
                         }
                 ]
@@ -280,6 +382,12 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
         self.assertEqual(f"Repository Validation PR #185 @ {head}", result[0]["run_display_title"])
         self.assertEqual("Repository Validation", result[0]["workflow_name"])
         self.assertEqual(2, repository_read_client.json.call_count)
+        for raw in (None, {}, {"workflow_id": 123}, {"workflow_id": 330877463, "display_title": "bad", "head_sha": "bad"}):
+            malformed = FakeClient()
+            with mock.patch.object(malformed, "json_object_array_pages", return_value=[raw]):
+                with self.subTest(raw=raw), self.assertRaises((control.ControlPlaneError, control.validator.ExactHeadMergeReviewError)) as raised:
+                    control.collect_upstream_checks(malformed, repository_read_client, 185, "a" * 40, head, policy)
+                self.assertNotIsInstance(raised.exception, control.ReadinessBlocked)
         self.assertTrue(
             all(
                 "/contents/" in call.args[1]
@@ -299,6 +407,27 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                 head,
                 policy,
             )
+        for status, conclusion in ((None, "success"), ("completed", None), ("unknown", None), ("in_progress", "success"), ("completed", "unknown")):
+            malformed = FakeClient(conclusion=conclusion)
+            malformed.status = status
+            with self.subTest(status=status, conclusion=conclusion):
+                with self.assertRaises(control.ControlPlaneError) as raised:
+                    control.collect_upstream_checks(malformed, repository_read_client, 185, "a" * 40, head, policy)
+                self.assertNotIsInstance(raised.exception, control.ReadinessBlocked)
+        for change in ("missing_conclusion", "wrong_url"):
+            malformed = FakeClient(conclusion=None)
+            runs = malformed.json_object_array_pages("", "workflow_runs", maximum_pages=5)
+            if change == "missing_conclusion":
+                runs[0].pop("conclusion")
+            else:
+                runs[0]["html_url"] = "https://github.com/other/repo/actions/runs/999"
+            with self.subTest(change=change), mock.patch.object(malformed, "json_object_array_pages", return_value=runs):
+                with self.assertRaises(control.ControlPlaneError) as raised:
+                    control.collect_upstream_checks(malformed, repository_read_client, 185, "a" * 40, head, policy)
+                self.assertNotIsInstance(raised.exception, control.ReadinessBlocked)
+        for conclusion in ("failure", "cancelled", "timed_out", "skipped", "action_required"):
+            with self.subTest(conclusion=conclusion), self.assertRaises(control.ReadinessBlocked):
+                control.collect_upstream_checks(FakeClient(conclusion=conclusion), repository_read_client, 185, "a" * 40, head, policy)
         with self.assertRaisesRegex(control.ControlPlaneError, "not successful"):
             control.collect_upstream_checks(
                 FakeClient(conclusion="failure"),

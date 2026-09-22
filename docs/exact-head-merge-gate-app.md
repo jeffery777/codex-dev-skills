@@ -157,6 +157,29 @@ and `completed`. A rerun therefore invalidates an earlier success while hosted
 CI is running, and the head-filtered bounded run query accepts only a successful
 latest run for the exact head before readiness can return to green.
 
+## Controller Job And Readiness
+
+`Trusted exact-head controller` reports whether evaluation completed correctly;
+`Exact-Head Merge Readiness` from the dedicated App remains the merge gate.
+Missing receipt or upstream run, and recognized pending/non-success CI results,
+produce an App failure. The job exits zero only after that failure and its
+native-latest identity are verified, with an explicit blocked diagnostic and no
+success envelope. API/schema errors, unknown CI states, invalid receipts,
+evidence drift, and publication/readback errors still fail the job.
+
+The collector requires a fresh `--output` path and rejects an existing file or
+symlink before platform access. It does not delete previous evidence or retry
+uncertain writes. Only a ready evaluation creates a v2 envelope for the separate
+offline validator; ordinary irrelevant comments create none. Never treat a
+green job, absent envelope, or injected-fault test as merge readiness.
+
+PR #285 and #289 exposed the previous behavior: waiting for a receipt left a
+failed Actions job after the App later became successful. The corrected job
+semantics apply after the reviewed controller reaches the trusted default
+branch. PR CI tests the candidate with controlled fixtures; it does not execute
+PR code with protected App credentials. A later open-PR evaluation is needed
+for hosted rollout evidence. Do not rewrite merged PR history to make it green.
+
 ## Ruleset Rollout
 
 Use the existing default-branch ruleset. It must have no bypass actors and

@@ -162,13 +162,16 @@ jobs:
           permission-issues: read
           permission-pull-requests: read
 
-      - name: Normalize live state, validate offline, and publish the head-bound check
+      - name: Evaluate readiness and verify the dedicated App decision
         id: collect
         env:
           EXACT_HEAD_GATE_TOKEN: ${{ steps.app-token.outputs.token }}
           REPOSITORY_READ_TOKEN: ${{ github.token }}
           RECEIPT_ID: ${{ inputs.receipt_id || '' }}
         run: |
+          # Exit 0 includes a verified blocking App failure or irrelevant event.
+          # Only a fresh ready envelope enables the independent validator below.
+          # API/schema/publication/readback faults still fail this job.
           ./scripts/project-python scripts/collect-exact-head-merge-readiness.py \
             --repository "$GITHUB_REPOSITORY" \
             --pr-number "${{ matrix.target.pr_number }}" \
