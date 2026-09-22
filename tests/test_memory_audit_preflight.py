@@ -245,10 +245,10 @@ class PreflightTests(unittest.TestCase):
 
     def test_expiry_during_last_environment_observation_clears_report(self):
         provider = self.a.provider
-        request = provider.accept(lifetime_seconds=1)
         original = AuditSnapshot.validate_disclosure
         environment = p.authority_environment
         sample = self.ctx.clock.clock()
+        current = [sample]
         expired = replace(sample, utc_seconds=sample.utc_seconds + 2,
                           monotonic_ns=sample.monotonic_ns + 2_000_000_000)
         reached = []
@@ -257,17 +257,16 @@ class PreflightTests(unittest.TestCase):
                 return original(snapshot)
             def observe(store, **kwargs):
                 value = environment(store, **kwargs)
-                clock_patch.start()
+                current[0] = expired
                 reached.append(True)
                 return value
             with mock.patch.object(p, 'authority_environment', side_effect=observe):
                 return original(snapshot)
-        clock_patch = mock.patch.object(self.ctx.clock, 'clock', return_value=expired)
-        try:
+        # 保持授權有效直到指定 observation；不受 runner 是否跨過真實一秒影響。
+        with mock.patch.object(self.ctx.clock, 'clock', side_effect=lambda: current[0]):
+            request = provider.accept(lifetime_seconds=1)
             with mock.patch.object(AuditSnapshot, 'validate_disclosure', final):
                 report = self.canary(provider, request)
-        finally:
-            clock_patch.stop()
         self.assertTrue(reached)
         self.assertEqual([], report['items'])
         self.assertEqual(0, report['counts']['listed'])
