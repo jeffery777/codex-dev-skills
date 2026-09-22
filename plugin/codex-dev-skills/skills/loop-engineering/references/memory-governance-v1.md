@@ -157,3 +157,6 @@ fd metadata。數值仍限小型 workload；取樣間隙、記憶體 temp 與完
 原生記憶、對話、匯出與備份是外部副本，coverage unknown 不等於沒有副本。
 本專案 memory-off 只表示這些管理核心操作不碰本專案 root／backend；不聲稱
 Codex 原生記憶或 context management 已關閉。不得把本 reference 用作私有資料存取授權。
+
+#288 新增[固定 synthetic stop/resume 操作入口](memory-maintenance-pilot.md)，僅本次新建 fixture，
+每次獨立精確確認；不開放真實 root 或沿用 audit-only authority。
