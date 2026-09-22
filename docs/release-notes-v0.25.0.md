@@ -25,7 +25,7 @@ GitHub Release 的讀回才證明發布。Commit、push、PR、merge、tag、Rel
 ## Compatibility And Boundaries
 
 這批新增能力適合作為 pre-1.0 minor 候選版。catalog、installer 與 plugin manifest
-同步 0.25.0。本候選準備切片只更新版本與文件；累積 v0.24.7 → 0.25.0 已在
+同步 0.25.0。本候選準備切片更新版本、文件與到期測試的可控時鐘；累積 v0.24.7 → 0.25.0 已在
 既有 `codex-delivery-workflow` 群組納入 `memory-audit`，升級會新增該技能。
 群組名稱、installer 控制流程與既有 M1 public API 保持不變，沒有資料 migration。
 既有安裝不會自動更新；更新需遵循 installer 的 diff、拒絕覆寫及備份契約。
@@ -46,6 +46,10 @@ fixture 與 authority bookkeeping 會寫入，內層 managed audit 唯讀不是�
 時資料／receipt 不變，以及明確 force update 的備份與版本讀回。沿用既有 installer
 異常測試檢查不安全目標、備份衝突及 receipt 失敗，不以物理耗盡作為驗收前提。
 實際命令與結果保留於 Issue #286 的驗收紀錄及 PR，候選文字不代替執行證據。
+
+CI 曾因測試的真實一秒 TTL 提前到期而未到達最後 observation。該測試改為在指定
+觀察點推進 UTC／monotonic sample，仍驗證確實到達、到期後內容與 digest 清空；
+不修改 runtime 期限或以增加等待上限掩蓋失敗。
 
 ```bash
 ./scripts/validate-repo.sh --skip-unit-tests

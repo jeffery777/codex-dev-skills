@@ -57,3 +57,9 @@ R286-01（MUST-FIX）修正 release note 的範圍混淆：本切片只更新版
 但累積 release 已在既有 delivery group 加入 memory-audit，升級會新增技能。
 R286-N1（NIT）修正 SQLITE_FULL 拼寫與繁體字，Issue 本文也同步修正。
 原 snapshot 安全掃描未發現漏洞不替代上述修正；修後須核對文件與覆蓋證據。
+
+CI286-01：首輪 PR CI 的最後 observation 到期測試未到達 callback。以 canary 前
+受控 1.1 秒延遲重現同一 reached 斷言失敗，確認真實一秒 TTL 可在目標路徑前到期。
+修正僅限 fixture clock：accept 前固定 sample，目標 observation 完成才推進兩秒；
+保留 reached、items／listed／snapshot_digest 清空斷言，runtime／期限不改。
+同樣延遲的修後測試與相關回歸須通過；changed head 重新做完整 Merge Review／CI。
