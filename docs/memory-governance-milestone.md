@@ -10,6 +10,9 @@
 #280 的[持久授權 provider](loops/issue-280/delivery-plan.md)接續單次 dispatch：
 保存獨立 lifecycle，原 owner 撤銷，交易不明停用 provider，restart 不恢復 grant。
 盤點資料唯讀；授權紀錄另有寫入，仍以隔離資料驗收，未啟用 production。
+#282 的[啟用前預檢與隔離 canary](loops/issue-282/delivery-plan.md)提供 advisory
+缺件診斷與獨立 authority 環境接受；預檢不授權，canary 仍需新接受。
+只用隔離 fixtures 驗收失敗處置及恢復，不啟用真實記憶。
 以下依時間保留的舊階段與「下一包 G0」屬歷史提案，不能取代現行範圍。
 
 2026-09-20：使用者在第四次觀察後明確同意將 #271 轉為

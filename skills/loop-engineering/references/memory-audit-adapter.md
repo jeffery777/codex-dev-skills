@@ -129,3 +129,6 @@ factory 核對完整 binding、principal/request 及 scope，並建立既有 `Au
 qualification、固定 factory/CLI dispatch 的精確 diff、唯讀 canary、停用及回退步驟。
 停用方式是在可信入口停止提供 dispatch 並撤銷已核發要求；未配置入口維持原先
 adapter-unavailable，不刪資料。僅這份串接程式及隔離測試通過不能批准真實讀取。
+
+可信 host 的[啟用前預檢與隔離 canary](memory-audit-preflight.md)提供有限 metadata
+觀察與獨立 authority filesystem qualification；不取代本頁的授權及最後揭露契約。

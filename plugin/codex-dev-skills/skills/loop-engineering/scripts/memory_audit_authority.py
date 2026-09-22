@@ -186,6 +186,31 @@ class AuditAuthorityProvider:
         return (self._session, grant.principal_id, c.digest(c.decode(grant.binding.scope_bytes)),
                 grant.expires_at, state)
 
+    def pending_current(self, request: AuditRequest) -> bool:
+        """僅觀察本 instance RAM／clock，不消耗、不查磁碟、不改 lifecycle。
+
+        True 不是可執行性證明；take_grant 仍須核對持久紀錄並原子消耗。
+        預檢失敗不關閉 provider，不把觀察當成新的接受要求。
+        """
+        if self._pid != os.getpid():
+            return False
+        with self._mutex:
+            try:
+                self._check()
+                c.require(type(request) is AuditRequest, 'read-unavailable')
+                grant = self._pending.get(request.request_id)
+                if grant is None:
+                    return False
+                sample = self.clock.clock()
+                return (request.principal_id == grant.principal_id
+                        and request.scope_digest == c.digest(c.decode(self.binding.scope_bytes))
+                        and type(sample) is ClockSample and sample.process_id == grant.issued.process_id
+                        and grant.issued.utc_seconds <= sample.utc_seconds < grant.expires_at
+                        and 0 <= sample.monotonic_ns - grant.issued.monotonic_ns
+                        < (grant.expires_at - grant.issued.utc_seconds) * 1_000_000_000)
+            except Exception:
+                return False
+
     def take_grant(self, request: AuditRequest) -> ReadGrant:
         self._check()
         with self._mutex:

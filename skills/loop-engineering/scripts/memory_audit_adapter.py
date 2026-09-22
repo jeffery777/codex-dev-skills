@@ -25,7 +25,7 @@ AUDIT_ENVELOPE = MappingProxyType({
     'max_items': 10000, 'max_versions': 10, 'max_proofs': 33792,
     'data_limit_bytes': 268435456,
 })
-PORT_FILES = ('memory_audit_authority.py', 'memory_audit_dispatch.py', 'governancectl.py', 'memory_audit_adapter.py', 'memory_audit_source.py', 'memory_audit.py',
+PORT_FILES = ('memory_audit_preflight.py', 'memory_audit_authority.py', 'memory_audit_dispatch.py', 'governancectl.py', 'memory_audit_adapter.py', 'memory_audit_source.py', 'memory_audit.py',
               'memory_governance_core.py', 'memory_governance_contract.py',
               'memory_governance_host.py', 'memory_governance_local.py', 'memory_governance_storage.py')
 
@@ -76,6 +76,9 @@ class AuditReadAuthority:
 
     def valid(self, binding):
         try:
+            c.require(not self._invalid and binding == self.grant.binding and os.getpid() == self._pid,
+                      'read-unavailable')
+            revoked = self.revoked(self.grant.request_id)
             sample = self.clock.clock()
             valid = (not self._invalid and binding == self.grant.binding and os.getpid() == self._pid
                      and type(sample) is ClockSample and sample.process_id == self.grant.issued.process_id
@@ -83,7 +86,7 @@ class AuditReadAuthority:
                      and self._last.monotonic_ns <= sample.monotonic_ns
                      and sample.monotonic_ns - self.grant.issued.monotonic_ns
                      < (self.grant.expires_at - self.grant.issued.utc_seconds) * 1_000_000_000
-                     and self.revoked(self.grant.request_id) is False)
+                     and revoked is False)
             self._last = sample
         except Exception:
             valid = False

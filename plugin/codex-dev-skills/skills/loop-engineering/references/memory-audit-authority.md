@@ -64,3 +64,6 @@ provider 或執行不受控的阻塞工作。
 隔離 fixture 證明 provider 的儲存、消耗、撤銷、拒絕與恢復機制，不代表正式 host
 接受流程、來源或 filesystem qualification。部署仍需精確整合、資格、唯讀 canary
 與停用預覽；本包維持 default-off 與空 production registry。
+
+可信 host 的[啟用前預檢與隔離 canary](memory-audit-preflight.md)提供有限 metadata
+觀察與獨立 authority filesystem qualification；不取代本頁的授權及最後揭露契約。

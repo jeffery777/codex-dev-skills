@@ -44,3 +44,7 @@ Host 可組合 [本機授權 provider](../loop-engineering/references/memory-aud
 時停用該 instance。盤點資料唯讀不代表 authority bookkeeping 完全零寫入。
 隔離異常處置驗收不要求讀取真實專案或物理耗盡資源。
 本技能不提供新增、修改、停止、恢復、清除或 G2 維護能力。
+
+啟用準備可由可信 host 使用[預檢與隔離 canary](../loop-engineering/references/memory-audit-preflight.md)。
+預檢只回 advisory 診斷，不建立／消耗授權；metadata 觀察需獨立許可。
+Canary 仍需新的 host 接受，authority filesystem 資格獨立於 managed target。
