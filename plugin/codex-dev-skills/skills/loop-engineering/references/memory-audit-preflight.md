@@ -60,3 +60,6 @@ Authority qualification 失效會 close 該 canary provider，避免同要求在
 隔離測試以真實 SQLite、provider、dispatch 及既有報告驗 FULL/BUSY/IOERR/NOMEM、
 ENOSPC/ENOMEM、未知錯誤及提交結果不明的清理、拒絕、保密與新接受恢復。
 不要求物理耗盡，不承諾硬 RSS／deadline 或 OS 強制終止仍會執行 cleanup。
+
+固定 synthetic 的可操作入口見 [操作 pilot](memory-audit-pilot.md)；該入口自行建立
+新 fixture，不改變本模組的 host-only／advisory 契約。
