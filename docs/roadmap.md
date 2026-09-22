@@ -49,6 +49,10 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Maintenance Approach
 
+- Issue #282 的[memory-audit 預檢與隔離 canary](loops/issue-282/delivery-plan.md)
+  沿用既有授權及報告，新增 advisory 缺件診斷與獨立 authority 環境接受。
+  維持 default-off／空 production registry，不將 synthetic 驗收視為正式資格。
+
 - Issue #269 的 runtime 相容性維護限於 Desktop sidebar 內建 headings、目前
   任務的 worktree reference 與 CLI dashboard 操作分類；維持獨立入口和共享
   完成契約。其 patch 發版評估見 [v0.24.7 候選紀錄](release-notes-v0.24.7.md)。
