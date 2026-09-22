@@ -5,6 +5,7 @@ import errno
 import json
 import os
 import sqlite3
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 
@@ -323,6 +324,24 @@ class PreflightTests(unittest.TestCase):
             observation = p._metadata(self.f.binding, self.ctx.check_inspection)
         self.assertEqual(1, len(calls))  # root_fd only; no syscall after final permission check.
         self.assertEqual(self.f.binding.directory_identity[0], observation['device'])
+
+    def test_filesystem_identity_preserves_full_os_integer_without_numeric_limit(self):
+        real = os.fstatvfs
+        for fsid in (2**64 - 1, -(2**63)):
+            with self.subTest(fsid=fsid):
+                def facts(fd):
+                    value = real(fd)
+                    return SimpleNamespace(f_fsid=fsid, f_frsize=value.f_frsize, f_flag=value.f_flag)
+                with mock.patch.object(p.os, 'fstatvfs', side_effect=facts):
+                    environment = p.authority_environment(self.a.store)
+                    self.assertEqual(str(fsid), environment['filesystem']['filesystem_identity'])
+                    accepted = replace(self.ctx.authority_qualification, environment_bytes=c.canonical(environment))
+                    ctx = replace(self.ctx, authority_qualification=accepted)
+                    self.assertEqual('observed', self.preflight(context=ctx)['checks']['authority_environment']['status'])
+                    request = self.a.provider.accept()
+                    self.assertEqual('complete', self.canary(request=request, context=ctx)['status'])
+                # Restoring the actual filesystem identity invalidates the synthetic acceptance.
+                self.assertEqual('invalid', self.preflight(context=ctx)['checks']['authority_environment']['status'])
 
     def test_canary_actual_transaction_fault_cleanup_and_new_acceptance_recovery(self):
         faults = []

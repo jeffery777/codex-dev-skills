@@ -31,6 +31,8 @@ integrity 亦保持 unknown，留給執行的既有 provider 驗證。`pending_c
 接受 `AuthorityQualification` 的精確 environment bytes、evidence、期限及撤銷來源。
 觀察綁 authority directory/main/lock identity、store ID、target digest、實際 device／
 filesystem identity、穩定 statvfs block-size/flags、runtime、authority schema 與 ports。
+Filesystem identity 以完整十進位字串保存 OS 回傳值，避免平台的 unsigned／signed
+識別碼超出 application counter 整數範圍；比較仍綁精確值，不截斷或取餘數。
 不採 `store.files` 從 managed target 複製的 filesystem/profile/adapter 標籤，
 也不把動態剩餘容量列入相等比較。這不是任意 filesystem 可用的資格證明；
 synthetic 接受及 canary 成功不能轉成 production qualification。

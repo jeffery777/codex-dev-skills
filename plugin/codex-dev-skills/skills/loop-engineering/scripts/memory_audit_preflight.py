@@ -46,7 +46,8 @@ def _metadata(binding, check=lambda: None):
         c.require(db.JOURNAL not in entries or entries[db.JOURNAL].st_size == 0, 'recovery-required')
         fs = os.fstatvfs(directory)
         check()
-        return {'device': binding.directory_identity[0], 'filesystem_identity': fs.f_fsid,
+        # Filesystem IDs are opaque OS integers, not bounded application counters.
+        return {'device': binding.directory_identity[0], 'filesystem_identity': str(fs.f_fsid),
                 'block_size': fs.f_frsize, 'flags': fs.f_flag}
     finally:
         os.close(directory)

@@ -47,6 +47,7 @@ Synthetic acceptance 不代表實際正式環境資格。不讀真實記憶、�
 | D282-04 | Fixed | authority 實際 statvfs/device 與 store identity 獨立綁定；排除動態剩餘容量及複製 target 標籤。 |
 | R282-01 | Fixed | metadata 撤銷 callback 後取時，每次 metadata/runtime/fingerprint 觀察前後檢查許可；callback／root open 期間到期或撤銷的觸碰陷阱與 fd close 測試；移除最後多餘 fstat，直接使用已驗證 device。 |
 | R282-N1 | Fixed | 移除 disposition rows 之間的空行，保留同一張表。 |
+| CI282-01 | Fixed | Linux CI 的 authority environment 序列化遭 invalid-integer 拒絕；filesystem ID 改存完整十進位字串，驗 unsigned／signed 邊界、實際 canary 及 identity 漂移拒絕，不放寬 canonical counter 上限。 |
 
 第一輪獨立實作審查重現 R282-01，修正後須重審。第一輪正式 Security Diff Scan
 已完成；同一候選因目前只有 host TCB 入口、沒有低權限攻擊路徑／權限增量而不列
