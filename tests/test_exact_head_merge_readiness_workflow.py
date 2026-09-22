@@ -6,6 +6,7 @@ import os
 import pathlib
 import re
 import subprocess
+import tempfile
 import unittest
 
 import yaml
@@ -65,6 +66,41 @@ class ExactHeadReadinessWorkflowTests(unittest.TestCase):
         self.assertIn("RECEIPT_ID: ${{ inputs.receipt_id || '' }}", self.text)
         self.assertIn('--receipt-id "$RECEIPT_ID"', self.text)
         self.assertNotIn("format('--receipt-id", self.text)
+
+    def test_collector_step_preserves_fault_exit_and_validates_only_ready_output(self) -> None:
+        steps = self.workflow["jobs"]["evaluate"]["steps"]
+        collect = next(step for step in steps if step.get("id") == "collect")
+        validate = steps[-1]
+        self.assertEqual("steps.collect.outputs.evaluated == 'true'", validate["if"])
+        self.assertNotIn("continue-on-error", self.text)
+        self.assertIn("validate-exact-head-merge-review.py", validate["run"])
+        # Execute the workflow's actual shell with a bounded fake collector;
+        # network/publication semantics are tested in the controller suite.
+        script = re.sub(r"\$\{\{.*?\}\}", "fixture", collect["run"])
+        for outcome, expected_exit, evaluated in (
+            ("ready", 0, "true"), ("blocked", 0, "false"),
+            ("noop", 0, "false"), ("error", 1, None),
+        ):
+            with self.subTest(outcome=outcome), tempfile.TemporaryDirectory() as directory:
+                root = pathlib.Path(directory)
+                (root / "scripts").mkdir()
+                runner = root / "scripts/project-python"
+                runner.write_text(
+                    '#!/bin/bash\n'
+                    'case "$FIXTURE_OUTCOME" in\n'
+                    'ready) echo "{}" > "$RUNNER_TEMP/exact-head-merge-readiness.json" ;;\n'
+                    'blocked|noop) ;;\n'
+                    '*) exit 1 ;;\nesac\n', encoding="utf-8")
+                runner.chmod(0o700)
+                environment = dict(os.environ, FIXTURE_OUTCOME=outcome,
+                                   RUNNER_TEMP=str(root), GITHUB_OUTPUT=str(root / "outputs"))
+                result = subprocess.run(["bash", "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", script],
+                                        cwd=root, env=environment, capture_output=True, text=True, check=False)
+                self.assertEqual(expected_exit, result.returncode, result.stderr)
+                if evaluated is None:
+                    self.assertFalse((root / "outputs").exists())
+                else:
+                    self.assertEqual(f"evaluated={evaluated}\n", (root / "outputs").read_text())
 
     def test_manual_and_scheduled_routing_are_canonical_and_bounded(self) -> None:
         self.assertIn('[[ "$raw_pr_number" =~ ^[1-9][0-9]*$ ]]', self.text)

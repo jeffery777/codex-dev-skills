@@ -93,6 +93,27 @@ Merge click. A stronger receipt/finding guarantee would require a GitHub-native
 pre-merge predicate or App-controlled merge path, which remains outside this
 profile's authority.
 
+## Controller Outcome Semantics
+
+The Actions controller job reports execution health, while the dedicated App
+check reports merge readiness. A missing current receipt, an absent upstream
+run, or a recognized pending/non-success upstream result is a known blocking
+prerequisite. Only after publishing an App `failure` and confirming its complete
+identity/content and native-latest selection may the controller exit zero with
+an explicit blocked diagnostic. This is not readiness success and produces no
+v2 success envelope. An irrelevant comment remains a no-op.
+
+Malformed/unknown upstream states, invalid receipts, drift, API/schema errors,
+App identity conflicts, and publication/readback faults remain nonzero even
+when a failure check was published. Do not catch all errors as expected blocks
+or use `continue-on-error`. Reject an existing output path before evaluation so
+a blocked/no-op run cannot reuse a stale success envelope. The independent
+workflow validator runs only for a newly emitted ready envelope.
+
+A green controller job cannot substitute for the ruleset-required App check.
+Controlled faults verify safe handling; they do not prove physical failures or
+hosted rollout. Historical failed jobs on already-merged PRs remain historical.
+
 ## Ruleset Enforcement
 
 When selected, the GitHub ruleset is the enforcement point. It requires pull

@@ -50,6 +50,14 @@ class ControlPlaneError(RuntimeError):
     """A fail-closed GitHub control-plane collection error."""
 
 
+class ReadinessBlocked(ControlPlaneError):
+    """A known unmet prerequisite, not yet a verified published decision."""
+
+
+class VerifiedReadinessBlocked(ControlPlaneError):
+    """The dedicated App failure and its native-latest identity were read back."""
+
+
 def canonical_digest(value: object) -> str:
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
@@ -401,11 +409,13 @@ def collect_upstream_checks(
         expected_title = f"{expected['workflow_name']} PR #{pr_number} @ {head}"
         for raw_run in runs:
             if not isinstance(raw_run, dict) or raw_run.get("workflow_id") != workflow_id:
-                continue
+                raise ControlPlaneError(f"workflow run collection for {context!r} contains invalid provenance")
+            validator.require_string(raw_run.get("display_title"), "workflow run.display_title")
+            validator.require_sha(raw_run.get("head_sha"), "workflow run.head_sha")
             if raw_run.get("display_title") == expected_title and raw_run.get("head_sha") == head:
                 candidates.append(raw_run)
         if not candidates:
-            raise ControlPlaneError(f"required upstream workflow {context!r} has no run for the live PR head")
+            raise ReadinessBlocked(f"required upstream workflow {context!r} has no run for the live PR head")
         workflow_run = max(candidates, key=lambda value: validator.require_positive_integer(value.get("id"), f"workflow {context}.id"))
         details_url = validator.require_github_url(workflow_run.get("html_url"), f"workflow {context}.html_url")
         workflow_path = str(expected["workflow_path"])
@@ -437,8 +447,21 @@ def collect_upstream_checks(
         actual_policy = {name: item[name] for name in UPSTREAM_POLICY_FIELDS}
         if actual_policy != expected:
             raise ControlPlaneError(f"required upstream workflow {context!r} provenance does not match policy")
-        if workflow_run.get("conclusion") != "success":
-            raise ControlPlaneError(f"latest workflow run for {context!r} is not successful on the live head")
+        if details_url != f"https://github.com/{client.repository}/actions/runs/{item['workflow_run_id']}":
+            raise ControlPlaneError(f"latest workflow run for {context!r} URL does not bind repository and run ID")
+        if "conclusion" not in workflow_run:
+            raise ControlPlaneError(f"latest workflow run for {context!r} is missing conclusion")
+        status = workflow_run.get("status")
+        conclusion = workflow_run.get("conclusion")
+        if status in {"queued", "in_progress", "requested", "waiting", "pending"} and conclusion is None:
+            raise ReadinessBlocked(f"latest workflow run for {context!r} is not successful on the live head")
+        if status != "completed" or conclusion not in {
+            "success", "failure", "neutral", "cancelled", "skipped", "timed_out",
+            "action_required", "stale", "startup_failure",
+        }:
+            raise ControlPlaneError(f"latest workflow run for {context!r} has an invalid status/conclusion")
+        if conclusion != "success":
+            raise ReadinessBlocked(f"latest workflow run for {context!r} is not successful on the live head")
         result.append(item)
     return result
 
@@ -722,6 +745,9 @@ def event_receipt_decision(event: dict[str, object], *, current_receipt_id: int 
 
 
 def run(args: argparse.Namespace) -> dict[str, object] | None:
+    # A blocked/no-op evaluation must never reuse a previous success envelope.
+    if os.path.lexists(args.output):
+        raise ControlPlaneError("output path already exists; use a fresh evaluation output path")
     policy = load_policy(args.policy)
     event_raw = strict_json(
         read_bounded_regular_file(args.event_path, maximum=1024 * 1024, label="event"),
@@ -852,7 +878,7 @@ def run(args: argparse.Namespace) -> dict[str, object] | None:
             confirm_gate_check(client, gate, head, external_id)
             confirm_latest_gate_check(client, gate, head)
         if receipt_id is None or receipt_sequence is None:
-            raise ControlPlaneError("no current exact-head receipt is bound to this PR head")
+            raise ReadinessBlocked("no current exact-head receipt is bound to this PR head")
         if args.receipt_id is not None and args.receipt_id != receipt_id:
             raise ControlPlaneError("requested receipt ID is not the authoritative current receipt")
         first = build_envelope(
@@ -930,6 +956,8 @@ def run(args: argparse.Namespace) -> dict[str, object] | None:
                 "failed to publish authoritative gate failure after "
                 f"{exc}: {publication_exc}"
             ) from publication_exc
+        if isinstance(exc, ReadinessBlocked):
+            raise VerifiedReadinessBlocked(str(exc)) from exc
         raise
 
 
@@ -980,6 +1008,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     try:
         run(parse_args(argv))
+    except VerifiedReadinessBlocked as exc:
+        print(f"exact-head readiness blocked; dedicated App failure verified: {exc}")
+        return 0
     except (ControlPlaneError, validator.ExactHeadMergeReviewError, OSError) as exc:
         print(f"exact-head merge readiness failed: {exc}", file=sys.stderr)
         return 1
