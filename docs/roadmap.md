@@ -440,14 +440,19 @@ APFS 新映像在建立階段失敗，本輪物理 ENOSPC／SQLite FULL 恢復�
 named/own-fd 取樣不證明完整 temp 或 J/T/G 上界，沒有 production code／registry 變更。
 
 #274／PR #275 及 #276／PR #277 已加入唯讀報告與 audit-only adapter。
-#278 接續[單次要求整合](loops/issue-278/delivery-plan.md)，以隔離資料驗證
+#278／PR #279 完成[單次要求整合](loops/issue-278/delivery-plan.md)，以隔離資料驗證
 可信 factory／dispatch、CLI 報告及異常後恢復；production registry 仍空。
 驗收重點為異常處置，允許受控注入經實際路徑，不要求物理耗盡或真實專案。
 
-#280 接續[持久授權 provider](loops/issue-280/delivery-plan.md)：獨立 lifecycle
+#280／PR #281 完成[持久授權 provider](loops/issue-280/delivery-plan.md)：獨立 lifecycle
 紀錄、原子單次消耗及原 owner 撤銷；磁碟不恢復 grant，結果不明停用 provider。
 隔離驗收包含 commit 前後失敗、程序中斷、重播及最後揭露撤銷；
 盤點資料仍唯讀，authority bookkeeping 另有寫入，正式啟用保持獨立接受。
+
+#282／PR #283 加入 [metadata 預檢與隔離 canary](../skills/loop-engineering/references/memory-audit-preflight.md)，
+#284／PR #285 加入[固定 synthetic 操作 pilot](../skills/loop-engineering/references/memory-audit-pilot.md)。
+兩次確認、等待後重驗、異常停止與 owner close 已有隔離驗收；production registry
+仍空，既有專案／原生記憶未啟用。後續工作不得把操作示範當成 G1/MG1 qualification。
 
 #265 的[儲存可靠性切片](loops/issue-265/verification-and-review.md)補 reader/control
 temp／sidecar、有效 pragma、容量與完整鎖區間，並在 filler 恢復失敗時停止依賴讀回。
