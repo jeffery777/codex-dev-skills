@@ -450,6 +450,10 @@ named/own-fd 取樣不證明完整 temp 或 J/T/G 上界，沒有 production cod
 盤點資料仍唯讀，authority bookkeeping 另有寫入，正式啟用保持獨立接受。
 
 #282／PR #283 加入 [metadata 預檢與隔離 canary](../skills/loop-engineering/references/memory-audit-preflight.md)，
+#288 新增[固定 synthetic stop/resume 操作入口](../skills/loop-engineering/references/memory-maintenance-pilot.md)，
+每步獨立確認、等待後重驗與讀回；stop 保留版本，resume 不新增 revision。
+異常以拒絕或 unknown 處置，不要求物理耗盡；production registry 仍空，完整 G1 尚未 qualified。
+
 #284／PR #285 加入[固定 synthetic 操作 pilot](../skills/loop-engineering/references/memory-audit-pilot.md)。
 兩次確認、等待後重驗、異常停止與 owner close 已有隔離驗收；production registry
 仍空，既有專案／原生記憶未啟用。後續工作不得把操作示範當成 G1/MG1 qualification。
