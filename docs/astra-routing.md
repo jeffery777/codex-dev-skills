@@ -9,14 +9,15 @@ The optional main-agent preset is separate from candidate qualification below.
 
 ## Contract
 
-The canonical registry retains Luna-low mechanical, Terra-low exploration,
-Terra-medium everyday, Terra-high senior and Sol-medium advanced. Issue #249
-adopts Astra-xhigh for the deep/security and exceptional baseline roles and
-the three separate Astra candidates. This is an explicit maintainer configuration
-decision, not measured parity or weekly-usage savings. Previous values remain
-comments in each changed TOML. See the [decision and rollback record](astra-xhigh-profile-decision.md).
-The dated runtime evidence, comparison matrix and pilot results below describe
-the earlier medium/high profiles; they do not qualify these changed bytes.
+Issue #292 adopts GPT-6 Luna-low mechanical, GPT-6 Luna-high exploration,
+GPT-6 Sol-medium balanced/advanced and GPT-6 Sol-high senior baselines, plus
+the read-only GPT-6 Sol-high `routine_reviewer` baseline for everyday review.
+Issue #249's Astra-xhigh deep/security/exceptional baselines and the three
+separate Astra candidates remain unchanged. This migration is an explicit
+routing decision, not measured parity, weekly-usage savings, or a claim that
+GPT-6 was superior in this repository. The dated runtime evidence, comparison
+matrix and pilot results below remain historical and do not qualify changed
+profile bytes.
 
 Class owns work and sandbox; tier owns minimum capability. Risk hard triggers
 remain non-compensatory. The deterministic role in a v2 route input remains the
@@ -59,12 +60,14 @@ surface for each session. Never reuse Desktop evidence to assert CLI/API support
 Remove the entry if quality fails or becomes unverified. Do not add a lower-tier
 qualification as a substitute. v1 rejects candidate opt-ins.
 
-Absent opt-in leaves baseline role selection unchanged, even if the candidate
-role is installed and its model is available. With qualification, model/effort support and matching installed bytes,
-the candidate for the exact baseline role is selected. Otherwise the baseline
-and existing sufficient-tier alternatives remain available. Unknown availability
+Absent Astra opt-in leaves the GPT-6 or Astra baseline role selection unchanged,
+even if the candidate role is installed and its model is available. With
+qualification, model/effort support and matching installed bytes, the Astra
+candidate for the exact baseline role is selected. Otherwise the baseline and
+existing sufficient-tier alternatives remain available. Unknown availability
 never becomes true by default. Parent/default and sequential require current
-class/tier evidence. No safe option means a human gate. A read-only parent cannot
+class/tier evidence but remain model-neutral; they do not prove a specific
+runtime model. No safe option means a human gate. A read-only parent cannot
 activate an Astra workspace-write worker. The standalone preflight may report a
 source adoptable; production routing additionally requires installed bytes.
 

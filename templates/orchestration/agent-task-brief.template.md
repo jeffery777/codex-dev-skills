@@ -46,6 +46,14 @@ Skip 依適用判準及原因判讀，不一律算失敗；必跑情境未執行
 重新分類，不修改固定 profile／effort 或沿用不相符資格。reviewer 不實作修正。
 驗收失敗時記錄核心檢查、原因與修正假設；按共用契約的返工政策回報能力重評，
 不以工具呼叫數當修正輪次，不因重評門檻放棄已指派工作。
+
+### Correction Record (only after an acceptance failure)
+
+- Packet lineage and correction rounds: `<existing packet; count only hypothesized correction plus required check>`
+- Core check and failure class: `<required check; implementation/reasoning | context/evidence | environment/data | permission | external result unknown>`
+- Correction hypothesis and effective profile: `<testable hypothesis; actual model/effort or baseline fallback>`
+- Result and next decision: `<check result; reclassify, diagnose, context assessment, recovery, or parent gate>`
+
 ## Do Not
 
 - Do not commit.

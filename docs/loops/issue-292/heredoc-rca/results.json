@@ -1,0 +1,748 @@
+{
+  "status": {
+    "root_cause": "located_for_controlled_reproduction",
+    "project_misinterpretation": "mitigated",
+    "upstream_event_gap": "unresolved",
+    "release": "known_issue_accepted_subject_to_remaining_gates"
+  },
+  "upstream": "https://github.com/openai/codex/issues/47433",
+  "follow_up": "https://github.com/jeffery777/codex-dev-skills/issues/293",
+  "runs": [
+    {
+      "alias": "baseline-initial",
+      "cli_version": "codex-cli 0.156.0",
+      "cli_sha256": "6b42db4d33fd53516162bd76a0e2d07e0567287c44e036d4e4c06cb555a432f9",
+      "cli_sha256_after": "6b42db4d33fd53516162bd76a0e2d07e0567287c44e036d4e4c06cb555a432f9",
+      "shell_sha256": "3fbc7a357f2cc9ee90b975f76c27744c19a051a5922fe59c5c8a3ac7a981ffc5",
+      "requested_model": "gpt-6-luna",
+      "requested_effort": "low",
+      "sandbox": "read-only",
+      "prompt_sha256": "4321f64cf0314a520dd9b2f15bb31a45d6d0ac8a16ba1a984990ae2155bbf121",
+      "command_sha256": "4fefcde6f8d6ae06f6c303c9f6e8ac1aaffb5eb2ffa18df4107057cf9c703d03",
+      "model_cli_exit_code": 0,
+      "analysis": {
+        "stream": {
+          "stream_integrity": "valid",
+          "turn_status": "completed",
+          "tool_coverage": "not_assessed",
+          "errors": [],
+          "raw_event_sha256": "2531f35a40a025756e52f2846304873f122f65e2406302c41d2bae2c9cdb766e",
+          "raw_event_bytes": 1598,
+          "raw_event_line_count": 7,
+          "final_sha256": "a888dbed7067f9fdbe8e0a0201cef36d66a6af338ad9b48a1e9435457fd67efd",
+          "final_bytes": 539,
+          "terminal_event_types": [
+            "turn.completed"
+          ],
+          "agent_message_count": 2,
+          "command_event_count": 1,
+          "usage": {
+            "input_tokens": 63489,
+            "cached_input_tokens": 47360,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 435,
+            "reasoning_output_tokens": 0
+          }
+        },
+        "checks": [
+          {
+            "command_file": "command.txt",
+            "direct_exit_code": 1,
+            "exact_tool_request_count": 0,
+            "public_command_event_count": 0,
+            "tool_exit_code": null,
+            "shell_login_cwd_match": false,
+            "tool_output_matches_direct": false,
+            "call_id": null,
+            "tool_output_truncated": null,
+            "status": "unknown"
+          },
+          {
+            "command_file": "after.txt",
+            "direct_exit_code": 0,
+            "exact_tool_request_count": 0,
+            "public_command_event_count": 1,
+            "tool_exit_code": null,
+            "shell_login_cwd_match": false,
+            "tool_output_matches_direct": false,
+            "call_id": null,
+            "tool_output_truncated": null,
+            "status": "unknown"
+          }
+        ],
+        "diagnostic_parse_unknown_count": 0,
+        "diagnostic_raw_sha256": "36e83db5cd193e51112ea2fe97eee46716b782178d7c4042390acf1dbbcfb39e",
+        "scope": "Two exact synthetic commands only; not an attestation of all runtime calls or model identity."
+      }
+    },
+    {
+      "alias": "disable-unified-exec-attempt",
+      "cli_version": "codex-cli 0.156.0",
+      "cli_sha256": "6b42db4d33fd53516162bd76a0e2d07e0567287c44e036d4e4c06cb555a432f9",
+      "cli_sha256_after": "6b42db4d33fd53516162bd76a0e2d07e0567287c44e036d4e4c06cb555a432f9",
+      "shell_sha256": "3fbc7a357f2cc9ee90b975f76c27744c19a051a5922fe59c5c8a3ac7a981ffc5",
+      "requested_model": "gpt-6-luna",
+      "requested_effort": "low",
+      "sandbox": "read-only",
+      "prompt_sha256": "94b964596b0d5abdbcce17556f0cac67b95fc42d0031c9c3412d4e1a855dfcc6",
+      "command_sha256": "57aebb021e6b05298f1496091b61a82ea952879cc4e4c3ccccafd7c011e8a80f",
+      "model_cli_exit_code": 0,
+      "analysis": {
+        "stream": {
+          "stream_integrity": "valid",
+          "turn_status": "completed",
+          "tool_coverage": "not_assessed",
+          "errors": [],
+          "raw_event_sha256": "8acaa3df2a36b300455ad8ca0cefa9ffdb45e4fc3657ce6323f033aeb37883af",
+          "raw_event_bytes": 1611,
+          "raw_event_line_count": 7,
+          "final_sha256": "2e94e97c40056ca2c7972aee438124339dc73b4f11b6eb5f69902aa6c464ff9b",
+          "final_bytes": 521,
+          "terminal_event_types": [
+            "turn.completed"
+          ],
+          "agent_message_count": 2,
+          "command_event_count": 1,
+          "usage": {
+            "input_tokens": 63475,
+            "cached_input_tokens": 47360,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 431,
+            "reasoning_output_tokens": 0
+          }
+        },
+        "checks": [
+          {
+            "command_file": "command.txt",
+            "direct_exit_code": 1,
+            "exact_tool_request_count": 0,
+            "public_command_event_count": 0,
+            "tool_exit_code": null,
+            "shell_login_cwd_match": false,
+            "tool_output_matches_direct": false,
+            "call_id": null,
+            "tool_output_truncated": null,
+            "status": "unknown"
+          },
+          {
+            "command_file": "after.txt",
+            "direct_exit_code": 0,
+            "exact_tool_request_count": 0,
+            "public_command_event_count": 1,
+            "tool_exit_code": null,
+            "shell_login_cwd_match": false,
+            "tool_output_matches_direct": false,
+            "call_id": null,
+            "tool_output_truncated": null,
+            "status": "unknown"
+          }
+        ],
+        "diagnostic_parse_unknown_count": 0,
+        "diagnostic_raw_sha256": "fbba533e9995082f05030866c1f155e17e3ac91a7685863b454292886787178e",
+        "scope": "Two exact synthetic commands only; not an attestation of all runtime calls or model identity."
+      },
+      "limitation": "Not a legacy backend comparison; requested flag is normalized by CLI. Does not mitigate the gap."
+    },
+    {
+      "alias": "baseline-before",
+      "cli_version": "codex-cli 0.156.0",
+      "cli_sha256": "6b42db4d33fd53516162bd76a0e2d07e0567287c44e036d4e4c06cb555a432f9",
+      "cli_sha256_after": "6b42db4d33fd53516162bd76a0e2d07e0567287c44e036d4e4c06cb555a432f9",
+      "shell_sha256": "3fbc7a357f2cc9ee90b975f76c27744c19a051a5922fe59c5c8a3ac7a981ffc5",
+      "requested_model": "gpt-6-luna",
+      "requested_effort": "low",
+      "sandbox": "read-only",
+      "prompt_sha256": "495fcfb5b8be863f58d9ebe9154bfa726b5007459fb3c3e0558676423fe3c1bc",
+      "command_sha256": "c5ea7b342734fd67580117b8766797419f8f717a9684fa4371a186966a711a83",
+      "model_cli_exit_code": 0,
+      "analysis": {
+        "stream": {
+          "stream_integrity": "valid",
+          "turn_status": "completed",
+          "tool_coverage": "not_assessed",
+          "errors": [],
+          "raw_event_sha256": "5b3b279db6ca8734acb41b7efed0d4aa069ff88249cdced4bba7663ce63d5dab",
+          "raw_event_bytes": 1532,
+          "raw_event_line_count": 7,
+          "final_sha256": "29b4fcfb1020a73518dd4e796d4067738f8230e029e545ce01ff13e39b5ecd2d",
+          "final_bytes": 487,
+          "terminal_event_types": [
+            "turn.completed"
+          ],
+          "agent_message_count": 2,
+          "command_event_count": 1,
+          "usage": {
+            "input_tokens": 56515,
+            "cached_input_tokens": 43264,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 413,
+            "reasoning_output_tokens": 0
+          }
+        },
+        "checks": [
+          {
+            "command_file": "command.txt",
+            "direct_exit_code": 1,
+            "exact_tool_request_count": 1,
+            "public_command_event_count": 0,
+            "tool_exit_code": 1,
+            "shell_login_cwd_match": true,
+            "tool_output_matches_direct": true,
+            "call_id": "exec-bed85ce3-bfae-48d9-92a5-04c844d25547",
+            "tool_output_truncated": false,
+            "status": "confirmed_event_gap"
+          },
+          {
+            "command_file": "after.txt",
+            "direct_exit_code": 0,
+            "exact_tool_request_count": 1,
+            "public_command_event_count": 1,
+            "tool_exit_code": 0,
+            "shell_login_cwd_match": true,
+            "tool_output_matches_direct": true,
+            "call_id": "exec-5356aa27-f90d-416d-8d29-45b640c3d8a9",
+            "tool_output_truncated": false,
+            "status": "consistent"
+          }
+        ],
+        "diagnostic_parse_unknown_count": 0,
+        "diagnostic_raw_sha256": "457e3b6d4806895cdf69a46c9a2ea2ed96f64bec775323652744371b94e828af",
+        "scope": "Two exact synthetic commands only; not an attestation of all runtime calls or model identity."
+      }
+    },
+    {
+      "alias": "temp-free-control",
+      "cli_version": "codex-cli 0.156.0",
+      "cli_sha256": "6b42db4d33fd53516162bd76a0e2d07e0567287c44e036d4e4c06cb555a432f9",
+      "cli_sha256_after": "6b42db4d33fd53516162bd76a0e2d07e0567287c44e036d4e4c06cb555a432f9",
+      "shell_sha256": "3fbc7a357f2cc9ee90b975f76c27744c19a051a5922fe59c5c8a3ac7a981ffc5",
+      "requested_model": "gpt-6-luna",
+      "requested_effort": "low",
+      "sandbox": "read-only",
+      "prompt_sha256": "b6e0c2dd4dd1a8bdf190cab69cc53c6e7de481ca1598c3fa860534f879dd02a9",
+      "command_sha256": "18ac202d4c1ede5b428bd53ded38390ba56b20e1ee8efb99a2347fa57803eff4",
+      "model_cli_exit_code": 0,
+      "analysis": {
+        "stream": {
+          "stream_integrity": "valid",
+          "turn_status": "completed",
+          "tool_coverage": "not_assessed",
+          "errors": [],
+          "raw_event_sha256": "cea7a9030572b06598e7ded5dbe16e58523b46e3c2db38fdb587962784cae563",
+          "raw_event_bytes": 2000,
+          "raw_event_line_count": 9,
+          "final_sha256": "d0ec10305932f217bd9b83c74f883ad41cd31d6a7b84e9ec49813a1186ef17f8",
+          "final_bytes": 396,
+          "terminal_event_types": [
+            "turn.completed"
+          ],
+          "agent_message_count": 2,
+          "command_event_count": 2,
+          "usage": {
+            "input_tokens": 56621,
+            "cached_input_tokens": 36352,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 450,
+            "reasoning_output_tokens": 0
+          }
+        },
+        "checks": [
+          {
+            "command_file": "command.txt",
+            "direct_exit_code": 0,
+            "exact_tool_request_count": 0,
+            "public_command_event_count": 1,
+            "tool_exit_code": null,
+            "shell_login_cwd_match": false,
+            "tool_output_matches_direct": false,
+            "call_id": null,
+            "tool_output_truncated": null,
+            "status": "unknown"
+          },
+          {
+            "command_file": "after.txt",
+            "direct_exit_code": 0,
+            "exact_tool_request_count": 0,
+            "public_command_event_count": 1,
+            "tool_exit_code": null,
+            "shell_login_cwd_match": false,
+            "tool_output_matches_direct": false,
+            "call_id": null,
+            "tool_output_truncated": null,
+            "status": "unknown"
+          }
+        ],
+        "diagnostic_parse_unknown_count": 0,
+        "diagnostic_raw_sha256": "b64856c4399adbda621f69963d255d5c7242c4915ca873d8a3d4d9e060a7c185",
+        "scope": "Two exact synthetic commands only; not an attestation of all runtime calls or model identity."
+      },
+      "observed_command_follow_up": [
+        {
+          "exit_code": 0,
+          "command_drift": "one terminal newline added by model; exact observed argv rerun directly",
+          "output_matches_tool": true,
+          "stderr_empty": true
+        },
+        {
+          "exit_code": 0,
+          "command_drift": "one terminal newline added by model; exact observed argv rerun directly",
+          "output_matches_tool": true,
+          "stderr_empty": true
+        }
+      ]
+    },
+    {
+      "alias": "baseline-after",
+      "cli_version": "codex-cli 0.156.0",
+      "cli_sha256": "6b42db4d33fd53516162bd76a0e2d07e0567287c44e036d4e4c06cb555a432f9",
+      "cli_sha256_after": "6b42db4d33fd53516162bd76a0e2d07e0567287c44e036d4e4c06cb555a432f9",
+      "shell_sha256": "3fbc7a357f2cc9ee90b975f76c27744c19a051a5922fe59c5c8a3ac7a981ffc5",
+      "requested_model": "gpt-6-luna",
+      "requested_effort": "low",
+      "sandbox": "read-only",
+      "prompt_sha256": "a633a79dac5d02decb3c2d17e004e07b3296ede0e7d233d42601c4cee6a09caa",
+      "command_sha256": "e1c9dc8850fd86574b886af07965786e177e8b1dbd4b5d59f3de6c84a8918c9e",
+      "model_cli_exit_code": 0,
+      "analysis": {
+        "stream": {
+          "stream_integrity": "valid",
+          "turn_status": "completed",
+          "tool_coverage": "not_assessed",
+          "errors": [],
+          "raw_event_sha256": "a570b62c80965af374209c03a8ddc9c9e21b21e8e111bff785316e47804ae003",
+          "raw_event_bytes": 1644,
+          "raw_event_line_count": 7,
+          "final_sha256": "28dfaf4619c3d11316f1da77b435c23277494225e159eb03189497560173d54c",
+          "final_bytes": 553,
+          "terminal_event_types": [
+            "turn.completed"
+          ],
+          "agent_message_count": 2,
+          "command_event_count": 1,
+          "usage": {
+            "input_tokens": 63476,
+            "cached_input_tokens": 47360,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 433,
+            "reasoning_output_tokens": 0
+          }
+        },
+        "checks": [
+          {
+            "command_file": "command.txt",
+            "direct_exit_code": 1,
+            "exact_tool_request_count": 1,
+            "public_command_event_count": 0,
+            "tool_exit_code": 1,
+            "shell_login_cwd_match": true,
+            "tool_output_matches_direct": true,
+            "call_id": "exec-f785484d-e41d-4263-8e9c-3bee9cc8217f",
+            "tool_output_truncated": false,
+            "status": "confirmed_event_gap"
+          },
+          {
+            "command_file": "after.txt",
+            "direct_exit_code": 0,
+            "exact_tool_request_count": 1,
+            "public_command_event_count": 1,
+            "tool_exit_code": 0,
+            "shell_login_cwd_match": true,
+            "tool_output_matches_direct": true,
+            "call_id": "exec-859dfdb7-6c26-4ae8-b76c-3f6b056cc68f",
+            "tool_output_truncated": false,
+            "status": "consistent"
+          }
+        ],
+        "diagnostic_parse_unknown_count": 0,
+        "diagnostic_raw_sha256": "47ffd4e4631eb91f5b4c8e2d9cca8694660e78c16d1206aaf01a0e6e32c9978d",
+        "scope": "Two exact synthetic commands only; not an attestation of all runtime calls or model identity."
+      }
+    }
+  ],
+  "historical_stream_reinspection": [
+    {
+      "run": "A-default",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "76271e97613e3620d690bdeb2fc483fe8f2769ef674ea25f709a4dc97ed4fc43",
+      "raw_event_bytes": 24492,
+      "raw_event_line_count": 39,
+      "final_sha256": "407f9b98569f05ec129df9c1c6977d8bd0ebcee393cfa7a26b5d4b4016990b43",
+      "final_bytes": 1216,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 4,
+      "command_event_count": 14,
+      "usage": {
+        "input_tokens": 225870,
+        "cached_input_tokens": 195072,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 6613,
+        "reasoning_output_tokens": 2390
+      }
+    },
+    {
+      "run": "E-default",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "87cd024b7457f17908737a9ae2dcbeae57953dfd71272fc033aec82473ffa25a",
+      "raw_event_bytes": 9550,
+      "raw_event_line_count": 15,
+      "final_sha256": "7cbfb7a9259d8b9d30b6793fecb8172ee00afd1b9a0f03a50706ae41ab271244",
+      "final_bytes": 2430,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 2,
+      "command_event_count": 5,
+      "usage": {
+        "input_tokens": 116611,
+        "cached_input_tokens": 88576,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 3106,
+        "reasoning_output_tokens": 1629
+      }
+    },
+    {
+      "run": "E-lower",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "e68296bcd9df58d2c11c6852d4cc9131534394dfdddb3ae509b8cc61f15122bb",
+      "raw_event_bytes": 8572,
+      "raw_event_line_count": 15,
+      "final_sha256": "4f939c153ac419813c10803d28c7f1d64c4e1ddac2542de7964862cb6ff7fd9c",
+      "final_bytes": 2164,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 2,
+      "command_event_count": 5,
+      "usage": {
+        "input_tokens": 114309,
+        "cached_input_tokens": 97792,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1382,
+        "reasoning_output_tokens": 0
+      }
+    },
+    {
+      "run": "R-default",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "6de9ba15168306dbdc48d8c88ec1412334c9c6570353586feb2be7aa16270dc8",
+      "raw_event_bytes": 4597,
+      "raw_event_line_count": 10,
+      "final_sha256": "d84a4090a05bc7d533f546403017481ef8a95f58f85954d044afaf9fb0e6afbd",
+      "final_bytes": 138,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 3,
+      "command_event_count": 2,
+      "usage": {
+        "input_tokens": 62709,
+        "cached_input_tokens": 47360,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 498,
+        "reasoning_output_tokens": 0
+      }
+    },
+    {
+      "run": "S-default",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "f95c9cacf203b264126fbd85001458d74da0ca21d5becda5d082f35332d0d8d1",
+      "raw_event_bytes": 22871,
+      "raw_event_line_count": 40,
+      "final_sha256": "3231fc30d2940f0f2ad7cb050aaad41bf9d797d412bc56db79efe68a21d02c3b",
+      "final_bytes": 1322,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 1,
+      "command_event_count": 16,
+      "usage": {
+        "input_tokens": 174261,
+        "cached_input_tokens": 146560,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4386,
+        "reasoning_output_tokens": 1773
+      }
+    },
+    {
+      "run": "S-lower",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "af6595ea93b7c011261f6ef35aa3b620e029c946f82c2fa1aa55161df5e801be",
+      "raw_event_bytes": 19998,
+      "raw_event_line_count": 22,
+      "final_sha256": "5a17ea506b559e8ef7d3e84a11b1f4ab4151ab2b83318792ddb53494626f4193",
+      "final_bytes": 1016,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 1,
+      "command_event_count": 7,
+      "usage": {
+        "input_tokens": 220175,
+        "cached_input_tokens": 189696,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2428,
+        "reasoning_output_tokens": 676
+      }
+    },
+    {
+      "run": "V-default",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "705ce7118de5c26907ef1f7bfa70eb3e10b68d4177de54b9c9ff800b8ad7e260",
+      "raw_event_bytes": 23849,
+      "raw_event_line_count": 34,
+      "final_sha256": "194244cdf6b128c233eddb8947983d80baac89d912cf5fa0795bf4a612746764",
+      "final_bytes": 2551,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 1,
+      "command_event_count": 15,
+      "usage": {
+        "input_tokens": 187937,
+        "cached_input_tokens": 160256,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2959,
+        "reasoning_output_tokens": 690
+      }
+    },
+    {
+      "run": "V-review-guidance",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "2851a2cbf990070fd34cd06bfa6e6bcede04bba9e3982831b17421ee27ef5f68",
+      "raw_event_bytes": 21767,
+      "raw_event_line_count": 18,
+      "final_sha256": "035879a5dd2a750e050f6ecfc749eb0e99a88337ae26f340a25c61047de1da71",
+      "final_bytes": 2034,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 1,
+      "command_event_count": 7,
+      "usage": {
+        "input_tokens": 147572,
+        "cached_input_tokens": 119808,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2528,
+        "reasoning_output_tokens": 727
+      }
+    },
+    {
+      "run": "V-review-high",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "eed5398cda517a8e35bea88aee681af02a2e5592c8b1192cb86fad631926a566",
+      "raw_event_bytes": 23899,
+      "raw_event_line_count": 14,
+      "final_sha256": "d18b23ee3516d56a63de1d24d46e31e3214e0ca0a5bceaba4d376f9cfcb7ec39",
+      "final_bytes": 3501,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 1,
+      "command_event_count": 5,
+      "usage": {
+        "input_tokens": 134315,
+        "cached_input_tokens": 115200,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 3447,
+        "reasoning_output_tokens": 1531
+      }
+    },
+    {
+      "run": "W-default",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "20551d4c3a80f5be735b720c09bbf8f2912f5a0be8387573b2597422d5005db7",
+      "raw_event_bytes": 14202,
+      "raw_event_line_count": 16,
+      "final_sha256": "ef8b8b6422403e99f596e8484223ad767ce77c8fc2784258c4ef4d36d972b25f",
+      "final_bytes": 912,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 1,
+      "command_event_count": 5,
+      "usage": {
+        "input_tokens": 103131,
+        "cached_input_tokens": 80640,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1192,
+        "reasoning_output_tokens": 240
+      }
+    },
+    {
+      "run": "v1-astra-xhigh",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "43f1f3480ac82fc4e53eb695266e9d1e85706f7b34a1faa2b4f57813943eb266",
+      "raw_event_bytes": 48446,
+      "raw_event_line_count": 24,
+      "final_sha256": "6be1144f59d4a0bc7a9752df43eb21c91997258f16c0b87c707c81262c69cfdc",
+      "final_bytes": 3736,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 1,
+      "command_event_count": 10,
+      "usage": {
+        "input_tokens": 216073,
+        "cached_input_tokens": 189824,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 5327,
+        "reasoning_output_tokens": 2475
+      }
+    },
+    {
+      "run": "v1-sol-high",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "e2b7e645b6625fbd32d0d419d6505c68eb2312573adf0de4300a4d4cf3392bb5",
+      "raw_event_bytes": 52315,
+      "raw_event_line_count": 58,
+      "final_sha256": "3b0c7e2fd3ac26e64f0818961f4b2b66857a949d1e1770b02dae8979dfe47262",
+      "final_bytes": 2736,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 1,
+      "command_event_count": 27,
+      "usage": {
+        "input_tokens": 253768,
+        "cached_input_tokens": 218624,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4959,
+        "reasoning_output_tokens": 2600
+      }
+    },
+    {
+      "run": "v1-sol-medium",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "89aaabccde5a8fda9638edc33b778670d378dbaf3cf2dcf8874fc2476400e970",
+      "raw_event_bytes": 48269,
+      "raw_event_line_count": 48,
+      "final_sha256": "48bb4b1497c918d557673bf80fbff9d1e0d67c3d0854769a6025904c61cea2f4",
+      "final_bytes": 2844,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 1,
+      "command_event_count": 22,
+      "usage": {
+        "input_tokens": 268786,
+        "cached_input_tokens": 240128,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 3953,
+        "reasoning_output_tokens": 1070
+      }
+    },
+    {
+      "run": "v2-astra-xhigh",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "eb70f20efc985626e7d6557e8a0a76955c644f7f2c3f4c37634ce0ff898dea56",
+      "raw_event_bytes": 68176,
+      "raw_event_line_count": 30,
+      "final_sha256": "15677bf3dc21253392ff52694d5f487ba0b868d0f167919ebdac5dd165dc6d49",
+      "final_bytes": 5084,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 1,
+      "command_event_count": 13,
+      "usage": {
+        "input_tokens": 304737,
+        "cached_input_tokens": 245120,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 10169,
+        "reasoning_output_tokens": 4974
+      }
+    },
+    {
+      "run": "v2-sol-high",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "6baa9ac9255db1149481658e71056e60f240dfd0880667f4af5dde1d63224484",
+      "raw_event_bytes": 39558,
+      "raw_event_line_count": 28,
+      "final_sha256": "418d0571816ae0b23a4842deffb43ebc8c3240a2e71221abc7b91407082b57d1",
+      "final_bytes": 3260,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 1,
+      "command_event_count": 12,
+      "usage": {
+        "input_tokens": 255174,
+        "cached_input_tokens": 227328,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7062,
+        "reasoning_output_tokens": 3629
+      }
+    },
+    {
+      "run": "v2-sol-medium",
+      "stream_integrity": "valid",
+      "turn_status": "completed",
+      "tool_coverage": "not_assessed",
+      "errors": [],
+      "raw_event_sha256": "c2fd97125d9a90620d6225d6ee5d903a605485880d9c9a79a512aced3f2b974b",
+      "raw_event_bytes": 31237,
+      "raw_event_line_count": 26,
+      "final_sha256": "ebbb2dd8e28dec89f0cf3cc6bb8295bd87f1b7d1770c6dacdc3256b62348e93a",
+      "final_bytes": 2006,
+      "terminal_event_types": [
+        "turn.completed"
+      ],
+      "agent_message_count": 1,
+      "command_event_count": 11,
+      "usage": {
+        "input_tokens": 143223,
+        "cached_input_tokens": 114176,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 3563,
+        "reasoning_output_tokens": 1325
+      }
+    }
+  ]
+}

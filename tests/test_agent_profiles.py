@@ -43,6 +43,7 @@ class AgentProfileValidationTests(unittest.TestCase):
                 "loop_v2a_balanced_worker",
                 "loop_v2a_senior_worker",
                 "loop_v2a_advanced_worker",
+                "loop_v2a_routine_reviewer",
                 "loop_v2a_deep_reviewer",
                 "loop_v2a_exceptional_researcher",
                 "loop_v2a_security_reviewer",
@@ -70,14 +71,56 @@ class AgentProfileValidationTests(unittest.TestCase):
                 self.assertNotIn("skills", profile)
 
         senior = entries["loop_v2a_senior_worker"]["runtime_mapping"]
-        self.assertEqual("gpt-5.6-terra", senior["model"])
+        self.assertEqual("gpt-6-sol", senior["model"])
         self.assertEqual("high", senior["reasoning_effort"])
         published = {
             (entry["runtime_mapping"]["model"], entry["runtime_mapping"]["reasoning_effort"])
             for entry in entries.values()
         }
-        self.assertNotIn(("gpt-5.6-terra", "xhigh"), published)
-        self.assertNotIn(("gpt-5.6-luna", "max"), published)
+        self.assertFalse(any(model.startswith(("gpt-5.5", "gpt-5.6")) for model, _ in published))
+
+        candidates = {
+            name: (entry["candidate_for"], entry["runtime_mapping"]["model"], entry["runtime_mapping"]["reasoning_effort"])
+            for name, entry in entries.items()
+            if entry.get("candidate_for")
+        }
+        self.assertEqual(
+            {
+                "loop_v2a_astra_advanced_worker": ("loop_v2a_advanced_worker", "gpt-6-astra", "xhigh"),
+                "loop_v2a_astra_deep_reviewer": ("loop_v2a_deep_reviewer", "gpt-6-astra", "xhigh"),
+                "loop_v2a_astra_security_reviewer": ("loop_v2a_security_reviewer", "gpt-6-astra", "xhigh"),
+            },
+            candidates,
+        )
+        routine = entries["loop_v2a_routine_reviewer"]
+        self.assertIsNone(routine.get("candidate_for"))
+        self.assertEqual(("deep-reviewer", "everyday", "read-only"), (
+            routine["capability_class"], routine["capability_tier"], routine["sandbox_expectation"]
+        ))
+        self.assertEqual(
+            ("gpt-6-sol", "high"),
+            (
+                routine["runtime_mapping"]["model"],
+                routine["runtime_mapping"]["reasoning_effort"],
+            ),
+        )
+
+    def test_astra_profile_bytes_remain_frozen(self) -> None:
+        expected = {
+            "loop_v2a_deep_reviewer.toml": "59e0b5f013fc5e05331c0ae022a97bda7a6f245cd1e69e6f48affbcaabecc6c1",
+            "loop_v2a_exceptional_researcher.toml": "5cae673a335105f261177384e9fea423d2f7a5a6af6409895b963add476b4078",
+            "loop_v2a_security_reviewer.toml": "6df48c493a8d67e5dbdc152978e2fc6b886e5b7649e7534c9ad1b79dffe599f9",
+            "loop_v2a_astra_advanced_worker.toml": "5c1d2f065ca7e2ef623e32630f56d22be9519ae6384db7981c3c75b0b677b951",
+            "loop_v2a_astra_deep_reviewer.toml": "ae4abf594e7bf5f1f76ee7cadc4a1fc9fbd49b2831342aa25f00a41e12c019d0",
+            "loop_v2a_astra_security_reviewer.toml": "e8aea0bb6d950c5c5a44c8e93f0cfb3ee2492601bccecbfdd2f46b3794eb30bf",
+        }
+        self.assertEqual(
+            expected,
+            {
+                name: hashlib.sha256((PROFILE_DIR / name).read_bytes()).hexdigest()
+                for name in expected
+            },
+        )
 
     def test_cli_default_validation_is_dependency_free(self) -> None:
         result = subprocess.run(
@@ -211,7 +254,7 @@ class AgentProfileValidationTests(unittest.TestCase):
             shutil.copytree(PROFILE_DIR, destination)
             report = VALIDATOR.detect_collisions(PROFILE_DIR, [destination], destination)
             self.assertEqual([], report["conflicts"])
-            self.assertEqual(11, len(report["expected_instances"]))
+            self.assertEqual(12, len(report["expected_instances"]))
 
     def test_destination_modified_instance_and_cross_root_match_are_conflicts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -251,8 +294,8 @@ class AgentProfileValidationTests(unittest.TestCase):
             facts.write_text(
                 json.dumps({
                     "custom_agent_surface": "available",
-                    "available_models": ["gpt-5.6-terra"],
-                    "reasoning_efforts": {"gpt-5.6-terra": ["low"]},
+                    "available_models": ["gpt-6-luna"],
+                    "reasoning_efforts": {"gpt-6-luna": ["high"]},
                 }),
                 encoding="utf-8",
             )
@@ -291,7 +334,7 @@ class AgentProfileValidationTests(unittest.TestCase):
                 encoding="utf-8",
             )
             _, entries = VALIDATOR.validate(destination, REGISTRY)
-            self.assertEqual(11, len(entries))
+            self.assertEqual(12, len(entries))
             changed = destination / "loop_v2a_balanced_worker.toml"
             changed.write_text(
                 changed.read_text(encoding="utf-8").replace(
@@ -339,13 +382,14 @@ class AgentProfilePreflightTests(unittest.TestCase):
             with self.subTest(candidate=candidate):
                 entry, original = self.entries[candidate], self.entries[baseline]
                 effort = entry["runtime_mapping"]["reasoning_effort"]
-                facts = self.ready_facts("gpt-6-astra", effort)
+                model = entry["runtime_mapping"]["model"]
+                facts = self.ready_facts(model, effort)
                 facts["parent_sandbox_mode"] = "workspace-write"
                 self.assertEqual("candidate-not-qualified-or-disabled", self.check(candidate, facts)["state"])
                 facts["enabled_candidates"] = {candidate: {"profile_sha256": entry["_profile_digest"], "quality_evidence": "synthetic-only"}}
                 facts["model_surface"] = {"runtime": "api", "source": "synthetic-only", "observed_on": "2026-09-05"}
                 self.assertEqual("ready", self.check(candidate, facts)["state"])
-                facts["reasoning_efforts"]["gpt-6-astra"] = ["low"]
+                facts["reasoning_efforts"][model] = ["none"]
                 self.assertEqual("unavailable", self.check(candidate, facts)["state"])
                 # An unqualified role may fall back to real canonical baseline bytes,
                 # even when both roles now use the same model/effort. Qualification
@@ -367,9 +411,63 @@ class AgentProfilePreflightTests(unittest.TestCase):
                 self.assertEqual(baseline, result["selected"])
                 self.assertEqual("same-capability-profile", result["fallback_tier"])
 
+    def test_routine_reviewer_baseline_cannot_satisfy_deep_minimum(self) -> None:
+        name = "loop_v2a_routine_reviewer"
+        entry = self.entries[name]
+        facts = self.ready_facts("gpt-6-sol", "high")
+        routine = VALIDATOR.preflight(
+            entry,
+            facts,
+            [],
+            trusted_profiles=self.entries,
+            fallback_required_tier="everyday",
+        )
+        self.assertEqual("ready", routine["decision"])
+        for scenario in (
+            "ci-release-gate", "installer-change", "cross-module-contract",
+            "security-change", "data-change",
+        ):
+            with self.subTest(scenario=scenario):
+                deep = VALIDATOR.preflight(
+                    entry,
+                    facts,
+                    [],
+                    trusted_profiles=self.entries,
+                    fallback_required_tier="deep",
+                )
+                self.assertEqual("profile-tier-insufficient", deep["state"])
+                self.assertNotEqual("ready", deep["decision"])
+
+    def test_routine_reviewer_is_v2_only_and_not_a_v1_same_class_fallback(self) -> None:
+        routine = self.entries["loop_v2a_routine_reviewer"]
+        facts = self.ready_facts("gpt-6-sol", "high")
+        direct = VALIDATOR.preflight(
+            routine, facts, [], enforce_tier=False, trusted_profiles=self.entries
+        )
+        self.assertEqual("v2-only-profile", direct["state"])
+        self.assertNotEqual("ready", direct["decision"])
+
+        deep = self.entries["loop_v2a_deep_reviewer"]
+        facts["compatible_profiles"] = {"deep-reviewer": [{
+            "name": routine["name"],
+            "profile_path": str(PROFILE_DIR / routine["file"]),
+            "capability_class": routine["capability_class"],
+            "capability_tier": routine["capability_tier"],
+            "config_valid": True,
+            "model_available": True,
+            "reasoning_available": True,
+            "sandbox": routine["sandbox_expectation"],
+            "allowed_workflow_scope": routine["allowed_workflow_scope"],
+            "profile_digest": routine["_profile_digest"],
+        }]}
+        result = VALIDATOR.preflight(
+            deep, facts, [], enforce_tier=False, trusted_profiles=self.entries
+        )
+        self.assertNotEqual("loop_v2a_routine_reviewer", result.get("selected"))
+
     def test_ready_when_profile_mapping_is_available(self) -> None:
         result = self.check(
-            "loop_v2a_fast_explorer", self.ready_facts("gpt-5.6-terra", "low")
+            "loop_v2a_fast_explorer", self.ready_facts("gpt-6-luna", "high")
         )
         self.assertEqual(("ready", "ready"), (result["state"], result["decision"]))
 
@@ -377,8 +475,8 @@ class AgentProfilePreflightTests(unittest.TestCase):
         role = "loop_v2a_balanced_worker"
         base = {
             "custom_agent_surface": "available",
-            "available_models": ["gpt-5.6-terra"],
-            "reasoning_efforts": {"gpt-5.6-terra": ["medium"]},
+            "available_models": ["gpt-6-sol"],
+            "reasoning_efforts": {"gpt-6-sol": ["medium"]},
             "parent_default": self.capability_evidence("balanced-worker", "everyday"),
         }
         unknown = self.check(role, base)

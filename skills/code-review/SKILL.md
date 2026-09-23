@@ -27,11 +27,16 @@ Use this skill for routine review of working-tree, branch, or patch changes.
 - Findings lead the response.
 - Prioritize correctness, regressions, missing tests, contract risk, security baseline issues, and operational risk.
 - Do not declare readiness only because tests pass.
+- Bind run/skip/fail and failure causes to observed tool evidence. Separate static
+  inference and unverified claims; never describe an unexecuted command as run.
 
 ## Workflow
 
 1. Inspect repo instructions and current state.
-2. Identify the diff range or changed files.
+2. Identify the diff range or changed files. Before the first review, route changes
+   affecting CI admission, installers, security, data or cross-module contracts
+   to `code-review-deep` (or the applicable security review); use the verified
+   model/effort for that risk without waiting for a failed retry.
 3. Read the changed code and relevant call sites.
 4. Check tests or evidence that cover the changed behavior.
 5. Report findings with file and line evidence.
@@ -39,7 +44,7 @@ Use this skill for routine review of working-tree, branch, or patch changes.
 依變更風險檢查受影響的完整執行路徑與上下游契約；必要時包含有效配置、
 實際執行環境、失敗／部分成功、重試及恢復情境。專案特定矩陣採按需 overlay，
 不要求每個小改動執行全套情境。
-受影響路徑涉及外部命令、環境傳遞、輸入 loader/builder 或產物
+受影響路徑涉及 parser／外部函式庫、外部命令、環境傳遞、輸入 loader/builder 或產物
 producer/consumer 時，按需讀取 [整合接點參考表](references/integration-boundaries.md)，
 只採用相關列；單純局部變更不額外載入。
 找到第一個問題後繼續其餘獨立檢查，集中回報已查證 findings；受阻或缺少環境的

@@ -35,7 +35,10 @@ Use this skill when routine review is not enough because the change has material
 
 Follow `code-review`, then add adversarial checks for edge cases, stale assumptions, rollback gaps, and evidence quality.
 
-涉及外部命令、環境傳遞、輸入 loader/builder 或產物 producer/consumer 時，
+首次 triage 即按風險選擇深入審查及合適的已驗證模型／effort；CI 放行、installer、
+安全、資料與跨模組契約不等待重試門檻。零 findings 不等於已證明沒有漏報。
+
+涉及 parser／外部函式庫、外部命令、環境傳遞、輸入 loader/builder 或產物 producer/consumer 時，
 依 `code-review` 的 [整合接點參考表](../code-review/references/integration-boundaries.md)
 檢查相關邊界；不因 deep review 一律擴成全套環境矩陣。
 

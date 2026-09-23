@@ -43,7 +43,8 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 - Issue #153 evolves that same V2a routing contract with event-driven
   coordination guidance and a Terra-high `senior` tier between routine
   Terra-medium and multi-trigger Sol-medium implementation. Terra-xhigh and
-  Luna-max remain eval-first candidates. The `loop_v2a_` namespace remains a
+  Luna-max were eval-first candidates in that release. Current mappings are in
+  [GPT-6 routing](gpt6-cost-routing.md). The `loop_v2a_` namespace remains a
   protocol identifier independent of the V3 improvement program.
 - Milestone continuation adds a shared upper-layer workflow for checking bounded milestone task state across repeated invocations, selecting the next ready task, routing through existing delivery and continuation workflows, and keeping runtime scheduling outside the skill.
 
@@ -62,6 +63,13 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 - Keep human gates explicit whenever a workflow approaches publication, release, merge, destructive action, or material risk.
 
 ## Backlog
+
+- Issue #292 將日常 profiles 遷移至 GPT-6 Sol／Luna，新增 everyday-only routine
+  reviewer；deep/security/exceptional 保留 Astra，歷史 receipt 分版本驗證。
+  [成本與路由說明](gpt6-cost-routing.md) 區分官方費率、runtime 可用性與有界
+  CLI 驗收；技能按階段載入必要規則。這次明確範圍的採用決策不宣稱 Issue #223
+  的 ME-01／ME-02／ME-03 已全部完成，實際安裝／設定仍是獨立操作。
+
 
 - Issue #223 separates optional workflow references from Skill entry points,
   makes exceptional research routing preference explicit, and preserves
@@ -329,7 +337,7 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   reduces unchanged-state polling and worker progress chatter, prefers
   ownership-based packets over one-agent-per-discipline fan-out, and inserts a
   Terra-high `senior` tier before multi-trigger Sol-medium implementation.
-  Terra-xhigh and Luna-max remain eval-only; existing `loop_v2a_` identities
+  Terra-xhigh and Luna-max were eval-only in that release; existing `loop_v2a_` identities
   remain stable because that namespace names the routing protocol rather than
   the repository or V3 program version.
 - Issue #155 owns the v0.15.1 runtime compatibility patch. It preserves the

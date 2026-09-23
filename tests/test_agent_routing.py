@@ -279,7 +279,7 @@ class ClassificationTests(unittest.TestCase):
         self.assertEqual("deep-reviewer", result["capability_class"])
         self.assertEqual("read-only", routing.CLASS_SANDBOX[result["capability_class"]])
         self.assertEqual("everyday", result["capability_tier"])
-        self.assertEqual("loop_v2a_deep_reviewer", result["selected_role"])
+        self.assertEqual("loop_v2a_routine_reviewer", result["selected_role"])
 
     def test_v2_review_complexity_and_hard_triggers_preserve_deep_requirement(self):
         for changes in (
@@ -299,6 +299,29 @@ class ClassificationTests(unittest.TestCase):
                     "security-reviewer" if changes.get("security_data_migration_public_contract_risk") == "security"
                     else "deep-reviewer", result["capability_class"],
                 )
+
+    def test_v2_named_first_review_risks_map_to_deep_despite_cost_bias(self):
+        scenarios = {
+            "ci-release-gate": "high",
+            "installer-change": "public-contract",
+            "cross-module-contract": "public-contract",
+            "security-change": "security",
+            "data-change": "data",
+        }
+        for scenario, risk in scenarios.items():
+            with self.subTest(scenario=scenario):
+                result = routing.classify_task(
+                    factors(
+                        write_blast_radius="none",
+                        latency_sensitivity="high",
+                        cost_token_sensitivity="high",
+                        security_data_migration_public_contract_risk=risk,
+                    ),
+                    contract_version=2,
+                    workload_kind="review",
+                )
+                self.assertEqual("deep", result["capability_tier"])
+                self.assertNotEqual("loop_v2a_routine_reviewer", result["selected_role"])
 
     def test_v2_exceptional_requires_explicit_quality_preference(self):
         task_factors = factors(
@@ -792,6 +815,62 @@ class RouteTests(unittest.TestCase):
         )
         self.assertEqual("sequential-current-session", receipt["fallback"])
 
+    def test_v1_cannot_route_high_risk_work_to_v2_only_routine_profile(self):
+        runtime = {
+            "custom_agents_available": True,
+            "profiles": [
+                profile(
+                    "loop_v2a_routine_reviewer", "deep-reviewer", "everyday"
+                )
+            ],
+            "parent_default_available": False,
+            "parent_capability_classes": [],
+            "current_session_capability_classes": [],
+            "sequential_available": False,
+        }
+        for risk in ("data", "high", "public-contract"):
+            with self.subTest(risk=risk):
+                receipt = route(
+                    factors(
+                        security_data_migration_public_contract_risk=risk,
+                        write_blast_radius="none",
+                    ),
+                    runtime,
+                )
+                self.assertEqual("stop-for-human-gate", receipt["execution_mode"])
+                self.assertNotEqual(
+                    "loop_v2a_routine_reviewer", receipt["runtime_mapping"]
+                )
+                self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+
+    def test_v1_receipt_validator_rejects_v2_only_runtime_mapping(self):
+        receipt = route(
+            factors(
+                security_data_migration_public_contract_risk="data",
+                write_blast_radius="none",
+            ),
+            {
+                "custom_agents_available": True,
+                "profiles": [profile("loop_v2a_deep_reviewer", "deep-reviewer")],
+                "parent_capability_classes": [],
+                "current_session_capability_classes": [],
+            },
+        )
+        self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+        receipt["runtime_mapping"] = "loop_v2a_routine_reviewer"
+        receipt["config_evidence"]["name"] = "loop_v2a_routine_reviewer"
+        receipt["config_evidence_sha256"] = routing._digest(
+            receipt["config_evidence"]
+        )
+        receipt["route_receipt_id"] = routing._digest({
+            key: value
+            for key, value in receipt.items()
+            if key != "route_receipt_id"
+        })
+        result = routing.validate_route_receipt(receipt)
+        self.assertFalse(result["valid"])
+        self.assertIn("execution-mode-semantic-mismatch", result["issues"])
+
     def test_route_only_binds_authority_and_scope(self):
         receipt = route()
         self.assertNotIn("authority", receipt)
@@ -931,6 +1010,9 @@ class RouteTests(unittest.TestCase):
 class HistoricalReceiptTests(unittest.TestCase):
     def setUp(self):
         self.fixture = json.loads((ROOT / "tests" / "fixtures" / "agent-routing-legacy-v2.json").read_text())
+        self.revisioned_fixture = json.loads(
+            (ROOT / "tests" / "fixtures" / "agent-routing-v2-2026-09-06.json").read_text()
+        )
 
     def test_frozen_legacy_route_worker_and_disposition_still_validate(self):
         self.assertEqual("43e50dd4280c580276f5bd2383c056bd47931e0d", self.fixture["source_revision"])
@@ -967,6 +1049,63 @@ class HistoricalReceiptTests(unittest.TestCase):
                         receipt["classification"]["quality_preference"] = None if mutation == "null-quality" else "quality-first"
                     receipt["route_receipt_id"] = routing._digest({key: value for key, value in receipt.items() if key != "route_receipt_id"})
                     self.assertFalse(routing.validate_route_receipt(receipt)["valid"])
+
+    def test_legacy_v2_receipts_reject_malformed_workload_kind(self):
+        for workload_kind in ("unknown-review", None, [], 17):
+            with self.subTest(workload_kind=workload_kind):
+                receipt = copy.deepcopy(self.fixture["cases"][0]["route_receipt"])
+                receipt["classification"]["workload_kind"] = workload_kind
+                receipt["route_receipt_id"] = routing._digest({
+                    key: value
+                    for key, value in receipt.items()
+                    if key != "route_receipt_id"
+                })
+                result = routing.validate_route_receipt(receipt)
+                self.assertFalse(result["valid"])
+                self.assertIn("classification-semantic-mismatch", result["issues"])
+
+    def test_frozen_previous_policy_receipts_still_validate_without_rewrite(self):
+        self.assertEqual("v2-2026-09-06", self.revisioned_fixture["routing_policy_revision"])
+        self.assertEqual(3, len(self.revisioned_fixture["cases"]))
+        original = copy.deepcopy(self.revisioned_fixture)
+        for case_id, case in self.revisioned_fixture["cases"].items():
+            with self.subTest(case=case_id):
+                receipt = case
+                self.assertEqual("v2-2026-09-06", receipt["routing_policy_revision"])
+                self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+        routine = self.revisioned_fixture["cases"]["routine-review"]
+        self.assertEqual("loop_v2a_deep_reviewer", routine["selected_role"])
+        self.assertEqual("everyday", routine["required_capability_tier"])
+        self.assertEqual("deep", routine["selected_capability_tier"])
+        self.assertTrue(routine["cost_degraded"])
+        self.assertEqual(original, self.revisioned_fixture)
+
+    def test_revisioned_v2_receipts_reject_unknown_workload_and_quality(self):
+        receipts = (
+            route_v2("review", factors(write_blast_radius="none")),
+            self.revisioned_fixture["cases"]["routine-review"],
+        )
+        for receipt, field, value in (
+            (receipt, field, value)
+            for receipt in receipts
+            for field, value in (
+                ("workload_kind", "unknown-review"),
+                ("quality_preference", "unknown-quality"),
+            )
+        ):
+            with self.subTest(
+                revision=receipt["routing_policy_revision"], field=field
+            ):
+                malformed = copy.deepcopy(receipt)
+                malformed["classification"][field] = value
+                malformed["route_receipt_id"] = routing._digest({
+                    key: item
+                    for key, item in malformed.items()
+                    if key != "route_receipt_id"
+                })
+                result = routing.validate_route_receipt(malformed)
+                self.assertFalse(result["valid"])
+                self.assertIn("classification-semantic-mismatch", result["issues"])
 
     def test_current_builder_binds_fixed_policy_and_rejects_policy_selection(self):
         receipt = route_v2("review", factors(write_blast_radius="none"))

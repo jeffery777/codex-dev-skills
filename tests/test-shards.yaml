@@ -102,6 +102,8 @@ shards:
     modules:
       - tests.test_code_mode_tool_policy
       - tests.test_github_control_plane_policy
+      - tests.test_issue_292_event_evidence
+      - tests.test_issue_292_heredoc_rca
       - tests.test_policy_loading
       - tests.test_pr_issue_link
       - tests.test_project_python

@@ -7,12 +7,14 @@ description: Run an explicitly requested durable loop, or continue an existing r
 
 Runtime compatibility: shared
 
-Code Mode tool orchestration: follow
+Code Mode tool orchestration: before batching, concurrent calls, or substantial
+tool-driven orchestration, read
 `../../policies/code-mode-tool-orchestration-policy.md` relative to this skill in source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
 after filesystem installation.
 
-Context continuity: follow
+Context continuity: when unfinished review/fix rounds reach the configured
+threshold, context drift appears, or fresh rollover is assessed, read
 `../../policies/context-continuity-policy.md` relative to this skill in source
 or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/context-continuity-policy.md`

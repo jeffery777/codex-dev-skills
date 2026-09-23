@@ -2805,8 +2805,8 @@ class CliTests(unittest.TestCase):
                     {
                         "custom_agent_surface": "available",
                         "parent_sandbox_mode": "workspace-write",
-                        "available_models": ["gpt-5.6-terra"],
-                        "reasoning_efforts": {"gpt-5.6-terra": ["medium"]},
+                        "available_models": ["gpt-6-sol"],
+                        "reasoning_efforts": {"gpt-6-sol": ["medium"]},
                     }
                 ),
                 encoding="utf-8",
@@ -2965,8 +2965,8 @@ class CliTests(unittest.TestCase):
                     {
                         "custom_agent_surface": "available",
                         "parent_sandbox_mode": "workspace-write",
-                        "available_models": ["gpt-5.6-terra"],
-                        "reasoning_efforts": {"gpt-5.6-terra": ["medium"]},
+                        "available_models": ["gpt-6-sol"],
+                        "reasoning_efforts": {"gpt-6-sol": ["medium"]},
                     }
                 ),
                 encoding="utf-8",
@@ -3296,8 +3296,8 @@ class CliTests(unittest.TestCase):
                     {
                         "custom_agent_surface": "available",
                         "parent_sandbox_mode": "workspace-write",
-                        "available_models": ["gpt-5.6-sol"],
-                        "reasoning_efforts": {"gpt-5.6-sol": ["medium"]},
+                        "available_models": ["gpt-6-sol"],
+                        "reasoning_efforts": {"gpt-6-sol": ["medium"]},
                     }
                 ),
                 encoding="utf-8",
@@ -3335,24 +3335,26 @@ class CliTests(unittest.TestCase):
             payload["contract_version"] = 2
             payload["task"]["workload_kind"] = "review"
             payload["task"]["factors"]["write_blast_radius"] = "none"
-            payload["profile_preflight"]["role"] = "loop_v2a_deep_reviewer"
+            payload["profile_preflight"]["role"] = "loop_v2a_routine_reviewer"
             path, facts = root / "route.json", root / "facts.json"
             path.write_text(json.dumps(document), encoding="utf-8")
             facts.write_text(json.dumps({
                 "custom_agent_surface": "available",
                 "parent_sandbox_mode": "read-only",
-                "available_models": ["gpt-6-astra"],
-                "reasoning_efforts": {"gpt-6-astra": ["xhigh"]},
+                "available_models": ["gpt-6-sol", "gpt-6-astra"],
+                "reasoning_efforts": {
+                    "gpt-6-sol": ["high"], "gpt-6-astra": ["xhigh"],
+                },
             }), encoding="utf-8")
             output = StringIO()
             with redirect_stdout(output):
                 self.assertEqual(0, loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts)]))
             receipt = json.loads(output.getvalue())["route_receipt"]
-            self.assertEqual("loop_v2a_deep_reviewer", receipt["runtime_mapping"])
+            self.assertEqual("loop_v2a_routine_reviewer", receipt["runtime_mapping"])
             self.assertEqual("everyday", receipt["required_capability_tier"])
-            self.assertEqual("deep", receipt["selected_capability_tier"])
-            self.assertEqual("same-class-higher-tier", receipt["fallback"])
-            self.assertTrue(receipt["cost_degraded"])
+            self.assertEqual("everyday", receipt["selected_capability_tier"])
+            self.assertEqual("none", receipt["fallback"])
+            self.assertFalse(receipt["cost_degraded"])
             self.assertEqual("read-only", receipt["config_evidence"]["sandbox"])
 
             payload["profile_preflight"]["role"] = "loop_v2a_balanced_worker"
@@ -3361,6 +3363,34 @@ class CliTests(unittest.TestCase):
             with redirect_stdout(output):
                 self.assertEqual(1, loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts)]))
             self.assertIn("must match the deterministic", output.getvalue())
+
+    def test_agent_route_v1_rejects_routine_reviewer_for_high_risk_work(self):
+        for risk in ("data", "high", "public-contract"):
+            with self.subTest(risk=risk), tempfile.TemporaryDirectory() as directory:
+                root = pathlib.Path(directory)
+                document = agent_route_document({"branch": "fixture", "head_sha": "a" * 40})
+                payload = document["agent_route"]
+                payload["task"]["factors"].update(
+                    security_data_migration_public_contract_risk=risk,
+                    write_blast_radius="none",
+                )
+                payload["profile_preflight"]["role"] = "loop_v2a_routine_reviewer"
+                path, facts = root / "route.json", root / "facts.json"
+                path.write_text(json.dumps(document), encoding="utf-8")
+                facts.write_text(json.dumps({
+                    "custom_agent_surface": "available",
+                    "parent_sandbox_mode": "read-only",
+                    "available_models": ["gpt-6-sol"],
+                    "reasoning_efforts": {"gpt-6-sol": ["high"]},
+                }), encoding="utf-8")
+                output = StringIO()
+                with redirect_stdout(output):
+                    code = loopctl.main([
+                        "agent-route", str(path), "--runtime-facts", str(facts)
+                    ])
+                self.assertEqual(2, code, output.getvalue())
+                self.assertNotIn('"status": "routed"', output.getvalue())
+                self.assertIn('"state": "v2-only-profile"', output.getvalue())
 
     def test_agent_route_v2_routine_review_uses_task_tier_for_current_session_fallback(self):
         for surface in ("available", "unavailable", "unknown"):
@@ -3372,7 +3402,7 @@ class CliTests(unittest.TestCase):
                     payload["contract_version"] = 2
                     payload["task"]["workload_kind"] = "review"
                     payload["task"]["factors"]["write_blast_radius"] = "none"
-                    payload["profile_preflight"]["role"] = "loop_v2a_deep_reviewer"
+                    payload["profile_preflight"]["role"] = "loop_v2a_routine_reviewer"
                     current_facts = {
                         "custom_agent_surface": surface,
                         "available_models": [],
@@ -3397,7 +3427,7 @@ class CliTests(unittest.TestCase):
                     self.assertEqual("everyday", receipt["required_capability_tier"])
                     self.assertEqual("everyday", receipt["selected_capability_tier"])
                     self.assertEqual(execution, receipt["execution_mode"])
-                    self.assertEqual("deep", result["profile_preflight"]["capability_tier"])
+                    self.assertEqual("everyday", result["profile_preflight"]["capability_tier"])
 
     def test_agent_route_v2_review_fallback_retains_class_tier_and_collision_guards(self):
         cases = (
@@ -3417,7 +3447,11 @@ class CliTests(unittest.TestCase):
                 payload["task"]["workload_kind"] = "review"
                 payload["task"]["factors"]["write_blast_radius"] = "none"
                 payload["task"]["factors"]["security_data_migration_public_contract_risk"] = risk
-                role = "loop_v2a_security_reviewer" if risk == "security" else "loop_v2a_deep_reviewer"
+                role = (
+                    "loop_v2a_security_reviewer" if risk == "security"
+                    else "loop_v2a_routine_reviewer" if risk == "routine"
+                    else "loop_v2a_deep_reviewer"
+                )
                 payload["profile_preflight"]["role"] = role
                 if collision:
                     destination = root / "installed"
@@ -3450,7 +3484,7 @@ class CliTests(unittest.TestCase):
                 if collision:
                     self.assertEqual("profile-name-collision", result["profile_preflight"]["reason"])
 
-    def test_agent_route_v2_routine_review_missing_installed_profile_retains_safe_fallback(self):
+    def test_agent_route_v2_missing_routine_uses_installed_deep_profile(self):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
             document = agent_route_document({"branch": "fixture", "head_sha": "a" * 40})
@@ -3458,31 +3492,36 @@ class CliTests(unittest.TestCase):
             payload["contract_version"] = 2
             payload["task"]["workload_kind"] = "review"
             payload["task"]["factors"]["write_blast_radius"] = "none"
-            payload["profile_preflight"]["role"] = "loop_v2a_deep_reviewer"
-            destination = root / "empty-installed"
+            payload["profile_preflight"]["role"] = "loop_v2a_routine_reviewer"
+            destination = root / "installed"
             destination.mkdir()
+            shutil.copy2(
+                ROOT / "agent-profiles" / "loop_v2a_deep_reviewer.toml",
+                destination,
+            )
             payload["profile_preflight"]["destination_root"] = str(destination)
             path, facts = root / "route.json", root / "facts.json"
             path.write_text(json.dumps(document), encoding="utf-8")
             facts.write_text(json.dumps({
                 "custom_agent_surface": "available",
                 "parent_sandbox_mode": "read-only",
-                "available_models": ["gpt-6-astra"],
-                "reasoning_efforts": {"gpt-6-astra": ["xhigh"]},
-                "enabled_candidates": {},
-                "parent_default": {
-                    "available": True,
-                    "capability_classes": ["deep-reviewer"],
-                    "capability_tiers": {"deep-reviewer": ["everyday"]},
+                "available_models": ["gpt-6-sol", "gpt-6-astra"],
+                "reasoning_efforts": {
+                    "gpt-6-sol": ["high"], "gpt-6-astra": ["xhigh"],
                 },
+                "enabled_candidates": {},
+                "parent_default": {"available": False},
                 "sequential": {"available": False},
             }), encoding="utf-8")
             output = StringIO()
             with redirect_stdout(output):
                 self.assertEqual(0, loopctl.main(["agent-route", str(path), "--runtime-facts", str(facts)]))
             receipt = json.loads(output.getvalue())["route_receipt"]
-            self.assertEqual("parent-default", receipt["execution_mode"])
-            self.assertEqual("everyday", receipt["selected_capability_tier"])
+            self.assertEqual("custom-agent-profile", receipt["execution_mode"])
+            self.assertEqual("loop_v2a_deep_reviewer", receipt["runtime_mapping"])
+            self.assertEqual("deep", receipt["selected_capability_tier"])
+            self.assertEqual("same-class-higher-tier", receipt["fallback"])
+            self.assertTrue(receipt["cost_degraded"])
 
     def test_agent_route_coupled_review_reports_final_gate_or_sequential_route(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -3491,7 +3530,7 @@ class CliTests(unittest.TestCase):
             payload = document["agent_route"]
             payload["task"]["factors"].update(
                 write_blast_radius="none", independence_parallelizability="coupled")
-            payload["profile_preflight"]["role"] = "loop_v2a_deep_reviewer"
+            payload["profile_preflight"]["role"] = "loop_v2a_routine_reviewer"
             path, facts_path = root / "route.json", root / "facts.json"
             for version in (1, 2):
                 payload["contract_version"] = version
@@ -3577,7 +3616,7 @@ class CliTests(unittest.TestCase):
             payload["contract_version"] = 2
             payload["task"]["workload_kind"] = "review"
             payload["task"]["factors"]["write_blast_radius"] = "none"
-            payload["profile_preflight"]["role"] = "loop_v2a_deep_reviewer"
+            payload["profile_preflight"]["role"] = "loop_v2a_routine_reviewer"
             # Only the exceptional role is installed. Model/effort now match
             # the deep role, so model availability alone cannot isolate tiers.
             destination = root / "installed"
@@ -3617,8 +3656,8 @@ class CliTests(unittest.TestCase):
             digest = hashlib.sha256((ROOT / "agent-profiles" / (candidate + ".toml")).read_bytes()).hexdigest()
             facts = {
                 "custom_agent_surface": "available", "parent_sandbox_mode": "workspace-write",
-                "available_models": ["gpt-5.6-sol", "gpt-6-astra"],
-                "reasoning_efforts": {"gpt-5.6-sol": ["medium"], "gpt-6-astra": ["xhigh"]},
+                "available_models": ["gpt-6-sol", "gpt-6-astra"],
+                "reasoning_efforts": {"gpt-6-sol": ["medium"], "gpt-6-astra": ["xhigh"]},
                 "model_surface": {"runtime": "desktop", "source": "synthetic fixture", "observed_on": "2026-09-05"},
                 "enabled_candidates": {candidate: {"profile_sha256": digest, "quality_evidence": "synthetic-fixture-not-model-measurement"}},
             }
@@ -3687,7 +3726,7 @@ class CliTests(unittest.TestCase):
                     elif mutation == "override":
                         f["enabled_candidates"] = {}
                     elif mutation == "availability":
-                        f["available_models"] = ["gpt-5.6-sol"]
+                        f["available_models"] = ["gpt-6-sol"]
                     else:
                         f["parent_sandbox_mode"] = "read-only"
                     code, result = run(f, d)
@@ -3709,7 +3748,7 @@ class CliTests(unittest.TestCase):
                     if mutation == "disabled":
                         f.pop("enabled_candidates")
                     elif mutation == "unavailable":
-                        f["available_models"] = ["gpt-5.6-sol"]
+                        f["available_models"] = ["gpt-6-sol"]
                     elif mutation == "unsupported":
                         f["reasoning_efforts"]["gpt-6-astra"] = ["low"]
                     elif mutation == "unknown":
@@ -3762,6 +3801,66 @@ class CliTests(unittest.TestCase):
             d["agent_route"]["task"].pop("workload_kind")
             self.assertEqual(1, run(facts, d)[0])
 
+    def test_gpt6_baselines_select_exact_runtime_roles(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            route_path, facts_path = root / "route.json", root / "facts.json"
+            cases = (
+                ("loop_v2a_mechanical_reader", "mechanical", {
+                    "ambiguity": "low", "reasoning_depth": "shallow",
+                    "code_context_volume": "small",
+                    "security_data_migration_public_contract_risk": "none",
+                    "write_blast_radius": "none", "verification_burden": "low",
+                }),
+                ("loop_v2a_fast_explorer", "exploration", {
+                    "security_data_migration_public_contract_risk": "none",
+                    "write_blast_radius": "none",
+                }),
+                ("loop_v2a_balanced_worker", "implementation", {}),
+                ("loop_v2a_senior_worker", "implementation", {
+                    "reasoning_depth": "deep",
+                }),
+                ("loop_v2a_advanced_worker", "implementation", {
+                    "reasoning_depth": "deep", "code_context_volume": "large",
+                    "verification_burden": "high",
+                }),
+                ("loop_v2a_routine_reviewer", "review", {
+                    "security_data_migration_public_contract_risk": "routine",
+                    "write_blast_radius": "none",
+                }),
+            )
+            facts_path.write_text(json.dumps({
+                "custom_agent_surface": "available",
+                "parent_sandbox_mode": "workspace-write",
+                "available_models": ["gpt-6-luna", "gpt-6-sol"],
+                "reasoning_efforts": {
+                    "gpt-6-luna": ["low", "high"],
+                    "gpt-6-sol": ["medium", "high"],
+                },
+                "enabled_candidates": {},
+            }), encoding="utf-8")
+            for expected_role, workload, updates in cases:
+                with self.subTest(role=expected_role):
+                    document = agent_route_document({"branch": "fixture", "head_sha": "a" * 40})
+                    payload = document["agent_route"]
+                    payload["contract_version"] = 2
+                    payload["task"]["workload_kind"] = workload
+                    payload["task"]["factors"].update(updates)
+                    payload["profile_preflight"]["role"] = expected_role
+                    route_path.write_text(json.dumps(document), encoding="utf-8")
+                    output = StringIO()
+                    with redirect_stdout(output):
+                        code = loopctl.main([
+                            "agent-route", str(route_path),
+                            "--runtime-facts", str(facts_path),
+                        ])
+                    result = json.loads(output.getvalue())
+                    self.assertEqual(0, code, result)
+                    self.assertEqual(expected_role, result["route_receipt"]["runtime_mapping"])
+                    self.assertEqual(
+                        "baseline", result["route_receipt"]["profile_selection"]["policy"]
+                    )
+
     def test_agent_route_v2_automatically_uses_installed_higher_tier(self):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
@@ -3788,8 +3887,8 @@ class CliTests(unittest.TestCase):
                 json.dumps(
                     {
                         "custom_agent_surface": "available",
-                        "available_models": ["gpt-5.6-terra"],
-                        "reasoning_efforts": {"gpt-5.6-terra": ["low"]},
+                        "available_models": ["gpt-6-luna"],
+                        "reasoning_efforts": {"gpt-6-luna": ["high"]},
                     }
                 ),
                 encoding="utf-8",

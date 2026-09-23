@@ -1,0 +1,268 @@
+{
+  "cases": {
+    "advanced-implementation": {
+      "assigned_scope": [
+        "skills/loop-engineering/scripts/agent_routing.py"
+      ],
+      "assigned_scope_sha256": "a511c32cf84b241c750ca45b53a277153a10333c4e937a63ed6e71b715efde3b",
+      "authority_contract_sha256": "97f4031f879d794db7b3953663b3bf296b331693a7667431b7405d541d3efa65",
+      "authority_invariants": {
+        "profile_cannot_expand_permissions": true,
+        "profile_cannot_expand_scope": true,
+        "profile_cannot_satisfy_human_gates": true,
+        "worker_receipt_cannot_prove_completion": true
+      },
+      "classification": {
+        "capability_class": "balanced-worker",
+        "capability_tier": "advanced",
+        "factor_effects": {
+          "ambiguity": "no-escalation",
+          "code_context_volume": "fast-read-tie-break",
+          "cost_token_sensitivity": "neutral",
+          "independence_parallelizability": "delegation-eligible",
+          "latency_sensitivity": "neutral",
+          "reasoning_depth": "deep-capability-trigger",
+          "security_data_migration_public_contract_risk": "no-hard-trigger",
+          "verification_burden": "deep-capability-trigger",
+          "write_blast_radius": "bounded-write"
+        },
+        "factors": {
+          "ambiguity": "moderate",
+          "code_context_volume": "large",
+          "cost_token_sensitivity": "medium",
+          "independence_parallelizability": "bounded",
+          "latency_sensitivity": "medium",
+          "reasoning_depth": "deep",
+          "security_data_migration_public_contract_risk": "routine",
+          "verification_burden": "high",
+          "write_blast_radius": "bounded"
+        },
+        "hard_triggered": false,
+        "reasons": [
+          "multi-trigger-advanced-bounded-implementation"
+        ],
+        "selected_role": "loop_v2a_advanced_worker",
+        "workload_kind": "implementation"
+      },
+      "config_evidence": {
+        "allowed_workflow_scope": [
+          "bounded-edit",
+          "focused-verify",
+          "read",
+          "report-receipt",
+          "search"
+        ],
+        "capability_class": "balanced-worker",
+        "capability_tier": "advanced",
+        "config_valid": true,
+        "model_available": true,
+        "name": "loop-v2a-advanced",
+        "parent_sandbox_mode": "workspace-write",
+        "profile_digest": "2205742803f72f772265b0280b4159f6ba245a733c652bd0536490ebb8fd381d",
+        "reasoning_available": true,
+        "sandbox": "workspace-write",
+        "sandbox_non_widening": true
+      },
+      "config_evidence_sha256": "54657a44f2e78598cac6162d212be4905501f40f08d89144912e77b2bc0a3493",
+      "contract_version": 2,
+      "cost_degraded": false,
+      "degraded": false,
+      "execution_mode": "custom-agent-profile",
+      "fallback": "none",
+      "ownership": {
+        "disjoint": true,
+        "owner": "worker-p2"
+      },
+      "required_capability_tier": "advanced",
+      "route_receipt_id": "bd7dd530a1dc73f1801888a9721dd4469ef1626f777792c683c4142ff73df8e9",
+      "routing_constraint": "bounded-work-allows-delegation",
+      "routing_policy_revision": "v2-2026-09-06",
+      "runtime_mapping": "loop-v2a-advanced",
+      "selected_capability_tier": "advanced",
+      "selected_profile_digest": "2205742803f72f772265b0280b4159f6ba245a733c652bd0536490ebb8fd381d",
+      "selected_role": "loop_v2a_advanced_worker",
+      "source_revision": {
+        "head_sha": "def456"
+      },
+      "source_revision_sha256": "d4a427cd1009c14c1e6375bb494a9215e4d828269456fb56d5719e5e0ab1303a",
+      "task_id": "P2"
+    },
+    "exceptional-research": {
+      "assigned_scope": [
+        "skills/loop-engineering/scripts/agent_routing.py"
+      ],
+      "assigned_scope_sha256": "a511c32cf84b241c750ca45b53a277153a10333c4e937a63ed6e71b715efde3b",
+      "authority_contract_sha256": "97f4031f879d794db7b3953663b3bf296b331693a7667431b7405d541d3efa65",
+      "authority_invariants": {
+        "profile_cannot_expand_permissions": true,
+        "profile_cannot_expand_scope": true,
+        "profile_cannot_satisfy_human_gates": true,
+        "worker_receipt_cannot_prove_completion": true
+      },
+      "classification": {
+        "capability_class": "deep-reviewer",
+        "capability_tier": "exceptional",
+        "factor_effects": {
+          "ambiguity": "deep-capability-trigger",
+          "code_context_volume": "fast-read-tie-break",
+          "cost_token_sensitivity": "neutral",
+          "independence_parallelizability": "delegation-eligible",
+          "latency_sensitivity": "neutral",
+          "reasoning_depth": "deep-capability-trigger",
+          "security_data_migration_public_contract_risk": "no-hard-trigger",
+          "verification_burden": "no-escalation",
+          "write_blast_radius": "read-only-fast-eligible"
+        },
+        "factors": {
+          "ambiguity": "high",
+          "code_context_volume": "large",
+          "cost_token_sensitivity": "medium",
+          "independence_parallelizability": "bounded",
+          "latency_sensitivity": "medium",
+          "reasoning_depth": "deep",
+          "security_data_migration_public_contract_risk": "routine",
+          "verification_burden": "medium",
+          "write_blast_radius": "none"
+        },
+        "hard_triggered": false,
+        "quality_preference": "quality-first",
+        "reasons": [
+          "explicit-research-orchestration",
+          "quality-first-exceptional-trigger"
+        ],
+        "selected_role": "loop_v2a_exceptional_researcher",
+        "workload_kind": "research-orchestration"
+      },
+      "config_evidence": {
+        "allowed_workflow_scope": [
+          "read",
+          "report-findings",
+          "report-receipt",
+          "search",
+          "verify"
+        ],
+        "capability_class": "deep-reviewer",
+        "capability_tier": "exceptional",
+        "config_valid": true,
+        "model_available": true,
+        "name": "loop-v2a-exceptional",
+        "parent_sandbox_mode": "workspace-write",
+        "profile_digest": "3a79f29cb0a62f58c59e771d24724100be561194d6a842e01faead9123c676e5",
+        "reasoning_available": true,
+        "sandbox": "read-only",
+        "sandbox_non_widening": true
+      },
+      "config_evidence_sha256": "9d3afd04a4ddbe3d4b4e242d70447db710c938a337fb66b96ee231aff443da8a",
+      "contract_version": 2,
+      "cost_degraded": false,
+      "degraded": false,
+      "execution_mode": "custom-agent-profile",
+      "fallback": "none",
+      "ownership": {
+        "disjoint": true,
+        "owner": "worker-p2"
+      },
+      "required_capability_tier": "exceptional",
+      "route_receipt_id": "6d3b9ab029f98587b1280811713fccbead3871da88950114b02c883560cea7a2",
+      "routing_constraint": "bounded-work-allows-delegation",
+      "routing_policy_revision": "v2-2026-09-06",
+      "runtime_mapping": "loop-v2a-exceptional",
+      "selected_capability_tier": "exceptional",
+      "selected_profile_digest": "3a79f29cb0a62f58c59e771d24724100be561194d6a842e01faead9123c676e5",
+      "selected_role": "loop_v2a_exceptional_researcher",
+      "source_revision": {
+        "head_sha": "def456"
+      },
+      "source_revision_sha256": "d4a427cd1009c14c1e6375bb494a9215e4d828269456fb56d5719e5e0ab1303a",
+      "task_id": "P2"
+    },
+    "routine-review": {
+      "assigned_scope": [
+        "skills/loop-engineering/scripts/agent_routing.py"
+      ],
+      "assigned_scope_sha256": "a511c32cf84b241c750ca45b53a277153a10333c4e937a63ed6e71b715efde3b",
+      "authority_contract_sha256": "97f4031f879d794db7b3953663b3bf296b331693a7667431b7405d541d3efa65",
+      "authority_invariants": {
+        "profile_cannot_expand_permissions": true,
+        "profile_cannot_expand_scope": true,
+        "profile_cannot_satisfy_human_gates": true,
+        "worker_receipt_cannot_prove_completion": true
+      },
+      "classification": {
+        "capability_class": "deep-reviewer",
+        "capability_tier": "everyday",
+        "factor_effects": {
+          "ambiguity": "no-escalation",
+          "code_context_volume": "neutral",
+          "cost_token_sensitivity": "neutral",
+          "independence_parallelizability": "delegation-eligible",
+          "latency_sensitivity": "neutral",
+          "reasoning_depth": "no-escalation",
+          "security_data_migration_public_contract_risk": "no-hard-trigger",
+          "verification_burden": "no-escalation",
+          "write_blast_radius": "read-only-fast-eligible"
+        },
+        "factors": {
+          "ambiguity": "moderate",
+          "code_context_volume": "medium",
+          "cost_token_sensitivity": "medium",
+          "independence_parallelizability": "bounded",
+          "latency_sensitivity": "medium",
+          "reasoning_depth": "balanced",
+          "security_data_migration_public_contract_risk": "none",
+          "verification_burden": "medium",
+          "write_blast_radius": "none"
+        },
+        "hard_triggered": false,
+        "reasons": [
+          "routine-read-only-review"
+        ],
+        "selected_role": "loop_v2a_deep_reviewer",
+        "workload_kind": "review"
+      },
+      "config_evidence": {
+        "allowed_workflow_scope": [
+          "read",
+          "report-findings",
+          "report-receipt",
+          "search",
+          "verify"
+        ],
+        "capability_class": "deep-reviewer",
+        "capability_tier": "deep",
+        "config_valid": true,
+        "model_available": true,
+        "name": "loop-v2a-deep",
+        "parent_sandbox_mode": "workspace-write",
+        "profile_digest": "fa6c05129bff294929c68be12928153c6cb6faf831fe5fbfc6f178d75db114a5",
+        "reasoning_available": true,
+        "sandbox": "read-only",
+        "sandbox_non_widening": true
+      },
+      "config_evidence_sha256": "87844531fe36c820c472cb97760df62dd2ef3521e88474c39aafdbb7b438acad",
+      "contract_version": 2,
+      "cost_degraded": true,
+      "degraded": false,
+      "execution_mode": "custom-agent-profile",
+      "fallback": "same-class-higher-tier",
+      "ownership": {
+        "disjoint": true,
+        "owner": "worker-p2"
+      },
+      "required_capability_tier": "everyday",
+      "route_receipt_id": "a261d3925ef1f2a92b2f511d2c2168ec654d12cf8970eb71438f7ad1ea7636ed",
+      "routing_constraint": "bounded-work-allows-delegation",
+      "routing_policy_revision": "v2-2026-09-06",
+      "runtime_mapping": "loop-v2a-deep",
+      "selected_capability_tier": "deep",
+      "selected_profile_digest": "fa6c05129bff294929c68be12928153c6cb6faf831fe5fbfc6f178d75db114a5",
+      "selected_role": "loop_v2a_deep_reviewer",
+      "source_revision": {
+        "head_sha": "def456"
+      },
+      "source_revision_sha256": "d4a427cd1009c14c1e6375bb494a9215e4d828269456fb56d5719e5e0ab1303a",
+      "task_id": "P2"
+    }
+  },
+  "routing_policy_revision": "v2-2026-09-06"
+}

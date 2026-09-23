@@ -13,17 +13,28 @@ radius, latency/cost sensitivity, independence, and verification burden; do not
 select a capability from the task name alone. Model/profile routing never
 changes permissions, scope, human gates, or completion criteria.
 
-New V2 receipts bind `routing_policy_revision: "v2-2026-09-06"`. Production
-routing always emits that revision. Historical V2 receipts without it retain
-their original validation semantics; preserve their bytes and digests, and
-construct new assignments from current facts. A legacy receipt is historical
-evidence, not permission to request a new legacy-policy route. Unknown revisions
-or mixed legacy/new fields are rejected; V1 remains unchanged.
+First-review triage maps actual CI admission, installer and cross-module
+contract impact to existing `high` or `public-contract` risk factors; security
+and data retain their hard triggers. Select deep review immediately when these
+risks apply, even with no observed retry failure. Do not add risk from the task
+title alone. A no-findings report may miss a defect: representative independent
+evaluation complements routing and retry reassessment.
+
+New V2 receipts bind `routing_policy_revision: "v2-2026-09-23"`. Validators
+accept frozen V2 receipts without a revision and `v2-2026-09-06` receipts only
+as historical evidence: preserve their bytes and digests, do not recompute or
+rewrite them, and never dispatch from their old installed digest. Construct new
+assignments from current facts. Unknown revisions or mixed legacy/new fields
+are rejected; V1 remains unchanged.
 
 Keep class and tier separate. Class binds sandbox and workflow scope; tier
 binds the minimum model/reasoning need. Select the lowest verified same-class
 profile that meets the tier. The legacy `cost_degraded` receipt field denotes
 higher-tier selection, not measured token usage, expense, latency, or savings.
+When more than one qualified Astra candidate satisfies the same baseline class
+and scope, select the lowest sufficient tier, then use stable registry order
+within that tier; it is not a price ordering. Candidate availability does not
+establish qualification.
 Never silently substitute a lower tier. Classify the required tier as exceptional
 only for research/orchestration with at least three quality triggers and explicit
 quality-first preference. Set V2 `task.quality_preference: quality-first` only
@@ -35,10 +46,19 @@ this field. Routine
 read-only review can request the everyday tier while retaining the reviewer
 class. If no qualified everyday reviewer is available, use the verified
 sufficient same-class baseline; classification alone installs no new profile.
-Use `senior` Terra-high for complex but bounded implementation before
-escalating multi-trigger advanced work to Sol-medium. Terra-xhigh and Luna-max
-remain eval-only candidates, not installed default profiles; add either only
-after representative comparisons show a distinct quality/usage advantage.
+Use GPT-6 Sol-high `senior` for complex but bounded implementation before
+escalating multi-trigger advanced work to GPT-6 Sol-medium. The nine baseline
+profiles are GPT-6 Luna-low mechanical, GPT-6 Luna-high explorer, GPT-6
+Sol-medium balanced/advanced, GPT-6 Sol-high senior, GPT-6 Sol-high
+read-only `routine_reviewer`, and Astra-xhigh deep/security/exceptional.
+`routine_reviewer` remains in the deep-reviewer class for everyday review only;
+it cannot satisfy deep or security work. GPT-6 baselines are current named
+profiles, not candidate-store opt-ins. The three Astra candidates remain
+default-off and require the complete qualification procedure. Other GPT-6 effort settings
+remain eval-only alternatives, not installed default profiles.
+Parent/default and sequential fallbacks remain model-neutral evidence paths;
+they do not prove a selected model is not 5.x. The named GPT-6 profiles
+themselves do not contain 5.x mappings.
 
 Custom-agent `sandbox_mode` is a technical runtime constraint distinct from
 workflow authorization. Preflight must compare it with current-session

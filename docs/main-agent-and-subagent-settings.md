@@ -49,18 +49,26 @@ in the destination runtime; an override argument cannot be assumed to replace
 a custom file's fixed mapping. See the official
 [subagent settings](https://learn.chatgpt.com/docs/agent-configuration/subagents#choosing-models-and-reasoning).
 
-The repository baseline profiles are Luna-low mechanical, Terra-low explorer,
-Terra-medium everyday, Terra-high senior, Sol-medium advanced and Astra-xhigh
-deep/security/exceptional. The three separate Astra-xhigh candidates remain
-qualified opt-ins. Issue #249 records the maintainer's configuration adoption
-and preserves previous values as comments; it does not prove task-quality or
-weekly-usage superiority. See [the decision and rollback record](astra-xhigh-profile-decision.md).
-Installed bytes and runtime selection still require verification. Main-agent
-selection does not qualify child profiles or bypass their gates.
+Issue #292 adopts GPT-6 for everyday baseline profiles: Luna-low mechanical,
+Luna-high explorer, Sol-medium balanced and advanced, and Sol-high senior. It
+adds the read-only Sol-high `routine_reviewer` baseline for the
+deep-reviewer class's everyday tier. Deep, security and exceptional baselines
+remain Astra-xhigh. The three separate Astra-xhigh candidates remain qualified
+opt-ins with exact scope, runtime, profile digest and current installed-byte
+requirements. `routine_reviewer` is not a candidate and never satisfies deep
+or security review. This is a user-adopted routing decision, not a claim that
+this repository measured GPT-6 quality, cost, or task success superiority.
 
-Routine read-only review now has an everyday capability requirement, but the
-existing registry still supplies the read-only deep profile as its sufficient
-fallback. No cheaper reviewer has been activated by that classification change.
+The source change does not install profiles, create or enable a qualification
+store, or change personal configuration. Confirm current installed bytes and
+destination runtime before delegation. Issue #249's dated Astra configuration
+record remains historical; see [the decision and rollback record](astra-xhigh-profile-decision.md).
+
+Routine read-only review now has an everyday capability requirement and uses
+the dedicated read-only GPT-6 Sol-high baseline. Parent/default and sequential
+fallbacks remain model-neutral evidence paths; their use does not prove which
+model the runtime selected. The named GPT-6 baseline profiles themselves do
+not contain a 5.x mapping.
 Exceptional selection, including fallback, requires quality-first
 research/orchestration with the classifier's multiple complexity triggers.
 Tier rank and `cost_degraded` are policy labels, not usage or price measurements.
@@ -71,6 +79,10 @@ discovers approved user qualification records. Users do not repeat candidate
 JSON or qualification-path arguments. This is scoped workflow automation, not
 a global conversation hook. See [automatic qualification loading](agent-qualification-autoload.md)
 for one-time adoption, revocation and the separate current-runtime checks.
+When multiple qualified Astra candidates meet the same baseline and scope,
+select the lowest sufficient tier and preserve stable registry order within that
+tier; the order is not price evidence. See [GPT-6 cost routing](gpt6-cost-routing.md)
+for the point-in-time migration and rate context; it does not affect router logic.
 
 ## Escalation is a workflow decision
 
@@ -84,11 +96,11 @@ Reassess after a reasonable correction fails the same core check, when a root
 cause cannot be explained, or when authoritative evidence conflicts. Update the
 bounded task assessment and select a supported, sufficient profile. Examples:
 
-- Clear extraction or mechanical work starts at Luna-low. Ambiguous cross-file
-  reasoning should move to an appropriate Terra or stronger role.
-- Exploration starts at Terra-low; ordinary implementation at Terra-medium;
-  complex bounded implementation may require the Terra-high senior tier.
-- Advanced work starts at Sol-medium or a qualified Astra-xhigh candidate.
+- Clear extraction or mechanical work starts at GPT-6 Luna-low. Ambiguous
+  cross-file reasoning should move to an appropriate GPT-6 Sol or stronger role.
+- Exploration starts at GPT-6 Luna-high; ordinary implementation at GPT-6
+  Sol-medium; complex bounded implementation may require GPT-6 Sol-high senior.
+- Advanced work starts at GPT-6 Sol-medium or a qualified Astra-xhigh candidate.
   If deeper reasoning is needed, use an explicitly supported high-effort task
   configuration only where the runtime and workflow permit it. It is not an
   automatic effort-changing controller. The Astra-xhigh implementation candidate
@@ -118,9 +130,10 @@ Composition 與 [Agent Task Brief](../templates/orchestration/agent-task-brief.t
 
 | 角色／既有配置 | 當次 brief 的重點 |
 | --- | --- |
-| Mechanical reader／Luna-low | 有界輸入、明確輸出欄位、缺值處理；非機械語意交回主代理。 |
-| Explorer／Terra-low | 搜尋問題、證據位置、範圍與停止搜尋條件。 |
-| Worker／Terra-medium、Terra-high、Sol-medium | 依分類選角色；指定檔案 ownership、可自行決定的局部細節、行為驗收與必要測試。 |
+| Mechanical reader／GPT-6 Luna-low | 有界輸入、明確輸出欄位、缺值處理；非機械語意交回主代理。 |
+| Explorer／GPT-6 Luna-high | 搜尋問題、證據位置、範圍與停止搜尋條件。 |
+| Worker／GPT-6 Sol-medium、GPT-6 Sol-high | 依分類選角色；指定檔案 ownership、可自行決定的局部細節、行為驗收與必要測試。 |
+| Routine reviewer／GPT-6 Sol-high | 唯讀 everyday review；不得用於 deep/security review 或自行修正。 |
 | Deep/security reviewer／Astra-xhigh | 唯讀、反例與風險邊界、severity／檔案證據、漏測與限制；不得自行修正或合併。 |
 | Exceptional researcher／Astra-xhigh | 仍需 quality-first 與分類條件；列出比較問題、證據衝突及研究停止條件。 |
 | Delivery owner／可選 Astra-high | 拆解、必要委派、結果整合與整體完成；對已授權階段持續推進。 |
@@ -139,17 +152,18 @@ OpenAI 的 [Astra prompting guidance](https://developers.openai.com/api/docs/gui
 ### 配對評估與證據新鮮度
 
 先固定模型／effort、案例、來源版本、工具與權限，比較舊／新提示詞；再固定
-提示詞，比較既有 baseline、Astra 同 effort 與支援的較低 effort。使用隔離
+提示詞，比較 GPT-6 baseline、Astra 同 effort 與支援的較低 effort。提示詞變更
+與模型／effort 遷移分開 A/B 比較。使用隔離
 checkout、實際載入的 instructions／profile digest 與獨立評分。正式 gate
 仍使用已合格的角色，較低 effort 的試驗結果不能直接作高風險驗收。
 
 記錄成功、false completion、越權、漏報 blocker、非必要澄清、重複驗證、
 修正輪數、wall time 與實際 usage；缺值保持 unknown。受影響模型需代表性
-回歸案例，不能只測 Astra 後推論 Luna/Terra/Sol 也改善。案例 oracle 與離線
+回歸案例，不能只測一個模型後推論其他 GPT-6 或 Astra role 也改善。案例 oracle 與離線
 tests 只驗證契約／套件，不能證明模型遵循或速度／成本優勢。
 
 變更 profile 文字會改 digest，不可沿用不相符資格；只改共用 skill/template
 也可能改行為，即使 profile digest 相同仍須檢查受影響 evidence。保留歷史
-pilot 原始紀錄；新增評估須有明確執行範圍與資源額度。本次交付不啟動新評測，
-八個 baseline 與三個 candidates 的角色數量及 qualification schema 保持不變；
-Issue #249 的六個 profile 內容變更與重新評估條件另見決策紀錄。
+pilot 原始紀錄；新增評估須有明確執行範圍與資源額度。Issue #292 的代表性
+CLI acceptance 結果及保留的失敗見 [verification record](loops/issue-292/verification.md)；
+有界案例不等於完整品質 qualification 或成本優越結論。

@@ -42,6 +42,25 @@ the registry. See the repository document
 [Main Agent And Subagent Settings](https://github.com/jeffery777/codex-dev-skills/blob/main/docs/main-agent-and-subagent-settings.md) for locations,
 supported profile defaults and the explicit-override boundary.
 
+### First-review risk and missed findings
+
+Before the first review, classify actual impact. CI admission, installer behavior
+and cross-module contracts map to existing `high` or `public-contract` risk
+factors; security/data/migration use their existing hard triggers. Do not infer
+risk from a task title alone or wait for retry failures before selecting deep
+review and its verified model/effort. Cost and latency preferences cannot lower
+that minimum. Parser or subprocess changes use the applicable integration
+boundary reference; they do not automatically imply every high-risk domain.
+
+A missed defect reported as no findings does not increment an observed-failure
+retry counter. Evaluate reviewer candidates on independent synthetic cases with
+unprimed review prompts, real library/command behavior, defective and correct
+controls, and independent grading. Record missed defects, false positives,
+maintenance suggestions, documented tradeoffs, evidence quality and usage
+separately; finding count is not a quality score. Keep failed attempts and
+unknowns. Small synthetic runs cannot establish production equivalence or
+qualify a lower-tier reviewer for a high-risk route.
+
 ### 返工分類、升級與續行
 
 遇到驗收失敗或反覆修正時才讀本節；正常工作不需建立額外流程或模型矩陣。
@@ -121,25 +140,26 @@ only when the required tier itself is exceptional; preference alone cannot
 escalate ordinary work into that tier. A preference never lowers safety minima.
 
 New V2 receipts bind these rules with
-`routing_policy_revision: "v2-2026-09-06"`, emitted by the production builder.
-Receipts without that field retain historical V2 validation semantics; they do
-not authorize a new route under the retired policy. Unknown revisions and mixed
-legacy/new fields are rejected. Preserve original historical receipt bytes and
-digests; rebuild a current assignment from current facts instead of retroactively
-adding a preference to old evidence. V1 behavior remains unchanged.
+`routing_policy_revision: "v2-2026-09-23"`, emitted by the production builder.
+Validators retain frozen V2 receipts without a revision and the prior
+`v2-2026-09-06` receipts as historical evidence; they are not recomputed,
+rewritten, or authorization for a new dispatch. Unknown revisions and mixed
+legacy/new fields are rejected. Rebuild a current assignment from current facts;
+an old installed digest cannot qualify a new dispatch. V1 behavior remains
+unchanged.
 
 Routine read-only review without high complexity or safety triggers retains the
-`deep-reviewer` class with an `everyday` requirement. Existing runtime profiles
-still resolve it to the read-only deep baseline as a higher-tier fallback; this
-does not activate a cheaper model. Do not substitute a workspace-write worker
-for a reviewer merely to satisfy the lower tier. Qualify any new reviewer
-profile independently before adding it to the registry.
+`deep-reviewer` class with an `everyday` requirement and selects the dedicated
+read-only `routine_reviewer` baseline. It is not a candidate and does not need
+candidate qualification. It never satisfies deep or security work; do not
+substitute a workspace-write worker for a reviewer merely to satisfy the lower
+tier.
 
-A lower tier cannot silently satisfy a higher-tier route. Use Terra-high
-`senior` for complex bounded work
-that exceeds the routine Terra-medium profile, and retain Sol-medium
-`advanced` for multi-trigger advanced work. Terra-xhigh and Luna-max are
-eval-first candidates, not defaults: compare them against the adjacent
+A lower tier cannot silently satisfy a higher-tier route. Use GPT-6 Sol-high
+`senior` for complex bounded work that exceeds the GPT-6 Sol-medium balanced
+profile, and retain GPT-6 Sol-medium `advanced` for multi-trigger advanced
+work. Other GPT-6 effort settings are
+eval-first alternatives, not defaults: compare them against the adjacent
 published profiles on representative quality, correction, latency, and usage
 evidence before adding a permanent route. Do not build a complete
 model-by-effort profile matrix.
@@ -203,16 +223,25 @@ not encode host-private aliases or a permanently current model name into public
 skills. Runtime profiles may map the capability classes above to models whose
 availability has been verified in that environment.
 
-## Qualified Astra Candidates
+## GPT-6 Baselines And Qualified Astra Candidates
 
-Preserve the eight baseline role identities. Issue #249 adopts Astra-xhigh for
-the deep/security and exceptional baseline profiles by explicit maintainer
-configuration choice; the three separate Astra candidates also use xhigh.
-The decision is not a benchmark qualification or a claim of reduced weekly
-usage. Former model/effort values remain TOML comments. See
+Issue #292 makes GPT-6 the everyday baseline: Luna-low mechanical reader,
+Luna-high explorer, Sol-medium balanced worker, Sol-high senior worker and
+Sol-medium advanced worker. It also adds the read-only Sol-high
+`routine_reviewer` baseline for the deep-reviewer class's everyday tier. The
+deep, security and exceptional Astra-xhigh baselines remain unchanged. This is
+a user-adopted routing decision; it does not claim repository-measured quality
+or cost superiority. The nine baseline identities and three separate Astra
+candidates remain distinct.
+
+Issue #249 adopts Astra-xhigh for the deep/security and exceptional baseline
+profiles by explicit maintainer configuration choice; the three separate Astra
+candidates also use xhigh. The decision is not a benchmark qualification or a
+claim of reduced weekly usage. Former model/effort values remain TOML comments. See
 [Astra Xhigh Profile Decision](https://github.com/jeffery777/codex-dev-skills/blob/main/docs/astra-xhigh-profile-decision.md)
 in the repository for the role matrix, evidence limits and
-rollback procedure. The other five baseline mappings remain unchanged.
+rollback procedure. The GPT-6 baseline migration does not alter the dated
+decision record.
 
 Candidate roles remain opt-in evaluation targets, including when a candidate
 and baseline have the same model/effort. Compare representative same-scope work
@@ -231,6 +260,18 @@ Candidates are excluded from implicit fallback searches and from v1 selection.
 The same-class sufficient-tier baseline, evidenced parent/default, evidenced
 sequential, and human-gate order remains unchanged. Model names and opt-in facts
 cannot override sandbox, allowed scope, authority, or high-risk hard triggers.
+
+Current GPT-6 baseline profiles require their current installed bytes and
+runtime support, but not candidate-store opt-in. Native parent/default and
+sequential fallbacks remain model-neutral evidence paths: they do not assert a
+specific non-5.x model. This policy only guarantees that the named GPT-6
+profiles themselves do not select 5.x models. No project-source edit installs
+profiles, changes personal configuration, or enables a qualification store.
+
+Detailed GPT-6 migration and cost-routing guidance is informational in the
+repository document
+[GPT-6 Cost Routing](https://github.com/jeffery777/codex-dev-skills/blob/main/docs/gpt6-cost-routing.md).
+It is not a required installed-skill dependency or a router price input.
 
 An evidence reference is a trusted operator assertion, not proof that the router
 has fetched, graded, or authenticated a benchmark. Offline fixtures cannot supply
