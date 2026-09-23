@@ -309,22 +309,21 @@ worker and verification digest mismatches, alternate profiles, and
 self-attested current-state fields in the receipt document.
 
 Route contract version 2 preserves the four workflow capability classes and
-adds ordered cost-aware tiers: Luna low for mechanical read-only work, Terra
-low for exploration, Terra medium for routine implementation, Terra high for
-complex bounded implementation, Sol medium for multi-trigger advanced bounded
-implementation, Astra xhigh for deep/security review and narrowly
-selected exceptional research. Terra xhigh and Luna max remain eval-only
-candidates rather than installed defaults. Exact model and reasoning
-availability remains current-session runtime evidence. Selection uses the
-lowest sufficient same-class tier, never alphabetical profile order, and never
-allows a lower tier to satisfy a higher-tier route silently.
+adds ordered capability tiers. Current daily profiles use GPT-6 Luna-low for
+mechanical reads, Luna-high for exploration, Sol-medium for balanced/advanced
+implementation, and Sol-high for senior implementation and routine read-only
+review. Astra-xhigh remains the deep/security/exceptional baseline. Tier labels
+are policy minima, not measured model rankings or token-price estimates.
+Exact model and reasoning availability remains current-session runtime evidence.
+Selection uses the lowest sufficient same-class tier and never silently lowers
+high-risk review requirements. The routine reviewer is V2-only; V1 retains its
+existing high-risk routing semantics.
 
-Three separate Astra xhigh profiles are opt-in candidates that require qualification.
-Issue #249 adopts Astra xhigh for the three deep/security/exceptional baseline roles
-by explicit maintainer choice, while preserving their old model/effort values as
-TOML comments. The other five baseline mappings remain unchanged. This is not
-a claim of measured quality or weekly-usage improvement; see the
-[configuration decision and rollback record](docs/astra-xhigh-profile-decision.md).
+Three separate Astra-xhigh profiles remain qualified opt-in candidates. The
+[dated Astra decision](docs/astra-xhigh-profile-decision.md) remains historical;
+[GPT-6 routing](docs/gpt6-cost-routing.md) describes current named profiles and
+the bounded evidence for their adoption. No task-quality or billing superiority
+is inferred from a role name or rate table.
 Installation alone does not enable candidate routing. The explicit version 2
 interface accepts `enabled_candidates` in current-session runtime facts, keyed by candidate name,
 with its exact `profile_sha256` and a non-empty `quality_evidence` reference to
@@ -610,6 +609,15 @@ Run at most two review/fix rounds. Stop before commit, push, PR creation, releas
 ```
 
 The orchestrator uses the smallest shared primitives that fit the current state: `implementation-slice`, `docs-update`, `code-review`, `code-review-deep`, `docs-review`, and merge-readiness workflows when applicable. It uses `code-review-gate` or `docs-review-gate` only for formal commit readiness, PR readiness, merge readiness, or repo-policy blocking decisions. This keeps the same closure model usable in Codex CLI and Codex Desktop.
+
+### GPT-6 Daily Routing
+
+日常 profiles 使用 GPT-6 Sol／Luna；Sol-high routine reviewer 承接 everyday
+審查，deep/security/exceptional 仍使用 Astra。新路由保留獨立 class/tier、sandbox、
+installed bytes 與 authority 檢查；既有 Astra candidates 仍需 qualification。
+詳見 [GPT-6 成本與路由](docs/gpt6-cost-routing.md)。官方費率與有界 CLI 驗收不等於
+實測成本優勢或所有 runtime 的模型資格；歷史 receipts 按各自政策版本驗證。
+技能入口按階段載入必要引用，返工先分類與重評。
 
 ### Loop Engineering
 

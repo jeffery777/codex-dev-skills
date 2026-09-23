@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "variants": {
+    "v1": {
+      "files": {
+        ".python-version": "7c31b8cce5796f169ade750a43dfa5f9fb4c326e90aab5c8e83189b0f6011eb8",
+        "AGENTS.md": "f10610fd5a0dd383be59b5bd53e2964386e206a7b622bbfb467ae2eba17c59a6",
+        "README.md": "8f963187f2fe7650bd6d983ad9c85dcffc5fd2c1aefbf761585ec0220aca58a1",
+        "REVIEW.md": "d737eaca5f0b0b70ee5541b848aaf0be939ca154054baff3e074382e78ed8682",
+        "data/normal.yaml": "f6f4a0de6e29111ec42a52123072a6573d20f59ecc62f60d7df0dd017a13eb14",
+        "data/review-sentinel-malformed.yaml": "b7e7e486734be6a0d2c2addc0ee5679d1abc413b23398bc125c6c0ca17482fd2",
+        "maintenance.py": "0b88e403011978f033771562426c2f2a422abac582c704439c660b9449dad956",
+        "retention.py": "3e648def34d0519f3db624cdc7b7236faf47f901bd390568efae0e49413fec7b",
+        "review_target.py": "a7b2abe2692cfdc2858ab3a921df3dcfe30ba6883bf52f2b6ca211ccc2e242b2",
+        "scripts/project-python": "c35f9e4782e14a8705ba28c83130f5a89a577734818d5fd9eb9d0b25f774db87"
+      }
+    },
+    "v2": {
+      "files": {
+        ".python-version": "7c31b8cce5796f169ade750a43dfa5f9fb4c326e90aab5c8e83189b0f6011eb8",
+        "AGENTS.md": "f10610fd5a0dd383be59b5bd53e2964386e206a7b622bbfb467ae2eba17c59a6",
+        "README.md": "ca6ddcc6c5f4709938558081b88c84d71251bdfdbeec0d58b6182a824374a22b",
+        "REVIEW.md": "d737eaca5f0b0b70ee5541b848aaf0be939ca154054baff3e074382e78ed8682",
+        "data/normal.yaml": "f6f4a0de6e29111ec42a52123072a6573d20f59ecc62f60d7df0dd017a13eb14",
+        "data/review-sentinel-malformed.yaml": "b7e7e486734be6a0d2c2addc0ee5679d1abc413b23398bc125c6c0ca17482fd2",
+        "maintenance.py": "0b88e403011978f033771562426c2f2a422abac582c704439c660b9449dad956",
+        "retention.py": "3e648def34d0519f3db624cdc7b7236faf47f901bd390568efae0e49413fec7b",
+        "review_target.py": "9ae4e749f60302effb7d603c82618fe8ca21912243f0b161d2c2c257fe2f3c3d",
+        "scripts/project-python": "c35f9e4782e14a8705ba28c83130f5a89a577734818d5fd9eb9d0b25f774db87"
+      }
+    }
+  }
+}

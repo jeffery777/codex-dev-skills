@@ -13,7 +13,10 @@ either CLI or Desktop. The user does not need to provide a qualification path,
 1. Read the approved user store at `${CODEX_HOME:-$HOME/.codex}/agent-qualifications.json`
    as data. Evaluate the actual task against the referenced quality evidence;
    set V2 `task.qualification_scope` only for a matching reviewed task type.
-   A matching label alone does not establish quality or authorize a task.
+   A matching label alone does not establish quality or authorize a task. For an
+   Astra candidate, require matching profile digest, installed bytes, runtime,
+   reviewed scope and enabled evidence; availability alone is never
+   qualification.
 2. Gather current model/effort, custom-role, parent sandbox and fallback facts
    from the active public runtime. Identify CLI or Desktop in `model_surface`.
    Do not derive availability from saved qualification records, copied pilot
@@ -33,6 +36,12 @@ route; no safe execution option retains the human gate. Do not manufacture
 qualification to make routing succeed or create a store without adoption
 authorization. This is workflow automation when these skills are invoked,
 not a global Codex hook or an automatic model change in every conversation.
+When several qualified Astra candidates satisfy the same baseline and scope, choose
+the lowest sufficient tier and retain the registry's stable order within that
+tier rather than treating the order as price evidence; normally enable only
+the evaluation-selected candidate for that scope. The GPT-6 `routine_reviewer`
+is a baseline, not a candidate: it needs no candidate-store qualification and
+remains limited to read-only everyday review, never deep or security work.
 The format and trust boundary are in
 `../../../docs/agent-qualification-autoload.md` in source/plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/docs/agent-qualification-autoload.md`

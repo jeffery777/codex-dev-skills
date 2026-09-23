@@ -1,6 +1,6 @@
 name = "loop_v2a_advanced_worker"
 description = "Advanced implementation worker for difficult but bounded cross-file changes with explicit verification."
-model = "gpt-5.6-sol"
+model = "gpt-6-sol"
 model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 developer_instructions = """

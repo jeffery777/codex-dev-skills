@@ -19,7 +19,8 @@ class AgentRoutingContractError(ValueError):
     """Raised when routing inputs or receipts violate the V2a contract."""
 
 
-ROUTING_POLICY_REVISION = "v2-2026-09-06"
+ROUTING_POLICY_REVISION = "v2-2026-09-23"
+PREVIOUS_ROUTING_POLICY_REVISION = "v2-2026-09-06"
 
 
 FACTOR_VALUES = {
@@ -80,10 +81,28 @@ TIER_ROLES = {
     ("balanced-worker", "everyday"): "loop_v2a_balanced_worker",
     ("balanced-worker", "senior"): "loop_v2a_senior_worker",
     ("balanced-worker", "advanced"): "loop_v2a_advanced_worker",
+    ("deep-reviewer", "everyday"): "loop_v2a_routine_reviewer",
     ("deep-reviewer", "deep"): "loop_v2a_deep_reviewer",
     ("deep-reviewer", "exceptional"): "loop_v2a_exceptional_researcher",
     ("security-reviewer", "deep"): "loop_v2a_security_reviewer",
 }
+V2_2026_09_06_TIER_ROLES = {
+    ("fast-read-explorer", "mechanical"): "loop_v2a_mechanical_reader",
+    ("fast-read-explorer", "efficient"): "loop_v2a_fast_explorer",
+    ("balanced-worker", "everyday"): "loop_v2a_balanced_worker",
+    ("balanced-worker", "senior"): "loop_v2a_senior_worker",
+    ("balanced-worker", "advanced"): "loop_v2a_advanced_worker",
+    ("deep-reviewer", "deep"): "loop_v2a_deep_reviewer",
+    ("deep-reviewer", "exceptional"): "loop_v2a_exceptional_researcher",
+    ("security-reviewer", "deep"): "loop_v2a_security_reviewer",
+}
+LEGACY_V2_TIER_ROLES = dict(V2_2026_09_06_TIER_ROLES)
+ROUTING_POLICY_TIER_ROLES = {
+    PREVIOUS_ROUTING_POLICY_REVISION: V2_2026_09_06_TIER_ROLES,
+    ROUTING_POLICY_REVISION: TIER_ROLES,
+}
+SUPPORTED_ROUTING_POLICY_REVISIONS = frozenset(ROUTING_POLICY_TIER_ROLES)
+V2_ONLY_PROFILE_NAMES = {"loop_v2a_routine_reviewer"}
 
 HIGH_RISK_CLASSES = {"deep-reviewer", "security-reviewer"}
 WORKER_STATUSES = {"complete", "partial", "failed"}
@@ -189,6 +208,13 @@ def classify_task(
                 "version 1 routing does not accept quality_preference"
             )
         return _classify_v1(factors)
+    _validate_v2_selectors(workload_kind, quality_preference)
+    return _classify_v2(factors, workload_kind, quality_preference)
+
+
+def _validate_v2_selectors(
+    workload_kind: Any, quality_preference: Any,
+) -> None:
     if not isinstance(workload_kind, str) or workload_kind not in WORKLOAD_KINDS:
         raise AgentRoutingContractError(
             "version 2 workload_kind must be one of: "
@@ -201,7 +227,6 @@ def classify_task(
         raise AgentRoutingContractError(
             "version 2 quality_preference must be balanced or quality-first"
         )
-    return _classify_v2(factors, workload_kind, quality_preference)
 
 
 def _factor_effects(factors: dict[str, str]) -> dict[str, str]:
@@ -314,11 +339,15 @@ def _classify_v1(factors: dict[str, str]) -> dict[str, Any]:
     }
 
 
-def _baseline_role_for_tier(capability_class: str, required_tier: str) -> str:
+def _baseline_role_for_tier(
+    capability_class: str,
+    required_tier: str,
+    tier_roles: dict[tuple[str, str], str],
+) -> str:
     """Keep role selection within existing same-class baseline profiles."""
-    candidates = sorted(TIER_ROLES, key=lambda key: TIER_RANK[key[1]])
+    candidates = sorted(tier_roles, key=lambda key: TIER_RANK[key[1]])
     return next(
-        TIER_ROLES[key]
+        tier_roles[key]
         for key in candidates
         if key[0] == capability_class
         and TIER_RANK[key[1]] >= TIER_RANK[required_tier]
@@ -327,13 +356,21 @@ def _baseline_role_for_tier(capability_class: str, required_tier: str) -> str:
 
 def _classify_v2(
     factors: dict[str, str], workload_kind: str, quality_preference: str | None,
-    *, legacy_receipt: bool = False,
+    *,
+    legacy_receipt: bool = False,
+    routing_policy_revision: str = ROUTING_POLICY_REVISION,
 ) -> dict[str, Any]:
     """Classify work; the private legacy path only revalidates old receipts.
 
     Public classification and receipt builders cannot request legacy semantics.
     Keep this historical path aligned with the independently frozen fixtures.
     """
+    if legacy_receipt:
+        tier_roles = LEGACY_V2_TIER_ROLES
+    else:
+        tier_roles = ROUTING_POLICY_TIER_ROLES.get(routing_policy_revision)
+        if tier_roles is None:
+            raise AgentRoutingContractError("unsupported routing policy revision")
     risk = factors["security_data_migration_public_contract_risk"]
     blast = factors["write_blast_radius"]
     quality_triggers = sum(
@@ -409,12 +446,10 @@ def _classify_v2(
     return {
         "capability_class": capability_class,
         "capability_tier": tier,
-        # The class preserves read-only review scope; a lower requirement does not
-        # introduce or qualify a new profile. Today routine review falls back
-        # to the existing deep baseline until a lower-tier reviewer is qualified.
         "selected_role": (
-            TIER_ROLES[(capability_class, tier)] if legacy_receipt
-            else _baseline_role_for_tier(capability_class, tier)
+            tier_roles[(capability_class, tier)]
+            if legacy_receipt
+            else _baseline_role_for_tier(capability_class, tier, tier_roles)
         ),
         "workload_kind": workload_kind,
         **({"quality_preference": quality_preference} if quality_preference is not None else {}),
@@ -633,6 +668,10 @@ def _runtime_route(classification: dict[str, Any], runtime: dict[str, Any]) -> d
             profile
             for profile in profiles
             if _valid_profile(profile, capability_class, required_tier)
+            and (
+                required_tier is not None
+                or profile.get("name") not in V2_ONLY_PROFILE_NAMES
+            )
             and (profile.get("capability_tier") != "exceptional" or exceptional_allowed)
         ),
         key=lambda profile: (
@@ -813,11 +852,13 @@ def validate_route_receipt(route_receipt: dict[str, Any]) -> dict[str, Any]:
     canonical_classification: dict[str, Any] | None = None
     contract_version = route_receipt.get("contract_version")
     has_policy_revision = "routing_policy_revision" in route_receipt
-    current_policy = (
+    policy_revision = route_receipt.get("routing_policy_revision")
+    supported_policy = (
         contract_version == 2
-        and route_receipt.get("routing_policy_revision") == ROUTING_POLICY_REVISION
+        and isinstance(policy_revision, str)
+        and policy_revision in SUPPORTED_ROUTING_POLICY_REVISIONS
     )
-    if has_policy_revision and not current_policy:
+    if has_policy_revision and not supported_policy:
         issues.append("unsupported-routing-policy-revision")
     if "quality_preference" in route_receipt:
         issues.append("unexpected-top-level-quality-preference")
@@ -830,17 +871,36 @@ def validate_route_receipt(route_receipt: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(classification, dict):
             issues.append("classification-semantic-mismatch")
         else:
-            rebuilt = classify_task(
-                classification.get("factors"),
-                contract_version=contract_version,
-                workload_kind=workload_kind,
-                quality_preference=classification.get("quality_preference"),
-            )
+            validated_factors = validate_task_factors(classification.get("factors"))
+            if contract_version == 2:
+                _validate_v2_selectors(
+                    workload_kind, classification.get("quality_preference")
+                )
             if contract_version == 2 and not has_policy_revision:
                 if "quality_preference" in classification:
                     raise AgentRoutingContractError("legacy v2 receipts cannot contain quality_preference")
                 rebuilt = _classify_v2(
-                    rebuilt["factors"], workload_kind, None, legacy_receipt=True
+                    validated_factors, workload_kind, None, legacy_receipt=True
+                )
+            elif contract_version == 2:
+                if not supported_policy:
+                    raise AgentRoutingContractError(
+                        "unsupported routing policy revision"
+                    )
+                rebuilt = _classify_v2(
+                    validated_factors,
+                    workload_kind,
+                    classification.get("quality_preference"),
+                    routing_policy_revision=route_receipt.get(
+                        "routing_policy_revision"
+                    ),
+                )
+            else:
+                rebuilt = classify_task(
+                    validated_factors,
+                    contract_version=contract_version,
+                    workload_kind=workload_kind,
+                    quality_preference=classification.get("quality_preference"),
                 )
             if rebuilt != classification:
                 issues.append("classification-semantic-mismatch")
@@ -884,7 +944,7 @@ def validate_route_receipt(route_receipt: dict[str, Any]) -> dict[str, Any]:
             )
             and route_receipt.get("selected_capability_tier") in TIER_RANK
             and (
-                not current_policy
+                not supported_policy
                 or route_receipt.get("selected_capability_tier") != "exceptional"
                 or trusted_classification.get("capability_tier") == "exceptional"
             )
@@ -909,6 +969,11 @@ def validate_route_receipt(route_receipt: dict[str, Any]) -> dict[str, Any]:
             and routing_constraint == delegation_constraint
             and "gate_reason" not in route_receipt
             and tier_contract
+            and (
+                is_v2
+                or route_receipt.get("runtime_mapping")
+                not in V2_ONLY_PROFILE_NAMES
+            )
             and (
                 not is_v2
                 or (

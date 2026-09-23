@@ -47,6 +47,7 @@ ROLE_CONTRACTS = {
     "loop_v2a_balanced_worker": ("balanced-worker", "everyday", 2, "workspace-write", {"read", "search", "bounded-edit", "focused-verify", "report-receipt"}),
     "loop_v2a_senior_worker": ("balanced-worker", "senior", 3, "workspace-write", {"read", "search", "bounded-edit", "focused-verify", "report-receipt"}),
     "loop_v2a_advanced_worker": ("balanced-worker", "advanced", 4, "workspace-write", {"read", "search", "bounded-edit", "focused-verify", "report-receipt"}),
+    "loop_v2a_routine_reviewer": ("deep-reviewer", "everyday", 2, "read-only", {"read", "search", "verify", "report-findings", "report-receipt"}),
     "loop_v2a_deep_reviewer": ("deep-reviewer", "deep", 5, "read-only", {"read", "search", "verify", "report-findings", "report-receipt"}),
     "loop_v2a_exceptional_researcher": ("deep-reviewer", "exceptional", 6, "read-only", {"read", "search", "verify", "report-findings", "report-receipt"}),
     "loop_v2a_security_reviewer": ("security-reviewer", "deep", 5, "read-only", {"read", "search", "validate", "defensive-control-analysis", "report-findings", "report-receipt"}),
@@ -56,6 +57,7 @@ CANDIDATE_ROLES = {
     "loop_v2a_astra_deep_reviewer": "loop_v2a_deep_reviewer",
     "loop_v2a_astra_security_reviewer": "loop_v2a_security_reviewer",
 }
+V2_ONLY_ROLES = {"loop_v2a_routine_reviewer"}
 for _candidate, _baseline in CANDIDATE_ROLES.items():
     ROLE_CONTRACTS[_candidate] = ROLE_CONTRACTS[_baseline]
 
@@ -445,7 +447,7 @@ def _validated_same_class(
         _exact(candidate, COMPATIBLE_PROFILE_KEYS, f"compatible profile evidence[{index}]")
         name = _string(candidate.get("name"), f"compatible profile evidence[{index}].name")
         # Experimental profiles are never implicit fallback targets, including v1.
-        if name in CANDIDATE_ROLES:
+        if name in CANDIDATE_ROLES or (not enforce_tier and name in V2_ONLY_ROLES):
             continue
         digest = candidate.get("profile_digest")
         if not isinstance(digest, str) or not SHA256.fullmatch(digest):
@@ -604,6 +606,43 @@ def preflight(
     base = {"profile": entry["name"], "capability_class": entry["capability_class"], "capability_tier": entry["capability_tier"], "tier_rank": entry["tier_rank"], "runtime_mapping": entry["runtime_mapping"], "collisions": conflicts}
     if conflicts:
         return {**base, "state": "human-gate", "decision": "human-gate", "reason": "profile-name-collision"}
+    if not enforce_tier and entry["name"] in V2_ONLY_ROLES:
+        decision, selected, tier, evidence = _fallback(
+            entry,
+            facts,
+            custom_surface_available=facts.get("custom_agent_surface") == "available",
+            enforce_tier=False,
+            trusted_profiles=trusted_profiles,
+            required_tier=required_tier,
+        )
+        return {
+            **base,
+            "state": "v2-only-profile",
+            "decision": decision,
+            "selected": selected,
+            "fallback_tier": tier,
+            "fallback_evidence": evidence,
+        }
+    if (
+        enforce_tier
+        and entry["tier_rank"] < TIER_RANK[required_tier]
+    ):
+        decision, selected, tier, evidence = _fallback(
+            entry,
+            facts,
+            custom_surface_available=facts.get("custom_agent_surface") == "available",
+            enforce_tier=True,
+            trusted_profiles=trusted_profiles,
+            required_tier=required_tier,
+        )
+        return {
+            **base,
+            "state": "profile-tier-insufficient",
+            "decision": decision,
+            "selected": selected,
+            "fallback_tier": tier,
+            "fallback_evidence": evidence,
+        }
     if entry["name"] in CANDIDATE_ROLES and (
         not enforce_tier or not candidate_enabled(entry, facts)
     ):

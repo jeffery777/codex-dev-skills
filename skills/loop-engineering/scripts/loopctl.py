@@ -922,12 +922,18 @@ def command_agent_route(
         )
         selection = {"policy": "baseline", "requested_profile": role, "candidate": None}
         if contract_version == 2:
-            for candidate_name, baseline_name in profile_preflight.CANDIDATE_ROLES.items():
-                if baseline_name != role:
-                    continue
+            eligible_candidates = sorted(
+                (
+                    candidate_name
+                    for candidate_name, baseline_name in profile_preflight.CANDIDATE_ROLES.items()
+                    if baseline_name == role
+                    and candidate_name in facts.get("enabled_candidates", {})
+                    and candidate_name in entries
+                ),
+                key=lambda name: entries[name]["tier_rank"],
+            )
+            for candidate_name in eligible_candidates:
                 candidate_entry = entries.get(candidate_name)
-                if candidate_entry is None or candidate_name not in facts.get("enabled_candidates", {}):
-                    continue
                 candidate_result = profile_preflight.preflight(
                     candidate_entry, facts, collision_report, enforce_tier=True,
                     trusted_profiles=entries,
@@ -944,11 +950,17 @@ def command_agent_route(
                 }
                 if candidate_result["decision"] == "ready" and installed:
                     preflight_result = candidate_result
+                    break
         if autoload is not None:
             selection["autoload"] = autoload
         evidence = preflight_result.get("route_profile_evidence")
         if evidence is None and preflight_result.get("fallback_tier") == "same-capability-profile":
             evidence = preflight_result.get("fallback_evidence")
+        requested_profile_missing = (
+            isinstance(evidence, dict) and not destination_matches(evidence)
+        )
+        if requested_profile_missing:
+            evidence = None
         if contract_version == 2 and not isinstance(evidence, dict):
             required = entries[role]
             alternatives = sorted(
@@ -992,11 +1004,27 @@ def command_agent_route(
         if preflight_result["decision"] == "human-gate":
             render({"status": "human-gate", "profile_preflight": preflight_result, "profile_selection": selection})
             return 2
-        if isinstance(evidence, dict) and not destination_matches(evidence):
+        if requested_profile_missing and not isinstance(evidence, dict):
             degraded_facts = copy.deepcopy(facts)
-            degraded_facts["available_models"] = []
-            degraded_facts["reasoning_efforts"] = {}
-            degraded_facts["compatible_profiles"] = {}
+            requested_model = entries[role]["runtime_mapping"]["model"]
+            degraded_facts["available_models"] = [
+                model
+                for model in degraded_facts.get("available_models", [])
+                if model != requested_model
+            ]
+            efforts = degraded_facts.get("reasoning_efforts")
+            if isinstance(efforts, dict):
+                efforts.pop(requested_model, None)
+            compatible = degraded_facts.get("compatible_profiles")
+            if isinstance(compatible, dict):
+                for capability_class, profiles in compatible.items():
+                    if isinstance(profiles, list):
+                        compatible[capability_class] = [
+                            profile
+                            for profile in profiles
+                            if not isinstance(profile, dict)
+                            or profile.get("name") != role
+                        ]
             preflight_result = profile_preflight.preflight(
                 entries[role],
                 degraded_facts,

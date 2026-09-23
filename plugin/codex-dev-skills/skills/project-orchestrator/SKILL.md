@@ -21,12 +21,14 @@ source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/github-control-plane-policy.md`
 after filesystem installation.
 
-Code Mode tool orchestration: follow
+Code Mode tool orchestration: before batching, concurrent calls, or substantial
+tool-driven orchestration, read
 `../../policies/code-mode-tool-orchestration-policy.md` relative to this skill in source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
 after filesystem installation.
 
-Context continuity: follow
+Context continuity: when unfinished review/fix rounds reach the configured
+threshold, context drift appears, or fresh rollover is assessed, read
 `../../policies/context-continuity-policy.md` relative to this skill in source
 or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/context-continuity-policy.md`
@@ -88,15 +90,12 @@ disclosure 不取代 runtime 工具搜尋。不得只靠 basename 或 OS 選 ada
 
 ## Delegation Economy
 
-Before selecting a custom-agent candidate, perform the shared automatic
-qualification procedure in `../loop-engineering/references/agent-qualification.md`
-(the same sibling path in source, plugin, and filesystem installation). The parent
-classifies the actual task, checks its qualified scope, gathers current public
-runtime facts and invokes the installed `agent-route` command itself. Do not
-ask the user to supply qualification JSON or repeat CLI arguments. The router
-discovers the explicitly approved user-level store; a missing or inapplicable
-record retains baseline routing. Do not turn a past CLI observation into
-Desktop availability or infer native dispatch support from installation alone.
+Before selecting a custom-agent candidate, the parent performs the shared
+automatic qualification procedure in
+`../loop-engineering/references/agent-qualification.md` (the same sibling path
+in source, plugin, and filesystem installation). That reference owns the
+complete procedure. Do not ask the user to supply qualification JSON or repeat
+CLI arguments; a missing or inapplicable record retains baseline routing.
 
 Delegate by disjoint ownership and useful parallelism, not by one worker per
 discipline. Keep implementation, focused tests, and directly related docs with

@@ -21,12 +21,14 @@ source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/github-control-plane-policy.md`
 after filesystem installation.
 
-Code Mode tool orchestration: follow
+Code Mode tool orchestration: before batching, concurrent calls, or substantial
+tool-driven orchestration, read
 `../../policies/code-mode-tool-orchestration-policy.md` relative to this skill in source or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/code-mode-tool-orchestration-policy.md`
 after filesystem installation.
 
-Context continuity: follow
+Context continuity: when unfinished review/fix rounds reach the configured
+threshold, context drift appears, or fresh rollover is assessed, read
 `../../policies/context-continuity-policy.md` relative to this skill in source
 or plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/context-continuity-policy.md`
@@ -71,12 +73,12 @@ and candidate delegation alone do not require a ledger or `decide` invocation.
    delegation helps, split by disjoint ownership and parallelism rather than
    discipline; keep code, focused tests, and directly related docs with the
    implementation owner by default.
-   Before candidate delegation, have the parent execute the shared automatic
+   Before candidate delegation, the parent executes the shared automatic
    qualification procedure in `../loop-engineering/references/agent-qualification.md`
-   (the same sibling path in source, plugin, and filesystem installation): assess task scope, collect
-   current runtime evidence, and call the installed router. Qualification
-   discovery and runtime-input preparation are agent work, not instructions
-   the user must repeat. Preserve baseline fallback when evidence is absent.
+   (the same sibling path in source, plugin, and filesystem installation).
+   That reference owns the complete procedure; qualification discovery and
+   runtime-input preparation are parent work, not instructions the user must
+   repeat. Preserve baseline fallback when evidence is absent.
 5. Run relevant verification and inspect the diff.
 6. Route code or mixed changes through `code-review`, high-risk code or mixed changes through `code-review-deep`, and docs-only or docs-dominant changes through `docs-review`.
 7. Use `code-review-gate` or `docs-review-gate` only when commit readiness, PR readiness, merge readiness, or repo policy requires a formal blocking decision.

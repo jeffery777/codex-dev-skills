@@ -51,9 +51,9 @@ class AgentRoutingEvalTests(unittest.TestCase):
         self.assertEqual("deep", cases["v2-research-balanced-preference"]["actual"]["tier"])
         routine_review = cases["v2-routine-review-preserves-read-only-fallback"]["actual"]
         self.assertEqual("everyday", routine_review["tier"])
-        self.assertEqual("deep", routine_review["selected_tier"])
+        self.assertEqual("everyday", routine_review["selected_tier"])
         self.assertEqual("deep-reviewer", routine_review["class"])
-        self.assertTrue(routine_review["cost_degraded"])
+        self.assertFalse(routine_review["cost_degraded"])
 
     def test_negative_astra_cases_detect_restored_overwrite_bug(self) -> None:
         import copy
