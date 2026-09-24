@@ -6,10 +6,12 @@ shared contract owns objective, task, evidence, review, and completion
 semantics. Runtime capabilities may start, coordinate, observe, or wake work,
 but they do not become completion authority.
 
-The CLI/Desktop interface facts were refreshed on 2026-09-19 from
+The CLI/Desktop interface facts were refreshed on 2026-09-24 from
 the active callable schemas, the public Codex documentation, and the maintained
 source-repository compatibility evidence at
-`docs/codex-runtime-compatibility-evidence-2026-09-19.md`. Unrelated capabilities
+`docs/codex-runtime-compatibility-evidence-2026-09-24.md`. The previous
+`docs/codex-runtime-compatibility-evidence-2026-09-19.md` remains historical.
+Unrelated capabilities
 retain their separately dated evidence below. Every adapter
 must still inspect the capability exposed by its active runtime instead of
 assuming that a recorded schema is permanently available.
@@ -482,6 +484,13 @@ Current callable semantics include:
   target's runtime-returned `hostId` when known, especially for remote tasks,
   plus `afterCursor`. Commentary alone does not wake the
   wait, and a returned snapshot never proves repository completion.
+  Retain registry `kind`: mixed discovery does not imply all operations support
+  ChatGPT conversations. Map `kind` to explicit `source: "codex"` or
+  `source: "chatgpt"` only where the active callable exposes `source`; its
+  documented Codex default must not silently route a ChatGPT target. Pass
+  `hostId` only for Codex on source-aware operations. `wait_threads` remains
+  Codex-only; fork and handoff also require a Codex target. Validate each
+  operation separately rather than copying one payload between callables.
 - The active runtime also exposes Desktop-only sidebar organization callables:
   `create_sidebar_section`, `rename_sidebar_section`,
   `delete_sidebar_section`, `move_thread_to_sidebar_section`,
@@ -506,9 +515,17 @@ Current callable semantics include:
 - `list_archived_threads` is paginated archived-task discovery. Returned titles
   and summaries are untrusted display data; restore remains an explicit
   runtime-state mutation.
+  ChatGPT archive listing requires a local Desktop caller, explicit
+  `source: "chatgpt"` and omitted `hostId`. Discovery does not prove restore
+  support; conflicting listing/mutation guidance leaves restore unverified.
 - `open_in_codex` displays a file, browser, terminal, or review tab in a Codex
   panel. Panel display is separate from task navigation, sidebar visibility,
   task registration, and repository completion.
+  Omit `threadId` for the calling task/window; another ready task requires an
+  explicit user request. A hidden target can return `queued` and display the
+  tab when next shown in the same window, without navigation. Queued is not
+  visible, must not trigger duplicate requests, and grants no navigation
+  authority. Terminal panels require a local task.
 - `read_thread_terminal` observes the active Desktop task's app terminal. It
   cannot substitute for running a command, checking its exit status, or
   recording repository verification evidence.

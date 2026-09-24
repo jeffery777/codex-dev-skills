@@ -53,6 +53,10 @@ CLI adapter 的 native TUI reference；相同 basename 不代表 payload 或啟�
 ## Contract Family Boundary
 
 Desktop callable 的最新比對見
+[2026-09-24 點時證據](codex-runtime-compatibility-evidence-2026-09-24.md)：
+混合 registry 需保留 backing kind，依各 callable 分別傳入 source／host；
+跨任務面板的 queued 回應不能當作已顯示或導航。CLI executor 和共享分層
+不因新增 optional 欄位而改變。前次
 [2026-09-19 點時證據](codex-runtime-compatibility-evidence-2026-09-19.md)：
 sidebar 可排序內建 headings；`create_worktree` 是目前任務的 checkout 操作，
 由 `desktop-project-delivery` 的按需 reference 處理，不是本 thread adapter

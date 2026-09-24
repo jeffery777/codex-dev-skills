@@ -382,13 +382,16 @@ def _stop(
     message: str,
     *,
     fallback: bool = False,
+    receipt: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return _base_receipt(
-        request,
+    if receipt is None:
+        receipt = _base_receipt(request, status="stopped")
+    receipt.update(
         status="fallback" if fallback else "stopped",
         failure_class=failure_class,
         message=message,
     )
+    return receipt
 
 
 def _require_object(value: Any, field: str) -> dict[str, Any]:
@@ -1050,7 +1053,9 @@ def _validate_continuity_assessment(
     )
 
 
-def _probe_version(executable: pathlib.Path) -> str:
+def _probe_version(
+    executable: pathlib.Path, *, on_started: Callable[[], None] | None = None
+) -> str:
     environment = _environment_without_git_targeting()
     environment["NO_COLOR"] = "1"
     environment.pop("OLDPWD", None)
@@ -1104,6 +1109,8 @@ def _probe_version(executable: pathlib.Path) -> str:
             ),
         ]
         try:
+            if on_started is not None:
+                on_started()
             tracker.start()
             for reader in readers:
                 reader.start()
@@ -1173,7 +1180,9 @@ def _probe_version(executable: pathlib.Path) -> str:
     return match.group(1)
 
 
-def validate_request(request: dict[str, Any]) -> ValidatedRequest:
+def validate_request(
+    request: dict[str, Any], *, on_version_probe_started: Callable[[], None] | None = None
+) -> ValidatedRequest:
     if os.name != "posix" or not (
         sys.platform == "darwin" or sys.platform.startswith("linux")
     ):
@@ -1260,7 +1269,7 @@ def validate_request(request: dict[str, Any]) -> ValidatedRequest:
     ) + "\n\n" + PROMPT_BOUNDARY_APPENDIX
     session_id = _validate_session_id(operation, request.get("session_id"))
     executable_sha256 = _sha256_file(executable)
-    cli_version = _probe_version(executable)
+    cli_version = _probe_version(executable, on_started=on_version_probe_started)
     return ValidatedRequest(
         operation=operation,
         executable=executable,
@@ -2401,14 +2410,21 @@ def _claim_rollover(request: ValidatedRequest) -> bool:
 
 def execute_handoff(request: dict[str, Any]) -> dict[str, Any]:
     receipt = _base_receipt(request, status="stopped")
+
+    def mark_version_probe_started() -> None:
+        receipt["capability"]["version_probe_performed"] = True
+
     try:
-        validated = validate_request(request)
+        validated = validate_request(
+            request, on_version_probe_started=mark_version_probe_started
+        )
     except HandoffValidationError as exc:
         return _stop(
             request,
             exc.failure_class,
             str(exc),
             fallback=exc.failure_class == "capability_unavailable",
+            receipt=receipt,
         )
     except OSError:
         return _stop(
@@ -2416,6 +2432,7 @@ def execute_handoff(request: dict[str, Any]) -> dict[str, Any]:
             "capability_unavailable",
             "Host capability validation failed safely.",
             fallback=True,
+            receipt=receipt,
         )
 
     receipt["capability"].update(
@@ -2442,7 +2459,7 @@ def execute_handoff(request: dict[str, Any]) -> dict[str, Any]:
     try:
         replay_record = _claim_rollover(validated)
     except HandoffValidationError as exc:
-        return _stop(request, exc.failure_class, str(exc))
+        return _stop(request, exc.failure_class, str(exc), receipt=receipt)
     if replay_record:
         receipt["boundaries"]["durable_replay_record_written"] = True
 

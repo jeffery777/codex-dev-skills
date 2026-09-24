@@ -4,6 +4,7 @@ import concurrent.futures
 import copy
 import ctypes
 import errno
+import hashlib
 import importlib.util
 import json
 import os
@@ -325,9 +326,13 @@ if sys.argv[1:] == ["--version"]:
     if version_mode == "timeout":
         time.sleep(30)
         raise SystemExit(0)
-    if version_mode == "stdout-overflow":
+    if version_mode in ("stdout-overflow", "stdout-overflow-quick"):
         sys.stdout.write("x" * 8192)
         sys.stdout.flush()
+        # Let the controller observe overflow and own termination. Exiting here
+        # can instead exercise invalid-version parsing or an exit/signal race.
+        if version_mode == "stdout-overflow":
+            time.sleep(30)
         raise SystemExit(0)
     print("codex-cli " + os.environ.get("FAKE_CODEX_VERSION", "9.8.7"))
     raise SystemExit(0)
@@ -988,20 +993,154 @@ class CliSessionHandoffTests(unittest.TestCase):
         self.assertNotIn(marker, json.dumps(response))
 
     def test_version_probe_timeout_and_output_are_bounded(self) -> None:
-        for mode in ("timeout", "stdout-overflow"):
-            with self.subTest(mode=mode), mock.patch.dict(
-                os.environ,
-                {"FAKE_CODEX_VERSION_MODE": mode},
-            ), mock.patch.object(handoff, "VERSION_TIMEOUT_SECONDS", 0.1):
-                response = handoff.execute_handoff(self.request())
+        capture_type = handoff.Capture
+        terminate = handoff._terminate_process_group
+        for mode, timeout, expected_overflow in (
+            ("timeout", 0.1, None),
+            ("stdout-overflow", 2, "stdout"),
+        ):
+            with self.subTest(mode=mode):
+                captures = []
+                termination_overflows = []
 
-            self.assertEqual("fallback", response["status"])
-            self.assertEqual(
-                "capability_unavailable", response["failure_class"]
-            )
-            self.assertFalse(
-                response["boundaries"]["session_call_performed"]
-            )
+                def record_capture(**kwargs):
+                    capture = capture_type(**kwargs)
+                    captures.append(capture)
+                    return capture
+
+                def record_termination(process, tracker=None):
+                    termination_overflows.append(captures[0].overflow_stream)
+                    return terminate(process, tracker)
+
+                with mock.patch.dict(
+                    os.environ,
+                    {"FAKE_CODEX_VERSION_MODE": mode},
+                ), mock.patch.object(
+                    handoff, "VERSION_TIMEOUT_SECONDS", timeout
+                ), mock.patch.object(
+                    handoff, "Capture", side_effect=record_capture
+                ), mock.patch.object(
+                    handoff, "_terminate_process_group", side_effect=record_termination
+                ):
+                    response = self.execute()
+
+                self.assertTrue(termination_overflows, response)
+                self.assertEqual(expected_overflow, termination_overflows[0], response)
+                self.assertEqual("fallback", response["status"], response)
+                self.assertEqual(
+                    "capability_unavailable", response["failure_class"], response
+                )
+                self.assertTrue(response["capability"]["version_probe_performed"])
+                self.assertIsNone(response["capability"]["cli_version"])
+                self.assertFalse(response["boundaries"]["session_call_performed"])
+                self.assertFalse(self.capture.exists())
+
+    def test_quick_overflow_fixture_preserves_natural_exit(self) -> None:
+        environment = {**os.environ, "FAKE_CODEX_VERSION_MODE": "stdout-overflow-quick"}
+        result = subprocess.run(
+            [str(self.executable), "--version"], env=environment,
+            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, timeout=3, check=False,
+        )
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(b"x" * 8192, result.stdout)
+        self.assertEqual(b"", result.stderr)
+
+    def test_version_probe_identity_permission_error_stops(self) -> None:
+        identity = handoff._process_identity
+        injected = False
+
+        def deny_first_identity(pid):
+            nonlocal injected
+            if not injected:
+                injected = True
+                raise PermissionError(errno.EPERM, "synthetic identity denial")
+            return identity(pid)
+
+        with mock.patch.dict(
+            os.environ, {"FAKE_CODEX_VERSION_MODE": "timeout"}
+        ), mock.patch.object(handoff, "_process_identity", side_effect=deny_first_identity):
+            response = self.execute()
+
+        self.assertTrue(injected)
+        self.assertEqual("stopped", response["status"], response)
+        self.assertEqual("termination_error", response["failure_class"], response)
+        self.assertIn("stage=root-identity; errno=1", response["message"])
+        self.assertTrue(response["capability"]["version_probe_performed"])
+        self.assertFalse(response["boundaries"]["session_call_performed"])
+        self.assertFalse(self.capture.exists())
+
+    def test_version_probe_signal_permission_error_stops(self) -> None:
+        killpg = handoff.os.killpg
+        injected = False
+
+        def deny_first_signal(pid, sig):
+            nonlocal injected
+            if not injected:
+                injected = True
+                raise PermissionError(errno.EPERM, "synthetic signal denial")
+            return killpg(pid, sig)
+
+        with mock.patch.dict(
+            os.environ, {"FAKE_CODEX_VERSION_MODE": "timeout"}
+        ), mock.patch.object(
+            handoff, "VERSION_TIMEOUT_SECONDS", 0.1
+        ), mock.patch.object(handoff.os, "killpg", side_effect=deny_first_signal):
+            response = self.execute()
+
+        self.assertTrue(injected)
+        self.assertEqual("stopped", response["status"], response)
+        self.assertEqual("termination_error", response["failure_class"], response)
+        self.assertEqual("The Codex process group could not be signaled.", response["message"])
+        self.assertTrue(response["capability"]["version_probe_performed"])
+        self.assertFalse(response["boundaries"]["session_call_performed"])
+        self.assertFalse(self.capture.exists())
+
+    def test_version_probe_launch_failure_does_not_claim_performed(self) -> None:
+        popen = handoff.subprocess.Popen
+        denied = False
+
+        def deny_probe(argv, **kwargs):
+            nonlocal denied
+            if (
+                len(argv) == 2
+                and argv[1] == "--version"
+                and pathlib.Path(argv[0]).resolve() == self.executable.resolve()
+            ):
+                denied = True
+                raise PermissionError(errno.EPERM, "synthetic launch denial")
+            return popen(argv, **kwargs)
+
+        with mock.patch.object(handoff.subprocess, "Popen", side_effect=deny_probe):
+            response = self.execute()
+
+        self.assertTrue(denied)
+        self.assertEqual("fallback", response["status"])
+        self.assertEqual("capability_unavailable", response["failure_class"])
+        self.assertFalse(response["capability"]["version_probe_performed"])
+        self.assertIsNone(response["capability"]["cli_version"])
+        self.assertFalse(response["boundaries"]["session_call_performed"])
+
+    def test_rollover_rejection_preserves_completed_probe_facts(self) -> None:
+        with mock.patch.object(
+            handoff, "_claim_rollover",
+            side_effect=handoff.HandoffValidationError(
+                "continuity_replay_state_unavailable", "synthetic replay-state rejection"
+            ),
+        ):
+            response = self.execute()
+
+        self.assertEqual("stopped", response["status"])
+        self.assertEqual("continuity_replay_state_unavailable", response["failure_class"])
+        self.assertTrue(response["capability"]["version_probe_performed"])
+        self.assertEqual("9.8.7", response["capability"]["cli_version"])
+        self.assertEqual(
+            hashlib.sha256(self.executable.read_bytes()).hexdigest(),
+            response["capability"]["executable_sha256"],
+        )
+        self.assertEqual(self.head, response["target"]["observed_head"])
+        self.assertFalse(response["boundaries"]["session_call_performed"])
+        self.assertFalse(self.capture.exists())
 
     def test_non_posix_host_falls_back_before_runtime_probe(self) -> None:
         with mock.patch.object(handoff.os, "name", "nt"):

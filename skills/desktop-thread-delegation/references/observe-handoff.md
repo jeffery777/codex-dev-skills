@@ -19,10 +19,27 @@ for a remote task, plus its `afterCursor`. Commentary alone does not wake the
 wait; a snapshot never proves completion. Respect active runtime wait bounds
 and back off when evidence is unchanged.
 
+Mixed discovery does not make every task callable support every backing kind.
+Retain registry `kind` and use explicit `source` only on callables exposing it;
+Codex is the default where documented. For `list_archived_threads`, ChatGPT
+archives require a local Desktop caller, `source: "chatgpt"`, and no `hostId`;
+Codex archives retain the observed host. `wait_threads` is Codex-only. Never
+send a ChatGPT conversation ID to Codex-only fork/handoff/wait operations.
+Archive discovery is not restore support: validate the selected mutation's
+current contract separately. If discovery and mutation guidance conflict,
+keep restore unverified and use the manual fallback instead of guessing.
+
 `read_thread_terminal` observes only the current task's app terminal; it cannot
 replace verification execution or checking a command result. `open_in_codex`
 displays a file, browser, terminal, or review panel; it is not task navigation,
 registration, sidebar rendering, resource inspection, or repository completion.
+Omit `open_in_codex.threadId` to use the calling task and window. Set another
+ready `threadId` only when the user explicitly asks to open the tab in that
+task. A hidden target may return `queued`: the tab opens when that task is next
+shown in the same window, without navigating there. Report queued separately
+from visible; do not navigate, duplicate the request, or claim display success
+from that acknowledgement. Terminal panels require a local task. This field
+does not change the tool's display-only purpose or authorize another action.
 
 ## Requested Navigation
 

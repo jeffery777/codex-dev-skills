@@ -79,6 +79,12 @@ request shape. In addition:
   polling observing every reparented descendant;
 - the executable version probe has its own disposable working directory,
   process-tree cleanup, time limit, and streaming output bounds;
+- receipt `capability.version_probe_performed` records that the version-probe
+  process started, including when it later fails or termination cannot be
+  confirmed; it remains false if validation stops before launch or launch fails.
+  `cli_version` is populated only after the probe is accepted. Later rejection
+  preserves already observed capability facts; these fields do not establish a
+  successful handoff or weaken `stopped` / `termination_error` handling;
 - arbitrary flags, model overrides, extra writable roots, environment
   overrides, approval bypasses, and `danger-full-access` are unsupported;
 - a `resume` or `fork` target must be an exact UUID, never `--last` or a

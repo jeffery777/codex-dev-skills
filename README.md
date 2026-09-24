@@ -6,6 +6,11 @@
 
 `codex-dev-skills` is an OSS maintenance workflow pack for OpenAI Codex CLI and Codex Desktop.
 
+維護本 repository 時先讀 [CONTRIBUTING.md](CONTRIBUTING.md)：實作前建立並
+讀回 GitHub Issue 與 Issue-ID 遠端分支；使用 GitNexus 前處理過期索引。
+這是本 repository 專屬流程，不隨技能安裝，也不要求其他 GitLab／GitHub
+專案採用相同流程。
+
 In current product naming, the Desktop surface runs inside the ChatGPT desktop
 app. This repository retains `Codex Desktop` and `desktop` as compatibility
 labels for Codex task, thread, worktree, and scheduling controls; those labels
@@ -1320,6 +1325,11 @@ synthetic contract evidence and perform no live sidebar mutation.
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 最新維護的比對見
+[Codex runtime compatibility evidence (2026-09-24)](docs/codex-runtime-compatibility-evidence-2026-09-24.md)：
+補齊混合 backing kind 的 source／host 分流與跨任務面板 queued 語意，
+保留 CLI／Desktop 獨立入口和共享分層；本 repository 的 Issue-first 與
+GitNexus 維護順序獨立記錄於 [CONTRIBUTING.md](CONTRIBUTING.md)。
+前次
 [Codex runtime compatibility evidence (2026-09-19)](docs/codex-runtime-compatibility-evidence-2026-09-19.md)：
 Desktop sidebar 支援選填的內建 headings 排序，並補上目前任務的 worktree
 契約與 CLI dashboard 刪除分類；CLI executor 與共享完成語意維持不變。
@@ -1713,6 +1723,9 @@ This repository intentionally does not include:
 - private runtime state, local application state, logs, local databases, machine-specific config, credentials, or private paths
 
 ## Contribution Guidelines
+
+本 repository 的必要順序、索引刷新與交付邊界見
+[維護流程](CONTRIBUTING.md)。此文件不屬於安裝 catalog 或 plugin。
 
 Contributions should keep the repository public, runtime-compatible, and low-surprise:
 
