@@ -468,6 +468,12 @@ current revision；舊版保留，stop/resume 不增加版本。每步以 fresh 
 及新舊關鍵詞核對，故障後不重試；[驗收紀錄](loops/issue-297/verification.md)
 分開記載合成情境與正式資格，並未啟用真實記憶或 G2。
 
+#299 延伸同一入口的固定 add/update/restore 情境。還原預覽從相同 snapshot
+讀取 current 與指定保留版本全文；獨立確認、重新驗證原來源後建立新 revision，
+保留歷史、只召回 current。[工作計畫](loops/issue-299/plan.md)及
+[驗收紀錄](loops/issue-299/verification.md)保留 synthetic 與正式資格的區別；
+production registry 仍空，沒有任意 root/import、G2 或原生記憶啟用。
+
 #284／PR #285 加入[固定 synthetic 操作 pilot](../skills/loop-engineering/references/memory-audit-pilot.md)。
 兩次確認、等待後重驗、異常停止與 owner close 已有隔離驗收；production registry
 仍空，既有專案／原生記憶未啟用。後續工作不得把操作示範當成 G1/MG1 qualification。

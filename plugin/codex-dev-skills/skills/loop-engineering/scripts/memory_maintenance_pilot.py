@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 import errno
 import sqlite3
 import os
 from pathlib import Path
 import sys
 import tempfile
+import time
 import uuid
 
 import memory_governance_contract as c
@@ -97,6 +99,8 @@ class _MaintenancePorts:
 
 class _ContentPorts(_MaintenancePorts):
     """只接受兩份固定候選；read/audit 權限來自當次 fixture 接受，不是 production grant。"""
+    operations = frozenset({'add', 'update', 'stop', 'resume'})
+
     def __init__(self, registry, clock, value, item_id, repository, permit, stdin, stdout,
                  updated, updated_repository, updated_permit):
         super().__init__(registry, clock, value, item_id, repository, permit, stdin, stdout)
@@ -110,7 +114,7 @@ class _ContentPorts(_MaintenancePorts):
 
     def qualify(self, binding, runtime, operation):
         return (not self.closed and binding == self.registry.binding() and runtime == self.runtime
-                and operation in {'authorize', 'add', 'update', 'stop', 'resume', 'audit', 'readback', 'recall'})
+                and operation in self.operations | {'authorize', 'audit', 'readback', 'recall'})
 
     def authorize_read(self, binding, purpose, operation_id):
         return not self.closed and binding == self.registry.binding() and purpose in {'audit', 'preview', 'readback', 'recall'}
@@ -129,15 +133,9 @@ class _ContentPorts(_MaintenancePorts):
             c.digest(value['provenance']), c.digest(c.POLICY), value['validation']['verifier_fingerprint'],
             value['validation']['evidence_id'], self.clock.clock().utc_seconds, 'eligible', 'safe')
 
-    def accept_preview(self, binding, preview_bytes):
-        self.check()
-        preview = c.decode(preview_bytes)
-        operation = preview['operation']
-        c.require(binding == self.registry.binding() and preview['item_id'] == self.item_id
-                  and operation in {'add', 'update', 'stop', 'resume'}
-                  and preview['candidate'] == self.candidates.get(operation), 'acceptance-unavailable')
+    def confirmation_change(self, binding, preview):
         before = None
-        if operation == 'update':
+        if preview['operation'] == 'update':
             observed = GovernanceCore(self.host(), enabled=True).recall(['widget'])
             c.require(observed['snapshot_digest'] == preview['before']['digest']
                       and observed['enumeration_complete'] and observed['source_rejected'] == 0
@@ -145,9 +143,18 @@ class _ContentPorts(_MaintenancePorts):
                       'preview-before-mismatch')
             before = observed['items'][0]['version']
             c.require(before == self.candidates['add'], 'preview-before-mismatch')
+        return {'before': before, 'after': preview['candidate']}
+
+    def accept_preview(self, binding, preview_bytes):
+        self.check()
+        preview = c.decode(preview_bytes)
+        operation = preview['operation']
+        c.require(binding == self.registry.binding() and preview['item_id'] == self.item_id
+                  and operation in self.operations
+                  and preview['candidate'] == self.candidates.get(operation), 'acceptance-unavailable')
+        change = self.confirmation_change(binding, preview)
         token = operation.upper() + ' ' + c.digest(preview)
-        _emit(self.stdout, 'confirm-operation', preview=preview, confirmation=token,
-              change={'before': before, 'after': preview['candidate']})
+        _emit(self.stdout, 'confirm-operation', preview=preview, confirmation=token, change=change)
         if not _confirm(self.stdin, token):
             raise _Cancelled()
         self.check()
@@ -158,7 +165,66 @@ class _ContentPorts(_MaintenancePorts):
             'expires_at': preview['expires_at'], 'host_evidence_id': 'synthetic-maintenance-explicit-input'}))
 
 
-def _prepare(workspace, stdin, stdout, *, content=False):
+class _RestorePorts(_ContentPorts):
+    """當次固定 fixture 的還原；歷史揭露只用於獨立 RESTORE preview。"""
+    operations = _ContentPorts.operations | {'restore'}
+
+    def prepare_restore(self):
+        self.check()
+        c.require('restore' not in self.candidates, 'restore-already-prepared')
+        value = c.decode(c.canonical(self.candidates['add']))
+        now = self.clock.clock().utc_seconds
+        value.update(revision=3, created_at=now)
+        value['validation'].update(verified_at=now, evidence_id='synthetic-restore-' + str(uuid.uuid4()))
+        value['validation']['content_digest'] = c.content_digest(value)
+        key = c.canonical(value)
+        self.candidates['restore'] = value
+        self._versions[key] = (value, ARTIFACT)
+        self._sources[key] = self.source
+        return value
+
+    def confirmation_change(self, binding, preview):
+        if preview['operation'] != 'restore':
+            return super().confirmation_change(binding, preview)
+        c.require(preview['target_revisions'] == [1], 'restore-source-unavailable')
+        observed = GovernanceCore(self.host(), enabled=True).recall(['widget'])
+        c.require(observed['snapshot_digest'] == preview['before']['digest']
+                  and observed['enumeration_complete'] and observed['source_rejected'] == 0
+                  and len(observed['items']) == 1 and observed['items'][0]['item_id'] == self.item_id
+                  and observed['items'][0]['version'] == self.candidates['update'], 'preview-before-mismatch')
+        scope, limits = c.decode(binding.scope_bytes), c.profile(c.decode(binding.profile_bytes))
+        deadline = time.monotonic() + 10
+
+        def check():
+            self.check()
+            c.require(binding == self.registry.binding()
+                      and self.authorize_read(binding, 'preview', preview['operation_id']), 'read-unavailable')
+            c.require(time.monotonic() < deadline, 'preview-timeout')
+
+        # 僅從本 fixture 的可信 binding 讀取；沿用受保護的唯讀 connection 與 proof-chain 驗證。
+        # 不把歷史放進 recall，也不在等待人類輸入期間持鎖。
+        check()
+        with db.locked(binding), closing(db.connect(binding, limits)) as connection:
+            connection.set_progress_handler(lambda: int(time.monotonic() >= deadline), 1000)
+            connection.execute('BEGIN')
+            snapshot = db.snapshot(connection, scope, limits, check=check)
+            c.require(snapshot.digest == preview['before']['digest']
+                      and snapshot.epoch == preview['acceptance_epoch'], 'preview-before-mismatch')
+            item = db.load_item(connection, self.item_id, scope, limits)
+            c.require(item is not None and item['status'] == 'active' and item['current_revision'] == 2
+                      and item['revision_high_water'] == 2
+                      and [v['revision'] for v in item['versions']] == [1, 2], 'preview-before-mismatch')
+            before, retained = item['versions'][-1], item['versions'][0]
+            c.require(before == observed['items'][0]['version'], 'preview-before-mismatch')
+            c.require(retained == dict(self.candidates['add'], retired_at=before['created_at']),
+                      'preview-before-mismatch')
+            c.restore_content(preview['candidate'], retained)
+            check()
+        return {'before': before, 'after': preview['candidate'], 'restore_source': retained,
+                'snapshot_digest': snapshot.digest}
+
+
+def _prepare(workspace, stdin, stdout, *, content=False, restore=False):
     managed = workspace / 'managed'
     managed.mkdir(mode=0o700)
     repository, permit = _source(workspace / 'source')
@@ -189,17 +255,21 @@ def _prepare(workspace, stdin, stdout, *, content=False):
         updated.update(revision=2, body='Synthetic pilot widget label green.',
                        summary='Synthetic pilot green widget', cues=['green', 'widget'])
         updated['validation']['content_digest'] = c.content_digest(updated)
-        return _ContentPorts(registry, clock, value, item_id, repository, permit, stdin, stdout,
-                             updated, updated_repository, updated_permit)
+        ports_type = _RestorePorts if restore else _ContentPorts
+        return ports_type(registry, clock, value, item_id, repository, permit, stdin, stdout,
+                          updated, updated_repository, updated_permit)
     return _MaintenancePorts(registry, clock, value, item_id, repository, permit, stdin, stdout)
 
 
 def _verify_content(ports, fresh, result, operation, stdout):
-    revision = 1 if operation == 'add' else 2
-    before_revision = {'add': 0, 'update': 1, 'stop': 2, 'resume': 2}[operation]
-    expected = ports.candidates['add' if revision == 1 else 'update']
+    revision = {'add': 1, 'restore': 3}.get(operation, 2)
+    before_revision = {'add': 0, 'update': 1, 'restore': 2, 'stop': 2, 'resume': 2}[operation]
+    expected = ports.candidates[operation if operation in {'add', 'update', 'restore'} else 'update']
     c.require(result['result'] == 'applied' and result['proof']['before_revision'] == before_revision
               and result['proof']['after_revision'] == revision, 'state-unknown')
+    if operation == 'restore':
+        c.require(result['proof']['operation'] == 'restore'
+                  and result['proof']['restore_source_revision'] == 1, 'state-unknown')
     counts = {}
     for cues in (['blue'], ['green'], ['widget'], ['blue', 'widget'], ['green', 'widget'], ['blue', 'green']):
         recall = fresh.recall(cues)
@@ -260,9 +330,11 @@ def _run(args, stdin, stdout):
     attempted = False
     phase = 'create-confirmation'
     try:
-        content = args.scenario == 'add-update'
+        content = args.scenario != 'stop-resume'
+        restore = args.scenario == 'add-update-restore'
         _emit(stdout, 'confirm-create', confirmation='CREATE SYNTHETIC',
-              scope=('建立空的隔離記憶與固定兩版來源；新增、修改、停用、恢復各自確認，期間盤點及查詢；結束保留 fixture。'
+              scope=('建立空的隔離記憶與固定兩版來源；新增、修改、歷史還原各自確認，還原預覽揭露指定舊版全文；期間盤點及查詢，結束保留 fixture。'
+                     if restore else '建立空的隔離記憶與固定兩版來源；新增、修改、停用、恢復各自確認，期間盤點及查詢；結束保留 fixture。'
                      if content else '建立固定來源與一筆 synthetic item；stop/resume 各自確認；結束保留 fixture。'))
         if not _confirm(stdin, 'CREATE SYNTHETIC'):
             _emit(stdout, 'cancelled', retained=False)
@@ -270,15 +342,18 @@ def _run(args, stdin, stdout):
         workspace = Path(tempfile.mkdtemp(prefix='memory-maintenance-pilot-', dir='/tmp')).resolve(strict=True)
         _emit(stdout, 'created', workspace=str(workspace), retained=True, fixture_writes=True)
         phase, attempted = 'preparation', True
-        ports = _prepare(workspace, stdin, stdout, content=True) if content else _prepare(workspace, stdin, stdout)
+        options = {'content': True, 'restore': True} if restore else {'content': True} if content else {}
+        ports = _prepare(workspace, stdin, stdout, **options)
         attempted = False
         _emit(stdout, 'target', scope=c.decode(ports.registry.binding().scope_bytes), item_id=ports.item_id)
-        for operation in (('add', 'update', 'stop', 'resume') if content else ('stop', 'resume')):
+        operations = ('add', 'update', 'restore') if restore else ('add', 'update', 'stop', 'resume') if content else ('stop', 'resume')
+        for operation in operations:
             phase = operation
             attempted = False
             core = GovernanceCore(ports.host(), enabled=True)
-            candidate = ports.candidates.get(operation) if content else None
-            preview = core.preview(operation, ports.item_id, candidate)
+            candidate = ports.prepare_restore() if operation == 'restore' else ports.candidates.get(operation) if content else None
+            preview = core.preview(operation, ports.item_id, candidate,
+                                   **({'restore_revision': 1} if operation == 'restore' else {}))
             handle = core.authorize(preview)
             attempted = True
             result = core.execute(handle)
@@ -322,7 +397,7 @@ def _run(args, stdin, stdout):
 def main(argv=None, *, stdin=None, stdout=None):
     parser = argparse.ArgumentParser(description='固定 synthetic memory-maintenance pilot')
     parser.add_argument('--create-synthetic', action='store_true')
-    parser.add_argument('--scenario', choices=('stop-resume', 'add-update'), default='stop-resume')
+    parser.add_argument('--scenario', choices=('stop-resume', 'add-update', 'add-update-restore'), default='stop-resume')
     args = parser.parse_args(argv)
     stdin = sys.stdin if stdin is None else stdin
     stdout = sys.stdout if stdout is None else stdout

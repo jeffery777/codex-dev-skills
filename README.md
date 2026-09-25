@@ -1410,7 +1410,7 @@ at
 | Skill | Runtime | Purpose |
 | --- | --- | --- |
 | `loop-engineering` | shared | Explicitly selected or repo-required durable loop; uses production decisions, current evidence and scoped phase skills. |
-| `memory-audit` | shared | 單專案 MG1 唯讀盤點、有界報告、可信 host factory／dispatch 與獨立授權 lifecycle provider、[advisory 預檢／隔離 canary](skills/loop-engineering/references/memory-audit-preflight.md)、[固定 synthetic 操作 pilot](skills/loop-engineering/references/memory-audit-pilot.md)、[synthetic add/update/stop/resume 操作入口](skills/loop-engineering/references/memory-maintenance-pilot.md)；production adapter 仍未啟用。 |
+| `memory-audit` | shared | 單專案 MG1 唯讀盤點、有界報告、可信 host factory／dispatch 與獨立授權 lifecycle provider、[advisory 預檢／隔離 canary](skills/loop-engineering/references/memory-audit-preflight.md)、[固定 synthetic 操作 pilot](skills/loop-engineering/references/memory-audit-pilot.md)、[synthetic add/update/restore/stop/resume 操作入口](skills/loop-engineering/references/memory-maintenance-pilot.md)；production adapter 仍未啟用。 |
 | `cli-session-handoff` | cli | Start, resume, fork, or clean non-interactive fresh-continue one authorized bounded CLI session, or prepare one exact manual interactive fork, after shared orchestration selects the handoff. |
 | `planning` | shared | Produce scoped implementation plans with assumptions, risks, DoD, and verification. |
 | `milestone-continuation` | shared | Continue a bounded milestone across repeated invocations by checking task completion, choosing the next ready task, and stopping at human gates. |
