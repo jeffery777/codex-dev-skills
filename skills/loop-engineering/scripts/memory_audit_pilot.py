@@ -32,7 +32,7 @@ ARTIFACT = b'Synthetic pilot widget label blue. No real project data.\n'
 REPOSITORY = 'synthetic-pilot-repository'
 
 
-def _source(root):
+def _source(root, *, artifact=ARTIFACT):
     """只在本次新目錄建立三個固定 loose objects；不執行 Git、讀 config 或網路。"""
     root.mkdir(mode=0o700)
     (root / '.git').mkdir(mode=0o700)
@@ -47,12 +47,12 @@ def _source(root):
         with os.fdopen(fd, 'wb') as stream:
             stream.write(zlib.compress(raw))
         return oid
-    blob = write('blob', ARTIFACT)
+    blob = write('blob', artifact)
     tree = write('tree', b'100644 artifact.txt\0' + bytes.fromhex(blob))
     commit = write('commit', f'tree {tree}\nauthor Synthetic <pilot@example.invalid> 1 +0000\ncommitter Synthetic <pilot@example.invalid> 1 +0000\n\nSynthetic pilot\n'.encode())
     return GitRepositoryBinding(root, db.identity(root.stat()), db.identity((root / '.git').stat()),
                                 db.identity(objects.stat()), REPOSITORY), ArtifactPermit(
-                                    'synthetic-pilot-source', commit, 'artifact.txt', hashlib.sha256(ARTIFACT).hexdigest())
+                                    'synthetic-pilot-source', commit, 'artifact.txt', hashlib.sha256(artifact).hexdigest())
 
 
 def _candidate(permit, now):

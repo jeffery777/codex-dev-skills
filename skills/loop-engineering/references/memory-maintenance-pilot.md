@@ -1,4 +1,4 @@
-# 單專案 synthetic memory-maintenance stop/resume pilot
+# 單專案 synthetic memory-maintenance pilot
 
 預設停用，production registry 為空。這是當次新建固定 synthetic fixture 的操作示範，
 不讀既有專案／原生記憶，也不認證人類身分或授予 production qualification。
@@ -20,9 +20,34 @@ Source checkout 改用 `./scripts/project-python`；plugin 使用其同名 scrip
 4. 只有 stop 確認 applied 才顯示新的 resume preview。另輸入
    `RESUME <preview_digest>`；stop 接受不包含 resume。resume 重驗來源，保持 revision 1。
 
+## 新增／修改與版本一致性
+
+```sh
+python3 ~/.agents/skills/loop-engineering/scripts/memory_maintenance_pilot.py --create-synthetic --scenario add-update
+```
+
+這是同一 shared script 的固定情境，可由 CLI 或 Desktop 的明確互動終端使用；
+不依賴 Desktop internals，也不新增 runtime-specific grant。只加 `--scenario`
+而沒有 `--create-synthetic` 仍回 disabled。原指令保留上述 stop/resume 行為。
+
+1. `CREATE SYNTHETIC` 接受建立空 managed root 與兩份固定來源，以及本次 fixture 的
+   讀回／recall／audit；不自動 seed ADD，也不接受任意文字、路徑或既有資料。
+2. 顯示完整 ADD preview，包含候選 body、summary、cues、provenance、validation
+   與 scope。另輸入當次 `ADD <preview_digest>`，才寫入 blue revision 1。
+3. UPDATE 顯示完整前後內容。舊內容以新唯讀 recall 取得，snapshot digest 必須
+   等於 preview 前態；green revision 2 有獨立固定 Git artifact 與 permit。
+   另輸入 `UPDATE <preview_digest>`；等待期間的狀態／來源／期限漂移仍須拒絕。
+4. 接著分別確認 STOP、RESUME。每步先核對 applied，再以新 core 讀回 proof，
+   有界 audit 核對 revision／保留版本數／status／來源覆蓋，並比較 blue、green、
+   widget 及新舊關鍵詞組合。UPDATE 後只召回 revision 2，blue 或 blue+green 查無；
+   STOP 全查無，RESUME 恢復 revision 2，保留兩版，不新增 revision 3。
+
+取消 ADD 後 items／versions／proofs 皆為零；後續取消保留已確認且提交的操作。
+更新保留舊版內容與 provenance，只補 retired_at；此入口沒有歷史 restore。
+
 確認預設期限 300 秒；過期不延長，不接受舊 digest／grant 重播。每個輸出事件標記
 synthetic-only／production_qualified=false。成功或取消 exit 0，Ctrl-C exit 130，
-無法完成 exit 2。seed 寫入及 stop/resume 均會修改 fixture，並非唯讀盤點。
+無法完成 exit 2。建立 fixture、舊情境 seed 與已確認 mutation 均有寫入，並非唯讀盤點。
 Audit-only provider 不參與 mutation 授權。
 
 ## 異常與恢復
@@ -32,6 +57,8 @@ Audit-only provider 不參與 mutation 授權。
 seed 準備階段可能已寫入；其失敗或中斷標為 preparation／unknown。
 readback 失敗或執行期間中斷不能推論 rollback；輸出故障後停止向故障 sink 寫入，
 可能沒有最後事件。任何非 applied 結果都不進入下一個操作，也不重送 mutation。
+add/update 的提交後 audit 或驗證失敗同樣保留 unknown；先前 applied 事件只是
+該步讀回，不能代替整段完成。只有該步所有核對成功才輸出 verified。
 
 結束會丟棄 RAM handle 並關閉 ports；OS 強制終止不保證 finally 執行。
 完整或部分 fixture 均保留於顯示的 workspace。入口不重開既有 root；重新執行
