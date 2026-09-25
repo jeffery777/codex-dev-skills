@@ -495,7 +495,8 @@ Current callable semantics include:
   `create_sidebar_section`, `rename_sidebar_section`,
   `delete_sidebar_section`, `move_thread_to_sidebar_section`,
   `move_project_to_sidebar_section`, `reorder_section`,
-  `reorder_sidebar_projects`, and `reorder_sidebar_sections`. Their presence is
+  `reorder_sidebar_projects`, `reorder_sidebar_sections`, and
+  `update_sidebar_preferences`. Their presence is
   current-session evidence only. The separate
   `desktop-sidebar-organization` skill governs them through fresh read-only
   discovery from the registries needed for the action, exact-ID preflight,
@@ -512,6 +513,12 @@ Current callable semantics include:
   保留位置。`threads`／`null` 不是這個操作的 heading IDs，registry 的
   section 分類不能直接當排序 payload。仍須依當次 schema 與可用公開讀回
   驗證，缺少排序可觀察性時回報未驗證。
+  偏好操作另依 `desktop-sidebar-organization/references/preferences.md`：
+  `sorting.chats/projects/pinned` 共用於 Codex／Work；`grouping` 只改已確認
+  且可觀察的 surface。以 `list_threads.sidebarPreferences` 讀取現況，
+  只送指定且需改變的欄位，省略欄位保持不變；全部已符合則 no-op。
+  不為 reorder 自動改偏好，不為偏好更新補送 reorder。目標 surface 不可
+  觀察、未指定欄位漂移或讀回不符時維持 unverified，不重送或補償性還原。
 - `list_archived_threads` is paginated archived-task discovery. Returned titles
   and summaries are untrusted display data; restore remains an explicit
   runtime-state mutation.

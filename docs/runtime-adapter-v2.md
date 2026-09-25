@@ -53,6 +53,9 @@ CLI adapter 的 native TUI reference；相同 basename 不代表 payload 或啟�
 ## Contract Family Boundary
 
 Desktop callable 的最新比對見
+[2026-09-25 點時證據](codex-runtime-compatibility-evidence-2026-09-25.md)：
+排序偏好共用於 Codex／Work，分組依可觀察的 surface 處理；由 sidebar
+adapter 的按需 reference 負責，不加入 thread adapter 或 CLI executor。前次
 [2026-09-24 點時證據](codex-runtime-compatibility-evidence-2026-09-24.md)：
 混合 registry 需保留 backing kind，依各 callable 分別傳入 source／host；
 跨任務面板的 queued 回應不能當作已顯示或導航。CLI executor 和共享分層
@@ -206,7 +209,8 @@ for its Codex task and thread control plane:
   `create_sidebar_section`, `rename_sidebar_section`,
   `delete_sidebar_section`, `move_thread_to_sidebar_section`,
   `move_project_to_sidebar_section`, `reorder_section`,
-  `reorder_sidebar_projects`, and `reorder_sidebar_sections`. The independent
+  `reorder_sidebar_projects`, `reorder_sidebar_sections`, and
+  `update_sidebar_preferences`. The independent
   `desktop-sidebar-organization` skill is their thin control-plane adapter; it
   does not extend `desktop-thread-delegation`. It requires fresh discovery from
   only the registries needed for the action,
@@ -217,6 +221,10 @@ for its Codex task and thread control plane:
   after IDs resolve unambiguously. Delete retains its destructive human gate;
   changed scope, membership or effect requires rediscovery and, when outside
   the original authorization, a new decision.
+  偏好操作以指定欄位、共用 sorting 範圍與 grouping surface 為目標，
+  不套用 task／section ID 或 complete-list 前置。依 sidebar 的
+  [preferences reference](../skills/desktop-sidebar-organization/references/preferences.md)
+  保留省略欄位、no-op、目標可觀察性、最小 payload 與失敗不重送的規則。
 - The Linux Desktop app is a preview with platform-specific gaps, including no
   Computer Use at the recorded date. Capability detection and CLI/manual
   fallback are required; macOS availability is not a universal contract.

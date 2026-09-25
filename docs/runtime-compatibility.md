@@ -7,7 +7,10 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only.
-最新的 [2026-09-24 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-24.md)
+最新的 [2026-09-25 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-25.md)
+補上 Desktop sidebar 排序偏好與單一 surface 分組的按需契約；CLI executor
+及共享編排／完成語意維持不變。前次
+[2026-09-24 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-24.md)
 補齊 Desktop 混合來源的 source／host 分流與指定其他任務面板的 queued 語意；
 CLI／Desktop 入口及共享完成契約維持獨立分層。前次
 [2026-09-19 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-19.md)

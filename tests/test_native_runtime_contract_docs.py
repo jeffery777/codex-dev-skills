@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import pathlib
 import re
 import subprocess
@@ -406,6 +407,61 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertNotIn("`sectionId` before deletion, rename, or reorder", skill)
         self.assertIn('["section-b", "section-a"]', skill)
         self.assertIn("省略 `section-a`、重複 `projects` 或加入 `threads` 都不能送出", skill)
+
+    def test_sidebar_preferences_have_an_action_scoped_reference(self) -> None:
+        entry = read("skills/desktop-sidebar-organization/SKILL.md")
+        relative = "skills/desktop-sidebar-organization/references/preferences.md"
+        body = read(relative)
+        self.assertIn("references/preferences.md", entry)
+        self.assertIn("不套用\ncomplete-list reorder 前置", entry)
+        self.assertIn("Runtime compatibility: desktop", body)
+        for path in ("README.md", "docs/runtime-adapter-v2.md"):
+            with self.subTest(path=path):
+                self.assertIn(relative, read(path))
+        for path in ("docs/native-runtime-capabilities.md", "docs/runtime-adapter-v2.md"):
+            with self.subTest(path=path):
+                self.assertIn("update_sidebar_preferences", read(path))
+        for entrypoint in ("cli-session-handoff", "desktop-thread-delegation"):
+            self.assertNotIn("references/preferences.md", read(f"skills/{entrypoint}/SKILL.md"))
+
+    def test_sidebar_preference_payload_examples_match_the_callable(self) -> None:
+        body = read("skills/desktop-sidebar-organization/references/preferences.md")
+        examples = [json.loads(block) for block in re.findall(r"```json\n(.*?)\n```", body, re.S)]
+        # The public operation updates shared sorting or one surface's grouping;
+        # these examples must not replay a snapshot or supply object identifiers.
+        self.assertEqual([
+            {"sorting": {"chats": "updated_at"}},
+            {"grouping": {"mode": "connection", "surface": "work"}},
+        ], examples)
+        for example in examples:
+            with self.subTest(example=example):
+                self.assertTrue(set(example) <= {"sorting", "grouping"})
+                if "sorting" in example:
+                    self.assertTrue(set(example["sorting"]) <= {"chats", "projects", "pinned"})
+                    self.assertTrue(set(example["sorting"].values()) <= {"manual", "priority", "updated_at"})
+                if "grouping" in example:
+                    self.assertEqual({"mode", "surface"}, set(example["grouping"]))
+                    self.assertIn(example["grouping"]["mode"], {"project", "connection", "list"})
+                    self.assertIn(example["grouping"]["surface"], {"codex", "work"})
+
+    def test_sidebar_preference_contract_preserves_scope_and_uncertainty(self) -> None:
+        body = read("skills/desktop-sidebar-organization/references/preferences.md")
+        for marker in (
+            "共用於 Codex／Work", "不是專案項目的排列", "省略欄位保持不變",
+            "不把完整 snapshot", "只改 Codex 的排序、Work 保持不變",
+            "本 adapter 在 grouping payload 明確傳入", "不能僅由執行環境叫 Codex",
+            "`list_threads` 沒有 surface selector", "不能拿它\n   當 Work 的 snapshot",
+            "不在另一部分尚未釐清時先套用一半", "回報 `no-op`", "不呼叫 mutation",
+            "不得為 reorder 自動切換 sorting", "不假定固定外層 envelope",
+            "未指定欄位出現漂移", "回報 `unverified`", "不自動重送、不補償性還原",
+            "不證明兩個 UI 已完成重新渲染", "不證明 live mutation",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, body)
+        evidence = "codex-runtime-compatibility-evidence-2026-09-25.md"
+        for path in ("README.md", "docs/runtime-compatibility.md", "docs/runtime-adapter-v2.md"):
+            self.assertIn(evidence, read(path))
+        self.assertIn("Issue #301", read(f"docs/{evidence}"))
 
     def test_current_task_worktree_has_an_independent_desktop_reference(self) -> None:
         entry = read("skills/desktop-project-delivery/SKILL.md")
