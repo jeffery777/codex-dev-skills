@@ -462,6 +462,12 @@ named/own-fd 取樣不證明完整 temp 或 J/T/G 上界，沒有 production cod
 每步獨立確認、等待後重驗與讀回；stop 保留版本，resume 不新增 revision。
 異常以拒絕或 unknown 處置，不要求物理耗盡；production registry 仍空，完整 G1 尚未 qualified。
 
+#297 延伸同一 synthetic 入口的 add/update 情境：從空 root 開始，每次分別確認，
+update 顯示與 preview 前態一致的完整舊／新內容及各自來源。一般 recall 只命中
+current revision；舊版保留，stop/resume 不增加版本。每步以 fresh readback、audit
+及新舊關鍵詞核對，故障後不重試；[驗收紀錄](loops/issue-297/verification.md)
+分開記載合成情境與正式資格，並未啟用真實記憶或 G2。
+
 #284／PR #285 加入[固定 synthetic 操作 pilot](../skills/loop-engineering/references/memory-audit-pilot.md)。
 兩次確認、等待後重驗、異常停止與 owner close 已有隔離驗收；production registry
 仍空，既有專案／原生記憶未啟用。後續工作不得把操作示範當成 G1/MG1 qualification。

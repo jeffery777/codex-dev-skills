@@ -60,6 +60,7 @@ shards:
       - tests.test_memory_audit_dispatch
       - tests.test_memory_audit_pilot
       - tests.test_memory_audit_preflight
+      - tests.test_memory_content_pilot
       - tests.test_memory_governance_contract
       - tests.test_memory_governance_core
       - tests.test_memory_governance_faults

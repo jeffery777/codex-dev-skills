@@ -23,20 +23,21 @@ class MaintenanceTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.parent = Path(self.temp.name).resolve()
 
-    def prepare(self, stream=None):
+    def prepare(self, stream=None, *, content=False):
         stream = stream or Interaction()
         root = Path(tempfile.mkdtemp(dir=self.parent))
-        ports = p._prepare(root, stream, stream)
+        ports = p._prepare(root, stream, stream, content=content)
         return ports, p.GovernanceCore(ports.host(), enabled=True), stream
 
-    def run_pilot(self, stream=None):
+    def run_pilot(self, stream=None, *, content=False):
         stream = stream or Interaction()
         create = tempfile.mkdtemp
         def create_here(**kwargs):
             self.assertEqual('/tmp', kwargs['dir'])
             return create(prefix=kwargs['prefix'], dir=self.parent)
         with mock.patch.object(p.tempfile, 'mkdtemp', side_effect=create_here):
-            code = p.main(['--create-synthetic'], stdin=stream, stdout=stream)
+            args = ['--create-synthetic'] + (['--scenario', 'add-update'] if content else [])
+            code = p.main(args, stdin=stream, stdout=stream)
         return code, stream
 
     def state(self, ports):
