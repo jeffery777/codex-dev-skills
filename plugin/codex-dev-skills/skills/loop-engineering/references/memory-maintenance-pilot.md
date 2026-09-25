@@ -43,7 +43,35 @@ python3 ~/.agents/skills/loop-engineering/scripts/memory_maintenance_pilot.py --
    STOP 全查無，RESUME 恢復 revision 2，保留兩版，不新增 revision 3。
 
 取消 ADD 後 items／versions／proofs 皆為零；後續取消保留已確認且提交的操作。
-更新保留舊版內容與 provenance，只補 retired_at；此入口沒有歷史 restore。
+更新保留舊版內容與 provenance，只補 retired_at；此情境不執行歷史 restore。
+
+## 歷史版本還原
+
+```sh
+python3 ~/.agents/skills/loop-engineering/scripts/memory_maintenance_pilot.py --create-synthetic --scenario add-update-restore
+```
+
+這個固定情境依序 ADD → UPDATE → RESTORE，每步仍須獨立確認。建立時另明示
+還原預覽會讀取本次 fixture 的指定舊版全文；沒有任意 revision／root 或歷史匯入參數。
+
+1. ADD 與 UPDATE 分別建立 blue revision 1、green revision 2，沿用上述確認與核對。
+2. RESTORE 預覽以當次可信 binding 的有界唯讀 transaction 取得實際 current 與
+   retained revision 1；完整內容包含 provenance、原 validation、created_at 及
+   retired_at。兩版與 preview 前態／epoch 綁定，顯示為 `change.before`、
+   `change.restore_source`；`change.after` 是新候選，`snapshot_digest` 標示同一前態。
+   在等待輸入前釋放讀鎖，歷史全文不加入一般 recall。
+3. 新候選保留 blue 內容與原 Git provenance，重新讀取 pinned artifact、核對 bytes，
+   使用當下時間與新的 validation evidence ID；不沿用 ADD 的 observation。
+   另輸入 `RESTORE <preview_digest>`，等待後仍重驗期限、來源、前態與容量。
+4. 還原產生 blue revision 3，保留 revisions 1/2 及 proof；fresh readback／audit
+   核對 `(before=2, after=3, restore_source_revision=1)` 與三版歷史。
+   一般 recall 只回 revision 3，green、green+widget、blue+green 皆查無。
+
+取消 RESTORE 保留已提交的 revision 2；不回到 revision 1，也不新增第三版。
+原 stop/resume 及 add/update 指令保持原行為。這是 synthetic 還原示範，
+不啟用 production，也不表示 G1/MG1 qualification 已完成。
+
+## 共用確認與結果
 
 確認預設期限 300 秒；過期不延長，不接受舊 digest／grant 重播。每個輸出事件標記
 synthetic-only／production_qualified=false。成功或取消 exit 0，Ctrl-C exit 130，
@@ -57,7 +85,7 @@ Audit-only provider 不參與 mutation 授權。
 seed 準備階段可能已寫入；其失敗或中斷標為 preparation／unknown。
 readback 失敗或執行期間中斷不能推論 rollback；輸出故障後停止向故障 sink 寫入，
 可能沒有最後事件。任何非 applied 結果都不進入下一個操作，也不重送 mutation。
-add/update 的提交後 audit 或驗證失敗同樣保留 unknown；先前 applied 事件只是
+add/update/restore 的提交後 audit 或驗證失敗同樣保留 unknown；先前 applied 事件只是
 該步讀回，不能代替整段完成。只有該步所有核對成功才輸出 verified。
 
 結束會丟棄 RAM handle 並關閉 ports；OS 強制終止不保證 finally 執行。
