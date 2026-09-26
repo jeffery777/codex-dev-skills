@@ -36,6 +36,12 @@ current schema is inspected at the call site:
 | Reorder a section | `reorder_section` | Exact custom or `pinned` `sectionId`; complete current membership list. |
 | Reorder sidebar projects | `reorder_sidebar_projects` | Exact unpinned project IDs; this callable has partial-list semantics. |
 | Reorder sidebar sections | `reorder_sidebar_sections` | 全部目前自訂 section IDs，另加本次要移動的受支援內建 headings；省略的內建 headings 保留位置。 |
+| Change sorting or grouping preferences | `update_sidebar_preferences` | 已授權的偏好欄位、共用排序範圍及可觀察的目標 surface；先讀 [Sidebar preferences](references/preferences.md)。 |
+
+偏好操作以欄位及 surface 為目標，不虛構 task／project／section IDs，也不套用
+complete-list reorder 前置。依上述 reference 取得偏好 snapshot、最小 payload
+與讀回條件；本檔的授權、response validation、禁止路徑及 fallback 仍適用。
+只有操作需要項目身分時，才套用下列 ID／membership／destination 步驟。
 
 These are runtime-state mutations, not repository operations or completion
 evidence. Repository tests, CI, and this skill's default workflow must use
@@ -50,7 +56,8 @@ not execute a live sidebar mutation.
    is unavailable or ambiguous, fail closed.
 2. Obtain one fresh snapshot from the registry needed by this action:
    `list_threads` for task/section identity and section membership;
-   `list_projects` for project identity. Read both only when the action needs
+   `list_projects` for project identity；偏好操作只讀 `list_threads.sidebarPreferences`。
+   Read both only when the action needs
    facts from both. Reuse the snapshot through planning and the call while its
    relevant identities, membership, and scope remain current; refresh if an
    intervening event, elapsed delay, or conflict makes it stale. A display
@@ -198,6 +205,7 @@ claim success.
 - Current callable and schema evidence, marked current-session or unverified
 - Needed `list_threads` / `list_projects` discovery facts and exact identities
 - Special-value and complete-list classification
+- 偏好操作另列指定欄位、共用排序或目標 surface、省略欄位與 no-op 判定
 - Exact dry-run plan and explicit authority or human-gate result
 - Dispatch response validation and post-mutation readback as separate states
 - CLI/manual fallback or fail-closed reason

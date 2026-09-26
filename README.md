@@ -1323,8 +1323,16 @@ complete-list membership must still match. Delete retains its destructive human
 gate, and changed scope or ambiguous effects require a decision. Tests and CI use only
 synthetic contract evidence and perform no live sidebar mutation.
 
+排序偏好與分組使用按需的
+[sidebar preferences reference](skills/desktop-sidebar-organization/references/preferences.md)。
+排序設定共用於 Codex／Work；分組只改已確認且可觀察的 surface。
+只傳指定欄位、保留省略值，已符合則 no-op；不為 reorder 自動改偏好。
+
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 最新維護的比對見
+[Codex runtime compatibility evidence (2026-09-25)](docs/codex-runtime-compatibility-evidence-2026-09-25.md)：
+補上 Desktop sidebar 偏好契約、目標 surface 觀測及不重送的讀回規則，
+CLI／Desktop 獨立入口與共享層保持不變。前次
 [Codex runtime compatibility evidence (2026-09-24)](docs/codex-runtime-compatibility-evidence-2026-09-24.md)：
 補齊混合 backing kind 的 source／host 分流與跨任務面板 queued 語意，
 保留 CLI／Desktop 獨立入口和共享分層；本 repository 的 Issue-first 與
