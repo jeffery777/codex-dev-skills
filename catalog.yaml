@@ -79,6 +79,7 @@ groups:
     skills:
       - source: skills/loop-engineering
       - source: skills/memory-audit
+      - source: skills/memory-maintenance
       - source: skills/planning
       - source: skills/milestone-continuation
       - source: skills/project-delivery
