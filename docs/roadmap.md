@@ -474,6 +474,15 @@ current revision；舊版保留，stop/resume 不增加版本。每步以 fresh 
 [驗收紀錄](loops/issue-299/verification.md)保留 synthetic 與正式資格的區別；
 production registry 仍空，沒有任意 root/import、G2 或原生記憶啟用。
 
+#304／PR #305 新增可安裝的 [memory-maintenance 薄入口](../skills/memory-maintenance/SKILL.md)
+及 [可信 host 整合契約](../skills/loop-engineering/references/memory-maintenance-entry.md)。
+單一本機 POSIX root、固定 Git artifacts 與 process-local authority 支援五操作；
+每步獨立 preview／confirmation、執行前重驗、單次消耗與 fresh readback。
+隔離驗收涵蓋來源／狀態漂移、撤銷／過期、重播、程序重啟及交易／讀回故障；
+此結果不證明 production ports 或完整 G1／MG1 資格。一般 CLI／Desktop 在缺少
+正式 host ports 時回報 unavailable；production registry 仍空，維持 default-off。
+詳見[本包計畫與驗收範圍](plans/issue-304-memory-maintenance.md)。
+
 #284／PR #285 加入[固定 synthetic 操作 pilot](../skills/loop-engineering/references/memory-audit-pilot.md)。
 兩次確認、等待後重驗、異常停止與 owner close 已有隔離驗收；production registry
 仍空，既有專案／原生記憶未啟用。後續工作不得把操作示範當成 G1/MG1 qualification。

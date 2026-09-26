@@ -19,7 +19,7 @@ DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
-VERSION="0.30.0"
+VERSION="0.31.0"
 
 case "$CODEX_DEV_SKILLS_TARGET" in
   legacy) DEFAULT_CODEX_SKILLS_DIR="$DEFAULT_CODEX_LEGACY_SKILLS_DIR" ;;
@@ -849,7 +849,7 @@ group_skills() {
     codex-review-workflow)
       printf '%s\n' code-review code-review-deep docs-review merge-review merge-review-deep ;;
     codex-delivery-workflow)
-      printf '%s\n' loop-engineering memory-audit planning milestone-continuation project-delivery project-orchestrator implementation-slice docs-update ;;
+      printf '%s\n' loop-engineering memory-audit memory-maintenance planning milestone-continuation project-delivery project-orchestrator implementation-slice docs-update ;;
     codex-cli-session-handoff)
       printf '%s\n' cli-session-handoff ;;
     desktop-delivery-workflow)

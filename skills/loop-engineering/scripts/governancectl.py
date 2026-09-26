@@ -8,15 +8,24 @@ import sys
 
 import memory_governance_contract as contract
 from memory_audit import audit_report, render_report
+from memory_maintenance import maintenance_report, render_report as render_maintenance
 from memory_governance_storage import SCHEMA_FINGERPRINT
 
 
-def main(argv=None, *, audit_dispatch=None) -> int:
+def main(argv=None, *, audit_dispatch=None, maintenance_dispatch=None) -> int:
     parser = argparse.ArgumentParser(description="MG1 G1 default-off governance boundary")
-    parser.add_argument("command", choices=("status", "audit", "proposal"), nargs="?", default="status")
+    parser.add_argument("command", choices=("status", "audit", "proposal", "maintenance"), nargs="?", default="status")
     parser.add_argument("--enabled", action="store_true")
     parser.add_argument("--format", choices=("json", "text"), default="json")
     args = parser.parse_args(argv)
+    if args.command == "maintenance":
+        def emit(report):
+            print(render_maintenance(report) if args.format == 'text' else contract.canonical(report).decode(),
+                  end='' if args.format == 'text' else '\n', flush=True)
+        report = maintenance_report(enabled=args.enabled, dispatch=maintenance_dispatch, emit=emit)
+        if report['status'] == 'disabled':
+            emit(report)
+        return 0 if report['status'] in {'complete', 'disabled'} else 2
     if args.command == "audit":
         report = audit_report(enabled=args.enabled, dispatch=audit_dispatch)
         if args.format == "text":
