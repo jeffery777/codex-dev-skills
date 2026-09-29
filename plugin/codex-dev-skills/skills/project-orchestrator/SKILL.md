@@ -110,6 +110,28 @@ final structured receipt. Integrate completed results while other workers run,
 and reuse the original worker for bounded follow-up when its ownership and
 source revision remain valid.
 
+## Checkout Selection
+
+Choose local or worktree from the user's and repository's preferences, current
+changes, writer ownership, required base, and actual isolation needs. A Git
+repository or a new conversation alone does not require a worktree. Reuse a
+suitable existing checkout when one writer can safely continue there. Separate
+isolation may be needed for conflicting changes, concurrent writers, or a
+different base that cannot safely coexist in the current checkout.
+
+Explain a departure from the user's preferred placement before acting; do not
+invent an approval step when the exact action is already authorized and the
+active runtime permits it. Reuse an eligible worktree before creating another.
+Placement selection does not authorize a new conversation, an external write,
+or a destructive operation. A runtime-specific requirement for explicit intent
+still applies to that operation; it is not a universal worktree policy. If the
+selected action cannot meet that contract, continue in local only when safe or
+prepare the bounded handoff without dispatching it.
+
+The CLI non-interactive executor's private clone is a separate execution
+isolation boundary, not a new worktree preference for the user's checkout.
+Keep its clean-source, exact-head and integration checks unchanged.
+
 ## Workflow
 
 1. Discover source-of-truth files and current state. On continuation, revalidate

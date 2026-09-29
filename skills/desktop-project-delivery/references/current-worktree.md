@@ -11,10 +11,14 @@ writer 與當次 callable。沿用涵蓋該隔離工作的既有授權，不從�
 額外操作權限。需要新任務或保留歷史的子任務時，回到
 `desktop-thread-delegation` 的 create／fork reference。
 
-- `create_worktree` 接受選填 `name` 與 `ref`；不傳 Desktop task 的 `prompt`、
+- 先呼叫 `list_artifacts`，核對目前 task 已附加的工作樹與使用狀態；優先重用
+  沒有其他工作依賴、既有修改已妥善處理且來源合適的 active worktree。名稱
+  不符新任務不是重建理由；archived worktree 不作為一般新工作 checkout。
+- `create_worktree` 必填 `allowAsync: true`，接受選填 `name` 與 `ref`；不傳 Desktop task 的 `prompt`、
   `target`、`projectId`、`environment` 或 `startingState`。
-- 省略 `ref` 從目前 repository 的 HEAD 建立；指定時先核對 branch、tag 或
-  commit 的精確目標。未提交修改不會複製。若工作必須包含那些修改，先解決
+- 省略 `ref` 從 repository 的 remote default branch 建立，不是目前 HEAD。
+  無法判定 remote default 時必須提供明確 `ref`；延續特定 branch／PR 工作也
+  要指定並核對精確來源。未提交修改不會複製。若工作必須包含那些修改，先解決
   來源與移轉方式，不能宣稱工作樹包含它們，或自動 commit／stash 以湊齊前置。
 - `name` 可省略；指定時使用最多 64 字元的小寫連字號名稱。四字元以上全
   十六進位名稱及 Windows device names 為保留值。重名或封存工作樹保留的
@@ -23,6 +27,13 @@ writer 與當次 callable。沿用涵蓋該隔離工作的既有授權，不從�
   新任務 worktree 設定流程會自動執行的假設。
 
 ## 結果、執行位置與部分失敗
+
+快速建立可直接回傳路徑；收到 pending `operationId` 時，使用同一 ID 呼叫
+`get_worktree_creation_status`，確認 `completed` 並取得路徑後才使用 checkout。
+`preparing`、`creating`、`registering` 不是完成；`failed` 或未知結果先查證，
+不重送建立。狀態查詢之間繼續獨立工作，進度未變時拉長間隔；Git phase 百分比
+不是整體百分比或 ETA。不得以 operationId、queued task ID 或推測路徑冒充
+可用工作樹。
 
 依當次 schema 驗證回應並使用 runtime 回傳的 Git root 與 workspace directory，
 不猜測未公開的 response 欄位名稱。工作樹會附加到目前 task，但不改變目前

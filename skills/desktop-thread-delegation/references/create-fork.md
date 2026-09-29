@@ -10,18 +10,24 @@ prompt before mutation, and honor the exact already-authorized execution mode.
 ## Choose The Target
 
 - `desktop-thread-fork`: use `fork_thread` with
-  `environment: {"type": "same-directory"}` for completed history in the same
+  `environment: {"type": "same-directory"}` for conversation history in the same
   checkout or existing worktree. The source task must stop writing before the
   child continues; this is sequential ownership transfer.
 - `desktop-worktree-fork`: use `fork_thread` with
-  `environment: {"type": "worktree"}` for completed history in a new isolated
+  `environment: {"type": "worktree"}` for conversation history in a new isolated
   checkout. Do not replace a fork with fresh `create_thread`, which discards
   the intended conversation lineage.
 - `desktop-thread-create`: call `list_projects` and use the exact observed
-  `projectId`. If `isGitRepository` is true, default to project
-  `environment: {"type": "worktree"}`. Use `environment: {"type": "local"}`
-  for non-Git projects or when the user explicitly requests the saved project checkout.
-  `projectless` is
+  `projectId`. Default to project `environment: {"type": "local"}` for Git and
+  non-Git projects. The current `create_thread` callable permits
+  `environment: {"type": "worktree"}` only when the user explicitly requests
+  a worktree and `isGitRepository` is true. This is that callable's constraint,
+  not a shared rule that every worktree needs a new confirmation. Shared
+  orchestration selects placement from user preferences and isolation needs;
+  it explains a departure from the preferred placement, then checks the exact
+  operation's authority and current schema. If local is unsafe and the required
+  worktree intent is absent, prepare the handoff without dispatch; do not
+  silently select another operation to bypass the constraint. `projectless` is
   for intentionally non-project work. “Do not create a new worktree” never
   implies `projectless`.
 - Omit worktree `startingState` for the project's default branch. Use
@@ -58,8 +64,8 @@ tracked interpreter resolver when present. In this repository,
 `scripts/project-python` selects the exact `.python-version` for Python checks,
 scripts, evals, and tests. Do not copy `.venv` through `.worktreeinclude`, use
 mismatched bare system Python, or install into another interpreter. If the
-pinned environment is unavailable, report verification blocked; switching to
-`local` still requires explicit saved-checkout intent.
+pinned environment is unavailable, report verification blocked; do not switch
+the selected placement merely to hide that missing verification.
 
 ## Dispatch And Identity Readback
 
@@ -83,6 +89,12 @@ Verify exact ready registry identity and require its observed `projectId` to
 match the selected project. The title cannot substitute for this association
 check. If the association is unavailable, report it unverified after dispatch;
 never create a duplicate because registry resolution or UI display is delayed.
+
+Forks may include an interrupted active turn; they are not guaranteed to copy
+completed history only. Before follow-up, re-read repository changes, operation
+results and source writer state. Copied in-flight text does not prove an action
+completed or authorize replay. Retain the single-writer handoff and resolve an
+uncertain operation through public readback before deciding what to continue.
 
 Do not navigate automatically after creation. Dispatch, UI directive, registry
 association, navigation, sidebar visibility, and repository completion are

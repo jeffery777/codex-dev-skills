@@ -19,6 +19,14 @@ This public repository contains Codex CLI and Codex Desktop software development
 
 When the user asks for review, stay read-only unless they explicitly ask for fixes. Findings should lead with risks, bugs, regressions, missing tests, or policy violations.
 
+## Checkout Selection
+
+本專案預設單一進行中話題與單一 writer，優先沿用 local checkout。編排 agent
+依既有修改、ownership、所需 base 及隔離需求決定 local 或 worktree；需要偏離
+local 偏好時，先簡述原因，在既有授權及當次 runtime 契約允許範圍內續行。
+不因 Git repository、新話題或開源授權本身建立 worktree；需要隔離時先檢查
+可重用的工作樹。新話題、外部寫入及破壞性操作仍保留各自的授權邊界。
+
 ## Python Verification Environment
 
 - Use `./scripts/project-python` for this repository's dependency checks,

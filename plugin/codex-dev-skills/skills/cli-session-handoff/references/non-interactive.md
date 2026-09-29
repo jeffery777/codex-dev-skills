@@ -7,6 +7,10 @@ The adapter uses documented stable non-interactive start/resume forms:
 surface, not a documented stability promise. Check the active executable's
 public help before relying on the selected operation.
 
+The source `workspace` may be the selected local checkout or an existing
+worktree. That placement is independent of the child's mandatory private clone;
+a local preference never removes clone isolation or the clean-source checks.
+
 ## Prepare And Execute
 
 1. Re-read the selected task brief, exact scope, expected Git head, source files,

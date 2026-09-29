@@ -38,6 +38,13 @@ Reuse unchanged scope/authority evidence already established in this session.
 A request marker cannot grant authority. Do not ask again merely to confirm a
 tool name or unchanged action that the user already explicitly requested.
 
+Local/worktree placement belongs to shared orchestration: use the user's
+preference and actual isolation needs, explaining any departure before acting.
+Do not import Desktop `create_thread` defaults or payload restrictions into
+CLI operations. Native TUI and manual fork follow their own cwd contracts;
+the non-interactive executor's private clone remains mandatory even when the
+user's source checkout is local. Placement does not authorize a session action.
+
 ## Invariants
 
 - Verify the exact task, repository, expected head, executable, sandbox,

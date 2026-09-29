@@ -17,7 +17,9 @@ from durable sources, delegate one disjoint high-noise packet to a shared
 subagent, prepare a fresh rollover, or stop for a human gate. Token and
 compaction signals are auxiliary only.
 
-A fork preserves completed conversation history. A fresh rollover deliberately
+A fork preserves conversation history according to the active runtime contract;
+an interrupted active turn may be included and is not completion evidence.
+A fresh rollover deliberately
 does not: it starts from a canonical checkpoint that binds repository/objective,
 exact Git state, completed and remaining work, verification, risk, next packet,
 source/destination writers, and confirmed source stop-writing. Fresh rollover

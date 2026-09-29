@@ -50,6 +50,10 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Maintenance Approach
 
+- Issue #306 校正 Desktop local 預設、非同步 worktree 與 fork 中斷回合契約；
+  共享層依使用者偏好及隔離需求選 checkout，CLI private-clone 邊界保持不變。
+  修補版範圍見 [v0.31.1 候選紀錄](release-notes-v0.31.1.md)。
+
 - Issue #282 的[memory-audit 預檢與隔離 canary](loops/issue-282/delivery-plan.md)
   沿用既有授權及報告，新增 advisory 缺件診斷與獨立 authority 環境接受。
   維持 default-off／空 production registry，不將 synthetic 驗收視為正式資格。

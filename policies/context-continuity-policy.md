@@ -34,9 +34,11 @@ command is read-only and returns exactly one of five decisions:
 
 - A shared subagent is parallel, bounded work with disjoint ownership. It does
   not become delivery owner and is integrated by the main agent.
-- A fork copies completed conversation history for the same task. It may reuse
-  an existing checkout or create an isolated worktree according to the runtime
-  adapter.
+- A fork preserves conversation history for the same task. Which turns are
+  copied, including an interrupted active turn when supported, follows the
+  active runtime contract. Copied history is not operation-completion evidence.
+  It may reuse an existing checkout or create an isolated worktree according
+  to shared placement selection and the runtime adapter.
 - A fresh create or fresh continuation deliberately does not inherit the noisy
   conversation. It bootstraps from the durable checkpoint and transfers the
   delivery-owner role sequentially.
@@ -83,7 +85,7 @@ task, select or transfer writer ownership, satisfy a gate, or prove completion.
 
 | Runtime | Native fresh path | Safe fallback |
 | --- | --- | --- |
-| Desktop | Authorized `create_thread` with the exact project, checkpoint branch starting state, and checkpoint-only prompt. The destination verifies branch/HEAD before writer ownership activates. | Current task regrounding or paste-ready prompt when the callable, project association, host, exact starting state, or authorization is unavailable. |
+| Desktop | Authorized `create_thread` with the exact project and checkpoint-only prompt. Local requires a clean saved checkout already at the checkpoint branch/HEAD with exclusive ownership; an explicitly requested worktree uses the exact checkpoint branch starting state. The destination verifies branch/HEAD before writer ownership activates. | Current task regrounding or paste-ready prompt when the callable, project association, host, exact checkout state, or authorization is unavailable. |
 | CLI | Phase one supports authorized non-interactive `fresh-continuation` on a clean exact worktree through the private-clone executor, with origin identity verification and a Git-control-directory replay barrier. | Interactive or dirty worktrees use a reviewed manual prompt/current-session path. A history-preserving `codex fork` remains a fork, not fresh rollover. |
 | IDE | Use a documented independent task/session surface only if the active IDE exposes and qualifies it. None is assumed in this baseline. | Current-session regrounding, shared subagent for disjoint work, or a paste-ready continuation prompt. |
 

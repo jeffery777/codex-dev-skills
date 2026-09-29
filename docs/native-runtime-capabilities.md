@@ -6,11 +6,12 @@ shared contract owns objective, task, evidence, review, and completion
 semantics. Runtime capabilities may start, coordinate, observe, or wake work,
 but they do not become completion authority.
 
-The CLI/Desktop interface facts were refreshed on 2026-09-24 from
+The checkout/worktree/fork interface facts were refreshed on 2026-09-29 from
 the active callable schemas, the public Codex documentation, and the maintained
 source-repository compatibility evidence at
-`docs/codex-runtime-compatibility-evidence-2026-09-24.md`. The previous
-`docs/codex-runtime-compatibility-evidence-2026-09-19.md` remains historical.
+`docs/codex-runtime-compatibility-evidence-2026-09-29.md`. The previous
+`docs/codex-runtime-compatibility-evidence-2026-09-24.md` and
+`docs/codex-runtime-compatibility-evidence-2026-09-19.md` remain historical.
 Unrelated capabilities
 retain their separately dated evidence below. Every adapter
 must still inspect the capability exposed by its active runtime instead of
@@ -383,8 +384,12 @@ retains `Desktop` as the compatibility label for its Codex control plane.
 Current callable semantics include:
 
 - `create_worktree` 在目前 task 的 repository 建立並附加隔離 checkout，
-  不建立新 task 或複製 conversation history。省略 `ref` 從 HEAD 建立，未提交
-  修改不複製；`name` 只是選填命名提示。它不選 environment、不跑 setup，
+  不建立新 task 或複製 conversation history。先用 `list_artifacts` 核對並優先
+  重用合適的 active worktree。省略 `ref` 從 remote default branch 建立；無法
+  判定預設來源或需延續特定 branch／PR 時提供精確 `ref`。未提交修改不複製；
+  `name` 只是選填命名提示。必填 `allowAsync: true`；快速建立可直接回傳路徑，
+  pending `operationId` 要以 `get_worktree_creation_status` 讀回 `completed`
+  和路徑後才使用。處理中、失敗或未知結果不授權重複建立。它不選 environment、不跑 setup，
   不改目前 task cwd 或 sandbox permissions。後續工具須明確使用已驗證的
   回傳目錄，並依 repo 的環境規則驗證。建立成功但 registration 失敗時沿用
   已回傳工作樹，不重複建立。按需讀取
@@ -392,10 +397,13 @@ Current callable semantics include:
   `target`／`startingState` 契約套到此操作，也不新增共享任務模式。
 - `list_projects` returns local and remote project information, project
   identifiers used for project-scoped creation, and `isGitRepository`. Use a
-  same-directory fork for same-task continuation with completed history,
-  project-worktree creation by default for a fresh task in a Git project,
-  project-local creation for a non-Git project, and Git project-local creation
-  only when the user explicitly requests the saved project checkout.
+  same-directory fork for same-task continuation with conversation history.
+  Shared orchestration selects local/worktree from user and repo preferences,
+  writer ownership, current changes and isolation needs, explaining a departure
+  from the preferred placement before acting. The current `create_thread`
+  callable defaults to project-local for Git and non-Git projects; its worktree
+  target requires an explicit user request and `isGitRepository: true`. That
+  operation-specific constraint is not a universal worktree-confirmation rule.
   Use `projectless` only for intentionally non-project work. “Do not create a
   new worktree” does not imply `projectless`. Current read-only evidence uses
   a schema-version-2 response with `projectKind` and `hostId` routing metadata;
@@ -423,10 +431,12 @@ Current callable semantics include:
   requests supported values.
 - A fresh-context rollover uses `create_thread` with the exact selected project
   and a checkpoint-only prompt. It must not use `fork_thread`, because fork
-  copies completed conversation history. The source stops writing before the
+  retains conversation history. The source stops writing before the
   destination becomes the sole delivery owner. Dispatch remains coordination
-  evidence and exact replay must not create a duplicate task. The worktree
-  starts from the exact checkpoint branch with `onMissing: error`; the new task
+  evidence and exact replay must not create a duplicate task. A local target
+  must already match the clean checkpoint branch/HEAD and exclusive ownership.
+  An explicitly requested worktree starts from the exact checkpoint branch with
+  `onMissing: error`; the new task
   remains a pending writer until it reports a read-only exact branch/HEAD check.
 - A worktree target omits `startingState` to start from the project default
   branch. Use `{"type":"working-tree"}` only when the user explicitly wants
@@ -462,10 +472,13 @@ Current callable semantics include:
   queued. A same-directory fork reuses the source checkout or existing
   worktree without creating another Git worktree and is a sequential ownership
   transfer: the source task must stop writing before the child continues. A
-  worktree fork preserves the same task's completed conversation lineage while
+  worktree fork preserves the same task's conversation lineage while
   preparing a new isolated checkout; its `clientThreadId` must resolve to a
-  usable `threadId` before follow-up. Both forms copy completed history only;
-  send a follow-up only when work must continue in the child. The current
+  usable `threadId` before follow-up. Both forms may include an interrupted
+  active turn; re-read Git state, operation results and source ownership before
+  continuation. Copied in-flight text is neither completion proof nor authority
+  to replay an uncertain operation. Send a follow-up only when work must
+  continue in the child. The current
   callable accepts no caller-supplied
   `hostId` and does not guarantee `hostId` in its response: the source task
   anchors the fork host. Retain a known source host, then obtain the child
