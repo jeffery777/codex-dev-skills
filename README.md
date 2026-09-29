@@ -1330,6 +1330,10 @@ synthetic contract evidence and perform no live sidebar mutation.
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 最新維護的比對見
+[Codex runtime compatibility evidence (2026-09-29)](docs/codex-runtime-compatibility-evidence-2026-09-29.md)：
+依偏好與隔離需求選擇 checkout，校正 Desktop 新任務 local 預設、目前任務
+worktree 的非同步／起點契約，以及 fork 可能包含中斷回合的語意；CLI 的
+來源 checkout 選擇與 executor private clone 邊界分開。前次
 [Codex runtime compatibility evidence (2026-09-25)](docs/codex-runtime-compatibility-evidence-2026-09-25.md)：
 補上 Desktop sidebar 偏好契約、目標 surface 觀測及不重送的讀回規則，
 CLI／Desktop 獨立入口與共享層保持不變。前次
@@ -1369,16 +1373,21 @@ separate. A stale sidebar is not authority to create a duplicate task, and
 pinning changes placement rather than registration.
 
 Choose the Desktop action from the handoff intent: use a same-directory
-`fork_thread` for the same task, completed history, and existing
-checkout/worktree; use a worktree `fork_thread` for the same task and completed
-history when a newly isolated checkout is required; for a fresh task use
+`fork_thread` for the same task, conversation history, and existing
+checkout/worktree; use a worktree `fork_thread` for the same task and conversation
+history when a newly isolated checkout is required. Forks may include an
+interrupted active turn; re-read operation results and writer ownership before
+continuing rather than assuming copied history proves completion. For a fresh task use
 `create_thread` with the exact project
 ID and a concise non-empty safe `title` derived from the user-approved objective.
 Ordinary descriptive titles are allowed; exclude sensitive details and use a
 neutral generic title such as `Project task` when needed. A
-Git project defaults to `worktree`; use `local` only when the user explicitly
-requests the saved project checkout.
-Non-Git projects default to `local`, and `projectless` remains limited to
+Git or non-Git project defaults to `local`. Shared orchestration weighs user/repo
+preferences and isolation needs, explaining a departure from the preference.
+The active `create_thread` callable permits a worktree only on an explicit user
+request for a Git project; that operation-specific constraint does not impose a
+universal confirmation gate on CLI/Desktop checkout selection.
+`projectless` remains limited to
 intentional non-project work. In a worktree, run repository verification
 through its tracked environment resolver (this repository uses
 `./scripts/project-python`) or stop when the pinned environment is unavailable.

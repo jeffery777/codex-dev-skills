@@ -43,8 +43,8 @@ Parallel subagent:
 - Ownership: packet-only; main delivery owner remains active.
 
 Fork:
-- Goal: continue the same task with completed conversation history.
-- History: copied.
+- Goal: continue the same task with conversation history.
+- History: copied according to the active runtime contract; an interrupted turn may be included.
 - Ownership: sequential transfer for same-directory/worktree continuation.
 
 Fresh rollover:
@@ -53,8 +53,10 @@ Fresh rollover:
 - Ownership: source stops writing; destination becomes the sole delivery owner.
 ```
 
-For Desktop, a fresh rollover uses an authorized `create_thread` with the
-checkpoint branch as an explicit `startingState` and `onMissing: error`;
+For Desktop, a fresh rollover uses an authorized `create_thread`. A local
+target must already match the clean checkpoint branch/HEAD with exclusive
+ownership. An explicitly requested worktree uses the checkpoint branch as an
+explicit `startingState` and `onMissing: error`;
 using `fork_thread` would retain history and therefore changes the requested
 semantics. The destination verifies its exact branch and HEAD read-only before
 writer ownership activates. For CLI, `fresh-continuation` is a new `codex exec --json` session

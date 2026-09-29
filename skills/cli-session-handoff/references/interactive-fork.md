@@ -8,6 +8,12 @@ working-directory policy; the executor does not automate the TUI.
 selects the invocation directory; an unset value prompts when they differ.
 Choose deliberately from public context rather than private session files.
 
+Apply shared placement preferences before preparing this command. Continuing
+alone in the existing local checkout does not require a new worktree merely
+because the conversation is forked. If isolation is needed, shared orchestration
+selects and verifies that checkout first and explains the departure from the
+preferred placement; this manual adapter does not create it.
+
 
 - Use only the documented `codex fork <SESSION_ID>` surface with an exact UUID.
 - Record whether the selected working directory is the saved `session`

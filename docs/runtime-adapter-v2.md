@@ -53,6 +53,10 @@ CLI adapter 的 native TUI reference；相同 basename 不代表 payload 或啟�
 ## Contract Family Boundary
 
 Desktop callable 的最新比對見
+[2026-09-29 點時證據](codex-runtime-compatibility-evidence-2026-09-29.md)：
+共享層依偏好與隔離需求選路，`create_thread` 採 local 預設並保留其專屬
+worktree 意圖限制；目前任務 worktree 需處理非同步完成與 remote default
+branch 起點；fork 可含中斷中的回合，複製歷史不證明操作完成。前次
 [2026-09-25 點時證據](codex-runtime-compatibility-evidence-2026-09-25.md)：
 排序偏好共用於 Codex／Work，分組依可觀察的 surface 處理；由 sidebar
 adapter 的按需 reference 負責，不加入 thread adapter 或 CLI executor。前次
@@ -89,11 +93,13 @@ for its Codex task and thread control plane:
   callers should use a returned `projectId` rather than infer project identity
   from private Desktop runtime state. Use a same-directory fork when the same
   task needs a new conversation in its existing checkout/worktree, or a
-  worktree fork when the same task needs completed history plus a newly
-  isolated checkout; use project
-  worktree creation by default for a fresh task in a Git project; use project
-  local creation for a non-Git project or when the user explicitly requests a
-  Git project's saved checkout; and use `projectless` only for intentionally
+  worktree fork when the same task needs conversation history plus a newly
+  isolated checkout. Shared orchestration chooses placement from user/repo
+  preferences and actual isolation needs, explaining a departure before acting.
+  The current `create_thread` callable defaults to project local for Git and
+  non-Git projects; a worktree target requires an explicit user request and
+  `isGitRepository: true`. This constraint belongs to that callable, not all
+  CLI/Desktop checkout decisions. Use `projectless` only for intentionally
   non-project work. A prohibition on
   creating a new worktree is not a reason to choose `projectless`.
 - The 2026-09-16 read-only `list_projects` result used `schemaVersion: 2` and
@@ -171,13 +177,22 @@ for its Codex task and thread control plane:
   paginated reads are insufficient by themselves. The current callable exposes
   no revoke operation; review or revoke
   the link separately through ChatGPT data controls.
+- Desktop `create_worktree` requires `allowAsync: true`; inspect `list_artifacts`
+  first and reuse a suitable active worktree. An omitted `ref` means the remote
+  default branch, not the current HEAD; supply an exact ref when the default is
+  unknown or continuing a specific branch/PR. A pending `operationId` is observed
+  through `get_worktree_creation_status`; use the returned checkout only after
+  `completed` and path verification. Unknown/failed results do not authorize
+  duplicate creation. This is a current-task operation with its own contract.
 - Desktop `fork_thread` accepts optional `threadId` and optional `environment`.
   `same-directory` reuses the source checkout or existing worktree and copies
-  completed history; it does not create another Git worktree. The source task
+  conversation history; it does not create another Git worktree. The source task
   must stop writing before the child continues in that shared directory.
-  `worktree` copies completed history while queuing a new isolated checkout and
+  `worktree` copies conversation history while queuing a new isolated checkout and
   may return `clientThreadId`; that identifier must resolve to a usable
-  `threadId` before follow-up. The
+  `threadId` before follow-up. Both forms may include an interrupted active turn;
+  re-read Git state, operation results and writer ownership before continuation,
+  rather than replaying in-flight text as if its outcome were known. The
   source task anchors the host because `fork_thread` accepts no caller-supplied
   `hostId`; its response does not guarantee a `hostId`. Retain a known source
   host and resolve the child's runtime-returned

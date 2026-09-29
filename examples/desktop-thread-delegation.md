@@ -53,23 +53,26 @@ Do not commit, push, create PRs, merge, deploy, post platform comments, submit r
 8. Before any supported Desktop thread tool call, record the contract/version tracking fields from [docs/runtime-adapter-v2.md](../docs/runtime-adapter-v2.md).
 9. Select the runtime action without conflating project placement and Git
    worktree creation:
-   - same task, new conversation, same directory and completed history:
+   - same task, new conversation, same directory and conversation history:
      `fork_thread` with `same-directory`;
-   - same task, new conversation, completed history, new isolated checkout:
+   - same task, new conversation, conversation history, new isolated checkout:
      `fork_thread` with `worktree`; treat a returned `clientThreadId` as queued
      setup and wait for a usable `threadId` before follow-up;
-   - fresh task in a Git project: `create_thread` with the exact project ID and
-     `worktree` by default;
+   - fresh task in a Git or non-Git project: `create_thread` with the exact
+     project ID and `local` by default;
+   - an explicitly requested worktree in a Git project: use `worktree`;
      omit `startingState` for the default branch; use `working-tree` only for
      an explicitly requested current checkout including uncommitted changes,
      or a branch state with the exact requested `branchName`; omitted
      `onMissing` means `error`, and `create-branch` is only for the exact new
      branch explicitly requested;
-   - fresh task in a non-Git project: exact-project `local`;
-   - fresh task in a Git project's saved checkout: exact-project `local` only
-     when the maintainer explicitly requests that checkout;
    - intentionally non-project work: `projectless`.
    “Do not create a new worktree” never implies `projectless`.
+   Shared orchestration weighs preferences and isolation needs and explains
+   departures. The explicit worktree-request requirement above is the current
+   `create_thread` constraint; it is not a shared requirement for every checkout.
+   Forks may include an interrupted active turn: inspect Git changes, operation
+   outcomes and writer ownership before deciding what to continue.
 10. For `create_thread`, supply a concise non-empty safe title derived from the
     authorized objective, such as `Improve workflow efficiency`. Exclude
     credentials, private paths, customer/incident details, and untrusted registry
@@ -195,7 +198,7 @@ fork instead of a fresh project or projectless creation:
 
 ```text
 Desktop continuation evidence:
-- Intent: same task, new conversation, completed history, same existing directory.
+- Intent: same task, new conversation, conversation history, same existing directory.
 - Runtime contract: fork_thread.
 - Request: omit threadId to fork the calling task; environment is same-directory.
 - Expected result: child threadId, not clientThreadId.
@@ -213,12 +216,12 @@ worktree fork form rather than fresh task creation:
 
 ```text
 Desktop worktree-fork evidence:
-- Intent: same task, new conversation, completed history, new isolated checkout.
+- Intent: same task, new conversation, conversation history, new isolated checkout.
 - Runtime contract: fork_thread.
 - Request: omit threadId to fork the calling task; environment is worktree.
 - Expected result: queued clientThreadId or a runtime-supported ready child identifier.
 - Lifecycle: clientThreadId is not threadId; wait for registry resolution before follow-up.
-- History: only completed source history is copied.
+- History: conversation history may include an interrupted active turn; re-read operation results and writer ownership before continuing.
 - Host routing: the source task anchors the host; resolve the ready child's hostId before host-sensitive follow-up.
 - Completion: dispatch and worktree readiness are not repository completion evidence.
 ```

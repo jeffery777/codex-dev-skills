@@ -32,11 +32,16 @@ Preflight checklist:
 7. Record `last_verified` date and the wrapper version to underlying API or tool contract mapping.
 8. Summarize the prepared prompt, intended thread action, and recipient thread if one exists.
 9. Preserve placement intent: use same-directory fork for same-task
-   continuation, exact-project worktree creation by default for a fresh task in
-   a Git project, exact-project local creation for a non-Git project or an
-   explicitly requested saved checkout, and projectless creation only for
-   non-project work. Do not treat a
-   no-new-worktree constraint as projectless intent.
+   continuation and exact-project local creation by default for a fresh task
+   in either a Git or non-Git project. Shared orchestration weighs preferences,
+   existing changes, writer ownership and isolation needs, explaining departures.
+   The current `create_thread` callable permits worktree creation only for an
+   explicitly requested worktree in a Git project; this is not a universal
+   worktree-confirmation rule. If local is unsafe and that intent is missing,
+   prepare the handoff without dispatch. Reserve projectless for non-project
+   work; a no-new-worktree constraint does not imply projectless intent.
+   Forks may include an interrupted active turn; re-read operation outcomes
+   and source writer state before continuing.
 10. State in-scope and out-of-scope files or categories.
 11. Verify explicit authorization for the exact action; reuse it when already
     established for unchanged target, scope, and effect.
@@ -64,9 +69,12 @@ Thread action preflight:
   private paths, customer/incident details, and untrusted registry text. Use a
   generic title only when a safe specific one is unavailable. It is display
   metadata, not project identity, and needs no separate approval.
-- Placement intent: fresh task in a Git project, so use project worktree by
-  default. Use project local only for an explicitly requested saved checkout;
-  for same-task continuation, use fork_thread same-directory instead.
+- Placement intent: use project local by default after accounting for the
+  existing docs-only changes and confirming exclusive writer ownership; the
+  source stops writing before the child becomes the sole writer. If isolation
+  is needed, explain the departure from the local preference and obey the
+  current create_thread requirement for an explicitly requested Git worktree.
+  For same-task continuation with history, use fork_thread same-directory.
 - Worktree environment: use the repository's tracked setup and interpreter
   resolver; in this repository run `./scripts/project-python`, never a
   mismatched bare system Python.

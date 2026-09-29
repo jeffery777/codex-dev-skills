@@ -6,11 +6,17 @@ Validate a complete canonical checkpoint, digest, lineage/idempotency, material
 progress, one destination writer, and confirmed source stop-writing.
 
 Use fresh `create_thread` with a checkpoint-only prompt; neither same-directory
-nor worktree `fork_thread` is a substitute because forks copy completed
-conversation history. Use the exact already selected project and set worktree
-`startingState` to
+nor worktree `fork_thread` is a substitute because forks retain conversation
+history, possibly including an interrupted active turn. Use the exact already
+selected project and the placement selected by shared orchestration under the
+current callable. For local, the clean saved checkout must already match the
+checkpoint branch/HEAD and have exclusive ownership; do not pass `startingState`
+or silently switch branches to force a match. For an explicitly requested
+worktree, set `startingState` to
 `{"type":"branch","branchName":"<checkpoint-branch>","onMissing":"error"}`.
-Never omit this state or substitute the default project branch for rollover.
+Never omit this state for a worktree rollover or substitute the default project
+branch for the checkpoint. If neither placement meets these checks, reground
+or return the prepared prompt without dispatch.
 
 After dispatch, the source performs no further repository writes and the
 destination's ownership remains pending. Its first actions are read-only

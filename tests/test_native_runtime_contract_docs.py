@@ -472,7 +472,12 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         for marker in (
             "`create_worktree`",
             "選填 `name` 與 `ref`",
-            "省略 `ref` 從目前 repository 的 HEAD",
+            "`allowAsync: true`",
+            "`list_artifacts`",
+            "省略 `ref` 從 repository 的 remote default branch",
+            "`operationId`",
+            "`get_worktree_creation_status`",
+            "`completed`",
             "未提交修改不會複製",
             "不執行 environment setup scripts",
             "不改變目前",
@@ -505,6 +510,58 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, body)
+
+    def test_checkout_selection_keeps_preference_and_execution_isolation_distinct(self) -> None:
+        policy = read("skills/project-orchestrator/SKILL.md")
+        for marker in (
+            "user's and repository's preferences",
+            "writer ownership", "actual isolation needs",
+            "Explain a departure", "not a universal worktree policy",
+            "Placement selection does not authorize a new conversation",
+            "private clone is a separate execution",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, policy)
+        self.assertIn("優先沿用 local checkout", read("AGENTS.md"))
+        cli = read_skill("skills/cli-session-handoff/SKILL.md")
+        for marker in (
+            "Do not import Desktop `create_thread` defaults",
+            "local preference never removes clone isolation or the clean-source checks",
+            "this manual adapter does not create it",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, cli)
+
+    def test_desktop_local_rollover_keeps_checkpoint_and_writer_checks(self) -> None:
+        body = read("skills/desktop-thread-delegation/references/fresh-rollover.md")
+        for marker in (
+            "clean saved checkout", "checkpoint branch/HEAD",
+            "exclusive ownership", "do not pass `startingState`",
+            "silently switch branches", "explicitly requested",
+            '"onMissing":"error"', "source performs no further repository writes",
+            "Only an exact match activates it as the sole writer",
+            "without dispatch", "resolve identity",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, body)
+
+    def test_active_desktop_guidance_does_not_restore_old_placement_or_history_contract(self) -> None:
+        paths = (
+            "README.md", "docs/runtime-compatibility.md", "docs/runtime-adapter-v2.md",
+            "examples/desktop-thread-delegation.md", "examples/runtime-adapter-boundary.md",
+            "skills/desktop-thread-delegation/references/create-fork.md",
+        )
+        for path in paths:
+            body = " ".join(read(path).split())
+            with self.subTest(path=path):
+                self.assertIn("interrupted active turn", body)
+                self.assertNotIn("Git project defaults to `worktree`", body)
+                self.assertNotIn("Git projects default to worktree", body)
+                self.assertNotIn("worktree creation by default", body)
+                self.assertNotIn("project worktree by default", body)
+                self.assertNotIn("project local only", body)
+                self.assertNotIn("only completed source history", body)
+                self.assertNotIn("explicitly requests the saved project checkout", body)
 
     def test_sidebar_authority_and_discovery_are_action_scoped(self) -> None:
         skill = read("skills/desktop-sidebar-organization/SKILL.md")
@@ -744,8 +801,8 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "existing worktree",
             "Do not create a new worktree",
             "source task must stop writing",
-            "default to project",
-            "explicitly requests the saved project checkout",
+            "defaults to project-local",
+            "explicit user request",
             "non-Git projects",
         ):
             with self.subTest(expected=expected):
@@ -985,7 +1042,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         for expected in (
             "desktop-worktree-fork",
             '`environment: {"type": "worktree"}`',
-            "completed history",
+            "interrupted active turn",
             "clientThreadId",
             "conversation lineage",
             "usable `threadId`",

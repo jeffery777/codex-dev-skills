@@ -7,7 +7,10 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only.
-最新的 [2026-09-25 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-25.md)
+[2026-09-29 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-29.md)
+修正 Desktop local/worktree 選路、非同步工作樹建立與 fork 中斷回合語意；共享
+編排依使用者偏好及隔離需求選擇 checkout，CLI private-clone 邊界保持不變。
+先前的 [2026-09-25 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-25.md)
 補上 Desktop sidebar 排序偏好與單一 surface 分組的按需契約；CLI executor
 及共享編排／完成語意維持不變。前次
 [2026-09-24 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-24.md)
@@ -55,6 +58,10 @@ authority. Its disposable private clone does not inherit the source checkout's
 activated Python environment, so it must follow the repository's tracked
 environment resolver when present and fail verification closed on a version or
 dependency mismatch.
+
+CLI source checkout 可依偏好及隔離需求選 local 或既有 worktree；新對話本身
+不要求新增工作樹。這與子程序的 mandatory private clone 分開；Desktop
+`create_thread` 的 worktree 意圖限制不套到 CLI payload 或一般 Git 操作。
 
 Fresh continuation is not a fork: it starts without copied conversation
 history and requires the shared durable checkpoint. Interactive or dirty CLI
@@ -259,15 +266,19 @@ creation, revocation, and repository completion separate.
 
 For the same Desktop task moving to a new conversation, a supported
 `fork_thread` same-directory action reuses the source checkout or existing
-worktree, copies completed history, and remains anchored to the source host.
+worktree, copies conversation history that may include an interrupted active
+turn, and remains anchored to the source host. Re-read operation results and
+writer ownership before continuing; copied history is not completion evidence.
 The fork request has no caller-supplied `hostId`, and its current response does
 not guarantee one. Preserve a known source host, then obtain the child
 `hostId` from supported registry evidence that explicitly exposes it before a
 host-sensitive follow-up; never assume an unresolved remote child is local. A
 fresh same-project task uses the exact `projectId` and its runtime-returned host
-identity. Git projects default to worktree execution; non-Git projects use
-local, and a Git project's saved checkout uses local only when the user
-explicitly requests it. `projectless` is reserved for intentionally non-project
+identity. Both Git and non-Git projects default to local. Shared orchestration
+selects placement from preferences and isolation needs and explains a departure;
+the current `create_thread` callable additionally requires an explicit worktree
+request and a Git project for that target. This constraint does not apply to all
+CLI/Desktop checkout choices. `projectless` is reserved for intentionally non-project
 work. Cross-host continuation is a
 separately authorized handoff with `destinationHostId`, not a fork option.
 
