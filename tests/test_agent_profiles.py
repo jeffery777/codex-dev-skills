@@ -24,6 +24,15 @@ SPEC.loader.exec_module(VALIDATOR)
 
 
 class AgentProfileValidationTests(unittest.TestCase):
+    def test_previous_sol_profile_bytes_cannot_claim_current_mapping(self) -> None:
+        for role in ("balanced_worker", "senior_worker", "advanced_worker", "routine_reviewer"):
+            with self.subTest(role=role), tempfile.TemporaryDirectory() as temporary:
+                profiles = self.copy_profiles(pathlib.Path(temporary))
+                path = profiles / f"loop_v2a_{role}.toml"
+                path.write_text(path.read_text().replace('"gpt-6.1-sol"', '"gpt-6-sol"'))
+                with self.assertRaises(VALIDATOR.ProfileValidationError):
+                    VALIDATOR.validate(profiles, REGISTRY)
+
     def copy_profiles(self, root: pathlib.Path) -> pathlib.Path:
         destination = root / "agent-profiles"
         shutil.copytree(PROFILE_DIR, destination)
@@ -71,7 +80,7 @@ class AgentProfileValidationTests(unittest.TestCase):
                 self.assertNotIn("skills", profile)
 
         senior = entries["loop_v2a_senior_worker"]["runtime_mapping"]
-        self.assertEqual("gpt-6-sol", senior["model"])
+        self.assertEqual("gpt-6.1-sol", senior["model"])
         self.assertEqual("high", senior["reasoning_effort"])
         published = {
             (entry["runtime_mapping"]["model"], entry["runtime_mapping"]["reasoning_effort"])
@@ -98,7 +107,7 @@ class AgentProfileValidationTests(unittest.TestCase):
             routine["capability_class"], routine["capability_tier"], routine["sandbox_expectation"]
         ))
         self.assertEqual(
-            ("gpt-6-sol", "high"),
+            ("gpt-6.1-sol", "high"),
             (
                 routine["runtime_mapping"]["model"],
                 routine["runtime_mapping"]["reasoning_effort"],
@@ -414,7 +423,7 @@ class AgentProfilePreflightTests(unittest.TestCase):
     def test_routine_reviewer_baseline_cannot_satisfy_deep_minimum(self) -> None:
         name = "loop_v2a_routine_reviewer"
         entry = self.entries[name]
-        facts = self.ready_facts("gpt-6-sol", "high")
+        facts = self.ready_facts("gpt-6.1-sol", "high")
         routine = VALIDATOR.preflight(
             entry,
             facts,
@@ -440,7 +449,7 @@ class AgentProfilePreflightTests(unittest.TestCase):
 
     def test_routine_reviewer_is_v2_only_and_not_a_v1_same_class_fallback(self) -> None:
         routine = self.entries["loop_v2a_routine_reviewer"]
-        facts = self.ready_facts("gpt-6-sol", "high")
+        facts = self.ready_facts("gpt-6.1-sol", "high")
         direct = VALIDATOR.preflight(
             routine, facts, [], enforce_tier=False, trusted_profiles=self.entries
         )
@@ -475,8 +484,8 @@ class AgentProfilePreflightTests(unittest.TestCase):
         role = "loop_v2a_balanced_worker"
         base = {
             "custom_agent_surface": "available",
-            "available_models": ["gpt-6-sol"],
-            "reasoning_efforts": {"gpt-6-sol": ["medium"]},
+            "available_models": ["gpt-6.1-sol"],
+            "reasoning_efforts": {"gpt-6.1-sol": ["medium"]},
             "parent_default": self.capability_evidence("balanced-worker", "everyday"),
         }
         unknown = self.check(role, base)

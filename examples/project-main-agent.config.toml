@@ -1,8 +1,11 @@
-# Optional main-agent preset for demanding project delivery and orchestration.
-# Merge these two keys into a trusted project's .codex/config.toml for project
+# Optional everyday preset; use only when the destination supports GPT-6.1 Sol.
+# Merge these three keys into a trusted project's .codex/config.toml for project
 # scope, or into your user config only when you want a cross-project default.
 # This example is not automatically installed or loaded by Codex.
 # Explicit CLI or Desktop conversation settings must be checked separately.
 # No sandbox, approval, provider, authentication or subagent defaults are set.
-model = "gpt-6-astra"
-model_reasoning_effort = "high"
+model = "gpt-6.1-sol"
+model_reasoning_effort = "medium"
+# Project recommendation, not an official universal Plan-mode default.
+plan_mode_reasoning_effort = "high"
+# Select Standard in the active client; these keys do not override speed.

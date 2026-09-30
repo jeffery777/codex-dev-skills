@@ -38,7 +38,7 @@
     {
       "name": "loop_v2a_balanced_worker",
       "file": "loop_v2a_balanced_worker.toml",
-      "profile_sha256": "91220731858591b02d37ec6532548480a0f45da36e3e0e1e5d18284d02ec4acf",
+      "profile_sha256": "613806c73fda4fd25c7f44afa34e2f6ef156b11618c30b83c75a6892e16e291a",
       "capability_class": "balanced-worker",
       "capability_tier": "everyday",
       "tier_rank": 2,
@@ -46,13 +46,13 @@
       "sandbox_expectation": "workspace-write",
       "allowed_workflow_scope": ["read", "search", "bounded-edit", "focused-verify", "report-receipt"],
       "output_contract": ["assigned_scope", "changed_files", "commands_run", "skipped_checks", "risks", "open_questions"],
-      "runtime_mapping": {"model": "gpt-6-sol", "reasoning_effort": "medium", "availability": "runtime-dependent", "last_verified": "2026-09-23", "replaceable": true},
+      "runtime_mapping": {"model": "gpt-6.1-sol", "reasoning_effort": "medium", "availability": "runtime-dependent", "last_verified": "2026-09-30", "replaceable": true},
       "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": false}
     },
     {
       "name": "loop_v2a_senior_worker",
       "file": "loop_v2a_senior_worker.toml",
-      "profile_sha256": "a75fdcf89ff8818adef21880b39aad62b67fcb7f29f50aa5a0c70c152b063ae8",
+      "profile_sha256": "1857f8fee3b7b16aaf35648b23da4d035f4b87b5b64632e645c50af4d3d8ddc0",
       "capability_class": "balanced-worker",
       "capability_tier": "senior",
       "tier_rank": 3,
@@ -60,13 +60,13 @@
       "sandbox_expectation": "workspace-write",
       "allowed_workflow_scope": ["read", "search", "bounded-edit", "focused-verify", "report-receipt"],
       "output_contract": ["assigned_scope", "changed_files", "commands_run", "skipped_checks", "risks", "open_questions"],
-      "runtime_mapping": {"model": "gpt-6-sol", "reasoning_effort": "high", "availability": "runtime-dependent", "last_verified": "2026-09-23", "replaceable": true},
+      "runtime_mapping": {"model": "gpt-6.1-sol", "reasoning_effort": "high", "availability": "runtime-dependent", "last_verified": "2026-09-30", "replaceable": true},
       "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": false}
     },
     {
       "name": "loop_v2a_advanced_worker",
       "file": "loop_v2a_advanced_worker.toml",
-      "profile_sha256": "1c5b4490e86bb8ed8a0343f0eed6a6db62186f6c7dd39db7b6b6417c47827e3a",
+      "profile_sha256": "bd0d9a69bdff53d95b19038b7256317d9c0fbf8c648d522ed387668fe7160a24",
       "capability_class": "balanced-worker",
       "capability_tier": "advanced",
       "tier_rank": 4,
@@ -74,7 +74,7 @@
       "sandbox_expectation": "workspace-write",
       "allowed_workflow_scope": ["read", "search", "bounded-edit", "focused-verify", "report-receipt"],
       "output_contract": ["assigned_scope", "changed_files", "commands_run", "skipped_checks", "risks", "open_questions"],
-      "runtime_mapping": {"model": "gpt-6-sol", "reasoning_effort": "medium", "availability": "runtime-dependent", "last_verified": "2026-09-23", "replaceable": true},
+      "runtime_mapping": {"model": "gpt-6.1-sol", "reasoning_effort": "medium", "availability": "runtime-dependent", "last_verified": "2026-09-30", "replaceable": true},
       "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": false}
     },
     {
@@ -167,7 +167,7 @@
     {
       "name": "loop_v2a_routine_reviewer",
       "file": "loop_v2a_routine_reviewer.toml",
-      "profile_sha256": "82e2c7d2c937ba076e1bd47facbd8bc716ce648032e498ac6d81bb48dd68f2ce",
+      "profile_sha256": "7f745b68943e11441d062546a9fc94e969d76a311bf77a61e8e8dae8bb831967",
       "capability_class": "deep-reviewer",
       "capability_tier": "everyday",
       "tier_rank": 2,
@@ -175,7 +175,7 @@
       "sandbox_expectation": "read-only",
       "allowed_workflow_scope": ["read", "search", "verify", "report-findings", "report-receipt"],
       "output_contract": ["assigned_scope", "findings", "verification", "skipped_checks", "risks", "open_questions"],
-      "runtime_mapping": {"model": "gpt-6-sol", "reasoning_effort": "high", "availability": "runtime-dependent", "last_verified": "2026-09-23", "replaceable": true},
+      "runtime_mapping": {"model": "gpt-6.1-sol", "reasoning_effort": "high", "availability": "runtime-dependent", "last_verified": "2026-09-30", "replaceable": true},
       "fallback": {"same_capability_first": true, "allow_parent_default": true, "allow_sequential": true, "human_gate_if_unresolved": true}
     }
   ]

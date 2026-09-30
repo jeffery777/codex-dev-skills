@@ -2805,8 +2805,8 @@ class CliTests(unittest.TestCase):
                     {
                         "custom_agent_surface": "available",
                         "parent_sandbox_mode": "workspace-write",
-                        "available_models": ["gpt-6-sol"],
-                        "reasoning_efforts": {"gpt-6-sol": ["medium"]},
+                        "available_models": ["gpt-6.1-sol"],
+                        "reasoning_efforts": {"gpt-6.1-sol": ["medium"]},
                     }
                 ),
                 encoding="utf-8",
@@ -2965,8 +2965,8 @@ class CliTests(unittest.TestCase):
                     {
                         "custom_agent_surface": "available",
                         "parent_sandbox_mode": "workspace-write",
-                        "available_models": ["gpt-6-sol"],
-                        "reasoning_efforts": {"gpt-6-sol": ["medium"]},
+                        "available_models": ["gpt-6.1-sol"],
+                        "reasoning_efforts": {"gpt-6.1-sol": ["medium"]},
                     }
                 ),
                 encoding="utf-8",
@@ -3296,8 +3296,8 @@ class CliTests(unittest.TestCase):
                     {
                         "custom_agent_surface": "available",
                         "parent_sandbox_mode": "workspace-write",
-                        "available_models": ["gpt-6-sol"],
-                        "reasoning_efforts": {"gpt-6-sol": ["medium"]},
+                        "available_models": ["gpt-6.1-sol"],
+                        "reasoning_efforts": {"gpt-6.1-sol": ["medium"]},
                     }
                 ),
                 encoding="utf-8",
@@ -3341,9 +3341,9 @@ class CliTests(unittest.TestCase):
             facts.write_text(json.dumps({
                 "custom_agent_surface": "available",
                 "parent_sandbox_mode": "read-only",
-                "available_models": ["gpt-6-sol", "gpt-6-astra"],
+                "available_models": ["gpt-6.1-sol", "gpt-6-astra"],
                 "reasoning_efforts": {
-                    "gpt-6-sol": ["high"], "gpt-6-astra": ["xhigh"],
+                    "gpt-6.1-sol": ["high"], "gpt-6-astra": ["xhigh"],
                 },
             }), encoding="utf-8")
             output = StringIO()
@@ -3380,8 +3380,8 @@ class CliTests(unittest.TestCase):
                 facts.write_text(json.dumps({
                     "custom_agent_surface": "available",
                     "parent_sandbox_mode": "read-only",
-                    "available_models": ["gpt-6-sol"],
-                    "reasoning_efforts": {"gpt-6-sol": ["high"]},
+                    "available_models": ["gpt-6.1-sol"],
+                    "reasoning_efforts": {"gpt-6.1-sol": ["high"]},
                 }), encoding="utf-8")
                 output = StringIO()
                 with redirect_stdout(output):
@@ -3505,9 +3505,9 @@ class CliTests(unittest.TestCase):
             facts.write_text(json.dumps({
                 "custom_agent_surface": "available",
                 "parent_sandbox_mode": "read-only",
-                "available_models": ["gpt-6-sol", "gpt-6-astra"],
+                "available_models": ["gpt-6.1-sol", "gpt-6-astra"],
                 "reasoning_efforts": {
-                    "gpt-6-sol": ["high"], "gpt-6-astra": ["xhigh"],
+                    "gpt-6.1-sol": ["high"], "gpt-6-astra": ["xhigh"],
                 },
                 "enabled_candidates": {},
                 "parent_default": {"available": False},
@@ -3656,8 +3656,8 @@ class CliTests(unittest.TestCase):
             digest = hashlib.sha256((ROOT / "agent-profiles" / (candidate + ".toml")).read_bytes()).hexdigest()
             facts = {
                 "custom_agent_surface": "available", "parent_sandbox_mode": "workspace-write",
-                "available_models": ["gpt-6-sol", "gpt-6-astra"],
-                "reasoning_efforts": {"gpt-6-sol": ["medium"], "gpt-6-astra": ["xhigh"]},
+                "available_models": ["gpt-6.1-sol", "gpt-6-astra"],
+                "reasoning_efforts": {"gpt-6.1-sol": ["medium"], "gpt-6-astra": ["xhigh"]},
                 "model_surface": {"runtime": "desktop", "source": "synthetic fixture", "observed_on": "2026-09-05"},
                 "enabled_candidates": {candidate: {"profile_sha256": digest, "quality_evidence": "synthetic-fixture-not-model-measurement"}},
             }
@@ -3726,7 +3726,7 @@ class CliTests(unittest.TestCase):
                     elif mutation == "override":
                         f["enabled_candidates"] = {}
                     elif mutation == "availability":
-                        f["available_models"] = ["gpt-6-sol"]
+                        f["available_models"] = ["gpt-6.1-sol"]
                     else:
                         f["parent_sandbox_mode"] = "read-only"
                     code, result = run(f, d)
@@ -3748,7 +3748,7 @@ class CliTests(unittest.TestCase):
                     if mutation == "disabled":
                         f.pop("enabled_candidates")
                     elif mutation == "unavailable":
-                        f["available_models"] = ["gpt-6-sol"]
+                        f["available_models"] = ["gpt-6.1-sol"]
                     elif mutation == "unsupported":
                         f["reasoning_efforts"]["gpt-6-astra"] = ["low"]
                     elif mutation == "unknown":
@@ -3832,10 +3832,10 @@ class CliTests(unittest.TestCase):
             facts_path.write_text(json.dumps({
                 "custom_agent_surface": "available",
                 "parent_sandbox_mode": "workspace-write",
-                "available_models": ["gpt-6-luna", "gpt-6-sol"],
+                "available_models": ["gpt-6-luna", "gpt-6.1-sol"],
                 "reasoning_efforts": {
                     "gpt-6-luna": ["low", "high"],
-                    "gpt-6-sol": ["medium", "high"],
+                    "gpt-6.1-sol": ["medium", "high"],
                 },
                 "enabled_candidates": {},
             }), encoding="utf-8")
@@ -3860,6 +3860,18 @@ class CliTests(unittest.TestCase):
                     self.assertEqual(
                         "baseline", result["route_receipt"]["profile_selection"]["policy"]
                     )
+                    if expected_role not in ("loop_v2a_mechanical_reader", "loop_v2a_fast_explorer"):
+                        current_facts = facts_path.read_text(encoding="utf-8")
+                        facts_path.write_text(current_facts.replace("gpt-6.1-sol", "gpt-6-sol"), encoding="utf-8")
+                        rejected = StringIO()
+                        with redirect_stdout(rejected):
+                            old_code = loopctl.main([
+                                "agent-route", str(route_path),
+                                "--runtime-facts", str(facts_path),
+                            ])
+                        self.assertEqual(2, old_code, rejected.getvalue())
+                        self.assertEqual("human-gate", json.loads(rejected.getvalue())["status"])
+                        facts_path.write_text(current_facts, encoding="utf-8")
 
     def test_agent_route_v2_automatically_uses_installed_higher_tier(self):
         with tempfile.TemporaryDirectory() as directory:

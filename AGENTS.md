@@ -89,9 +89,10 @@ Do not sync local runtime state, credential files, application state, logs, sess
   findings, dispositions, and code/documentation coherence. Bind hosted CI,
   review threads, receipt readback, and the dedicated App separately through
   this repository's selected GitHub profile.
-- After a fix, rerun code review and Security Diff Scan proportionally to the
-  affected boundary, but always repeat complete base-to-head exact-head Merge
-  Review for a changed change-request head.
+- After a fix, rerun the appropriate review proportionally to the affected
+  boundary. Assess Security Diff Scan applicability under the exact-head
+  contract; record the scope and rationale when not applicable. Always repeat
+  complete base-to-head exact-head Merge Review for a changed change-request head.
 - Clean review and scan results may advance automatically to later read-only or
   already-authorized stages. Stop only at a real decision, authority,
   environment, permission, risk, destructive-action, or unauthorized

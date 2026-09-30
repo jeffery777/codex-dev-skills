@@ -13,11 +13,12 @@ and explicit client settings determine the effective runtime configuration.
 | Canonical role contracts | `skills/loop-engineering/references/agent-profile-registry.json` | The canonical registry shipped with the invoked skill |
 | Availability and quality opt-in | Caller-supplied runtime facts | Current destination/runtime evidence, not a permanent repository assertion |
 
-The main-agent example selects Astra-high for demanding delivery, decomposition,
-integration and acceptance. It is a project recommendation, not an OpenAI-wide
-default or a measured equivalence claim. Routine bounded work may use medium;
-Sol-high is an explicit alternative when Astra is unavailable. Do not silently
-substitute a model or infer capability from its name alone.
+一般主代理 example 採 GPT-6.1 Sol-medium，Plan mode 採 high，速度建議 Standard。
+這是依官方定位及本專案任務提出的可選配置，不是 OpenAI 統一預設；官方只定義
+Plan-mode override 的用途，未要求一律 high。最困難交付仍可明確選 Astra-high。
+6.1 未提供時可明確選擇可用的 6 Sol-medium；模型名稱本身不證明角色資格。
+官方 [config reference](https://learn.chatgpt.com/docs/config-file/config-reference)
+說明未設定 Plan override 時使用該模式內建 preset，不能假定繼承一般 effort。
 
 For CLI/IDE, official precedence is explicit CLI overrides, trusted project
 configuration, a selected configuration profile, user configuration,
@@ -30,10 +31,10 @@ and [model controls](https://learn.chatgpt.com/docs/models).
 
 ## Adoption
 
-Read and merge the example's two keys into the intended configuration layer;
+Read and merge the example's three keys into the intended configuration layer;
 do not overwrite an existing file or copy secrets and machine-local settings
 into this repository. The installer does not install this example or change
-personal main-agent defaults. This Issue does not apply it to the current chat.
+personal main-agent defaults. Changing the example does not apply it to the current chat.
 Confirm the selected model/effort in the destination before delegating work.
 
 Child roles should receive explicit model/effort settings from their selected
@@ -65,7 +66,7 @@ destination runtime before delegation. Issue #249's dated Astra configuration
 record remains historical; see [the decision and rollback record](astra-xhigh-profile-decision.md).
 
 Routine read-only review now has an everyday capability requirement and uses
-the dedicated read-only GPT-6 Sol-high baseline. Parent/default and sequential
+the dedicated read-only GPT-6.1 Sol-high baseline. Parent/default and sequential
 fallbacks remain model-neutral evidence paths; their use does not prove which
 model the runtime selected. The named GPT-6 baseline profiles themselves do
 not contain a 5.x mapping.
@@ -97,10 +98,10 @@ cause cannot be explained, or when authoritative evidence conflicts. Update the
 bounded task assessment and select a supported, sufficient profile. Examples:
 
 - Clear extraction or mechanical work starts at GPT-6 Luna-low. Ambiguous
-  cross-file reasoning should move to an appropriate GPT-6 Sol or stronger role.
-- Exploration starts at GPT-6 Luna-high; ordinary implementation at GPT-6
-  Sol-medium; complex bounded implementation may require GPT-6 Sol-high senior.
-- Advanced work starts at GPT-6 Sol-medium or a qualified Astra-xhigh candidate.
+  cross-file reasoning should move to an appropriate GPT-6.1 Sol or stronger role.
+- Exploration starts at GPT-6 Luna-high; ordinary implementation at GPT-6.1
+  Sol-medium; complex bounded implementation may require GPT-6.1 Sol-high senior.
+- Advanced work starts at GPT-6.1 Sol-medium or a qualified Astra-xhigh candidate.
   If deeper reasoning is needed, use an explicitly supported high-effort task
   configuration only where the runtime and workflow permit it. It is not an
   automatic effort-changing controller. The Astra-xhigh implementation candidate
@@ -108,8 +109,8 @@ bounded task assessment and select a supported, sufficient profile. Examples:
 - Deep/security review uses the maintainer-adopted Astra-xhigh baseline. This
   does not raise every task's required capability tier or qualify a candidate.
   Max/Ultra are not default escalation targets.
-- A delivery main agent starts at Astra-high under this optional preset; xhigh
-  requires the same concrete depth triggers and a supported client control.
+- 一般交付主代理從 6.1 Sol-medium 開始；複雜規劃／整合可用 high，最困難工作
+  可選 Astra-high。xhigh 仍需具體深度需求及支援的控制介面。
 
 These conditions are decision guidance, not an implemented automatic retry or
 effort-changing controller. Do not alter a fixed profile's bytes/effort in place
@@ -132,11 +133,11 @@ Composition 與 [Agent Task Brief](../templates/orchestration/agent-task-brief.t
 | --- | --- |
 | Mechanical reader／GPT-6 Luna-low | 有界輸入、明確輸出欄位、缺值處理；非機械語意交回主代理。 |
 | Explorer／GPT-6 Luna-high | 搜尋問題、證據位置、範圍與停止搜尋條件。 |
-| Worker／GPT-6 Sol-medium、GPT-6 Sol-high | 依分類選角色；指定檔案 ownership、可自行決定的局部細節、行為驗收與必要測試。 |
-| Routine reviewer／GPT-6 Sol-high | 唯讀 everyday review；不得用於 deep/security review 或自行修正。 |
+| Worker／GPT-6.1 Sol-medium、GPT-6.1 Sol-high | 依分類選角色；指定檔案 ownership、可自行決定的局部細節、行為驗收與必要測試。 |
+| Routine reviewer／GPT-6.1 Sol-high | 唯讀 everyday review；不得用於 deep/security review 或自行修正。 |
 | Deep/security reviewer／Astra-xhigh | 唯讀、反例與風險邊界、severity／檔案證據、漏測與限制；不得自行修正或合併。 |
 | Exceptional researcher／Astra-xhigh | 仍需 quality-first 與分類條件；列出比較問題、證據衝突及研究停止條件。 |
-| Delivery owner／可選 Astra-high | 拆解、必要委派、結果整合與整體完成；對已授權階段持續推進。 |
+| Delivery owner／日常 6.1 Sol-medium；困難工作可選 Astra-high | 拆解、必要委派、結果整合與整體完成；對已授權階段持續推進。 |
 | 已合格的 Astra candidates | 仍沿用對應角色責任；xhigh、runtime、scope 與 digest 需各自符合資格，舊 medium/high 資格及主代理設定不能代替。 |
 
 例如：worker 可自行沿用現有 helper 完成已接受的行為與焦點測試；發現須改變
@@ -167,3 +168,12 @@ tests 只驗證契約／套件，不能證明模型遵循或速度／成本優�
 pilot 原始紀錄；新增評估須有明確執行範圍與資源額度。Issue #292 的代表性
 CLI acceptance 結果及保留的失敗見 [verification record](loops/issue-292/verification.md)；
 有界案例不等於完整品質 qualification 或成本優越結論。
+
+## Issue #308 採用與後續觀察
+
+四個 Sol roles 已在 source 改為 6.1，原 effort 保留；Issue #292 的紀錄仍只代表
+當時 6 Sol 的有限案例，不能資格化新模型。本次依使用者指示不做節省率或
+真實模型配對；保留配置、路由、隔離安裝與獨立審查。
+先以部署後真實工作建立路由／品質基準，再一次調低一類工作的 effort；見
+[採用與觀察計畫](gpt61-adoption-and-observation.md)。不自動安裝、不收集私人
+對話、不啟動排程；實際 loaded model 不可見時保持 unknown。

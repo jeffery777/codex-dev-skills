@@ -5,7 +5,15 @@
 `policies/model-selection-policy.md` 與已安裝的 routing reference 仍只依工作
 類別、tier、sandbox、目前 runtime 與 qualification 選路。
 
-## Everyday baselines
+## 後續採用
+
+Issue #308 的 GPT-6.1 設定與 2026-09-30 費率分析見
+[採用與觀察計畫](gpt61-adoption-and-observation.md)。下列角色與費率為
+Issue #292 的點時紀錄；當前具名模型以 canonical registry 為準。
+2026-09-30 官方已區分 Fast 的內含訂閱量 2.5× 與 purchased credits 2×；
+以下舊費率語境不能當作現行扣量規則。
+
+## Issue #292 everyday baselines
 
 下列具名 profiles 是日常 baseline；它們仍要求當前 installed bytes 與 runtime
 support。source 變更不會安裝 profile、修改個人設定或啟用 user qualification store：

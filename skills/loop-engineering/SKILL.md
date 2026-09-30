@@ -106,8 +106,10 @@ Report provider enforcement separately as `VERIFIED`, `UNVERIFIED`, `BLOCKED`,
 or `NOT_CONFIGURED`. Apply GitHub App/check/receipt/ruleset requirements only
 when repository policy selects the optional GitHub profile.
 
-After a fix, select code review and Security Diff Scan scope from the affected
-boundary and record why prior evidence remains applicable. Widen the rerun when
+After a fix, select the appropriate review scope from the affected boundary
+and assess Security Diff Scan applicability under the exact-head contract.
+Record scope and rationale when not applicable, and why prior evidence remains
+applicable. Widen the rerun when
 shared assumptions changed. Every changed change-request head still requires a
 complete new base-to-head Merge Review. Repeat provider readback only when the
 selected profile requires it.
