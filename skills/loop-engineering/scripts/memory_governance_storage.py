@@ -16,6 +16,7 @@ from memory_governance_host import RootBinding
 
 MAIN = "managed.sqlite3"
 LOCK = "coordination.lock"
+INITIAL_PAGE_LIMIT = 64
 JOURNAL = MAIN + "-journal"
 SQL = (
     "CREATE TABLE root_meta (singleton INTEGER PRIMARY KEY CHECK(singleton=1), document BLOB NOT NULL) STRICT",
@@ -49,7 +50,8 @@ def runtime_facts() -> dict:
             "compile_options": sorted(row[0] for row in options), "python_version": sys.version.split()[0],
             "schema_fingerprint": SCHEMA_FINGERPRINT, "sql_fingerprint": c.digest(list(SQL)),
             "platform": os.uname().sysname, "os_release": os.uname().release,
-            "journal_mode": "delete", "page_size": 4096, "temp_store": "memory"}
+            "journal_mode": "delete", "page_size": 4096, "temp_store": "memory",
+            "cache_spill": "off", "locking_mode": "normal", "initial_page_limit": INITIAL_PAGE_LIMIT}
 
 
 def identity(value: os.stat_result) -> tuple[int, int]:
@@ -163,6 +165,10 @@ def connect(binding: RootBinding, limits: dict, *, writer: bool = False) -> sqli
         connection.setlimit(sqlite3.SQLITE_LIMIT_ATTACHED, 0)
         connection.execute("PRAGMA trusted_schema=OFF")
         connection.execute("PRAGMA foreign_keys=ON")
+        connection.execute("PRAGMA cache_spill=OFF")
+        connection.execute("PRAGMA locking_mode=NORMAL")
+        c.require(connection.execute("PRAGMA cache_spill").fetchone()[0] == 0
+                  and connection.execute("PRAGMA locking_mode").fetchone()[0] == 'normal', "pragma-mismatch")
         c.require(identity(path.lstat()) == binding.main_identity, "file-identity-mismatch")
         for key, expected in (("page_size", 4096), ("journal_mode", "delete"), ("auto_vacuum", 2)):
             c.require(connection.execute("PRAGMA " + key).fetchone()[0] == expected, "pragma-mismatch")
@@ -199,14 +205,17 @@ def initialize(binding: RootBinding, limits: dict, scope: dict, now: int) -> tup
         main = os.open(MAIN, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_NOFOLLOW, 0o600, dir_fd=directory)
         connection = sqlite3.connect((binding.root / MAIN).as_uri() + "?mode=rw&cache=private", uri=True,
                                      isolation_level=None, timeout=0)
-        for setting in ("page_size=4096", "journal_mode=DELETE", "synchronous=EXTRA", "auto_vacuum=INCREMENTAL",
+        for setting in ("page_size=4096", "cache_spill=OFF", "locking_mode=NORMAL",
+                        "max_page_count=" + str(INITIAL_PAGE_LIMIT),
+                        "journal_mode=DELETE", "synchronous=EXTRA", "auto_vacuum=INCREMENTAL",
                         "secure_delete=ON", "temp_store=MEMORY", "foreign_keys=ON", "trusted_schema=OFF",
-                        "max_page_count=" + str(limits["data_limit_bytes"] // 4096)):
+                        ):
             connection.execute("PRAGMA " + setting)
         for key, expected in (("page_size", 4096), ("journal_mode", "delete"), ("auto_vacuum", 2),
                               ("synchronous", 3), ("secure_delete", 1), ("temp_store", 2),
                               ("foreign_keys", 1), ("trusted_schema", 0),
-                              ("max_page_count", limits["data_limit_bytes"] // 4096)):
+                              ("cache_spill", 0), ("locking_mode", "normal"),
+                              ("max_page_count", INITIAL_PAGE_LIMIT)):
             c.require(connection.execute("PRAGMA " + key).fetchone()[0] == expected, "pragma-mismatch")
         connection.execute("BEGIN IMMEDIATE")
         for statement in SQL:

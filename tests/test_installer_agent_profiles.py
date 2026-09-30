@@ -265,18 +265,26 @@ class AgentProfileInstallerTests(unittest.TestCase):
         self.assertEqual(PROFILE_NAMES, sorted(path.name for path in target.glob("*.toml")))
 
     def test_user_and_project_deployments_keep_separate_ownership_state(self) -> None:
-        self.assertEqual(0, self.run_installer("install", "codex-agent-profiles").returncode)
+        user_install = self.run_installer("install", "codex-agent-profiles")
+        self.assertEqual(0, user_install.returncode,
+                         f"user install\nstdout:\n{user_install.stdout}\nstderr:\n{user_install.stderr}")
         project_target = self.root / "project" / ".codex" / "agents"
         project_env = {
             **self.env,
             "CODEX_CUSTOM_AGENTS_DIR": str(project_target),
             "CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS": "YES",
         }
-        self.assertEqual(0, self.run_installer("install", "codex-agent-profiles", env=project_env).returncode)
+        project_install = self.run_installer("install", "codex-agent-profiles", env=project_env)
+        self.assertEqual(0, project_install.returncode,
+                         f"project install\nstdout:\n{project_install.stdout}\nstderr:\n{project_install.stderr}")
         state_files = list((self.root / "state" / "codex-dev-skills").glob("agent-profile-*.tsv"))
         self.assertEqual(2, len(state_files))
-        self.assertEqual(0, self.run_installer("uninstall", "codex-agent-profiles", "--yes").returncode)
-        self.assertEqual(0, self.run_installer("uninstall", "codex-agent-profiles", "--yes", env=project_env).returncode)
+        user_uninstall = self.run_installer("uninstall", "codex-agent-profiles", "--yes")
+        self.assertEqual(0, user_uninstall.returncode,
+                         f"user uninstall\nstdout:\n{user_uninstall.stdout}\nstderr:\n{user_uninstall.stderr}")
+        project_uninstall = self.run_installer("uninstall", "codex-agent-profiles", "--yes", env=project_env)
+        self.assertEqual(0, project_uninstall.returncode,
+                         f"project uninstall\nstdout:\n{project_uninstall.stdout}\nstderr:\n{project_uninstall.stderr}")
 
     def test_default_and_custom_profile_roots_receive_distinct_managed_backup_slots(self) -> None:
         self.assertEqual(0, self.run_installer("install", "codex-agent-profiles").returncode)

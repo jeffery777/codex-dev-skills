@@ -1428,7 +1428,7 @@ at
 | --- | --- | --- |
 | `loop-engineering` | shared | Explicitly selected or repo-required durable loop; uses production decisions, current evidence and scoped phase skills. |
 | `memory-audit` | shared | 單專案 MG1 唯讀盤點、有界報告、可信 host factory／dispatch 與獨立授權 lifecycle provider、[advisory 預檢／隔離 canary](skills/loop-engineering/references/memory-audit-preflight.md)、[固定 synthetic 操作 pilot](skills/loop-engineering/references/memory-audit-pilot.md)、[synthetic add/update/restore/stop/resume 操作入口](skills/loop-engineering/references/memory-maintenance-pilot.md)；production adapter 仍未啟用。 |
-| `memory-maintenance` | shared | [單次受控維護入口](skills/loop-engineering/references/memory-maintenance-entry.md)：五操作共用核心，獨立 mutation authority、host factory／dispatch、advisory preflight 及隔離 canary；真實 CLI／Desktop ports 尚不可用。 |
+| `memory-maintenance` | shared | [單次受控維護入口](skills/loop-engineering/references/memory-maintenance-entry.md) 與 [固定 operator CLI](skills/loop-engineering/references/memory-maintenance-local.md)：五操作共用核心，隔離 qualified runtime、逐次 source／環境／preview 接受，可由 human 或明確受使用者委派的 agent 操作，actor evidence 分別記錄；root 首用／enable／disable、容量不足安全拒絕，無完整 MG1 或滿庫 stop 保證。通用 CLI／Desktop 無可信 dispatch 時仍 unavailable。 |
 | `cli-session-handoff` | cli | Start, resume, fork, or clean non-interactive fresh-continue one authorized bounded CLI session, or prepare one exact manual interactive fork, after shared orchestration selects the handoff. |
 | `planning` | shared | Produce scoped implementation plans with assumptions, risks, DoD, and verification. |
 | `milestone-continuation` | shared | Continue a bounded milestone across repeated invocations by checking task completion, choosing the next ready task, and stopping at human gates. |

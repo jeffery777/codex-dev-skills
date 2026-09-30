@@ -16,7 +16,9 @@ REASONS = frozenset({'authority-unavailable', 'request-not-accepted', 'request-r
     'root-binding-mismatch', 'revision-conflict', 'state-conflict', 'identity-conflict',
     'source-identity-mismatch', 'source-integrity-failed', 'acceptance-unavailable',
     'state-unknown', 'verification-mismatch', 'preview-unrecognized', 'host-unavailable',
-    'inspection-unavailable', 'scope-unavailable', 'confirmation-port-unavailable', 'storage-port-unavailable'})
+    'inspection-unavailable', 'scope-unavailable', 'confirmation-port-unavailable', 'storage-port-unavailable',
+    'insufficient-space', 'descriptor-drift', 'source-review-limit', 'source-not-accepted',
+    'qualification-not-accepted', 'operator-terminal-unavailable', 'unsafe-display', 'root-not-empty'})
 
 
 def reason(exc):
@@ -48,7 +50,9 @@ def _verify(host, fresh, readback, preview):
                   and item['projection_digest'] == readback['proof']['projection_digest'], 'verification-mismatch')
     current = item['versions'][-1]
     cues = sorted({cue for version in item['versions'] for cue in version['cues']})
-    for cue in cues:
+    # Stop adopts no source. load_item independently verifies its empty current_search
+    # projection, even when unrelated active items share the stopped item's cues.
+    for cue in ([] if item['status'] == 'stopped' else cues):
         result = fresh.recall([cue])
         matches = [entry for entry in result['items'] if entry['item_id'] == item['item_id']]
         expected = item['status'] == 'active' and cue in current['cues']
