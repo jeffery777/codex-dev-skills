@@ -326,8 +326,8 @@ existing high-risk routing semantics.
 
 Three separate Astra-xhigh profiles remain qualified opt-in candidates. The
 [dated Astra decision](docs/astra-xhigh-profile-decision.md) remains historical;
-[GPT-6 routing](docs/gpt6-cost-routing.md) describes current named profiles and
-the bounded evidence for their adoption. No task-quality or billing superiority
+[GPT-6.1 adoption](docs/gpt61-adoption-and-observation.md) describes current named
+profiles, the adoption rationale, and planned observation. No task-quality or billing superiority
 is inferred from a role name or rate table.
 Installation alone does not enable candidate routing. The explicit version 2
 interface accepts `enabled_candidates` in current-session runtime facts, keyed by candidate name,
@@ -340,7 +340,7 @@ Omit a candidate after failed or unverified qualification. See
 [the Astra adoption and measurement record](docs/astra-routing.md) for the exact
 facts shape, evidence boundaries, and outstanding real-model qualification.
 
-For the optional Astra-high main-agent preset, user versus project settings,
+For the optional GPT-6.1 Sol-medium everyday main-agent preset, user versus project settings,
 installed child-profile locations and effort escalation guidance, see
 [main-agent and subagent settings](docs/main-agent-and-subagent-settings.md).
 The preset is an example only; installation does not change personal defaults.
@@ -617,10 +617,10 @@ The orchestrator uses the smallest shared primitives that fit the current state:
 
 ### GPT-6 Daily Routing
 
-日常 profiles 使用 GPT-6 Sol／Luna；Sol-high routine reviewer 承接 everyday
+日常 profiles 使用 GPT-6.1 Sol／GPT-6 Luna；Sol-high routine reviewer 承接 everyday
 審查，deep/security/exceptional 仍使用 Astra。新路由保留獨立 class/tier、sandbox、
 installed bytes 與 authority 檢查；既有 Astra candidates 仍需 qualification。
-詳見 [GPT-6 成本與路由](docs/gpt6-cost-routing.md)。官方費率與有界 CLI 驗收不等於
+詳見 [GPT-6.1 採用與觀察](docs/gpt61-adoption-and-observation.md)。官方費率與歷史有界 CLI 驗收不等於
 實測成本優勢或所有 runtime 的模型資格；歷史 receipts 按各自政策版本驗證。
 技能入口按階段載入必要引用，返工先分類與重評。
 

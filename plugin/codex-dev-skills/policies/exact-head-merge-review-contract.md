@@ -117,11 +117,26 @@ branch, and final readback evidence when its deployment exposes those controls.
 
 ## Review And Remediation Scope
 
-After a finding is fixed, rerun code review and Security Diff Scan over the
-smallest scope that proves the fix and affected boundaries. Record why
-unchanged prior evidence remains applicable. Escalate when the fix changes
-shared contracts, data or trust boundaries, generated artifacts, packaging,
-documentation claims, or assumptions of earlier evidence.
+After a finding is fixed, rerun the appropriate code or documentation review
+over the smallest scope that proves the fix and affected boundaries. Select
+routine or deep review by the actual risk, not merely because a finding was
+fixed. Record why unchanged prior evidence remains applicable.
+
+Assess Security Diff Scan applicability from the final diff. Require a
+proportional scan when changes affect security or trust boundaries, permissions,
+authentication, sensitive data handling, executable behavior with security
+impact, dependencies or installation paths with security impact, or when a
+concrete security concern remains. A clean code review does not replace a
+required scan. If applicability is uncertain, inspect the affected boundary
+before deciding; unresolved material security risk blocks readiness.
+
+For changes without those impacts, record Security Diff Scan as not applicable
+with the examined scope and rationale; never label a skipped scan as passed.
+Model/effort-only configuration, documentation, or generated-file changes do
+not automatically require a scan, nor are those categories blanket exemptions.
+Reassess applicability after scope or assumptions change. Widen review or scan
+scope when shared contracts, data or trust boundaries, generated artifacts,
+packaging, documentation claims, or prior evidence assumptions are affected.
 
 Proportional fix review never permits reusing an old exact-head verdict for a
 new head. Clean internal reviews and scans may advance automatically to later

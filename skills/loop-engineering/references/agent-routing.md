@@ -46,10 +46,10 @@ this field. Routine
 read-only review can request the everyday tier while retaining the reviewer
 class. If no qualified everyday reviewer is available, use the verified
 sufficient same-class baseline; classification alone installs no new profile.
-Use GPT-6 Sol-high `senior` for complex but bounded implementation before
-escalating multi-trigger advanced work to GPT-6 Sol-medium. The nine baseline
-profiles are GPT-6 Luna-low mechanical, GPT-6 Luna-high explorer, GPT-6
-Sol-medium balanced/advanced, GPT-6 Sol-high senior, GPT-6 Sol-high
+Use GPT-6.1 Sol-high `senior` for complex but bounded implementation before
+escalating multi-trigger advanced work to GPT-6.1 Sol-medium. The nine baseline
+profiles are GPT-6 Luna-low mechanical, GPT-6 Luna-high explorer, GPT-6.1
+Sol-medium balanced/advanced, GPT-6.1 Sol-high senior, GPT-6.1 Sol-high
 read-only `routine_reviewer`, and Astra-xhigh deep/security/exceptional.
 `routine_reviewer` remains in the deep-reviewer class for everyday review only;
 it cannot satisfy deep or security work. GPT-6 baselines are current named

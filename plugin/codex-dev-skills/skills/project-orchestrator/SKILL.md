@@ -69,8 +69,10 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
   changed head invalidates the content verdict. Evaluate provider enforcement
   separately; require GitHub receipts, Checks, Apps, Actions, or rulesets only
   when repository policy selects the GitHub enforcement profile.
-- When a fix closes findings, rerun code review and Security Diff Scan over the
-  smallest justified affected scope; widen when shared assumptions changed.
+- When a fix closes findings, rerun the appropriate review over the smallest
+  justified affected scope. Assess Security Diff Scan applicability under the
+  exact-head contract, recording scope and rationale when not applicable;
+  widen when shared assumptions changed.
   Continue automatically after clean internal stages when the next action is
   read-only or already authorized.
 - Two unfinished review/fix rounds trigger the default context-health

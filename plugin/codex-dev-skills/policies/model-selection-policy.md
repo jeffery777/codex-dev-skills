@@ -25,11 +25,13 @@ of truth, permissions, human gates, or completion rules.
 
 ## Main Agent And Escalation
 
-For demanding project delivery, the optional main-agent recommendation is
-Astra-high; it is separate from child-profile qualification and is not a global
-product default. The repository provides a two-key example, not an installer
-write into personal configuration. Select child profiles explicitly so small
-tasks do not unintentionally inherit that main-agent setting.
+一般日常交付的可選主代理建議為 GPT-6.1 Sol-medium，速度選 Standard；
+複雜規劃可用 high，最困難的端到端工作保留 Astra-high。這是依官方定位與
+維護者選擇的專案建議，不是官方統一預設或已量測的成本／品質優勢。
+三鍵 example 另以 `plan_mode_reasoning_effort = "high"` 為規劃起點；這只覆寫
+Plan mode 的深度，不切換模型或固定子角色。安裝器不修改個人設定。
+目的端未提供 6.1 時，主代理可明確選擇可用的 6 Sol-medium；固定角色仍須
+符合當前 bytes、runtime preflight 與既有 fallback，不能冒充已載入 6.1。
 
 Reassess task factors after a reasonable correction still fails the same core
 check, unexplained root causes, or conflicting authoritative evidence. Use
@@ -78,6 +80,11 @@ qualify a lower-tier reviewer for a high-risk route.
 | 升級後仍失敗，或已用高 effort | 以最小重現、額外觀測、來源重新核對或新上下文的獨立診斷改變策略；不預設繼續升到最高 effort。 |
 | 環境、缺少資料、暫時性工具故障或權限不足 | 使用對應且已授權的 recovery。模型升級不能取得權限；先核對資料／工具契約，必要時向父代理回報精確缺口。 |
 | 外部寫入結果不明 | 先讀回結果，確認操作身分、冪等性及目前授權；不得因回應遺失而盲目重播部署、發文或資源建立。 |
+
+同工作包兩次能力升級後，優先進行方法重設或新上下文獨立診斷；這不是
+停止次數上限，也不是自動切模控制器。保留 correction lineage 與原驗收。
+`senior` 的 high 不滿足 `advanced` 的 tier；需要 advanced-high 時須另行驗證
+相符契約，不能以 effort 名稱越過 tier 或沿用不相符資格。
 
 上述門檻觸發能力與方法重評，**不是停止任務、假報完成或自動建立新對話的
 輪次上限**。已明確需要較強能力或獨立診斷時可提早重評，不必先消耗指定次數。
@@ -155,9 +162,9 @@ candidate qualification. It never satisfies deep or security work; do not
 substitute a workspace-write worker for a reviewer merely to satisfy the lower
 tier.
 
-A lower tier cannot silently satisfy a higher-tier route. Use GPT-6 Sol-high
-`senior` for complex bounded work that exceeds the GPT-6 Sol-medium balanced
-profile, and retain GPT-6 Sol-medium `advanced` for multi-trigger advanced
+A lower tier cannot silently satisfy a higher-tier route. Use GPT-6.1 Sol-high
+`senior` for complex bounded work that exceeds the GPT-6.1 Sol-medium balanced
+profile, and retain GPT-6.1 Sol-medium `advanced` for multi-trigger advanced
 work. Other GPT-6 effort settings are
 eval-first alternatives, not defaults: compare them against the adjacent
 published profiles on representative quality, correction, latency, and usage
@@ -233,6 +240,13 @@ deep, security and exceptional Astra-xhigh baselines remain unchanged. This is
 a user-adopted routing decision; it does not claim repository-measured quality
 or cost superiority. The nine baseline identities and three separate Astra
 candidates remain distinct.
+
+Issue #308 依維護者明確選擇及官方建議，將 balanced/advanced/senior/routine
+四個 Sol baseline 遷移至 GPT-6.1，原 effort 保持 medium/medium/high/high。
+本次不做模型配對或節省率量測，亦不以此建立候選 qualification；其餘八個
+profiles 的 bytes 不變。Registry 日期記錄 mapping 查核，不代表跨 runtime
+品質證明。部署後先觀察真實任務的模型選路與完成，再逐類比較較低 effort；
+見 [採用與觀察計畫](https://github.com/jeffery777/codex-dev-skills/blob/main/docs/gpt61-adoption-and-observation.md)。
 
 Issue #249 adopts Astra-xhigh for the deep/security and exceptional baseline
 profiles by explicit maintainer configuration choice; the three separate Astra

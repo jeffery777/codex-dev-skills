@@ -12,6 +12,8 @@ The optional main-agent preset is separate from candidate qualification below.
 Issue #292 adopts GPT-6 Luna-low mechanical, GPT-6 Luna-high exploration,
 GPT-6 Sol-medium balanced/advanced and GPT-6 Sol-high senior baselines, plus
 the read-only GPT-6 Sol-high `routine_reviewer` baseline for everyday review.
+Issue #308 subsequently migrates these four Sol profiles to GPT-6.1 Sol with
+the same efforts; see [adoption and observation](gpt61-adoption-and-observation.md).
 Issue #249's Astra-xhigh deep/security/exceptional baselines and the three
 separate Astra candidates remain unchanged. This migration is an explicit
 routing decision, not measured parity, weekly-usage savings, or a claim that

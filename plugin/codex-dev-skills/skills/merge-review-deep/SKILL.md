@@ -49,10 +49,12 @@ Use the `merge-review` workflow with the additional focus above in one review
 pass. Verify evidence from source files and commands rather than relying only
 on summaries; two complete consecutive reviews are not required by this skill.
 
-Re-evaluate whether pre-commit review and Security Diff Scan evidence still
-applies to the exact head. After a fix, rerun those reviews over the smallest
-scope that proves the remediation and its affected boundaries, widening when
-their assumptions changed. A changed change-request head always requires a new
+Re-evaluate whether pre-commit review evidence still applies to the exact head.
+After a fix, rerun the appropriate review over the smallest scope that proves
+the remediation and affected boundaries. Assess Security Diff Scan applicability
+under the exact-head contract, recording scope and rationale when not applicable.
+Retain required scans and blocking unresolved material security risk; widen
+review or scan scope when their assumptions changed. A changed change-request head always requires a new
 complete base-to-head Merge Review.
 
 Independently inspect any provider enforcement profile selected by repository
