@@ -487,6 +487,13 @@ production registry 仍空，沒有任意 root/import、G2 或原生記憶啟用
 正式 host ports 時回報 unavailable；production registry 仍空，維持 default-off。
 詳見[本包計畫與驗收範圍](plans/issue-304-memory-maintenance.md)。
 
+#310 整合 [固定 operator CLI](../skills/loop-engineering/references/memory-maintenance-local.md)，
+採同 UID 可信邊界、官方 source 隔離 runtime、逐次 operator source／環境／完整 preview
+接受（human 或受明確委派的 agent）及 root 首用／enable／disable。受限 `mg1-local-operation/v1` 容量不足安全拒絕，
+SQLITE_FULL 等錯誤以獨立讀回分類，不要求實體滿庫實驗，不保證滿庫 stop；完整
+G1/MG1 與 native Desktop confirmation 尚未資格。實作／actor 驗收狀態見
+[計畫](plans/issue-310-memory-maintenance-local-entry.md)。
+
 #284／PR #285 加入[固定 synthetic 操作 pilot](../skills/loop-engineering/references/memory-audit-pilot.md)。
 兩次確認、等待後重驗、異常停止與 owner close 已有隔離驗收；production registry
 仍空，既有專案／原生記憶未啟用。後續工作不得把操作示範當成 G1/MG1 qualification。

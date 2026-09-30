@@ -7,9 +7,11 @@ Runtime compatibility: shared。Issue #304 新增一般單次可信程式串接�
 
 限定 POSIX 本機、既有 initialized host-owned 單 root、固定
 `PinnedGitReader` Git loose commit/tree/blob permits。沒有 root/import/config
-loader。Production registry 保持空；CLI argv 及 Desktop 自然語言都不能建立
-可信 host。真正 runtime source review、確認 UI 與 operation qualification
-尚未整合，正常入口回 `adapter-unavailable`。不宣稱完整 G1／MG1 qualification。
+loader。Static production registry 保持空；CLI argv 及 Desktop 自然語言都不能建立
+可信 host。通用入口未提供 dispatch 時回 `adapter-unavailable`。另有固定
+[operator CLI](memory-maintenance-local.md)，在已審查隔離 runtime、同 UID 可信邊界、
+由人類或已有使用者委派的 agent 當次 source/environment/preview 接受後建立本次 RAM host；採受限容量
+拒絕契約，不宣稱完整 G1／MG1 qualification 或滿庫 stop 保證。
 
 Host 整合順序：
 
@@ -82,4 +84,6 @@ scope、operation-specific qualification、source acceptance 與 confirmation po
 `tests/test_memory_maintenance_entry.py` 使用新建 synthetic Git／SQLite，驗證五
 操作、各層重播／撤銷／TTL、等待不持鎖、來源與 state drift、process boundary、
 真實 core 交易故障、新 reader 及輸出失敗。既有 governance、audit 與 pilot
-tests 繼續回歸。Physical FULL、production ports 與完整 G1 qualification 不在本包。
+tests 繼續回歸。Physical FULL 實驗與完整 G1 qualification 不作固定 local 入口的
+驗收前提；SQLITE_FULL 等異常須以獨立讀回分類、不重播。通用 ports 與 local
+受限資格分開，模擬接受不作正式人工證據。
