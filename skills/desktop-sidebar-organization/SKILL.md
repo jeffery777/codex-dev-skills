@@ -137,7 +137,7 @@ so unlisted projects retain their current positions; still reject duplicate,
 missing, foreign, or stale listed identities.
 
 `reorder_sidebar_sections` 另接受本次要移動的內建 heading IDs：`pinned`、
-`agents`、`chats`、`projects`，仍以當次 callable 為準。內建 headings 可省略，
+`orbit`（Your dot）、`agents`、`chats`、`projects`，仍以當次 callable 為準。內建 headings 可省略，
 省略者保留原位置；自訂區塊不可省略，整份 payload 不可有重複 ID。
 這些 headings 不是自訂區塊，不能因此取得 rename／delete 權限。
 `threads` 與 `null` 不屬於此排序操作的 heading IDs，不能沿用 move 操作的
@@ -147,7 +147,7 @@ missing, foreign, or stale listed identities.
 
 例如目前自訂 IDs 為 `section-a`、`section-b`，使用者明確要求排列全部區塊
 時，可依當次 schema 準備
-`["pinned", "section-b", "agents", "chats", "projects", "section-a"]`；
+`["pinned", "orbit", "section-b", "agents", "chats", "projects", "section-a"]`；
 只調整自訂區塊時可用 `["section-b", "section-a"]`，內建 headings 保留位置。
 省略 `section-a`、重複 `projects` 或加入 `threads` 都不能送出。
 以上 IDs 是 synthetic 範例，不是可直接執行的本機目標。

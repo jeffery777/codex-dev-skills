@@ -392,6 +392,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         for marker in (
             "every current custom `sectionId` exactly once",
             "`pinned`、",
+            "`orbit`（Your dot）",
             "`agents`、`chats`、`projects`",
             "省略者保留原位置",
             "自訂區塊不可省略",

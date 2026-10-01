@@ -522,7 +522,7 @@ Current callable semantics include:
   decision. No adapter may use
   private runtime state or task creation/navigation as a fallback.
   `reorder_sidebar_sections` 要求全部自訂 IDs 恰好一次，另接受要移動的
-  `pinned`／`agents`／`chats`／`projects` 內建 headings；省略的內建 headings
+  `pinned`／`orbit`（Your dot）／`agents`／`chats`／`projects` 內建 headings；省略的內建 headings
   保留位置。`threads`／`null` 不是這個操作的 heading IDs，registry 的
   section 分類不能直接當排序 payload。仍須依當次 schema 與可用公開讀回
   驗證，缺少排序可觀察性時回報未驗證。
