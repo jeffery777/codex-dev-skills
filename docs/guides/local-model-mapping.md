@@ -329,3 +329,98 @@ enforcement、真實 provider、訂閱登入或完整故障矩陣，也不登錄
 
 正式採用另須完成 N1（完整檔案／FD／socket邊界）、N2（全部啟用工具）、
 N3（supervisor／重啟／撤銷／可信export）、N4（實際provider及官方訂閱憑證）資格。
+
+隔離 probe 現在包含 rename／link／symlink、繼承 FD 與 TCP／UDP／Unix socket
+正反控制。Socket 案例要求既有映像提供 Python 標準函式庫；工具缺失或正控制
+不成立時 exit 2 並保留 unknown。Exit 0 僅表示列出的合成案例通過。
+
+Dispatch probe 的 patch 案例可另指定 `--host-read-only --hook-fault
+<deny|exit1|exit2-empty|invalid-json|timeout>`。固定測試 hook 先留下執行標記；
+測試確認標記及 host 寫入限制，不把 hook 錯誤當成安全阻擋。這是受控 fixture，
+不允許執行任意使用者 hook，亦不證明全部 CLI 工具已合格。
+
+`scripts/verify-model-subscription.py` 以現有公開 ChatGPT 登入執行固定無工具短
+回覆，不抽取或轉送憑證。呼叫時指定 `--model <model>`、
+`--instructions-sha256 <reviewed-user-AGENTS-digest>` 及 Git 外的
+`--evidence-root`（位於 `/private/tmp` 下且在 Git 外）；instructions 漂移時拒絕。它只保存輸出形狀、digest 與
+診斷計數，不保存原始登入／模型輸出。成功不代表長 context、角色品質、
+完整工具隔離或 credential broker 合格；診斷缺口另行保留。
+
+`model_packet_supervisor.py` 的 backend 只由可信 host 注入，沒有模型可填的
+backend／command 設定。恢復讀回原 runtime 及封存成果，拒絕 stale generation；
+unknown 與後續 resolution 追加在同一受保護 ledger。它目前產生
+integration candidate，尚不修改原始 source，也未登錄 production backend。
+
+`scripts/verify-model-container-backend.py` 是 opt-in 本機 Docker 固定 recipe 測試，
+使用既有 immutable image ID 與 Unix endpoint；執行前以 `--help` 核對必要參數。
+它驗證同 ledger 封存 descriptor 後才 start、失聯不重播、恢復與 quarantine。
+可信 host 讀回停止狀態後擷取有界 regular-file 成果，保留完整累積 checkpoint；
+容器、失敗與成功證據都保留在 Git 外。不接模型、不整合 source、不啟用正式 adapter。
+Physical stop 讀回不等於原始 execution 的證明；單次執行 qualifier 尚缺時，
+backend 保留 unknown，不從首次 `StartedAt` 或 `RestartCount` 推定可發布成果。
+
+固定 fixture 可另指定 `--one-shot`，使用 root-only 持久 control volume、單次
+claim latch 與降權 worker，並驗證 bootstrap／回覆遺失／duplicate start 的讀回。
+它只執行固定合成 recipes；當前 image policy 限制 `linux/arm64`，不能直接
+推定其他 Linux 架構或 Podman 已合格。所有自有 volumes、容器及原始證據均
+保留，測試不自動清理。此模式仍不接真實 provider、修改 source 或啟用正式 adapter。
+
+`UnusedSourceGuard` 只供可信 host-code 注入選模介面，讀取既有未使用 packet
+及治理證據；沒有 JSON／CLI loader。能力資格 TTL 過期的不可達來源，只有
+上述證明全部成立才可略過；目的地資格不放寬。規劃 snapshot 仍須在真正
+dispatch 前重新核對，普通 JSON 入口維持原保守行為。
+
+`HistoricalSourceGuard` 另提供同 class 的 tier 提升規劃。可信 host 須保留原
+request bytes、原 V2 route、有效 path assignment／disjoint ownership、原 authority
+contract 與獨立封存的 authority bytes，並核對真實已完成 attempts／checkpoint／
+完整 correction lineage。舊 artifact 不補造 contract。目的地及當前授權／資格
+仍採最新要求；這個 host-code 介面不授予 dispatch，也沒有 JSON／CLI loader。
+
+`ResolvedUnknownGuard` 另供可信 host 讀回未知結果及獨立原因，與 HSG 共用
+受鎖 ledger snapshot。隔離證據或實際 sealed checkpoint 不代替 cause 證據；
+source、效果或原因未查明仍 blocked。原 events 與預算保留；schema3 歷史
+dispatch 必須帶當時 independently archived resolution bytes 的綁定，不能
+用今日證據補造。已有 source integration 的 packet 不接受後續規劃。
+這些 seam 均沒有 production reader／dispatcher，普通 CLI JSON 入口不啟用它們。
+
+`scripts/verify-model-tool-boundary.py` 以無登入的 loopback fixture、固定 MCP stub
+與六種固定呼叫量測工具邊界；每個 case 先驗正向控制，再核對精確 dispatch
+拒絕與檔案副作用。它解析 structured advertised tools，不將模型可見宣告當成
+完整 handler inventory。Agent、`write_stdin`、Code Mode 均尚未量測。
+此 runner 僅支援 macOS；evidence root 必須是既有、canonical 且位於 Git 外的
+目錄，以下使用 `/private/tmp`。Linux、bundled CLI 及 Desktop 入口尚未由此
+runner 驗證，不能沿用其結果。
+
+固定 CLI `0.159.3` 會強制啟用 `UnifiedExec`，嚴格模式要求全部指定 features
+為 false，因此在此版本保留 unknown。有限觀測須明確另加
+`--allow-normalized-unified-exec-fixture`，例如：
+
+```sh
+./scripts/project-python scripts/verify-model-tool-boundary.py --evidence-root /private/tmp --metadata-model gpt-6.1-sol --allow-normalized-unified-exec-fixture
+```
+
+觀測模式要求 exact CLI 版本、`unified_exec=true` 及其餘指定 features 全為 false；
+保存設定意圖與實際狀態，通過也只表示固定 case 的 measured outcome，不能取得
+嚴格停用契約或 production 隔離資格。來源原始碼與完整限制見
+[隔離設計](../design/isolated-model-execution.md)。證據位於每次新建的 Git 外 fixture。
+
+`scripts/verify-model-packet-integrator.py` 另驗證八項固定的唯一整合器案例：
+add-update、noop、intent crash、write-intent crash、mid-write、commit crash、
+reply-lost 及 revoked authority。執行前指定既有 immutable image ID、本機 Unix
+endpoint，及 Git 外、由目前使用者持有的 `0700` evidence root：
+
+```sh
+./scripts/project-python scripts/verify-model-packet-integrator.py --synthetic-qualified-container-fixture --endpoint "$FIXTURE_DOCKER_ENDPOINT" --image "$FIXTURE_IMAGE_ID" --evidence-root "$FIXTURE_EVIDENCE_ROOT"
+```
+
+測試只建立私有 synthetic Git source，保留自有容器、volume 與原始收據，
+不接模型或採用現有專案。Fixed validation／review artifacts 不代替正式 review。
+未知結果不重播 apply、不 rollback；多檔案更新不是交易。整合後仍禁止下一個
+claim，不能由此推定 production 整合或接手已完成。
+
+`model_packet_governance.py` 提供 host-only `ObjectiveGovernance` 與純 projection；
+只採認可信 reader 取得的完整原始證據 bytes，沒有 worker JSON 或 CLI loader。
+Ledger v5 限既有空 packet 的首次採認，不遷移非空 legacy packet；舊執行器
+拒絕 v5。治理 owner 是 reservation，並非已派工證據。Healthy、冷卻到期及
+換 work unit 不重設原事件或能力下限，也不奪取現有 owner。跨 packet 健康
+共享與正式 dispatcher 尚未接入；此介面不能啟用 production 自動切換。

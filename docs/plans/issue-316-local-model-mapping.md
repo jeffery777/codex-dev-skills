@@ -44,6 +44,15 @@ review finding 本身不等於已完成一輪修補。Scope 真正新增須明�
 對所有使用者的預設授權。送出前須核對輸入、工具結果、歷史與交接包的排除
 條件；未知或無法排除的內容不可跨目的地轉送。不得把敏感全文留在證據中。
 
+任務重新分類而提高 tier 時，下一個目的地須符合最新 V2 requirements；已完成
+的歷史來源則須核對原 dispatch 當時的合法分類，不能因舊 tier 低於新需求而
+阻擋升級。例外須由可信 host 讀回原 request／route receipt、實際 attempt 與
+完整 correction lineage，綁定現有 ledger；歷史摘要或可自填的舊 tier 不足以
+放行。原 route 的 hash 正確也不能代替有效的 path assignment、disjoint ownership
+與同 task／scope／acceptance 綁定的原 authority contract。首包限定同 class 的
+tier 提升，當前授權、撤銷、身分、scope 與新鮮度
+防護不變；再次選取低 tier 來源仍須拒絕。
+
 ### 決策與執行分層
 
 1. 既有選模流程讀取受保護 policy、新鮮可用性／資格及 correction lineage，產出
@@ -120,7 +129,7 @@ Checkpoint 保留原目標與驗收、repository／branch／HEAD、tracked 與 u
 | ready | 已驗證 checkpoint、原始 source 身分／digest、尚無 active attempt。 |
 | claimed | 在受保護本機紀錄原子保留 attempt ID／target binding／checkpoint；重播不再啟動。 |
 | running | 紀錄 runtime process identity 與唯一 packet writer；服務恢復不能搶占。 |
-| reconciling | 中斷、失敗或重啟後先確認 process tree 停止，再核對私有修改與未知外寫。 |
+| reconciling | 中斷、失敗或重啟後讀回受控執行邊界已停止，或確認舊副本已隔離且結果採用權已撤銷；程序樹掃描不足以建立此證據。再核對可封存成果與未知外寫。 |
 | checkpointed | 停止寫入後保存修改 digest、驗收／返工／讀回證據；選模前重新核對容量與授權。 |
 | integration-ready | 完整驗證與獨立 review 通過，父代理再核對 source 沒有漂移，僅整合已審內容。 |
 | blocked | ownership、結果或 snapshot 無法查明；保留成果及紀錄，拒絕相依 dispatch。 |
@@ -144,7 +153,7 @@ Privately fenced packet workspace 必須由可信 executor 建立及管理。失
 
 深入 review 的受控本機程序反例顯示：root process 在首次 inventory 前已退出，
 detached descendant 仍存活時，既有 polling tracker 可返回成功。Polling 不能
-證明從未觀測到的子程序不存在；即使补強 root birth identity 也不能據此完成
+證明從未觀測到的子程序不存在；即使補強 root birth identity 也不能據此完成
 writer containment 資格。Portable 公開 CLI 尚無本專案已資格的完整停止保證。
 
 因此 `PACKET_STOP_ADAPTERS` production 清冊維持空，packet executor 及共用
@@ -189,6 +198,45 @@ Linux 優先資格化受限 rootless container 與受控生命週期；cgroup �
 default-off primitive 或純選模決策通過時，不得以完整自動切換功能發行。
 控制面與 worker bridge 的候選設計及公開 CLI 限制見
 [隔離模型執行與可信接手](../design/isolated-model-execution.md)。
+
+### 可重跑的局部驗證與剩餘資格
+
+N3-A 已提供 host-injected backend 的 durable supervisor：啟動前保留 runtime
+身分及 launch intent，恢復只 inspect 原 runtime，不重播 launch；停止及封存
+成果經綁定與 generation fence 後產生 integration candidate。Unknown observations
+保留於同一 ledger，查證後追加 resolution，不刪除原事件。Candidate 讀回同時
+核對實際 checkpoint 與 sealed bytes；合法空 patch 仍須通過相同控制。
+此介面另接入固定合成 recipe 的本機 Docker backend（N3-B1）；create 後的
+physical descriptor 必須在同一 ledger 封存，才可 start。恢復只讀回 exact ID，
+回覆遺失不重建或重啟。Bounded export 不執行 worker Git，累積 checkpoint
+不丟失前輪成果。Production backend／來源整合器仍未資格化，亦未驗 daemon restart。
+原始 execution 身分的首次採認仍須 qualifier；共享 daemon 的首次啟停時間
+觀察不能排除曾再次 start，缺證明時不發布 integration candidate。
+
+B2 已實作私有、獨占 synthetic Git source 的唯一整合 fixture；固定 add-update
+與 noop 產生持久 intent，crash／reply-lost 只讀回，部分完成保留 unknown。
+授權與驗收／review artifacts 僅供固定 fixture，不授予使用者 repository 寫入權。
+Schema4 與原 ledger 共存；任何 integration record 阻擋後續 claim，正式整合後
+續作尚未資格化。CLI／Docker 實測須另有當前入口證據，單元測試不代替它。
+
+N1 probe 擴充固定合成檔案、rename、hardlink、symlink、繼承 FD、背景程序與
+TCP／UDP／Unix socket 正反控制。缺少工具或正控制失敗時保留 unknown；不能
+以工具不存在推定隔離成功。它尚不涵蓋 detached Codex、重啟及全部資源邊界。
+N2 的固定 PreToolUse hook 故障案例需先讀回 hook 執行標記，再核對 OS 唯讀
+邊界；hook 錯誤不能成為唯一寫入防線。全部啟用工具與配置入口仍須資格化。
+
+官方訂閱另有固定無工具回覆 smoke probe，保留實際 CLI、catalog、使用者
+instructions digest 與診斷計數，不抽取登入憑證。短請求成功不證明角色品質、
+完整 context、credential broker 或 provider/model 獨立讀回；未解的 CLI
+diagnostic 仍記為缺口。公司模型不可達時仍可完成以上實作與合成驗證，公司
+真實連線、工具循環、品質升級及接手驗收則延後，不能宣稱端到端完成。
+
+對未曾派工的不可達公司來源，選模介面可由可信 host 注入 `UnusedSourceGuard`：
+真正 packet ledger 須已存在且從未使用，另有新鮮治理讀回，綁定身分、授權、
+撤銷、task／scope／acceptance 與舊能力證據。只有能力資格 TTL 過期可被略過；
+官方目的地仍須全部新鮮資格。JSON 或空 events 不能建立此權限；缺 guard 保留
+原保守行為。此規劃 snapshot 不授予 dispatch，production governance reader
+及 executor 的再次核對仍須另外接入。
 
 ## 設計與實作順序
 

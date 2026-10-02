@@ -20,8 +20,15 @@ shards:
       - tests.test_agent_qualification
       - tests.test_installer_agent_profiles
       - tests.test_local_model_mapping
+      - tests.test_model_container_backend
+      - tests.test_model_container_launcher
+      - tests.test_model_control_archive
       - tests.test_model_failover
+      - tests.test_model_packet_governance
+      - tests.test_model_packet_integrator
+      - tests.test_model_packet_integrator_runner
       - tests.test_model_packet_store
+      - tests.test_model_packet_supervisor
       - tests.test_model_task_execution
   - id: installer-runtime
     modules:
@@ -92,7 +99,11 @@ shards:
       - tests.test_killpg_eperm_probe
       - tests.test_model_broker_probe
       - tests.test_model_execution_target
+      - tests.test_model_host_controls
       - tests.test_model_probe_controls
+      - tests.test_model_probe_tools
+      - tests.test_model_subscription_probe
+      - tests.test_model_tool_boundary
       - tests.test_native_runtime_contract_docs
   - id: operational-improvement
     modules:

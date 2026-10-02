@@ -263,5 +263,117 @@ class PacketStoreTests(unittest.TestCase):
             self.store.read_checkpoint()
 
 
+    def reserve(self, attempt='attempt-1', revision=0):
+        return self.store.reserve_runtime(attempt, 'b'*64, 'c'*64, expected_revision=revision,
+            source_sha256='1'*64, scope_sha256='2'*64, acceptance_sha256='3'*64,
+            host_id='host', backend_id='synthetic', policy_sha256='f'*64, runtime_id='runtime-test')
+
+    def test_explicit_atomic_new_claim_reservation_upgrade_preserves_v2_checkpoint(self):
+        self.claim()
+        old = self.store.publish_checkpoint('attempt-1', b'legacy patch', 'd'*64)
+        self.assertEqual(old['schema_version'], 2)
+        result = self.reserve('attempt-2', old['revision'])
+        self.assertEqual(result['ledger']['schema_version'], 3)
+        self.assertEqual(result['ledger']['attempts'][0], old['attempts'][0])
+        binding = result['ledger']['supervisors']['attempt-2']['binding']
+        self.assertEqual(binding['predecessor_sha256'], old['checkpoint'])
+        reopened = packets.PacketStore(self.root, 'packet-1')
+        self.assertEqual(reopened.read_checkpoint()[1], b'legacy patch')
+        self.assertEqual(reopened.supervisor_snapshot('attempt-2')[1]['stage'], 'reserved')
+
+    def test_existing_v2_pending_attempt_cannot_receive_runtime_or_stop_proof(self):
+        self.claim()
+        before = (self.root/'packet-1/ledger.json').read_bytes()
+        with self.assertRaisesRegex(packets.PacketError, 'already-exists'):
+            self.reserve(revision=1)
+        with self.assertRaisesRegex(packets.PacketError, 'unavailable'):
+            self.store.supervisor_snapshot('attempt-1')
+        self.assertEqual((self.root/'packet-1/ledger.json').read_bytes(), before)
+        self.store.retain_unknown('attempt-1')
+        with self.assertRaisesRegex(packets.PacketError, 'already-exists'):
+            self.reserve(revision=2)
+        self.assertEqual(self.store.read_checkpoint()[0]['schema_version'], 2)
+
+    def test_supervisor_claim_crash_does_not_leave_unbound_v3_attempt(self):
+        with mock.patch.object(self.store, '_write', side_effect=OSError('crash before atomic ledger')):
+            with self.assertRaises(OSError):
+                self.reserve()
+        ledger, _ = self.store.read_checkpoint()
+        self.assertEqual(ledger['attempts'], [])
+        self.assertEqual(ledger['schema_version'], 2)
+
+    def test_supervisor_record_cas_and_json_injection_are_rejected(self):
+        self.reserve()
+        ledger, record = self.store.supervisor_snapshot('attempt-1')
+        with self.assertRaisesRegex(packets.PacketError, 'revision-conflict'):
+            self.store.supervisor_transition('attempt-1', 'launch-intent', expected_revision=999,
+                record_sha256=packets.digest(packets.canonical(record)))
+        path = self.root/'packet-1/ledger.json'; original = path.read_bytes()
+        for field, value in [('module', 'os'), ('host_command', 'echo hi'), ('mount', '/'), ('stopped', True)]:
+            mutated = json.loads(original)
+            mutated['supervisors']['attempt-1']['binding'][field] = value
+            path.write_text(json.dumps(mutated))
+            with self.assertRaises(packets.PacketError):
+                self.store.supervisor_snapshot('attempt-1')
+        path.write_bytes(original)
+        duplicate = original.replace(b'"stage":"reserved"', b'"stage":"reserved","stage":"published"')
+        path.write_bytes(duplicate)
+        with self.assertRaises(packets.PacketError):
+            self.store.supervisor_snapshot('attempt-1')
+
+    def test_supervised_attempt_cannot_use_legacy_publish_bypass(self):
+        self.reserve()
+        with self.assertRaisesRegex(packets.PacketError, 'publication-fence'):
+            self.store.publish_checkpoint('attempt-1', b'forged', 'd'*64)
+        self.assertIsNone(self.store.read_checkpoint()[0]['checkpoint'])
+
+
+class BootstrapSchemaTests(unittest.TestCase):
+    setUp=PacketStoreTests.setUp
+    # Only dedicated migration cases; fixture methods are reused below.
+    def test_schema4_reservation_is_explicit_and_legacy_attempt_cannot_upgrade(self):
+        arguments=dict(source_sha256='d'*64,scope_sha256='e'*64,acceptance_sha256='f'*64,
+            host_id='host',backend_id='backend',policy_sha256='0'*64,runtime_id='runtime',runtime_descriptor_required=True)
+        self.store.reserve_runtime('attempt','b'*64,'c'*64,expected_revision=0,**arguments)
+        original=(self.root/'packet-1/ledger.json').read_bytes()
+        with self.store.locked() as fd:
+            ledger=self.store._read(fd)
+            with self.assertRaises(packets.PacketError):
+                self.store._bootstrap_transition(fd,ledger,'attempt','intent','1'*64)
+        self.assertEqual((self.root/'packet-1/ledger.json').read_bytes(),original)
+        other=packets.PacketStore(self.root,'packet-new'); other.prepare('a'*64)
+        other.reserve_runtime('attempt','b'*64,'c'*64,expected_revision=0,runtime_bootstrap_required=True,**arguments)
+        _,record=other.supervisor_snapshot('attempt'); self.assertEqual(record['schema_version'],4); self.assertIsNone(record['bootstrap'])
+
+
+class IntegrationSchemaCompatibilityTests(unittest.TestCase):
+    setUp=PacketStoreTests.setUp
+
+    def test_v2_pending_remains_v2_without_integration_upgrade(self):
+        self.store.claim('legacy','b'*64,'c'*64,expected_revision=0)
+        original=(self.root/'packet-1/ledger.json').read_bytes()
+        with self.store.locked() as fd:
+            ledger=self.store._read(fd)
+            self.assertEqual(ledger['schema_version'],2)
+            self.assertNotIn('integrations',ledger)
+        with self.assertRaises(packets.PacketError): self.store.integration_snapshot('absent')
+        self.assertEqual((self.root/'packet-1/ledger.json').read_bytes(),original)
+
+    def test_schema4_empty_record_keeps_version_on_new_supervised_reservation(self):
+        with self.store.locked() as fd:
+            ledger=self.store._read(fd); ledger.update(schema_version=4,supervisors={},integrations={}); self.store._write(fd,ledger)
+        self.store.reserve_runtime('attempt','b'*64,'c'*64,expected_revision=0,source_sha256='d'*64,
+            scope_sha256='e'*64,acceptance_sha256='f'*64,host_id='host',backend_id='backend',policy_sha256='0'*64,runtime_id='runtime')
+        ledger,_=self.store.supervisor_snapshot('attempt')
+        self.assertEqual(ledger['schema_version'],4); self.assertEqual(ledger['integrations'],{})
+
+    def test_schema4_unknown_namespace_and_nonobject_integrations_rejected(self):
+        with self.store.locked() as fd:
+            ledger=self.store._read(fd); ledger.update(schema_version=4,supervisors={},integrations=[]); self.store._write(fd,ledger)
+            with self.assertRaises(packets.PacketError): self.store._read(fd)
+            ledger['integrations']={}; ledger['retry_ledger']={}; self.store._write(fd,ledger)
+            with self.assertRaises(packets.PacketError): self.store._read(fd)
+
+
 if __name__ == '__main__':
     unittest.main()

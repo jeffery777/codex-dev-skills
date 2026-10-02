@@ -460,11 +460,14 @@ def _classify_v2(
     }
 
 
-def plan_model_failover(task: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+def plan_model_failover(task: dict[str, Any], payload: dict[str, Any], *,
+                        _trusted_unused_source_guard=None, _trusted_historical_source_guard=None,
+                        _trusted_resolved_unknown_guard=None) -> dict[str, Any]:
     """Extend the current V2 classifier with provider-aware failure planning.
 
     This is advisory. Existing qualification/preflight and runtime dispatch still
     own their contracts; a plan is never an executed agent-route receipt.
+    Optional source guards are injected host code, never loaded from task/JSON.
     """
     import model_failover
 
@@ -477,14 +480,17 @@ def plan_model_failover(task: dict[str, Any], payload: dict[str, Any]) -> dict[s
     classification = classify_task(task['factors'], contract_version=2,
                                    workload_kind=task['workload_kind'],
                                    quality_preference=task.get('quality_preference'))
-    model_failover._validate(payload)
+    model_failover._validate(payload, _defer_transitions=_trusted_resolved_unknown_guard is not None)
     expected = {'id': task['id'], 'scope': task['qualification_scope'],
                 'capability_class': classification['capability_class'],
                 'capability_tier': classification['capability_tier']}
     if any(payload['task'][key] != value for key, value in expected.items()):
         raise AgentRoutingContractError('failover task does not match current V2 classification')
     return {'classification': classification,
-            'plan': model_failover.select_next(payload), 'dispatched': False}
+            'plan': model_failover.select_next(payload,
+                _trusted_unused_source_guard=_trusted_unused_source_guard,
+                _trusted_historical_source_guard=_trusted_historical_source_guard,
+                _trusted_resolved_unknown_guard=_trusted_resolved_unknown_guard), 'dispatched': False}
 
 
 def _sandbox_is_non_widening(profile: dict[str, Any]) -> bool:

@@ -124,7 +124,7 @@ def audit_client_directory(client):
             if os.path.lexists(path):
                 raise ProbeError('unexpected-client-configuration:' + str(path))
         inspected.append(str(parent))
-    for path in ('/etc/codex/config.toml', '/etc/codex/requirements.toml'):
+    for path in ('/etc/codex/config.toml', '/etc/codex/requirements.toml', '/etc/codex/managed_config.toml'):
         if os.path.lexists(path):
             raise ProbeError('system-configuration-requires-review')
     return inspected
