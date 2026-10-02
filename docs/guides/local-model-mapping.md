@@ -316,5 +316,16 @@ named permissions；shell 案例先確認相同沙箱內的讀取工具可用，
 部分 native metadata 把工具指引放入 input 而未宣告 request.tools；顯式選擇
 `--allow-unparsed-native-fixture` 僅供實驗與回歸調查，不能用來資格化 tool manifest。
 原始合成 requests、CLI logs 與結果都保留於 Git 外，production_qualified 固定 false。
+
+`scripts/verify-model-broker.py` 是 macOS-only、無憑證的 CLI → stdio MCP → Docker
+合成原型。以 `./scripts/project-python scripts/verify-model-broker.py --evidence-root
+/private/tmp` 重跑；只使用既有 immutable image，不拉取映像或清理容器。
+host client 使用唯讀 permissions；唯一固定 MCP 工具 `run` 明確授權給已核准的
+合成操作，模型不能提供 host argv、mount、socket 或映像。清冊必須明確宣告工具與
+namespace；收到結果後另讀回 worker 停止狀態與檔案，再保存 packet checkpoint。
+lost reply 保留 unknown，重複呼叫不得再次派送。原始證據與保留容器身分在 Git 外。
+此原型只量測單次固定操作的 transport／隔離／checkpoint，不量測 host patch
+enforcement、真實 provider、訂閱登入或完整故障矩陣，也不登錄 production adapter。
+
 正式採用另須完成 N1（完整檔案／FD／socket邊界）、N2（全部啟用工具）、
 N3（supervisor／重啟／撤銷／可信export）、N4（實際provider及官方訂閱憑證）資格。
