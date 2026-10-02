@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "runtime": "hermes",
+  "namespace": "codex-dev-skills",
+  "skills": [
+    "hermes-project-delivery",
+    "hermes-review-gate",
+    "hermes-task-continuation"
+  ],
+  "resources": [
+    "policies/human-gate-policy.md",
+    "policies/delivery-drift-control-policy.md",
+    "policies/review-artifact-policy.md",
+    "policies/security-review-escalation-policy.md",
+    "policies/multi-agent-integration-policy.md",
+    "policies/exact-head-merge-review-contract.md",
+    "policies/github-exact-head-enforcement-profile.md",
+    "policies/github-control-plane-policy.md",
+    "policies/release-state-contract.md",
+    "templates/orchestration/implementation-plan.template.md",
+    "templates/orchestration/current-task-summary.template.md",
+    "templates/hermes/next-session-prompt.template.md",
+    "templates/orchestration/agent-task-brief.template.md",
+    "templates/orchestration/integration-review-report.template.md",
+    "templates/review/code-review-report.template.md",
+    "templates/review/merge-review-report.template.md",
+    "scripts/validate-exact-head-merge-review.py",
+    "docs/guides/hermes-agent.md",
+    "policies/reusable-workflow-contract.md",
+    "policies/reusable-workflow-details.md",
+    "policies/model-selection-policy.md",
+    "policies/context-continuity-policy.md",
+    "policies/code-mode-tool-orchestration-policy.md",
+    "policies/runtime-compatibility-policy.md",
+    "policies/agent-delegation-policy.md",
+    "policies/project-agent-knowledge-policy.md",
+    "policies/projectspec-alignment-policy.md",
+    "scripts/verify-hermes-runtime.py"
+  ]
+}
