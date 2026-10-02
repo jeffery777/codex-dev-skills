@@ -29,6 +29,7 @@ SHARED_FILES = {
     "scripts/collect-exact-head-merge-readiness.py",
     "docs/native-runtime-capabilities.md",
     "docs/agent-qualification-autoload.md",
+    "docs/guides/local-model-mapping.md",
 }
 SHARED_PREFIXES = ("templates/orchestration/",)
 

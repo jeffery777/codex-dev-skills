@@ -19,6 +19,7 @@ shards:
       - tests.test_agent_profiles
       - tests.test_agent_qualification
       - tests.test_installer_agent_profiles
+      - tests.test_local_model_mapping
   - id: installer-runtime
     modules:
       - tests.test_installer_runtime_groups

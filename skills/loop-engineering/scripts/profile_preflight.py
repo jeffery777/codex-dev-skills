@@ -314,7 +314,7 @@ def runtime_facts(path: pathlib.Path) -> dict[str, Any]:
         facts = _object(json.loads(sys.stdin.read() if str(path) == "-" else path.read_text(encoding="utf-8")), "runtime facts")
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ProfileValidationError(f"invalid runtime facts {path}: {exc}") from exc
-    _exact(facts, {"custom_agent_surface", "available_models", "reasoning_efforts", "compatible_profiles", "parent_default", "sequential", "parent_sandbox_mode", "enabled_candidates", "model_surface"}, "runtime facts")
+    _exact(facts, {"custom_agent_surface", "available_models", "reasoning_efforts", "compatible_profiles", "parent_default", "sequential", "parent_sandbox_mode", "enabled_candidates", "model_surface", "local_model_surface"}, "runtime facts")
     candidate_facts(facts)
     surface = facts.get("custom_agent_surface")
     if surface is not None and (

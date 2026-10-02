@@ -25,6 +25,7 @@ import git_source  # noqa: E402
 import profile_preflight  # noqa: E402
 import agent_routing  # noqa: E402
 import agent_qualification  # noqa: E402
+import local_model_mapping  # noqa: E402
 import context_continuity  # noqa: E402
 
 CANONICAL_PROFILE_REGISTRY = (
@@ -888,6 +889,48 @@ def command_agent_route(
             role in profile_preflight.CANDIDATE_ROLES or facts.get("enabled_candidates")
         ):
             raise profile_preflight.ProfileValidationError("candidate selection requires route contract version 2")
+        try:
+            mapped = local_model_mapping.resolve(
+                role=role, entries=entries, facts=facts,
+                scope=task.get("qualification_scope"), destination=destination,
+                profile_dir=profile_dir,
+            )
+        except local_model_mapping.MappingError as exc:
+            render({"status": "human-gate", "reason": str(exc), "policy": "local-model-mapping-opt-in"})
+            return 2
+        if mapped is not None:
+            if contract_version != 2:
+                render({"status": "human-gate", "reason": "local-mapping-requires-v2"})
+                return 2
+            mapped_entry, binding, mapped_path = mapped
+            collisions = profile_preflight.detect_collisions(profile_dir, roots, destination)
+            accepted = local_model_mapping.accepted_profiles(entries=entries, facts=facts, destination=destination, profile_dir=profile_dir)
+            collisions["conflicts"] = [c for c in collisions["conflicts"] if not (
+                c.get("reason") == "destination-content-conflict"
+                and (c.get("name"), c.get("path")) in accepted
+            )]
+            isolated = {**facts, "enabled_candidates": {}, "compatible_profiles": {},
+                        "parent_default": {"available": False}, "sequential": {"available": False}}
+            checked = profile_preflight.preflight(
+                mapped_entry, isolated, collisions, trusted_profiles={role:mapped_entry},
+                fallback_required_tier=classification["capability_tier"],
+            )
+            if checked["decision"] != "ready":
+                render({"status": "human-gate", "profile_preflight": checked, "policy": "local-model-mapping-opt-in"})
+                return 2
+            evidence = {**checked["route_profile_evidence"], "local_model_mapping": binding}
+            runtime = {"custom_agents_available": True, "profiles": [evidence],
+                       "parent_default_available": False, "sequential_available": False,
+                       "profile_selection": {"policy": "local-model-mapping-opt-in", "requested_profile": role}}
+            receipt = loop_core.evaluate_agent_route(
+                task_id=task.get("id"), factors=task.get("factors"), runtime=runtime,
+                assigned_scope=assignment.get("scope"), ownership=assignment.get("ownership"),
+                source_revision=assignment.get("source_revision"), authority_contract=assignment.get("authority_contract"),
+                contract_version=2, workload_kind=task.get("workload_kind"), quality_preference=task.get("quality_preference"),
+            )
+            ok = receipt["execution_mode"] == "custom-agent-profile"
+            render({"status": "routed" if ok else "human-gate", "profile_preflight": checked, "route_receipt": receipt})
+            return 0 if ok else 2
         autoload = None
         if contract_version == 2:
             facts, autoload = agent_qualification.discover(
@@ -1164,6 +1207,8 @@ def command_agent_integrate(
     verification_root: pathlib.Path,
     assignment_fresh: bool,
     profile_path: pathlib.Path | None,
+    runtime_facts_path: pathlib.Path | None = None,
+    profile_dir: pathlib.Path = profile_preflight.DEFAULT_PROFILE_DIR,
 ) -> int:
     """Validate worker evidence and current-state integration disposition."""
     document = loop_yaml.load_yaml(path)
@@ -1268,6 +1313,29 @@ def command_agent_integrate(
                 raise agent_routing.AgentRoutingContractError(
                     "selected profile does not match the route receipt"
                 )
+        validity = agent_routing.validate_route_receipt(route_receipt)
+        config_evidence = route_receipt.get("config_evidence")
+        # Invalid receipts still use the established worker/integration rejection
+        # report, but must never supply fields to the mapping resolver.
+        mapping = config_evidence.get("local_model_mapping") if validity["valid"] and isinstance(config_evidence, dict) else None
+        if mapping is not None:
+            if runtime_facts_path is None or profile_path is None:
+                raise agent_routing.AgentRoutingContractError("mapped integration requires fresh --runtime-facts and --profile-path")
+            _, entries = profile_preflight.validate(profile_dir, CANONICAL_PROFILE_REGISTRY)
+            fresh_facts = profile_preflight.runtime_facts(runtime_facts_path)
+            try:
+                fresh = local_model_mapping.resolve(
+                    role=mapping["role"], entries=entries,
+                    facts=fresh_facts, scope=mapping["scope"],
+                    destination=profile_path.parent, profile_dir=profile_dir,
+                )
+                if fresh is None or fresh[1] != mapping:
+                    raise local_model_mapping.MappingError("mapping-revoked-or-drifted")
+                check = profile_preflight.preflight(fresh[0], fresh_facts, [], trusted_profiles={})
+                if check["decision"] != "ready":
+                    raise local_model_mapping.MappingError("mapped-runtime-drift")
+            except local_model_mapping.MappingError as exc:
+                raise agent_routing.AgentRoutingContractError(str(exc)) from None
         current_source_revision = _current_git_revision(
             repo_root, route_receipt.get("source_revision")
         )
@@ -1738,6 +1806,8 @@ def main(argv: list[str] | None = None) -> int:
         "--assignment-fresh", required=True, action="store_true"
     )
     agent_integrate.add_argument("--profile-path", type=pathlib.Path)
+    agent_integrate.add_argument("--runtime-facts", type=pathlib.Path)
+    agent_integrate.add_argument("--profile-dir", type=pathlib.Path, default=profile_preflight.DEFAULT_PROFILE_DIR)
     migrate = subparsers.add_parser("migrate-v1")
     migrate.add_argument("path", type=pathlib.Path)
     migrate.add_argument("--spec", type=pathlib.Path)
@@ -1811,6 +1881,8 @@ def main(argv: list[str] | None = None) -> int:
                 verification_root=args.verification_root,
                 assignment_fresh=args.assignment_fresh,
                 profile_path=args.profile_path,
+                runtime_facts_path=args.runtime_facts,
+                profile_dir=args.profile_dir,
             )
         if args.command == "apply-event":
             return command_apply_event(

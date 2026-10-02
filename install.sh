@@ -19,7 +19,7 @@ DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
-VERSION="0.33.0"
+VERSION="0.34.0"
 
 case "$CODEX_DEV_SKILLS_TARGET" in
   legacy) DEFAULT_CODEX_SKILLS_DIR="$DEFAULT_CODEX_LEGACY_SKILLS_DIR" ;;
@@ -924,6 +924,7 @@ group_templates() {
       printf '%s\n' \
         docs/native-runtime-capabilities.md \
         docs/agent-qualification-autoload.md \
+        docs/guides/local-model-mapping.md \
         templates/orchestration/loop-engineering-spec.template.md \
         templates/orchestration/loop-decision-input.template.yaml \
         templates/orchestration/loop-event.template.yaml \
@@ -1178,6 +1179,8 @@ validate_agent_profile_sources() {
 
 preflight_agent_profile_sync() {
   local action="$1" force="$2" item target_rel src dst
+  PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/skills/loop-engineering/scripts/local_model_mapping.py" \
+    installer-check "$CODEX_CUSTOM_AGENTS_DIR" || die "Refusing to replace a local model mapping destination"
   for item in $(group_agent_profiles codex-agent-profiles); do
     target_rel="$(profile_target "$item")"
     src="$ROOT_DIR/$item"

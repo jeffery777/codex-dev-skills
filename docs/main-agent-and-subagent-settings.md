@@ -177,3 +177,10 @@ CLI acceptance 結果及保留的失敗見 [verification record](loops/issue-292
 先以部署後真實工作建立路由／品質基準，再一次調低一類工作的 effort；見
 [採用與觀察計畫](gpt61-adoption-and-observation.md)。不自動安裝、不收集私人
 對話、不啟動排程；實際 loaded model 不可見時保持 unknown。
+
+## 本機自訂模型 opt-in
+
+Issue #316 的[本機角色模型映射](guides/local-model-mapping.md)是獨立 user-owned
+store，不能用既有候選 enabled 開關代替。未啟用保留原有流程；啟用後綁定
+當前 provider／runtime、兩欄替換的 profile bytes 與代表性角色 evidence，
+缺件或漂移停止路由。CLI／Desktop 分別驗證，安裝不自動啟用。
