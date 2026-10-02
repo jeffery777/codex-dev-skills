@@ -187,6 +187,8 @@ Linux 優先資格化受限 rootless container 與受控生命週期；cgroup �
 
 本 Issue 的發行評估必須涵蓋上述資格與端到端交付驗收。只有合成隔離測試、
 default-off primitive 或純選模決策通過時，不得以完整自動切換功能發行。
+控制面與 worker bridge 的候選設計及公開 CLI 限制見
+[隔離模型執行與可信接手](../design/isolated-model-execution.md)。
 
 ## 設計與實作順序
 
