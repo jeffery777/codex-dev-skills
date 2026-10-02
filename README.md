@@ -1,5 +1,10 @@
 # codex-dev-skills
 
+Hermes Agent 基礎 adapter 使用獨立安裝入口；既有 `shared` 標籤不宣告
+Hermes 相容性。支援範圍、依賴、原生驗收與尚未支援能力見
+[Hermes Agent 指南](docs/guides/hermes-agent.md)。Codex installer／plugin
+不會自動安裝 Hermes adapters。
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Runtime: Codex CLI + Desktop](https://img.shields.io/badge/runtime-Codex%20CLI%20%2B%20Desktop-blue)](#runtime-compatibility)
 [![Repo hygiene](https://img.shields.io/badge/hygiene-validate--repo.sh-informational)](#verification)

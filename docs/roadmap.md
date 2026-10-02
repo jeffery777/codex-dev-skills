@@ -75,6 +75,16 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   純選模決策與實際 runtime dispatch 分開驗收，擴充完成前不合併／發行。
   記憶 production qualification、M2／V3-C 的既有 gate 保持不變。
 
+- [Issue #318](https://github.com/jeffery777/codex-dev-skills/issues/318) 新增
+  Hermes Agent 基礎支援，獨立於 #316／LiteLLM。範圍為專用安裝、明確依賴、
+  delivery／review gate／手動接續 adapters；沿用共用授權與 exact-head 契約。
+  [需求矩陣](requirements/hermes-agent.md)、[設計](design/hermes-agent.md) 與
+  [工程計畫](plans/issue-318-hermes-agent.md) 定義驗收。原生技能、真實訂閱
+  模型、工具／隔離、委派品質與 session 各別驗證；缺口不得以合成測試補足。
+  自動 model routing、session dispatch、Hermes Desktop／gateway／cron 與
+  managed-memory adapters 尚未納入基礎支援。main 合併漂移後保留雙方項目，
+  核對語意、版本及受影響驗證，不重排其他優先序；發版與名稱評估在同 Issue。
+
 - Issue #292 將日常 profiles 遷移至 GPT-6 Sol／Luna，新增 everyday-only routine
   reviewer；deep/security/exceptional 保留 Astra，歷史 receipt 分版本驗證。
   [成本與路由說明](gpt6-cost-routing.md) 區分官方費率、runtime 可用性與有界

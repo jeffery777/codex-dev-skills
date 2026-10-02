@@ -25,6 +25,7 @@ shards:
       - tests.test_model_task_execution
   - id: installer-runtime
     modules:
+      - tests.test_hermes_package
       - tests.test_installer_runtime_groups
   - id: loop-context
     modules:
