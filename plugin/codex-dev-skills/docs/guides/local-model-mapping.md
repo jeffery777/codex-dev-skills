@@ -17,6 +17,93 @@ Project-local provider keys 在官方設定中不受支援；不得放進專案�
 同一 provider 可提供實作模型 A、審查模型 B、主模型 C。跨 provider 組合須先有
 獨立公開 runtime 支援與資料目的地授權，本功能不自動提供。
 
+## 公司連線中斷與居家使用
+
+以下描述目前 schema 1 的行為。Internal-first、服務 fallback 與品質返工
+自動升級仍屬待完成擴充；安裝目前版本不會取得這些能力。
+
+安裝本技能不會啟用 LiteLLM，也不修改個人 provider。若已選 LiteLLM，而
+gateway 或公司後端在離開公司後不可達，不會自動改走 OpenAI 官方 provider。
+可信父代理若已觀察到模型不可用，preflight 會停止；如果當前 facts 尚未反映
+連線中斷，實際 runtime 請求仍可能連線失敗或逾時。此 loader 不自行連線探測，
+既有 API 成功或 catalog entry 不能證明目前公司服務可達。
+
+工作與居家應明確切換各自的 provider、模型、catalog/context 與角色配置。
+只改模型名稱而保留 LiteLLM provider，不代表已切回官方服務。居家配置可
+使用隔離的 user-owned 配置 root；若沿用同一 root，須明確停用整份公司映射
+store，恢復並重新核對 baseline 角色載入及 installed bytes。只停用單個 record
+仍會停止該角色路由，不會自動 fallback。切換後重新取得 runtime facts；
+不能推定既有對話或子代理立即重載配置，也不將工作資料自行送往另一 provider。
+
+## 訂閱官方模型與自動升級規劃
+
+官方端採 Codex ChatGPT 登入／訂閱時，由官方 parent／原生合格子角色執行，
+公司工作包可使用另行驗證的公開 CLI executor。LiteLLM 的 OpenAI API upstream
+使用 API 計費路徑，不能當成訂閱 fallback；技能不抽取或轉交登入 token。
+
+`loopctl.py model-failover-plan INPUT.json` 是純決策入口：公司目標優先；有
+新鮮證據確認不可達，或可重試服務錯誤耗盡有界預算時規劃官方目標。品質
+返工沿用同一 task/scope/acceptance lineage：合理修補後同一驗收仍失敗，或
+兩輪修補陸續出現缺陷，先分類／診斷；確認能力不足時依公司一般、公司最高
+合格目標、官方的順序規劃升級。換 SHA、錯誤名稱或模型不清零總返工紀錄。
+
+此入口**不執行切換**，輸出始終 `dispatched: false`。`planned`／`retry` 僅
+表示輸入摘要符合決策條件；`diagnose` 需改變診斷方法，`blocked` 表示不能
+採用該切換，兩者均不是任務停止次數上限。CLI 退出碼 0 不是任務完成或 gate。
+缺公開 executor、新鮮資格／可用性／逐目標 context，或 scope／授權／機密排除
+不符時拒絕規劃。現有 schema 1 mapping、`agent-route` 與 installer 邊界維持原值。
+
+輸入只由可信父代理準備；JSON 欄位不能自行證明使用者授權、秘密已排除、
+真實品質或 runtime 能力。摘要須引用獨立查證的 evidence digests，對每個目標
+綁 provider configuration、model、runtime、profile、context policy 與 catalog。
+Input tokens 是按**目的模型**對完整輸入的估算；切換後不得沿用來源模型數值。
+前置資格、授權及內容排除在真正送出前還須重新核對；純 planner 不讀 protected
+policy、不探測服務、不寫 attempts、不 dispatch，不能取代 production executor。
+
+此擴充重用既有 `agent_routing.classify_task` 與 canonical tier 順序，並綁定
+既有 V2 task 的 id、qualification scope、class/tier。`INPUT.json` 頂層必須
+是 `task`（既有 agent-route V2 task）及 `model_failover`（可信父代理的目標／
+事件摘要）；輸出包含同一 classifier 的 `classification` 與 advisory `plan`。
+不建立第二套公司專屬分類規則，不替代原 preflight／qualification，也不將
+摘要的 `qualified` 欄位當成實際 qualification。官方-only 的既有流程不必
+啟用這項公司／官方目標擴充。
+
+首次採用保持 default-off。目標順位及公司最高能力角色由採用者根據同 scope
+證據核准，不依模型名稱或 effort 排序。只有明確啟用的 policy 可規劃官方目標；
+配置損壞、資格撤銷、認證／權限問題、context 超限、機密內容及工具寫入結果
+不明不能藉 fallback 繞過 gate。失敗與結果未知先讀回，不能自動重播外部操作。
+
+`loopctl.py model-task-execute INPUT.json` 將同一 V2 決策綁到既有 CLI executor，
+僅接受一個 typed `start` 工作包。**目前 production writer containment adapter
+清冊為空，入口在任何 session 派工前拒絕；不能啟用正式自動接手。** 輸入增加
+`cli_request`，包含 protected
+`target_ref`（schema version、opaque ID、store 與 record digest）。它讀取
+`${CODEX_HOME}/model-execution-targets.json`，按實際 prompt／HEAD／角色／
+執行檔與版本重驗 protected 目標、資格、context、授權及內容排除；送出前再讀回。
+CLI target 不接受任意 config flags，官方限 builtin OpenAI 與 ChatGPT 訂閱。
+受控工作包使用核准 HEAD 的 shallow snapshot，不攜帶其他 refs／tags／歷史物件。
+Typed source 或 private clone 存在 `.codex/config.toml` 時拒絕，避免未驗證的
+project 設定合併；不讀該配置或弱化既有 private-clone 隔離與 patch 契約。
+
+工作包的程序完成不等於 provider 已獨立讀回或任務驗收。Receipt 的
+`provider_readback` 保留 `unknown`；consumer 進入 executor 後遇到結果不明，
+回傳 `dispatched: null` 並要求獨立查證，不能變成「尚未送出」後自動重試。
+Protected summaries 仍是可信操作人的輸入，不能由 loader 自行產生正式資格。
+
+持久冷卻、單一 writer 交接、半成品快照與切換後續作仍待實作及深入審查。
+原服務恢復不搶占接手中的工作；品質升級不因恢復而降級。既有 CLI executor
+仍要求 clean exact source，不能把一包 typed dispatch 當成 dirty workspace
+接手能力或完整自動路由器。驗收證據保存在 ignored `.work/`，不放入 user
+policy 或套件；各 runtime 的真實容量與角色品質須另行取得資格證據。
+
+新增 durable packet primitive 已涵蓋 claim／CAS／replay、immutable checkpoint
+及逐 attempt 私有工作目錄；成功或失敗半成品先留在 packet，不立即整合 source。
+Production root `${CODEX_HOME}/model-packets` 必須另行採用且位於 Git 外、mode
+0700。沒有可信完整 writer containment／停止讀回資格時，不以 process polling、
+程序 exit code 或 timeout 推定停止。合成 adapter 只用於測試；不得自行登錄成
+production adapter。Unknown process、跨重啟恢復、持久返工／冷卻、外寫讀回及
+最終驗收／promotion 尚未完成，CLI 函式可呼叫不等於 workflow 已可正式使用。
+
 ## 一次性採用
 
 由操作人員在 user-owned `${CODEX_HOME:-~/.codex}` 保存
@@ -191,3 +278,43 @@ store 與 effective profiles 由使用者管理，不屬 generated package。
 
 官方來源：[設定參考](https://learn.chatgpt.com/docs/config-file/config-reference)、
 [子代理模型與 effort](https://learn.chatgpt.com/docs/agent-configuration/subagents#choosing-models-and-reasoning)。
+
+### 隔離執行資格的合成檢查
+
+`scripts/verify-model-isolation.py` 是 opt-in 合成測試，使用既有映像的 immutable
+identity，不拉取映像、不掛載憑證、停用網路與 capabilities。兩個 attempt 只各自
+掛載自己的可寫副本；來源及封存 checkpoint 不掛載。測試確認接手者在舊 writer
+仍執行時完成，並確認舊 writer 稍後寫入不影響接手成果與來源。
+
+使用 `./scripts/project-python scripts/verify-model-isolation.py --engine docker
+--image <existing-image> --evidence-root <directory-outside-git>`；Linux 可指定
+`--engine podman`，僅執行本機 rootless 路徑。證據目錄必須已存在且在 Git checkout
+以外。未委派 CPU 控制器時可顯式指定 `--cpu-limit-unavailable`，證據保留該缺口，
+不能據此認定正式資源管理通過。測試程序自行結束，容器及資料保留，不自動清理。
+
+預期重跑得到相同的布林檢查結果；artifact path、時間與容器識別自然不同。
+`production_qualified` 固定為 false：這個檢查不能證明完整 supervisor、憑證隔離、
+可信 checkpoint 擷取、重啟、撤銷或成果整合已合格，亦不啟用任何 production adapter。
+
+`scripts/verify-model-permissions.py` 提供另一個 macOS-only opt-in 合成檢查，
+以空白 HOME／CODEX_HOME 與乾淨環境呼叫公開 `codex sandbox` permission profile，
+不呼叫模型。背景子程序在 root 已退出後寫入自己的副本，另一 profile 的接手者
+先完成；檢查背景子程序不能寫接手副本或讀合成控制端檔案。以
+`./scripts/project-python scripts/verify-model-permissions.py --evidence-root
+<directory-outside-git>` 重跑，原始證據留在該目錄。本檢查不驗證真實憑證、網路、
+socket、完整內建工具或 Codex exec，亦不登錄 production adapter。
+
+`scripts/verify-model-dispatch.py` 使用本機 loopback 合成 Responses fixture，驅動
+真正 CLI 的 shell 或 patch 入口，沒有真實模型或登入。以 `--case shell` 或
+`--case patch` 及 `--evidence-root <directory-outside-git>` 選擇合成案例。它使用
+named permissions；shell 案例先確認相同沙箱內的讀取工具可用，再檢查控制端
+讀寫被拒絕。patch 案例檢查控制端檔案未被改寫，不驗證讀取限制。
+兩者都讀回指定成果與同 call ID 的 tool output，
+不能只靠最終文字判定成功。模型名稱只選擇 CLI metadata，不是可用模型的證據。
+
+預設只接受 request.tools 明確宣告的工具與 namespace；沒有適合 schema 時失敗。
+部分 native metadata 把工具指引放入 input 而未宣告 request.tools；顯式選擇
+`--allow-unparsed-native-fixture` 僅供實驗與回歸調查，不能用來資格化 tool manifest。
+原始合成 requests、CLI logs 與結果都保留於 Git 外，production_qualified 固定 false。
+正式採用另須完成 N1（完整檔案／FD／socket邊界）、N2（全部啟用工具）、
+N3（supervisor／重啟／撤銷／可信export）、N4（實際provider及官方訂閱憑證）資格。

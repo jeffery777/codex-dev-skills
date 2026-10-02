@@ -460,6 +460,33 @@ def _classify_v2(
     }
 
 
+def plan_model_failover(task: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    """Extend the current V2 classifier with provider-aware failure planning.
+
+    This is advisory. Existing qualification/preflight and runtime dispatch still
+    own their contracts; a plan is never an executed agent-route receipt.
+    """
+    import model_failover
+
+    allowed = {'id', 'factors', 'workload_kind', 'qualification_scope', 'quality_preference'}
+    required = allowed - {'quality_preference'}
+    if not isinstance(task, dict) or set(task) - allowed or not required <= set(task):
+        raise AgentRoutingContractError('failover requires a current V2 route task')
+    if not isinstance(task['id'], str) or not task['id'].strip() or not isinstance(task['qualification_scope'], str) or not task['qualification_scope'].strip():
+        raise AgentRoutingContractError('failover task identity and qualification scope are required')
+    classification = classify_task(task['factors'], contract_version=2,
+                                   workload_kind=task['workload_kind'],
+                                   quality_preference=task.get('quality_preference'))
+    model_failover._validate(payload)
+    expected = {'id': task['id'], 'scope': task['qualification_scope'],
+                'capability_class': classification['capability_class'],
+                'capability_tier': classification['capability_tier']}
+    if any(payload['task'][key] != value for key, value in expected.items()):
+        raise AgentRoutingContractError('failover task does not match current V2 classification')
+    return {'classification': classification,
+            'plan': model_failover.select_next(payload), 'dispatched': False}
+
+
 def _sandbox_is_non_widening(profile: dict[str, Any]) -> bool:
     sandbox = profile.get("sandbox")
     parent = profile.get("parent_sandbox_mode")
