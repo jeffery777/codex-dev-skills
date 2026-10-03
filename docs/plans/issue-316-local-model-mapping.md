@@ -490,3 +490,15 @@ Transport 綁核對過的本機 Desktop Unix socket，拒絕 context 名稱同�
 production 未資格化。CLI 的預設 local environment 與 app-server 空 environment
 為不同入口；system／managed／cloud／project config closure 及完整 dispatcher
 readback 仍是 N2 後續工作，不由兩個 ignore flags 或三工具 advertisement 宣稱完成。
+
+### N1 exact-path read/write 控制
+
+以獨立固定 recipe 補三份 synthetic source／checkpoint／sibling canary 的讀寫
+對照，正控制額外掛載單一檔案至其 exact host paths，確認實際可讀寫與退出後
+才重設；負控制移除 canary mounts，保持同 image／UID／program／paths／政策，
+每項 read 與 write 必須各自遭 boundary denial，host bytes／inodes 不變。
+兩輪有獨立 workspace 正控制、intent／CID／policy／自然退出及 unknown 不重播。
+反例覆蓋 mount、身份、數量／案例混用、缺 write、未知 errno、OOM／running、
+canary／reset 漂移，以及 unknown positive 不 reset／不啟動 negative。
+工程 source 與重跑方式納入 repository，證據保留 Git 外；不放寬舊 probe 契約，
+亦不宣稱其餘 N1、N2、N3、訂閱登入或公司環境驗收已完成。

@@ -706,3 +706,25 @@ advertisement 在 Git 外的獨立 private temporary directory。重跑產生相
 Linux host、其他 image／binary 或官方登入支援。完整有效 layers、nested CLI、
 hooks、sessions 與可信 observer 仍須各自驗證；既有 session 局部測量不由本
 28-case probe 取得完整資格。所有 qualification flags 維持 false。
+
+## N1 exact-path 讀寫對照
+
+`verify-model-isolation-path-controls.py` 另建固定 Mac Docker 控制：三份全新 synthetic
+canary 分別代表 source／checkpoint／sibling，全部留在經核對的 private temporary
+root；不掛載實際 repository 或使用者資料。兩個不同 own containers 使用同一
+image、UID、program、target arguments 及政策。正控制僅額外掛載三個 canary file
+至其 host exact absolute paths；host 核對實際 read、write、readback 及自然退出，
+才可用核對過的 descriptor 重設原 synthetic inodes。負控制使用相同 paths 與
+read/write primitive，但不掛載 canaries；每項都實際嘗試 read 與 write，僅
+boundary errno 可接受，EIO／ENOMEM 等未知結果不可算通過。兩輪各有獨立 workspace
+讀寫正控制，host 再核對 canary bytes／identity、精確 mount／policy 與 engine。
+
+未知正控制結果不得 reset 或啟動負控制；create／start 不重播，receipt 保留在
+Git 外。既有 isolation probe 的單 workspace mount 契約不變。這只補三個固定
+paths 的 read/write 對照，不代表 rename／link、resource enforcement、daemon／
+host restart、native Codex、credentials 或完整 N1／production qualification。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_isolation_path_controls
+./scripts/project-python scripts/verify-model-isolation-path-controls.py --evidence-root /private/tmp
+```
