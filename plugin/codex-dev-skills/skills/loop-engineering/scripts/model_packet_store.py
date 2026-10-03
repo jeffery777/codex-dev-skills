@@ -56,15 +56,16 @@ class _PlanningContext:
     Callers must retain the store lock and must not close its yielded dirFD.
     v5/v6 governance requires a separate fully validated journal reader.
     """
-    def __init__(self, store, fd, lease):
+    def __init__(self, store, fd, lease, *, _lifecycle_token=None):
         self._store = store
         self._root, self._packet_id = store.root, store.packet_id
         self._fd, self._lease = fd, lease
+        self._lifecycle_token = _lifecycle_token
         self._inode = (os.fstat(fd).st_dev, os.fstat(fd).st_ino)
         self._root_inode = (os.fstat(lease[2]).st_dev, os.fstat(lease[2]).st_ino)
         self._lock_inode = (os.fstat(lease[3]).st_dev, os.fstat(lease[3]).st_ino)
         self._ledger_raw = trust._read(fd, 'ledger.json', MAX_LEDGER)
-        self._ledger = store._read(fd)
+        self._ledger = store._read(fd, _lifecycle_token=_lifecycle_token)
         if canonical(self._ledger) != canonical(json.loads(self._ledger_raw, object_pairs_hook=trust._pairs)):
             raise PacketError('planning-context-prefix-drift')
 
@@ -94,7 +95,7 @@ class _PlanningContext:
                     or (held.st_mode | current.st_mode | lock.st_mode | lock_path.st_mode) & 0o077
                     or trust._read(self._fd, 'ledger.json', MAX_LEDGER) != self._ledger_raw):
                 raise PacketError('planning-context-prefix-or-lock-drift')
-            if canonical(store._read(self._fd)) != canonical(self._ledger):
+            if canonical(store._read(self._fd, _lifecycle_token=self._lifecycle_token)) != canonical(self._ledger):
                 raise PacketError('planning-context-prefix-drift')
             return self._fd, copy.deepcopy(self._ledger)
         finally:
@@ -179,7 +180,7 @@ class PacketStore:
         context._snapshot()
         return context
 
-    def _read(self, fd, *, _governance=False):
+    def _read(self, fd, *, _governance=False, _lifecycle_token=None):
         try:
             raw = trust._read(fd, 'ledger.json', MAX_LEDGER)
         except FileNotFoundError:
@@ -187,6 +188,12 @@ class PacketStore:
         try:
             value = json.loads(raw, object_pairs_hook=trust._pairs,
                 parse_constant=lambda _: (_ for _ in ()).throw(PacketError('invalid-packet-json')))
+            if type(value) is dict and type(value.get('schema_version')) is int and value['schema_version'] == 6:
+                from model_packet_lifecycle import _WRITE_TOKEN as lifecycle_token, validate_ledger as lifecycle_validate
+                lifecycle_validate(value, self.packet_id)
+                if _lifecycle_token is not lifecycle_token:
+                    raise PacketError('packet-lifecycle-executor-unavailable')
+                return value
             if type(value) is dict and type(value.get('schema_version')) is int and value['schema_version'] == 5:
                 # Governance reservations are not executor claims. Old readers
                 # must not mistake empty actual attempts for a fresh retry, and
@@ -261,14 +268,19 @@ class PacketStore:
         except (ValueError, UnicodeError, RecursionError, TypeError, KeyError):
             raise PacketError('invalid-packet-ledger') from None
 
-    def _write(self, fd, ledger, *, _governance_token=None):
+    def _write(self, fd, ledger, *, _governance_token=None, _lifecycle_token=None):
         try:
             current = json.loads(trust._read(fd, 'ledger.json', MAX_LEDGER), object_pairs_hook=trust._pairs)
         except FileNotFoundError:
             current = None
-        # Keep legacy host repair/write semantics; only the v5 discriminator
-        # selects this extra guard. A downgrade cannot escape through _write.
-        if ledger.get('schema_version') == 5 or type(current) is dict and current.get('schema_version') == 5:
+        # Keep legacy host repair/write semantics; v5 and v6 have distinct
+        # protected capabilities. A downgrade cannot escape through _write.
+        if ledger.get('schema_version') == 6 or type(current) is dict and current.get('schema_version') == 6:
+            from model_packet_lifecycle import _WRITE_TOKEN as lifecycle_token, validate_ledger as lifecycle_validate
+            if _lifecycle_token is not lifecycle_token:
+                raise PacketError('packet-lifecycle-write-unavailable')
+            lifecycle_validate(ledger, self.packet_id)
+        elif ledger.get('schema_version') == 5 or type(current) is dict and current.get('schema_version') == 5:
             from model_packet_governance import _WRITE_TOKEN, validate_ledger
             if _governance_token is not _WRITE_TOKEN:
                 raise PacketError('packet-governance-write-unavailable')
@@ -753,11 +765,11 @@ class PacketStore:
             self._write(fd, ledger)
             return ledger, record
 
-    def _immutable(self, fd, name, raw, *, _governance_token=None):
+    def _immutable(self, fd, name, raw, *, _governance_token=None, _lifecycle_token=None):
         from model_packet_governance import _WRITE_TOKEN
         # Internal legacy methods accepting an already-read ledger cannot seal
         # new evidence into a v5 packet before reaching the final write guard.
-        self._read(fd, _governance=_governance_token is _WRITE_TOKEN)
+        self._read(fd, _governance=_governance_token is _WRITE_TOKEN, _lifecycle_token=_lifecycle_token)
         staging = 'artifact-'+uuid.uuid4().hex
         output = os.open(staging, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=fd)
         with os.fdopen(output, 'wb') as stream:

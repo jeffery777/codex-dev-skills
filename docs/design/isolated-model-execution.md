@@ -357,3 +357,53 @@ release → qualified successor，並驗證 lost reply／crash 不重播 launch 
 正常 completed 為 objective terminal，不造 failure 或重設預算。撤銷後可信 host
 仍能記錄 containment／unknown，不能啟動新模型或採用結果。非空 v2–v5、dirty
 source、未知 external effects、缺失隔離或原始 evidence 都保留 blocked。
+
+
+## v6 完整 synthetic lifecycle 候選
+
+`model_packet_lifecycle.py` 將原治理 evidence 與實際 execution claim 接在同一
+ordered journal。Attempts、supervisors、checkpoint 均從原始 artifact 完整回放，
+核對 canonical projection bytes；任一缺檔、symlink、digest、request、prefix 或 projection
+漂移都拒絕。V6 使用獨立 code-only write token；舊 reader、writer、supervisor、
+integrator 與 v5 治理 API 不能據此取得執行能力，也不能降版繞過。
+
+`admit_new` 只接受獨立採認的空 v2 packet，保存可信 host 的初始 source bytes
+及 canonical objective locator。不同 alias 必須讀回同一 root／packet／objective／
+authority，不能另建 packet 重設預算；真實全域 authority reader 仍未資格化。
+Source dirty 或 baseline 漂移先阻擋，不 stash、reset 或 clean。
+
+`acquire_attempt` 在唯一一次持鎖交易中回放完整治理，核對目前權限、V2
+classification、服務預算、quality／required floors、health、原始 events、目前
+隔離／停止及逐模型 context，選模後一次提交 owner、實際 attempt 與 supervisor。
+治理 request 和實際 execution request 各自保存原始 bytes；後者綁定 acquire 前
+prefix、目標、前一 checkpoint、host／backend／runtime policy 及 runtime ID。
+啟動只消費這份已封存的 execution bytes。
+
+Launch／export 先提交 intent，再做至多一次 backend 呼叫。Intent commit 或回覆
+遺失後，重試與重啟僅讀回原 operation；reconcile 只 inspect，不重新 launch 或
+export。停機證據與失敗原因各自核對；原 unknown event 保留，resolve 只提供經
+驗證的 cause overlay。未排除 external effects 不釋放 owner，也不採用成果。
+Stopped runtime 的 sealed patch 與 checkpoint 先 fsync 再發佈 pointer；隔離仍活著
+的 writer 只可 quarantine，保留前一 checkpoint 或已保存的初始 source，不能
+採用它持續變動的最新成果。新 acquire 重新確認全部 retained writers 的停止／
+隔離仍有效。
+
+Acquire 通過不延長來源、權限或隔離的有效期限。Launch／export 的 backend 效果前，
+以及 publish／finish 提交前，重新核對來源 baseline／dirty／scope／acceptance、
+完整 prefix 的 sticky revocation 及全部 retained writers 的新鮮停止／隔離證據。
+隔離失效或 effects 未排除時保留 owner，禁止新效果與成果採用；snapshot／
+containment observation 仍可讀回。Export intent 已提交但未取得封存成果時，
+可透過獨立 isolated observation 與原 failure outcome 丟棄本輪成果、quarantine
+並沿用 predecessor；不重播 export，也不補造 checkpoint。
+
+`finish_attempt` 將 release 與實際 attempt 結果一起提交。Failed 結果必須有原始
+outcome；正常 completed 是此 objective 的 terminal，不偽造 failure、不清除
+lineage／floor／budget，也不表示 repository DoD、review、merge 或 release 已完成。
+Revoked 模型權限仍允許有效 host recording authority 做 snapshot／containment
+observation，禁止新啟動、export、採用與 release。Health 恢復不能搶占 owner。
+
+此包僅接受 host 注入的 synthetic reader／backend，descriptor 與 bootstrap 關閉；
+沒有 CLI／JSON loader、production registry、Docker／app-server worker 接線或 OS
+隔離資格。首包要求來源資格新鮮，legacy unused／historical tier 例外仍保守阻擋，
+不能由此宣稱回家時的完整官方 fallback 或公司最佳模型品質驗收完成。真實 reader、
+provider、credential broker、原工具 inventory 與跨入口 qualification 仍需後續接線。

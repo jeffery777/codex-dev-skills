@@ -350,3 +350,24 @@ checkpoint、terminal release 及 successor 共用同一歷史與預算。正常
 先作為 objective terminal，不能偽造 failure 或清空 history。非空 v2–v5 不遷移，
 沒有可信 objective locator 或停止／隔離證據就拒絕接手。完整流程與 crash、
 revocation、alias、原始 bytes 漂移負例須同包審查，production registry 保持空。
+
+
+### v6 synthetic lifecycle 候選範圍
+
+候選實作已接同一 ledger 的 admit／actual acquire／once-launch／unknown
+observation／cause resolution／seal／publish／terminal release／successor。
+不重播 launch／export；隔離存續時從先前可信 checkpoint 或初始 source 接手。
+正常 completed 關閉 objective，不增造服務或品質失敗。原始 events、獨立的治理
+與 execution bytes、floors、預算及 canonical alias locator 均持久保存並完整回放。
+Revocation 保留 host containment 讀回，禁止新模型效果。舊入口與非空 v2–v5
+不遷移、不降版，dirty source 不採認。
+
+效果前與成果採用前另重核來源、sticky revocation 與 retained writer containment；
+acquire 後的漂移不能沿用先前許可。Export intent crash 的安全 quarantine 不重播
+export，保留 predecessor 及原始失敗計數。Execution generation 與 owner epoch
+採嚴格整數契約，bool／float 不能作為相同值採認。
+
+驗收以 synthetic 固定 backend 與獨立 host 原始檔案為限，尚不接實際 provider、
+Docker／app-server writer 或使用者工作區。完整 runtime／quality／context／
+credentials qualification 維持未完成；legacy stale-unused／historical-tier 例外
+仍須另接 v6 原始 prefix／authority 接口，不能以 fixture 通過替代。

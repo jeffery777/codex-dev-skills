@@ -1,0 +1,541 @@
+"""Host-only synthetic v6 lifecycle; no production loader or adapter.
+
+One journal owns governance and actual attempts. Readers and backends are
+independently injected trusted host code, bounded and non-reentrant. No model
+JSON can select them. This first synthetic contract requires freshly qualified
+sources: legacy stale/historical source exceptions are deliberately blocked.
+"""
+from __future__ import annotations
+
+import copy
+from dataclasses import dataclass
+
+import agent_qualification as trust
+import agent_routing
+import model_packet_governance as governance
+import model_packet_store as packets
+from model_packet_supervisor import validate_patch
+
+VERSION = 6
+_WRITE_TOKEN = object()
+FIELDS = ('request', 'record', 'classification', 'authority', 'execution', 'runtime')
+KINDS = frozenset({'admit', 'acquire', 'outcome', 'resolve', 'quality-floor',
+    'cooldown', 'health', 'launch-intent', 'observe', 'export-intent', 'publish', 'finish'})
+GATED_KINDS = frozenset({'acquire', 'launch-intent', 'export-intent', 'publish', 'finish'})
+GOVERNANCE_KINDS = frozenset({'admit', 'acquire', 'outcome', 'resolve', 'quality-floor', 'cooldown', 'health'})
+
+
+class LifecycleError(packets.PacketError):
+    pass
+
+
+@dataclass(frozen=True)
+class HostEvidence:
+    request: bytes
+    record: bytes
+    classification: bytes
+    authority: bytes
+    execution: bytes | None = None
+    runtime: bytes | None = None
+
+
+def _binding(store, ledger, operation_id):
+    state = ledger.get('governance')
+    return dict(packet_id=store.packet_id, identity_sha256=ledger['identity_sha256'],
+        operation_id=operation_id, revision=ledger['revision'], generation=ledger['generation'],
+        prefix_sha256=packets.digest(packets.canonical(state['records'] if state else [])),
+        objective_sha256=packets.digest(packets.canonical(state['objective'])) if state else None,
+        policy_sha256=packets.digest(packets.canonical(state['policy'])) if state else None)
+
+
+def validate_ledger(ledger, packet_id):
+    governance._obj(ledger, 'schema_version packet_id identity_sha256 revision generation attempts checkpoint supervisors integrations governance')
+    if type(ledger['schema_version']) is not int or ledger['schema_version'] != VERSION or ledger['packet_id'] != packet_id:
+        raise LifecycleError('lifecycle-ledger-version')
+    packets._sha(ledger['identity_sha256'])
+    governance._int(ledger['revision'], governance.MAX_RECORDS)
+    governance._int(ledger['generation'], packets.MAX_ATTEMPTS)
+    if ledger['integrations'] != {} or type(ledger['integrations']) is not dict:
+        raise LifecycleError('lifecycle-integration-unavailable')
+    state = governance._obj(ledger['governance'], 'schema_version objective policy locator_sha256 records')
+    if type(state['schema_version']) is not int or state['schema_version'] != 2:
+        raise LifecycleError('lifecycle-governance-version')
+    governance._objective(state['objective']); governance._policy(state['policy'])
+    packets._sha(state['locator_sha256'])
+    refs = state['records']
+    if type(refs) is not list or not 1 <= len(refs) <= governance.MAX_RECORDS or len(refs) != ledger['revision']:
+        raise LifecycleError('lifecycle-prefix-invalid')
+    seen = set()
+    for ref in refs:
+        governance._obj(ref, 'operation_id kind binding committed_at request_sha256 record_sha256 classification_sha256 authority_sha256 execution_sha256 runtime_sha256')
+        packets._id(ref['operation_id']); governance._int(ref['committed_at'])
+        if ref['operation_id'] in seen or type(ref['kind']) is not str or ref['kind'] not in KINDS:
+            raise LifecycleError('lifecycle-operation-invalid')
+        seen.add(ref['operation_id'])
+        for field in FIELDS:
+            sha = ref[field + '_sha256']
+            if sha is None and field in ('execution', 'runtime'):
+                continue
+            packets._sha(sha)
+    if type(ledger['attempts']) is not list or type(ledger['supervisors']) is not dict:
+        raise LifecycleError('lifecycle-projection-invalid')
+
+
+def _authority(raw, binding, now, freshness, *, containment=False):
+    proof = governance._obj(governance._parse(raw), 'schema_version binding host_recording_status authorization_status qualification_status objective_status observed_at expires_at')
+    if (type(proof['schema_version']) is not int or proof['schema_version'] != 2
+            or packets.canonical(proof['binding']) != packets.canonical(binding)
+            or proof['host_recording_status'] != 'granted' or proof['objective_status'] != 'admitted'):
+        raise LifecycleError('lifecycle-authority-unavailable')
+    if proof['authorization_status'] not in ('granted', 'revoked') or proof['qualification_status'] not in ('qualified', 'revoked'):
+        raise LifecycleError('lifecycle-authority-unavailable')
+    if not containment and (proof['authorization_status'] != 'granted' or proof['qualification_status'] != 'qualified'):
+        raise LifecycleError('lifecycle-authority-revoked')
+    governance._int(proof['observed_at']); governance._int(proof['expires_at'])
+    if not 0 <= now - proof['observed_at'] <= freshness or not now < proof['expires_at'] <= proof['observed_at'] + freshness:
+        raise LifecycleError('lifecycle-authority-stale')
+
+
+def _evidence(evidence, binding, now, *, objective=None, policy=None):
+    if type(evidence) is not HostEvidence:
+        raise LifecycleError('lifecycle-host-evidence-required')
+    request, classification = governance._request(evidence.request, evidence.classification)
+    record = governance._obj(governance._parse(evidence.record), 'schema_version binding request_sha256 classification_sha256 kind observed_at payload')
+    if (type(record['schema_version']) is not int or record['schema_version'] != 1
+            or type(record['kind']) is not str or record['kind'] not in KINDS or packets.canonical(record['binding']) != packets.canonical(binding)
+            or record['request_sha256'] != packets.digest(evidence.request)
+            or record['classification_sha256'] != packets.digest(evidence.classification)):
+        raise LifecycleError('lifecycle-evidence-binding-drift')
+    governance._int(record['observed_at'])
+    if not 0 <= now - record['observed_at'] <= request['policy']['freshness_seconds']:
+        raise LifecycleError('lifecycle-record-stale')
+    if (objective is not None and request['objective'] != objective
+            or policy is not None and request['policy'] != policy):
+        raise LifecycleError('lifecycle-objective-or-policy-drift')
+    auth_binding = dict(binding, **{field + '_sha256': packets.digest(getattr(evidence, field))
+        if getattr(evidence, field) is not None else None for field in FIELDS if field != 'authority'})
+    _authority(evidence.authority, auth_binding, now, request['policy']['freshness_seconds'],
+        containment=record['kind'] == 'observe')
+    required = {'execution'} if record['kind'] == 'acquire' else {'runtime'} if record['kind'] in ('observe', 'publish', 'finish') else set()
+    if any((getattr(evidence, field) is not None) != (field in required) for field in ('execution', 'runtime')):
+        raise LifecycleError('lifecycle-evidence-field-conflict')
+    for field in ('execution', 'runtime'):
+        raw = getattr(evidence, field)
+        if raw is not None:
+            governance._parse(raw)
+    return dict(request=request, record=record, classification=classification,
+        evidence=evidence, committed_at=now)
+
+
+class SyntheticLifecycle:
+    """An explicit fixture host; no public CLI constructor or backend registry.
+
+    The reader must locate the same canonical objective across aliases and
+    independently retain exact evidence bytes. The backend must independently
+    inspect its saved runtime, consume the exact execution bytes and expose a
+    read-only seal after export. No descriptor/OS-containment claim is made.
+    """
+    def __init__(self, store, reader, backend, *, alias, host_id, backend_id, policy_sha256):
+        if type(store) is not packets.PacketStore:
+            raise LifecycleError('lifecycle-store-required')
+        packets._id(alias); packets._id(host_id); packets._id(backend_id); packets._sha(policy_sha256)
+        for value, methods in [(reader, ('locate_objective', 'readback_evidence', 'readback_authority',
+                                        'readback_initial_source', 'readback_source_state')),
+                               (backend, ('launch', 'inspect', 'export_patch', 'read_sealed_patch'))]:
+            if getattr(value, 'synthetic_only', False) is not True or any(not callable(getattr(value, name, None)) for name in methods):
+                raise LifecycleError('lifecycle-synthetic-capability-required')
+        if (getattr(backend, 'requires_runtime_descriptor', False) is not False
+                or getattr(backend, 'requires_runtime_bootstrap', False) is not False):
+            raise LifecycleError('lifecycle-backend-unqualified')
+        self.store, self.reader, self.backend = store, reader, backend
+        self.alias, self.host_id, self.backend_id, self.policy_sha256 = alias, host_id, backend_id, policy_sha256
+
+    def _locator(self, objective, identity):
+        raw = self.reader.locate_objective(self.alias)
+        locator = governance._obj(governance._parse(raw), 'schema_version root packet_id identity_sha256 objective_sha256 authority_id')
+        expected = dict(schema_version=1, root=str(self.store.root), packet_id=self.store.packet_id,
+            identity_sha256=identity, objective_sha256=packets.digest(packets.canonical(objective)), authority_id=objective['authority_id'])
+        if locator != expected or str(self.store.root.resolve()) != str(self.store.root):
+            raise LifecycleError('lifecycle-objective-locator-conflict')
+        return packets.digest(raw)
+
+    def _runtime(self, raw, binding, now, freshness):
+        value = governance._obj(governance._parse(raw), 'schema_version binding runtime_state external_effects observed_at expires_at evidence_sha256')
+        if (type(value['schema_version']) is not int or value['schema_version'] != 1
+                or packets.canonical(value['binding']) != packets.canonical(binding)
+                or value['runtime_state'] not in ('running', 'stopped', 'isolated', 'unknown')
+                or value['external_effects'] not in ('excluded', 'unknown')):
+            raise LifecycleError('lifecycle-runtime-binding-drift')
+        packets._sha(value['evidence_sha256'])
+        governance._int(value['observed_at']); governance._int(value['expires_at'])
+        if not 0 <= now - value['observed_at'] <= freshness or not now < value['expires_at'] <= value['observed_at'] + freshness:
+            raise LifecycleError('lifecycle-runtime-stale')
+        return value
+
+    def _project(self, fd, ledger, *, now, _check_projection=True):
+        validate_ledger(ledger, self.store.packet_id)
+        state = ledger['governance']; refs = []; gov_entries = []; attempts = []; supervisors = {}; checkpoint = None
+        terminal = False; snapshot = None; previous_commit = -1
+        for ref in state['records']:
+            if not previous_commit <= ref['committed_at'] <= now:
+                raise LifecycleError('lifecycle-clock-rollback-or-future')
+            previous_commit = ref['committed_at']
+            partial = dict(ledger, revision=len(refs), generation=len(attempts),
+                governance=dict(state, records=refs))
+            if not refs:
+                partial.pop('governance')
+            binding = _binding(self.store, partial, ref['operation_id'])
+            if ref['binding'] != binding or packets.canonical(ref['binding']) != packets.canonical(binding):
+                raise LifecycleError('lifecycle-prefix-binding-drift')
+            raws = []
+            for field in FIELDS:
+                sha = ref[field + '_sha256']
+                raw = None if sha is None else trust._read(fd, 'lifecycle-' + sha + '.json', governance.MAX_EVIDENCE)
+                if raw is not None and packets.digest(raw) != sha:
+                    raise LifecycleError('lifecycle-original-bytes-drift')
+                raws.append(raw)
+            entry = _evidence(HostEvidence(*raws), binding, ref['committed_at'], objective=state['objective'], policy=state['policy'])
+            record = entry['record']; request = entry['request']; kind = record['kind']; payload = record['payload']
+            if kind != ref['kind'] or terminal:
+                raise LifecycleError('lifecycle-terminal-or-kind-conflict')
+            if kind in GATED_KINDS and snapshot is not None and 'revoked' in snapshot['blocked_reasons']:
+                raise LifecycleError('lifecycle-governance-revoked')
+            if kind in GOVERNANCE_KINDS:
+                gov_entries.append(entry)
+                snapshot = governance.project(gov_entries, now=ref['committed_at'])
+            if kind == 'acquire':
+                execution = governance._obj(governance._parse(entry['evidence'].execution),
+                    'schema_version binding governance_request_sha256 attempt_id generation predecessor_sha256 target_id target_identity failover_payload host_id backend_id runtime_policy_sha256 runtime_id')
+                governance._int(execution['generation'], packets.MAX_ATTEMPTS)
+                if (type(execution['schema_version']) is not int or execution['schema_version'] != 1
+                        or packets.canonical(execution['binding']) != packets.canonical(binding) or execution['governance_request_sha256'] != ref['request_sha256']
+                        or execution['attempt_id'] != request['attempt_id'] or execution['generation'] != len(attempts) + 1
+                        or request['generation'] != execution['generation'] or execution['predecessor_sha256'] != checkpoint
+                        or execution['target_id'] != request['target_id'] or execution['target_identity'] != request['target_identity']):
+                    raise LifecycleError('lifecycle-execution-request-drift')
+                if (execution['host_id'] != self.host_id or execution['backend_id'] != self.backend_id
+                        or execution['runtime_policy_sha256'] != self.policy_sha256):
+                    raise LifecycleError('lifecycle-host-policy-drift')
+                packets._id(execution['runtime_id'])
+                if any(v['binding']['runtime_id'] == execution['runtime_id'] for v in supervisors.values()):
+                    raise LifecycleError('lifecycle-runtime-id-reused')
+                prior = governance.project(gov_entries[:-1], now=ref['committed_at'])
+                planning = execution['failover_payload']
+                if (packets.canonical(planning['events']) != packets.canonical(prior['events'])
+                        or planning['now'] != ref['committed_at']
+                        or planning['freshness_seconds'] != state['policy']['freshness_seconds']
+                        or planning['policy'] != {k: state['policy'][k] for k in planning['policy']}
+                        or planning['task']['acceptance_sha256'] != state['objective']['acceptance_sha256']):
+                    raise LifecycleError('lifecycle-execution-history-drift')
+                effective = copy.deepcopy(planning)
+                for event in effective['events']:
+                    event['cause'] = prior['resolved_causes'].get(event['attempt_id'], event['cause'])
+                route = agent_routing.plan_model_failover(request['v2_task'], effective)
+                selected = route['plan']['target']
+                if route['plan']['status'] not in ('planned', 'retry') or selected is None or selected['id'] != request['target_id'] or selected['identity'] != request['target_identity'] or selected['stage'] != request['stage']:
+                    raise LifecycleError('lifecycle-selection-unconfirmed')
+                runtime = execution['runtime_id']
+                runtime_binding = dict(packet_id=ledger['packet_id'], identity_sha256=ledger['identity_sha256'],
+                    attempt_id=request['attempt_id'], generation=request['generation'], runtime_id=runtime,
+                    execution_request_sha256=ref['execution_sha256'], target_sha256=packets.digest(packets.canonical(request['target_identity'])),
+                    host_id=self.host_id, backend_id=self.backend_id, policy_sha256=self.policy_sha256)
+                attempts.append(dict(id=request['attempt_id'], generation=request['generation'],
+                    request_sha256=ref['request_sha256'], execution_request_sha256=ref['execution_sha256'],
+                    predecessor_sha256=checkpoint, checkpoint_sha256=None, status='reserved'))
+                supervisors[request['attempt_id']] = dict(binding=runtime_binding, stage='reserved', runtime_sha256=None)
+            elif kind not in GOVERNANCE_KINDS:
+                if snapshot is None or snapshot['owner'] is None or not attempts or request['attempt_id'] != attempts[-1]['id']:
+                    raise LifecycleError('lifecycle-owner-required')
+                attempt = attempts[-1]; supervisor = supervisors[attempt['id']]
+                if ref['request_sha256'] != attempt['request_sha256'] or request['generation'] != attempt['generation']:
+                    raise LifecycleError('lifecycle-original-request-drift')
+                if kind in ('launch-intent', 'export-intent'):
+                    governance._obj(payload, '')
+                    required = 'reserved' if kind == 'launch-intent' else 'observed'
+                    if supervisor['stage'] != required:
+                        raise LifecycleError('lifecycle-intent-already-established')
+                    supervisor['stage'] = kind
+                    attempt['status'] = 'unknown'
+                elif kind == 'observe':
+                    governance._obj(payload, '')
+                    proof = self._runtime(entry['evidence'].runtime, supervisor['binding'], ref['committed_at'], state['policy']['freshness_seconds'])
+                    if supervisor['stage'] == 'reserved':
+                        raise LifecycleError('lifecycle-runtime-not-launched')
+                    supervisor['runtime_sha256'] = ref['runtime_sha256']
+                    safe = proof['runtime_state'] in ('stopped', 'isolated') and proof['external_effects'] == 'excluded'
+                    if supervisor['stage'] in ('launch-intent', 'observed'):
+                        supervisor['stage'] = 'observed'
+                        attempt['status'] = 'observed' if safe else 'unknown'
+                    elif supervisor['stage'] == 'published':
+                        attempt['status'] = 'published' if safe else 'unknown'
+                    else:
+                        attempt['status'] = 'observed' if safe and proof['runtime_state'] == 'isolated' else 'unknown'
+                elif kind == 'publish':
+                    governance._obj(payload, 'patch_sha256 checkpoint_sha256')
+                    packets._sha(payload['patch_sha256']); packets._sha(payload['checkpoint_sha256'])
+                    if supervisor['stage'] != 'export-intent' or attempt['status'] != 'unknown':
+                        raise LifecycleError('lifecycle-export-intent-required')
+                    proof = self._runtime(entry['evidence'].runtime, supervisor['binding'], ref['committed_at'], state['policy']['freshness_seconds'])
+                    if proof['runtime_state'] != 'stopped' or proof['external_effects'] != 'excluded':
+                        raise LifecycleError('lifecycle-publish-not-stopped')
+                    patch = trust._read(fd, 'lifecycle-patch-' + payload['patch_sha256'], packets.MAX_PATCH)
+                    if packets.digest(patch) != payload['patch_sha256']:
+                        raise LifecycleError('lifecycle-patch-drift')
+                    validate_patch(patch)
+                    manifest_raw = trust._read(fd, 'lifecycle-checkpoint-' + payload['checkpoint_sha256'] + '.json', governance.MAX_EVIDENCE)
+                    manifest = governance._parse(manifest_raw)
+                    expected = dict(binding=supervisor['binding'], patch_sha256=payload['patch_sha256'], runtime_sha256=ref['runtime_sha256'])
+                    if manifest != expected or packets.digest(manifest_raw) != payload['checkpoint_sha256']:
+                        raise LifecycleError('lifecycle-checkpoint-drift')
+                    checkpoint = payload['checkpoint_sha256']; attempt['checkpoint_sha256'] = checkpoint
+                    supervisor['stage'] = 'published'; attempt['status'] = 'published'
+                elif kind == 'finish':
+                    governance._obj(payload, 'result owner_id epoch')
+                    if payload['result'] not in ('completed', 'failed'):
+                        raise LifecycleError('lifecycle-result-unsealed')
+                    packets._id(payload['owner_id']); governance._int(payload['epoch'], governance.MAX_RECORDS)
+                    owner = snapshot['owner']
+                    if payload['owner_id'] != owner['owner_id'] or payload['epoch'] != owner['epoch']:
+                        raise LifecycleError('lifecycle-release-owner-drift')
+                    proof = self._runtime(entry['evidence'].runtime, supervisor['binding'], ref['committed_at'], state['policy']['freshness_seconds'])
+                    quarantined = (supervisor['stage'] in ('observed', 'export-intent') and payload['result'] == 'failed'
+                        and proof['runtime_state'] == 'isolated' and attempt['status'] == 'observed')
+                    if (proof['external_effects'] != 'excluded' or not quarantined
+                            and (supervisor['stage'] != 'published' or proof['runtime_state'] != 'stopped')):
+                        raise LifecycleError('lifecycle-release-not-stopped-or-isolated')
+                    has_failure = any(e['attempt_id'] == attempt['id'] for e in snapshot['events'])
+                    if has_failure != (payload['result'] == 'failed'):
+                        raise LifecycleError('lifecycle-terminal-result-conflict')
+                    if payload['result'] == 'failed':
+                        release = copy.deepcopy(entry)
+                        release['record'].update(kind='release', payload=dict(owner_id=payload['owner_id'], epoch=payload['epoch'], runtime_state=proof['runtime_state'], external_effects='excluded'))
+                        gov_entries.append(release)
+                        snapshot = governance.project(gov_entries, now=ref['committed_at'])
+                    else:
+                        snapshot = dict(snapshot, owner=None)
+                        terminal = True
+                    attempt['status'] = 'quarantined' if quarantined else payload['result']
+                    supervisor['stage'] = 'finished'
+                else:
+                    raise LifecycleError('lifecycle-operation-unavailable')
+            refs.append(ref)
+        if _check_projection and (ledger['generation'] != len(attempts)
+                or packets.canonical(ledger['attempts']) != packets.canonical(attempts)
+                or packets.canonical(ledger['supervisors']) != packets.canonical(supervisors)
+                or ledger['checkpoint'] != checkpoint):
+            raise LifecycleError('lifecycle-projection-drift')
+        snapshot = dict(governance.project(gov_entries, now=now), terminal=terminal)
+        if terminal:
+            snapshot['owner'] = None
+        return snapshot if _check_projection else (snapshot, attempts, supervisors, checkpoint)
+
+    def _read(self, fd, now):
+        ledger = self.store._read(fd, _lifecycle_token=_WRITE_TOKEN)
+        if ledger is None or ledger['schema_version'] != VERSION:
+            raise LifecycleError('lifecycle-unavailable')
+        fence = self._fence(fd)
+        snapshot = self._project(fd, ledger, now=now)
+        locator = self._locator(ledger['governance']['objective'], ledger['identity_sha256'])
+        if locator != ledger['governance']['locator_sha256']:
+            raise LifecycleError('lifecycle-objective-locator-drift')
+        first = ledger['governance']['records'][0]
+        request = governance._parse(trust._read(fd, 'lifecycle-' + first['request_sha256'] + '.json', governance.MAX_EVIDENCE))
+        source = trust._read(fd, 'lifecycle-source-' + request['source_sha256'], packets.MAX_PATCH)
+        if packets.digest(source) != request['source_sha256']:
+            raise LifecycleError('lifecycle-initial-source-drift')
+        fence._snapshot()
+        return ledger, snapshot
+
+    def _current(self, ledger, now, kind):
+        binding = dict(_binding(self.store, ledger, 'current'), action=kind)
+        raw = self.reader.readback_authority(copy.deepcopy(binding))
+        _authority(raw, binding, now, ledger['governance']['policy']['freshness_seconds'], containment=kind in ('observe', 'read'))
+
+    def _source(self, request):
+        expected = dict(source_sha256=request['source_sha256'], dirty=False,
+            scope=request['objective']['scope'], acceptance_sha256=request['objective']['acceptance_sha256'])
+        value = governance._parse(self.reader.readback_source_state(copy.deepcopy(request['objective'])))
+        if packets.canonical(value) != packets.canonical(expected):
+            raise LifecycleError('lifecycle-source-not-clean-or-bound')
+
+    def _effect_gate(self, fd, ledger, state, request, now, kind):
+        # A claim is not an enduring source/containment/authority lease.
+        # Recheck under the same fence immediately before effects or adoption.
+        fence = self._fence(fd)
+        if 'revoked' in state['blocked_reasons']:
+            raise LifecycleError('lifecycle-governance-revoked')
+        self._current(ledger, now, kind)
+        self._source(request)
+        retained = ledger['attempts'] if kind == 'acquire' else ledger['attempts'][:-1]
+        for attempt in retained:
+            binding = ledger['supervisors'][attempt['id']]['binding']
+            proof = self._runtime(self.backend.inspect(copy.deepcopy(binding)), binding, now,
+                ledger['governance']['policy']['freshness_seconds'])
+            if proof['runtime_state'] not in ('stopped', 'isolated') or proof['external_effects'] != 'excluded':
+                raise LifecycleError('lifecycle-retained-writer-unconfirmed')
+        fence._snapshot()
+
+    def _fence(self, fd):
+        # Private journal-reader token guards I/O, never establishes authority.
+        context = packets._PlanningContext(self.store, fd, self.store._planning_lease,
+            _lifecycle_token=_WRITE_TOKEN)
+        context._snapshot()
+        return context
+
+    def snapshot(self, *, now):
+        governance._int(now)
+        with self.store.locked() as fd:
+            ledger, state = self._read(fd, now)
+            fence = self._fence(fd)
+            self._current(ledger, now, 'read')
+            fence._snapshot()
+            return copy.deepcopy(ledger), state
+
+    def _append(self, operation_id, kind, *, expected_revision, now, effect=None):
+        packets._id(operation_id); governance._int(expected_revision); governance._int(now)
+        if kind not in KINDS:
+            raise LifecycleError('lifecycle-operation-invalid')
+        with self.store.locked() as fd:
+            ledger = self.store._read(fd, _lifecycle_token=_WRITE_TOKEN)
+            fence = self._fence(fd)
+            if kind == 'admit' and ledger is not None and ledger['schema_version'] == 2:
+                if ledger['revision'] != 0 or ledger['generation'] != 0 or ledger['attempts'] or ledger['checkpoint'] is not None:
+                    raise LifecycleError('lifecycle-nonempty-legacy-unavailable')
+                prefix = None
+            else:
+                ledger, prefix = self._read(fd, now)
+                self._current(ledger, now, kind)
+                fence._snapshot()
+                prior = next((ref for ref in ledger['governance']['records'] if ref['operation_id'] == operation_id), None)
+                if prior is not None:
+                    evidence = self.reader.readback_evidence(copy.deepcopy(prior['binding']))
+                    if type(evidence) is not HostEvidence or kind != prior['kind'] or any(
+                            (packets.digest(getattr(evidence, field)) if getattr(evidence, field) is not None else None)
+                            != prior[field + '_sha256'] for field in FIELDS):
+                        raise LifecycleError('lifecycle-operation-bytes-conflict')
+                    fence._snapshot()
+                    return copy.deepcopy(ledger), prefix
+                if kind == 'admit':
+                    raise LifecycleError('lifecycle-already-admitted')
+            if ledger is None or ledger['revision'] != expected_revision:
+                raise LifecycleError('lifecycle-revision-conflict')
+            if expected_revision >= governance.MAX_RECORDS:
+                raise LifecycleError('lifecycle-prefix-bound')
+            fence._snapshot()
+            binding = _binding(self.store, ledger, operation_id)
+            evidence = self.reader.readback_evidence(copy.deepcopy(binding))
+            current = ledger.get('governance')
+            entry = _evidence(evidence, binding, now,
+                objective=current['objective'] if current else None, policy=current['policy'] if current else None)
+            if entry['record']['kind'] != kind:
+                raise LifecycleError('lifecycle-operation-kind-conflict')
+            request = entry['request']
+            updated = copy.deepcopy(ledger)
+            if kind == 'admit':
+                self._source(request)
+                source = self.reader.readback_initial_source(copy.deepcopy(request['objective']))
+                if type(source) is not bytes or len(source) > packets.MAX_PATCH or packets.digest(source) != request['source_sha256']:
+                    raise LifecycleError('lifecycle-initial-source-unconfirmed')
+                locator = self._locator(request['objective'], ledger['identity_sha256'])
+                updated.update(schema_version=VERSION, supervisors={}, integrations={},
+                    governance=dict(schema_version=2, objective=request['objective'], policy=request['policy'],
+                        locator_sha256=locator, records=[]))
+                self.store._immutable(fd, 'lifecycle-source-' + request['source_sha256'], source,
+                    _lifecycle_token=_WRITE_TOKEN)
+            elif kind == 'acquire':
+                if prefix['owner'] is not None or prefix['terminal']:
+                    raise LifecycleError('lifecycle-owner-or-terminal-conflict')
+                self._source(request)
+                for attempt in ledger['attempts']:
+                    old = ledger['supervisors'][attempt['id']]['binding']
+                    proof = self._runtime(self.backend.inspect(copy.deepcopy(old)), old, now, current['policy']['freshness_seconds'])
+                    if proof['runtime_state'] not in ('stopped', 'isolated') or proof['external_effects'] != 'excluded':
+                        raise LifecycleError('lifecycle-retained-writer-unconfirmed')
+            elif kind in ('observe', 'publish', 'finish'):
+                if not ledger['attempts']:
+                    raise LifecycleError('lifecycle-owner-required')
+                runtime_binding = ledger['supervisors'][ledger['attempts'][-1]['id']]['binding']
+                actual = self.backend.inspect(copy.deepcopy(runtime_binding))
+                if type(actual) is not bytes or actual != evidence.runtime:
+                    raise LifecycleError('lifecycle-current-runtime-unconfirmed')
+                proof = self._runtime(actual, runtime_binding, now, current['policy']['freshness_seconds'])
+                if kind == 'publish':
+                    patch = self.backend.read_sealed_patch(copy.deepcopy(runtime_binding), packets.MAX_PATCH)
+                    validate_patch(patch)
+                    payload = entry['record']['payload']
+                    manifest = packets.canonical(dict(binding=runtime_binding, patch_sha256=packets.digest(patch),
+                        runtime_sha256=packets.digest(actual)))
+                    if payload != dict(patch_sha256=packets.digest(patch), checkpoint_sha256=packets.digest(manifest)):
+                        raise LifecycleError('lifecycle-seal-bytes-unconfirmed')
+                    if proof['runtime_state'] != 'stopped' or proof['external_effects'] != 'excluded':
+                        raise LifecycleError('lifecycle-publish-not-stopped')
+                    self.store._immutable(fd, 'lifecycle-patch-' + packets.digest(patch), patch, _lifecycle_token=_WRITE_TOKEN)
+                    self.store._immutable(fd, 'lifecycle-checkpoint-' + packets.digest(manifest) + '.json', manifest,
+                        _lifecycle_token=_WRITE_TOKEN)
+            ref = dict(operation_id=operation_id, kind=kind, binding=binding, committed_at=now)
+            for field in FIELDS:
+                raw = getattr(evidence, field)
+                ref[field + '_sha256'] = None if raw is None else packets.digest(raw)
+                if raw is not None:
+                    self.store._immutable(fd, 'lifecycle-' + packets.digest(raw) + '.json', raw, _lifecycle_token=_WRITE_TOKEN)
+            updated['governance']['records'].append(ref); updated['revision'] += 1
+            projected, attempts, supervisors, checkpoint = self._project(fd, updated, now=now, _check_projection=False)
+            updated.update(attempts=attempts, supervisors=supervisors, checkpoint=checkpoint, generation=len(attempts))
+            fence._snapshot()
+            if kind in GATED_KINDS:
+                self._effect_gate(fd, ledger, projected, request, now, kind)
+            self.store._write(fd, updated, _lifecycle_token=_WRITE_TOKEN)
+            self._read(fd, now); post = self._fence(fd)
+            # Intent is durable before the only side effect. Retry/restart never
+            # reaches this callback for an already committed operation.
+            if effect is not None:
+                effect(fd, updated)
+                post._snapshot()
+            return copy.deepcopy(updated), projected
+
+    def admit_new(self, operation_id, *, expected_revision, now):
+        return self._append(operation_id, 'admit', expected_revision=expected_revision, now=now)
+
+    def acquire_attempt(self, operation_id, *, expected_revision, now):
+        return self._append(operation_id, 'acquire', expected_revision=expected_revision, now=now)
+
+    def record(self, operation_id, kind, *, expected_revision, now):
+        if kind not in GOVERNANCE_KINDS - {'admit', 'acquire'}:
+            raise LifecycleError('lifecycle-governance-operation-required')
+        return self._append(operation_id, kind, expected_revision=expected_revision, now=now)
+
+    def launch_reserved(self, operation_id, *, expected_revision, now):
+        def launch(fd, ledger):
+            attempt = ledger['attempts'][-1]
+            binding = ledger['supervisors'][attempt['id']]['binding']
+            raw = trust._read(fd, 'lifecycle-' + attempt['execution_request_sha256'] + '.json', governance.MAX_EVIDENCE)
+            fence = self._fence(fd)
+            request = governance._parse(trust._read(fd, 'lifecycle-' + attempt['request_sha256'] + '.json', governance.MAX_EVIDENCE))
+            self._effect_gate(fd, ledger, self._project(fd, ledger, now=now), request, now, 'launch-intent')
+            fence._snapshot()
+            if packets.digest(raw) != attempt['execution_request_sha256']:
+                raise LifecycleError('lifecycle-execution-bytes-drift')
+            self.backend.launch(copy.deepcopy(binding), raw)
+        return self._append(operation_id, 'launch-intent', expected_revision=expected_revision, now=now, effect=launch)
+
+    def reconcile(self, operation_id, *, expected_revision, now):
+        return self._append(operation_id, 'observe', expected_revision=expected_revision, now=now)
+
+    def seal(self, operation_id, *, expected_revision, now):
+        def export(fd, ledger):
+            attempt = ledger['attempts'][-1]; binding = ledger['supervisors'][attempt['id']]['binding']
+            fence = self._fence(fd)
+            proof = self._runtime(self.backend.inspect(copy.deepcopy(binding)), binding, now, ledger['governance']['policy']['freshness_seconds'])
+            if proof['runtime_state'] != 'stopped' or proof['external_effects'] != 'excluded':
+                raise LifecycleError('lifecycle-export-not-stopped')
+            request = governance._parse(trust._read(fd, 'lifecycle-' + attempt['request_sha256'] + '.json', governance.MAX_EVIDENCE))
+            self._effect_gate(fd, ledger, self._project(fd, ledger, now=now), request, now, 'export-intent')
+            fence._snapshot()
+            self.backend.export_patch(copy.deepcopy(binding), packets.MAX_PATCH)
+        return self._append(operation_id, 'export-intent', expected_revision=expected_revision, now=now, effect=export)
+
+    def publish(self, operation_id, *, expected_revision, now):
+        return self._append(operation_id, 'publish', expected_revision=expected_revision, now=now)
+
+    def finish_attempt(self, operation_id, *, expected_revision, now):
+        return self._append(operation_id, 'finish', expected_revision=expected_revision, now=now)

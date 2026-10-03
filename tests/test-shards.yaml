@@ -27,6 +27,7 @@ shards:
       - tests.test_model_packet_governance
       - tests.test_model_packet_integrator
       - tests.test_model_packet_integrator_runner
+      - tests.test_model_packet_lifecycle
       - tests.test_model_packet_store
       - tests.test_model_packet_supervisor
       - tests.test_model_task_execution
