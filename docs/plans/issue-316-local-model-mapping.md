@@ -514,3 +514,16 @@ EAGAIN、counter／PID／UID／policy／mount 漂移、缺 readiness／wait、ch
 未知 create／start 不重播；離線測試不在 host fork。工程 source 可重跑等價
 assertions，證據留 Git 外。這不完成全部資源隔離、N1／N2／N3 或 production 資格，
 也不由 cgroup events 推定 ancestor 的拒絕因果；公司外可獨立執行此控制。
+
+### N2 匿名 project config／hook 局部控制
+
+以固定匿名容器、唯一 exec call／兩次 Responses requests，驗證受控 user provider／
+project trust 與 project-local `PreToolUse` 路徑；不需要公司網路或登入。先盤點固定
+local config candidates，未知檔案／symlink 停止；不把此清單當成完整 cloud 或
+effective-layer readback。Project hook／self-trust state 兩輪相同，user normalized
+hash 一輪正確、一輪刻意不符；不使用 trust bypass。正控制要求一次 hook event
+及 tool marker，負控制要求 hook 無效果且 tool 正常執行，維持 exact continuation、
+advertisement、實際 project config bytes 與 container policy 身分。未知 positive
+不接續或重播。工程 source／反例與重跑方法 tracked，採證留 Git 外；不宣稱完整
+N2／startup／hook trust／credentials／production 資格。後續 sessions、nested CLI、
+其他 hook 故障與完整 contributor／registry 對帳仍分別驗證。

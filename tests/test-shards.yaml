@@ -115,6 +115,7 @@ shards:
       - tests.test_model_isolation_pid_limit
       - tests.test_model_probe_controls
       - tests.test_model_probe_tools
+      - tests.test_model_project_hook
       - tests.test_model_subscription_probe
       - tests.test_model_tool_boundary
       - tests.test_native_runtime_contract_docs

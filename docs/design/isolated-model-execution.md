@@ -759,3 +759,48 @@ production qualification；全部資格 flags 仍 false。
 
 重跑重建固定 fork／counter／wait assertions，CID、PID、時間與路徑可不同；測試
 程式及反例 tracked，實測收據、inspect 與 outputs 不納入 Git。
+
+## N2 匿名 project config／hook 正反控制
+
+`verify-model-project-hook.py` 另用固定 Mac Docker／Linux arm64 CLI tuple 測量一個
+project-local `PreToolUse` 路徑。兩個新 own containers 共用固定 image／public binary
+副本／程式／UID／CLI argv，各自只掛載唯讀 binary 與全新 synthetic scratch，
+network none，HOME／CODEX_HOME 留在容器內。沒有登入、公司設定或真實 provider。
+Fixture source 以單次 bounded regular-file descriptor 擷取；host recipe 由同一份
+bytes 載入，兩輪執行與最後收據的 program hash 都使用該 immutable memory snapshot，
+不在每輪或結束後重新讀來源檔。Host owner／root 與 daemon 仍為可信邊界。
+
+先逐項盤點固定 Linux system／managed、CODEX_HOME、cwd 與 ancestor config 位置的
+metadata；有既存檔案、symlink 或非 canonical 路徑時，在執行 CLI 前停止。這份
+清單只涵蓋固定 local candidates，沒有完整 cloud layer／effective config readback。
+受控 user config 提供匿名 loopback provider、fixture-only Direct entry、project
+trust 與 `features.hooks=true`；保留官方 catalog entries／context defaults。
+不使用 `--ignore-user-config`，`--strict-config` 只對未知欄位 fail，不代表全 layer
+隔離。`--sandbox danger-full-access` 只用於此無登入的固定容器 scratch，不能用於
+正式派工或降低其 sandbox ceiling。
+
+Project config 的單一 matcher `^Bash$` hook 執行固定 Python 程式，寫出 bounded
+stdin event。Hook 的 registry 名稱與 `tool_name=Bash` 為不同層；預期事件是
+`PreToolUse`、`tool_input={"command": <固定命令>}`。Host 固定唯一 exec call、兩次
+Responses requests／exact continuation、每輪三工具 advertisement、tool marker，
+並對照實際 project config bytes、前後 CID／mounts／policy／engine／自然退出。
+
+兩輪 project hook 與其 self-trust state 完全相同；user state 的 normalized
+trusted hash 在正控制精確相符，在負控制則刻意不相符。沒有 hook-trust bypass。
+正控制須觀察一次 hook event 與 tool 效果；負控制須沒有 hook event，但原 tool
+仍執行成功。這只支持本 tuple 的 user trust 正反樣本，以及 project state 不能
+替自己的 hook 建立信任；未信任 hook 是略過，不是拒絕原 tool 的 deny gate。
+Hash 依固定公開 source 的 normalized handler／TOML／canonical JSON 計算，不能
+用原 TOML bytes 的 hash 代替。來源：[state layers](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/hooks/src/config_rules.rs#L8-L29)、
+[hash](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/hooks/src/engine/discovery.rs#L775-L791)。
+
+未知 positive 不啟動 negative；create／start 不重播。這不完成 startup closure、
+完整 registry、其他 hook failure modes、native sessions／nested CLI、credentials
+或可信 production observer；provider／CLI／hook 共用 fixture UID，所有 qualification
+flags 保持 false。Source 與反例 tracked；inputs／outputs、收據、inspect 位於 Git
+外的 private temporary root，重跑重建等價 assertions，ports／CID／時間可不同。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_project_hook
+./scripts/project-python scripts/verify-model-project-hook.py --binary /absolute/path/to/codex --evidence-root /private/tmp
+```
