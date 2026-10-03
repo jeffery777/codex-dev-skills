@@ -75,6 +75,13 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
   純選模決策與實際 runtime dispatch 分開驗收，擴充完成前不合併／發行。
   記憶 production qualification、M2／V3-C 的既有 gate 保持不變。
 
+- [Issue #320](https://github.com/jeffery777/codex-dev-skills/issues/320) 接續 Hermes
+  基礎交付，將工程階段與證據抽為[共用契約](../policies/engineering-workflow-contract.md)，
+  Codex 與 Hermes 各用原生 adapter 完成規劃、實作、驗證、獨立審查／修正、
+  文件同步、交付及接續。同案例驗收與 runtime 資格分開；不依賴 #316／LiteLLM，
+  不啟用自動切模、常駐排程或記憶。範圍及同案發版評估見
+  [工程計畫](plans/issue-320-portable-engineering-workflow.md)。
+
 - [Issue #318](https://github.com/jeffery777/codex-dev-skills/issues/318) 新增
   Hermes Agent 基礎支援，獨立於 #316／LiteLLM。範圍為專用安裝、明確依賴、
   delivery／review gate／手動接續 adapters；沿用共用授權與 exact-head 契約。

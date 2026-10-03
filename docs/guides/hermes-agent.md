@@ -129,3 +129,38 @@ boundary。[官方 security 文件](https://hermes-agent.nousresearch.com/docs/u
 升級後重查 help/schema、source 差異、依賴讀回、權限／憑證、模型 roundtrip 與
 受影響 lifecycle；版本/help 相同也不能代替實測。source tree／installer
 bytes 可重建，驗收身分／時間、平台 checks／scan IDs 是當次歷史證據。
+
+## 共用工程工作流
+
+Issue #320 讓三個 Hermes 入口與 Codex 引用同一份
+[工程階段與完成契約](../../policies/engineering-workflow-contract.md)。採用時先
+讀當次需求與 repository 指令，經 planning → implementation → verification →
+independent review/fix → docs sync → delivery gate；中斷以 checkpoint 接續。
+小型工作可合併階段，必要證據不能省略。原生委派未資格時維持單一 writer，
+由已驗證且獨立的 Hermes session／review service 提供審查；必要 scan 與
+forge control plane 各自接入。任何一步都不要求安裝 Codex CLI/Desktop。
+`openai-codex` 是 Hermes 的訂閱 provider identifier，不是執行 Codex 程式。
+
+相同 fixed fixture 用以下 helper 準備；指向既有安全 parent 下的全新目錄，
+保留 prepare 輸出的 `case_sha256` 在模型不可改寫的操作人員證據位置：
+
+```bash
+./scripts/project-python scripts/verify-engineering-workflow.py prepare --fixture-root /absolute/new-fixture --runtime hermes
+```
+
+讓 Hermes 用已安裝的 `hermes-project-delivery` 讀 SPEC.md，僅修改 port.py、
+README.md 及 CHECKPOINT.md，原生工具執行 `python -B -m unittest test_port.py`，
+避免 bytecode 產生額外檔案。由父代理／操作人員
+檢查程式與 diff 後，以受核對的權限執行獨立 verify；helper 會執行 fixture
+程式，它沒有 OS sandbox，不能作為不可信程式的隔離器：
+
+```bash
+./scripts/project-python scripts/verify-engineering-workflow.py verify --fixture-root /absolute/new-fixture --expected-case-sha256 <prepare-digest>
+```
+
+Consumer 可用已驗證 Python 3.10+ 執行安裝的 scripts helper。Codex 另在自己的
+全新 fixture 使用 `--runtime codex`，相同 tests／spec／文件條件。Label 不是
+實際 runtime 身分證明；另外保存 actual model/provider、instructions digest、
+tool calls、權限、獨立 review、必要 scan／平台證據，以及 exact session 接續
+讀回。Helper exit 0 只證明列出的 functional observations，不能放行正式 gate
+或宣稱品質等價；其他資格與支援矩陣的限制保持不變。

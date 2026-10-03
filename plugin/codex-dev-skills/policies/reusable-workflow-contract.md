@@ -1,6 +1,6 @@
 # Reusable Workflow Contract
 
-本檔是 CLI／Desktop 共用的必讀核心與情境入口。讀完整個本檔，再依觸發表
+本檔是 Codex CLI／Desktop 與 Hermes CLI 工程工作流的必讀核心與情境入口。讀完整個本檔，再依觸發表
 選讀細則；不要預載全部政策。既有章節名稱保留，source、plugin 與 filesystem
 安裝共用相同契約。同目錄 [完整細則](reusable-workflow-details.md) 保留展開規則。
 
@@ -63,6 +63,7 @@ Release、deploy 的目標、範圍、授權與 gate；已授權且前置通過�
 
 ## Shared Phases
 
+具體工程階段與證據見 [共用工程契約](engineering-workflow-contract.md)。
 一般任務依適用技能讀來源、規劃最小範圍、執行、驗證、檢查 diff、必要審查
 及文件同步；有界多階段交付另讀上表的 Shared Phases 細則。
 

@@ -9,7 +9,10 @@ Hermes 相容性。支援範圍、依賴、原生驗收與尚未支援能力見
 [![Runtime: Codex CLI + Desktop](https://img.shields.io/badge/runtime-Codex%20CLI%20%2B%20Desktop-blue)](#runtime-compatibility)
 [![Repo hygiene](https://img.shields.io/badge/hygiene-validate--repo.sh-informational)](#verification)
 
-`codex-dev-skills` is an OSS maintenance workflow pack for OpenAI Codex CLI and Codex Desktop.
+`codex-dev-skills` is an OSS engineering workflow pack with Codex CLI/Desktop
+and a separately verified Hermes CLI entry path. Common engineering stages and
+evidence are defined in [Portable Engineering Workflow](policies/engineering-workflow-contract.md);
+runtime tools, credentials, capability qualification and installation remain separate.
 
 維護本 repository 時先讀 [CONTRIBUTING.md](CONTRIBUTING.md)：實作前建立並
 讀回 GitHub Issue 與 Issue-ID 遠端分支；使用 GitNexus 前處理過期索引。

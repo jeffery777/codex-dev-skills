@@ -18,6 +18,11 @@ or required by repo policy. Declare the mode and exact scope before starting.
 
 ## Procedure
 
+先讀 `../../policies/engineering-workflow-contract.md` 的適用階段與能力替代。
+以下是 Hermes 的執行接點；工程標準與 Codex 共用，工具、角色、session 與
+資格各自核對。必要 reviewer、scan、forge 能力可由已驗證的 Hermes 或獨立
+服務提供，不要求安裝或呼叫 Codex。缺必要能力時阻擋相依 readiness。
+
 1. Inspect repository identity, branch/head, complete diff and applicable DoD.
    Stay read-only; review does not authorize fixes. For merge inspect the full
    base-to-head range, current base/head/merge-base and diff identity.
