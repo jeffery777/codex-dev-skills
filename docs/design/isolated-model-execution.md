@@ -673,3 +673,36 @@ CLI、hooks／project config 與 escalation。Container 內沒有額外 CLI sand
 測量僅適用該 synthetic scratch；不能弱化正式 runtime 的權限契約。Provider 與 CLI
 共用 fixture UID 的 observer 不能充當可信 production exporter。版本／help 或少量
 exec／patch 成功均不完成 N2；unknown 與未測項保留，production registry 仍空。
+
+`verify-model-container-native.py` 是 opt-in macOS Docker 的固定匿名 CLI 測量，
+只接受已存在的固定 Linux arm64 binary 與 image；不下載、登入、拉取、停止或
+刪除資源。Host 在啟動前建立固定 28-case recipe，拒絕 worker 回報的空案例、
+子集合、重排或篡改 expectations；逐筆核對 exact continuation、scratch bytes、
+精確拒絕與每輪三工具 advertisement，並核對前後 engine／policy／mount 身分。
+Context 名稱不能證明本機目標；程式先讀回並核對目前使用者的標準 Desktop
+Unix socket，以該 endpoint 固定 transport，拒絕 SSH／TCP、socket 或 engine
+身分漂移。證據根目錄僅允許 owner／mode 已核對的系統 `/private/tmp`，不接受
+共享子目錄或 symlink 祖先；每次新建的 private 目錄保留，不覆寫舊結果。
+來源 binary 以有界 regular-file descriptor 讀取，只有固定公開 SHA 符合的 bytes
+才保存至新 private 目錄的單一唯讀副本；container 掛載副本而非原輸入路徑。
+Create／start 前再核對副本身分與內容，原檔後續替換不影響本次測量；host owner、
+root 與 Docker daemon 屬可信邊界，這不宣稱能抵抗它們改寫副本。
+它涵蓋 exec／custom patch 的四種 default namespace、排除名稱、非預設 namespace、
+exec heredoc patch、明確 argv0／hidden-arg patch 及升權拒絕。這不是完整 registry
+或 startup config fence；此 CLI 使用預設 `local` environment，不能與 app-server
+候選的明確 `environments: []` 混用。Provider 與 CLI 仍共用 fixture UID。
+
+測試程式與 recipe 是 tracked 工程產物；實測 inputs／outputs、inspect、收據與
+advertisement 在 Git 外的獨立 private temporary directory。重跑產生相同 28 個
+語意 assertions，container IDs、路徑、時間及相關 hashes 可改變。使用既有固定
+官方 0.159.3 Linux arm64 executable 的絕對路徑：
+
+```bash
+./scripts/project-python -m unittest tests.test_model_container_native
+./scripts/project-python scripts/verify-model-container-native.py --binary /absolute/path/to/codex --evidence-root /private/tmp
+```
+
+此命令只適用已核對的 Mac Docker 測量 tuple；不推定 bundled CLI、Desktop、
+Linux host、其他 image／binary 或官方登入支援。完整有效 layers、nested CLI、
+hooks、sessions 與可信 observer 仍須各自驗證；既有 session 局部測量不由本
+28-case probe 取得完整資格。所有 qualification flags 維持 false。

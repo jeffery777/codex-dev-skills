@@ -108,6 +108,7 @@ shards:
       - tests.test_model_app_server_probe
       - tests.test_model_app_server_transport
       - tests.test_model_broker_probe
+      - tests.test_model_container_native
       - tests.test_model_execution_target
       - tests.test_model_host_controls
       - tests.test_model_probe_controls

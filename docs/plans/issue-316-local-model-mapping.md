@@ -477,3 +477,16 @@ native sessions、巢狀 CLI、hooks、project config、escalation 與可信 obs
 N1 剩餘隔離控制、N3 真實 backend／authority reader／整合器與官方訂閱登入資格
 亦不能由公司模型端點恢復自動完成；專用登入環境仍待採用者決策。公司環境只負責
 真實公司 target／context／能力／登入與跨 provider 的端到端驗收，不能取代上述工作。
+
+固定 28-case native container probe 已將重跑 recipe 納入工程 source；證據仍在
+Git 外。涵蓋 default namespace、被排除 handler 名稱、exec 內隱與 argv0 patch、
+升權拒絕及逐輪 advertisement。Host 固定案例身分／數量與 exact continuation，
+不由 worker 自述決定 coverage；engine／policy／mount 逐次讀回且未知結果不重送。
+Transport 綁核對過的本機 Desktop Unix socket，拒絕 context 名稱同名但遠端
+或漂移的 endpoint；證據根目錄限定核對 owner／sticky mode 的系統 `/private/tmp`。
+只掛載已驗證公開 binary bytes 的 private 唯讀副本，不以先前原路徑雜湊代替
+實際執行內容身分；反例涵蓋原檔替換、非 regular descriptor、未知內容與副本漂移。
+此版只測固定 Mac Docker／Linux arm64 CLI tuple，維持 registry／startup／
+production 未資格化。CLI 的預設 local environment 與 app-server 空 environment
+為不同入口；system／managed／cloud／project config closure 及完整 dispatcher
+readback 仍是 N2 後續工作，不由兩個 ignore flags 或三工具 advertisement 宣稱完成。
