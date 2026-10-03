@@ -398,3 +398,18 @@ subscription 契約，品質或服務政策決定 stage，升 tier 本身不升 
 predecessor 保留、無使用證據／pending owner／gratuitous proof 及 schema 1／2
 相容性。證據維持 ignored／原生工具儲存；production 接線、獨立 reader、provider、
 credential／tool broker、source integrator 及各 runtime 資格不由此包宣稱完成。
+
+### R1 準備交易接點
+
+先完成 explicit prepared admission、host immutable plan、durable prepare intent
+及獨立 saved descriptor／observation 確認。Flat／prepared 閉集合互斥，authority
+原始 bytes 不變；歷史 operation archive-only replay 不呼叫今日 callback，新 ID
+不可重複 phase。提交前／後失敗與 lost reply 保留 owner／intent，不因 absent／
+created 宣稱 never-started，也不轉為 service／quality outcome。
+
+驗收包含原 source／execution／policy／instance／nonce／control／prefix 綁定、
+模式／phase／backend 型別、private artifact、pre-/post-intent current gates、
+independent readback、archives／callback fence、freshness 與 immutable observation
+更新，以及 schema 1 live gate、schema 2 first official unused TTL 和 schema 3
+無 actual history 拒絕。Bootstrap／start／adoption／infra successor 尚未接線；
+Docker／provider／登入與公司驗收分開，發行評估仍保留未就緒。

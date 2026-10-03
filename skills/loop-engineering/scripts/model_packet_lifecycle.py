@@ -29,6 +29,7 @@ KINDS = frozenset({'admit', 'acquire', 'outcome', 'resolve', 'quality-floor',
     'cooldown', 'health', 'launch-intent', 'observe', 'export-intent', 'publish', 'finish'})
 GATED_KINDS = frozenset({'acquire', 'launch-intent', 'export-intent', 'publish', 'finish'})
 GOVERNANCE_KINDS = frozenset({'admit', 'acquire', 'outcome', 'resolve', 'quality-floor', 'cooldown', 'health'})
+PREPARED_KINDS = frozenset({'admit-prepared', 'acquire', 'prepare-intent', 'prepared'})
 
 
 class LifecycleError(packets.PacketError):
@@ -297,10 +298,12 @@ def validate_ledger(ledger, packet_id):
     if type(refs) is not list or not 1 <= len(refs) <= governance.MAX_RECORDS or len(refs) != ledger['revision']:
         raise LifecycleError('lifecycle-prefix-invalid')
     seen = set()
+    mode = refs[0].get('kind') if type(refs[0]) is dict else None
+    allowed = KINDS if mode == 'admit' else PREPARED_KINDS if mode == 'admit-prepared' else frozenset()
     for ref in refs:
         governance._obj(ref, 'operation_id kind binding committed_at request_sha256 record_sha256 classification_sha256 authority_sha256 execution_sha256 runtime_sha256')
         packets._id(ref['operation_id']); governance._int(ref['committed_at'])
-        if ref['operation_id'] in seen or type(ref['kind']) is not str or ref['kind'] not in KINDS:
+        if ref['operation_id'] in seen or type(ref['kind']) is not str or ref['kind'] not in allowed:
             raise LifecycleError('lifecycle-operation-invalid')
         seen.add(ref['operation_id'])
         for field in FIELDS:
@@ -327,13 +330,13 @@ def _authority(raw, binding, now, freshness, *, containment=False):
         raise LifecycleError('lifecycle-authority-stale')
 
 
-def _evidence(evidence, binding, now, *, objective=None, policy=None):
+def _evidence(evidence, binding, now, *, objective=None, policy=None, _kinds=KINDS):
     if type(evidence) is not HostEvidence:
         raise LifecycleError('lifecycle-host-evidence-required')
     request, classification = governance._request(evidence.request, evidence.classification)
     record = governance._obj(governance._parse(evidence.record), 'schema_version binding request_sha256 classification_sha256 kind observed_at payload')
     if (type(record['schema_version']) is not int or record['schema_version'] != 1
-            or type(record['kind']) is not str or record['kind'] not in KINDS or packets.canonical(record['binding']) != packets.canonical(binding)
+            or type(record['kind']) is not str or record['kind'] not in _kinds or packets.canonical(record['binding']) != packets.canonical(binding)
             or record['request_sha256'] != packets.digest(evidence.request)
             or record['classification_sha256'] != packets.digest(evidence.classification)):
         raise LifecycleError('lifecycle-evidence-binding-drift')
@@ -366,20 +369,40 @@ class SyntheticLifecycle:
     inspect its saved runtime, consume the exact execution bytes and expose a
     read-only seal after export. No descriptor/OS-containment claim is made.
     """
+    _kinds = KINDS
+    _gated_kinds = GATED_KINDS
+    _admission_kind = 'admit'
+    _archive_replays = False
+    _current_schema1 = False
+
     def __init__(self, store, reader, backend, *, alias, host_id, backend_id, policy_sha256):
         if type(store) is not packets.PacketStore:
             raise LifecycleError('lifecycle-store-required')
         packets._id(alias); packets._id(host_id); packets._id(backend_id); packets._sha(policy_sha256)
         for value, methods in [(reader, ('locate_objective', 'readback_evidence', 'readback_authority',
-                                        'readback_initial_source', 'readback_source_state')),
-                               (backend, ('launch', 'inspect', 'export_patch', 'read_sealed_patch'))]:
+                                        'readback_initial_source', 'readback_source_state'))]:
             if getattr(value, 'synthetic_only', False) is not True or any(not callable(getattr(value, name, None)) for name in methods):
                 raise LifecycleError('lifecycle-synthetic-capability-required')
+        self._validate_backend(backend)
+        self.store, self.reader, self.backend = store, reader, backend
+        self.alias, self.host_id, self.backend_id, self.policy_sha256 = alias, host_id, backend_id, policy_sha256
+
+    def _validate_backend(self, backend):
+        if (getattr(backend, 'synthetic_only', False) is not True
+                or any(not callable(getattr(backend, name, None)) for name in ('launch', 'inspect', 'export_patch', 'read_sealed_patch'))):
+            raise LifecycleError('lifecycle-synthetic-capability-required')
         if (getattr(backend, 'requires_runtime_descriptor', False) is not False
                 or getattr(backend, 'requires_runtime_bootstrap', False) is not False):
             raise LifecycleError('lifecycle-backend-unqualified')
-        self.store, self.reader, self.backend = store, reader, backend
-        self.alias, self.host_id, self.backend_id, self.policy_sha256 = alias, host_id, backend_id, policy_sha256
+
+    def _governance_entry(self, entry):
+        return entry
+
+    def _extra_projection(self, entry, ref, attempt, supervisor):
+        raise LifecycleError('lifecycle-operation-unavailable')
+
+    def _extra_confirmation(self, fd, ledger, entry, now):
+        pass
 
     def _locator(self, objective, identity):
         raw = self.reader.locate_objective(self.alias)
@@ -406,6 +429,8 @@ class SyntheticLifecycle:
     def _project(self, fd, ledger, *, now, _check_projection=True, _unused_checks=None,
                  _historical_checks=None, _historical_caps=None):
         validate_ledger(ledger, self.store.packet_id)
+        if ledger['governance']['records'][0]['kind'] != self._admission_kind:
+            raise LifecycleError('lifecycle-mode-conflict')
         state = ledger['governance']; refs = []; gov_entries = []; attempts = []; supervisors = {}; checkpoint = None
         terminal = False; snapshot = None; previous_commit = -1; executions = []; original_source = None; acquires = []
         for ref in state['records']:
@@ -426,16 +451,16 @@ class SyntheticLifecycle:
                 if raw is not None and packets.digest(raw) != sha:
                     raise LifecycleError('lifecycle-original-bytes-drift')
                 raws.append(raw)
-            entry = _evidence(HostEvidence(*raws), binding, ref['committed_at'], objective=state['objective'], policy=state['policy'])
+            entry = _evidence(HostEvidence(*raws), binding, ref['committed_at'], objective=state['objective'], policy=state['policy'], _kinds=self._kinds)
             record = entry['record']; request = entry['request']; kind = record['kind']; payload = record['payload']
             if kind != ref['kind'] or terminal:
                 raise LifecycleError('lifecycle-terminal-or-kind-conflict')
-            if kind in GATED_KINDS and snapshot is not None and 'revoked' in snapshot['blocked_reasons']:
+            if kind in self._gated_kinds and snapshot is not None and 'revoked' in snapshot['blocked_reasons']:
                 raise LifecycleError('lifecycle-governance-revoked')
-            if kind in GOVERNANCE_KINDS:
-                gov_entries.append(entry)
+            if kind in GOVERNANCE_KINDS or kind == self._admission_kind:
+                gov_entries.append(self._governance_entry(entry))
                 snapshot = governance.project(gov_entries, now=ref['committed_at'])
-            if kind == 'admit':
+            if kind == self._admission_kind:
                 original_source = dict(id=request['target_id'], identity=request['target_identity'])
             if kind == 'acquire':
                 execution = governance._parse(entry['evidence'].execution)
@@ -521,13 +546,15 @@ class SyntheticLifecycle:
                     request_sha256=ref['request_sha256'], execution_request_sha256=ref['execution_sha256'],
                     predecessor_sha256=checkpoint, checkpoint_sha256=None, status='reserved'))
                 supervisors[request['attempt_id']] = dict(binding=runtime_binding, stage='reserved', runtime_sha256=None)
-            elif kind not in GOVERNANCE_KINDS:
+            elif kind not in GOVERNANCE_KINDS and kind != self._admission_kind:
                 if snapshot is None or snapshot['owner'] is None or not attempts or request['attempt_id'] != attempts[-1]['id']:
                     raise LifecycleError('lifecycle-owner-required')
                 attempt = attempts[-1]; supervisor = supervisors[attempt['id']]
                 if ref['request_sha256'] != attempt['request_sha256'] or request['generation'] != attempt['generation']:
                     raise LifecycleError('lifecycle-original-request-drift')
-                if kind in ('launch-intent', 'export-intent'):
+                if kind in ('prepare-intent', 'prepared'):
+                    self._extra_projection(entry, ref, attempt, supervisor)
+                elif kind in ('launch-intent', 'export-intent'):
                     governance._obj(payload, '')
                     required = 'reserved' if kind == 'launch-intent' else 'observed'
                     if supervisor['stage'] != required:
@@ -616,13 +643,16 @@ class SyntheticLifecycle:
         locator = self._locator(ledger['governance']['objective'], ledger['identity_sha256'])
         if locator != ledger['governance']['locator_sha256']:
             raise LifecycleError('lifecycle-objective-locator-drift')
+        self._source_archive(fd, ledger)
+        fence._snapshot()
+        return ledger, snapshot
+
+    def _source_archive(self, fd, ledger):
         first = ledger['governance']['records'][0]
         request = governance._parse(trust._read(fd, 'lifecycle-' + first['request_sha256'] + '.json', governance.MAX_EVIDENCE))
         source = trust._read(fd, 'lifecycle-source-' + request['source_sha256'], packets.MAX_PATCH)
         if packets.digest(source) != request['source_sha256']:
             raise LifecycleError('lifecycle-initial-source-drift')
-        fence._snapshot()
-        return ledger, snapshot
 
     def _current(self, ledger, now, kind):
         binding = dict(_binding(self.store, ledger, 'current'), action=kind)
@@ -638,7 +668,7 @@ class SyntheticLifecycle:
 
     def _destination(self, fd, ledger, execution_raw, now, kind, historical_cap=None):
         execution = governance._parse(execution_raw)
-        if execution['schema_version'] == 1:
+        if execution['schema_version'] == 1 and not self._current_schema1:
             return
         requirements = {}
         if execution['schema_version'] == 3:
@@ -675,7 +705,7 @@ class SyntheticLifecycle:
             source = p['targets'][source_index]
             if (source['qualification']['observed_at'] > now
                     or failover._qualification_problem(p, source,
-                        check_fresh=execution['schema_version'] == 3 or source_index != 0,
+                        check_fresh=execution['schema_version'] != 2 or source_index != 0,
                         required_tier=requirements.get(source['id'], p['task']['capability_tier'])) is not None):
                 raise LifecycleError('lifecycle-current-source-revoked-or-unqualified')
         # Live observations may raise the reservation, never shrink the saved
@@ -727,16 +757,25 @@ class SyntheticLifecycle:
 
     def _append(self, operation_id, kind, *, expected_revision, now, effect=None):
         packets._id(operation_id); governance._int(expected_revision); governance._int(now)
-        if kind not in KINDS:
+        if kind not in self._kinds:
             raise LifecycleError('lifecycle-operation-invalid')
         with self.store.locked() as fd:
             ledger = self.store._read(fd, _lifecycle_token=_WRITE_TOKEN)
             fence = self._fence(fd)
-            if kind == 'admit' and ledger is not None and ledger['schema_version'] == 2:
+            if kind == self._admission_kind and ledger is not None and ledger['schema_version'] == 2:
                 if ledger['revision'] != 0 or ledger['generation'] != 0 or ledger['attempts'] or ledger['checkpoint'] is not None:
                     raise LifecycleError('lifecycle-nonempty-legacy-unavailable')
                 prefix = None
             else:
+                if self._archive_replays and ledger is not None and ledger['schema_version'] == VERSION:
+                    prefix = self._project(fd, ledger, now=now)
+                    self._source_archive(fd, ledger)
+                    prior = next((ref for ref in ledger['governance']['records'] if ref['operation_id'] == operation_id), None)
+                    if prior is not None:
+                        if kind != prior['kind']:
+                            raise LifecycleError('lifecycle-operation-bytes-conflict')
+                        fence._snapshot()
+                        return copy.deepcopy(ledger), prefix
                 ledger, prefix = self._read(fd, now)
                 self._current(ledger, now, kind)
                 fence._snapshot()
@@ -749,7 +788,7 @@ class SyntheticLifecycle:
                         raise LifecycleError('lifecycle-operation-bytes-conflict')
                     fence._snapshot()
                     return copy.deepcopy(ledger), prefix
-                if kind == 'admit':
+                if kind == self._admission_kind:
                     raise LifecycleError('lifecycle-already-admitted')
             if ledger is None or ledger['revision'] != expected_revision:
                 raise LifecycleError('lifecycle-revision-conflict')
@@ -760,12 +799,12 @@ class SyntheticLifecycle:
             evidence = self.reader.readback_evidence(copy.deepcopy(binding))
             current = ledger.get('governance')
             entry = _evidence(evidence, binding, now,
-                objective=current['objective'] if current else None, policy=current['policy'] if current else None)
+                objective=current['objective'] if current else None, policy=current['policy'] if current else None, _kinds=self._kinds)
             if entry['record']['kind'] != kind:
                 raise LifecycleError('lifecycle-operation-kind-conflict')
             request = entry['request']
             updated = copy.deepcopy(ledger)
-            if kind == 'admit':
+            if kind == self._admission_kind:
                 self._source(request)
                 source = self.reader.readback_initial_source(copy.deepcopy(request['objective']))
                 if type(source) is not bytes or len(source) > packets.MAX_PATCH or packets.digest(source) != request['source_sha256']:
@@ -830,7 +869,9 @@ class SyntheticLifecycle:
                 if not callable(readback) or readback(copy.deepcopy(expected_binding)) != expected_raw:
                     raise LifecycleError('lifecycle-historical-source-current-readback-unconfirmed')
                 fence._snapshot()
-            if kind in GATED_KINDS:
+            self._extra_confirmation(fd, updated, entry, now)
+            fence._snapshot()
+            if kind in self._gated_kinds:
                 self._effect_gate(fd, ledger, projected, request, now, kind,
                     execution_raw=evidence.execution if kind == 'acquire' else None, historical_caps=historical_caps)
             self.store._write(fd, updated, _lifecycle_token=_WRITE_TOKEN)

@@ -29,6 +29,7 @@ shards:
       - tests.test_model_packet_integrator
       - tests.test_model_packet_integrator_runner
       - tests.test_model_packet_lifecycle
+      - tests.test_model_packet_preparation
       - tests.test_model_packet_store
       - tests.test_model_packet_supervisor
       - tests.test_model_packet_unused_source

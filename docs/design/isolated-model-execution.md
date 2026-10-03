@@ -493,3 +493,47 @@ broker、provider／Docker writer 或使用者 source integrator。測試可重�
 與 assertions；安全分析／獨立 review 結論另由原生收據保存，不能宣稱可逐 byte 重建。
 公司模型實際能力與 context、CLI／Desktop／bundled／Linux 入口及訂閱登入安排
 仍需各自驗收。
+
+## R1 執行準備模式（合成接線）
+
+`SyntheticPreparedLifecycle` 是 host 明確建構的獨立模式，首筆 immutable
+`admit-prepared` 綁固定 protocol／recipe／runtime policy／saved backend instance。
+同一 v6 journal 的 structural validator 依首筆選擇閉集合；flat host 拒絕 prepared
+模式，prepared host 拒絕 flat 模式，沒有既有工作包遷移、JSON backend registry
+或 v4 capability flags 包裝。只有已驗證的 admission entry 副本正規化為治理
+`admit`／空 payload；保存的 record、ref、digest 與六類 evidence artifacts 不變。
+
+R1 順序限定為 `admit-prepared → acquire → prepare-intent → prepared`。
+Acquire 仍只是 owner／generation reservation，不建立資源。Host 先產生 canonical
+plan，將 operation／prefix、actual execution／request／runtime binding、固定 mode、
+nonce／logical control、source／objective／scope／acceptance／predecessor 保存到
+原 authenticated record 的 payload；每段 artifact 上限 16 KiB。Intent 必須先
+durable commit 並讀回，再通過同一 full-ledger fence 與目前完整 source／destination／
+authority／context gate，才至多一次呼叫固定 saved backend 的 `prepare`。
+Physical instance descriptor 只能在建立資源後，依實際保存的檔案獨立讀回。
+
+Saved backend instance identity 綁 private root inode 與持久 nonce；重新建構同一
+host instance 可核對，其他實例、寬鬆權限、symlink／hardlink artifact 拒絕。
+每次效果及 readback 都在持有的同一 backend directory FD 驗證原 inode／identity，
+並在效果後核對 path 與 identity；原 bytes 被複製到替換目錄也不被接收。
+Descriptor 綁原 plan／runtime／mode／control／nonce 與實際 fixture instance。
+`prepared` 再獨立讀回 descriptor 及新鮮 observation 的 exact bytes，核對所有
+binding 後保存。Observation 可另產生 immutable receipt 更新觀察時間，不覆寫
+原證據、不重新 prepare；callback 的回傳值本身不構成確認。
+
+已提交 operation 只以 actual immutable archives、原時間與完整 fence 回放；不
+呼叫今日的 locator／authority／evidence／destination／backend。新 operation ID
+不能重做同一 phase。提交後讀回或效果失敗、lost reply、partial／absent resource
+都保留 intent 與 owner；descriptor 只代表 `created`，不證明 stopped／isolated／
+never-started。原始 bytes 缺失或漂移不能由今日 readback 補造。
+
+共用 execution schema 1／2／3 parser 與原歷史規則保留；prepared 模式的 schema 1
+也必須通過目前完整 destination／source gate，schema 2 僅保留核可 unused TTL
+例外。R1 沒有 release／多次 acquired 歷史鏈，因此不宣稱 schema 3 的完整正向
+prepared 續作已驗收；新工作包缺 actual history 時仍拒絕。
+
+Bootstrap、launch、runtime observation、outcome、export、publish、finish、cancel
+及 successor 在 R1 全部拒絕，infra 不確定狀態不換成模型失敗或清空預算／floors。
+本包只建立 private saved fixture files，不啟動 worker／Docker／provider，也沒有
+credential broker、source integrator、OS／CLI／Desktop／bundled／Linux 或 production
+qualification；完整準備／啟動／接手鏈仍需後續接線。
