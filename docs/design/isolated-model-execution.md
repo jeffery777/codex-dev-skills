@@ -67,6 +67,47 @@ model-visible input 不是完整 runtime handler inventory；缺乏完整讀回�
 結果與檔案副作用。它不能取得原本「全部停用」契約的資格，也不證明完整
 handler inventory、Code Mode、agent 或登入資料隔離；嚴格模式不自動切入此觀測。
 
+## 公開 app-server 的受控工具候選
+
+另一條候選使用公開 `codex app-server --stdio`，由 host 接收固定 dynamic tool
+呼叫，再交給隔離 worker。固定 0.159.3 schema 的 `thread/start` 與 `turn/start`
+均明確傳入 `environments: []`；省略此欄位不能作為沒有執行環境的證據。
+Dynamic tools 仍是 experimental API；必須先 `initialize` 並宣告能力，再送出
+`initialized`。此候選不依賴 Desktop 私有介面。
+[公開協定與版本化 schema](https://developers.openai.com/codex/app-server)。
+
+`model_app_server_transport.py` 提供 host-only、有界 stdio primitive：限制 frame、
+總 bytes、messages、notifications、outbound bytes 及 I/O 等待；嚴格關聯 RPC ID，
+拒絕重複 JSON keys、非有限數字、未知 server request、額外工具及重播 call。
+已知 approval request 回覆 deny 後仍鎖定 unknown，不自動續行。未知結果不
+重試、重啟或推定停止；`close()` 只觀察 direct child，descendants 永遠保留
+unknown。Callback 必須是可信且有界的 host code；同步 primitive 不能中斷
+任意 Python callback。它不提供 JSON loader、sandbox 或 production adoption。
+
+`verify-model-app-server.py` 使用獨立匿名 HOME／CODEX_HOME、本機 Responses
+fixture、唯讀 client directory 及單一固定 `packet_probe` 正控制。它驗證真正
+function／custom carrier 的十個負控制，包含 Code Mode、agent、權限請求、
+stdin 與未知 dynamic tool；使用精確拒絕文字及相同 turn 身分核對結果，亦核對
+CLI version、binary digest、thread configuration、sentinel 及 direct child exit。
+工具仍出現在 model-visible 宣告時，不能以宣告取代實際 handler 拒絕證據。
+
+此 probe 不使用現有登入、公司或官方模型，也不提供 worker bridge、完整工具
+清冊、配置／resume 漂移、credential broker 或 production authority reader。
+Receipt 固定保留 `handler_inventory_complete: false`、`production_qualified: false`；
+不得將有限矩陣提升為正式隔離資格。真實訂閱接入前，仍須逐項驗證所有 host
+callback、MCP／extensions／hooks、Code Mode helper、子代理、網路與憑證入口。
+
+可重跑命令（須允許啟動本機 loopback fixture）：
+
+```bash
+./scripts/project-python -m unittest tests.test_model_app_server_transport tests.test_model_app_server_probe
+./scripts/project-python scripts/verify-model-app-server.py --evidence-root /private/tmp --case code_mode
+```
+
+其他固定案例由 `--help` 的 `--case` 列表選取。Evidence root 必須在 Git 外；
+每次建立獨立私有目錄，保留 raw synthetic requests 與 receipt，不覆寫舊失敗。
+重跑可重建同一組 assertions；臨時路徑、port、IDs、時間與 hash 可因輸入變化。
+
 ## 準備與啟動契約
 
 1. 從核准 source／checkpoint 建立獨立副本；不以硬連結或共享 Git 可寫資料

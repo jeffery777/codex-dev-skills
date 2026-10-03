@@ -98,6 +98,8 @@ shards:
       - tests.test_cli_session_handoff
       - tests.test_desktop_wrapper_security_fixtures
       - tests.test_killpg_eperm_probe
+      - tests.test_model_app_server_probe
+      - tests.test_model_app_server_transport
       - tests.test_model_broker_probe
       - tests.test_model_execution_target
       - tests.test_model_host_controls

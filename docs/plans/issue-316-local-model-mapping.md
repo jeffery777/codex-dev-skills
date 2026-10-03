@@ -238,6 +238,12 @@ diagnostic 仍記為缺口。公司模型不可達時仍可完成以上實作與
 原保守行為。此規劃 snapshot 不授予 dispatch，production governance reader
 及 executor 的再次核對仍須另外接入。
 
+匿名 public app-server probe 另驗證 no-environment 與固定 dynamic tool 的有限
+正反控制；host-only stdio transport 保留 unknown、不重播及 direct-child-only
+退出讀回。它仍未建立完整工具／憑證清冊、隔離 worker bridge 或實際派工能力，
+也未將 C1 治理 reservation 轉為 executor claim。公司不可達不是這些本機接線
+工作的阻擋原因，不能把待公司驗收誤寫成唯一剩餘項目。
+
 ## 設計與實作順序
 
 1. 核對公開 runtime/schema，使用有界合成資料驗證主／子代理工具循環。
