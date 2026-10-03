@@ -16,6 +16,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 PACKAGE_ROOT = ROOT / "plugin" / "codex-dev-skills"
 MANIFEST_PATH = ".codex-plugin/plugin.json"
 SHARED_FILES = {
+    "policies/engineering-workflow-contract.md",
+    "scripts/verify-engineering-workflow.py",
     "policies/code-mode-tool-orchestration-policy.md",
     "policies/context-continuity-policy.md",
     "policies/exact-head-merge-review-contract.md",

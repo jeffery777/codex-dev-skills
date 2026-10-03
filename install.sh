@@ -894,6 +894,8 @@ group_templates() {
         policies/project-agent-knowledge-policy.md \
         policies/projectspec-alignment-policy.md \
         policies/release-state-contract.md \
+        policies/engineering-workflow-contract.md \
+        scripts/verify-engineering-workflow.py \
         policies/reusable-workflow-contract.md \
         policies/reusable-workflow-details.md \
         policies/review-artifact-policy.md \

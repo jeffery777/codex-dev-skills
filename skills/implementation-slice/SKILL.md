@@ -7,6 +7,10 @@ description: Implement a bounded software change after read-only inspection, the
 
 Runtime compatibility: shared
 
+工程階段與完成標準共用 `../../policies/engineering-workflow-contract.md`；
+filesystem 安裝改讀 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/engineering-workflow-contract.md`。
+Runtime 操作依當次 adapter 與能力證據選取，既有 Codex qualification 仍適用。
+
 執行方式選用：先讀 `../../policies/reusable-workflow-contract.md` 完整核心與觸發表；本地安裝改讀
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/reusable-workflow-contract.md`。
 可重用契約相容的原生／內建／本地執行結果；本技能的必要步驟、證據與輸出仍適用。
