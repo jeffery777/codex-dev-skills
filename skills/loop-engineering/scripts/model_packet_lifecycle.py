@@ -2,8 +2,9 @@
 
 One journal owns governance and actual attempts. Readers and backends are
 independently injected trusted host code, bounded and non-reentrant. No model
-JSON can select them. Only an independently read back, replay-bound unused
-source can skip its qualification TTL; historical tier exceptions stay blocked.
+JSON can select them. Independent readback and replay-bound capabilities allow
+schema 2 unused-source TTL and schema 3 original historical-tier exceptions,
+within this synthetic host only; production qualification remains unavailable.
 """
 from __future__ import annotations
 
@@ -22,6 +23,7 @@ _WRITE_TOKEN = object()
 _PREFIX_TOKEN = object()
 EXECUTION_FIELDS = ('schema_version binding governance_request_sha256 attempt_id generation '
     'predecessor_sha256 target_id target_identity failover_payload host_id backend_id runtime_policy_sha256 runtime_id')
+MAX_HISTORICAL_ACQUIRE_BYTES = 8 * 1024 * 1024
 FIELDS = ('request', 'record', 'classification', 'authority', 'execution', 'runtime')
 KINDS = frozenset({'admit', 'acquire', 'outcome', 'resolve', 'quality-floor',
     'cooldown', 'health', 'launch-intent', 'observe', 'export-intent', 'publish', 'finish'})
@@ -120,6 +122,152 @@ class _ValidatedUnusedPrefix:
             raise LifecycleError('lifecycle-unused-source-proof-stale')
         self._check()
         return dict(proof_sha256=packets.digest(raw), binding=expected, evidence_sha256=value['evidence_sha256'])
+
+
+@dataclass(frozen=True)
+class _ValidatedHistoricalPrefix:
+    """Forward-replayed actual acquire evidence, never legacy dispatch artifacts.
+
+    This capability describes the pre-acquire history while its fence always
+    checks the real full journal. It does not authorize an old source to run.
+    """
+    _issuer: object
+    _fence: object
+    _prefix_raw: bytes
+    _acquires: tuple
+    _owner: object
+    _execution_raw: bytes
+    _classification_raw: bytes
+    _decision_raw: bytes
+
+    @property
+    def _store(self):
+        return self._fence._store
+
+    def _check(self):
+        if self._issuer is not _PREFIX_TOKEN or self._owner is not None:
+            raise LifecycleError('lifecycle-historical-prefix-unavailable')
+        fd, actual = self._fence._snapshot()
+        refs = governance._parse(self._prefix_raw)
+        if (actual['schema_version'] != VERSION or not refs
+                or packets.canonical(actual['governance']['records'][:len(refs)]) != self._prefix_raw):
+            raise LifecycleError('lifecycle-historical-prefix-drift')
+        originals = [ref for ref in refs if ref['kind'] == 'acquire']
+        if len(originals) != len(self._acquires):
+            raise LifecycleError('lifecycle-historical-acquires-incomplete')
+        size = 0
+        for ref, (ref_raw, evidence) in zip(originals, self._acquires):
+            if packets.canonical(ref) != ref_raw or type(evidence) is not HostEvidence:
+                raise LifecycleError('lifecycle-historical-acquire-drift')
+            for field in FIELDS:
+                raw = getattr(evidence, field)
+                size += len(raw) if raw is not None else 0
+                if (None if raw is None else packets.digest(raw)) != ref[field+'_sha256']:
+                    raise LifecycleError('lifecycle-historical-original-bytes-drift')
+        if size > MAX_HISTORICAL_ACQUIRE_BYTES:
+            raise LifecycleError('lifecycle-historical-acquires-bound')
+        return fd, actual
+
+    def _facts(self, p, sources, destination):
+        if packets.canonical(p) != self._decision_raw or not sources or len(set(sources)) != len(sources):
+            raise LifecycleError('lifecycle-historical-decision-drift')
+        ids = [t['id'] for t in p['targets']]
+        if sources != [i for i in ids if i in sources] or p['targets'][destination]['id'] in sources:
+            raise LifecycleError('lifecycle-historical-sources-invalid')
+        # Every acquired target retains its original identity, including targets
+        # whose current qualification already meets the new tier. Otherwise a
+        # replacement could inherit another model's failures and stage floor.
+        originals = {}
+        for ref_raw, evidence in self._acquires:
+            request, classification = governance._request(evidence.request, evidence.classification)
+            if request['target_id'] not in ids:
+                raise LifecycleError('lifecycle-historical-source-identity-or-class-drift')
+            source = p['targets'][ids.index(request['target_id'])]
+            ref = governance._parse(ref_raw); execution = governance._parse(evidence.execution)
+            if (request['target_identity'] != source['identity'] or request['stage'] != source['stage']
+                    or classification['capability_class'] != p['task']['capability_class']
+                    or execution['target_id'] != source['id'] or execution['target_identity'] != source['identity']):
+                raise LifecycleError('lifecycle-historical-source-identity-or-class-drift')
+            # Forward replay already verified original authority and selection
+            # at the committed time. Never substitute today's observation.
+            old = execution['failover_payload']; failover._validate(old, _defer_transitions=True)
+            if (old['now'] != ref['committed_at']
+                    or old['task']['capability_tier'] != classification['capability_tier']
+                    or failover._authorization_problem(old) is not None
+                    or failover._destination_problem(old, [t['id'] for t in old['targets']].index(source['id'])) is not None):
+                raise LifecycleError('lifecycle-historical-destination-was-unqualified')
+            originals.setdefault(source['id'], []).append((classification['capability_tier'], ref['operation_id']))
+        facts = []
+        for source_id in sources:
+            source = p['targets'][ids.index(source_id)]
+            requirements = [tier for tier, _ in originals.get(source_id, [])]
+            operations = [op for _, op in originals.get(source_id, [])]
+            if not requirements:
+                raise LifecycleError('lifecycle-historical-source-never-acquired')
+            required = max(requirements, key=failover.TIER_RANK.__getitem__)
+            if (failover.TIER_RANK[required] >= failover.TIER_RANK[p['task']['capability_tier']]
+                    or failover._qualification_problem(p, source, required_tier=required) is not None):
+                raise LifecycleError('lifecycle-historical-source-not-qualified')
+            facts.append(dict(id=source_id, identity_sha256=packets.digest(packets.canonical(source['identity'])),
+                stage=source['stage'], required_tier=required, acquire_operations=operations))
+        return facts
+
+    def _proof_binding(self, p, sources, destination):
+        facts = self._facts(p, sources, destination)
+        execution = governance._parse(self._execution_raw); core = dict(execution); core.pop('historical_source_bytes', None)
+        binding = dict(execution['binding'], domain='v6-historical-source/1',
+            attempt_id=execution['attempt_id'], runtime_id=execution['runtime_id'],
+            governance_request_sha256=execution['governance_request_sha256'],
+            classification_sha256=packets.digest(self._classification_raw),
+            execution_core_sha256=packets.digest(packets.canonical(core)),
+            planning_sha256=packets.digest(packets.canonical(execution['failover_payload'])),
+            decision_sha256=packets.digest(self._decision_raw),
+            historical_acquires_sha256=packets.digest(packets.canonical([governance._parse(raw) for raw, _ in self._acquires])),
+            sources_sha256=packets.digest(packets.canonical(facts)),
+            qualifications_sha256=packets.digest(packets.canonical([p['targets'][[t['id'] for t in p['targets']].index(s)]['qualification'] for s in sources])),
+            destination_id=p['targets'][destination]['id'],
+            destination_identity_sha256=packets.digest(packets.canonical(p['targets'][destination]['identity'])),
+            authorization_sha256=packets.digest(packets.canonical(p['authorization'])),
+            secret_check_sha256=packets.digest(packets.canonical(p['secret_check'])))
+        return binding, facts
+
+    def _proof(self, raw, p, sources, destination, snapshot):
+        fd, actual = self._check()
+        if snapshot is None or snapshot[0] != fd or packets.canonical(snapshot[1]) != packets.canonical(actual):
+            raise LifecycleError('lifecycle-historical-real-snapshot-required')
+        value = governance._obj(governance._parse(raw),
+            'schema_version binding coverage authorization_status qualification_status observed_at expires_at evidence_sha256')
+        expected, facts = self._proof_binding(p, sources, destination)
+        if (type(value['schema_version']) is not int or value['schema_version'] != 3
+                or packets.canonical(value['binding']) != packets.canonical(expected) or value['coverage'] != 'complete'
+                or value['authorization_status'] != 'granted' or value['qualification_status'] != 'qualified'):
+            raise LifecycleError('lifecycle-historical-proof-unconfirmed')
+        governance._int(value['observed_at']); governance._int(value['expires_at']); packets._sha(value['evidence_sha256'])
+        if (not 0 <= p['now'] - value['observed_at'] <= p['freshness_seconds']
+                or not p['now'] < value['expires_at'] <= value['observed_at'] + p['freshness_seconds']):
+            raise LifecycleError('lifecycle-historical-proof-stale')
+        self._check()
+        return dict(proof_sha256=packets.digest(raw), binding=expected, evidence_sha256=value['evidence_sha256'],
+            source_requirements={v['id']: v['required_tier'] for v in facts})
+
+
+@dataclass(frozen=True)
+class _ValidatedHistoricalDestination:
+    _issuer: object
+    _prefix: _ValidatedHistoricalPrefix
+    _sources: tuple
+
+    def _requirements(self, fd, execution_raw):
+        if self._issuer is not _PREFIX_TOKEN or type(self._prefix) is not _ValidatedHistoricalPrefix:
+            raise LifecycleError('lifecycle-historical-destination-unavailable')
+        actual_fd, _ = self._prefix._check()
+        if actual_fd != fd or execution_raw != self._prefix._execution_raw:
+            raise LifecycleError('lifecycle-historical-destination-execution-drift')
+        p = governance._parse(self._prefix._decision_raw)
+        execution = governance._parse(execution_raw)
+        index = [t['id'] for t in p['targets']].index(execution['target_id'])
+        facts = self._prefix._facts(p, list(self._sources), index)
+        return {v['id']: v['required_tier'] for v in facts}
 
 
 def _binding(store, ledger, operation_id):
@@ -255,10 +403,11 @@ class SyntheticLifecycle:
             raise LifecycleError('lifecycle-runtime-stale')
         return value
 
-    def _project(self, fd, ledger, *, now, _check_projection=True, _unused_checks=None):
+    def _project(self, fd, ledger, *, now, _check_projection=True, _unused_checks=None,
+                 _historical_checks=None, _historical_caps=None):
         validate_ledger(ledger, self.store.packet_id)
         state = ledger['governance']; refs = []; gov_entries = []; attempts = []; supervisors = {}; checkpoint = None
-        terminal = False; snapshot = None; previous_commit = -1; executions = []; original_source = None
+        terminal = False; snapshot = None; previous_commit = -1; executions = []; original_source = None; acquires = []
         for ref in state['records']:
             if not previous_commit <= ref['committed_at'] <= now:
                 raise LifecycleError('lifecycle-clock-rollback-or-future')
@@ -291,9 +440,9 @@ class SyntheticLifecycle:
             if kind == 'acquire':
                 execution = governance._parse(entry['evidence'].execution)
                 version = execution.get('schema_version') if type(execution) is dict else None
-                if type(version) is not int or version not in (1, 2):
+                if type(version) is not int or version not in (1, 2, 3):
                     raise LifecycleError('lifecycle-execution-version')
-                governance._obj(execution, EXECUTION_FIELDS + (' unused_source_bytes' if version == 2 else ''))
+                governance._obj(execution, EXECUTION_FIELDS + {1: '', 2: ' unused_source_bytes', 3: ' historical_source_bytes'}[version])
                 governance._int(execution['generation'], packets.MAX_ATTEMPTS)
                 if (packets.canonical(execution['binding']) != packets.canonical(binding) or execution['governance_request_sha256'] != ref['request_sha256']
                         or execution['attempt_id'] != request['attempt_id'] or execution['generation'] != len(attempts) + 1
@@ -332,6 +481,16 @@ class SyntheticLifecycle:
                         entry['evidence'].execution, packets.canonical(effective))
                     kwargs = dict(_trusted_locked_context=fence,
                         _trusted_v6_unused_source_guard=failover._V6UnusedSourceGuard(cap, raw.encode('utf-8')))
+                if version == 3:
+                    raw = execution['historical_source_bytes']
+                    if type(raw) is not str or not 0 < len(raw.encode('utf-8')) <= 16384:
+                        raise LifecycleError('lifecycle-historical-source-bytes-bound')
+                    fence = self._fence(fd)
+                    historical_cap = _ValidatedHistoricalPrefix(_PREFIX_TOKEN, fence, packets.canonical(refs),
+                        tuple(acquires), prior['owner'], entry['evidence'].execution,
+                        entry['evidence'].classification, packets.canonical(effective))
+                    kwargs = dict(_trusted_locked_context=fence,
+                        _trusted_v6_historical_source_guard=failover._V6HistoricalSourceGuard(historical_cap, raw.encode('utf-8')))
                 route = agent_routing.plan_model_failover(request['v2_task'], effective, **kwargs)
                 selected = route['plan']['target']
                 if route['plan']['status'] not in ('planned', 'retry') or selected is None or selected['id'] != request['target_id'] or selected['identity'] != request['target_identity'] or selected['stage'] != request['stage']:
@@ -342,6 +501,16 @@ class SyntheticLifecycle:
                         raise LifecycleError('lifecycle-unused-proof-not-consumed')
                     if _unused_checks is not None:
                         _unused_checks[ref['operation_id']] = (copy.deepcopy(proof['binding']), raw.encode('utf-8'))
+                if version == 3:
+                    proof = route['plan'].get('v6_historical_source_proof')
+                    if proof is None:
+                        raise LifecycleError('lifecycle-historical-proof-not-consumed')
+                    if _historical_checks is not None:
+                        _historical_checks[ref['operation_id']] = (copy.deepcopy(proof['binding']), raw.encode('utf-8'))
+                    if _historical_caps is not None:
+                        _historical_caps[ref['execution_sha256']] = _ValidatedHistoricalDestination(
+                            _PREFIX_TOKEN, historical_cap, tuple(proof['source_requirements']))
+                acquires.append((packets.canonical(ref), entry['evidence']))
                 executions.append(entry['evidence'].execution)
                 runtime = execution['runtime_id']
                 runtime_binding = dict(packet_id=ledger['packet_id'], identity_sha256=ledger['identity_sha256'],
@@ -467,10 +636,15 @@ class SyntheticLifecycle:
         if packets.canonical(value) != packets.canonical(expected):
             raise LifecycleError('lifecycle-source-not-clean-or-bound')
 
-    def _destination(self, ledger, execution_raw, now, kind):
+    def _destination(self, fd, ledger, execution_raw, now, kind, historical_cap=None):
         execution = governance._parse(execution_raw)
-        if execution['schema_version'] != 2:
+        if execution['schema_version'] == 1:
             return
+        requirements = {}
+        if execution['schema_version'] == 3:
+            if type(historical_cap) is not _ValidatedHistoricalDestination:
+                raise LifecycleError('lifecycle-historical-destination-cap-required')
+            requirements = historical_cap._requirements(fd, execution_raw)
         readback = getattr(self.reader, 'readback_destination', None)
         if not callable(readback):
             raise LifecycleError('lifecycle-current-destination-unavailable')
@@ -500,7 +674,9 @@ class SyntheticLifecycle:
         for source_index in traversed:
             source = p['targets'][source_index]
             if (source['qualification']['observed_at'] > now
-                    or failover._qualification_problem(p, source, check_fresh=source_index != 0) is not None):
+                    or failover._qualification_problem(p, source,
+                        check_fresh=execution['schema_version'] == 3 or source_index != 0,
+                        required_tier=requirements.get(source['id'], p['task']['capability_tier'])) is not None):
                 raise LifecycleError('lifecycle-current-source-revoked-or-unqualified')
         # Live observations may raise the reservation, never shrink the saved
         # host estimate to make a smaller context window appear adequate.
@@ -508,7 +684,7 @@ class SyntheticLifecycle:
                 for k in ('input_tokens', 'output_tokens', 'reasoning_tokens', 'margin_tokens')):
             raise LifecycleError('lifecycle-current-context-reservation-shrunk')
 
-    def _effect_gate(self, fd, ledger, state, request, now, kind, *, execution_raw=None):
+    def _effect_gate(self, fd, ledger, state, request, now, kind, *, execution_raw=None, historical_caps=None):
         # A claim is not an enduring source/containment/authority lease.
         # Recheck under the same fence immediately before effects or adoption.
         fence = self._fence(fd)
@@ -522,7 +698,8 @@ class SyntheticLifecycle:
             if packets.digest(execution_raw) != sha:
                 raise LifecycleError('lifecycle-execution-bytes-drift')
         if execution_raw is not None:
-            self._destination(ledger, execution_raw, now, kind)
+            self._destination(fd, ledger, execution_raw, now, kind,
+                (historical_caps or {}).get(packets.digest(execution_raw)))
         retained = ledger['attempts'] if kind == 'acquire' else ledger['attempts'][:-1]
         for attempt in retained:
             binding = ledger['supervisors'][attempt['id']]['binding']
@@ -636,8 +813,9 @@ class SyntheticLifecycle:
                 if raw is not None:
                     self.store._immutable(fd, 'lifecycle-' + packets.digest(raw) + '.json', raw, _lifecycle_token=_WRITE_TOKEN)
             updated['governance']['records'].append(ref); updated['revision'] += 1
-            checks = {}
-            projected, attempts, supervisors, checkpoint = self._project(fd, updated, now=now, _check_projection=False, _unused_checks=checks)
+            checks = {}; historical_checks = {}; historical_caps = {}
+            projected, attempts, supervisors, checkpoint = self._project(fd, updated, now=now, _check_projection=False, _unused_checks=checks,
+                _historical_checks=historical_checks, _historical_caps=historical_caps)
             updated.update(attempts=attempts, supervisors=supervisors, checkpoint=checkpoint, generation=len(attempts))
             fence._snapshot()
             if kind == 'acquire' and operation_id in checks:
@@ -646,9 +824,15 @@ class SyntheticLifecycle:
                 if not callable(readback) or readback(copy.deepcopy(expected_binding)) != expected_raw:
                     raise LifecycleError('lifecycle-unused-source-current-readback-unconfirmed')
                 fence._snapshot()
+            if operation_id in historical_checks:
+                expected_binding, expected_raw = historical_checks[operation_id]
+                readback = getattr(self.reader, 'readback_v6_historical_sources', None)
+                if not callable(readback) or readback(copy.deepcopy(expected_binding)) != expected_raw:
+                    raise LifecycleError('lifecycle-historical-source-current-readback-unconfirmed')
+                fence._snapshot()
             if kind in GATED_KINDS:
                 self._effect_gate(fd, ledger, projected, request, now, kind,
-                    execution_raw=evidence.execution if kind == 'acquire' else None)
+                    execution_raw=evidence.execution if kind == 'acquire' else None, historical_caps=historical_caps)
             self.store._write(fd, updated, _lifecycle_token=_WRITE_TOKEN)
             self._read(fd, now); post = self._fence(fd)
             # Intent is durable before the only side effect. Retry/restart never
@@ -676,7 +860,9 @@ class SyntheticLifecycle:
             raw = trust._read(fd, 'lifecycle-' + attempt['execution_request_sha256'] + '.json', governance.MAX_EVIDENCE)
             fence = self._fence(fd)
             request = governance._parse(trust._read(fd, 'lifecycle-' + attempt['request_sha256'] + '.json', governance.MAX_EVIDENCE))
-            self._effect_gate(fd, ledger, self._project(fd, ledger, now=now), request, now, 'launch-intent')
+            caps = {}
+            state = self._project(fd, ledger, now=now, _historical_caps=caps)
+            self._effect_gate(fd, ledger, state, request, now, 'launch-intent', historical_caps=caps)
             fence._snapshot()
             if packets.digest(raw) != attempt['execution_request_sha256']:
                 raise LifecycleError('lifecycle-execution-bytes-drift')
@@ -694,7 +880,9 @@ class SyntheticLifecycle:
             if proof['runtime_state'] != 'stopped' or proof['external_effects'] != 'excluded':
                 raise LifecycleError('lifecycle-export-not-stopped')
             request = governance._parse(trust._read(fd, 'lifecycle-' + attempt['request_sha256'] + '.json', governance.MAX_EVIDENCE))
-            self._effect_gate(fd, ledger, self._project(fd, ledger, now=now), request, now, 'export-intent')
+            caps = {}
+            state = self._project(fd, ledger, now=now, _historical_caps=caps)
+            self._effect_gate(fd, ledger, state, request, now, 'export-intent', historical_caps=caps)
             fence._snapshot()
             self.backend.export_patch(copy.deepcopy(binding), packets.MAX_PATCH)
         return self._append(operation_id, 'export-intent', expected_revision=expected_revision, now=now, effect=export)

@@ -382,3 +382,19 @@ credentials qualification 維持未完成；V6 stale-unused 接線見下一節�
 但未 launch、source ID／identity 改名、proof／prefix／runtime／destination 漂移、
 callback fence、目前權限／context 過期、未知效果、服務及品質預算耗盡。
 Legacy unused 語義與非空 v2–v5 blocker 保留；historical-tier 仍需另接。
+
+
+### v6 歷史能力需求接點的合成實作
+
+Schema 3 接線使用原 actual-acquire journal；不移植 legacy HSG artifact，
+不把 event 數量當成 execution generation。新 claim 的完整歷史 proof 與目前
+source／destination observation 分開；來源只適用最高原需求，仍要求新鮮、未撤銷
+及相同 identity／scope／class。新目標符合目前分類與完整 context／executor／
+subscription 契約，品質或服務政策決定 stage，升 tier 本身不升 stage。
+
+驗收涵蓋內部至最佳模型及兩個歷史來源至官方／official retry、原最高需求、
+原 archive 缺失／綁定漂移、每次新 proof、reader fence、目前資格與 context
+漂移、pre-/post-intent gate、禁止的 failure cause、unknown overlay、預算／floor／
+predecessor 保留、無使用證據／pending owner／gratuitous proof 及 schema 1／2
+相容性。證據維持 ignored／原生工具儲存；production 接線、獨立 reader、provider、
+credential／tool broker、source integrator 及各 runtime 資格不由此包宣稱完成。

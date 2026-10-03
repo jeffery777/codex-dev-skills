@@ -449,3 +449,47 @@ Destination 的授權、訂閱 billing、公開 executor 及完整 input／outpu
 margin／client context 限制仍須新鮮通過。Official retry、service count／elapsed、
 quality lineage／floors、predecessor 與 retained-writer gate 保留；耗盡照原政策停止，
 不藉此重設預算。此契約不處理 historical-tier exception 或 production qualification。
+
+
+## v6 歷史能力需求的交易契約（合成接線）
+
+Execution schema 3 擴充前述 schema 1／2：只對已 actual acquired、且不再作為
+本次 destination 的來源，使用當時同一 objective／class 的最高原能力需求。
+來源曾被 admission、events 或 health 提及不構成使用證據；未 launch、被 quarantine
+或沒有 outcome 不會抹除 actual acquire。Owner 未釋放、completed terminal 或
+品質返工尚未達門檻時仍拒絕接手。提高分類 tier 本身不改變 stage。
+
+Forward replay 在原始 acquire 驗證通過後，保存六份原始 evidence bytes 與完整
+ordered acquire references；私有不可變 capability 以真實 store、lease、full-ledger
+fence 及 acquire 前 prefix 綁定這份歷史。逐來源核對原 request、V2 classification、
+identity、stage、原時間下完整 destination qualification 與 authority，包含目前
+已符合新 tier、不需要例外的所有原 acquired targets；使用同來源
+所有原 acquire 的最高需求，不能選較早較低的一輪。Aggregate 原 acquire bytes
+上限為 8 MiB；proof 上限 16 KiB，execution 維持 256 KiB 上限。缺檔或漂移拒絕，
+今天的 callback 不能補造原證據；回放不遞迴 full replay 或再次取鎖。
+
+Schema 3 的 `historical_source_bytes` 保存 canonical 原 proof；domain 為
+`v6-historical-source/1`。Proof 綁定原 acquire manifest、來源需求與 qualification、
+本次 classification、planning／effective decision、完整 prefix、operation／attempt／
+runtime、execution core、destination、authorization 及 secret exclusion。
+只有 own proof 欄位不納入 core digest；authority 仍綁含 proof 的完整 execution。
+每次新 claim 都要求 `readback_v6_historical_sources` 獨立讀回相同 canonical bytes，
+完整 coverage、新鮮 granted／qualified 證據；前一輪 proof 不授權 successor。
+未被 selector 消費的 proof 拒絕。Schema 3 不與 unused／legacy guard 混合；
+舊 schema 1／2 與 legacy selector 契約保留。
+
+Source exception 僅調整能力 tier 比較，不豁免 freshness／future time、revocation、
+identity、scope、class、authorization 或 secret check。Schema 3 不延用 schema 2
+source slot 0 的 TTL 例外。Destination 一律符合目前完整分類需求、公開 executor、
+訂閱 billing 與 input／output／reasoning／margin／client context 限制；live context
+reservation 不可縮小原估算。Claim、launch／export 前後、publish／finish 的目前
+qualification gate 只接受 replay 產生且綁 exact execution 的私有 typed capability，
+不接受 JSON 的 old-tier map。服務 attempt／elapsed、quality／required floors、
+未知 cause overlay、predecessor、retained writer containment 與 recovered model
+不得 preempt 的規則維持不變。
+
+此接線仍限 synthetic host／backend，沒有 production registry、真實 credential
+broker、provider／Docker writer 或使用者 source integrator。測試可重建固定案例
+與 assertions；安全分析／獨立 review 結論另由原生收據保存，不能宣稱可逐 byte 重建。
+公司模型實際能力與 context、CLI／Desktop／bundled／Linux 入口及訂閱登入安排
+仍需各自驗收。

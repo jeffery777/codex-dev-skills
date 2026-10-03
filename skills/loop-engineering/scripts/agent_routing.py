@@ -463,7 +463,7 @@ def _classify_v2(
 def plan_model_failover(task: dict[str, Any], payload: dict[str, Any], *,
                         _trusted_unused_source_guard=None, _trusted_historical_source_guard=None,
                         _trusted_resolved_unknown_guard=None, _trusted_locked_context=None,
-                        _trusted_v6_unused_source_guard=None) -> dict[str, Any]:
+                        _trusted_v6_unused_source_guard=None, _trusted_v6_historical_source_guard=None) -> dict[str, Any]:
     """Extend the current V2 classifier with provider-aware failure planning.
 
     This is advisory. Existing qualification/preflight and runtime dispatch still
@@ -489,6 +489,8 @@ def plan_model_failover(task: dict[str, Any], payload: dict[str, Any], *,
         raise AgentRoutingContractError('failover task does not match current V2 classification')
     extra = {} if _trusted_v6_unused_source_guard is None else {
         '_trusted_v6_unused_source_guard': _trusted_v6_unused_source_guard}
+    if _trusted_v6_historical_source_guard is not None:
+        extra['_trusted_v6_historical_source_guard'] = _trusted_v6_historical_source_guard
     return {'classification': classification,
             'plan': model_failover.select_next(payload,
                 _trusted_unused_source_guard=_trusted_unused_source_guard,
