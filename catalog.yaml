@@ -35,6 +35,8 @@ groups:
       - source: policies/project-agent-knowledge-policy.md
       - source: policies/projectspec-alignment-policy.md
       - source: policies/release-state-contract.md
+      - source: policies/engineering-workflow-contract.md
+      - source: scripts/verify-engineering-workflow.py
       - source: policies/reusable-workflow-contract.md
       - source: policies/reusable-workflow-details.md
       - source: policies/review-artifact-policy.md

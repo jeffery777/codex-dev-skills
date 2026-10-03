@@ -4,6 +4,11 @@ Every public skill and workflow must state runtime compatibility.
 
 ## Shared
 
+工程階段依 [共用工程契約](engineering-workflow-contract.md)，可由已驗證的
+Codex 或 Hermes adapter 執行。同一完成標準不要求相同原生控制面。既有
+`shared` catalog 標籤仍指已宣告的 Codex surfaces，不自動資格化 Hermes；
+Hermes 只安裝專用 allowlist，其版本／能力與驗收單獨記錄。
+
 Shared workflows must preserve the same objective, authority, task-selection,
 verification, review, and completion semantics across Codex surfaces. They may
 use repository files, shell/git inspection, durable artifacts, native Goal

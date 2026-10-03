@@ -35,6 +35,8 @@
     "policies/agent-delegation-policy.md",
     "policies/project-agent-knowledge-policy.md",
     "policies/projectspec-alignment-policy.md",
-    "scripts/verify-hermes-runtime.py"
+    "scripts/verify-hermes-runtime.py",
+    "policies/engineering-workflow-contract.md",
+    "scripts/verify-engineering-workflow.py"
   ]
 }

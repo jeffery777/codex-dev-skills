@@ -7,6 +7,10 @@ description: Routine read-only review for code or mixed diffs, focused on bugs, 
 
 Runtime compatibility: shared
 
+工程階段與完成標準共用 `../../policies/engineering-workflow-contract.md`；
+filesystem 安裝改讀 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/engineering-workflow-contract.md`。
+Runtime 操作依當次 adapter 與能力證據選取，既有 Codex qualification 仍適用。
+
 執行方式選用：先讀 `../../policies/reusable-workflow-contract.md` 的
 `Contract-Preserving Capability Selection`；本地安裝改讀
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/reusable-workflow-contract.md`。
