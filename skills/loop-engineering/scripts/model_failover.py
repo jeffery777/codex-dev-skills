@@ -131,6 +131,23 @@ class UnusedSourceGuard:
             return None
 
 
+class _V6UnusedSourceGuard:
+    """Private journal capability; caller JSON cannot establish unused facts."""
+    def __init__(self, prefix, proof_raw):
+        from model_packet_lifecycle import _ValidatedUnusedPrefix
+        if type(prefix) is not _ValidatedUnusedPrefix:
+            raise FailoverError('invalid-v6-unused-prefix')
+        prefix._check()
+        self._prefix, self._raw = prefix, proof_raw
+        self._store = prefix._store
+
+    def _readback(self, p, source, destination, *, _snapshot=None):
+        try:
+            return self._prefix._proof(self._raw, p, source, destination, _snapshot)
+        except Exception:
+            return None
+
+
 class ResolvedUnknownGuard:
     """Host-only advisory reconciliation of effects AND independently saved cause.
 
@@ -760,6 +777,11 @@ def _precondition(p):
         return 'blocked', 'non-fallback-failure'
     if events and events[-1]['cause'] == 'unknown':
         return 'diagnose', 'failure-cause-unknown'
+    return _authorization_problem(p)
+
+
+def _authorization_problem(p):
+    task = p['task']
     auth = p['authorization']; secret = p['secret_check']
     for summary in [auth, secret]:
         if not fresh(summary, p['now'], p['freshness_seconds']) or any(summary[k] != task[v] for k, v in [('task_id', 'id'), ('scope', 'scope'), ('acceptance_sha256', 'acceptance_sha256')]):
@@ -854,7 +876,8 @@ def _destination_problem(p, target_index):
 
 
 def select_next(payload, *, _trusted_unused_source_guard=None, _trusted_historical_source_guard=None,
-                _trusted_resolved_unknown_guard=None, _trusted_locked_context=None):
+                _trusted_resolved_unknown_guard=None, _trusted_locked_context=None,
+                _trusted_v6_unused_source_guard=None):
     """Reuse one host-owned transaction; context is never loaded from JSON."""
     snapshot = None
     if _trusted_locked_context is not None:
@@ -864,7 +887,7 @@ def select_next(payload, *, _trusted_unused_source_guard=None, _trusted_historic
         try:
             snapshot = _trusted_locked_context._snapshot()
             for guard in (_trusted_unused_source_guard, _trusted_historical_source_guard,
-                          _trusted_resolved_unknown_guard):
+                          _trusted_resolved_unknown_guard, _trusted_v6_unused_source_guard):
                 if guard is not None and getattr(guard, '_store', None) is not _trusted_locked_context._store:
                     raise FailoverError('locked-planning-store-mismatch')
         except Exception:
@@ -873,7 +896,7 @@ def select_next(payload, *, _trusted_unused_source_guard=None, _trusted_historic
         _trusted_unused_source_guard=_trusted_unused_source_guard,
         _trusted_historical_source_guard=_trusted_historical_source_guard,
         _trusted_resolved_unknown_guard=_trusted_resolved_unknown_guard,
-        _snapshot=snapshot)
+        _trusted_v6_unused_source_guard=_trusted_v6_unused_source_guard, _snapshot=snapshot)
     if _trusted_locked_context is not None:
         try:
             _trusted_locked_context._snapshot()
@@ -883,21 +906,25 @@ def select_next(payload, *, _trusted_unused_source_guard=None, _trusted_historic
 
 
 def _select_next(payload, *, _trusted_unused_source_guard=None, _trusted_historical_source_guard=None,
-                 _trusted_resolved_unknown_guard=None, _snapshot=None):
+                 _trusted_resolved_unknown_guard=None, _snapshot=None, _trusted_v6_unused_source_guard=None):
     """Validate trusted summaries and return a plan, never a dispatch receipt.
 
     Guard objects are host code, never JSON. Resolution and historical callbacks
     share ONE locked ledger; all snapshots are advisory and default off.
     """
     p = copy.deepcopy(payload)
+    if _trusted_unused_source_guard is not None and _trusted_v6_unused_source_guard is not None:
+        raise FailoverError('unused-source-modes-conflict')
     for guard, expected_type, error in [(_trusted_unused_source_guard, UnusedSourceGuard, 'invalid-unused-source-guard'),
             (_trusted_historical_source_guard, HistoricalSourceGuard, 'invalid-historical-source-guard'),
-            (_trusted_resolved_unknown_guard, ResolvedUnknownGuard, 'invalid-resolved-unknown-guard')]:
+            (_trusted_resolved_unknown_guard, ResolvedUnknownGuard, 'invalid-resolved-unknown-guard'),
+            (_trusted_v6_unused_source_guard, _V6UnusedSourceGuard, 'invalid-v6-unused-source-guard')]:
         if guard is not None and type(guard) is not expected_type:
             raise FailoverError(error)
     _validate(p, _defer_transitions=_trusted_resolved_unknown_guard is not None)
     kwargs = {'_trusted_unused_source_guard': _trusted_unused_source_guard,
-              '_trusted_historical_source_guard': _trusted_historical_source_guard}
+              '_trusted_historical_source_guard': _trusted_historical_source_guard,
+              '_trusted_v6_unused_source_guard': _trusted_v6_unused_source_guard}
     if not any(e['cause'] == 'unknown-write' for e in p['events']) or _trusted_resolved_unknown_guard is None:
         _validate(p)
         return _select_validated(p, **kwargs, _snapshot=_snapshot)
@@ -922,18 +949,19 @@ def _select_next(payload, *, _trusted_unused_source_guard=None, _trusted_histori
 
 
 def _select_validated(p, *, _trusted_unused_source_guard=None, _trusted_historical_source_guard=None,
-                      _effective=None, _resolution=None, _snapshot=None):
+                      _effective=None, _resolution=None, _snapshot=None, _trusted_v6_unused_source_guard=None):
     decision = p if _effective is None else _effective
     task = p['task']; ids = [t['id'] for t in p['targets']]
     events = p['events']; current = ids.index(p['current_target'])
-    unused_source_proof = historical_source_proof = None
+    unused_source_proof = historical_source_proof = v6_unused_source_proof = None
     counts = {'service_failures': sum(e['kind'] == 'service' for e in events),
               'correction_rounds': sum(e['kind'] == 'quality' and e['correction'] for e in events)}
 
     def result(status, reason, target=None):
         output = {'schema_version': 1, 'status': status, 'reason': reason, 'dispatched': False,
                   'target': target, 'lineage_counts': counts}
-        for key, proof in [('unused_source_proof', unused_source_proof), ('historical_source_proof', historical_source_proof)]:
+        for key, proof in [('unused_source_proof', unused_source_proof), ('historical_source_proof', historical_source_proof),
+                           ('v6_unused_source_proof', v6_unused_source_proof)]:
             if proof is not None and status in {'planned', 'retry'}:
                 output[key] = copy.deepcopy(proof)
         if _resolution is not None and status in {'planned', 'retry'}:
@@ -967,6 +995,14 @@ def _select_validated(p, *, _trusted_unused_source_guard=None, _trusted_historic
             unused_source_proof = _trusted_unused_source_guard._readback(p, source, _snapshot=_snapshot)
             if unused_source_proof is None:
                 return result('blocked', 'unused-source-proof-unconfirmed')
+        elif (index == 0 and target_index is not None and target_index != index
+                and _trusted_v6_unused_source_guard is not None
+                and q['observed_at'] <= p['now'] and not fresh(q, p['now'], p['freshness_seconds'])
+                and av['status'] == 'unavailable' and fresh(av, p['now'], p['freshness_seconds'])
+                and _qualification_problem(p, source, check_fresh=False) is None):
+            v6_unused_source_proof = _trusted_v6_unused_source_guard._readback(p, source, target_index, _snapshot=_snapshot)
+            if v6_unused_source_proof is None:
+                return result('blocked', 'v6-unused-source-proof-unconfirmed')
         elif (target_index is not None and index != target_index and _trusted_historical_source_guard is not None
                 and TIER_RANK[q['capability_tier']] < TIER_RANK[task['capability_tier']]
                 and _qualification_problem(p, source, required_tier=q['capability_tier']) is None):

@@ -404,6 +404,48 @@ observation，禁止新啟動、export、採用與 release。Health 恢復不能
 
 此包僅接受 host 注入的 synthetic reader／backend，descriptor 與 bootstrap 關閉；
 沒有 CLI／JSON loader、production registry、Docker／app-server worker 接線或 OS
-隔離資格。首包要求來源資格新鮮，legacy unused／historical tier 例外仍保守阻擋，
+隔離資格。Execution schema 1 要求來源資格新鮮；後述 schema 2 接線僅提供
+V6 未使用來源的 TTL 例外，legacy unused／historical tier 例外仍保守阻擋，
 不能由此宣稱回家時的完整官方 fallback 或公司最佳模型品質驗收完成。真實 reader、
 provider、credential broker、原工具 inventory 與跨入口 qualification 仍需後續接線。
+
+
+## v6 未使用來源的交易契約（合成接線）
+
+這個擴充處理 source slot 0 從未 actual acquired、其能力資格僅 TTL 過期，且
+availability 仍為新鮮 unavailable 的情況。它涵蓋第一次 official acquire 與
+同 official stage 的後續 retry；不是只要求整個 packet 的 generation 為 0。
+原始 source ID／identity 固定於 admission 與各份 execution；任何原 acquire
+以相同 ID 或 identity 使用來源，即使未 launch、沒有 outcome 或已 quarantine，
+都不能採用這個例外。缺少原 execution、owner 仍存在或 isolation 未確認均拒絕。
+這個來源錨定限制只用於 schema 2 的例外邊界；schema 1 不新增 admission target
+等於 planning source 0 的要求，也不因此拒讀既有合法 journal。
+
+沿用 V2 classifier／selector；legacy unused guard 不變。新私有 V6 guard 僅
+接受 forward replay 產生的不可變 prefix capability，綁定真正 store、交易 lease
+及 full-ledger fence。它只表示特定 source 尚未 acquired，不替換實際 ledger
+snapshot，不可由 JSON、structural token 或 validated=true 建立。每份原 execution
+按其 acquire 前的 owner／完整 journal 事實回放，不以 failure index 代替 generation。
+Legacy／V6 unused guards 同時提供時拒絕。
+
+Execution schema 2 內保存一份 canonical UTF-8 原 proof；schema 1 不接受新增
+欄位。Proof 有獨立 V6 domain，綁 packet／objective／policy、pre-acquire prefix、
+operation／attempt／runtime、治理 request、原 planning／effective decision、source
+identity／qualification／availability、destination、authorization 及 secret check。
+Execution core digest 排除 proof 欄位，避免自我雜湊；外層 authority 再綁含 proof
+的完整 execution bytes。Proof 與整份 execution 均有大小限制及嚴格型別。
+
+每次新 claim 都由獨立 host reader 讀回自己的新原始 proof，與 execution 內
+bytes 完全相等；第一次 proof 不授權第二次 acquire。Historical replay 只讀原
+archive、按原時間驗證，不查今天的 proof、不遞迴 full replay、不再次取鎖。
+新效果仍使用目前的 destination 資格／availability／executor／context 與 authority
+讀回，綁實際 execution request、當前 prefix 及原 task；source proof 不延長
+目的地資格，也不以單一 qualified boolean 取代完整 context budget 檢查。
+目前來源 qualification 的 observed_at 必須不晚於 now；TTL 豁免不能接受未來證據。
+
+例外僅略過 source 的 qualification TTL。Revocation、identity／scope／class／tier、
+authority 漂移仍阻擋；source 成為 destination 或沒有 candidate 時不使用例外。
+Destination 的授權、訂閱 billing、公開 executor 及完整 input／output／reasoning／
+margin／client context 限制仍須新鮮通過。Official retry、service count／elapsed、
+quality lineage／floors、predecessor 與 retained-writer gate 保留；耗盡照原政策停止，
+不藉此重設預算。此契約不處理 historical-tier exception 或 production qualification。

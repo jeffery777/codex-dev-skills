@@ -127,6 +127,12 @@ class FailoverHostInjectionTests(unittest.TestCase):
                                                         _trusted_historical_source_guard=historical,
                                                         _trusted_resolved_unknown_guard=resolved, _trusted_locked_context=None)
             selector.select_next.reset_mock()
+            v6 = object()
+            routing.plan_model_failover(task, payload, _trusted_v6_unused_source_guard=v6)
+            selector.select_next.assert_called_once_with(payload, _trusted_unused_source_guard=None,
+                _trusted_historical_source_guard=None, _trusted_resolved_unknown_guard=None,
+                _trusted_locked_context=None, _trusted_v6_unused_source_guard=v6)
+            selector.select_next.reset_mock()
             task['factors']['reasoning_depth'] = 'deep'
             with self.assertRaises(routing.AgentRoutingContractError):
                 routing.plan_model_failover(task, payload, _trusted_historical_source_guard=historical)

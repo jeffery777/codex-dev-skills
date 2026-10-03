@@ -369,5 +369,16 @@ export，保留 predecessor 及原始失敗計數。Execution generation 與 own
 
 驗收以 synthetic 固定 backend 與獨立 host 原始檔案為限，尚不接實際 provider、
 Docker／app-server writer 或使用者工作區。完整 runtime／quality／context／
-credentials qualification 維持未完成；legacy stale-unused／historical-tier 例外
-仍須另接 v6 原始 prefix／authority 接口，不能以 fixture 通過替代。
+credentials qualification 維持未完成；V6 stale-unused 接線見下一節，legacy
+例外不移植，historical-tier 仍須另接，不能以 fixture 通過替代。
+
+
+### v6 未使用來源接點的合成實作
+
+接線範圍為特定 source 從未 actual acquired 的 V6 私有 guard，包含初次 official
+接手與 official 同 stage retry。完整原 execution／prefix 回放、每次新 proof、
+原 archive 與目前 destination qualification 分開；沿用既有 selector，不建立
+第二份 retry journal，也不偽造 legacy artifact。驗收需涵蓋 source 已 acquire
+但未 launch、source ID／identity 改名、proof／prefix／runtime／destination 漂移、
+callback fence、目前權限／context 過期、未知效果、服務及品質預算耗盡。
+Legacy unused 語義與非空 v2–v5 blocker 保留；historical-tier 仍需另接。

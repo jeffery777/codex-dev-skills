@@ -2,8 +2,8 @@
 
 One journal owns governance and actual attempts. Readers and backends are
 independently injected trusted host code, bounded and non-reentrant. No model
-JSON can select them. This first synthetic contract requires freshly qualified
-sources: legacy stale/historical source exceptions are deliberately blocked.
+JSON can select them. Only an independently read back, replay-bound unused
+source can skip its qualification TTL; historical tier exceptions stay blocked.
 """
 from __future__ import annotations
 
@@ -14,10 +14,14 @@ import agent_qualification as trust
 import agent_routing
 import model_packet_governance as governance
 import model_packet_store as packets
+import model_failover as failover
 from model_packet_supervisor import validate_patch
 
 VERSION = 6
 _WRITE_TOKEN = object()
+_PREFIX_TOKEN = object()
+EXECUTION_FIELDS = ('schema_version binding governance_request_sha256 attempt_id generation '
+    'predecessor_sha256 target_id target_identity failover_payload host_id backend_id runtime_policy_sha256 runtime_id')
 FIELDS = ('request', 'record', 'classification', 'authority', 'execution', 'runtime')
 KINDS = frozenset({'admit', 'acquire', 'outcome', 'resolve', 'quality-floor',
     'cooldown', 'health', 'launch-intent', 'observe', 'export-intent', 'publish', 'finish'})
@@ -37,6 +41,85 @@ class HostEvidence:
     authority: bytes
     execution: bytes | None = None
     runtime: bytes | None = None
+
+
+@dataclass(frozen=True)
+class _ValidatedUnusedPrefix:
+    """Private replay facts, never a replacement for the actual held ledger.
+
+    Minted before one acquire during forward replay. The fence still reads the
+    entire real ledger, including later records when validating old evidence.
+    This code capability is synthetic host trust, not an OS authorization token.
+    """
+    _issuer: object
+    _fence: object
+    _prefix_raw: bytes
+    _source_raw: bytes
+    _executions: tuple
+    _owner: object
+    _execution_raw: bytes
+    _decision_raw: bytes
+
+    @property
+    def _store(self):
+        return self._fence._store
+
+    def _check(self):
+        if self._issuer is not _PREFIX_TOKEN or self._owner is not None:
+            raise LifecycleError('lifecycle-unused-prefix-unavailable')
+        fd, actual = self._fence._snapshot()
+        refs = governance._parse(self._prefix_raw)
+        if (actual['schema_version'] != VERSION or not refs
+                or packets.canonical(actual['governance']['records'][:len(refs)]) != self._prefix_raw
+                or len(self._executions) != sum(ref['kind'] == 'acquire' for ref in refs)):
+            raise LifecycleError('lifecycle-unused-prefix-drift')
+        source = governance._parse(self._source_raw)
+        for raw in self._executions:
+            value = governance._parse(raw)
+            original = value['failover_payload']['targets'][0]
+            if (original['id'] != source['id'] or original['identity'] != source['identity']
+                    or value['target_id'] == source['id'] or value['target_identity'] == source['identity']):
+                raise LifecycleError('lifecycle-source-already-used-or-renamed')
+        return fd, actual
+
+    def _proof_binding(self, p, source, destination):
+        execution = governance._parse(self._execution_raw)
+        original = governance._parse(self._source_raw)
+        if (source['id'] != original['id'] or source['identity'] != original['identity']
+                or packets.canonical(p) != self._decision_raw or destination == 0):
+            raise LifecycleError('lifecycle-unused-source-binding-drift')
+        core = dict(execution); core.pop('unused_source_bytes', None)
+        return dict(execution['binding'], domain='v6-unused-source/1',
+            attempt_id=execution['attempt_id'], runtime_id=execution['runtime_id'],
+            governance_request_sha256=execution['governance_request_sha256'],
+            execution_core_sha256=packets.digest(packets.canonical(core)),
+            planning_sha256=packets.digest(packets.canonical(execution['failover_payload'])),
+            decision_sha256=packets.digest(self._decision_raw), source_id=source['id'],
+            source_identity_sha256=packets.digest(packets.canonical(source['identity'])),
+            source_qualification_sha256=packets.digest(packets.canonical(source['qualification'])),
+            source_availability_sha256=packets.digest(packets.canonical(source['availability'])),
+            destination_id=p['targets'][destination]['id'],
+            destination_identity_sha256=packets.digest(packets.canonical(p['targets'][destination]['identity'])),
+            authorization_sha256=packets.digest(packets.canonical(p['authorization'])),
+            secret_check_sha256=packets.digest(packets.canonical(p['secret_check'])))
+
+    def _proof(self, raw, p, source, destination, snapshot):
+        fd, actual = self._check()
+        if snapshot is None or snapshot[0] != fd or packets.canonical(snapshot[1]) != packets.canonical(actual):
+            raise LifecycleError('lifecycle-unused-real-snapshot-required')
+        value = governance._obj(governance._parse(raw),
+            'schema_version binding authorization_status qualification_status observed_at expires_at evidence_sha256')
+        expected = self._proof_binding(p, source, destination)
+        if (type(value['schema_version']) is not int or value['schema_version'] != 2
+                or packets.canonical(value['binding']) != packets.canonical(expected)
+                or value['authorization_status'] != 'granted' or value['qualification_status'] != 'qualified'):
+            raise LifecycleError('lifecycle-unused-source-proof-unconfirmed')
+        governance._int(value['observed_at']); governance._int(value['expires_at']); packets._sha(value['evidence_sha256'])
+        if (not 0 <= p['now'] - value['observed_at'] <= p['freshness_seconds']
+                or not p['now'] < value['expires_at'] <= value['observed_at'] + p['freshness_seconds']):
+            raise LifecycleError('lifecycle-unused-source-proof-stale')
+        self._check()
+        return dict(proof_sha256=packets.digest(raw), binding=expected, evidence_sha256=value['evidence_sha256'])
 
 
 def _binding(store, ledger, operation_id):
@@ -172,10 +255,10 @@ class SyntheticLifecycle:
             raise LifecycleError('lifecycle-runtime-stale')
         return value
 
-    def _project(self, fd, ledger, *, now, _check_projection=True):
+    def _project(self, fd, ledger, *, now, _check_projection=True, _unused_checks=None):
         validate_ledger(ledger, self.store.packet_id)
         state = ledger['governance']; refs = []; gov_entries = []; attempts = []; supervisors = {}; checkpoint = None
-        terminal = False; snapshot = None; previous_commit = -1
+        terminal = False; snapshot = None; previous_commit = -1; executions = []; original_source = None
         for ref in state['records']:
             if not previous_commit <= ref['committed_at'] <= now:
                 raise LifecycleError('lifecycle-clock-rollback-or-future')
@@ -203,12 +286,16 @@ class SyntheticLifecycle:
             if kind in GOVERNANCE_KINDS:
                 gov_entries.append(entry)
                 snapshot = governance.project(gov_entries, now=ref['committed_at'])
+            if kind == 'admit':
+                original_source = dict(id=request['target_id'], identity=request['target_identity'])
             if kind == 'acquire':
-                execution = governance._obj(governance._parse(entry['evidence'].execution),
-                    'schema_version binding governance_request_sha256 attempt_id generation predecessor_sha256 target_id target_identity failover_payload host_id backend_id runtime_policy_sha256 runtime_id')
+                execution = governance._parse(entry['evidence'].execution)
+                version = execution.get('schema_version') if type(execution) is dict else None
+                if type(version) is not int or version not in (1, 2):
+                    raise LifecycleError('lifecycle-execution-version')
+                governance._obj(execution, EXECUTION_FIELDS + (' unused_source_bytes' if version == 2 else ''))
                 governance._int(execution['generation'], packets.MAX_ATTEMPTS)
-                if (type(execution['schema_version']) is not int or execution['schema_version'] != 1
-                        or packets.canonical(execution['binding']) != packets.canonical(binding) or execution['governance_request_sha256'] != ref['request_sha256']
+                if (packets.canonical(execution['binding']) != packets.canonical(binding) or execution['governance_request_sha256'] != ref['request_sha256']
                         or execution['attempt_id'] != request['attempt_id'] or execution['generation'] != len(attempts) + 1
                         or request['generation'] != execution['generation'] or execution['predecessor_sha256'] != checkpoint
                         or execution['target_id'] != request['target_id'] or execution['target_identity'] != request['target_identity']):
@@ -230,10 +317,32 @@ class SyntheticLifecycle:
                 effective = copy.deepcopy(planning)
                 for event in effective['events']:
                     event['cause'] = prior['resolved_causes'].get(event['attempt_id'], event['cause'])
-                route = agent_routing.plan_model_failover(request['v2_task'], effective)
+                failover._validate(effective)
+                source = effective['targets'][0]
+                if version == 2 and original_source != dict(id=source['id'], identity=source['identity']):
+                    raise LifecycleError('lifecycle-original-source-renamed')
+                kwargs = {}
+                if version == 2:
+                    raw = execution['unused_source_bytes']
+                    if type(raw) is not str or not 0 < len(raw.encode('utf-8')) <= 16384:
+                        raise LifecycleError('lifecycle-unused-source-bytes-bound')
+                    fence = self._fence(fd)
+                    cap = _ValidatedUnusedPrefix(_PREFIX_TOKEN, fence, packets.canonical(refs),
+                        packets.canonical(original_source), tuple(executions), prior['owner'],
+                        entry['evidence'].execution, packets.canonical(effective))
+                    kwargs = dict(_trusted_locked_context=fence,
+                        _trusted_v6_unused_source_guard=failover._V6UnusedSourceGuard(cap, raw.encode('utf-8')))
+                route = agent_routing.plan_model_failover(request['v2_task'], effective, **kwargs)
                 selected = route['plan']['target']
                 if route['plan']['status'] not in ('planned', 'retry') or selected is None or selected['id'] != request['target_id'] or selected['identity'] != request['target_identity'] or selected['stage'] != request['stage']:
                     raise LifecycleError('lifecycle-selection-unconfirmed')
+                if version == 2:
+                    proof = route['plan'].get('v6_unused_source_proof')
+                    if proof is None:
+                        raise LifecycleError('lifecycle-unused-proof-not-consumed')
+                    if _unused_checks is not None:
+                        _unused_checks[ref['operation_id']] = (copy.deepcopy(proof['binding']), raw.encode('utf-8'))
+                executions.append(entry['evidence'].execution)
                 runtime = execution['runtime_id']
                 runtime_binding = dict(packet_id=ledger['packet_id'], identity_sha256=ledger['identity_sha256'],
                     attempt_id=request['attempt_id'], generation=request['generation'], runtime_id=runtime,
@@ -358,7 +467,48 @@ class SyntheticLifecycle:
         if packets.canonical(value) != packets.canonical(expected):
             raise LifecycleError('lifecycle-source-not-clean-or-bound')
 
-    def _effect_gate(self, fd, ledger, state, request, now, kind):
+    def _destination(self, ledger, execution_raw, now, kind):
+        execution = governance._parse(execution_raw)
+        if execution['schema_version'] != 2:
+            return
+        readback = getattr(self.reader, 'readback_destination', None)
+        if not callable(readback):
+            raise LifecycleError('lifecycle-current-destination-unavailable')
+        binding = dict(_binding(self.store, ledger, 'current'), action=kind,
+            execution_sha256=packets.digest(execution_raw), target_id=execution['target_id'],
+            target_identity_sha256=packets.digest(packets.canonical(execution['target_identity'])))
+        value = governance._obj(governance._parse(readback(copy.deepcopy(binding))),
+            'schema_version binding observed_at expires_at payload')
+        if type(value['schema_version']) is not int or value['schema_version'] != 1 or packets.canonical(value['binding']) != packets.canonical(binding):
+            raise LifecycleError('lifecycle-current-destination-binding-drift')
+        governance._int(value['observed_at']); governance._int(value['expires_at'])
+        freshness = ledger['governance']['policy']['freshness_seconds']
+        if not 0 <= now - value['observed_at'] <= freshness or not now < value['expires_at'] <= value['observed_at'] + freshness:
+            raise LifecycleError('lifecycle-current-destination-stale')
+        p = value['payload']; failover._validate(p, _defer_transitions=True)
+        original = execution['failover_payload']
+        if (p['now'] != now or p['freshness_seconds'] != freshness or not p['enabled']
+                or any(p[k] != original[k] for k in ('task', 'policy', 'current_target', 'events'))
+                or [(t['id'], t['stage'], t['identity']) for t in p['targets']]
+                    != [(t['id'], t['stage'], t['identity']) for t in original['targets']]
+                or failover._authorization_problem(p) is not None):
+            raise LifecycleError('lifecycle-current-destination-authority-drift')
+        ids = [t['id'] for t in p['targets']]; index = ids.index(execution['target_id'])
+        if failover._destination_problem(p, index) is not None:
+            raise LifecycleError('lifecycle-current-destination-unqualified')
+        traversed = {0, ids.index(p['current_target'])} | {ids.index(e['target_id']) for e in p['events']}
+        for source_index in traversed:
+            source = p['targets'][source_index]
+            if (source['qualification']['observed_at'] > now
+                    or failover._qualification_problem(p, source, check_fresh=source_index != 0) is not None):
+                raise LifecycleError('lifecycle-current-source-revoked-or-unqualified')
+        # Live observations may raise the reservation, never shrink the saved
+        # host estimate to make a smaller context window appear adequate.
+        if any(p['targets'][index]['context'][k] < original['targets'][index]['context'][k]
+                for k in ('input_tokens', 'output_tokens', 'reasoning_tokens', 'margin_tokens')):
+            raise LifecycleError('lifecycle-current-context-reservation-shrunk')
+
+    def _effect_gate(self, fd, ledger, state, request, now, kind, *, execution_raw=None):
         # A claim is not an enduring source/containment/authority lease.
         # Recheck under the same fence immediately before effects or adoption.
         fence = self._fence(fd)
@@ -366,6 +516,13 @@ class SyntheticLifecycle:
             raise LifecycleError('lifecycle-governance-revoked')
         self._current(ledger, now, kind)
         self._source(request)
+        if execution_raw is None and ledger['attempts']:
+            sha = ledger['attempts'][-1]['execution_request_sha256']
+            execution_raw = trust._read(fd, 'lifecycle-' + sha + '.json', governance.MAX_EVIDENCE)
+            if packets.digest(execution_raw) != sha:
+                raise LifecycleError('lifecycle-execution-bytes-drift')
+        if execution_raw is not None:
+            self._destination(ledger, execution_raw, now, kind)
         retained = ledger['attempts'] if kind == 'acquire' else ledger['attempts'][:-1]
         for attempt in retained:
             binding = ledger['supervisors'][attempt['id']]['binding']
@@ -479,11 +636,19 @@ class SyntheticLifecycle:
                 if raw is not None:
                     self.store._immutable(fd, 'lifecycle-' + packets.digest(raw) + '.json', raw, _lifecycle_token=_WRITE_TOKEN)
             updated['governance']['records'].append(ref); updated['revision'] += 1
-            projected, attempts, supervisors, checkpoint = self._project(fd, updated, now=now, _check_projection=False)
+            checks = {}
+            projected, attempts, supervisors, checkpoint = self._project(fd, updated, now=now, _check_projection=False, _unused_checks=checks)
             updated.update(attempts=attempts, supervisors=supervisors, checkpoint=checkpoint, generation=len(attempts))
             fence._snapshot()
+            if kind == 'acquire' and operation_id in checks:
+                expected_binding, expected_raw = checks[operation_id]
+                readback = getattr(self.reader, 'readback_unused_source', None)
+                if not callable(readback) or readback(copy.deepcopy(expected_binding)) != expected_raw:
+                    raise LifecycleError('lifecycle-unused-source-current-readback-unconfirmed')
+                fence._snapshot()
             if kind in GATED_KINDS:
-                self._effect_gate(fd, ledger, projected, request, now, kind)
+                self._effect_gate(fd, ledger, projected, request, now, kind,
+                    execution_raw=evidence.execution if kind == 'acquire' else None)
             self.store._write(fd, updated, _lifecycle_token=_WRITE_TOKEN)
             self._read(fd, now); post = self._fence(fd)
             # Intent is durable before the only side effect. Retry/restart never
