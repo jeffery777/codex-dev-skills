@@ -728,3 +728,34 @@ host restart、native Codex、credentials 或完整 N1／production qualificatio
 ./scripts/project-python -m unittest tests.test_model_isolation_path_controls
 ./scripts/project-python scripts/verify-model-isolation-path-controls.py --evidence-root /private/tmp
 ```
+
+## N1 固定 PID 上限控制
+
+`verify-model-isolation-pid-limit.py` 使用同一已核對的本機 Docker transport 與固定
+image，另建沒有 host mounts 的 own container；固定 UID1000、private PID／cgroup、
+network none、唯讀 root、PID 上限 32、memory／CPU 上限及 restart no。它不是任意
+負載工具，上限控制階段最多嘗試 32 次 fork，含正控制整輪最多 33 次；不做 host
+process exhaustion 或 memory／CPU 壓測。
+
+Python PID1 明確安裝 30 秒 deadline handler，逾時 exit 124 不算成功。先核對單一
+task、private cgroup v2 與 `pids.max=32`／`pids.current=1`，再以 readiness 管道、
+單一 child 正控制及 EOF／wait 回收確認 `1 → 2 → 1`、events 不變。正控制不完整
+不得開始上限控制。上限控制須有 31 個不同且已回報 readiness 的 children、第
+32 次 fork 精確 Linux EAGAIN（11，不使用 Mac host errno）、current 32、
+`pids.events` 與 `pids.events.local` 的 max
+各增加一次；EAGAIN 單獨不足以通過。釋放所有 children 後逐一 wait exit 0、回到
+current 1，計數不得再變。計數表示 tasks；本 fixture 是單執行緒的固定程式。
+
+Host 核對 exact CID、前後完整 policy、沒有 host bind／volume mounts、自然退出／PID0／非 OOM 與
+engine 身分。缺 counter、異常格式、清理不完整、逾時或 unknown 都不得算通過；
+create／start 不重播，結果留在 Git 外的全新 private 目錄。此觀察不歸因是哪層
+cgroup 導致拒絕，也不宣稱完整資源隔離、restart、native CLI／credentials 或 N1／
+production qualification；全部資格 flags 仍 false。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_isolation_pid_limit
+./scripts/project-python scripts/verify-model-isolation-pid-limit.py --evidence-root /private/tmp
+```
+
+重跑重建固定 fork／counter／wait assertions，CID、PID、時間與路徑可不同；測試
+程式及反例 tracked，實測收據、inspect 與 outputs 不納入 Git。

@@ -502,3 +502,15 @@ readback 仍是 N2 後續工作，不由兩個 ignore flags 或三工具 adverti
 canary／reset 漂移，以及 unknown positive 不 reset／不啟動 negative。
 工程 source 與重跑方式納入 repository，證據保留 Git 外；不放寬舊 probe 契約，
 亦不宣稱其餘 N1、N2、N3、訂閱登入或公司環境驗收已完成。
+
+### N1 固定 PID 上限控制
+
+新增獨立無 host mounts 的 Mac Docker fixture，PID1 單一 task、30 秒 explicit
+deadline、上限控制最多 32 次 fork，含正控制整輪最多 33 次。先完成
+single-child readiness／wait 正控制，再要求
+31 個不同 children、第 32 次 EAGAIN、current 32 及兩種本地可讀 max events 各
+增加一次；EOF 釋放後逐一 wait exit 0、current 回 1。反例涵蓋無 counter 的
+EAGAIN、counter／PID／UID／policy／mount 漂移、缺 readiness／wait、child 異常、
+未知 create／start 不重播；離線測試不在 host fork。工程 source 可重跑等價
+assertions，證據留 Git 外。這不完成全部資源隔離、N1／N2／N3 或 production 資格，
+也不由 cgroup events 推定 ancestor 的拒絕因果；公司外可獨立執行此控制。
