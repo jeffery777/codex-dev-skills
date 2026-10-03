@@ -72,6 +72,19 @@ send({'id':r['id'],'result':{'account':None}})
         self.assertEqual(len(seen), 1)
         self.assertFalse(session.unknown)
 
+    def test_public_metadata_reads_do_not_admit_config_writes_or_authentication(self):
+        methods = ('config/read', 'configRequirements/read',
+                   'experimentalFeature/list', 'mcpServerStatus/list')
+        session = self.session(f"for method in {methods!r}:\n r=read()\n assert r['method']==method\n send({{'id':r['id'],'result':{{'observation':True}}}})\n")
+        # Rejected host requests must not reach the fake peer or consume an ID.
+        for method in ('config/write', 'config/value/write', 'account/login/start',
+                       'mcpServer/oauth/login', 'experimentalFeature/enablement/set'):
+            with self.subTest(method=method), self.assertRaises(transport.TransportError) as raised:
+                session.request(method, {})
+            self.assertEqual(raised.exception.code, 'method_not_allowed')
+        for method in methods:
+            self.assertEqual(session.request(method, {}), {'observation': True})
+
     def test_malformed_duplicate_keys_nonfinite_and_bad_envelopes(self):
         cases = [('{oops', 'invalid_json'),
             ('{"method":"warning","method":"warning","params":{}}', 'invalid_json'),

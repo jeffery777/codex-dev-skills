@@ -244,6 +244,12 @@ diagnostic 仍記為缺口。公司模型不可達時仍可完成以上實作與
 也未將 C1 治理 reservation 轉為 executor claim。公司不可達不是這些本機接線
 工作的阻擋原因，不能把待公司驗收誤寫成唯一剩餘項目。
 
+匿名配置觀察另使用 public config／requirements／thread feature／MCP status
+readback；固定保留啟動前隔離與 thread 快照未資格化，未知配置在模型 turn 前
+停止。專用官方訂閱 home 的登入流程仍需採用者确认，不能抽取目前登入憑證。
+單一 ledger 的實際 execution claim／lifecycle 接線須先完成 v6 設計審查；
+v5 reservation 不因 metadata 觀察成功而取得 writer 權限。
+
 ## 設計與實作順序
 
 1. 核對公開 runtime/schema，使用有界合成資料驗證主／子代理工具循環。

@@ -84,12 +84,23 @@ Dynamic tools 仍是 experimental API；必須先 `initialize` 並宣告能力�
 unknown。Callback 必須是可信且有界的 host code；同步 primitive 不能中斷
 任意 Python callback。它不提供 JSON loader、sandbox 或 production adoption。
 
+公開的唯讀設定、requirements、feature 與 MCP status 方法另可用於匿名觀察。
+`model_app_server_metadata.py` 限制頁數、列數及 cursor，拒絕重複或未知結構；
+只保留固定來源類別計數、指定公開 feature 的實際 boolean 及必要狀態，不保留
+完整配置、路徑、provider secrets 或 requirements 內容。MCP 配置非空或未知時
+在 status/discovery 前停止，不能把空 overlay 當成已清除 lower layer。
+Feature 缺席不補為 false；即使列舉完成，仍不證明全部 handler 已停用。
+
 `verify-model-app-server.py` 使用獨立匿名 HOME／CODEX_HOME、本機 Responses
 fixture、唯讀 client directory 及單一固定 `packet_probe` 正控制。它驗證真正
 function／custom carrier 的十個負控制，包含 Code Mode、agent、權限請求、
 stdin 與未知 dynamic tool；使用精確拒絕文字及相同 turn 身分核對結果，亦核對
 CLI version、binary digest、thread configuration、sentinel 及 direct child exit。
 工具仍出現在 model-visible 宣告時，不能以宣告取代實際 handler 拒絕證據。
+Probe 亦停用 legacy `notify` 及 `agents.enabled`，CodeMode 使用單一
+`features.code_mode_host={enabled=false,disable_in_process_fallback=false}` override；
+不能使用不存在的頂層 `code_mode` key，或先 boolean 後 dotted key 而遺失
+`enabled=false`。上述只適用固定版本，須由有效 readback 另行查證。
 
 此 probe 不使用現有登入、公司或官方模型，也不提供 worker bridge、完整工具
 清冊、配置／resume 漂移、credential broker 或 production authority reader。
@@ -97,10 +108,25 @@ Receipt 固定保留 `handler_inventory_complete: false`、`production_qualified
 不得將有限矩陣提升為正式隔離資格。真實訂閱接入前，仍須逐項驗證所有 host
 callback、MCP／extensions／hooks、Code Mode helper、子代理、網路與憑證入口。
 
+固定版本的 app-server 不提供 exec 的 `--ignore-user-config`／`--ignore-rules`。
+獨立 `CODEX_HOME` 只切開 user config／auth storage；system、managed／MDM、cloud、
+project 與祖先設定仍須啟動前盤點。事後 `config/read` 排除 package defaults，
+thread feature readback 又可能重新載入配置，故 receipt 保留
+`startup_isolation_qualified: false` 與 `thread_snapshot_verified: false`。
+不能將有效設定觀察提升成啟動前防線或既有 thread 快照證明。
+
+正式訂閱接入的候選是由官方登入流程直接 provision host 管理的專用
+`CODEX_HOME`，讓設定與 worker 可寫範圍分開；不複製、symlink、抽取或轉送
+既有 `auth.json`／keyring token。公開介面未提供另一個獨立 auth root，專用
+登入與管理設定盤點尚待採用者確認及資格驗證；匿名程序不需要登入。
+來源：[固定 CLI dispatch](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/cli/src/main.rs)、
+[公開設定 schema](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/config.schema.json)、
+[原生 auth storage](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/login/src/auth/storage.rs)。
+
 可重跑命令（須允許啟動本機 loopback fixture）：
 
 ```bash
-./scripts/project-python -m unittest tests.test_model_app_server_transport tests.test_model_app_server_probe
+./scripts/project-python -m unittest tests.test_model_app_server_transport tests.test_model_app_server_metadata tests.test_model_app_server_probe
 ./scripts/project-python scripts/verify-model-app-server.py --evidence-root /private/tmp --case code_mode
 ```
 

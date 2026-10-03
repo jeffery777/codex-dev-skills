@@ -174,6 +174,7 @@ class ProbeTests(unittest.TestCase):
             'sentinel_preserved': True, 'client_unchanged': True,
             'version_verified': True, 'binary_unchanged': True,
             'fixture_stopped': True,
+            'metadata': {'feature_inventory_complete': True, 'startup_isolation_qualified': False, 'thread_snapshot_verified': False},
             'process_readback': {'protocol': 'observed', 'direct_child': 'exited', 'exit_code': 0, 'descendants': 'unknown'}}
 
     def test_pass_requires_version_binary_known_close_and_no_fixture_failure(self):
@@ -182,6 +183,9 @@ class ProbeTests(unittest.TestCase):
         mutations = [('version_verified', False), ('binary_unchanged', False),
             ('positive_control', False), ('accepted_dynamic_calls', 0),
             ('fixture_stopped', False),
+            ('metadata', None), ('metadata', {'feature_inventory_complete': False}),
+            ('metadata', {'feature_inventory_complete': True, 'startup_isolation_qualified': True, 'thread_snapshot_verified': False}),
+            ('metadata', {'feature_inventory_complete': True, 'startup_isolation_qualified': False, 'thread_snapshot_verified': True}),
             ('accepted_dynamic_calls', True), ('negative_outcome', 'unknown'),
             ('turn_status', 'failed'), ('sentinel_preserved', False), ('client_unchanged', False),
             ('process_readback', {'protocol': 'unknown', 'direct_child': 'unknown', 'descendants': 'unknown'}),
@@ -245,6 +249,7 @@ class ProbeTests(unittest.TestCase):
             return {'method': 'turn/completed', 'params': {'threadId': 'thread-1', 'turn': {'id': 'turn-1', 'status': 'completed'}}}
         session.notification.side_effect = completion
         with mock.patch.object(probe, 'server', side_effect=service), \
+                mock.patch.object(probe.metadata, 'collect', return_value={'feature_inventory_complete': True, 'startup_isolation_qualified': False, 'thread_snapshot_verified': False}), \
                 mock.patch.object(probe.subprocess, 'run', return_value=mock.Mock(returncode=0, stdout=(probe.VERSION+'\n').encode())), \
                 mock.patch.object(probe.transport, 'Session', return_value=session) as constructor:
             root, receipt = probe.run_case(self.root, executable, 'code_mode')
@@ -258,6 +263,11 @@ class ProbeTests(unittest.TestCase):
         self.assertTrue(pathlib.Path(env['CODEX_HOME']).is_dir())
         self.assertIn('shell_environment_policy.inherit="none"', constructor.call_args.args[0])
         self.assertIn('permissions.probe.network.enabled=false', constructor.call_args.args[0])
+        self.assertIn('notify=[]', constructor.call_args.args[0])
+        self.assertIn('agents.enabled=false', constructor.call_args.args[0])
+        self.assertIn('features.code_mode_host={enabled=false,disable_in_process_fallback=false}', constructor.call_args.args[0])
+        self.assertNotIn('features.code_mode_host=false', constructor.call_args.args[0])
+        self.assertNotIn('code_mode.disable_in_process_fallback=false', constructor.call_args.args[0])
         requests = session.request.call_args_list
         self.assertEqual(requests[0].args[1]['capabilities'], {'experimentalApi': True})
         self.assertEqual(requests[1].args[1]['environments'], [])
@@ -265,7 +275,7 @@ class ProbeTests(unittest.TestCase):
         self.assertEqual(requests[1].args[1]['dynamicTools'][0]['name'], 'packet_probe')
         self.assertFalse(requests[1].args[1]['allowProviderModelFallback'])
 
-    def guard_case(self, *, configuration=None, completion=None):
+    def guard_case(self, *, configuration=None, completion=None, metadata_error=None):
         """Exercise run_case guards with anonymous in-memory Session/provider."""
         executable = self.root / 'anonymous-guard-native'
         executable.write_bytes(b'never executed')
@@ -295,6 +305,8 @@ class ProbeTests(unittest.TestCase):
             return {'method': 'turn/completed', 'params': params}
         session.notification.side_effect = notification
         with mock.patch.object(probe, 'server', side_effect=service), \
+                mock.patch.object(probe.metadata, 'collect', side_effect=metadata_error,
+                    return_value={'feature_inventory_complete': True, 'startup_isolation_qualified': False, 'thread_snapshot_verified': False}), \
                 mock.patch.object(probe.subprocess, 'run', return_value=mock.Mock(returncode=0, stdout=(probe.VERSION+'\n').encode())), \
                 mock.patch.object(probe.transport, 'Session', return_value=session):
             root, receipt = probe.run_case(self.root, executable, 'code_mode')
@@ -337,6 +349,13 @@ class ProbeTests(unittest.TestCase):
         self.assertEqual(receipt['turn_status'], 'completed')
         self.assertFalse(receipt['production_qualified'])
         self.assertFalse(receipt['repository_completion'])
+
+    def test_metadata_uncertainty_stops_before_turn_and_keeps_failure_receipt(self):
+        receipt, session = self.guard_case(metadata_error=ValueError('synthetic-metadata-drift'))
+        self.assertFalse(receipt['passed'])
+        self.assertNotIn('turn_status', receipt)
+        self.assertEqual([call.args[0] for call in session.request.call_args_list], ['initialize', 'thread/start'])
+        session.notification.assert_not_called()
 
     def test_anonymous_connections_do_not_allocate_unbounded_workers(self):
         # Use the actual server class, suppress socket bind/activation, and

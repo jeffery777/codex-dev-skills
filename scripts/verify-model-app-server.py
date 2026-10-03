@@ -25,6 +25,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 sys.path.insert(0, str(ROOT / 'skills/loop-engineering/scripts'))
 import model_app_server_transport as transport
+import model_app_server_metadata as metadata
 import model_probe_tools as manifest
 
 spec = importlib.util.spec_from_file_location('appserver_boundary', ROOT / 'scripts/verify-model-tool-boundary.py')
@@ -123,6 +124,10 @@ def passed(receipt):
             and receipt.get('sentinel_preserved') is True and receipt.get('client_unchanged') is True
             and receipt.get('version_verified') is True and receipt.get('binary_unchanged') is True
             and receipt.get('fixture_stopped') is True
+            and type(receipt.get('metadata')) is dict
+            and receipt['metadata'].get('feature_inventory_complete') is True
+            and receipt['metadata'].get('startup_isolation_qualified') is False
+            and receipt['metadata'].get('thread_snapshot_verified') is False
             and type(receipt.get('process_readback')) is dict
             and type(receipt['process_readback'].get('exit_code')) is int
             and receipt['process_readback'] == {'protocol': 'observed', 'direct_child': 'exited', 'exit_code': 0, 'descendants': 'unknown'}
@@ -243,7 +248,11 @@ def run_case(parent, executable, case):
         settings = ['model_provider="fixture"', provider, 'model="gpt-6-sol"', 'model_reasoning_effort="low"',
                     'default_permissions="probe"', 'permissions.probe.filesystem={' + fs + '}',
                     'permissions.probe.network.enabled=false', 'approval_policy="never"', 'web_search="disabled"',
-                    'shell_environment_policy.inherit="none"', *['features.' + key + '=false' for key in boundary.REQUIRED_DISABLED_FEATURES]]
+                    'shell_environment_policy.inherit="none"', 'notify=[]', 'agents.enabled=false',
+                    'features.code_mode_host={enabled=false,disable_in_process_fallback=false}',
+                    *['features.' + key + '=false' for key in
+                      sorted(set(boundary.REQUIRED_DISABLED_FEATURES) | {'hooks', 'apps', 'plugins',
+                             'multi_agent_v2', 'image_generation', 'memories'}) if key != 'code_mode_host']]
         argv = [str(executable), 'app-server', '--stdio', '--strict-config']
         for value in settings:
             argv += ['-c', value]
@@ -269,6 +278,7 @@ def run_case(parent, executable, case):
                 'approvalPolicy': 'never', 'activePermissionProfile': {'id': 'probe', 'extends': None}}:
             raise ProbeError('thread-configuration-drift')
         identities['threadId'] = started['thread']['id']
+        receipt['metadata'] = metadata.collect(session, cwd=str(client), thread_id=identities['threadId'])
         turn = session.request('turn/start', {'threadId': identities['threadId'], 'environments': [],
                         'input': [{'type': 'text', 'text': 'Anonymous protocol fixture. Do not access real data.'}]})
         identities['turnId'] = turn['turn']['id']
