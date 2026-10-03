@@ -616,3 +616,29 @@ destination／context／authority gate 約束。原模型恢復不奪取既有 o
 objective uniqueness、sole-integrator 續作、完整工具與 credential 邊界、CLI／
 Desktop／bundled／Linux 及真實模型品質／context qualification 仍分開驗收；不能
 用合成完整鏈宣稱 production 或 release readiness。
+
+## N1 脫離程序及再次啟動的固定控制
+
+`verify-model-isolation.py --lifecycle` 在既有檔案／FD／socket 正反控制外，
+另使用固定 Python supervisor 留住 container PID 1。Launcher double-fork／setsid
+後退出，脫離 writer 重新由 PID 1 收養；host 讀回完整 image／command／mount／
+policy，並以 engine process inventory 核對唯一 supervisor 與其 Python child。
+Writer marker、supervisor 的 live check 與 host inventory 是不同觀察；缺任一
+控制或未完成實際嘗試不視為通過。Writer 先成功寫 private copy，再實際嘗試
+source／checkpoint／sibling 的固定 path write；每輪完成後核對 host canary。
+
+只對本 probe 新建且已讀回 exited 的 exact container ID 再次 start。第二輪
+需新的實際 StartedAt、process inventory、執行標記與完整靜態 policy readback；
+不以 RestartCount 或 PID 數字單獨證明新啟動。程序有期限並自行退出，沒有
+stop／remove、daemon restart、image pull 或使用者 repository 效果。
+
+Receipt 綁 probe／engine executable／image 及觀察到的 engine 身分，保存
+兩輪 runtime／process readback。Inspect artifacts 只保存驗證所需的白名單欄位，
+排除 `Config.Env`、labels 及不必要的 diagnostics。Writer 自己讀 private cgroup v2 的 CPU／memory／
+PID 數值，與 engine inspect 交叉核對；缺失保持 unknown。這只證明讀回數值，
+不是資源耗盡／壓力測試或完整祖先限制證明。Own-write positive 驗證相同 write
+primitive 可用，但沒有將 protected exact paths 刻意 mount 的獨立 positive。
+
+這些固定控制不能證明任意 descendant、Docker daemon／host 重啟、Codex native
+tools／config／credential 或 production 接手資格。Production registry 仍空，
+正式 N1／N2／N3／N4 仍須完整證據；實測收據與 inspect artifacts 保存在 Git 外。

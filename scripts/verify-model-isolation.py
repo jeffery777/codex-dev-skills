@@ -9,6 +9,7 @@ Exit 0 covers only the recorded synthetic cases, never production qualification.
 """
 import argparse
 import fcntl
+import hashlib
 import json
 import os
 import pathlib
@@ -159,6 +160,132 @@ PROBE_KEYS = {'reader_positive', 'rename_positive', 'link_positive', 'symlink_po
         for operation in ('read', 'write', 'rename', 'link', 'symlink')}
 
 
+# Fixed supplemental fixture, never a Codex tool or provider. The original
+# parent remains alive while a double-forked, reparented child writes its own
+# copy. Host release is bounded; no signal, stop or daemon restart is used.
+LIFECYCLE_PROBE = r'''
+import json, os, pathlib, sys, time
+work = pathlib.Path('/workspace')
+counter = work / 'run-count'
+cycle = int(counter.read_text()) + 1 if counter.exists() else 1
+if cycle not in (1, 2): raise RuntimeError('unexpected fixture cycle')
+counter.write_text(str(cycle))
+prefix = work / ('cycle-' + str(cycle))
+parent_session = os.getsid(0)
+def save(path, value):
+    temporary = pathlib.Path(str(path) + '.tmp')
+    temporary.write_text(json.dumps(value)); temporary.replace(path)
+first = os.fork()
+if first == 0:
+    os.setsid()
+    second = os.fork()
+    if second != 0: os._exit(0)
+    for _ in range(100):
+        if os.getppid() == 1: break
+        time.sleep(.01)
+    identity = dict(pid=os.getpid(), ppid=os.getppid(), sid=os.getsid(0),
+        parent_session=parent_session)
+    save(pathlib.Path(str(prefix) + '-ready.json'), identity)
+    for _ in range(300):
+        if pathlib.Path(str(prefix) + '-release').exists(): break
+        time.sleep(.05)
+    else: os._exit(21)
+    results = {}
+    own = pathlib.Path(str(prefix) + '-own')
+    own.write_text('detached-positive')
+    results['own_write'] = own.read_text() == 'detached-positive'
+    for name, target in zip(('source', 'checkpoint', 'sibling'), sys.argv[1:]):
+        try:
+            pathlib.Path(target).write_text('forbidden-detached')
+            results[name + '_write_denied'] = False
+        except OSError:
+            results[name + '_write_denied'] = not pathlib.Path(target).exists()
+    limits = {}
+    for name in ('memory.max', 'pids.max', 'cpu.max'):
+        try: limits[name] = (pathlib.Path('/sys/fs/cgroup') / name).read_text().strip()
+        except OSError: limits[name] = None
+    save(pathlib.Path(str(prefix) + '-limits.json'), limits)
+    try: membership = pathlib.Path('/proc/self/cgroup').read_text().strip()
+    except OSError: membership = None
+    save(pathlib.Path(str(prefix) + '-cgroup.json'), dict(membership=membership))
+    save(pathlib.Path(str(prefix) + '-done.json'), results)
+    os._exit(0)
+os.waitpid(first, 0)
+for _ in range(300):
+    ready = pathlib.Path(str(prefix) + '-ready.json')
+    if ready.exists(): break
+    time.sleep(.05)
+else: raise RuntimeError('detached child not observed')
+identity = json.loads(ready.read_text())
+os.kill(identity['pid'], 0)
+pathlib.Path(str(prefix) + '-live').write_text('observed')
+for _ in range(400):
+    done = pathlib.Path(str(prefix) + '-done.json')
+    if done.exists(): break
+    time.sleep(.05)
+else: raise RuntimeError('detached child completion missing')
+if not all(json.loads(done.read_text()).values()): raise RuntimeError('boundary failure')
+'''
+
+
+def validate_lifecycle_cycle(workspace, cycle, inspected, *, cpu_limit_unavailable=False):
+    """Missing controls never establish detached-process or resource success."""
+    prefix = workspace / ('cycle-' + str(cycle))
+    def read(suffix):
+        path = pathlib.Path(str(prefix) + suffix)
+        if path.is_symlink() or path.stat().st_size > 4096:
+            raise ValueError('invalid lifecycle observation')
+        return json.loads(path.read_text())
+    identity = read('-ready.json')
+    if (set(identity) != {'pid', 'ppid', 'sid', 'parent_session'}
+            or any(type(v) is not int or v <= 0 for v in identity.values())):
+        raise ValueError('invalid detached identity')
+    done = read('-done.json')
+    expected_done = {'own_write', 'source_write_denied', 'checkpoint_write_denied', 'sibling_write_denied'}
+    if set(done) != expected_done or any(type(v) is not bool for v in done.values()):
+        raise ValueError('invalid detached result')
+    limits = read('-limits.json')
+    if set(limits) != {'memory.max', 'pids.max', 'cpu.max'}:
+        raise ValueError('invalid cgroup observation')
+    cpu = limits['cpu.max']
+    parts = cpu.split() if type(cpu) is str else []
+    cpu_matches = (not cpu_limit_unavailable and len(parts) == 2
+        and all(p.isdigit() for p in parts) and int(parts[0]) == int(parts[1]) and int(parts[0]) > 0)
+    resource_outcome = 'unknown' if any(v is None for v in limits.values()) or cpu_limit_unavailable else (
+        'passed' if limits['memory.max'] == '134217728' and limits['pids.max'] == '32' and cpu_matches else 'failed')
+    membership = read('-cgroup.json')
+    if membership != {'membership': '0::/'}:
+        resource_outcome = 'unknown'
+    return {'detached_identity': identity['ppid'] == 1 and identity['sid'] != identity['parent_session'],
+        'detached_live_positive': pathlib.Path(str(prefix) + '-live').read_text() == 'observed',
+        'detached_copy_written': pathlib.Path(str(prefix) + '-own').read_text() == 'detached-positive',
+        'detached_boundary_negatives': all(done.values()),
+        'container_exited': stopped_successfully(inspected) and inspected['State'].get('Pid') == 0,
+        'resource_readback': resource_outcome, 'observed_limits': limits,
+        'observed_cgroup': membership}
+
+
+def validate_lifecycle_top(raw, active):
+    """Engine PID-namespace mapping is separate from worker marker claims."""
+    if type(raw) is not str or len(raw.encode()) > 8192:
+        raise ValueError('unbounded process readback')
+    lines = [line.split() for line in raw.splitlines()]
+    if not lines or lines[0] != ['PID', 'PPID', 'COMMAND'] or len(lines) != 3:
+        raise ValueError('unexpected process inventory')
+    processes = []
+    for row in lines[1:]:
+        if len(row) != 3 or not row[0].isdigit() or not row[1].isdigit() or row[2] != 'python3':
+            raise ValueError('unexpected fixture process')
+        processes.append((int(row[0]), int(row[1])))
+    parent = active['State']['Pid']
+    if type(parent) is not int or parent <= 0:
+        raise ValueError('missing init process identity')
+    children = [pid for pid, ppid in processes if ppid == parent and pid != parent]
+    if len(children) != 1 or len(set(pid for pid, _ in processes)) != 2 or not any(pid == parent for pid, _ in processes):
+        raise ValueError('detached runtime process not observed')
+    return dict(init_host_pid=parent, detached_host_pid=children[0])
+
+
 def read_probe_results(path):
     results = {key: 'unknown' for key in sorted(PROBE_KEYS)}
     if not path.exists():
@@ -258,12 +385,31 @@ def stopped_successfully(value):
         and state['ExitCode'] == 0 and state.get('OOMKilled') is False)
 
 
+def inspect_evidence(value):
+    """Persist only validation fields, never image environment or diagnostics."""
+    def select(obj, fields):
+        if type(obj) is not dict:
+            raise ValueError('invalid inspect evidence object')
+        return {key: obj[key] for key in fields.split() if key in obj}
+    result = select(value, 'Id Image RestartCount')
+    result['Config'] = select(value['Config'], 'Image Entrypoint Cmd User')
+    result['Config']['Healthcheck'] = select(value['Config']['Healthcheck'], 'Test')
+    result['HostConfig'] = select(value['HostConfig'],
+        'NetworkMode ReadonlyRootfs Privileged CapDrop CapAdd SecurityOpt PidsLimit Memory NanoCpus '
+        'CpuPeriod CpuQuota Tmpfs VolumesFrom Devices DeviceRequests DeviceCgroupRules RestartPolicy CgroupnsMode')
+    result['State'] = select(value['State'], 'Running Status ExitCode OOMKilled Pid StartedAt FinishedAt')
+    result['Mounts'] = [select(mount, 'Type Source Destination RW Propagation') for mount in value['Mounts']]
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--engine', choices=['docker', 'podman'], required=True)
     parser.add_argument('--image', required=True)
     parser.add_argument('--evidence-root', type=pathlib.Path, required=True)
     parser.add_argument('--cpu-limit-unavailable', action='store_true')
+    parser.add_argument('--lifecycle', action='store_true',
+        help='Also run fixed double-fork and two-start fixture; no daemon restart')
     args = parser.parse_args()
     root = args.evidence_root.resolve(strict=True)
     if any((ancestor / '.git').exists() for ancestor in [root, *root.parents]):
@@ -293,6 +439,11 @@ def main():
         if not re.fullmatch(r'sha256:[0-9a-f]{64}', image):
             raise ValueError('immutable image identity required')
         volumes = validate_image_volumes(json.loads(command('image', 'inspect', image, '--format', '{{json .Config.Volumes}}')))
+        engine_identity = {'client_version': command('--version'),
+            'engine_executable_sha256': hashlib.sha256(pathlib.Path(executable).read_bytes()).hexdigest()}
+        if args.engine == 'docker':
+            engine_identity['server_version'] = command('version', '--format', '{{.Server.Version}}')
+            engine_identity['daemon_id_sha256'] = hashlib.sha256(command('info', '--format', '{{.ID}}').encode()).hexdigest()
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
         # An unavailable daemon is an unmeasured environment, not successful
         # isolation. Retain a receipt even when no container could be started.
@@ -307,7 +458,7 @@ def main():
             'execution_outcome': 'unknown', 'error_type': type(error).__name__, 'production_qualified': False}))
         return 2
     fixture = pathlib.Path(tempfile.mkdtemp(prefix='model-isolation-', dir=root))
-    for name in ('source', 'checkpoint', 'sibling', 'a', 'b'):
+    for name in ('source', 'checkpoint', 'sibling', 'a', 'b') + (('c',) if args.lifecycle else ()):
         directory = fixture / name
         directory.mkdir()
         directory.chmod(0o777)  # Synthetic writable mounts for unprivileged UID.
@@ -324,6 +475,12 @@ def main():
             'no preexisting host hardlink is mounted; cross-boundary link creation is measured'],
         'image_volumes_replaced_with_readonly_tmpfs': sorted(volumes),
         'resource_limits': {'memory': '128m', 'pids': 32, 'cpu': None if args.cpu_limit_unavailable else 1}}
+    receipt['qualification_identity'] = {
+        'probe_sha256': hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest(),
+        'engine_executable': executable,
+        **engine_identity,
+        'fixed_tools': ['/bin/sh', 'cat', 'mv', 'ln', 'python3/socket', 'python3/os.fork/os.setsid'],
+        'image_id': image, 'endpoint_sha256': hashlib.sha256(engine_socket.encode()).hexdigest()}
     start = time.monotonic()
     host_fd = None
     worker_scripts = {}
@@ -390,7 +547,7 @@ def main():
         for name, observed in [('a', final_a), ('b', final_b)]:
             validate_worker(observed, fixture / name, image=image, script=worker_scripts[name], volumes=volumes,
                 cpu_limit_unavailable=args.cpu_limit_unavailable)
-            (fixture / (name + '-inspect.json')).write_text(json.dumps(observed, indent=2) + '\n')
+            (fixture / (name + '-inspect.json')).write_text(json.dumps(inspect_evidence(observed), indent=2) + '\n')
         receipt['probe_results'] = read_probe_results(fixture / 'b/probe-results.tsv')
         receipt['checks'] = {
             'successor_completed_while_old_active': b_exit == '0' and a_active == 'true',
@@ -407,6 +564,77 @@ def main():
             'successor_exited': b_exit == '0' and stopped_successfully(final_b)}
         results = receipt['probe_results']
         receipt['unknown_cases'] = [key for key, outcome in results.items() if outcome == 'unknown']
+        if args.lifecycle:
+            targets = [str(fixture / name / 'sentinel') for name in ('source', 'checkpoint', 'sibling')]
+            c_script = 'exec python3 -I -S -c ' + shlex.quote(LIFECYCLE_PROBE) + ' ' + ' '.join(map(shlex.quote, targets))
+            c = launch('c', c_script)
+            lifecycle_cycles = []
+            started_at = None
+            for cycle in (1, 2):
+                if cycle == 2:
+                    before = json.loads(command('inspect', c))[0]
+                    validate_worker(before, fixture / 'c', image=image, script=c_script, volumes=volumes,
+                        cpu_limit_unavailable=args.cpu_limit_unavailable)
+                    if (before['Id'] != c or not stopped_successfully(before)
+                            or before['State'].get('Pid') != 0
+                            or before['HostConfig'].get('RestartPolicy') != {'Name': 'no', 'MaximumRetryCount': 0}
+                            or before['HostConfig'].get('CgroupnsMode') != 'private'):
+                        raise ValueError('own fixture identity or exited state drift')
+                    if command('start', c) != c:
+                        raise ValueError('own fixture second start identity drift')
+                prefix = fixture / 'c' / ('cycle-' + str(cycle))
+                deadline = time.monotonic() + 8
+                while not pathlib.Path(str(prefix) + '-live').exists():
+                    if time.monotonic() > deadline:
+                        raise OSError('detached live positive unavailable')
+                    time.sleep(.05)
+                active = json.loads(command('inspect', c))[0]
+                validate_worker(active, fixture / 'c', image=image, script=c_script, volumes=volumes,
+                    cpu_limit_unavailable=args.cpu_limit_unavailable)
+                if active['Id'] != c or active['State']['Running'] is not True:
+                    raise ValueError('detached fixture not running')
+                if (active['HostConfig'].get('RestartPolicy') != {'Name': 'no', 'MaximumRetryCount': 0}
+                        or active['HostConfig'].get('CgroupnsMode') != 'private'):
+                    raise ValueError('unexpected fixture restart or cgroup namespace policy')
+                current_start = active['State'].get('StartedAt')
+                if type(current_start) is not str or not current_start or current_start == started_at:
+                    raise ValueError('fixture start identity did not advance')
+                started_at = current_start
+                top_raw = command('top', c, '-eo', 'pid,ppid,comm')
+                process_identity = validate_lifecycle_top(top_raw, active)
+                (fixture / ('c-top-' + str(cycle) + '.txt')).write_text(top_raw + '\n')
+                pathlib.Path(str(prefix) + '-release').touch(exist_ok=False)
+                exit_code = command('wait', c)
+                observed = json.loads(command('inspect', c))[0]
+                validate_worker(observed, fixture / 'c', image=image, script=c_script, volumes=volumes,
+                    cpu_limit_unavailable=args.cpu_limit_unavailable)
+                if observed['Id'] != c or exit_code != '0':
+                    raise ValueError('own fixture completion drift')
+                (fixture / ('c-inspect-' + str(cycle) + '.json')).write_text(json.dumps(inspect_evidence(observed), indent=2) + '\n')
+                measured = validate_lifecycle_cycle(fixture / 'c', cycle, observed,
+                    cpu_limit_unavailable=args.cpu_limit_unavailable)
+                measured['host_canaries_preserved'] = all(
+                    (fixture / name / 'sentinel').read_text() == name for name in ('source', 'checkpoint', 'sibling'))
+                if not measured['host_canaries_preserved']:
+                    raise ValueError('protected canary changed during own fixture cycle')
+                measured['runtime_identity'] = dict(container_id=c, started_at=current_start,
+                    finished_at=observed['State'].get('FinishedAt'), **process_identity)
+                lifecycle_cycles.append(measured)
+            receipt['lifecycle_cycles'] = lifecycle_cycles
+            receipt['limitations'] += ['two starts of only the same own fixture; no daemon or host restart',
+                'cgroup values are readback controls, not CPU/memory/PID exhaustion or resource enforcement proof',
+                'private cgroup namespace hides ancestor controls; no complete effective resource hierarchy proof',
+                'fixed double-fork writer is not native Codex or complete tool/credential qualification']
+            for cycle, measured in enumerate(lifecycle_cycles, 1):
+                for name, value in measured.items():
+                    if type(value) is bool:
+                        receipt['checks']['cycle_' + str(cycle) + '_' + name] = value
+                outcome = measured['resource_readback']
+                results['cycle_' + str(cycle) + '_resource_readback'] = outcome
+            receipt['checks']['protected_sources_after_second_start'] = all(
+                (fixture / name / 'sentinel').read_text() == name for name in ('source', 'checkpoint', 'sibling'))
+            receipt['checks']['exact_two_runs'] = (fixture / 'c/run-count').read_text() == '2'
+            receipt['unknown_cases'] = [key for key, outcome in results.items() if outcome == 'unknown']
         if not all(receipt['checks'].values()) or 'failed' in results.values():
             receipt['execution_outcome'] = 'failed'
             return 1

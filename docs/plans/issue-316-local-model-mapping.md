@@ -448,3 +448,18 @@ R2 journal 的失敗、safe finish 與多次 actual acquire 驗收 HSG：原需�
 完整 saved fixture 不等於完整 runtime qualification。公司模型／context／角色
 驗收等公司環境；官方訂閱登入、公開工具／credential 接點、production authority
 reader／sole integrator 與各入口 qualification 仍須各自證據，發行保持未就緒。
+
+### N1 固定 double-fork／兩輪啟動補充控制
+
+既有 isolation probe 的 opt-in `--lifecycle` 增加固定 double-fork／setsid／
+launcher exit、host process inventory、實際 writer 的 private cgroup 數值讀回，
+以及 exact own container 的第二次 start。每輪實際 own write 與 protected path
+嘗試、policy／mount／image、StartedAt、host canary 和自然退出均須核對；
+缺正控制或 incomplete observation 保持未通過。證據綁 executable／profile
+與當前環境身分，全部在 Git 外，重跑可重建等價 assertions。
+
+這是固定 synthetic writer 的實際 Docker 測試，不是完整 N1 qualification。
+Protected exact-path mounted positive、daemon／host restart、resource enforcement、
+任意 Codex descendant 與全部 tool／credential 邊界仍未驗證。接通 production
+authority reader／sole integrator 須先確立上述執行路徑；不能新增另一份合成
+registry 作為全域 authority，也不能由這些補充控制開啟正式派工。

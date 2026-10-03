@@ -258,6 +258,84 @@ class ContainerControlTests(unittest.TestCase):
             self.assertEqual(set(receipt['probe_results'].values()), {'unknown'})
             self.assertFalse(receipt['production_qualified'])
 
+    def lifecycle_fixture(self, directory):
+        root = pathlib.Path(directory)
+        values = {'-ready.json': {'pid': 7, 'ppid': 1, 'sid': 6, 'parent_session': 1},
+            '-done.json': dict(own_write=True, source_write_denied=True,
+                checkpoint_write_denied=True, sibling_write_denied=True),
+            '-limits.json': {'memory.max': '134217728', 'pids.max': '32', 'cpu.max': '100000 100000'},
+            '-cgroup.json': {'membership': '0::/'}}
+        for suffix, value in values.items():
+            (root / ('cycle-1' + suffix)).write_text(json.dumps(value))
+        (root / 'cycle-1-live').write_text('observed')
+        (root / 'cycle-1-own').write_text('detached-positive')
+        state = {'State': dict(Running=False, Status='exited', ExitCode=0, OOMKilled=False, Pid=0)}
+        return root, state, values
+
+    def test_detached_marker_cannot_replace_independent_runtime_process_inventory(self):
+        active = {'State': {'Pid': 100}}
+        self.assertEqual(self.probe.validate_lifecycle_top('PID PPID COMMAND\n100 20 python3\n101 100 python3', active),
+            dict(init_host_pid=100, detached_host_pid=101))
+        for raw in ['PID PPID COMMAND\n100 20 python3',
+                'PID PPID COMMAND\n100 20 python3\n101 20 python3',
+                'PID PPID COMMAND\n100 20 python3\n100 100 python3',
+                'PID PPID COMMAND\n100 20 python3\n101 100 sh',
+                'PID PPID COMMAND\n100 20 python3\n101 100 python3\n102 100 python3',
+                'x' * 8193]:
+            with self.subTest(raw=raw[:80]), self.assertRaises(ValueError):
+                self.probe.validate_lifecycle_top(raw, active)
+
+    def test_saved_inspect_preserves_validation_but_excludes_environment_and_diagnostics(self):
+        workspace, expected, value = self.worker_fixture()
+        value['Id'] = 'fixed-container'
+        value['State'] = dict(Running=False, Status='exited', ExitCode=0, OOMKilled=False,
+            Pid=0, StartedAt='synthetic-start', FinishedAt='synthetic-finish', Error='CREDENTIAL_SENTINEL')
+        value['Config']['Env'] = ['CREDENTIAL_SENTINEL=excluded']
+        value['Config']['Labels'] = {'private': 'CREDENTIAL_SENTINEL'}
+        value['Config']['Healthcheck']['unneeded'] = 'CREDENTIAL_SENTINEL'
+        value['LogPath'] = '/synthetic/CREDENTIAL_SENTINEL'
+        value['HostConfig']['unneeded'] = 'CREDENTIAL_SENTINEL'
+        value['Mounts'][0]['unneeded'] = 'CREDENTIAL_SENTINEL'
+        saved = self.probe.inspect_evidence(value)
+        self.assertNotIn('CREDENTIAL_SENTINEL', json.dumps(saved))
+        self.assertNotIn('Env', saved['Config'])
+        self.probe.validate_worker(saved, workspace, **expected)
+        self.assertTrue(self.probe.stopped_successfully(saved))
+        self.assertEqual(saved['Id'], value['Id'])
+
+    def test_detached_positive_and_cgroup_readback_have_independent_controls(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root, state, values = self.lifecycle_fixture(directory)
+            result = self.probe.validate_lifecycle_cycle(root, 1, state)
+            self.assertTrue(result['detached_identity']); self.assertEqual(result['resource_readback'], 'passed')
+            for value in [None, '0::/unmatched']:
+                (root / 'cycle-1-cgroup.json').write_text(json.dumps({'membership': value}))
+                self.assertEqual(self.probe.validate_lifecycle_cycle(root, 1, state)['resource_readback'], 'unknown')
+            (root / 'cycle-1-cgroup.json').write_text(json.dumps(values['-cgroup.json']))
+            for value, expected in [(None, 'unknown'), ('64', 'failed')]:
+                limits = dict(values['-limits.json'], **{'pids.max': value})
+                (root / 'cycle-1-limits.json').write_text(json.dumps(limits))
+                self.assertEqual(self.probe.validate_lifecycle_cycle(root, 1, state)['resource_readback'], expected)
+            (root / 'cycle-1-limits.json').write_text(json.dumps(values['-limits.json']))
+            self.assertEqual(self.probe.validate_lifecycle_cycle(root, 1, state,
+                cpu_limit_unavailable=True)['resource_readback'], 'unknown')
+
+    def test_detached_missing_attempts_or_non_detached_identity_cannot_pass(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root, state, values = self.lifecycle_fixture(directory)
+            for change in [{'ppid': 7}, {'sid': 1}]:
+                (root / 'cycle-1-ready.json').write_text(json.dumps({**values['-ready.json'], **change}))
+                self.assertFalse(self.probe.validate_lifecycle_cycle(root, 1, state)['detached_identity'])
+            (root / 'cycle-1-ready.json').write_text(json.dumps(values['-ready.json']))
+            done = dict(values['-done.json']); done.pop('source_write_denied')
+            (root / 'cycle-1-done.json').write_text(json.dumps(done))
+            with self.assertRaises(ValueError): self.probe.validate_lifecycle_cycle(root, 1, state)
+            (root / 'cycle-1-done.json').write_text(json.dumps(values['-done.json']))
+            (root / 'cycle-1-own').write_text('')
+            self.assertFalse(self.probe.validate_lifecycle_cycle(root, 1, state)['detached_copy_written'])
+            state['State']['Pid'] = 101
+            self.assertFalse(self.probe.validate_lifecycle_cycle(root, 1, state)['container_exited'])
+
 
 if __name__ == '__main__':
     unittest.main()
