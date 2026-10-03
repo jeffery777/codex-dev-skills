@@ -69,6 +69,10 @@ handler inventory、Code Mode、agent 或登入資料隔離；嚴格模式不自
 
 ## 公開 app-server 的受控工具候選
 
+Contributor、設定 guard 與 source/readback 差異另見
+[工具註冊與設定對帳設計](app-server-tool-inventory.md)。該清冊是固定 source 的
+工程設計，不能替代當次完整 registry 或 production qualification。
+
 另一條候選使用公開 `codex app-server --stdio`，由 host 接收固定 dynamic tool
 呼叫，再交給隔離 worker。固定 0.159.3 schema 的 `thread/start` 與 `turn/start`
 均明確傳入 `environments: []`；省略此欄位不能作為沒有執行環境的證據。

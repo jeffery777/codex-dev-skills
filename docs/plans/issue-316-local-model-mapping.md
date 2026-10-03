@@ -530,6 +530,9 @@ N2／startup／hook trust／credentials／production 資格。後續 sessions、
 
 ### N2 匿名 native terminal session 局部控制
 
+公司外可繼續依[app-server 工具清冊設計](../design/app-server-tool-inventory.md)
+逐項對帳 source guards、公開 readback 與實際 dispatch；清冊本身不完成資格。
+
 固定 recipe 使用兩個新 CLI／獨立 loopback provider 與匿名 homes。A 的 TTY
 terminal 先產生 READY；B 在無 terminal 的另一個 CLI 實際使用 A 的 ID，要求
 unknown。A 空 poll 不重現 READY，固定 chars 只送一次；唯一 ACK／marker 加上
