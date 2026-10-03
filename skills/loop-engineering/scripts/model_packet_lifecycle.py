@@ -30,6 +30,8 @@ KINDS = frozenset({'admit', 'acquire', 'outcome', 'resolve', 'quality-floor',
 GATED_KINDS = frozenset({'acquire', 'launch-intent', 'export-intent', 'publish', 'finish'})
 GOVERNANCE_KINDS = frozenset({'admit', 'acquire', 'outcome', 'resolve', 'quality-floor', 'cooldown', 'health'})
 PREPARED_KINDS = frozenset({'admit-prepared', 'acquire', 'prepare-intent', 'prepared'})
+BOOTSTRAP_FIXTURE_KINDS = frozenset({'admit-bootstrap-fixture', 'acquire',
+    'prepare-intent', 'prepared', 'bootstrap-intent', 'bootstrapped'})
 
 
 class LifecycleError(packets.PacketError):
@@ -299,7 +301,8 @@ def validate_ledger(ledger, packet_id):
         raise LifecycleError('lifecycle-prefix-invalid')
     seen = set()
     mode = refs[0].get('kind') if type(refs[0]) is dict else None
-    allowed = KINDS if mode == 'admit' else PREPARED_KINDS if mode == 'admit-prepared' else frozenset()
+    allowed = (KINDS if mode == 'admit' else PREPARED_KINDS if mode == 'admit-prepared'
+        else BOOTSTRAP_FIXTURE_KINDS if mode == 'admit-bootstrap-fixture' else frozenset())
     for ref in refs:
         governance._obj(ref, 'operation_id kind binding committed_at request_sha256 record_sha256 classification_sha256 authority_sha256 execution_sha256 runtime_sha256')
         packets._id(ref['operation_id']); governance._int(ref['committed_at'])
@@ -374,6 +377,7 @@ class SyntheticLifecycle:
     _admission_kind = 'admit'
     _archive_replays = False
     _current_schema1 = False
+    _extra_kinds = frozenset({'prepare-intent', 'prepared'})
 
     def __init__(self, store, reader, backend, *, alias, host_id, backend_id, policy_sha256):
         if type(store) is not packets.PacketStore:
@@ -552,7 +556,7 @@ class SyntheticLifecycle:
                 attempt = attempts[-1]; supervisor = supervisors[attempt['id']]
                 if ref['request_sha256'] != attempt['request_sha256'] or request['generation'] != attempt['generation']:
                     raise LifecycleError('lifecycle-original-request-drift')
-                if kind in ('prepare-intent', 'prepared'):
+                if kind in self._extra_kinds:
                     self._extra_projection(entry, ref, attempt, supervisor)
                 elif kind in ('launch-intent', 'export-intent'):
                     governance._obj(payload, '')

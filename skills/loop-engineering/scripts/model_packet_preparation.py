@@ -60,6 +60,8 @@ class SavedPreparationBackend:
     synthetic_only = True
     requires_runtime_descriptor = True
     requires_runtime_bootstrap = True
+    _protocol_sha = PROTOCOL_SHA
+    _recipe_sha = RECIPE_SHA
 
     def __init__(self, root):
         self.root = pathlib.Path(root)
@@ -130,8 +132,8 @@ class SavedPreparationBackend:
         plan = _artifact(raw, PLAN_FIELDS)
         governance._obj(plan['mode'], MODE_FIELDS)
         _nonce(plan['nonce']); packets._id(plan['control_id'])
-        if (plan['mode']['protocol_sha256'] != PROTOCOL_SHA
-                or plan['mode']['recipe_sha256'] != RECIPE_SHA
+        if (plan['mode']['protocol_sha256'] != self._protocol_sha
+                or plan['mode']['recipe_sha256'] != self._recipe_sha
                 or plan['mode']['backend_instance_sha256'] != self.instance_sha256):
             raise lifecycle.LifecycleError('preparation-backend-plan-drift')
         return plan

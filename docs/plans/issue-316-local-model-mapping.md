@@ -413,3 +413,18 @@ independent readback、archives／callback fence、freshness 與 immutable obser
 更新，以及 schema 1 live gate、schema 2 first official unused TTL 和 schema 3
 無 actual history 拒絕。Bootstrap／start／adoption／infra successor 尚未接線；
 Docker／provider／登入與公司驗收分開，發行評估仍保留未就緒。
+
+### B1 固定 bootstrap 接點
+
+採獨立 bootstrap fixture mode，六類 phase 只到 bootstrapped；未來完整執行模式
+須另建 packet，不沿用 B1／R1 journal authority。Input 由 sealed plan／descriptor
+純函式推導，durable intent 先於固定 saved file 效果；receipt 綁 actual committed
+intent ref 與 input，新鮮 observation 及四份獨立 exact bytes readback 才確認。
+
+驗收三份 artifact 每個寫入失敗點、partial／lost reply、phase uniqueness、
+archive-only replay、raw input／receipt／observation 綁定、私有檔案與兩個實體
+fence，以及前／後 intent 的 source／authority／context gates。任何 bootstrap
+狀態都不構成 model failure、writer stopped 或治理完成；owner／unknown 保留。
+完整啟動／runtime／export／安全 finish／同 journal HSG 接手另在新模式實作。
+公司真實模型驗收仍待公司環境；專用 CODEX_HOME 官方訂閱登入安排仍待使用者
+決策。這些證據不代表 production 或 release readiness。

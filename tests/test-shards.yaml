@@ -24,6 +24,7 @@ shards:
       - tests.test_model_container_launcher
       - tests.test_model_control_archive
       - tests.test_model_failover
+      - tests.test_model_packet_bootstrap
       - tests.test_model_packet_governance
       - tests.test_model_packet_historical_source
       - tests.test_model_packet_integrator

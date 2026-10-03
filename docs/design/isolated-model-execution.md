@@ -537,3 +537,35 @@ Bootstrap、launch、runtime observation、outcome、export、publish、finish�
 本包只建立 private saved fixture files，不啟動 worker／Docker／provider，也沒有
 credential broker、source integrator、OS／CLI／Desktop／bundled／Linux 或 production
 qualification；完整準備／啟動／接手鏈仍需後續接線。
+
+## B1 固定 bootstrap 模式（合成接線）
+
+`SyntheticBootstrapFixtureLifecycle` 使用獨立 `admit-bootstrap-fixture`、固定
+`synthetic-bootstrap-fixture-journal/B1` protocol 與 `saved-bootstrap-fixture/B1`
+recipe。六類 phase 為 admission、acquire、prepare-intent、prepared、
+bootstrap-intent、bootstrapped；與 flat／R1 的 admission、backend exact type
+及 protocol 閉集合互斥。不升級既有 journal，也不預先開放 inherited launch 或
+治理入口。後續完整執行模式必須使用新 mode 與新 packet，重新建立完整證據鏈；
+B1 的 descriptor／receipt 不能直接作為新 packet 的 bootstrap authority。
+
+Input 是已封存 plan＋descriptor 的純函式，保存有界 canonical raw bytes，沒有
+任意 command、path 或 recipe 入口。先在原 ordered journal 保存 authenticated
+bootstrap-intent，完整 readback 後，在同一 packet fence 下重建目前 gates／
+historical capability，再至多一次執行固定 saved backend。Backend 在同一 private
+directory FD 依序獨占保存 input、actual committed intent ref、receipt；receipt
+綁 input 與 intent ref digest，不回寫 descriptor 造成循環。這三份檔案的任一
+寫入失敗、partial 或 lost reply 均保留 intent／unknown／owner，不補送 bootstrap。
+
+獨立 observation 綁 input／intent／receipt 與新鮮度，另保存 immutable artifact。
+`bootstrapped` 必須將 backend 實際保存的四份 exact bytes 與原 journal projection
+比對；成功回傳值不構成 confirmation。新觀察可以另存，不改寫既有 artifacts；
+舊 operation 仍只按原 bytes／原時間 replay，不呼叫今日 callback 或重做效果。
+Backend inode／identity、private file metadata 與 packet full-ledger fence 均沿用
+R1 實體核對，新的 phase ID 不能重做效果。
+
+到 bootstrapped 為止是目前支援的 phase 範圍，不是治理 terminal 或任務完成。
+Attempt 保持 unknown、owner 保留；created／bootstrapped／absent 不證明 writer
+未啟動或已停止。Launch、runtime observation、model outcome、export、publish、
+finish、infra cancellation／successor 均拒絕。沒有 worker、Docker、provider、
+credential 或 source adoption 效果；完整同 journal HSG 多次 acquire 正向鏈、
+OS containment 及各 CLI／Desktop／bundled／Linux 入口仍待後續完整模式驗收。
