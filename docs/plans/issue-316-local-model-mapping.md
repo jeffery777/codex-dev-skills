@@ -463,3 +463,17 @@ Protected exact-path mounted positive、daemon／host restart、resource enforce
 任意 Codex descendant 與全部 tool／credential 邊界仍未驗證。接通 production
 authority reader／sole integrator 須先確立上述執行路徑；不能新增另一份合成
 registry 作為全域 authority，也不能由這些補充控制開啟正式派工。
+
+### 不需公司網路的 N2 容器路徑
+
+固定公開 Codex source 的完整工具註冊查讀支持匿名 native CLI 的 Docker 候選，
+其設計與 inventory 條件見 [匿名原生 CLI](../design/isolated-model-execution.md#匿名原生-cli-的容器候選)。
+先核對固定官方 Linux asset、版本／公開 flags、create intent／cidfile 與前後 policy；
+再用固定 provider 呼叫 native exec／patch 並讀回 scratch 與未掛載的 host canaries。
+這些是可在公司外推進的局部測量，不是全工具、N2 或 production 資格。
+
+後續須補完整 source／runtime inventory 對帳、每個允許工具與排除入口的實測、
+native sessions、巢狀 CLI、hooks、project config、escalation 與可信 observer。
+N1 剩餘隔離控制、N3 真實 backend／authority reader／整合器與官方訂閱登入資格
+亦不能由公司模型端點恢復自動完成；專用登入環境仍待採用者決策。公司環境只負責
+真實公司 target／context／能力／登入與跨 provider 的端到端驗收，不能取代上述工作。

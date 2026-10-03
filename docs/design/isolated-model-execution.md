@@ -642,3 +642,34 @@ primitive 可用，但沒有將 protected exact paths 刻意 mount 的獨立 pos
 這些固定控制不能證明任意 descendant、Docker daemon／host 重啟、Codex native
 tools／config／credential 或 production 接手資格。Production registry 仍空，
 正式 N1／N2／N3／N4 仍須完整證據；實測收據與 inspect artifacts 保存在 Git 外。
+
+## 匿名原生 CLI 的容器候選
+
+N2 另採固定 image／binary 的乾淨容器執行 `codex exec`，以容器內 loopback
+合成 Responses provider 驅動 native dispatcher。Host 不掛載 source、登入資料或
+daemon socket；唯讀 executable 與該次 private scratch 分開。入口先用 `env -i`
+清除 image environment，再提供固定匿名 HOME／CODEX_HOME。這不需要真實公司模型
+或訂閱登入，也不由 host app-server 缺少全工具 deny 入口推定不可行。
+
+此路徑仍須在啟動前盤點 image 內 system／managed／project 設定；exec 的兩個
+ignore flags 不代表忽略全部 layers。Synthetic Direct model entry 可在固定完整 catalog
+中新增專用 fixture entry，保留官方 entries；不修改官方 context defaults，亦不將
+fixture 的 context 值當作公司容量證據。真實 target 仍須核對 input／output／total、
+reasoning 與 handoff payload 預算，不能因合成 provider 接受 request 就取得資格。
+
+Inventory 必須同時綁定 source-derived registration、有效 model／features／environment、
+MCP／extensions／dynamic contributors、每輪 structured advertisement 與實際 dispatch。
+Hidden、deferred、namespace advertisement 過濾與 Code Mode 的工具可能仍保留於
+registry；namespace 省略、空字串與 `functions` 的 canonical identity 另須對帳。
+此外 native exec 內的 `apply_patch`／`applypatch` interception 與 argv0 路徑必須列為
+可達能力，不能從獨立 patch handler 未廣告推定沒有 patch 能力。
+來源：[組裝](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/spec_plan.rs#L123-L187)、
+[dispatch](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/registry.rs#L491-L600)、
+[exec interception](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs#L378-L404)、
+[argv0](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/arg0/src/lib.rs#L97-L120)。
+
+資格矩陣逐項包含允許工具正控制、canonical／carrier 負控制、native session、巢狀
+CLI、hooks／project config 與 escalation。Container 內沒有額外 CLI sandbox 的固定
+測量僅適用該 synthetic scratch；不能弱化正式 runtime 的權限契約。Provider 與 CLI
+共用 fixture UID 的 observer 不能充當可信 production exporter。版本／help 或少量
+exec／patch 成功均不完成 N2；unknown 與未測項保留，production registry 仍空。
