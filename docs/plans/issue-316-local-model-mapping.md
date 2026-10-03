@@ -527,3 +527,17 @@ advertisement、實際 project config bytes 與 container policy 身分。未知
 不接續或重播。工程 source／反例與重跑方法 tracked，採證留 Git 外；不宣稱完整
 N2／startup／hook trust／credentials／production 資格。後續 sessions、nested CLI、
 其他 hook 故障與完整 contributor／registry 對帳仍分別驗證。
+
+### N2 匿名 native terminal session 局部控制
+
+固定 recipe 使用兩個新 CLI／獨立 loopback provider 與匿名 homes。A 的 TTY
+terminal 先產生 READY；B 在無 terminal 的另一個 CLI 實際使用 A 的 ID，要求
+unknown。A 空 poll 不重現 READY，固定 chars 只送一次；唯一 ACK／marker 加上
+工具 exit 0 後，再驗證舊 ID unknown。Host 只接受原始 header 的本輪 process ID，
+對帳 UUID、固定 call sequence、當輪 continuation、model、宣告 schema 與 exact
+container policy，不宣稱完整 request／input byte 對帳；不把 thread UUID 當工具
+ID，也不從正文推定身分。Poll 是消耗式操作，
+未知結果不重播。Fixture 有整體 50 秒及 subprocess／barrier 上限，證據保存在
+Git 外、方法與反例 tracked。此包不完成 non-TTY、nested CLI、完整配置／工具
+清冊、restart、credentials 或 N2／production 資格；後續分項仍保留。公司
+模型端點恢復不能取代這些驗證，官方訂閱專用登入安排仍待原先提出的決策。

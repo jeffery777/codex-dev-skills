@@ -804,3 +804,48 @@ flags 保持 false。Source 與反例 tracked；inputs／outputs、收據、insp
 ./scripts/project-python -m unittest tests.test_model_project_hook
 ./scripts/project-python scripts/verify-model-project-hook.py --binary /absolute/path/to/codex --evidence-root /private/tmp
 ```
+
+## N2 匿名 native terminal session 控制
+
+`verify-model-native-session.py` 在新的固定匿名容器中啟動兩個獨立 CLI，
+分別使用不同 loopback provider、HOME／CODEX_HOME。只有同一份已擷取的公開
+binary 唯讀掛載及本次 private scratch 可寫；沿用固定 image、UID、pids 64、
+memory 512 MiB、network none 與 exact policy。無公司模型、登入或其他 host mounts。
+此固定測量仍使用既有匿名容器的 `danger-full-access`，不是正式 CLI 權限預設
+或 sandbox 失敗時的 fallback。
+
+工具 `session_id` 是當前 CLI Session 的 process manager ID，不是 `thread.started`
+的對話 UUID。它可在釋放後重用；只接受本輪固定 exec call 原始 continuation
+的 header 所帶 ID，再對帳各 CLI 的 UUID、固定 call sequence、當輪 continuation、
+model 與工具宣告；不宣稱完整 request 或所有 input 的 byte 對帳。
+只解析第一個 `Output:` 之前的 native string header，不從正文的假 header
+擷取身分；非本包的 MCP carrier 拒收。工具宣告完整比對既有三項 identity、
+namespace、type 與 schema，不能把 advertisement 當作完整 registry。
+
+A 只啟動一個有 20 秒期限的 TTY 程式，先產生 `SESSION_READY` 並等待固定一行。
+B 在尚無 terminal 的另一個 CLI 中，實際嘗試向 A 的 ID 寫入不同控制字串，
+須收到 exact unknown-process error。A 隨後空 poll，不能再收到已消耗的 READY；
+只傳送一次核准的固定輸入，要求唯一 ACK 與 scratch marker。若該回應仍 running，
+只允許一次有界 final poll；必須讀回 exit 0 且無 running ID，下一次同 ID poll
+才要求 unknown。不能以 ACK、背景 end event 或 CLI shutdown 取代自然工具退出。
+Parser 保留原始正文；chars 與 final poll 合併後只正規化一次 CRLF，包含換行
+或 ACK 跨回應切分；額外的 CR 必須在所有切分位置一致拒絕。
+合併內容只能是一次固定 ACK，及至多一次固定輸入的 TTY echo。
+
+B 先到達 provider，A 身分與 B exact continuation 以有界 barrier 交接；
+不依 assistant 完成文字解開 barrier。A／B subprocess 分別限 35／30 秒，
+整個 fixture 的 PID 1 使用明確 SIGALRM handler，50 秒即失敗退出；SSE idle
+15 秒不是整體期限。Normal flow 至多八個 requests、兩次空 poll，不重送 exec、
+chars 或未知結果。Create／start unknown 只記錄及讀回 exact CID，不 replay。
+
+這只量測固定 TTY、消耗式 poll、一次輸入、自然退出、跨 CLI 與 closed-ID
+正反控制。Non-TTY stdin、nested CLI、截斷、完整 config／registry、credentials、
+restart 與可信 production observer 仍另行驗證；provider／CLI／terminal 共用 UID，
+`native_session_qualified` 與 `production_qualified` 固定 false。工程 source、
+反例與方法 tracked；raw requests／outputs、收據及 inspect 留在 Git 外。重跑
+重建同一組 assertions，session／thread IDs、ports、CID 與時間可不同。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_native_session
+./scripts/project-python scripts/verify-model-native-session.py --binary /absolute/path/to/codex --evidence-root /private/tmp
+```
