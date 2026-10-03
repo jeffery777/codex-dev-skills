@@ -32,6 +32,9 @@ GOVERNANCE_KINDS = frozenset({'admit', 'acquire', 'outcome', 'resolve', 'quality
 PREPARED_KINDS = frozenset({'admit-prepared', 'acquire', 'prepare-intent', 'prepared'})
 BOOTSTRAP_FIXTURE_KINDS = frozenset({'admit-bootstrap-fixture', 'acquire',
     'prepare-intent', 'prepared', 'bootstrap-intent', 'bootstrapped'})
+EXECUTED_KINDS = frozenset({'admit-bootstrap', 'acquire', 'prepare-intent', 'prepared',
+    'bootstrap-intent', 'bootstrapped', 'outcome', 'resolve', 'quality-floor', 'cooldown',
+    'health', 'launch-intent', 'observe', 'export-intent', 'publish', 'finish'})
 
 
 class LifecycleError(packets.PacketError):
@@ -302,7 +305,8 @@ def validate_ledger(ledger, packet_id):
     seen = set()
     mode = refs[0].get('kind') if type(refs[0]) is dict else None
     allowed = (KINDS if mode == 'admit' else PREPARED_KINDS if mode == 'admit-prepared'
-        else BOOTSTRAP_FIXTURE_KINDS if mode == 'admit-bootstrap-fixture' else frozenset())
+        else BOOTSTRAP_FIXTURE_KINDS if mode == 'admit-bootstrap-fixture'
+        else EXECUTED_KINDS if mode == 'admit-bootstrap' else frozenset())
     for ref in refs:
         governance._obj(ref, 'operation_id kind binding committed_at request_sha256 record_sha256 classification_sha256 authority_sha256 execution_sha256 runtime_sha256')
         packets._id(ref['operation_id']); governance._int(ref['committed_at'])
@@ -378,6 +382,7 @@ class SyntheticLifecycle:
     _archive_replays = False
     _current_schema1 = False
     _extra_kinds = frozenset({'prepare-intent', 'prepared'})
+    _launch_stage = 'reserved'
 
     def __init__(self, store, reader, backend, *, alias, host_id, backend_id, policy_sha256):
         if type(store) is not packets.PacketStore:
@@ -406,6 +411,21 @@ class SyntheticLifecycle:
         raise LifecycleError('lifecycle-operation-unavailable')
 
     def _extra_confirmation(self, fd, ledger, entry, now):
+        pass
+
+    def _before_governance(self, entry, attempts, supervisors):
+        pass
+
+    def _launch_projection(self, entry, ref, attempt, supervisor):
+        pass
+
+    def _observe_allowed(self, stage):
+        return stage != 'reserved'
+
+    def _inspect_runtime(self, fd, ledger, attempt):
+        return self.backend.inspect(copy.deepcopy(ledger['supervisors'][attempt['id']]['binding']))
+
+    def _runtime_projection(self, proof, supervisor):
         pass
 
     def _locator(self, objective, identity):
@@ -462,6 +482,7 @@ class SyntheticLifecycle:
             if kind in self._gated_kinds and snapshot is not None and 'revoked' in snapshot['blocked_reasons']:
                 raise LifecycleError('lifecycle-governance-revoked')
             if kind in GOVERNANCE_KINDS or kind == self._admission_kind:
+                self._before_governance(entry, attempts, supervisors)
                 gov_entries.append(self._governance_entry(entry))
                 snapshot = governance.project(gov_entries, now=ref['committed_at'])
             if kind == self._admission_kind:
@@ -560,16 +581,19 @@ class SyntheticLifecycle:
                     self._extra_projection(entry, ref, attempt, supervisor)
                 elif kind in ('launch-intent', 'export-intent'):
                     governance._obj(payload, '')
-                    required = 'reserved' if kind == 'launch-intent' else 'observed'
+                    required = self._launch_stage if kind == 'launch-intent' else 'observed'
                     if supervisor['stage'] != required:
                         raise LifecycleError('lifecycle-intent-already-established')
+                    if kind == 'launch-intent':
+                        self._launch_projection(entry, ref, attempt, supervisor)
                     supervisor['stage'] = kind
                     attempt['status'] = 'unknown'
                 elif kind == 'observe':
                     governance._obj(payload, '')
                     proof = self._runtime(entry['evidence'].runtime, supervisor['binding'], ref['committed_at'], state['policy']['freshness_seconds'])
-                    if supervisor['stage'] == 'reserved':
+                    if not self._observe_allowed(supervisor['stage']):
                         raise LifecycleError('lifecycle-runtime-not-launched')
+                    self._runtime_projection(proof,supervisor)
                     supervisor['runtime_sha256'] = ref['runtime_sha256']
                     safe = proof['runtime_state'] in ('stopped', 'isolated') and proof['external_effects'] == 'excluded'
                     if supervisor['stage'] in ('launch-intent', 'observed'):
@@ -587,6 +611,7 @@ class SyntheticLifecycle:
                     proof = self._runtime(entry['evidence'].runtime, supervisor['binding'], ref['committed_at'], state['policy']['freshness_seconds'])
                     if proof['runtime_state'] != 'stopped' or proof['external_effects'] != 'excluded':
                         raise LifecycleError('lifecycle-publish-not-stopped')
+                    self._runtime_projection(proof,supervisor)
                     patch = trust._read(fd, 'lifecycle-patch-' + payload['patch_sha256'], packets.MAX_PATCH)
                     if packets.digest(patch) != payload['patch_sha256']:
                         raise LifecycleError('lifecycle-patch-drift')
@@ -607,6 +632,7 @@ class SyntheticLifecycle:
                     if payload['owner_id'] != owner['owner_id'] or payload['epoch'] != owner['epoch']:
                         raise LifecycleError('lifecycle-release-owner-drift')
                     proof = self._runtime(entry['evidence'].runtime, supervisor['binding'], ref['committed_at'], state['policy']['freshness_seconds'])
+                    self._runtime_projection(proof,supervisor)
                     quarantined = (supervisor['stage'] in ('observed', 'export-intent') and payload['result'] == 'failed'
                         and proof['runtime_state'] == 'isolated' and attempt['status'] == 'observed')
                     if (proof['external_effects'] != 'excluded' or not quarantined
@@ -718,7 +744,8 @@ class SyntheticLifecycle:
                 for k in ('input_tokens', 'output_tokens', 'reasoning_tokens', 'margin_tokens')):
             raise LifecycleError('lifecycle-current-context-reservation-shrunk')
 
-    def _effect_gate(self, fd, ledger, state, request, now, kind, *, execution_raw=None, historical_caps=None):
+    def _effect_gate(self, fd, ledger, state, request, now, kind, *, execution_raw=None, historical_caps=None,
+                     current_entry=None):
         # A claim is not an enduring source/containment/authority lease.
         # Recheck under the same fence immediately before effects or adoption.
         fence = self._fence(fd)
@@ -737,7 +764,7 @@ class SyntheticLifecycle:
         retained = ledger['attempts'] if kind == 'acquire' else ledger['attempts'][:-1]
         for attempt in retained:
             binding = ledger['supervisors'][attempt['id']]['binding']
-            proof = self._runtime(self.backend.inspect(copy.deepcopy(binding)), binding, now,
+            proof = self._runtime(self._inspect_runtime(fd,ledger,attempt), binding, now,
                 ledger['governance']['policy']['freshness_seconds'])
             if proof['runtime_state'] not in ('stopped', 'isolated') or proof['external_effects'] != 'excluded':
                 raise LifecycleError('lifecycle-retained-writer-unconfirmed')
@@ -825,14 +852,14 @@ class SyntheticLifecycle:
                 self._source(request)
                 for attempt in ledger['attempts']:
                     old = ledger['supervisors'][attempt['id']]['binding']
-                    proof = self._runtime(self.backend.inspect(copy.deepcopy(old)), old, now, current['policy']['freshness_seconds'])
+                    proof = self._runtime(self._inspect_runtime(fd,ledger,attempt), old, now, current['policy']['freshness_seconds'])
                     if proof['runtime_state'] not in ('stopped', 'isolated') or proof['external_effects'] != 'excluded':
                         raise LifecycleError('lifecycle-retained-writer-unconfirmed')
             elif kind in ('observe', 'publish', 'finish'):
                 if not ledger['attempts']:
                     raise LifecycleError('lifecycle-owner-required')
                 runtime_binding = ledger['supervisors'][ledger['attempts'][-1]['id']]['binding']
-                actual = self.backend.inspect(copy.deepcopy(runtime_binding))
+                actual = self._inspect_runtime(fd,ledger,ledger['attempts'][-1])
                 if type(actual) is not bytes or actual != evidence.runtime:
                     raise LifecycleError('lifecycle-current-runtime-unconfirmed')
                 proof = self._runtime(actual, runtime_binding, now, current['policy']['freshness_seconds'])
@@ -877,7 +904,8 @@ class SyntheticLifecycle:
             fence._snapshot()
             if kind in self._gated_kinds:
                 self._effect_gate(fd, ledger, projected, request, now, kind,
-                    execution_raw=evidence.execution if kind == 'acquire' else None, historical_caps=historical_caps)
+                    execution_raw=evidence.execution if kind == 'acquire' else None, historical_caps=historical_caps,
+                    current_entry=entry)
             self.store._write(fd, updated, _lifecycle_token=_WRITE_TOKEN)
             self._read(fd, now); post = self._fence(fd)
             # Intent is durable before the only side effect. Retry/restart never
@@ -921,7 +949,7 @@ class SyntheticLifecycle:
         def export(fd, ledger):
             attempt = ledger['attempts'][-1]; binding = ledger['supervisors'][attempt['id']]['binding']
             fence = self._fence(fd)
-            proof = self._runtime(self.backend.inspect(copy.deepcopy(binding)), binding, now, ledger['governance']['policy']['freshness_seconds'])
+            proof = self._runtime(self._inspect_runtime(fd,ledger,attempt), binding, now, ledger['governance']['policy']['freshness_seconds'])
             if proof['runtime_state'] != 'stopped' or proof['external_effects'] != 'excluded':
                 raise LifecycleError('lifecycle-export-not-stopped')
             request = governance._parse(trust._read(fd, 'lifecycle-' + attempt['request_sha256'] + '.json', governance.MAX_EVIDENCE))

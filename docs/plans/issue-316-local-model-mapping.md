@@ -428,3 +428,23 @@ fence，以及前／後 intent 的 source／authority／context gates。任何 b
 完整啟動／runtime／export／安全 finish／同 journal HSG 接手另在新模式實作。
 公司真實模型驗收仍待公司環境；專用 CODEX_HOME 官方訂閱登入安排仍待使用者
 決策。這些證據不代表 production 或 release readiness。
+
+### R2 完整 saved-fixture 接點
+
+新 mode／packet 串接 preparation、bootstrap、launch、獨立 runtime、export、
+publish 與 safe finish，不遷移 B1／R1／flat authority。Launch binding 將原 acquire
+與 immutable artifact chain／actual committed launch ref 綁定；原六類與 execution
+schemas 不改。只有固定 running genesis 確認 fixture start，infra partial 不能
+補造 genesis、model failure 或 successor authority。
+
+Runtime 讀全部 bounded immutable events，包含 publish／finish 原 proof 的
+monotonic frontier；缺失尾端、gap、fork、partial 或舊 mode proof 均拒絕。
+驗收原 mode projection／replay 不變、四效果提交前後／lost reply／phase uniqueness、
+兩個實體 fence／current gates、反 rollback 及保留 unknown／owner。以同一真實
+R2 journal 的失敗、safe finish 與多次 actual acquire 驗收 HSG：原需求 tier 不同，
+取最高需求的正反案例，保留 quality／service 預算、floors 與 predecessor；來源
+模型恢復不得 preempt 接手者。First-official schema 2 另走完整合成鏈。
+
+完整 saved fixture 不等於完整 runtime qualification。公司模型／context／角色
+驗收等公司環境；官方訂閱登入、公開工具／credential 接點、production authority
+reader／sole integrator 與各入口 qualification 仍須各自證據，發行保持未就緒。

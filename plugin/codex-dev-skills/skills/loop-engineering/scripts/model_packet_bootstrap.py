@@ -19,7 +19,7 @@ OBSERVATION_FIELDS = ('schema_version domain input_sha256 receipt_sha256 '
     'intent_ref_sha256 state observed_at expires_at')
 
 
-def _input(plan_raw, descriptor_raw):
+def _input(plan_raw, descriptor_raw, *, domain=DOMAIN):
     plan = preparation._artifact(plan_raw, preparation.PLAN_FIELDS)
     descriptor = preparation._artifact(descriptor_raw, preparation.DESCRIPTOR_FIELDS)
     expected = dict(schema_version=1, plan_sha256=packets.digest(plan_raw),
@@ -28,14 +28,14 @@ def _input(plan_raw, descriptor_raw):
     packets._id(descriptor['instance_id'])
     if packets.canonical(descriptor) != packets.canonical(expected):
         raise lifecycle.LifecycleError('bootstrap-descriptor-chain-drift')
-    raw = packets.canonical(dict(schema_version=1, domain=DOMAIN,
+    raw = packets.canonical(dict(schema_version=1, domain=domain,
         plan_bytes=plan_raw.decode(), descriptor_bytes=descriptor_raw.decode()))
     preparation._artifact(raw, INPUT_FIELDS)
     return raw
 
 
-def _receipt(input_raw, intent_ref_raw):
-    return packets.canonical(dict(schema_version=1, domain=DOMAIN,
+def _receipt(input_raw, intent_ref_raw, *, domain=DOMAIN):
+    return packets.canonical(dict(schema_version=1, domain=domain,
         input_sha256=packets.digest(input_raw), intent_ref_sha256=packets.digest(intent_ref_raw),
         state='bootstrapped'))
 
@@ -44,6 +44,7 @@ class SavedBootstrapBackend(preparation.SavedPreparationBackend):
     """Private immutable fixture files, never an OS or model execution proof."""
     _protocol_sha = PROTOCOL_SHA
     _recipe_sha = RECIPE_SHA
+    _domain = DOMAIN
 
     def __init__(self, root):
         super().__init__(root)
@@ -51,12 +52,12 @@ class SavedBootstrapBackend(preparation.SavedPreparationBackend):
 
     def _bootstrap_input(self, raw):
         value = preparation._artifact(raw, INPUT_FIELDS)
-        if value['domain'] != DOMAIN:
+        if value['domain'] != self._domain:
             raise lifecycle.LifecycleError('bootstrap-domain-drift')
         plan_raw = preparation._raw(value['plan_bytes'])
         descriptor_raw = preparation._raw(value['descriptor_bytes'])
         plan = self._plan(plan_raw)
-        if raw != _input(plan_raw, descriptor_raw):
+        if raw != _input(plan_raw, descriptor_raw, domain=self._domain):
             raise lifecycle.LifecycleError('bootstrap-input-not-derived')
         return plan, descriptor_raw
 
@@ -85,7 +86,7 @@ class SavedBootstrapBackend(preparation.SavedPreparationBackend):
                 raise lifecycle.LifecycleError('bootstrap-independent-descriptor-drift')
             self._save(fd, 'bootstrap-input-'+control+'.json', input_raw)
             self._save(fd, 'bootstrap-intent-'+control+'.json', intent_ref_raw)
-            self._save(fd, 'bootstrap-receipt-'+control+'.json', _receipt(input_raw, intent_ref_raw))
+            self._save(fd, 'bootstrap-receipt-'+control+'.json', _receipt(input_raw, intent_ref_raw, domain=self._domain))
         self.bootstrap_count += 1
         return None
 
@@ -99,10 +100,10 @@ class SavedBootstrapBackend(preparation.SavedPreparationBackend):
             actual = self._read(fd, 'bootstrap-input-'+control+'.json')
             intent = self._read(fd, 'bootstrap-intent-'+control+'.json')
             receipt = self._read(fd, 'bootstrap-receipt-'+control+'.json')
-            if (actual != input_raw or receipt != _receipt(input_raw, intent)
+            if (actual != input_raw or receipt != _receipt(input_raw, intent, domain=self._domain)
                     or self._read(fd, 'descriptor-'+control+'.json') != descriptor_raw):
                 raise lifecycle.LifecycleError('bootstrap-saved-chain-drift')
-            proof = packets.canonical(dict(schema_version=1, domain=DOMAIN,
+            proof = packets.canonical(dict(schema_version=1, domain=self._domain,
                 input_sha256=packets.digest(input_raw), receipt_sha256=packets.digest(receipt),
                 intent_ref_sha256=packets.digest(intent), state='bootstrapped',
                 observed_at=now, expires_at=now+freshness))
@@ -133,6 +134,7 @@ class SyntheticBootstrapFixtureLifecycle(preparation.SyntheticPreparedLifecycle)
     _gated_kinds = frozenset({'acquire', 'prepare-intent', 'prepared', 'bootstrap-intent', 'bootstrapped'})
     _extra_kinds = frozenset({'prepare-intent', 'prepared', 'bootstrap-intent', 'bootstrapped'})
     _admission_kind = 'admit-bootstrap-fixture'
+    _domain = DOMAIN
 
     def _validate_backend(self, backend):
         if type(backend) is not SavedBootstrapBackend:
@@ -153,7 +155,7 @@ class SyntheticBootstrapFixtureLifecycle(preparation.SyntheticPreparedLifecycle)
                 raise lifecycle.LifecycleError('bootstrap-prepared-required')
             self._current(ledger, now, 'read')
             saved = supervisor['preparation']
-            raw = _input(saved['plan_bytes'].encode(), saved['descriptor_bytes'].encode())
+            raw = _input(saved['plan_bytes'].encode(), saved['descriptor_bytes'].encode(), domain=self._domain)
             fence._snapshot()
             return raw
 
@@ -167,7 +169,7 @@ class SyntheticBootstrapFixtureLifecycle(preparation.SyntheticPreparedLifecycle)
                 raise lifecycle.LifecycleError('bootstrap-prepared-required')
             saved = supervisor['preparation']
             raw = preparation._raw(payload['input_bytes'])
-            if raw != _input(saved['plan_bytes'].encode(), saved['descriptor_bytes'].encode()):
+            if raw != _input(saved['plan_bytes'].encode(), saved['descriptor_bytes'].encode(), domain=self._domain):
                 raise lifecycle.LifecycleError('bootstrap-intent-already-established-or-drift')
             supervisor.update(stage=kind, bootstrap=dict(input_bytes=raw.decode(),
                 intent_ref_bytes=packets.canonical(ref).decode(), receipt_bytes=None, observation_bytes=None))
@@ -178,11 +180,11 @@ class SyntheticBootstrapFixtureLifecycle(preparation.SyntheticPreparedLifecycle)
             saved = supervisor['bootstrap']
             receipt = preparation._raw(payload['receipt_bytes'])
             observation = preparation._raw(payload['observation_bytes'])
-            if receipt != _receipt(saved['input_bytes'].encode(), saved['intent_ref_bytes'].encode()):
+            if receipt != _receipt(saved['input_bytes'].encode(), saved['intent_ref_bytes'].encode(), domain=self._domain):
                 raise lifecycle.LifecycleError('bootstrap-receipt-binding-drift')
             proof = preparation._artifact(observation, OBSERVATION_FIELDS)
             governance._int(proof['observed_at']); governance._int(proof['expires_at'])
-            expected = dict(schema_version=1, domain=DOMAIN,
+            expected = dict(schema_version=1, domain=self._domain,
                 input_sha256=packets.digest(saved['input_bytes'].encode()), receipt_sha256=packets.digest(receipt),
                 intent_ref_sha256=packets.digest(saved['intent_ref_bytes'].encode()), state='bootstrapped',
                 observed_at=proof['observed_at'], expires_at=proof['expires_at'])

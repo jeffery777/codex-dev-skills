@@ -569,3 +569,50 @@ Attempt 保持 unknown、owner 保留；created／bootstrapped／absent 不證�
 finish、infra cancellation／successor 均拒絕。沒有 worker、Docker、provider、
 credential 或 source adoption 效果；完整同 journal HSG 多次 acquire 正向鏈、
 OS containment 及各 CLI／Desktop／bundled／Linux 入口仍待後續完整模式驗收。
+
+## R2 完整執行模式（saved fixture 接線）
+
+`SyntheticExecutedLifecycle` 在新 packet 使用 `admit-bootstrap`、固定 R2 protocol／
+recipe／domain 與 explicit phase 閉集合；flat／R1／B1 journal 均拒絕。共用 private
+hooks 的預設行為不改舊模式；B1 仍只到 bootstrapped。R2 原六類 evidence、
+execution schema 1／2／3 與 acquire binding 原樣封存。只有新的 launch-intent
+將 supervisor binding 推導成完整鏈，另保留 acquisition binding；鏈包含原
+plan／descriptor／input／bootstrap intent／receipt 及 actual committed launch ref
+digests。沒有 descriptor 回填或任意 worker command 入口。
+
+Launch 先保存 immutable artifact，再由同一次效果獨占建立 running／excluded
+genesis。只有此 running genesis 與完整 saved chain 才構成 fixture 已啟動；
+launch artifact 單獨存在時 inspect／後續 state observation 拒絕，不補造 genesis。
+這是 saved fixture 定義，不是 OS process 或 model service 啟動證據。模型 outcome
+須已有 independently read-back、authenticated runtime observation；bootstrap／
+partial launch 的 infra 不確定狀態不改成 service／quality failure。
+
+可信 host 另保存 bounded immutable runtime events，最多 64 筆。每筆綁完整
+runtime binding、launch artifact、sequence 與 predecessor；inspection 讀取全部
+實際檔案，拒絕 gap／分叉／partial／偽造 genesis，不採 writable head。
+獨立 schema 2 runtime proof 使用 R2 domain、ordered event hashes 與最新 digest；
+observe／publish／finish 的原始 proofs 都在 journal 投影建立 monotonic frontier。
+目前及 retained-writer inspection 必須包含此完整 frontier，不能以尾端遺失後的
+舊 stopped prefix 產生新鮮 authority。Archive replay 仍只用原 bytes／原時間，
+frontier 欄位篡改會因 projection 不符拒絕。Fixture inspection 的 host clock 與
+60 秒 expiry 不代表 OS 停止租約或公司模型 freshness。
+
+Prepare／bootstrap／launch／export 都先持久化 intent，再重新檢查 source、目前
+authority／qualification／context 與真正 journal 歷史能力。在同一 packet fence
+和 backend FD／inode／identity 下執行固定檔案效果；lost reply 只 reconcile，
+新 operation 不能重做 phase。Export 只建立固定空 patch，publish／finish 在其他
+reader gates 後再獨立核對當前 runtime exact bytes；running／unknown／未排除外部
+效果不能發佈或釋放 owner。沒有原生 source 整合器接線或實際 source adoption。
+
+Stopped 且 independently sealed output 才能保存 checkpoint；failed 且 isolated 的
+fixture 僅 quarantine 並沿用 predecessor。既有治理 event／safe finish／下一次
+actual acquire 保持同 journal、預算、stage／tier floors 與 source identity。
+Schema 3 HSG 使用所有真實原 acquire 六類 bytes 及其最高 tier，不接受 B1／flat
+歷史匯入或手製 acquire ref；schema 2 first-official unused TTL 例外仍受目前完整
+destination／context／authority gate 約束。原模型恢復不奪取既有 owner。
+
+本模式固定建立 private fixture files／空 patch，不啟動 worker、Docker 或任何
+模型，不載入憑證、不調用 provider。OS containment、production reader／canonical
+objective uniqueness、sole-integrator 續作、完整工具與 credential 邊界、CLI／
+Desktop／bundled／Linux 及真實模型品質／context qualification 仍分開驗收；不能
+用合成完整鏈宣稱 production 或 release readiness。
