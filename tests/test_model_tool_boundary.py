@@ -352,7 +352,7 @@ class BoundaryTests(unittest.TestCase):
         self.assertFalse(probe.argument_parser().parse_args(args).allow_normalized_unified_exec_fixture)
         self.assertTrue(probe.argument_parser().parse_args(
             args+['--allow-normalized-unified-exec-fixture']).allow_normalized_unified_exec_fixture)
-        with tempfile.TemporaryDirectory(dir='/private/tmp') as directory:
+        with tempfile.TemporaryDirectory() as directory:
             base = pathlib.Path(directory).resolve()
             for observation in [False, True]:
                 argv = ['--evidence-root', str(base), '--metadata-model', 'native-model']
@@ -360,11 +360,13 @@ class BoundaryTests(unittest.TestCase):
                 receipt = successful_receipt(observation)
                 receipt['outcome'] = 'measured-case-passed' if observation else 'passed'
                 with mock.patch.object(probe.sys, 'platform', 'darwin'), \
+                        mock.patch.object(pathlib.Path, 'is_relative_to', return_value=True) as private_tmp, \
                         mock.patch.object(probe.shutil, 'which', return_value=sys.executable), \
                         mock.patch.object(probe, 'load_broker', return_value=(mock.Mock(), pathlib.Path(sys.executable))), \
                         mock.patch.object(probe, 'run_case', return_value=(receipt, base/'synthetic.json')) as run, \
                         mock.patch('builtins.print') as output:
                     self.assertEqual(probe.main(argv), 0)
+                private_tmp.assert_called_once_with('/private/tmp')
                 self.assertEqual([call.args[1] for call in run.call_args_list], list(probe.CASES))
                 self.assertTrue(all(call.kwargs == {'allow_normalized_unified_exec_fixture': observation}
                     for call in run.call_args_list))
