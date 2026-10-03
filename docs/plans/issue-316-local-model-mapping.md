@@ -246,7 +246,7 @@ diagnostic 仍記為缺口。公司模型不可達時仍可完成以上實作與
 
 匿名配置觀察另使用 public config／requirements／thread feature／MCP status
 readback；固定保留啟動前隔離與 thread 快照未資格化，未知配置在模型 turn 前
-停止。專用官方訂閱 home 的登入流程仍需採用者确认，不能抽取目前登入憑證。
+停止。專用官方訂閱 home 的登入流程仍需採用者確認，不能抽取目前登入憑證。
 單一 ledger 的實際 execution claim／lifecycle 接線須先完成 v6 設計審查；
 v5 reservation 不因 metadata 觀察成功而取得 writer 權限。
 
@@ -334,3 +334,19 @@ artifact 交換機制。Security 原生 scan 收據留在工具管理位置，�
 候選紀錄與 publication truth 分離。Commit/content push／PR、exact-head、
 merge、tag/Release、安裝與清理各自核對授權與 gate。既有 memory production、
 M2／V3-C gates 維持不變。
+
+
+### v6 前置：共用持鎖規劃接口
+
+`PacketStore.planning_context(fd)` 只在 caller 已取得同一 store lock 時建立
+host-only context；UG／HSG／RUG 與 V2 classifier 共用同一 snapshot，不再次
+取鎖。Context 離開交易即失效，前後核對原始 ledger bytes、store、完整 root／ancestor、lock FD／path 與 directory
+identity；沒有 JSON loader，也不授予 dispatch authority。既有 v2–v4 證據
+仍按原規則核對；v5／v6 尚未接入，不能把這一前置接口當成 execution claim。
+
+下一包採單一 ordered journal 的 v6 全部 synthetic lifecycle：原治理 request
+與實際 execution request 分別保存；acquire、once-launch、unknown readback、
+checkpoint、terminal release 及 successor 共用同一歷史與預算。正常 completed
+先作為 objective terminal，不能偽造 failure 或清空 history。非空 v2–v5 不遷移，
+沒有可信 objective locator 或停止／隔離證據就拒絕接手。完整流程與 crash、
+revocation、alias、原始 bytes 漂移負例須同包審查，production registry 保持空。

@@ -332,3 +332,28 @@ Schema2／3 dispatch 與 proof bytes 保持唯讀，不補造治理 snapshot。L
 缺證據回報 unavailable，不能視為零次失敗或建立替代 packet。所有能修改新
 ledger 的舊入口必須遵守 ownership／CAS，否則拒絕；整合後續作 blocker 保留。
 首包排除跨 packet 共享 health、反向 stage 恢復及既有非空 packet 治理遷移。
+
+
+## 交易持鎖的規劃接口
+
+`PacketStore.planning_context(fd)` 提供 host-only、交易限定的 legacy snapshot。
+Caller 必須持有該 store 的既有 lock；V2 classifier、unused／historical source
+與 resolved-unknown guards 在同一 context 規劃，不另取鎖。每次入口及完成後
+重新走完整 root／ancestor nofollow，核對有效 lock lease、仍持有的 lock FD／
+inode、當前 lock path、directory identity 與原始 ledger bytes；copy 回傳值不能
+更改 snapshot。離開交易、同 operation 的 prefix 漂移、換 store 或 path 置換
+均拒絕。Context 不是 authority，也不進 JSON、公開 CLI 或 production registry。
+
+這個前置接口仍只讀既有 v2–v4。v5 保守拒絕；v6 實際接線須有完整原始 journal
+回放與 projection 比對後的新 context。Acquire 必須在唯一一次持鎖交易內核對
+完整 history、目前權限／資格／floors／cooldown，使用原 actual execution request
+選模，再 fsync 原始 bytes 並原子提交 owner、attempt、supervisor。不能在鎖內
+呼叫會自行取鎖的 claim、reserve_runtime 或 governance append。
+
+v6 首包必須包含 acquire → once-launch → unknown reconcile → checkpoint →
+release → qualified successor，並驗證 lost reply／crash 不重播 launch 或 export。
+原治理 request 與 actual execution request 有各自 digest；歷史以明確 attempt ID
+及原 acquire prefix 關聯，不用 failure events 的 list index 代替 generation。
+正常 completed 為 objective terminal，不造 failure 或重設預算。撤銷後可信 host
+仍能記錄 containment／unknown，不能啟動新模型或採用結果。非空 v2–v5、dirty
+source、未知 external effects、缺失隔離或原始 evidence 都保留 blocked。

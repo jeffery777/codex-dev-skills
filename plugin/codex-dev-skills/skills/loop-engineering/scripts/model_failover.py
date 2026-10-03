@@ -93,14 +93,14 @@ class UnusedSourceGuard:
         self._packet_identity = packet_identity_sha256
         self._reader = governance_reader
 
-    def _readback(self, p, source):
+    def _readback(self, p, source, *, _snapshot=None):
         # Keep absence, a used packet, unknown outcomes and a busy ledger distinct
         # from a prepared empty ledger. None of these failures authorizes fallback.
         try:
             if self._store.root != self._root or self._store.packet_id != self._packet_id:
                 return None
-            with self._store.locked() as fd:
-                ledger = self._store._read(fd)
+            with (self._store.locked() if _snapshot is None else nullcontext(_snapshot[0])) as fd:
+                ledger = self._store._read(fd) if _snapshot is None else _snapshot[1]
                 if (ledger is None or ledger['identity_sha256'] != self._packet_identity
                         or ledger['revision'] != 0 or ledger['generation'] != 0
                         or ledger['attempts'] or ledger['checkpoint'] is not None
@@ -854,7 +854,36 @@ def _destination_problem(p, target_index):
 
 
 def select_next(payload, *, _trusted_unused_source_guard=None, _trusted_historical_source_guard=None,
-                _trusted_resolved_unknown_guard=None):
+                _trusted_resolved_unknown_guard=None, _trusted_locked_context=None):
+    """Reuse one host-owned transaction; context is never loaded from JSON."""
+    snapshot = None
+    if _trusted_locked_context is not None:
+        from model_packet_store import _PlanningContext
+        if type(_trusted_locked_context) is not _PlanningContext:
+            raise FailoverError('invalid-locked-planning-context')
+        try:
+            snapshot = _trusted_locked_context._snapshot()
+            for guard in (_trusted_unused_source_guard, _trusted_historical_source_guard,
+                          _trusted_resolved_unknown_guard):
+                if guard is not None and getattr(guard, '_store', None) is not _trusted_locked_context._store:
+                    raise FailoverError('locked-planning-store-mismatch')
+        except Exception:
+            raise FailoverError('locked-planning-context-unconfirmed') from None
+    result = _select_next(payload,
+        _trusted_unused_source_guard=_trusted_unused_source_guard,
+        _trusted_historical_source_guard=_trusted_historical_source_guard,
+        _trusted_resolved_unknown_guard=_trusted_resolved_unknown_guard,
+        _snapshot=snapshot)
+    if _trusted_locked_context is not None:
+        try:
+            _trusted_locked_context._snapshot()
+        except Exception:
+            raise FailoverError('locked-planning-context-unconfirmed') from None
+    return result
+
+
+def _select_next(payload, *, _trusted_unused_source_guard=None, _trusted_historical_source_guard=None,
+                 _trusted_resolved_unknown_guard=None, _snapshot=None):
     """Validate trusted summaries and return a plan, never a dispatch receipt.
 
     Guard objects are host code, never JSON. Resolution and historical callbacks
@@ -871,7 +900,7 @@ def select_next(payload, *, _trusted_unused_source_guard=None, _trusted_historic
               '_trusted_historical_source_guard': _trusted_historical_source_guard}
     if not any(e['cause'] == 'unknown-write' for e in p['events']) or _trusted_resolved_unknown_guard is None:
         _validate(p)
-        return _select_validated(p, **kwargs)
+        return _select_validated(p, **kwargs, _snapshot=_snapshot)
     guard = _trusted_resolved_unknown_guard
     try:
         if (guard._store.root != guard._root or guard._store.packet_id != guard._packet_id
@@ -879,8 +908,8 @@ def select_next(payload, *, _trusted_unused_source_guard=None, _trusted_historic
                 (_trusted_historical_source_guard._store is not guard._store
                  or _trusted_historical_source_guard._packet_identity != guard._packet_identity)):
             raise FailoverError('resolved-guard-snapshot-mismatch')
-        with guard._store.locked() as fd:
-            ledger = guard._store._read(fd)
+        with (guard._store.locked() if _snapshot is None else nullcontext(_snapshot[0])) as fd:
+            ledger = guard._store._read(fd) if _snapshot is None else _snapshot[1]
             proof, effective, sha = guard._readback_locked(p, fd, ledger)
             return _select_validated(p, **kwargs, _effective=effective,
                 _resolution=(proof, sha), _snapshot=(fd, ledger))
@@ -935,7 +964,7 @@ def _select_validated(p, *, _trusted_unused_source_guard=None, _trusted_historic
                 and q['observed_at'] <= p['now'] and not fresh(q, p['now'], p['freshness_seconds'])
                 and av['status'] == 'unavailable' and fresh(av, p['now'], p['freshness_seconds'])
                 and _qualification_problem(p, source, check_fresh=False) is None):
-            unused_source_proof = _trusted_unused_source_guard._readback(p, source)
+            unused_source_proof = _trusted_unused_source_guard._readback(p, source, _snapshot=_snapshot)
             if unused_source_proof is None:
                 return result('blocked', 'unused-source-proof-unconfirmed')
         elif (target_index is not None and index != target_index and _trusted_historical_source_guard is not None

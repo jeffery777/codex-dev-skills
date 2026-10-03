@@ -5,6 +5,7 @@ claim survives a crash indefinitely: expiry never proves that a writer stopped.
 """
 from __future__ import annotations
 from contextlib import contextmanager
+import copy
 import hashlib
 import json
 import os
@@ -49,6 +50,59 @@ def _sha(value):
         raise PacketError('invalid-packet-digest')
 
 
+class _PlanningContext:
+    """Host-only, transaction-scoped legacy snapshot; no dispatch authority.
+
+    Callers must retain the store lock and must not close its yielded dirFD.
+    v5/v6 governance requires a separate fully validated journal reader.
+    """
+    def __init__(self, store, fd, lease):
+        self._store = store
+        self._root, self._packet_id = store.root, store.packet_id
+        self._fd, self._lease = fd, lease
+        self._inode = (os.fstat(fd).st_dev, os.fstat(fd).st_ino)
+        self._root_inode = (os.fstat(lease[2]).st_dev, os.fstat(lease[2]).st_ino)
+        self._lock_inode = (os.fstat(lease[3]).st_dev, os.fstat(lease[3]).st_ino)
+        self._ledger_raw = trust._read(fd, 'ledger.json', MAX_LEDGER)
+        self._ledger = store._read(fd)
+        if canonical(self._ledger) != canonical(json.loads(self._ledger_raw, object_pairs_hook=trust._pairs)):
+            raise PacketError('planning-context-prefix-drift')
+
+    def _snapshot(self):
+        store = self._store
+        if (store.root != self._root or store.packet_id != self._packet_id
+                or store._planning_lease is not self._lease
+                or self._lease is None or self._lease[1] != self._fd):
+            raise PacketError('planning-context-expired-or-mismatched')
+        # Walk every ancestor again, rather than stat() through a replaced root.
+        root = trust._directory(self._root)
+        child = None
+        try:
+            root_stat = os.fstat(root)
+            if ((root_stat.st_dev, root_stat.st_ino) != self._root_inode
+                    or root_stat.st_mode & 0o077):
+                raise PacketError('planning-context-root-drift')
+            child = os.open(self._packet_id, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=root)
+            current = os.fstat(child); trust._check(current, directory=True)
+            held = os.fstat(self._fd); trust._check(held, directory=True)
+            lock = os.fstat(self._lease[3]); trust._check(lock)
+            lock_path = os.stat('lock', dir_fd=child, follow_symlinks=False); trust._check(lock_path)
+            if ((held.st_dev, held.st_ino) != self._inode
+                    or (current.st_dev, current.st_ino) != self._inode
+                    or (lock.st_dev, lock.st_ino) != self._lock_inode
+                    or (lock_path.st_dev, lock_path.st_ino) != self._lock_inode
+                    or (held.st_mode | current.st_mode | lock.st_mode | lock_path.st_mode) & 0o077
+                    or trust._read(self._fd, 'ledger.json', MAX_LEDGER) != self._ledger_raw):
+                raise PacketError('planning-context-prefix-or-lock-drift')
+            if canonical(store._read(self._fd)) != canonical(self._ledger):
+                raise PacketError('planning-context-prefix-drift')
+            return self._fd, copy.deepcopy(self._ledger)
+        finally:
+            if child is not None:
+                os.close(child)
+            os.close(root)
+
+
 class PacketStore:
     """Root must already be adopted outside Git, owned and mode 0700.
 
@@ -59,6 +113,7 @@ class PacketStore:
         _id(packet_id)
         self.root = pathlib.Path(root)
         self.packet_id = packet_id
+        self._planning_lease = None
         # Synthetic host-owned code injection only. Normal consumers never
         # supply this argument; no JSON loader or production registry is added.
         adapters = {} if _trusted_isolation_adapters is None else _trusted_isolation_adapters
@@ -76,6 +131,7 @@ class PacketStore:
         import fcntl
         fd = trust._directory(self.root)
         child = lock = None
+        lease = None
         try:
             if os.fstat(fd).st_mode & 0o077:
                 raise PacketError('packet-root-must-be-private')
@@ -102,13 +158,26 @@ class PacketStore:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
                 raise PacketError('packet-busy') from None
+            lease = (object(), child, fd, lock)
+            self._planning_lease = lease
             yield child
         finally:
+            if lease is not None and self._planning_lease is lease:
+                self._planning_lease = None
             if lock is not None:
                 os.close(lock)
             if child is not None:
                 os.close(child)
             os.close(fd)
+
+    def planning_context(self, fd):
+        """Read a legacy snapshot under the caller-owned lock, never take a lock."""
+        lease = self._planning_lease
+        if type(fd) is not int or lease is None or lease[1] != fd:
+            raise PacketError('planning-context-lock-required')
+        context = _PlanningContext(self, fd, lease)
+        context._snapshot()
+        return context
 
     def _read(self, fd, *, _governance=False):
         try:

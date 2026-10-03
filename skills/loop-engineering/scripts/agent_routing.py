@@ -462,7 +462,7 @@ def _classify_v2(
 
 def plan_model_failover(task: dict[str, Any], payload: dict[str, Any], *,
                         _trusted_unused_source_guard=None, _trusted_historical_source_guard=None,
-                        _trusted_resolved_unknown_guard=None) -> dict[str, Any]:
+                        _trusted_resolved_unknown_guard=None, _trusted_locked_context=None) -> dict[str, Any]:
     """Extend the current V2 classifier with provider-aware failure planning.
 
     This is advisory. Existing qualification/preflight and runtime dispatch still
@@ -490,7 +490,8 @@ def plan_model_failover(task: dict[str, Any], payload: dict[str, Any], *,
             'plan': model_failover.select_next(payload,
                 _trusted_unused_source_guard=_trusted_unused_source_guard,
                 _trusted_historical_source_guard=_trusted_historical_source_guard,
-                _trusted_resolved_unknown_guard=_trusted_resolved_unknown_guard), 'dispatched': False}
+                _trusted_resolved_unknown_guard=_trusted_resolved_unknown_guard,
+                _trusted_locked_context=_trusted_locked_context), 'dispatched': False}
 
 
 def _sandbox_is_non_widening(profile: dict[str, Any]) -> bool:

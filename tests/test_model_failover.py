@@ -529,6 +529,123 @@ class UnusedSourceGuardTests(unittest.TestCase):
         self.assertEqual(result['unused_source_proof']['binding']['source_id'], 'internal')
 
 
+    def test_caller_owned_context_uses_one_lock_and_preserves_snapshot(self):
+        with mock.patch.object(self.store, 'locked', wraps=self.store.locked) as lock:
+            with self.store.locked() as fd:
+                context = self.store.planning_context(fd)
+                before = self.store._read(fd)
+                out = failover.select_next(self.p, _trusted_unused_source_guard=self.guard,
+                    _trusted_locked_context=context)
+                self.assertEqual(out['status'], 'planned')
+                self.assertEqual(out['unused_source_proof']['binding']['ledger_sha256'], failover.identity_digest(before))
+                self.assertEqual(self.store._read(fd), before)
+            self.assertEqual(lock.call_count, 1)
+
+    def test_context_rejects_replaced_lock_while_second_store_holds_new_lock(self):
+        with self.store.locked() as fd:
+            context = self.store.planning_context(fd)
+            lock_path = self.root / 'packet-1/lock'; saved = self.root / 'packet-1/saved-lock'
+            lock_path.rename(saved)
+            other = packets.PacketStore(self.root, 'packet-1')
+            with other.locked():
+                with self.assertRaises(failover.FailoverError):
+                    failover.select_next(self.p, _trusted_locked_context=context,
+                        _trusted_unused_source_guard=self.guard)
+            lock_path.unlink(); saved.rename(lock_path)
+        self.assertEqual(self.reader.calls, [])
+
+    def test_context_rejects_equivalent_json_with_changed_original_bytes(self):
+        with self.store.locked() as fd:
+            context = self.store.planning_context(fd)
+            path = self.root / 'packet-1/ledger.json'; original = path.read_bytes()
+            path.write_text(json.dumps(json.loads(original), indent=2))
+            with self.assertRaises(failover.FailoverError):
+                failover.select_next(self.p, _trusted_locked_context=context,
+                    _trusted_unused_source_guard=self.guard)
+            path.write_bytes(original)
+        self.assertEqual(self.reader.calls, [])
+
+    def test_context_rejects_root_and_ancestor_symlink_replacement(self):
+        for which in ('root', 'ancestor'):
+            with self.subTest(which=which):
+                base = self.root / ('context-' + which); base.mkdir(mode=0o700)
+                root = base / 'packets'; root.mkdir(mode=0o700)
+                store = packets.PacketStore(root, 'private'); store.prepare('a'*64)
+                guard = failover.UnusedSourceGuard(store, self.reader, packet_identity_sha256='a'*64)
+                with store.locked() as fd:
+                    context = store.planning_context(fd)
+                    original = root if which == 'root' else base
+                    saved = original.with_name(original.name + '-saved')
+                    original.rename(saved); original.symlink_to(saved, target_is_directory=True)
+                    try:
+                        with self.assertRaises(failover.FailoverError):
+                            failover.select_next(self.p, _trusted_locked_context=context,
+                                _trusted_unused_source_guard=guard)
+                    finally:
+                        original.unlink(); saved.rename(original)
+        self.assertEqual(self.reader.calls, [])
+
+    def test_context_requires_active_owned_fd_and_expires_at_exit(self):
+        with self.assertRaises(packets.PacketError): self.store.planning_context(0)
+        with self.store.locked() as fd:
+            with self.assertRaises(packets.PacketError): self.store.planning_context(True)
+            context = self.store.planning_context(fd)
+        with self.assertRaises(failover.FailoverError):
+            failover.select_next(self.p, _trusted_locked_context=context)
+        with self.store.locked() as fd:
+            with self.assertRaises(failover.FailoverError):
+                failover.select_next(self.p, _trusted_locked_context=context)
+        self.assertEqual(self.reader.calls, [])
+
+    def test_json_or_other_store_context_cannot_supply_locked_snapshot(self):
+        with self.assertRaises(failover.FailoverError):
+            failover.select_next(self.p, _trusted_locked_context={'already_locked':True})
+        with self.store.locked() as fd:
+            context = self.store.planning_context(fd)
+            other = packets.PacketStore(self.root, 'packet-1')
+            guard = failover.UnusedSourceGuard(other, self.reader, packet_identity_sha256='a'*64)
+            with self.assertRaises(failover.FailoverError):
+                failover.select_next(self.p, _trusted_locked_context=context, _trusted_unused_source_guard=guard)
+        self.assertEqual(self.reader.calls, [])
+
+    def test_context_detects_ledger_mutation_before_or_during_callback(self):
+        with self.store.locked() as fd:
+            context = self.store.planning_context(fd)
+            ledger = self.store._read(fd)
+            changed = copy.deepcopy(ledger); changed['identity_sha256'] = 'b'*64
+            self.store._write(fd, changed)
+            with self.assertRaises(failover.FailoverError):
+                failover.select_next(self.p, _trusted_locked_context=context, _trusted_unused_source_guard=self.guard)
+            self.assertEqual(self.reader.calls, [])
+            self.store._write(fd, ledger)
+            self.reader.mutate = lambda _: self.store._write(fd, changed)
+            with self.assertRaises(failover.FailoverError):
+                failover.select_next(self.p, _trusted_locked_context=context, _trusted_unused_source_guard=self.guard)
+            self.store._write(fd, ledger)
+
+    def test_context_snapshot_copy_and_failed_nested_lock_do_not_change_lease(self):
+        with self.store.locked() as fd:
+            context = self.store.planning_context(fd)
+            _, copied = context._snapshot(); copied['identity_sha256'] = 'b'*64
+            with self.assertRaises(packets.PacketError):
+                with self.store.locked(): pass
+            self.assertEqual(failover.select_next(self.p, _trusted_locked_context=context,
+                _trusted_unused_source_guard=self.guard)['status'], 'planned')
+
+    def test_context_rejects_packet_path_replacement_and_store_alias_drift(self):
+        with self.store.locked() as fd:
+            context = self.store.planning_context(fd)
+            self.store.packet_id = 'other'
+            with self.assertRaises(failover.FailoverError):
+                failover.select_next(self.p, _trusted_locked_context=context)
+            self.store.packet_id = 'packet-1'
+            original = self.root / 'packet-1'; saved = self.root / 'saved'
+            original.rename(saved); original.symlink_to(saved, target_is_directory=True)
+            with self.assertRaises(failover.FailoverError):
+                failover.select_next(self.p, _trusted_locked_context=context)
+            original.unlink(); saved.rename(original)
+
+
 class ArchivedDispatchHost:
     """Original bytes/outcomes are archived before the current reclassification."""
     def __init__(self):
@@ -956,6 +1073,17 @@ class HistoricalSourceGuardTests(unittest.TestCase):
         self.assertRejected()
 
 
+    def test_historical_planner_uses_caller_transaction_without_relocking(self):
+        with mock.patch.object(self.store, 'locked', wraps=self.store.locked) as lock:
+            with self.store.locked() as fd:
+                context = self.store.planning_context(fd)
+                out = agent_routing.plan_model_failover(self.route_task, self.p,
+                    _trusted_historical_source_guard=self.guard, _trusted_locked_context=context)
+                self.assertEqual(out['plan']['status'], 'planned')
+                self.assertFalse(out['dispatched'])
+            self.assertEqual(lock.call_count, 1)
+
+
 class ResolutionHost(ArchivedDispatchHost):
     """Synthetic saved cause/effect archive and independently mutable runtime."""
     def __init__(self):
@@ -1371,6 +1499,22 @@ class ResolvedUnknownTests(unittest.TestCase):
 
     def test_historical_secret_cause_cannot_be_cleared_after_dispatch(self):
         self._assert_historical_nonfallback_cause_cannot_be_cleared_after_dispatch('secret')
+
+
+    def test_resolution_and_historical_planning_share_caller_transaction(self):
+        self.capture(); self.capture(correction=True); self.escalate()
+        self.reader.now = self.p['now']
+        with mock.patch.object(self.store, 'locked', wraps=self.store.locked) as lock:
+            with self.store.locked() as fd:
+                context = self.store.planning_context(fd)
+                out = agent_routing.plan_model_failover(self.route_task, self.p,
+                    _trusted_resolved_unknown_guard=self.guard,
+                    _trusted_historical_source_guard=self.hsg,
+                    _trusted_locked_context=context)['plan']
+                self.assertEqual(out['status'], 'planned')
+                self.assertEqual(out['historical_source_proof']['binding']['ledger_sha256'],
+                    out['resolved_unknown_proof']['binding']['ledger_sha256'])
+            self.assertEqual(lock.call_count, 1)
 
 
 if __name__ == '__main__':
