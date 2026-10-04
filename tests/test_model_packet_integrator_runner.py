@@ -460,4 +460,506 @@ class RunnerTests(unittest.TestCase):
         with self.assertRaises(SystemExit): runner.main([])
 
 
+
+class ReloadDocker(OverlapDocker):
+    """Durable daemon double for the private stages; no CLI or Docker transport."""
+    instances=[]
+    _allowed=runner._ReloadDocker._allowed
+    def __init__(self,endpoint,root,stage,*,image,cid=None,volume=None,deadline=None):
+        super().__init__(root)
+        self.endpoint=endpoint;self.stage=stage;self.image_id=image;self.cid=cid;self.volume_name=volume
+        self.deadline=deadline;self.executable='/synthetic/docker';self.executable_identity=(1,2,'docker')
+        self.trace=[];self.failures=[];self.containers=[];self.volumes=[]
+        self.instances.append(self)
+    def command(self,*argv):
+        runner._ReloadDocker._allowed(self,argv,None)
+        raw=super().command(*argv)
+        if argv[:2]==('container','create'):self.containers.append(raw.decode())
+        if argv[:2]==('volume','create'):self.volumes.append(raw.decode())
+        return raw
+    def archive(self,*argv,input_bytes=None):
+        runner._ReloadDocker._allowed(self,argv,input_bytes)
+        return super().archive(*argv,input_bytes=input_bytes)
+    def inspect(self,cid):
+        value=super().inspect(cid)
+        if self.stage=='consumer':
+            try:runner._reload_running(value,self.cid)
+            except Exception as error:self.failures.append(str(error));raise
+        return value
+
+
+class ControllerReloadTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
+        self.root=pathlib.Path(self.temp.name).resolve();self.root.chmod(0o700)
+        self.request={'run_id':'a'*32,'coordinator_pid':runner.os.getpid(),
+            'bundle_sha256':'b'*64,'interpreter':runner._reload_interpreter(),
+            'endpoint':'unix:///synthetic/docker.sock','image':IMAGE,
+            'docker_executable':'/synthetic/docker','docker_identity':[1,2,'docker']}
+        ReloadDocker.instances=[]
+
+    def produce(self):
+        with mock.patch.object(runner,'_ReloadDocker',ReloadDocker), \
+                mock.patch.object(runner.os,'getpid',return_value=101), \
+                mock.patch.object(runner.os,'getppid',return_value=self.request['coordinator_pid']):
+            runner._reload_produce(self.root,self.request)
+        raw,ref=runner._reload_read(self.root,'producer-handoff.json')
+        handoff=json.loads(raw);waited=runner.time.monotonic()
+        permit={'schema_version':1,'run_id':self.request['run_id'],'producer_pid':101,'producer_exit':0,
+            'producer_waited_at':waited,'handoff_ref':ref,'consumer_spawned_after':waited}
+        runner._reload_save(self.root,'consumer-permit.json',permit)
+        return handoff,permit
+
+    def test_source_closure_private_import_preflight_and_sentinel_not_inherited(self):
+        hashes=runner._reload_capture(self.root)
+        self.assertGreaterEqual(len(hashes),12)
+        self.assertIn('skills/loop-engineering/scripts/local_model_mapping.py',hashes)
+        fd=runner.trust._directory(self.root)
+        try:identity=runner._reload_identity(runner.os.fstat(fd))[:4]
+        finally:runner.os.close(fd)
+        request={**self.request,'schema_version':1,'root_identity':identity,'bundle_hashes':hashes,
+            'bundle_sha256':runner.packets.digest(runner.packets.canonical(hashes))}
+        runner._reload_save(self.root,'reload-request.json',request)
+        read,write=runner.os.pipe();sentinel=runner.fcntl.fcntl(read,runner.fcntl.F_DUPFD,100)
+        try:
+            runner.os.set_inheritable(sentinel,True)
+            result=runner._reload_helper(self.root,request,'preflight',sentinel,runner.time.monotonic()+10)
+            self.assertEqual(result['exit_code'],0)
+            self.assertNotEqual(result['pid'],runner.os.getpid())
+            evidence=json.loads((self.root/'preflight-helper-readback.json').read_bytes())
+            self.assertFalse(evidence['own_helper_killed'])
+            self.assertFalse(evidence['docker_children_stopped_claimed'])
+        finally:
+            runner.os.close(read);runner.os.close(write);runner.os.close(sentinel)
+
+    def test_bundle_missing_extra_import_and_hash_drift_fail_before_engine(self):
+        hashes=runner._reload_capture(self.root);bundle=self.root/'bundle'
+        for failure in ('missing','extra-file','hash','dependency'):
+            with self.subTest(failure=failure):
+                copy_hashes=dict(hashes)
+                if failure=='missing':copy_hashes.pop(next(iter(copy_hashes)))
+                elif failure=='extra-file':(bundle/'extra.py').write_text('pass');(bundle/'extra.py').chmod(0o600)
+                else:
+                    path=bundle/runner._RELOAD_RUNNER;original=path.read_bytes()
+                    path.write_bytes(original+b'\nimport forbidden_ambient_dependency\n')
+                    if failure=='dependency':copy_hashes[runner._RELOAD_RUNNER]=runner.packets.digest(path.read_bytes())
+                with mock.patch.object(runner.containers,'LocalDocker') as engine,self.assertRaises(runner.packets.PacketError):
+                    runner._reload_validate_bundle(bundle,copy_hashes)
+                engine.assert_not_called()
+                if failure=='extra-file':(bundle/'extra.py').unlink()
+                if failure in ('hash','dependency'):path.write_bytes(original)
+
+    def test_private_refs_reject_symlink_nonregular_identity_and_digest_tamper(self):
+        ref=runner._reload_save(self.root,'reference.json',{'fixed':True})
+        self.assertEqual(json.loads(runner._reload_ref(self.root,ref)),{'fixed':True})
+        for failure in ('digest','identity','traversal'):
+            changed=dict(ref)
+            if failure=='digest':changed['sha256']='0'*64
+            elif failure=='identity':changed['identity']=[0]*8
+            else:changed['relative']='../reference.json'
+            with self.subTest(failure=failure),self.assertRaises(runner.packets.PacketError):runner._reload_ref(self.root,changed)
+        (self.root/'link').symlink_to(self.root/'reference.json')
+        with self.assertRaises(OSError):runner._reload_read(self.root,'link')
+        runner.os.mkfifo(self.root/'fifo',0o600)
+        with self.assertRaisesRegex(runner.packets.PacketError,'regular-file'):runner._reload_read(self.root,'fifo')
+        (self.root/'directory').mkdir(mode=0o700)
+        with self.assertRaisesRegex(runner.packets.PacketError,'regular-file'):runner._reload_read(self.root,'directory')
+        with self.assertRaisesRegex(runner.packets.PacketError,'regular-file'):runner._reload_read(self.root,'reference.json',limit=1)
+
+    def test_original_live_checkpoint_reconstruction_once_unknown_no_authority(self):
+        handoff,_=self.produce()
+        original=runner.supervisors.PacketSupervisor.reconcile;calls=[]
+        def reconcile(supervisor,attempt):calls.append(attempt);return original(supervisor,attempt)
+        with mock.patch.object(runner,'_ReloadDocker',ReloadDocker), \
+                mock.patch.object(runner.supervisors.PacketSupervisor,'reconcile',reconcile), \
+                mock.patch.object(runner.integration.SyntheticSource,'create') as create, \
+                mock.patch.object(runner.integration.FixtureGovernance,'issue') as issue, \
+                mock.patch.object(runner.containers.OneShotSyntheticContainerBackend,'prepare') as prepare, \
+                mock.patch.object(runner.containers.OneShotSyntheticContainerBackend,'export_patch') as export:
+            result=runner._reload_consume(self.root,self.request)
+        self.assertEqual(calls,['old']);self.assertEqual(result['stage'],'consumer')
+        for blocked in (create,issue,prepare,export):blocked.assert_not_called()
+        evidence=json.loads((self.root/'consumer-result.json').read_bytes())
+        self.assertEqual(evidence['result'],runner._RELOAD_PENDING)
+        self.assertEqual(evidence['observations'],[handoff['observation']]*2)
+        self.assertEqual(evidence['ledger_delta'],'deduplicated')
+        self.assertFalse(evidence['production_qualified'])
+        for call in ReloadDocker.instances[-1].calls:
+            self.assertIn(call[:2],[('container','top'),('container','cp')])
+        self.assertEqual(len(ReloadDocker.instances[0].containers),2)
+        self.assertEqual(len(ReloadDocker.instances[0].volumes),2)
+
+    def test_live_to_stopped_race_and_backend_error_stay_unknown_without_export_intent(self):
+        for failure in ('stopped-proof','error','actual-stop'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp:
+                oldroot=self.root;self.root=pathlib.Path(tmp).resolve();self.root.chmod(0o700)
+                handoff,_=self.produce();inspect=runner.containers.OneShotSyntheticContainerBackend.inspect
+                def broken(backend,binding,descriptor):
+                    if failure=='error':raise OSError('backend-read-failed')
+                    if failure=='actual-stop':
+                        value=backend.engine.inspect(descriptor['container_id'])
+                        value['State'].update(Status='exited',Running=False,Pid=0)
+                        backend.engine._write(descriptor['container_id'],value)
+                        return inspect(backend,binding,descriptor)
+                    reply=inspect(backend,binding,descriptor);return {**reply,'state':'stopped'}
+                with mock.patch.object(runner,'_ReloadDocker',ReloadDocker), \
+                        mock.patch.object(runner.containers.OneShotSyntheticContainerBackend,'inspect',broken), \
+                        mock.patch.object(runner.containers.OneShotSyntheticContainerBackend,'export_patch') as export, \
+                        self.assertRaisesRegex(runner.packets.PacketError,'consumer-proof-failed'):
+                    runner._reload_consume(self.root,self.request)
+                export.assert_not_called()
+                ledger=json.loads((self.root/runner._RELOAD_PACKET/'ledger.json').read_bytes())
+                self.assertEqual(ledger['supervisors']['old']['stage'],'observing')
+                self.assertEqual(ledger['checkpoint'],handoff['refs']['checkpoint'])
+                self.assertFalse((self.root/'consumer-result.json').exists());self.root=oldroot
+
+    def test_handoff_exit_pid_order_and_required_ref_fail_without_engine(self):
+        _,permit=self.produce()
+        for failure in ('nonzero','not-exited','same-pid','early','no-handoff','run','expired'):
+            changed=runner.copy.deepcopy(permit)
+            if failure=='nonzero':changed['producer_exit']=1
+            elif failure=='not-exited':changed['producer_exit']=None
+            elif failure=='same-pid':changed['producer_pid']=runner.os.getpid()
+            elif failure=='early':changed['producer_waited_at']=0;changed['consumer_spawned_after']=0
+            elif failure=='no-handoff':changed.pop('handoff_ref')
+            elif failure=='run':changed['run_id']='c'*32
+            else:changed['producer_waited_at']=runner.time.monotonic()+100;changed['consumer_spawned_after']=changed['producer_waited_at']
+            with self.subTest(failure=failure),mock.patch.object(runner,'_ReloadDocker') as engine, \
+                    self.assertRaises(runner.packets.PacketError):runner._reload_handoff(self.root,self.request,changed)
+            engine.assert_not_called()
+
+    def test_before_consumer_checkpoint_descriptor_ledger_lock_and_source_tamper_fail_without_engine(self):
+        for failure in ('patch','descriptor','ledger','lock','source'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp:
+                oldroot=self.root;self.root=pathlib.Path(tmp).resolve();self.root.chmod(0o700)
+                handoff,_=self.produce()
+                if failure=='source':path=self.root/handoff['source_relative']/'source/example.txt'
+                else:
+                    key={'patch':'patch_ref','descriptor':'descriptor_ref','ledger':'ledger_ref','lock':'lock_ref'}[failure]
+                    path=self.root/handoff['refs'][key]['relative']
+                path.write_bytes(b'tamper\n')
+                with mock.patch.object(runner,'_ReloadDocker') as engine,self.assertRaises(runner.packets.PacketError):
+                    runner._reload_consume(self.root,self.request)
+                engine.assert_not_called();self.root=oldroot
+
+    def test_engine_policy_image_daemon_drift_does_not_pass(self):
+        for failure in ('image','daemon','executable'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp:
+                oldroot=self.root;self.root=pathlib.Path(tmp).resolve();self.root.chmod(0o700);self.produce()
+                class Drift(ReloadDocker):
+                    def __init__(self,*args,**kwargs):
+                        super().__init__(*args,**kwargs)
+                        if failure=='daemon':self.daemon='d'*64
+                        if failure=='executable':self.executable='/other/docker'
+                    def image(self,image):
+                        value=super().image(image)
+                        if failure=='image':value['Id']='sha256:'+'0'*64
+                        return value
+                with mock.patch.object(runner,'_ReloadDocker',Drift),self.assertRaises(runner.packets.PacketError):
+                    runner._reload_consume(self.root,self.request)
+                self.assertFalse((self.root/'consumer-result.json').exists());self.root=oldroot
+
+    def test_legal_unknown_observation_append_and_dedup_but_no_other_ledger_change(self):
+        self.produce();store=runner.packets.PacketStore(self.root,runner._RELOAD_PACKET)
+        before=store.supervisor_snapshot('old')[0]
+        self.assertEqual(runner._reload_ledger_delta(before,before),'deduplicated')
+        # Remove the existing dedup event in this isolated fixture, then exercise
+        # the actual store append operation to obtain the exact lawful event.
+        with store.locked() as fd:
+            ledger=store._read(fd);ledger['supervisors']['old']['observations']=[];store._write(fd,ledger)
+        before=store.supervisor_snapshot('old')[0]
+        after=store.observe_supervisor_unknown('old','runtime-proof-unavailable')
+        self.assertEqual(runner._reload_ledger_delta(before,after),'appended')
+        for field in ('checkpoint','generation','revision'):
+            drift=runner.copy.deepcopy(after);drift[field]='drift'
+            with self.subTest(field=field),self.assertRaisesRegex(runner.packets.PacketError,'ledger-unexpected-drift'):
+                runner._reload_ledger_delta(before,drift)
+
+    def test_consumer_exact_transport_allowlist_denies_all_mutation_and_other_targets(self):
+        engine=object.__new__(runner._ReloadDocker)
+        engine.stage='consumer';engine.image_id=IMAGE;engine.cid='a'*64;engine.volume_name='original-control'
+        allowed=[('info','--format','{{json .ID}}'),('image','inspect',IMAGE),
+            ('container','inspect',engine.cid),('volume','inspect',engine.volume_name),
+            ('container','top',engine.cid,'-eo','pid,ppid,uid,stat,comm'),
+            ('container','cp',engine.cid+':/control','-')]
+        for call in allowed:engine._allowed(call,None)
+        denied=[('container','stop',engine.cid),('container','start',engine.cid),('container','restart',engine.cid),
+            ('container','create'),('volume','create'),('image','pull',IMAGE),('container','inspect','b'*64),
+            ('volume','inspect','other'),('container','cp',engine.cid+':/workspace','-'),
+            ('container','cp','-',engine.cid+':/control'),('container','cp',engine.cid+':/control/completion.json','-')]
+        for call in denied:
+            with self.subTest(call=call),self.assertRaisesRegex(runner.packets.PacketError,'command-denied'):engine._allowed(call,None)
+        with self.assertRaisesRegex(runner.packets.PacketError,'command-denied'):engine._allowed(allowed[-1],b'archive')
+
+    def test_helper_unknown_spawn_nonzero_partial_and_expired_never_replayed(self):
+        for failure in ('spawn','nonzero','partial','timeout','truncated'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp:
+                root=pathlib.Path(tmp).resolve();root.chmod(0o700)
+                process=mock.Mock(pid=909)
+                process.stdout=mock.Mock();process.stdout.fileno.return_value=900
+                process.stderr=mock.Mock();process.stderr.fileno.return_value=901
+                process.wait.return_value=1 if failure=='nonzero' else 0;process.poll.return_value=process.wait.return_value
+                stdout=b'{"stage":"consumer","pid":909,"run_id":"'+self.request['run_id'].encode()+b'"}'
+                if failure=='partial':stdout=b'{'
+                if failure=='truncated':stdout=b'x'*(runner._RELOAD_HELPER_LIMIT+1)
+                actual_read=runner.os.read;replies=iter([stdout,b'',b''])
+                def read(fd,size):return next(replies) if fd in (900,901) else actual_read(fd,size)
+                with mock.patch.object(runner.subprocess,'Popen',side_effect=OSError('spawn-unknown') if failure=='spawn' else None,
+                        return_value=process) as spawn, \
+                        mock.patch.object(runner.os,'set_blocking'), \
+                        mock.patch.object(runner.select,'select',side_effect=[([] if failure=='timeout' else [900,901],[],[]),([900],[],[])]), \
+                        mock.patch.object(runner.os,'read',side_effect=read), \
+                        self.assertRaises(Exception):
+                    runner._reload_helper(root,self.request,'consumer',100,runner.time.monotonic()+5)
+                spawn.assert_called_once()
+                self.assertTrue((root/'consumer-helper-readback.json').exists())
+        with mock.patch.object(runner.subprocess,'Popen') as spawn,self.assertRaisesRegex(runner.packets.PacketError,'deadline-unavailable'):
+            runner._reload_helper(self.root,self.request,'consumer',100,runner.time.monotonic())
+        spawn.assert_not_called()
+
+    def test_interpreter_drift_and_conflicting_opt_in_modes_fail_closed(self):
+        with mock.patch.object(runner.sys,'version_info',(3,11,0)),self.assertRaisesRegex(runner.packets.PacketError,'interpreter-drift'):
+            runner._reload_interpreter()
+        with mock.patch.object(runner,'run') as run,self.assertRaises(SystemExit):
+            runner.main(['--synthetic-qualified-container-fixture','--controller-reload-only','--checkpoint-overlap-only',
+                '--endpoint',self.request['endpoint'],'--image',IMAGE,'--evidence-root',str(self.root)])
+        run.assert_not_called()
+
+    def test_raw_transport_audit_requires_original_running_inspect_and_read_only_commands(self):
+        now=runner.time.monotonic();cid='a'*64
+        handoff={'sealed_at':now-1,'deadline':now+20,'observation':{'process_table':'raw fixed top'},'refs':{'descriptor':{'container_id':cid,
+            'created_at':'fixed-created','control_volume':{'name':'original-control'}}}}
+        inspected={'Id':cid,'Created':'fixed-created','State':{'Status':'running','Running':True,'Pid':42}}
+        argv=[('container','inspect',cid)]*5+[('container','top',cid,'-eo','pid,ppid,uid,stat,comm')]*2
+        for index,call in enumerate(argv):
+            row={'argv':list(call),'input_bytes':None,'started':now,'reply_base64':'','error':None}
+            name='consumer-transport-'+str(index)+'.json'
+            runner._reload_save(self.root,name+'.intent',row)
+            reply=runner.packets.canonical([inspected]) if call[1]=='inspect' else b'raw fixed top\n'
+            runner._reload_save(self.root,name,{**row,'finished':now+.01,'reply_base64':runner.base64.b64encode(reply).decode()})
+        audit=runner._reload_audit_trace(self.root,'consumer',len(argv),self.request,handoff)
+        self.assertEqual((audit['inspections'],audit['tops']),(5,2))
+        path=self.root/'consumer-transport-0.json';original=path.read_bytes();row=json.loads(original)
+        for failure in ('stopped','cid','created','error','mutation','expired','oversize'):
+            changed=runner.copy.deepcopy(row)
+            if failure in ('stopped','cid','created'):
+                value=runner.copy.deepcopy(inspected)
+                if failure=='stopped':value['State'].update(Status='exited',Running=False,Pid=0)
+                elif failure=='cid':value['Id']='b'*64
+                else:value['Created']='other'
+                changed['reply_base64']=runner.base64.b64encode(runner.packets.canonical([value])).decode()
+            elif failure=='error':changed['error']='unknown-partial'
+            elif failure=='mutation':changed['argv']=['container','start',cid]
+            elif failure=='expired':changed['finished']=handoff['deadline']
+            else:changed['reply_base64']=runner.base64.b64encode(b'x'*65537).decode()
+            path.write_bytes(runner.packets.canonical(changed))
+            with self.subTest(failure=failure),self.assertRaises(runner.packets.PacketError):
+                runner._reload_audit_trace(self.root,'consumer',len(argv),self.request,handoff)
+        path.write_bytes(original)
+
+    def test_transport_denial_timeout_partial_truncation_and_reserve_are_sticky(self):
+        for failure in ('denied','timeout','partial','truncated','reserve'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp:
+                root=pathlib.Path(tmp).resolve();root.chmod(0o700)
+                engine=object.__new__(runner._ReloadDocker)
+                engine.root=root;engine.stage='consumer';engine.image_id=IMAGE;engine.cid='a'*64
+                engine.volume_name='control-original';engine.deadline=runner.time.monotonic()+(1 if failure=='reserve' else 25)
+                engine.trace=[];engine.trace_bytes=0;engine.failures=[];engine.containers=[];engine.volumes=[]
+                engine.executable='/synthetic/docker';engine.endpoint=self.request['endpoint'];engine.executable_identity=('fixed',)
+                engine.environment={'HOME':str(root)}
+                engine._executable_snapshot=mock.Mock(return_value=('fixed',))
+                process=mock.Mock();process.stdout.fileno.return_value=900;process.stdin=None
+                process.wait.return_value=1 if failure=='partial' else 0;process.poll.return_value=0
+                reply=b'x'*65537 if failure=='truncated' else b'raw-partial'
+                call=('container','start',engine.cid) if failure=='denied' else ('container','inspect',engine.cid)
+                actual_read=runner.os.read;replies=iter([reply,b''])
+                def read(fd,size):return next(replies) if fd==900 else actual_read(fd,size)
+                with mock.patch.object(runner.subprocess,'Popen',return_value=process) as spawn, \
+                        mock.patch.object(runner.os,'set_blocking'), \
+                        mock.patch.object(runner.select,'select',return_value=([] if failure=='timeout' else [process.stdout],[],[])), \
+                        mock.patch.object(runner.os,'read',side_effect=read),self.assertRaises(runner.packets.PacketError):
+                    engine._transport(call)
+                if failure in ('denied','reserve'):spawn.assert_not_called()
+                else:spawn.assert_called_once()
+                self.assertTrue(engine.failures)
+                raw=json.loads((root/'consumer-transport-0.json').read_bytes())
+                self.assertIsNotNone(raw['error'])
+                if failure in ('partial','truncated'):
+                    self.assertEqual(runner.base64.b64decode(raw['reply_base64']),reply)
+
+    def test_consumer_detects_after_reconcile_checkpoint_source_and_worker_drift(self):
+        for failure in ('checkpoint','source','worker'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp:
+                oldroot=self.root;self.root=pathlib.Path(tmp).resolve();self.root.chmod(0o700)
+                handoff,_=self.produce();original=runner.containers.OneShotSyntheticContainerBackend.inspect
+                def inspect(backend,binding,descriptor):
+                    reply=original(backend,binding,descriptor)
+                    if failure=='checkpoint':(self.root/handoff['refs']['patch_ref']['relative']).write_bytes(b'changed\n')
+                    elif failure=='source':(self.root/handoff['source_relative']/'source/example.txt').write_bytes(b'changed\n')
+                    else:
+                        backend.engine.command=lambda *args:b'PID PPID UID STAT COMMAND\n42 1 0 S python3\n4243 42 65534 S python3\n'
+                    return reply
+                with mock.patch.object(runner,'_ReloadDocker',ReloadDocker), \
+                        mock.patch.object(runner.containers.OneShotSyntheticContainerBackend,'inspect',inspect), \
+                        self.assertRaises(runner.packets.PacketError):runner._reload_consume(self.root,self.request)
+                self.assertFalse((self.root/'consumer-result.json').exists());self.root=oldroot
+
+    def test_coordinator_never_spawns_consumer_without_successful_producer_wait_and_handoff(self):
+        for failure in ('unknown-spawn','nonzero','no-handoff'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp:
+                root=pathlib.Path(tmp).resolve();root.chmod(0o700);stages=[]
+                def helper(home,request,stage,sentinel,deadline):
+                    stages.append(stage)
+                    if stage=='producer':
+                        if failure=='unknown-spawn':raise OSError('spawn-outcome-unknown')
+                        if failure=='nonzero':raise runner.packets.PacketError('reload-helper-nonzero')
+                    return {'pid':101,'exit_code':0,'waited_at':runner.time.monotonic()}
+                engine=mock.Mock(executable='/synthetic/docker',executable_identity=(1,2,'docker'))
+                args=SimpleNamespace(evidence_root=root,endpoint=self.request['endpoint'],image=IMAGE)
+                with mock.patch.object(runner.containers,'LocalDocker',return_value=engine), \
+                        mock.patch.object(runner,'_reload_helper',side_effect=helper),self.assertRaises(Exception):
+                    runner.controller_reload(args)
+                self.assertEqual(stages,['preflight','producer'])
+                receipt=json.loads(next(root.glob('model-controller-reload-*/controller-reload-evidence.json')).read_bytes())
+                self.assertEqual(receipt['execution_outcome'],'unknown');self.assertEqual(receipt['cases'],{})
+                self.assertFalse(receipt['n3_complete']);self.assertFalse(receipt['runtime_qualified'])
+
+
+    def transport_doubles(self,root,*,stage='producer'):
+        engine=object.__new__(runner._ReloadDocker)
+        engine.root=root;engine.stage=stage;engine.image_id=IMAGE;engine.cid='a'*64;engine.volume_name='control-original'
+        engine.deadline=runner.time.monotonic()+25;engine.trace=[];engine.trace_bytes=0;engine.failures=[]
+        engine.containers=[];engine.volumes=[];engine.executable='/synthetic/docker'
+        engine.endpoint=self.request['endpoint'];engine.executable_identity=('fixed',)
+        engine.environment={'HOME':str(root)};engine._executable_snapshot=mock.Mock(return_value=('fixed',))
+        process=mock.Mock();process.stdout.fileno.return_value=900;process.stdout.closed=False;process.stdin=None
+        process.wait.return_value=0;process.poll.return_value=0
+        return engine,process
+
+    def call_transport(self,engine,process,*,input_bytes=None,timeout=False):
+        actual_read=runner.os.read;replies=iter([b'raw-reply',b''])
+        def read(fd,size):return next(replies) if fd==900 else actual_read(fd,size)
+        with mock.patch.object(runner.subprocess,'Popen',return_value=process) as spawn, \
+                mock.patch.object(runner.os,'set_blocking'), \
+                mock.patch.object(runner.select,'select',return_value=([] if timeout else [process.stdout],[],[])), \
+                mock.patch.object(runner.os,'read',side_effect=read):
+            engine.spawn=spawn
+            return engine._transport(('container','inspect',engine.cid),input_bytes=input_bytes)
+
+    def test_transport_intent_write_and_fsync_failures_are_sticky_and_cannot_spawn(self):
+        for phase in ('write','fsync'):
+            with self.subTest(phase=phase),tempfile.TemporaryDirectory() as tmp:
+                root=pathlib.Path(tmp).resolve();root.chmod(0o700);engine,process=self.transport_doubles(root)
+                original_save=runner._reload_save;original_fsync=runner.os.fsync
+                target=root/'producer-transport-0.json.intent';faults=[]
+                def save(home,name,value):
+                    if name==target.name and phase=='write':raise OSError('intent-write-unknown')
+                    return original_save(home,name,value)
+                def fsync(fd):
+                    if phase=='fsync' and target.exists() and runner.os.fstat(fd).st_ino==target.stat().st_ino:
+                        faults.append(fd);raise OSError('intent-fsync-unknown')
+                    return original_fsync(fd)
+                with mock.patch.object(runner,'_reload_save',side_effect=save), \
+                        mock.patch.object(runner.os,'fsync',side_effect=fsync),self.assertRaises(OSError):
+                    self.call_transport(engine,process)
+                engine.spawn.assert_not_called();self.assertTrue(engine.failures)
+                result=json.loads((root/'producer-transport-0.json').read_bytes())
+                self.assertIsNotNone(result['error']);self.assertEqual(result['reply_base64'],'')
+                if phase=='fsync':self.assertEqual(len(faults),1);self.assertTrue(target.exists())
+
+    def test_full_result_bytes_then_fsync_or_readback_failure_remain_sticky_and_immutable(self):
+        for phase in ('fsync','readback'):
+            with self.subTest(phase=phase),tempfile.TemporaryDirectory() as tmp:
+                root=pathlib.Path(tmp).resolve();root.chmod(0o700);engine,process=self.transport_doubles(root)
+                target=root/'producer-transport-0.json';original_fsync=runner.os.fsync;original_read=runner._reload_read
+                faults=[]
+                def fsync(fd):
+                    if phase=='fsync' and target.exists() and runner.os.fstat(fd).st_ino==target.stat().st_ino:
+                        faults.append('fsync');raise OSError('result-fsync-unknown')
+                    return original_fsync(fd)
+                def read(home,name,*args,**kwargs):
+                    if phase=='readback' and name==target.name:
+                        faults.append('readback');raise OSError('result-readback-unknown')
+                    return original_read(home,name,*args,**kwargs)
+                with mock.patch.object(runner.os,'fsync',side_effect=fsync), \
+                        mock.patch.object(runner,'_reload_read',side_effect=read),self.assertRaises(OSError):
+                    self.call_transport(engine,process)
+                engine.spawn.assert_called_once();self.assertEqual(faults,[phase])
+                self.assertTrue(any('transport-result-journal' in error for error in engine.failures))
+                saved=target.read_bytes();value=json.loads(saved)
+                self.assertIsNone(value['error'])  # Complete bytes are uncertain, never rewritten.
+                self.assertEqual(runner.base64.b64decode(value['reply_base64']),b'raw-reply')
+                self.assertIsNotNone(engine.trace[0]['error'])
+                with self.assertRaises(FileExistsError):runner._reload_save(root,target.name,{'replacement':True})
+                self.assertEqual(target.read_bytes(),saved)
+
+    def test_transport_cleanup_kill_wait_and_each_pipe_close_are_sticky_but_normal_return_survives(self):
+        for failure in ('kill','wait','stdout-close','stdin-close','none'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp:
+                root=pathlib.Path(tmp).resolve();root.chmod(0o700);engine,process=self.transport_doubles(root)
+                if failure in ('kill','wait'):
+                    process.poll.return_value=None
+                    if failure=='kill':process.kill.side_effect=OSError('kill-unknown')
+                    else:process.wait.side_effect=OSError('wait-unknown')
+                if failure=='stdout-close':process.stdout.close.side_effect=OSError('stdout-close-unknown')
+                if failure=='stdin-close':
+                    process.stdin=mock.Mock();process.stdin.closed=False
+                    process.stdin.fileno.return_value=901;process.stdin.close.side_effect=OSError('stdin-close-unknown')
+                if failure=='none':
+                    self.assertEqual(self.call_transport(engine,process),b'raw-reply')
+                    self.assertEqual(engine.failures,[]);process.kill.assert_not_called();process.wait.assert_called_once()
+                else:
+                    with self.assertRaises(runner.packets.PacketError):
+                        self.call_transport(engine,process,input_bytes=b'archive' if failure=='stdin-close' else None,
+                            timeout=failure in ('kill','wait','stdin-close'))
+                    self.assertTrue(engine.failures)
+                    phase='transport-cleanup' if failure in ('kill','wait') else 'transport-'+failure
+                    self.assertTrue(any(phase in error for error in engine.failures))
+                process.stdout.close.assert_called_once()
+                value=json.loads((root/'producer-transport-0.json').read_bytes())
+                self.assertEqual(value['error'] is None,failure=='none')
+
+    def test_producer_swallowed_result_journal_error_cannot_seal_successful_handoff(self):
+        actual_transport=runner._ReloadDocker._transport;original_save=runner._reload_save;faults=[]
+        test=self
+        class JournalFaultDocker(ReloadDocker):
+            def __init__(self,*args,**kwargs):
+                super().__init__(*args,**kwargs);self.trace_bytes=0;self.environment={'HOME':str(self.root)}
+                self._executable_snapshot=lambda:self.executable_identity;self.injected=False
+            def inspect(self,cid):
+                value=super().inspect(cid)
+                if not self.injected and value['State']['Running'] is True:
+                    self.injected=True
+                    _,process=test.transport_doubles(self.root)
+                    actual_read=runner.os.read;replies=iter([runner.packets.canonical([value]),b''])
+                    def read(fd,size):return next(replies) if fd==900 else actual_read(fd,size)
+                    with mock.patch.object(runner.subprocess,'Popen',return_value=process) as spawn, \
+                            mock.patch.object(runner.os,'set_blocking'), \
+                            mock.patch.object(runner.select,'select',return_value=([process.stdout],[],[])), \
+                            mock.patch.object(runner.os,'read',side_effect=read):
+                        try:actual_transport(self,('container','inspect',cid))
+                        finally:self.spawn=spawn
+                return value
+        def save(root,name,value):
+            result=original_save(root,name,value)
+            if name=='producer-transport-0.json':
+                faults.append(name);raise OSError('result-readback-after-full-bytes')
+            return result
+        with mock.patch.object(runner,'_ReloadDocker',JournalFaultDocker), \
+                mock.patch.object(runner,'_reload_save',side_effect=save), \
+                mock.patch.object(runner.os,'getpid',return_value=101), \
+                mock.patch.object(runner.os,'getppid',return_value=self.request['coordinator_pid']), \
+                self.assertRaisesRegex(runner.packets.PacketError,'producer-live-proof-unavailable'):
+            runner._reload_produce(self.root,self.request)
+        engine=ReloadDocker.instances[-1];engine.spawn.assert_called_once()
+        self.assertEqual(faults,['producer-transport-0.json']);self.assertTrue(engine.failures)
+        self.assertFalse((self.root/'producer-handoff.json').exists())
+        result=json.loads((self.root/'producer-transport-0.json').read_bytes())
+        self.assertIsNone(result['error'])
+        ledger=json.loads((self.root/runner._RELOAD_PACKET/'ledger.json').read_bytes())
+        self.assertEqual(ledger['supervisors']['old']['stage'],'observing')
+        self.assertEqual(ledger['supervisors']['old']['observations'][-1]['reason'],'runtime-proof-unavailable')
+
+
+
 if __name__=='__main__': unittest.main()

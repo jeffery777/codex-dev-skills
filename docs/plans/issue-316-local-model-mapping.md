@@ -608,3 +608,23 @@ Binary／設定漂移不得沿用原結果，收到負階段連線或 nonce 就�
 assertions tracked，原始證據保存在 Git 外，供 code／merge review 讀回。
 它不補足完整 N1、native tool inventory、credentials、restart 或 production
 authority／executor 資格；原 N1–N4 與發行條件保持適用。
+
+### N3 私有 controller reload 局部工程包
+
+既有 runner 新增互斥 opt-in `--controller-reload-only`：私有 producer 只建立
+S→非空 C→live old，封存 original refs 並自然退出；coordinator 取得原 process
+wait exit 0 後，才由不同 PID consumer 重新建立原 store／backend／supervisor。
+固定 private source closure、isolated import preflight、interpreter／engine／
+run binding 與 no-follow bounded refs 均須相符，不提供任意 loader／argv／root
+CLI。Consumer 只 reconcile old 一次且保持 exact unknown；transport exact
+read allowlist、sticky running-only backend proof 及前後完整 same-worker observation
+共同阻止 live→stop race 寫 export-intent。沒有 quarantine、successor、authority、
+source write 或 production registry；C／descriptor／source 不變，僅允許合法
+unknown ledger append／dedup。Raw trace 與 helper lifecycle 另由 coordinator 對帳。
+
+Old start 前 T0+25 秒是完整預算，transport 預留 10+2 秒；兩 helpers 必須自然
+exit 0，最後 readback 仍在期限內。Unknown spawn、timeout、partial reply、
+refs／policy 漂移或 backend error 不重送，不宣稱所有 Docker children 已停止。
+工程反例與方法 tracked；native runtime 測量、獨立正式 review／Security Diff Scan
+與完整 DoD 仍由後續驗證處理，不能由離線成功推定 READY。這不完成完整 N3、
+self-hosted／auth／daemon restart 或任何 production qualification；flags 保持 false。

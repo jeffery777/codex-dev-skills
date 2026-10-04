@@ -1053,3 +1053,61 @@ tools、credentials、daemon／host restart、完整資源限制或其它 runtim
 production registry 與 qualification flags 不由此開啟。
 方法及反例 tracked，raw readbacks／ledger／receipt 位於 private Git 外位置；重跑
 重建相同 assertions，CID、nonce、時間與各次授權身分不要求相同。
+
+## N3 私有 controller process reload 局部控制
+
+`verify-model-packet-integrator.py --controller-reload-only` 是互斥、明確 opt-in 的
+固定匿名案例。Coordinator 捕獲 runner 與其固定 import closure 的私有 bytes
+bundle，目前為 13 檔，包含 immutable write 所需 governance／routing／failover／
+preflight 及 routing 的 deferred local mapping dependency；不載入完整 repository、
+使用者 HOME、auth 或 saved lifecycle schema。每份來源採 no-follow regular
+bounded read，對帳前後 file identity／digest。固定 `-I -S -B` bootstrap 先執行
+import preflight，任何 missing／額外 dependency 或 ambient fallback 在 Docker
+效果前拒絕；選定 interpreter 的 canonical path、stat、digest 與 3.12.9 version
+亦須相符。Helper 環境只保留固定 PATH／私有 HOME／disabled Docker config／locale，
+stdin 關閉、`close_fds=True`、`pass_fds=()`；own inheritable sentinel FD 負控制不
+代表所有 FD 的 OS isolation。
+
+Producer 建立 synthetic S，沿固定 seed recipe 封存非空 C，再啟動 35 秒
+`hold-overlap` old worker。它封存 original packet／attempt／revision、ledger 與
+runtime descriptor 原始 refs、checkpoint manifest／patch、source descriptor 與
+baseline Git metadata、engine／image／host／policy binding、CID／Created／worker
+PID、run UUID／PID／PPID／bundle／interpreter 及 T0／sealed time。Producer
+關閉 handles 並自然 exit 0；coordinator 必須從原 Popen 的 wait 證明退出及完整
+handoff，才能建立不同 PID 的 fresh consumer。未退出、非零、缺失 handoff、
+unknown spawn、timeout 或 partial output 不重送。
+
+Consumer 在任何 engine read 前驗證原始 refs 與既存 packet directory／ledger／
+lock，不補建 missing store；只 reopen source 並唯讀對帳 baseline。重新建立
+原 PacketStore／backend／supervisor 後只 reconcile old 一次，要求精確
+`unknown/runtime-proof-unavailable`。沒有 quarantine、successor、authority 或
+source write。Transport 層保留每次 intent、bounded raw reply／partial error，
+consumer 只接受固定 daemon info、image inspect、原 CID inspect／top、原 control
+volume inspect 及原 CID control input／claim 的 stdout cp；stdin archive、任意
+CID／volume／path 與所有 mutator 均拒絕。每次原 CID inspect 必須仍 running；
+sticky backend proxy 另拒絕 stopped proof 及 prepare／bootstrap／launch／export／
+sealed-read，避免 live check 後 worker 停止而先寫 export-intent。Supervisor 即使
+合法轉 unknown，也不能掩蓋 backend／transport error。前後完整 observation
+要求同一 live worker／holding／control binding；C、descriptor、source 不變。
+Ledger 只准原 unknown observation 的合法 append／dedup，保留原 raw SHA 與
+讀回差異，不強求整份 ledger bytes 永遠相同。Coordinator 另讀回原始 command
+trace、結果、checkpoint、descriptor 與 source。
+
+總測量預算從 old start 前 T0 起固定 25 秒；每個 Docker transport 預留既有
+10 秒 timeout 與 2 秒 cleanup，期限不足或逾期只保留 unknown，不延長 hold 或
+restart。兩個 helper 均須自然 exit 0，最後 readback 仍在期限內才可通過。
+Own helper 被終止不證明 Docker children 已停止；任意 I/O stall 也沒有 35 秒
+完成保證。Raw evidence 留在既存、Git 外的私有 evidence root，resources retained。
+每個 helper stdout／stderr 上限各 64 KiB、transport reply 上限 64 KiB、每 stage
+trace 上限 8 MiB、private artifact 上限 1 MiB。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_packet_integrator_runner
+./scripts/project-python scripts/verify-model-packet-integrator.py --synthetic-qualified-container-fixture --controller-reload-only --endpoint unix:///absolute/path/to/approved.sock --image sha256:APPROVED_INSTALLED_IMAGE --evidence-root /absolute/path/to/private-evidence-root
+```
+
+此方法與離線反例不等於已完成實測；只有另外保存的當輪 native receipt 能證明
+有限測量成功。它不完成 N3、production／adapter／runtime qualification、
+self-hosted／auth／daemon restart，所有 qualification flags 維持 false。舊有
+single-process fixture 的 synchronous-nochildren 限制不沿用到此新模式；可信
+host、固定不替換 worker 與有限 readback 窗口仍是本局部證明的前提。
