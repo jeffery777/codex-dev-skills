@@ -299,6 +299,7 @@ class CodexPublicHelpCompatibilityTests(unittest.TestCase):
                 workspace=ROOT,
                 operation=operation,
                 session_id=None if operation == "start" else SESSION_ID,
+                execution_target=None,
             )
             argv = handoff.build_argv(request)
             self.assertEqual("-", argv[-1])
@@ -635,6 +636,266 @@ class CliSessionHandoffTests(unittest.TestCase):
                 "fresh_rollover": metric,
             },
         }
+
+    def _typed_request(self, *, official=True, sandbox="read-only"):
+        from tests.test_model_execution_target import TargetFixture
+        request = self.request(sandbox=sandbox)
+        request["authorization"]["sandbox_ceiling"] = sandbox
+        home = self.root.resolve()/"typed-target-home"
+        target = TargetFixture(home, prompt=request["prompt"].rstrip()+"\n\n"+handoff.PROMPT_BOUNDARY_APPENDIX,
+            head=self.head, executable_sha256=handoff._sha256_file(self.executable), official=official)
+        request["target_ref"] = target.ref
+        return request, target
+
+    def _packet_attempt(self, request, packet, attempt_id, revision):
+        # Synthetic stop adapter is fixture evidence, never production adoption.
+        adapter = types.SimpleNamespace(verify_stopped=lambda *_: True, supports_target=lambda *_: True)
+        with mock.patch.dict(handoff.PACKET_STOP_ADAPTERS, {'synthetic': adapter}):
+            return handoff.execute_packet_attempt(request, packet, attempt_id, revision, stop_adapter_id='synthetic')
+
+    def test_packet_without_qualified_stop_adapter_never_starts(self):
+        with mock.patch.object(handoff, 'validate_request') as validate:
+            with self.assertRaisesRegex(handoff.HandoffValidationError, 'containment is unavailable'):
+                handoff.execute_packet_attempt({}, None, 'attempt-1', 0)
+        validate.assert_not_called()
+
+    def test_typed_official_start_preserves_executor_and_unknown_provider_readback(self):
+        request, target = self._typed_request()
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home), "OPENAI_API_KEY": "synthetic-sentinel"}):
+            response = self.execute(request=request)
+        self.assertEqual(response["status"], "completed")
+        self.assertTrue(response["boundaries"]["child_workspace_isolated"])
+        self.assertEqual(response["execution_target"]["execution_state"], "completed")
+        self.assertEqual(response["execution_target"]["provider_readback"], "unknown")
+        self.assertNotIn("synthetic-sentinel", json.dumps(response))
+        self.assertNotIn(str(target.home), json.dumps(response))
+        self.assertFalse(response["boundaries"]["repository_completion_claimed"])
+
+    def test_typed_company_start_and_fixed_argv(self):
+        request, target = self._typed_request(official=False)
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home), "SYNTHETIC_MODEL_KEY": "synthetic-sentinel"}):
+            validated = handoff.validate_request(request)
+            argv = handoff.build_argv(validated)
+            response = self.execute(request=request)
+        self.assertIn('model_provider="synthetic"', argv)
+        self.assertNotIn("synthetic-sentinel", " ".join(argv))
+        self.assertIn("--ignore-user-config", argv)
+        self.assertEqual(response["status"], "completed")
+        self.assertEqual(response["execution_target"]["provider_readback"], "unknown")
+
+    def test_typed_snapshot_excludes_unapproved_tag_objects_and_source_path(self):
+        request, target = self._typed_request()
+        (self.workspace/'other-ref.txt').write_text('synthetic-unapproved-sentinel')
+        self._git('add', 'other-ref.txt')
+        self._git('commit', '-qm', 'unapproved ref fixture')
+        other = self._git('rev-parse', 'HEAD').stdout.strip()
+        self._git('tag', 'unapproved-data')
+        self._git('checkout', '--detach', self.head)
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}):
+            validated = handoff.validate_request(request)
+        with tempfile.TemporaryDirectory() as directory:
+            git, isolated = handoff._prepare_isolated_workspace(validated, pathlib.Path(directory))
+            def read(*args):
+                return subprocess.run([str(git), '-C', str(isolated), *args], capture_output=True, text=True)
+            self.assertEqual(read('rev-parse', 'HEAD').stdout.strip(), self.head)
+            self.assertEqual(read('tag', '--list').stdout.strip(), '')
+            self.assertNotEqual(read('cat-file', '-e', other).returncode, 0)
+            self.assertFalse((isolated/'other-ref.txt').exists())
+            self.assertFalse((isolated/'.git/FETCH_HEAD').exists())
+            self.assertEqual(read('remote').stdout.strip(), '')
+
+    def test_packet_failure_keeps_partial_patch_and_replay_never_launches(self):
+        request, target = self._typed_request(sandbox='workspace-write')
+        directory = target.home/'packets'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        packet.prepare('a'*64)
+        def partial(validated, workspace, *, on_started):
+            on_started()
+            (workspace/'README.md').write_text('partial packet work\n')
+            (workspace/'new.txt').write_text('partial untracked work\n')
+            return 1, b'', None
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff, '_run_child', side_effect=partial) as run:
+            receipt = self._packet_attempt(request, packet, 'attempt-1', 0)
+            self.assertEqual(receipt['status'], 'failed')
+            self.assertEqual(receipt['packet']['status'], 'checkpointed')
+            self.assertFalse(receipt['boundaries']['adapter_repository_write_performed'])
+            self.assertEqual((self.workspace/'README.md').read_text(), 'fixture\n')
+            ledger, patch = packet.read_checkpoint()
+            self.assertIn(b'partial packet work', patch)
+            self.assertIn(b'partial untracked work', patch)
+            replay = self._packet_attempt(request, packet, 'attempt-1', 0)
+            self.assertTrue(replay['packet']['replayed'])
+            run.assert_called_once()
+        self.assertTrue((directory/'synthetic-packet/attempt-attempt-1/workspace/new.txt').exists())
+
+    def test_packet_uncertain_termination_retains_workspace_and_blocks_new_writer(self):
+        request, target = self._typed_request(sandbox='workspace-write')
+        directory = target.home/'packets'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        packet.prepare('a'*64)
+        def uncertain(validated, workspace, *, on_started):
+            on_started(); (workspace/'new.txt').write_text('uncertain partial work')
+            raise handoff.HandoffValidationError('termination_error', 'synthetic unproven stop')
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff, '_run_child', side_effect=uncertain) as run:
+            receipt = self._packet_attempt(request, packet, 'attempt-1', 0)
+            self.assertEqual(receipt['status'], 'unknown')
+            with self.assertRaisesRegex(handoff.model_packet_store.PacketError, 'predecessor-outcome-unknown'):
+                self._packet_attempt(request, packet, 'attempt-2', 2)
+            run.assert_called_once()
+        self.assertTrue((directory/'synthetic-packet/attempt-attempt-1/workspace/new.txt').exists())
+
+    def test_packet_real_fake_process_nonzero_retains_changes_without_source_integration(self):
+        self.executable.write_text(self.executable.read_text().replace('mode = os.environ.get("FAKE_CODEX_MODE", "success")', 'mode = "write-workspace"')+'\nsys.exit(1)\n')
+        request, target = self._typed_request(sandbox='workspace-write')
+        directory = target.home/'packets'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        packet.prepare('a'*64)
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}):
+            receipt = self._packet_attempt(request, packet, 'attempt-1', 0)
+        self.assertEqual(receipt['status'], 'failed')
+        self.assertEqual(receipt['failure_class'], 'nonzero_exit')
+        self.assertEqual(receipt['packet']['status'], 'checkpointed')
+        self.assertIn(b'changed by child', packet.read_checkpoint()[1])
+        self.assertEqual((self.workspace/'README.md').read_text(), 'fixture\n')
+
+    def test_packet_second_attempt_restores_checkpoint_in_a_new_private_workspace(self):
+        request, target = self._typed_request(sandbox='workspace-write')
+        directory = target.home/'packets'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        packet.prepare('a'*64)
+        paths = []
+        def first(validated, workspace, *, on_started):
+            paths.append(workspace); on_started()
+            (workspace/'new.txt').write_text('first partial content\n')
+            return 1, b'', None
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff, '_run_child', side_effect=first):
+            self._packet_attempt(request, packet, 'attempt-1', 0)
+        ledger, patch = packet.read_checkpoint()
+        target.record['task']['checkpoint_sha256'] = ledger['checkpoint']
+        for name, value in list(target.summary_values.items()):
+            value = dict(value, task_sha256=handoff.model_execution_target.canonical_sha(target.record['task']))
+            target.write_summary(name, value, refresh=False)
+        target.refresh(); request['target_ref'] = target.ref
+        def second(validated, workspace, *, on_started):
+            paths.append(workspace); on_started()
+            self.assertEqual((workspace/'new.txt').read_text(), 'first partial content\n')
+            (workspace/'new.txt').write_text('second repair content\n')
+            return 1, b'', None
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff, '_run_child', side_effect=second):
+            receipt = self._packet_attempt(request, packet, 'attempt-2', ledger['revision'])
+        self.assertEqual(receipt['packet']['status'], 'checkpointed')
+        self.assertNotEqual(paths[0], paths[1])
+        self.assertEqual((paths[0]/'new.txt').read_text(), 'first partial content\n')
+        self.assertIn(b'second repair content', packet.read_checkpoint()[1])
+        self.assertFalse((self.workspace/'new.txt').exists())
+        ledger, _ = packet.read_checkpoint()
+        target.record['task']['checkpoint_sha256'] = ledger['checkpoint']
+        for name, value in list(target.summary_values.items()):
+            target.write_summary(name, dict(value, task_sha256=handoff.model_execution_target.canonical_sha(target.record['task'])), refresh=False)
+        target.refresh(); request['target_ref'] = target.ref
+        request['sandbox'] = 'read-only'; request['authorization']['sandbox_ceiling'] = 'read-only'
+        def readonly(validated, workspace, *, on_started):
+            on_started()
+            self.assertEqual((workspace/'new.txt').read_text(), 'second repair content\n')
+            return 1, b'', None
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff, '_run_child', side_effect=readonly):
+            receipt = self._packet_attempt(request, packet, 'attempt-3', ledger['revision'])
+        self.assertEqual(receipt['packet']['status'], 'checkpointed')
+        self.assertEqual(receipt['failure_class'], 'nonzero_exit')
+
+    def test_typed_start_only_and_raw_override_rejection(self):
+        for operation in ["resume", "fork", "fresh-continuation"]:
+            request, target = self._typed_request(); request["operation"] = operation
+            with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}):
+                result = self.execute(request=request)
+            self.assertFalse(result["boundaries"]["session_call_performed"])
+            self.assertFalse(result["capability"]["version_probe_performed"])
+        request, target = self._typed_request(); request["model"] = "arbitrary"
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}): result = self.execute(request=request)
+        self.assertFalse(result["capability"]["version_probe_performed"])
+
+    def test_typed_launch_rereads_artifacts_and_rejects_drift(self):
+        request, target = self._typed_request()
+        prepare = handoff._prepare_isolated_workspace
+        def drift(*args, **kwargs):
+            result = prepare(*args, **kwargs)
+            (target.home/target.record["summaries"]["authorization"]["path"]).write_text("{}")
+            return result
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(handoff, "_prepare_isolated_workspace", side_effect=drift):
+            result = self.execute(request=request)
+        self.assertEqual(result["failure_class"], "execution_target_rejected")
+        self.assertFalse(result["boundaries"]["session_call_performed"])
+        self.assertEqual(result["execution_target"]["execution_state"], "not-started")
+
+    def test_typed_missing_company_key_stops_before_child(self):
+        request, target = self._typed_request(official=False)
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}):
+            os.environ.pop("SYNTHETIC_MODEL_KEY", None)
+            result = self.execute(request=request)
+        self.assertEqual(result["failure_class"], "execution_target_rejected")
+        self.assertFalse(result["boundaries"]["session_call_performed"])
+        self.assertEqual(result["message"], "target-credential-unavailable")
+
+    def test_typed_write_reuses_private_clone_and_bounded_patch_apply(self):
+        self.executable.write_text(self.executable.read_text().replace('mode = os.environ.get("FAKE_CODEX_MODE", "success")', 'mode = "write-workspace"'))
+        request, target = self._typed_request(sandbox="workspace-write")
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}): result = self.execute(request=request)
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual((self.workspace/"README.md").read_text(), "changed by child\n")
+        self.assertEqual((self.workspace/"new.txt").read_text(), "new child file\n")
+        self.assertFalse((self.workspace/"typed-model-catalog.json").exists())
+        self.assertTrue(result["boundaries"]["child_workspace_isolated"])
+
+    def test_typed_unapproved_executable_or_revocation_prevents_version_process(self):
+        for mode in ["executable", "revoked"]:
+            request, target = self._typed_request()
+            summary = dict(target.summary_values["capability" if mode == "executable" else "authorization"])
+            if mode == "executable": summary["executable_sha256"] = "0"*64
+            else: summary["status"] = "revoked"
+            target.write_summary("capability" if mode == "executable" else "authorization", summary)
+            request["target_ref"] = target.ref
+            with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(handoff, "_probe_version") as probe:
+                result = self.execute(request=request)
+            probe.assert_not_called()
+            self.assertEqual(result["failure_class"], "execution_target_rejected")
+            self.assertFalse(result["capability"]["version_probe_performed"])
+            self.assertFalse(result["boundaries"]["session_call_performed"])
+
+    def test_typed_source_project_config_stops_without_read_or_probe(self):
+        directory = self.workspace/".codex"; directory.mkdir()
+        (directory/"config.toml").write_text("model='synthetic-project-model'\n")
+        self._git("add", ".codex/config.toml"); self._git("commit", "-q", "-m", "synthetic project config")
+        self.head = self._git("rev-parse", "HEAD").stdout.strip()
+        request, target = self._typed_request()
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(handoff, "_probe_version") as probe:
+            result = self.execute(request=request)
+        probe.assert_not_called()
+        self.assertEqual(result["message"], "target-project-config-unqualified")
+        self.assertFalse(result["boundaries"]["session_call_performed"])
+        # Opt-out retains the prior executor contract.
+        result = self.execute(request=self.request())
+        self.assertEqual(result["status"], "completed")
+        self.assertNotIn("execution_target", result)
+
+    def test_typed_private_clone_project_config_stops_before_child(self):
+        request, target = self._typed_request(); prepare = handoff._prepare_isolated_workspace
+        def inject(*args, **kwargs):
+            git, clone = prepare(*args, **kwargs)
+            (clone/".codex").mkdir()
+            (clone/".codex"/"config.toml").write_text("model='synthetic-project-model'\n")
+            return git, clone
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(handoff, "_prepare_isolated_workspace", side_effect=inject):
+            result = self.execute(request=request)
+        self.assertEqual(result["message"], "target-project-config-unqualified")
+        self.assertFalse(result["boundaries"]["session_call_performed"])
+        self.assertEqual(result["execution_target"]["execution_state"], "not-started")
+
+    def test_typed_dirty_source_still_rejected_before_probe(self):
+        request, target = self._typed_request()
+        (self.workspace/"README.md").write_text("dirty")
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}): result = self.execute(request=request)
+        self.assertFalse(result["capability"]["version_probe_performed"])
+        self.assertFalse(result["boundaries"]["session_call_performed"])
 
     def test_start_success_uses_fixed_argv_and_emits_bounded_receipt(self) -> None:
         request = self.request()

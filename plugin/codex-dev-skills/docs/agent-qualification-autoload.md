@@ -106,3 +106,10 @@ are copied into receipts.
 Autoload emits `qualification-evidence-sha256:<digest>` as the evidence reference;
 the store digest binds the record that supplied it. The legacy explicit-input
 interface retains caller-supplied references unchanged.
+
+## 本機自訂模型 opt-in
+
+Issue #316 的[本機角色模型映射](guides/local-model-mapping.md)是獨立 user-owned
+store，不能用既有候選 enabled 開關代替。未啟用保留原有流程；啟用後綁定
+當前 provider／runtime、兩欄替換的 profile bytes 與代表性角色 evidence，
+缺件或漂移停止路由。CLI／Desktop 分別驗證，安裝不自動啟用。

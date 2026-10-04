@@ -4,7 +4,7 @@
 # skill. routes_to is always a list and is required only for deprecated aliases.
 
 name: codex-dev-skills
-version: "0.33.0"
+version: "0.34.0"
 platforms:
   - codex
   - codex-desktop
@@ -91,6 +91,7 @@ groups:
     templates:
       - source: docs/native-runtime-capabilities.md
       - source: docs/agent-qualification-autoload.md
+      - source: docs/guides/local-model-mapping.md
       - source: templates/orchestration/loop-engineering-spec.template.md
       - source: templates/orchestration/loop-decision-input.template.yaml
       - source: templates/orchestration/loop-event.template.yaml
