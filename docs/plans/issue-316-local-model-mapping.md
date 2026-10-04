@@ -752,3 +752,16 @@ reader 完整性分開記錄，close 使用單一 deadline、不 kill 或 relaun
 RO capture／inputs 與私有有界 tmpfs；不掛 host controller／auth／receipts，
 不升 privilege 或重播失敗 attempt。Bootstrap、設定生效、兩個 native case
 與全部 production／N1–N4 資格仍待驗收；本包只提供傳輸介面與匿名控制。
+
+### 外層 OS bootstrap 的有限前置驗證
+
+另行實作明確 opt-in 的 `verify-model-external-bootstrap.py` 與固定 guest。
+先在新 CID 的 RO capture／inputs、唯一 host RW workspace、私有 tmpfs 中
+驗證 read-only thread/start、externalSandbox settings ACK 與 raw notification
+順序。此 packet 不送 turn、不派工具、不採用帳號或真實模型，不改原 bwrap
+runner，也不提高 privilege 或重播 unknown attempt。
+
+完成工程包需有反例測試、深入審查、適用完整 Security Diff Scan 與新 head
+完整 Merge Review；匿名原生觀測另保存於 Git 外。即使此前置流程通過，
+workspace-write／external-write-refusal、工具清冊、官方原生登入、來源權限、
+唯一整合器、程序撤權及端到端接手仍待後續實作／驗證，全部資格維持 false。

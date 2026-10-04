@@ -1395,3 +1395,38 @@ thread/settings/updated，包括 sandbox policy、approval、cwd、model、provi
 匿名 subprocess controls 只驗證 opt-in、RPC queue、bounded stream 與 unknown
 契約；不證明 native policy 生效、外層隔離、完整工具清冊、production source
 authority 或 N1–N4。原 bwrap runner 不改入口、sandbox 或自動切換，所有資格 false。
+
+### 匿名 external OS bootstrap 前置探針
+
+`scripts/verify-model-external-bootstrap.py` 另設
+`--external-bootstrap-container-fixture` 明確 opt-in，只驗證新的 ephemeral
+thread 能否由 read-only 啟動，再完成固定 externalSandbox settings 的讀回。
+此入口不送 turn、不宣告 dynamic tool、不讀帳號、不登入、不接外部模型。
+本輪原生結果未驗證前保持 unknown，不代表 writer／拒寫兩個案例通過。
+
+使用既有固定 Linux CLI、既有固定 image 與新 private run／CID；每次 create
+與 start 各一次，未知結果不重試、重播或重設。來源擴充為固定 22 檔 RO
+capture；RO inputs 只有固定 request 與 canary，唯一 host RW bind 是空
+`/workspace`。HOME／CODEX_HOME／registry 位於有界 16 MiB 私有 tmpfs，
+不掛 host controller、evidence、auth 或 Docker socket。沿用非 root、network
+none、RO root、cap-drop ALL、no-new-privileges 與資源限制，無 privilege fallback。
+固定 image 的 13 個 typed-empty 欄位投影只在此明確入口使用，原始 snapshot
+與其他欄位仍核對，不由 drift failure 自動啟用。
+
+物理三個 mounts、wrapper command 與 cwd 先逐項核對，才在獨立副本中將
+這三個已核對的 layout 欄位轉成既有完整 policy checker 的固定表示；其餘
+image、host、資源與原 CID／Created／state 欄位不變，raw engine evidence
+不修改。這是有限 fixture 的 policy reuse，並非 production OS qualification。
+
+Host 核對 read-only、network disabled、固定 cwd／model／provider／approval
+及空 instruction sources 的 thread/start；空 ACK 不足。必須在 raw wire
+看見 settings request out-sent 之後、同 thread、固定 externalSandbox／restricted
+network 與無 named profile 的唯一已觀察 notification；舊通知、重複、drift、
+任何 turn／item activity 都保持 unknown。此有限觀測不承諾未来通知永不重複。
+
+Guest stdout 僅傳 CLI RPC；最後 guest observation 以單一固定有界 stderr
+frame 傳給 host，CLI stderr 使用有界 drain 並另核對 EOF、完整性與 hash。
+Frame 是同 UID 不可信觀測，不能取得 stop／source／integration authority。
+Host 分別核對 Docker client exit、原 CID exit、RO inputs、空 workspace 與
+source／image／engine identity；缺項仍為 unknown，所有資格 false。
+原始 wire／stderr／image／gate 證據留在 Git 外，可重跑產生等價 assertion。

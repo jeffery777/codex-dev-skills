@@ -111,6 +111,7 @@ shards:
       - tests.test_model_broker_probe
       - tests.test_model_container_native
       - tests.test_model_execution_target
+      - tests.test_model_external_bootstrap
       - tests.test_model_host_controls
       - tests.test_model_isolation_path_controls
       - tests.test_model_isolation_pid_limit
