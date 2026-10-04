@@ -64,6 +64,7 @@ WORKERS = {
     'privileges': "REPORT='privileges.json'\n"+AUDIT_CHILD+"\nimport subprocess,sys; subprocess.run([sys.executable,'-I','-c',"+repr("REPORT='grandchild.json'\n"+AUDIT_CHILD)+"],check=True)",
     'noop': "pass",
     'hold': "import pathlib,time; w=pathlib.Path('/workspace'); (w/'example.txt').write_text('holding\\n'); time.sleep(15); (w/'example.txt').write_text('done\\n')",
+    'hold-overlap': "import pathlib,time; w=pathlib.Path('/workspace'); (w/'example.txt').write_text('holding\\n'); time.sleep(35); (w/'example.txt').write_text('done\\n')",
     'background': "import pathlib,subprocess,sys,time; w=pathlib.Path('/workspace'); subprocess.Popen([sys.executable,'-I','-c',"
         + repr(BACKGROUND_CHILD) + "],start_new_session=True); deadline=time.monotonic()+1;\n"
         "while not (w/'background-started.txt').exists():\n"

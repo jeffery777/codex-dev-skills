@@ -544,3 +544,15 @@ ID，也不從正文推定身分。Poll 是消耗式操作，
 Git 外、方法與反例 tracked。此包不完成 non-TTY、nested CLI、完整配置／工具
 清冊、restart、credentials 或 N2／production 資格；後續分項仍保留。自架來源
 模型端點恢復不能取代這些驗證，官方訂閱專用登入安排仍待原先提出的決策。
+
+### N3 固定實體 checkpoint 接手組合控制
+
+沿既有 one-shot container supervisor／sole integrator 補非空 C→存活且隔離的
+A→新副本 B 的匿名案例，scope／acceptance 保持同一固定驗收。B 用 noop 仍須
+保留 C 的累積 patch，A 的活躍 `holding` 不得進入 B；host exact readback 在
+candidate／整合前後以 bounded process table 核對同一個 live 降權 child、holding
+階段與無 completion 的 root control 綁定，不把 init running 當成 worker 存活。
+唯一整合器採納 B，拒收 A 晚到的各個入口；
+未知副作用不重播，隔離／checkpoint／authority 漂移須拒絕。這不替換 R2 saved
+backend、不啟用 production registry、不接 provider，不完成全域 authority 或
+完整 N3／原生工具／訂閱資格。工程方法與反例 tracked，原始證據留 Git 外。

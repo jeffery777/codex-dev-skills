@@ -576,6 +576,10 @@ OS containment 及各 CLI／Desktop／bundled／Linux 入口仍待後續完整�
 
 ## R2 完整執行模式（saved fixture 接線）
 
+實體 backend 的非空 checkpoint／存活 quarantine／唯一整合器控制另見下方
+[N3 固定接手控制](#n3-非空-checkpoint存活舊-worker-與唯一整合器控制)。兩條模式
+不能互換 authority 或把 saved runtime proof 升成 OS 證據。
+
 `SyntheticExecutedLifecycle` 在新 packet 使用 `admit-bootstrap`、固定 R2 protocol／
 recipe／domain 與 explicit phase 閉集合；flat／R1／B1 journal 均拒絕。共用 private
 hooks 的預設行為不改舊模式；B1 仍只到 bootstrapped。R2 原六類 evidence、
@@ -853,3 +857,54 @@ restart 與可信 production observer 仍另行驗證；provider／CLI／termina
 ./scripts/project-python -m unittest tests.test_model_native_session
 ./scripts/project-python scripts/verify-model-native-session.py --binary /absolute/path/to/codex --evidence-root /private/tmp
 ```
+
+## N3 非空 checkpoint、存活舊 worker 與唯一整合器控制
+
+`verify-model-packet-integrator.py --checkpoint-overlap-only` 明確選取新的固定
+匿名案例；不改既有八個 B2 案例，也不把 R2 saved backend 換成 Docker。
+Host 只建立本次 private synthetic Git source、packet、三個 attempt 的獨立
+workspace／control volume／own CID。沿用 host 選定且已安裝的 image、固定
+root-latch launcher 與降權 worker，沒有登入、provider、使用者 repository 或
+production registry；資源及原始收據保留 Git 外，不 cleanup 或重啟 daemon。
+
+Seed 用 `add-update` 封存非空 checkpoint C，尚不整合 source。A 從 C 執行固定
+35 秒 `hold-overlap`，host 核對 exact physical identity／policy、實際 `holding` 效果及
+running state，才能 quarantine；quarantine 不宣稱停止 A，也不擷取其活躍半成品。
+B 用 `noop`，但保留同一 `add-update` scope／驗收，只能從 C 的 immutable bytes
+建立新副本。B 的累積 patch、workspace files、predecessor 與 C 的原始 manifest／
+patch bytes 須相符，CID／workspace identity／control volume 須與 A 不同。
+因此錯用空 baseline，或把 A 的 `holding` 帶入 B，均不能通過。
+
+B 成為 candidate、整合前及整合後仍須由 host 讀回同一個非 zombie／dead 的 A worker。
+Container init running 不等於 worker 存活；每次以 exact CID 的 bounded `top`
+對帳 root PID、唯一 child 的 PID／PPID／UID／process state／固定 command，要求
+四次 worker PID 相同、實際 `holding` 階段及 root control 的 input／claim 原始
+綁定相符且無 completion。Control tar 僅接受固定 USTAR directory 與兩份 regular
+files，拒絕 links、額外 entries、metadata／JSON 漂移，不解壓至 host。
+每次 readback 前後核對 physical policy；有八秒期限，底層同步呼叫可能跨期限，
+但到期結果只能 unknown，不能通過。固定 hold 不 fork／替換 worker、可信 host
+無其他 exec／signal，是這個有限存活證明的前提。沒有建立時間
+重疊就回報未完成，不把停止後結果稱為存活接手。原有 15 秒 `hold` 不變；新的
+35 秒固定 recipe 只供本匿名 overlap 測量，低於既有 launcher 的 40 秒 alarm；
+僅核對實際讀回期間的重疊，超出窗口只能 unknown，不宣稱永久存活。不接受任意
+timeout／命令，亦不重啟已退出的 worker。固定
+FixtureGovernance 讀回 host-issued source authority；唯一 PacketIntegrator 才
+能將 B 合格累積 patch 寫入 synthetic source。A 的晚到 reconcile、admit、publish
+與 integrate 分別要求確切 gate 拒絕；原 source 在 B 整合前須保持 baseline。
+整合結果及完整 postimage 另讀回，reconcile 禁止再次 source write。
+
+未知 prepare／start／export／write 不重送；缺 top、格式／phase／completion 未知、
+child 已結束而 root 尚 running、隔離失效、checkpoint 漂移、未建立
+重疊或 authority 撤銷不能取得成功收據。Root ledger 保留原 intent／結果，不因
+此測量失敗而 rollback 或重做原 operation。離線反例不在 host fork 或連 Docker。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_packet_integrator_runner tests.test_model_packet_integrator
+./scripts/project-python scripts/verify-model-packet-integrator.py --synthetic-qualified-container-fixture --checkpoint-overlap-only --endpoint unix:///absolute/path/to/approved.sock --image sha256:APPROVED_INSTALLED_IMAGE --evidence-root /absolute/path/to/private-evidence-root
+```
+
+這是固定 recipe 的實體合成組合控制，不是完整 N3、真實模型／原生 CLI 接線、
+全域 objective authority 或 production qualification。Fixture validation/review
+artifacts 不代替正式 review；formal gate 仍獨立執行，qualification 維持 false。
+方法及反例 tracked，raw readbacks／ledger／receipt 位於 private Git 外位置；重跑
+重建相同 assertions，CID、nonce、時間與各次授權身分不要求相同。
