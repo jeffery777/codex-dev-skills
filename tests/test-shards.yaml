@@ -114,6 +114,7 @@ shards:
       - tests.test_model_isolation_path_controls
       - tests.test_model_isolation_pid_limit
       - tests.test_model_native_session
+      - tests.test_model_nested_cli
       - tests.test_model_probe_controls
       - tests.test_model_probe_tools
       - tests.test_model_project_hook

@@ -874,6 +874,69 @@ restart 與可信 production observer 仍另行驗證；provider／CLI／termina
 ./scripts/project-python scripts/verify-model-native-session.py --mode non-tty --binary /absolute/path/to/codex --evidence-root /private/tmp
 ```
 
+## N2 匿名 nested CLI 配置與環境局部控制
+
+`verify-model-nested-cli.py` 沿用已驗證的 public CLI bytes、固定本機 Docker
+image／policy，只有 read-only binary 與本次 synthetic workspace 兩個 mounts。
+Parent P 的原生 `exec_command` 啟動固定 wrapper；wrapper 先 READY 等待，
+provider 從原始 header 取得 live ID 後，完整寫入／fsync staging file，再以
+不覆寫 hardlink 單次發布 release。兩個 child C+／C− 依序各啟動一次新
+`codex exec`，使用不同匿名 HOME／CODEX_HOME、cwd、provider port 與 thread UUID。
+Wrapper 原樣保留實際收到的原生環境，只修改 child 的 HOME 身分；未知鍵先
+停止查明，不剔除 guard、重送 spawn 或偽裝 argv0。
+
+C+ 由受控 user `config.toml` 取得唯一 model canary，argv 不覆寫 model；
+C− 保持同一 user config，由固定 argv 覆寫成另一 fixture model。實際 Responses
+request 必須讀回對應 model。安全設定、匿名 loopback provider、catalog、feature
+開關及工具 recipe 由固定 argv 約束。這只核對選定 user model 與 argv precedence，
+不宣稱完整 effective layers；startup candidates 的 absence 也不是完整 config inventory。
+
+Parent 與 C+ 用 `inherit="all"`、明確 `include_only`、`exclude=[]`、`set={}`，
+保留 default sensitive-name exclusion；C− 只改 `inherit="none"`。固定 synthetic
+marker 僅由 parent 啟動環境提供，wrapper 不補值。兩個 child 的原生 tool 各自
+讀回 marker 存在／缺席及自己的 `CODEX_THREAD_ID`，不能把 launch intent 當成
+實際 tool env。`include_only` 之後仍有原生身分與 unified-exec 固定鍵注入，
+因此不宣稱 tool env 恰好只有 allowlist。Source-derived 規則綁定
+[pinned TOML schema](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/config/src/shell_environment_policy.rs)、
+[環境建構](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/protocol/src/shell_environment.rs) 與
+[原生 tool 注入](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/unified_exec/process_manager.rs)。
+這是固定 source contract 的查讀，不是 package build attestation 或完整 nested guards 清冊。
+
+每個 child 在建立自己的 terminal 前，先空 `write_stdin` 使用 P 的 live ID，
+要求 exact unknown-process error，再實際執行固定 probe。Probe 先完成自身 scratch
+讀寫，才以相同 open/read/write primitive 嘗試三個未掛載的 host source／control／
+sibling canary paths；write 不用 `O_CREAT`／`O_TRUNC`。Host 保存並重讀 canary
+identity／mode／size／hash。這只測量本次未掛載 paths，不能推定任意 filesystem
+或所有 descendant 的隔離。Parent tool 僅回短 ACK；host 另讀 child 原始 JSON
+stdout／stderr、user-config bytes 記錄、exact call-ID/output continuation、
+per-turn advertised schema 與 container inspect。Advertisement hash 不稱為 registry hash。
+
+PID 1 整體 50 秒，parent CLI 35 秒，wrapper 32 秒，每個 child 12 秒，release 等待
+六秒；parent 至多一次 exec 加 24 次空 poll，各 child 固定兩次 tool calls。
+這些固定期限包含自然退出驗證；timeout、spawn unknown、截斷、缺原始證據或
+自然 exit 未確認均不通過，unknown 不 replay。已觀察到 canary 變更／開啟或
+marker 控制違規保留 failed，另記生命週期 unknown。Create／start intents 先
+保存，結果未知只能讀回 exact own CID；不刪除資源或重啟 daemon。
+Probe 以逐筆 flush／fsync 的有界 observation journal 保存原始 marker 與每次
+canary 操作；後續 EIO、截斷或期限不能抹去已綁定的先前反例。Host 讀回 unavailable
+保持 unknown，只有確切 identity／bytes mismatch 或已記錄違規才標 failed。
+父層 wrapper 也先 flush／fsync 保存原始 marker、source／call 與 native thread 綁定，
+才判定 marker；缺席／錯值造成早期停止時，不因尚無 child journals 而降為 unknown。
+缺觀察、錯誤 source／thread／call 或讀回 unavailable 不能製造 failed 或 pass。
+
+Provider、CLI、wrapper、probe 共用 UID，都是固定 fixture evidence，不能作為
+可信 production observer。`handler_inventory_complete`、`startup_isolation_qualified`、
+`nested_cli_qualified`、`production_qualified` 固定 false；窄欄位
+`fixed_nested_cli_controls_passed` 只表示上述 controls。Credentials、restart／revocation、
+完整 registry／config、Desktop 與 N1–N4／production 資格仍另行驗證。工程方法與
+離線反例 tracked，原始 readbacks、host-only receipt／canaries 留 Git 外；重跑
+重建同一組 assertions，UUID、SID、ports、CID、路徑與時間可不同。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_nested_cli
+./scripts/project-python scripts/verify-model-nested-cli.py --binary /absolute/path/to/codex --evidence-root /private/tmp
+```
+
 ## N3 非空 checkpoint、存活舊 worker 與唯一整合器控制
 
 `verify-model-packet-integrator.py --checkpoint-overlap-only` 明確選取新的固定

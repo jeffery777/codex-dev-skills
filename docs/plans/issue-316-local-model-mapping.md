@@ -554,6 +554,24 @@ running，再由匿名 provider 完整寫好 staging file、fsync 並以不覆�
 nested CLI、production observer 或完整 N2；資格 flags 仍 false，實測證據留
 Git 外。工程方法與反例按同一驗收強度審查，不能由 public source 推定實測成功。
 
+### N2 匿名 nested CLI 局部控制
+
+新增固定 P→原生 exec→wrapper→C+／C− recipe，不需要登入或自架來源端點。
+沿用原 image／binary／兩個 mounts；三個 CLI 的 HOME、cwd、provider port 與
+UUID 獨立。C+ 讀受控 user model，C− 以 argv 覆寫；由實際 request model 對帳。
+Parent／C+ 的原生 env 繼承指定 synthetic marker，C− inherit none 要求缺席。
+Wrapper 不補 marker 或剔除原生 guard，只改 child HOME，未知 env key 停止。
+每個 child 先實際拒收 P 的 live process ID，再經固定 tool 完成自身 scratch
+正控制及三個未掛載 host canary 的讀寫負控制。Host 另讀 child 原始輸出、
+exact continuations、當輪 advertisement、canary 身分／bytes 與容器 policy。
+
+固定整體／subprocess／release／poll／輸出上限，未知 create／start／spawn／poll
+不重送；缺自然退出或原始證據不能通過。已知隔離／marker 違規保留 failed。
+工程 source、方法與反例 tracked，raw evidence／host receipt 留 Git 外。此包
+只驗證所選配置／環境及固定巢狀工具路徑；完整 layers／registry、credentials、
+restart、可信 observer、Desktop 與 N2／production 資格仍未完成，flags 保持 false。
+官方訂閱專用登入安排仍等待原先提出的決策，與本匿名控制獨立。
+
 ### N3 固定實體 checkpoint 接手組合控制
 
 沿既有 one-shot container supervisor／sole integrator 補非空 C→存活且隔離的
