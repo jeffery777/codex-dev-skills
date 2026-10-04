@@ -453,3 +453,105 @@ class ProbeTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class AdmissionTests(unittest.TestCase):
+    post = ProbeTests.post
+    output = ProbeTests.output
+    def setUp(self):
+        ProbeTests.setUp(self)
+        self.receipt.update(run_id='a'*32, accepted_token='packet-admission-accepted:'+'a'*32)
+        with mock.patch.object(probe.http.server, 'HTTPServer') as constructor:
+            probe.server(self.root, probe.ADMISSION_CASE, self.control, self.receipt)
+        self.handler_class = constructor.call_args.args[1]
+
+    def test_admission_callback_only_latches_exact_envelope_and_duplicate_is_sticky(self):
+        ids={'threadId':'thread-1','turnId':'turn-1'}
+        params=dict(ids,arguments={},callId=probe.ADMISSION_CALL,tool='packet_probe')
+        callback=probe.admission_callback(self.receipt,ids)
+        for changed in ({'arguments':{'source':'bad'}},{'namespace':'other'},{'tool':'other'},
+                        {'threadId':'other'},{'turnId':'other'},{'callId':'other'}):
+            bad=dict(params,**changed)
+            self.receipt['_pending_envelope']={'id':19,'method':'item/tool/call','params':bad}
+            with self.subTest(changed=changed),self.assertRaises(probe.ProbeError):callback(bad)
+            self.assertEqual(self.receipt['accepted_dynamic_calls'],0)
+        self.receipt.pop('admission_error')
+        self.receipt['_pending_envelope']={'id':19,'method':'item/tool/call','params':params}
+        with mock.patch.object(probe.subprocess,'Popen',side_effect=AssertionError('callback-process')), \
+                mock.patch.object(pathlib.Path,'write_bytes',side_effect=AssertionError('callback-write')):
+            response=callback(params)
+        self.assertEqual(response['contentItems'][0]['text'],self.receipt['accepted_token'])
+        self.assertEqual(self.receipt['admission_call']['message_id'],19)
+        with self.assertRaisesRegex(probe.ProbeError,'duplicate'):callback(params)
+        self.assertEqual(self.receipt['admission_error'],'admission-duplicate')
+
+    def test_public_null_namespace_is_preserved_without_allowing_extra_parameters(self):
+        ids={'threadId':'thread-1','turnId':'turn-1'}
+        params=dict(ids,arguments={},callId=probe.ADMISSION_CALL,tool='packet_probe',namespace=None)
+        self.receipt['_pending_envelope']={'id':0,'method':'item/tool/call','params':params}
+        response=probe.admission_callback(self.receipt,ids)(params)
+        self.assertEqual(response['contentItems'][0]['text'],self.receipt['accepted_token'])
+        self.assertIn('namespace',self.receipt['admission_call'])
+        self.assertIsNone(self.receipt['admission_call']['namespace'])
+        for changed in ({'namespace':'functions'},{'destination':'other'}):
+            receipt={'accepted_dynamic_calls':0,'accepted_token':'fixed'}
+            bad=dict(params,**changed)
+            receipt['_pending_envelope']={'id':0,'method':'item/tool/call','params':bad}
+            with self.subTest(changed=changed),self.assertRaises(probe.ProbeError):
+                probe.admission_callback(receipt,ids)(bad)
+            self.assertEqual(receipt['accepted_dynamic_calls'],0)
+
+    def test_admission_server_requires_exact_token_then_completes_without_second_tool(self):
+        first=self.post()
+        self.assertIn(probe.ADMISSION_CALL,first.wfile.getvalue().decode())
+        self.receipt['accepted_dynamic_calls']=1
+        second=self.post(self.output(probe.ADMISSION_CALL,self.receipt['accepted_token']))
+        second.send_response.assert_called_once_with(200)
+        self.assertTrue(self.receipt['positive_control'])
+        self.assertIn('Admission acknowledged; host outcome pending.',second.wfile.getvalue().decode())
+        self.assertNotIn('forced_call',self.receipt['requests'][1])
+        self.post().send_error.assert_called_once_with(422)
+
+    def test_wrong_or_missing_admission_token_cannot_confirm(self):
+        self.post();self.receipt['accepted_dynamic_calls']=1
+        for text in ('',probe.TOKEN,self.receipt['accepted_token']+'wrong'):
+            del self.receipt['requests'][1:]
+            with self.subTest(text=text):
+                self.post(self.output(probe.ADMISSION_CALL,text)).send_error.assert_called_once_with(422)
+                self.assertFalse(self.receipt['positive_control'])
+
+    def test_python_only_pipe_preserves_native_envelope_and_token_before_close(self):
+        # A fixed Python peer tests stdio framing; it is not a Codex/native run.
+        source='''import sys,json
+request=json.loads(sys.stdin.readline())
+print(json.dumps({'id':request['id'],'result':{}}),flush=True)
+sys.stdin.readline()
+print(' {"id":31,"method":"item/tool/call","params":{"arguments":{},"callId":"packet-admission-1","threadId":"t","tool":"packet_probe","turnId":"u"}} ',flush=True)
+reply=json.loads(sys.stdin.readline())
+assert reply['id']==31 and reply['result']['contentItems'][0]['text']=='packet-admission-accepted:fixed'
+print(json.dumps({'method':'turn/completed','params':{'threadId':'t','turn':{'id':'u','status':'completed'}}}),flush=True)
+'''
+        receipt={'accepted_dynamic_calls':0,'accepted_token':'packet-admission-accepted:fixed'}
+        session=probe.AdmissionSession([sys.executable,'-I','-S','-B','-c',source],cwd=str(self.root),
+            env={'PATH':'/usr/bin:/bin','HOME':str(self.root)},limits=probe.transport.Limits(timeout=2,close_timeout=2),
+            fixed_tool='packet_probe',tool_callback=probe.admission_callback(receipt,{'threadId':'t','turnId':'u'}),
+            admission_receipt=receipt)
+        try:
+            session.request('initialize',{'clientInfo':{},'capabilities':{'experimentalApi':True}})
+            self.assertEqual(session.notification()['method'],'turn/completed')
+        finally:close=session.close()
+        receipt['wire']=session.wire
+        self.assertTrue(probe.admission_wire_confirmed(receipt))
+        self.assertEqual(close,{'protocol':'observed','direct_child':'exited','exit_code':0,'descendants':'unknown'})
+        incoming=next(row for row in session.wire if row['direction']=='in' and row['message'].get('id')==31)
+        self.assertTrue(probe.base64.b64decode(incoming['raw_base64']).startswith(b' {'))
+        for mutation in ('token','duplicate','completion','raw','error'):
+            changed=json.loads(json.dumps(receipt))
+            if mutation=='token':changed['accepted_token']='wrong'
+            if mutation=='duplicate':changed['wire'].append(incoming)
+            if mutation=='completion':changed['wire']=[row for row in changed['wire'] if row['message'].get('method')!='turn/completed']
+            if mutation=='raw':changed['wire'][0]['raw_base64']='e30='
+            if mutation=='error':
+                message={'method':'error','params':{'threadId':'t'}}
+                changed['wire'].append({'direction':'in','message':message,'raw_base64':probe.base64.b64encode(json.dumps(message).encode()).decode()})
+            with self.subTest(mutation=mutation):self.assertFalse(probe.admission_wire_confirmed(changed))

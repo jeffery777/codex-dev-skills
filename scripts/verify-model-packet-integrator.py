@@ -12,6 +12,8 @@ import copy
 import contextlib
 import fcntl
 import hashlib
+import importlib.util
+import shutil
 import json
 import os
 import pathlib
@@ -177,24 +179,30 @@ def running_observation(backend,binding,descriptor,*,deadline=None):
         'worker_pid':workers[0]['pid'],'process_table':raw.decode('ascii'),'control':control}
 
 
-def checkpoint_overlap(args,root,engine):
+def checkpoint_overlap(args,root,engine,*,_admission=None):
     """S seals C; A stays isolated/live; B resumes C; only B integrates.
 
     Fixed recipes and synthetic host source only. No model, auth, cleanup,
     stop, inferred quiescence, production adapter or saved-lifecycle override.
     """
+    if _admission is not None:_admission_guard(root,args,_admission)
     source=integration.SyntheticSource.create(root)
     store=packets.PacketStore(root,'packet-checkpoint-overlap')
-    store.prepare(packets.digest(packets.canonical({'scope':'checkpoint-overlap'})))
+    identity,request,target=_admission_seam(args,_admission)
+    store.prepare(identity)
     requirements=source.requirements('add-update')
+    source_before=None
+    if _admission is not None:
+        with source._locked() as (fd,_):source_before=_fresh_source_snapshot(source,fd)
     def create(current,recipe):
+        if _admission is not None:_admission_guard(root,args,_admission,current)
         backend=containers.OneShotSyntheticContainerBackend(current,endpoint=args.endpoint,
             image_id=args.image,opt_in=True,worker=recipe,_engine=engine)
         supervisor=supervisors.PacketSupervisor(current,backend,host_id=backend.host_id,
             backend_id=backend.backend_id,policy_sha256=backend.policy_sha256)
         return backend,supervisor
     seed,seed_supervisor=create(store,'add-update')
-    candidate=seed_supervisor.start('seed','e'*64,'f'*64,expected_revision=0,**requirements)
+    candidate=seed_supervisor.start('seed',request,target,expected_revision=0,**requirements)
     candidate=await_candidate(seed_supervisor,store,engine,'seed',candidate)
     if candidate.get('outcome')!='integration-candidate' or candidate.get('patch')!=integration.FIXED_PATCH:
         raise packets.PacketError('fixture-nonempty-checkpoint-unavailable')
@@ -203,7 +211,7 @@ def checkpoint_overlap(args,root,engine):
     with store.locked() as fd:
         checkpoint_manifest=trust._read(fd,checkpoint_id+'.json',packets.MAX_LEDGER)
     old,old_supervisor=create(store,'hold-overlap')
-    pending=old_supervisor.start('old','e'*64,'f'*64,expected_revision=ledger['revision'],**requirements)
+    pending=old_supervisor.start('old',request,target,expected_revision=ledger['revision'],**requirements)
     if pending!={'outcome':'unknown','reason':'runtime-proof-unavailable','attempt_id':'old'}:
         raise packets.PacketError('fixture-old-writer-not-pending')
     ledger,record=store.supervisor_snapshot('old'); descriptor=store.read_runtime_descriptor('old')
@@ -224,7 +232,7 @@ def checkpoint_overlap(args,root,engine):
     quarantined=private.quarantine('old',expected_revision=ledger['revision'],isolation_adapter_id='overlap')
     if quarantined['checkpoint']!=checkpoint_id: raise packets.PacketError('fixture-quarantine-checkpoint-drift')
     successor,next_supervisor=create(private,'noop')
-    result=next_supervisor.start('successor','e'*64,'f'*64,
+    result=next_supervisor.start('successor',request,target,
         expected_revision=quarantined['revision'],**requirements)
     result=await_candidate(next_supervisor,private,engine,'successor',result)
     if result.get('outcome')!='integration-candidate' or result.get('patch')!=checkpoint:
@@ -247,6 +255,7 @@ def checkpoint_overlap(args,root,engine):
                 or private._checkpoint_bytes(fd,checkpoint_id,private._read(fd))!=checkpoint):
             raise packets.PacketError('fixture-trusted-checkpoint-changed')
     governance=integration.FixtureGovernance(source)
+    if _admission is not None:_admission_guard(root,args,_admission,private)
     authority=governance.issue(next_supervisor,'successor',recipe='add-update')
     integrator=integration.PacketIntegrator(source,governance,next_supervisor)
     stale={}
@@ -266,6 +275,7 @@ def checkpoint_overlap(args,root,engine):
     observations.append(running_observation(old,record['binding'],descriptor))
     if len({x['worker_pid'] for x in observations})!=1:
         raise packets.PacketError('fixture-old-worker-process-changed')
+    if _admission is not None:_admission_guard(root,args,_admission,private)
     integrated=integrator.integrate('successor',authority,operation_id='operation')
     if integrated['state']!='applied': raise packets.PacketError('fixture-successor-integration-unavailable')
     observations.append(running_observation(old,record['binding'],descriptor))
@@ -277,13 +287,19 @@ def checkpoint_overlap(args,root,engine):
     with mock.patch.object(integrator,'_write_file',side_effect=AssertionError('replayed-source-write')):
         if integrator.reconcile('operation',authority)!=integrated:
             raise packets.PacketError('fixture-integrated-readback-drift')
+    source_after=None
+    if _admission is not None:
+        with source._locked() as (fd,_):source_after=_fresh_source_snapshot(source,fd)
     return {'passed':True,'old_stop_claimed':False,'old_running_observations':observations,
         'source':str(source.root),'source_descriptor_sha256':source.descriptor_sha256,
         'seed_checkpoint_sha256':checkpoint_id,'seed_patch_sha256':packets.digest(checkpoint),
         'successor_checkpoint_sha256':result['checkpoint_sha256'],
         'successor_patch_sha256':result['patch_sha256'],'runtime_evidence_sha256':result['evidence_sha256'],
         'authority_sha256':authority.sha,'old_descriptor':descriptor,'successor_descriptor':next_descriptor,
-        'stale_rejections':stale,'integration':integrated,'packet':store.packet_id}
+        'stale_rejections':stale,'integration':integrated,'packet':store.packet_id,
+        **({'admission_sha256':_admission['sha256'],'identity_sha256':identity,
+            'request_sha256':request,'target_sha256':target,'source_before':source_before,
+            'source_after':source_after} if _admission is not None else {})}
 
 
 # Fixed private helpers only. These references are host-generated, never CLI APIs.
@@ -335,7 +351,7 @@ def _reload_read(root, relative, limit=_RELOAD_LIMIT, *, private=True):
         before=os.fstat(fd)
         # PacketStore retains its O_EXCL staging hardlink as crash evidence.
         # Permit that fixed immutable layout, binding the observed link count too.
-        links={1,2} if (private and len(parts)==2 and parts[0] in (_RELOAD_PACKET,'packet-fresh-integration')
+        links={1,2} if (private and len(parts)==2 and parts[0] in (_RELOAD_PACKET,'packet-fresh-integration','packet-checkpoint-overlap')
             and re.fullmatch(r'(?:artifact-[a-f0-9]{32}|backend-runtime-[a-f0-9]{32}\.[a-z-]{1,32}'
                 r'|sealed-runtime-[a-f0-9]{32}\.(?:json|patch)'
                 r'|(?:runtime-|bootstrap-|bootstrap-event-|integration-intent-|integration-result-)?[a-f0-9]{64}\.(?:json|patch))',parts[1])) else {1}
@@ -1436,7 +1452,155 @@ def fresh_integration(args):
     return receipt
 
 
+# Fixed anonymous host admission; no loader/argv/provider/source API is exposed.
+_ADMISSION_FILES = _RELOAD_FILES + ('scripts/verify-model-app-server.py',
+    'scripts/verify-model-tool-boundary.py', 'scripts/model_probe_tools.py',
+    'skills/loop-engineering/scripts/model_app_server_transport.py',
+    'skills/loop-engineering/scripts/model_app_server_metadata.py')
+
+
+def _admission_sources():
+    repository=pathlib.Path(__file__).resolve().parents[1]
+    result={}
+    allowed={pathlib.PurePosixPath(name).stem for name in _ADMISSION_FILES}|set(sys.stdlib_module_names)|{'model_packet_lifecycle'}
+    for name in _ADMISSION_FILES:
+        raw,ref=_reload_read(repository,name,private=False)
+        for node in ast.walk(ast.parse(raw)):
+            imports=([alias.name for alias in node.names] if isinstance(node,ast.Import)
+                else [node.module or ''] if isinstance(node,ast.ImportFrom) else [])
+            if any(module.split('.')[0] not in allowed for module in imports):
+                raise packets.PacketError('admission-extra-import-dependency')
+        module=sys.modules.get(pathlib.PurePosixPath(name).stem)
+        if module is not None and pathlib.Path(module.__file__).resolve()!=repository/name:
+            raise packets.PacketError('admission-import-origin-drift')
+        result[name]=ref
+    return result
+
+
+def _admission_seam(args,admission):
+    if admission is None:
+        return packets.digest(packets.canonical({'scope':'checkpoint-overlap'})),'e'*64,'f'*64
+    sha=admission['sha256']
+    def hashed(scope):return packets.digest(packets.canonical({'scope':scope,'admission_sha256':sha,
+        'packet':'packet-checkpoint-overlap','endpoint':args.endpoint,'image':args.image}))
+    return tuple(hashed(scope) for scope in ('packet-identity','packet-request','packet-target'))
+
+
+def _admission_guard(root,args,admission,store=None):
+    if type(admission)is not dict or set(admission)!={'value','sha256','ref','sources'}:
+        raise packets.PacketError('admission-binding-schema-invalid')
+    raw=_reload_ref(root,admission['ref'])
+    value=admission['value']
+    _reload_ref(root,value['native_receipt'])
+    if (raw!=packets.canonical(value) or packets.digest(raw)!=admission['sha256']
+            or value.get('endpoint')!=args.endpoint or value.get('image')!=args.image
+            or value.get('packet')!='packet-checkpoint-overlap'
+            or value.get('recipe')!='fixed-checkpoint-overlap'
+            or value.get('sources')!=admission['sources'] or _admission_sources()!=admission['sources']):
+        raise packets.PacketError('admission-binding-or-source-drift')
+    if store is not None:
+        if store.root!=root or store.packet_id!=value['packet']:
+            raise packets.PacketError('admission-store-reference-drift')
+        existing=trust._directory(root/store.packet_id);os.close(existing)
+        _reload_read(root,store.packet_id+'/ledger.json');_reload_read(root,store.packet_id+'/lock')
+        with store.locked() as fd:
+            ledger=store._read(fd)
+            identity,request,target=_admission_seam(args,admission)
+            if ledger['packet_id']!=value['packet'] or ledger['identity_sha256']!=identity:
+                raise packets.PacketError('admission-packet-identity-drift')
+            attempts=ledger['attempts']
+            if [row['id'] for row in attempts]!=['seed','old','successor'][:len(attempts)] or len(attempts)>3:
+                raise packets.PacketError('admission-lineage-drift')
+            expected_generation=len(attempts)
+            if ledger['generation']!=expected_generation:
+                raise packets.PacketError('admission-generation-drift')
+            for index,attempt in enumerate(attempts):
+                if attempt['generation']!=index+1:
+                    raise packets.PacketError('admission-attempt-generation-drift')
+                if attempt.get('request_sha256')!=request or attempt.get('target_sha256')!=target:
+                    raise packets.PacketError('admission-request-target-drift')
+
+
+def native_packet_admission(args,*,_engine_factory=None,_native_probe=None):
+    parent=args.evidence_root.resolve(strict=True)
+    if any((path/'.git').exists() for path in (parent,*parent.parents)):
+        raise packets.PacketError('admission-evidence-must-be-outside-git')
+    fd=trust._directory(args.evidence_root)
+    try:
+        if os.fstat(fd).st_mode&0o077:raise packets.PacketError('evidence-root-must-be-private')
+    finally:os.close(fd)
+    root=pathlib.Path(tempfile.mkdtemp(prefix='model-native-packet-admission-',dir=args.evidence_root));root.chmod(0o700)
+    receipt={'schema_version':1,'scope':'anonymous-native-admission-fixed-packet-lineage',
+        'execution_outcome':'unknown','fixture':str(root),'cases':{},
+        **{name:False for name in ('qualified','native_qualified','tool_qualified','startup_isolation_qualified',
+            'isolation_qualified','runtime_qualified','adapter_qualified','production_qualified','n3_complete')},
+        'limitations':['same-trusted-host-coordinator-not-fresh-process-bundle',
+            'token-is-admission-not-final-integration-result-or-source-authority',
+            'direct-child-exit-not-descendant-quiescence','synthetic-source-only-no-production-qualification']}
+    engine=None
+    try:
+        sources=_admission_sources();run_id=uuid.uuid4().hex
+        captured=root/'source-capture';captured.mkdir(mode=0o700)
+        source_refs={}
+        repository=pathlib.Path(__file__).resolve().parents[1]
+        for index,(name,reference) in enumerate(sources.items()):
+            raw,current=_reload_read(repository,name,private=False)
+            if current!=reference:raise packets.PacketError('admission-source-capture-drift')
+            source_refs[name]=_reload_save(captured,'source-'+str(index)+'.json',
+                {'original':reference,'bytes_base64':base64.b64encode(raw).decode()})
+        receipt['source_capture']=source_refs
+        receipt['interpreter']=_reload_interpreter()
+        spec=importlib.util.spec_from_file_location('fixed_anonymous_admission',
+            pathlib.Path(__file__).with_name('verify-model-app-server.py'))
+        probe=importlib.util.module_from_spec(spec);spec.loader.exec_module(probe)
+        if _admission_sources()!=sources:raise packets.PacketError('admission-source-load-drift')
+        if _native_probe is None:
+            selected=shutil.which('codex')
+            if selected is None:raise packets.PacketError('installed-codex-required')
+            executable=pathlib.Path(selected).resolve(strict=True)
+            native_root,native=probe.run_case(root,executable,probe.ADMISSION_CASE,_run_id=run_id)
+        else:native_root,native=_native_probe(root,run_id,probe)
+        receipt['native_evidence']=str(native_root/'receipt.json')
+        if not probe.admission_passed(native) or native.get('run_id')!=run_id:
+            raise packets.PacketError('native-admission-prerequisite-unknown')
+        if _admission_sources()!=sources:raise packets.PacketError('admission-native-source-drift')
+        native_raw,native_ref=_reload_read(root,str((native_root/'receipt.json').relative_to(root)))
+        if _reload_json(native_raw)!=native:raise packets.PacketError('admission-native-receipt-drift')
+        value={'schema_version':1,'run_id':run_id,'packet':'packet-checkpoint-overlap',
+            'recipe':'fixed-checkpoint-overlap','endpoint':args.endpoint,'image':args.image,
+            'call':native['admission_call'],'turn':native['turn_identity'],'accepted_token':native['accepted_token'],
+            'close':native['process_readback'],'binary_sha256':native['binary_sha256'],
+            'native_receipt':native_ref,'sources':sources,'coordinator_pid':os.getpid(),
+            'sealed_at':time.monotonic()}
+        reference=_reload_save(root,'native-admission-binding.json',value)
+        admission={'value':value,'sha256':reference['sha256'],'ref':reference,'sources':sources}
+        receipt['admission']=admission
+        _admission_guard(root,args,admission)
+        # No engine constructor, identity query or packet/source creation before
+        # all native prerequisites and immutable binding have been read back.
+        engine=(_engine_factory(root) if _engine_factory else
+            _ReloadDocker(args.endpoint,root,'native-packet',image=args.image))
+        case=checkpoint_overlap(args,root,engine,_admission=admission)
+        if getattr(engine,'failures',[]):raise packets.PacketError('admission-transport-unknown')
+        _admission_guard(root,args,admission,packets.PacketStore(root,'packet-checkpoint-overlap'))
+        receipt['cases']['checkpoint-overlap']=case
+        receipt['execution_outcome']='measured-synthetic-native-admission-packet-passed'
+    except Exception as error:
+        receipt['failure_class']=type(error).__name__;receipt['failure_reason']=str(error)[:160];raise
+    finally:
+        receipt['transport_trace_count']=len(getattr(engine,'trace',[])) if engine is not None else 0
+        receipt['transport_failures']=getattr(engine,'failures',[]) if engine is not None else []
+        receipt['containers_retained']=getattr(engine,'containers',[]) if engine is not None else []
+        receipt['volumes_retained']=getattr(engine,'volumes',[]) if engine is not None else []
+        _reload_save(root,'native-packet-admission-evidence.json',receipt)
+        print(json.dumps({'evidence':str(root/'native-packet-admission-evidence.json'),
+            'execution_outcome':receipt['execution_outcome'],'production_qualified':False}))
+    return receipt
+
+
 def run(args,*,_engine_factory=None):
+    if getattr(args,'native_packet_admission_only',False):
+        return native_packet_admission(args,_engine_factory=_engine_factory)
     if getattr(args,'fresh_integration_only',False):
         if _engine_factory is not None:raise packets.PacketError('fresh-coordinator-private-helpers-required')
         return fresh_integration(args)
@@ -1553,6 +1717,7 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--synthetic-qualified-container-fixture',action='store_true',required=True)
     modes=parser.add_mutually_exclusive_group()
+    modes.add_argument('--native-packet-admission-only',action='store_true',help='fixed anonymous native token gates one checkpoint overlap packet lineage')
     modes.add_argument('--fresh-integration-only',action='store_true',help='fixed eight-case fresh producer/consumer integration and revocation only')
     modes.add_argument('--controller-reload-only',action='store_true',help='fixed producer exit/fresh readonly original live worker reconstruction only')
     modes.add_argument('--checkpoint-overlap-only',action='store_true',help='fixed nonempty checkpoint/live quarantine/successor fixture only')

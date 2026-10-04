@@ -1168,3 +1168,44 @@ process／command readbacks 與 receipt 留 Git 外，由當輪 native evidence 
 固定 synchronous producer 的真實退出不證明任意 process-kill／FD OS isolation、
 daemon restart、模型／訂閱接線或完整 N3；production／runtime／adapter／N3 flags
 全部 false，fixture validation artifacts 不取代獨立正式 review。
+
+## 匿名 native admission 與固定 packet 因果綁定
+
+`--native-packet-admission-only` 是與其他 integrator fixtures 互斥的明確 opt-in。
+匿名 Responses fixture 只送固定 `packet_probe({})`，不接受命令、來源、loader、
+provider 或配置輸入。同步 callback 僅核對完整 envelope、message ID、thread／turn／
+call IDs、固定 tool 與精確空 arguments，完成一次記憶體 latch 並立即回覆固定 run token；
+callback 不執行 Docker、fsync、wait 或來源整合。Namespace 僅接受省略或公開原生
+請求的 `null`，並保留原始欄位與 wire；重複、非空 namespace 或額外欄位均拒絕。
+
+Fixture 必須讀回精確 token continuation，同一 turn 必須 completed；binary／client／
+sentinel 不變、fixture thread 停止，以及 `Session.close` 的 protocol observed／direct
+child exited 0 都是前置。原始有界 JSON-line wire bytes、送出 intent／sent confirmation、
+Responses requests 與 close 讀回保留 Git 外。未知 callback、timeout、缺 token、錯誤
+completion、unknown close 或任一前置失敗，均不得建立 backend 或 synthetic source。
+Direct child exit 不證明所有 descendants 停止。
+
+前置全部合格後，唯一 host coordinator 才封存原 admission binding，將其 digest
+納入既有 packet identity／request／target。沿用唯一 `packet-checkpoint-overlap` 的
+seed → 非空 C → old live quarantine → 不同 successor 從 C stop／export → sole
+integrator／readback／reconcile；不建立新 broker、MCP 或 dispatch registry。每一
+後續階段核對 binding／來源清冊與原 lineage；identity、request、target、generation、
+C、descriptor 或 runtime policy 漂移只能拒絕，不重開 packet 或重播。Quarantined
+old 不重新 export；source authority 仍由既有 `FixtureGovernance` 核發，admission
+只證明因果關聯。Tool response 僅代表 admission，不能聲稱已包含最後整合結果。
+
+此模式是固定可信 host coordinator，不是前包 fresh-process bundle。另行盤點
+18 份 runner／probe／backend／store／governance 與 app-server transport／metadata
+來源，捕獲 bounded no-follow regular bytes、identity 與 digest，驗 imports 與已載入
+module origins；未啟用 saved lifecycle。前包 13-file bundle 資格不沿用。原 source
+bytes／mode／identity、HEAD／index／metadata、C、control、authority、Docker traces、
+結果及失敗收據保留於私有 evidence root，不納入 Git。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_app_server_probe tests.test_model_packet_integrator_runner
+./scripts/project-python scripts/verify-model-packet-integrator.py --synthetic-qualified-container-fixture --native-packet-admission-only --endpoint unix:///absolute/path/to/approved.sock --image sha256:APPROVED_INSTALLED_IMAGE --evidence-root /absolute/path/to/private-evidence-root
+```
+
+離線正反控制不能代替 native CLI＋Docker 的當輪實測或獨立 review。qualified、native、
+tool、startup isolation、isolation、runtime、adapter、production 與完整 N3 flags
+全部 false；此 fixture 不證明模型／訂閱接線、任意工作執行或 production authority。

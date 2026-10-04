@@ -8,6 +8,9 @@ real provider is passed to the child. Raw synthetic requests stay outside Git.
 from __future__ import annotations
 
 import argparse
+import base64
+import os
+import selectors
 import hashlib
 import http.server
 import importlib.util
@@ -20,6 +23,7 @@ import sys
 import tempfile
 import threading
 import time
+import uuid
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
@@ -116,6 +120,168 @@ def fixed_callback(receipt, identities):
     return callback
 
 
+# Admission is an in-memory causal latch, never packet/source authority.
+ADMISSION_CASE = 'packet-admission'
+ADMISSION_CALL = 'packet-admission-1'
+
+
+def admission_callback(receipt, identities):
+    def callback(params):
+        # Public native requests may explicitly encode the absent namespace as
+        # null. Retain those original fields in the bound call and wire proof.
+        envelope = receipt.get('_pending_envelope')
+        expected = {'arguments': {}, 'callId': ADMISSION_CALL, 'threadId': identities.get('threadId'),
+                    'tool': 'packet_probe', 'turnId': identities.get('turnId')}
+        if (type(params) is not dict
+                or {k: v for k, v in params.items() if k != 'namespace'} != expected
+                or set(params) not in (set(expected), set(expected) | {'namespace'})
+                or params.get('namespace') is not None
+                or any(type(expected[k]) is not str or not expected[k] for k in ('threadId', 'turnId'))
+                or type(params['arguments']) is not dict or params['arguments']
+                or type(envelope) is not dict or set(envelope) != {'id', 'method', 'params'}
+                or envelope.get('method') != 'item/tool/call' or envelope.get('params') != params
+                or not transport._id(envelope.get('id'))):
+            receipt['admission_error'] = 'admission-envelope-drift'
+            raise ProbeError('admission-envelope-drift')
+        if receipt['accepted_dynamic_calls'] != 0:
+            receipt['admission_error'] = 'admission-duplicate'
+            raise ProbeError('admission-duplicate')
+        receipt['accepted_dynamic_calls'] = 1
+        receipt['admission_call'] = dict(params, message_id=envelope['id'])
+        return {'success': True, 'contentItems': [{'type': 'inputText', 'text': receipt['accepted_token']}]}
+    return callback
+
+
+class AdmissionSession(transport.Session):
+    # Keep bounded wire messages in memory; disk publication happens after close.
+    def __init__(self, *args, admission_receipt, **kwargs):
+        self.admission_receipt = admission_receipt
+        self.wire = []
+        self.wire_bytes = 0
+        super().__init__(*args, **kwargs)
+
+    def _record(self, direction, message, raw=None):
+        if raw is None:
+            raw = (json.dumps(message, ensure_ascii=True, allow_nan=False, separators=(',', ':')) + '\n').encode()
+        self.wire_bytes += len(raw)
+        if self.wire_bytes > 262144 or len(self.wire) >= 8192:
+            self._fail('admission-wire-bound')
+        self.wire.append({'direction': direction, 'message': message, 'raw_base64': base64.b64encode(raw).decode()})
+
+    def _read(self, deadline):
+        # Fixed fixture observation of the primitive's bounded JSON-line framing;
+        # preserve received bytes before decoding, including malformed frames.
+        while True:
+            if time.monotonic() >= deadline:
+                self._fail('timeout')
+            newline = self._buffer.find(b'\n')
+            if newline >= 0:
+                if newline > self.limits.line_bytes:
+                    self._fail('line_limit')
+                raw = bytes(self._buffer[:newline+1])
+                del self._buffer[:newline+1]
+                self._messages += 1
+                if self._messages > self.limits.messages:
+                    self._fail('message_limit')
+                try:
+                    message = json.loads(raw.decode('utf-8'), object_pairs_hook=transport._pairs,
+                        parse_constant=transport._constant, parse_float=transport._float)
+                except (ValueError, UnicodeError, RecursionError):
+                    self._record('in-invalid', None, raw)
+                    self._fail('invalid_json')
+                self._record('in', message, raw)
+                if type(message) is not dict:
+                    self._fail('invalid_envelope')
+                return message
+            if len(self._buffer) > self.limits.line_bytes:
+                self._fail('line_limit')
+            self._select(self.process.stdout, selectors.EVENT_READ, deadline)
+            try:
+                chunk = os.read(self.process.stdout.fileno(), min(65536,
+                    self.limits.line_bytes + 1 - len(self._buffer)))
+            except BlockingIOError:
+                continue
+            except OSError:
+                self._fail('read_failed')
+            if not chunk:
+                if self._buffer:
+                    self._record('in-partial', None, bytes(self._buffer))
+                self._fail('partial_eof' if self._buffer else 'eof')
+            self._total += len(chunk)
+            if self._total > self.limits.total_bytes:
+                self._fail('total_limit')
+            self._buffer.extend(chunk)
+
+    def _send(self, message, deadline):
+        self._record('out-intent', message)
+        super()._send(message, deadline)
+        self._record('out-sent', message)
+
+    def _dispatch(self, message, expected_id, deadline):
+        if message.get('method') == 'item/tool/call':
+            self.admission_receipt['_pending_envelope'] = message
+        try:
+            return super()._dispatch(message, expected_id, deadline)
+        finally:
+            self.admission_receipt.pop('_pending_envelope', None)
+
+
+def admission_wire_confirmed(receipt):
+    wire=receipt.get('wire')
+    call=receipt.get('admission_call', {})
+    if type(wire) is not list or len(wire)>8192 or type(call) is not dict:
+        return False
+    invocation={'id':call.get('message_id'),'method':'item/tool/call',
+        'params':{k:v for k,v in call.items() if k!='message_id'}}
+    response={'id':call.get('message_id'),'result':{'success':True,'contentItems':[
+        {'type':'inputText','text':receipt.get('accepted_token')}]}}
+    incoming=[];outgoing=[];completions=[];total=0
+    try:
+        for row in wire:
+            if type(row) is not dict or set(row)!={'direction','message','raw_base64'}:return False
+            raw=base64.b64decode(row['raw_base64'],validate=True);total+=len(raw)
+            if total>262144 or json.loads(raw,object_pairs_hook=transport._pairs)!=row['message']:return False
+            if row['direction']=='in':
+                if row['message'].get('method')=='error':return False
+                if row['message'].get('method')=='item/tool/call':incoming.append(row['message'])
+                if row['message'].get('method')=='turn/completed':completions.append(row['message']['params'])
+            if row['direction']=='out-sent' and row['message']==response:outgoing.append(row['message'])
+        return (incoming==[invocation] and outgoing==[response] and len(completions)==1
+            and completions[0].get('threadId')==call.get('threadId')
+            and completions[0].get('turn',{}).get('id')==call.get('turnId')
+            and completions[0].get('turn',{}).get('status')=='completed')
+    except (ValueError,TypeError,KeyError,AttributeError):return False
+
+
+def admission_passed(receipt):
+    return (admission_wire_confirmed(receipt) and receipt.get('case') == ADMISSION_CASE and receipt.get('positive_control') is True
+            and type(receipt.get('accepted_dynamic_calls')) is int and receipt['accepted_dynamic_calls'] == 1
+            and receipt.get('turn_status') == 'completed'
+            and all(receipt.get(k) is True for k in ('sentinel_preserved', 'client_unchanged',
+                     'version_verified', 'binary_unchanged', 'fixture_stopped'))
+            and receipt.get('process_readback') == {'protocol': 'observed', 'direct_child': 'exited',
+                     'exit_code': 0, 'descendants': 'unknown'}
+            and type(receipt.get('process_readback', {}).get('exit_code')) is int
+            and type(receipt.get('metadata')) is dict
+            and receipt['metadata'].get('feature_inventory_complete') is True
+            and receipt['metadata'].get('startup_isolation_qualified') is False
+            and receipt['metadata'].get('thread_snapshot_verified') is False
+            and receipt.get('turn_identity') == {k: receipt.get('admission_call', {}).get(k)
+                                                for k in ('threadId', 'turnId')}
+            and type(receipt.get('admission_call')) is dict
+            and set(receipt['admission_call']) in (
+                {'arguments','callId','threadId','tool','turnId','message_id'},
+                {'arguments','callId','threadId','tool','turnId','message_id','namespace'})
+            and receipt['admission_call'].get('namespace') is None
+            and type(receipt['admission_call']['arguments']) is dict
+            and transport._id(receipt['admission_call']['message_id'])
+            and receipt['admission_call'].get('arguments') == {}
+            and receipt['admission_call'].get('callId') == ADMISSION_CALL
+            and receipt['admission_call'].get('tool') == 'packet_probe'
+            and receipt.get('accepted_token') == 'packet-admission-accepted:' + receipt.get('run_id', '')
+            and not any(k in receipt for k in ('failure_class', 'fixture_error', 'admission_error')))
+
+
 def passed(receipt):
     return (receipt.get('positive_control') is True
             and type(receipt.get('accepted_dynamic_calls')) is int and receipt['accepted_dynamic_calls'] == 1
@@ -179,30 +345,35 @@ def server(root, case, control, receipt):
                     if self.path != '/v1/responses' or self.headers.get('Authorization') is not None or self.headers.get('Content-Encoding', 'identity') != 'identity':
                         raise ProbeError('unexpected-provider-request')
                     length = int(self.headers.get('Content-Length', '0'))
-                    if not 0 < length <= manifest.MAX_REQUEST_BYTES or len(receipt['requests']) >= 3:
+                    if not 0 < length <= manifest.MAX_REQUEST_BYTES or len(receipt['requests']) >= (2 if case == ADMISSION_CASE else 3):
                         raise ProbeError('request-limit')
                     raw = self.rfile.read(length)
                     if len(raw) != length:
                         raise ProbeError('truncated-request')
                     request = manifest.decode(raw)
                     stage = len(receipt['requests']) + 1
-                    (root / f'request-{stage}.json').write_bytes(raw)
+                    request_file = root / f'request-{stage}.json'
+                    request_file.write_bytes(raw)
+                    if case == ADMISSION_CASE:
+                        request_file.chmod(0o600)
                     record = {'stage': stage, 'advertised': manifest.advertised_tools(raw)}
                     receipt['requests'].append(record)
                     if stage == 1:
-                        item = {'type': 'function_call', 'name': 'packet_probe', 'arguments': '{}', 'call_id': 'boundary-positive-1'}
+                        item = {'type': 'function_call', 'name': 'packet_probe', 'arguments': '{}', 'call_id': ADMISSION_CALL if case == ADMISSION_CASE else 'boundary-positive-1'}
                     elif stage == 2:
                         output = boundary.find_output(request, calls[0])
-                        if boundary.output_text(output) != TOKEN or type(receipt['accepted_dynamic_calls']) is not int or receipt['accepted_dynamic_calls'] != 1:
+                        if boundary.output_text(output) != (receipt['accepted_token'] if case == ADMISSION_CASE else TOKEN) or type(receipt['accepted_dynamic_calls']) is not int or receipt['accepted_dynamic_calls'] != 1:
                             raise ProbeError('positive-control-unconfirmed')
                         receipt['positive_control'] = True
-                        item = negative_call(case, control)
+                        item = ({'type': 'message', 'role': 'assistant', 'id': 'anonymous-admission-final',
+                                 'content': [{'type': 'output_text', 'text': 'Admission acknowledged; host outcome pending.'}]}
+                                if case == ADMISSION_CASE else negative_call(case, control))
                     else:
                         output = boundary.find_output(request, calls[1])
                         record['negative_output'] = output
                         receipt['negative_outcome'] = deny_outcome(output, calls[1], case)
                         item = {'type': 'message', 'role': 'assistant', 'id': 'anonymous-final', 'content': [{'type': 'output_text', 'text': 'Anonymous app-server fixture finished.'}]}
-                    if stage < 3:
+                    if stage == 1 or stage == 2 and case != ADMISSION_CASE:
                         calls.append(item)
                         record['forced_call'] = item
                     events = [{'type': 'response.created', 'response': {'id': f'anonymous-{stage}'}},
@@ -222,7 +393,7 @@ def server(root, case, control, receipt):
     return http.server.HTTPServer(('127.0.0.1', 0), Handler)
 
 
-def run_case(parent, executable, case):
+def run_case(parent, executable, case, *, _run_id=None):
     root = pathlib.Path(tempfile.mkdtemp(prefix='appserver-' + case + '-', dir=parent))
     root.chmod(0o700)
     home, client, control = [root / name for name in ('home', 'client', 'control')]
@@ -233,6 +404,11 @@ def run_case(parent, executable, case):
     receipt = {'case': case, 'production_qualified': False, 'repository_completion': False,
                'accepted_dynamic_calls': 0, 'requests': [], 'positive_control': False,
                'handler_inventory_complete': False, 'real_provider': False, 'existing_login_used': False}
+    if case == ADMISSION_CASE:
+        receipt['run_id'] = _run_id or uuid.uuid4().hex
+        receipt['accepted_token'] = 'packet-admission-accepted:' + receipt['run_id']
+        receipt.update({name: False for name in ('qualified','native_qualified','tool_qualified',
+            'startup_isolation_qualified','isolation_qualified','runtime_qualified','adapter_qualified','n3_complete')})
     service = thread = session = None
     service_started = False
     try:
@@ -266,8 +442,10 @@ def run_case(parent, executable, case):
         receipt['cli_version'] = VERSION
         receipt['binary_sha256'] = hashlib.sha256(executable.read_bytes()).hexdigest()
         identities = {}
-        session = transport.Session(argv, cwd=str(client), env=env, limits=transport.Limits(timeout=15, close_timeout=5),
-                                    fixed_tool='packet_probe', tool_callback=fixed_callback(receipt, identities))
+        session_type = AdmissionSession if case == ADMISSION_CASE else transport.Session
+        session = session_type(argv, cwd=str(client), env=env, limits=transport.Limits(timeout=15, close_timeout=5),
+                    fixed_tool='packet_probe', tool_callback=(admission_callback if case == ADMISSION_CASE else fixed_callback)(receipt, identities),
+                    **({'admission_receipt': receipt} if case == ADMISSION_CASE else {}))
         session.request('initialize', {'clientInfo': {'name': 'anonymous_packet_probe', 'version': '1'}, 'capabilities': {'experimentalApi': True}})
         started = session.request('thread/start', {'model': 'gpt-6-sol', 'modelProvider': 'fixture', 'allowProviderModelFallback': False,
                     'cwd': str(client), 'ephemeral': True, 'permissions': 'probe', 'approvalPolicy': 'never', 'environments': [],
@@ -289,7 +467,13 @@ def run_case(parent, executable, case):
                 if note['params'].get('threadId') != identities['threadId'] or note['params']['turn'].get('id') != identities['turnId']:
                     raise ProbeError('turn-identity-drift')
                 receipt['turn_status'] = note['params']['turn']['status']
+                if case == ADMISSION_CASE:
+                    receipt['turn_identity'] = dict(identities)
                 break
+        if case == ADMISSION_CASE:
+            # Observe already-arrived duplicate/invalid frames before closing;
+            # a partial frame remains uncertainty under the transport deadline.
+            session._drain_available(session._deadline())
         receipt['sentinel_preserved'] = (control / 'sentinel').read_text() == 'synthetic-only'
         receipt['client_unchanged'] = not list(client.iterdir())
         receipt['binary_unchanged'] = hashlib.sha256(executable.read_bytes()).hexdigest() == receipt['binary_sha256']
@@ -307,15 +491,21 @@ def run_case(parent, executable, case):
                 receipt['fixture_stopped'] = stop_fixture(service, thread, started=service_started)
             except (OSError, RuntimeError):
                 receipt['fixture_stopped'] = False
-        receipt['passed'] = passed(receipt)
+        if case == ADMISSION_CASE and session is not None:
+            receipt['wire'] = session.wire
+        receipt['passed'] = admission_passed(receipt) if case == ADMISSION_CASE else passed(receipt)
         (root / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
+        if case == ADMISSION_CASE:
+            (root / 'receipt.json').chmod(0o600)
     return root, receipt
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--evidence-root', type=pathlib.Path, required=True)
-    parser.add_argument('--case', choices=CASES, required=True)
+    modes = parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument('--case', choices=CASES)
+    modes.add_argument('--packet-admission-only', action='store_true', help='fixed anonymous token admission only; no packet execution')
     args = parser.parse_args()
     parent = args.evidence_root.resolve(strict=True)
     if not parent.is_dir() or any((p / '.git').exists() for p in (parent, *parent.parents)):
@@ -324,8 +514,9 @@ def main():
     if selected is None:
         parser.error('installed Codex CLI required')
     executable = pathlib.Path(selected).resolve(strict=True)
-    root, receipt = run_case(parent, executable, args.case)
-    print(json.dumps({'evidence': str(root / 'receipt.json'), 'case': args.case, 'passed': receipt['passed'], 'production_qualified': False, 'failure_class': receipt.get('failure_class')}))
+    case = ADMISSION_CASE if args.packet_admission_only else args.case
+    root, receipt = run_case(parent, executable, case)
+    print(json.dumps({'evidence': str(root / 'receipt.json'), 'case': case, 'passed': receipt['passed'], 'production_qualified': False, 'failure_class': receipt.get('failure_class')}))
     return 0 if receipt['passed'] else 1
 
 

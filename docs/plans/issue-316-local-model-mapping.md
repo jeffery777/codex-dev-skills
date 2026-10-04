@@ -653,3 +653,26 @@ exit／marker、journal／cleanup fault 或未知副作用均不得形成成功�
 與 meaningful offline controls tracked；native runtime、獨立 code／security review
 及完整 DoD 留待當輪證據。此包不完成 N3／daemon restart／模型或訂閱 qualification，
 所有 production／runtime／adapter／N3 flags false，原始證據保留 Git 外。
+
+### 匿名 native packet admission 工程包
+
+新增互斥 `--native-packet-admission-only`，先由固定匿名 Responses conversation
+取得一次 `packet_probe({})` 的嚴格 message／thread／turn／call binding 與精確 token。
+Callback 只做記憶體 latch；token continuation、同 turn completion、binary／client／
+sentinel、fixture 停止與 protocol-observed／direct-child-exit-0 全部讀回後，才由
+host coordinator 封存 admission，並把 digest 注入既有 packet identity／request／
+target。所有 native unknown 都在 backend construction 前拒絕。
+
+重用既有唯一 checkpoint-overlap lineage：seed 非空 C、old live quarantine、
+不同 successor 從 C 停止／export、唯一 synthetic integrator 和正式 reconcile。
+不新增 dispatch registry 或 core 契約，不重新 export quarantined old；admission
+不是 source authority，固定 tool 回覆不包含最後整合結果。原 lineage／generation／
+request／target／C／descriptor／policy 漂移只能拒絕，不開新 packet、不重播。
+
+固定同 host coordinator 另行盤點 18-file import closure，驗證來源與已載入 origins，
+保存 source bytes／identity／hash；不沿用 13-file fresh bundle qualification。
+Wire／token／close／binding／Docker／C／authority／results／source proof 與 failure
+保留 Git 外。Tracked tests 涵蓋精確 latch、token、原始 pipe bytes、unknown gates 的
+零 backend effects，以及 packet binding／generation 漂移不啟動後續 attempt。
+Native CLI＋Docker 實測與獨立 review／scan 留待當輪來源凍結後處理；所有 native／
+tool／startup／isolation／runtime／production／完整 N3 qualification flags false。

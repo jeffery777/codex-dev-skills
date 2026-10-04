@@ -1165,3 +1165,132 @@ class FreshIntegrationTests(unittest.TestCase):
 
 
 if __name__=='__main__': unittest.main()
+
+
+class NativeAdmissionTests(unittest.TestCase):
+    def native(self,home,run_id,probe):
+        root=home/'native';root.mkdir(mode=0o700)
+        call={'arguments':{},'callId':probe.ADMISSION_CALL,'threadId':'native-thread',
+            'turnId':'native-turn','tool':'packet_probe','message_id':12,'namespace':None}
+        value={'case':probe.ADMISSION_CASE,'run_id':run_id,'accepted_token':'packet-admission-accepted:'+run_id,
+            'admission_call':call,'turn_identity':{'threadId':'native-thread','turnId':'native-turn'},
+            'accepted_dynamic_calls':1,'positive_control':True,'turn_status':'completed',
+            'process_readback':{'protocol':'observed','direct_child':'exited','exit_code':0,'descendants':'unknown'},
+            'metadata':{'feature_inventory_complete':True,'startup_isolation_qualified':False,'thread_snapshot_verified':False},
+            'binary_sha256':'b'*64,**{key:True for key in ('sentinel_preserved','client_unchanged',
+                'version_verified','binary_unchanged','fixture_stopped')}}
+        messages=[('in',{'id':12,'method':'item/tool/call','params':{k:v for k,v in call.items() if k!='message_id'}}),
+            ('out-sent',{'id':12,'result':{'success':True,'contentItems':[{'type':'inputText','text':value['accepted_token']}]}}),
+            ('in',{'method':'turn/completed','params':{'threadId':'native-thread','turn':{'id':'native-turn','status':'completed'}}})]
+        value['wire']=[{'direction':direction,'message':message,'raw_base64':runner.base64.b64encode(
+            (json.dumps(message)+'\n').encode()).decode()} for direction,message in messages]
+        runner._reload_save(root,'receipt.json',value)
+        return root,value
+
+    def args(self,root):return SimpleNamespace(evidence_root=root,image=IMAGE,endpoint='unix:///synthetic/docker.sock')
+
+    def test_native_token_binds_only_existing_lineage_and_real_core_integrates_successor(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=pathlib.Path(temporary).resolve();root.chmod(0o700);engines=[]
+            def factory(home):engines.append(OverlapDocker(home));return engines[-1]
+            value=runner.native_packet_admission(self.args(root),_native_probe=self.native,_engine_factory=factory)
+            case=value['cases']['checkpoint-overlap'];binding=value['admission']
+            self.assertEqual(case['integration']['state'],'applied')
+            self.assertEqual(case['admission_sha256'],binding['sha256'])
+            store=runner.packets.PacketStore(pathlib.Path(value['fixture']),case['packet'])
+            with store.locked() as fd:ledger=store._read(fd)
+            self.assertEqual(ledger['identity_sha256'],case['identity_sha256'])
+            self.assertEqual([row['id'] for row in ledger['attempts']],['seed','old','successor'])
+            for row in ledger['attempts']:
+                self.assertEqual(row['request_sha256'],case['request_sha256'])
+                self.assertEqual(row['target_sha256'],case['target_sha256'])
+            self.assertFalse(value['native_qualified']);self.assertFalse(value['n3_complete'])
+            self.assertEqual(case['source_before']['head'],case['source_after']['head'])
+            self.assertEqual(sum(call[:2]==('container','start') for call in engines[0].calls),3)
+            self.assertEqual(case['stale_rejections']['reconcile'],'stale-writer-result-rejected')
+
+    def test_every_unknown_native_gate_prevents_even_engine_construction(self):
+        changes=[('positive_control',False),('accepted_dynamic_calls',2),('turn_status','failed'),
+            ('sentinel_preserved',False),('binary_unchanged',False),('client_unchanged',False),
+            ('fixture_stopped',False),('accepted_token','wrong'),('turn_identity',{'threadId':'other','turnId':'native-turn'}),
+            ('process_readback',{'protocol':'unknown','direct_child':'exited','exit_code':0,'descendants':'unknown'}),
+            ('failure_class','callback_timeout')]
+        for key,changed in changes:
+            with self.subTest(key=key),tempfile.TemporaryDirectory() as temporary:
+                root=pathlib.Path(temporary).resolve();root.chmod(0o700)
+                def native(home,run_id,probe):
+                    native_root,value=self.native(home,run_id,probe);value[key]=changed;return native_root,value
+                factory=mock.Mock(side_effect=AssertionError('backend-before-native-proof'))
+                with self.assertRaisesRegex(runner.packets.PacketError,'prerequisite-unknown'):
+                    runner.native_packet_admission(self.args(root),_native_probe=native,_engine_factory=factory)
+                factory.assert_not_called()
+                self.assertFalse(list(root.glob('**/packet-checkpoint-overlap')))
+
+    def test_sealed_binding_and_current_source_drift_fail_before_create(self):
+        for drift in ('image','endpoint','packet','run_id','recipe','source'):
+            with self.subTest(drift=drift),tempfile.TemporaryDirectory() as temporary:
+                root=pathlib.Path(temporary).resolve();root.chmod(0o700);args=self.args(root)
+                def native(home,run_id,probe):return self.native(home,run_id,probe)
+                original=runner._admission_guard
+                def guard(home,args,binding,store=None):
+                    if drift=='source':
+                        with mock.patch.object(runner,'_admission_sources',return_value={}):return original(home,args,binding,store)
+                    changed=dict(binding,value=dict(binding['value'],**{drift:'wrong'}))
+                    return original(home,args,changed,store)
+                factory=mock.Mock()
+                with mock.patch.object(runner,'_admission_guard',side_effect=guard),self.assertRaises(runner.packets.PacketError):
+                    runner.native_packet_admission(args,_native_probe=native,_engine_factory=factory)
+                factory.assert_not_called()
+
+    def test_packet_request_target_generation_drift_does_not_start_another_attempt(self):
+        for field,changed in [('identity_sha256','a'*64),('generation',9),
+                              ('request_sha256','a'*64),('target_sha256','a'*64)]:
+            with self.subTest(field=field),tempfile.TemporaryDirectory() as temporary:
+                root=pathlib.Path(temporary).resolve();root.chmod(0o700);engines=[]
+                def factory(home):engines.append(OverlapDocker(home));return engines[-1]
+                original=runner._admission_guard
+                def guard(home,args,binding,store=None):
+                    if store is not None:
+                        with store.locked() as fd:
+                            ledger=store._read(fd)
+                            if len(ledger['attempts'])==1:
+                                if field.endswith('_sha256') and field!='identity_sha256':ledger['attempts'][0][field]=changed
+                                else:ledger[field]=changed
+                                store._write(fd,ledger)
+                    return original(home,args,binding,store)
+                with mock.patch.object(runner,'_admission_guard',side_effect=guard),self.assertRaises(runner.packets.PacketError):
+                    runner.native_packet_admission(self.args(root),_native_probe=self.native,_engine_factory=factory)
+                self.assertEqual(sum(call[:2]==('container','start') for call in engines[0].calls),1)
+                self.assertEqual(len(list(root.glob('**/packet-checkpoint-overlap'))),1)
+
+    def test_new_closure_rejects_missing_or_extra_import_before_native_or_backend(self):
+        original=runner._reload_read
+        for fault in ('missing','import'):
+            with self.subTest(fault=fault),tempfile.TemporaryDirectory() as temporary:
+                root=pathlib.Path(temporary).resolve();root.chmod(0o700)
+                def read(home,name,*args,**kwargs):
+                    if name=='scripts/verify-model-app-server.py':
+                        if fault=='missing':raise FileNotFoundError('fixture missing')
+                        raw,ref=original(home,name,*args,**kwargs);return raw+b'\nimport unapproved_dependency\n',ref
+                    return original(home,name,*args,**kwargs)
+                native=mock.Mock();factory=mock.Mock()
+                with mock.patch.object(runner,'_reload_read',side_effect=read),self.assertRaises((runner.packets.PacketError,FileNotFoundError)):
+                    runner.native_packet_admission(self.args(root),_native_probe=native,_engine_factory=factory)
+                native.assert_not_called();factory.assert_not_called()
+
+    def test_missing_original_packet_lock_is_not_recreated(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=pathlib.Path(temporary).resolve();root.chmod(0o700);engines=[]
+            def factory(home):engines.append(OverlapDocker(home));return engines[-1]
+            original=runner._admission_guard;retained=[]
+            def guard(home,args,binding,store=None):
+                if store is not None and not retained:
+                    with store.locked() as fd:ledger=store._read(fd)
+                    if ledger['attempts']:
+                        lock=home/store.packet_id/'lock';retained.append(lock)
+                        lock.rename(lock.with_name('saved-lock'))
+                return original(home,args,binding,store)
+            with mock.patch.object(runner,'_admission_guard',side_effect=guard),self.assertRaises(FileNotFoundError):
+                runner.native_packet_admission(self.args(root),_native_probe=self.native,_engine_factory=factory)
+            self.assertEqual(sum(call[:2]==('container','start') for call in engines[0].calls),1)
+            self.assertFalse(retained[0].exists())
