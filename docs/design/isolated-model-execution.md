@@ -906,5 +906,40 @@ child 已結束而 root 尚 running、隔離失效、checkpoint 漂移、未建�
 這是固定 recipe 的實體合成組合控制，不是完整 N3、真實模型／原生 CLI 接線、
 全域 objective authority 或 production qualification。Fixture validation/review
 artifacts 不代替正式 review；formal gate 仍獨立執行，qualification 維持 false。
+
+## N1 Mac 原生 socket 正反控制
+
+`verify-model-permissions.py --network-controls` 在既有原生背景程序案例後，
+分別測量 TCP、UDP 與私有 Unix socket。它不需要 Docker、provider 或登入；
+controller 以專案 Python 執行，固定 C client 由已存在的 system compiler 建立。
+Mac client 的 linked libraries 只接受 `/System/` 或 `/usr/lib/`，不擴充原
+filesystem profile 的可讀路徑。缺 compiler、編譯失敗、未知 linked library 或
+Unix socket 路徑過長都保留 unknown。
+
+可信 host 為每個 transport 建立同一個 listener：TCP／UDP 僅綁定 loopback
+的 ephemeral port，Unix socket 留在允許寫入的私有 workspace。正、負階段
+使用不同 nonce 與單調時鐘期限；兩階段的固定 client、binary、工作目錄、
+環境及 filesystem 設定相同，只切換 `network.enabled`。Mac client 使用
+`mach_absolute_time` 與所選 Python 的時間域對齊；Linux 控制測試使用
+`CLOCK_MONOTONIC`。這些輸入由 host 固定產生，不接受模型提供的程式或目的地。
+
+正控制須由 host 獨立收到一次 nonce、回傳精確 ACK，且 client 在期限前核對
+成功，才執行負控制。TCP／Unix 的負控制只接受 `connect`、UDP 只接受
+`sendto` 本身的 `EACCES`／`EPERM`；connection refused、reset、timeout、
+程序失敗、重複／逾期 nonce 或缺 readback 不能當成隔離成功。Host 保持觀察
+到負階段期限並完成 observer 停止讀回；負階段任何 stream accept 或 nonce
+收件都是 counterexample。Observer lifecycle 不明時保留 unknown 並停止
+建立後續 listener。Receipt 同時核對固定 client／CLI 的 bytes identity。
+
+執行時應使用已存在、Git 外且路徑長度足以容納 Unix socket 的私有 evidence
+目錄；原始收據與診斷留 Git 外。重跑重建相同 assertions，nonce、port、
+timestamp、私有路徑及 build identity 須重新核對，不要求逐 byte 相同。
+純邏輯反例另涵蓋錯誤分類、缺失／重複／過期證據、觀察期限不足及設定漂移；
+無 sandbox 的實際 client 必須因 host 收到負控制而失敗。
+
+這只測量固定 no-fork client 的本機 socket 操作，不涵蓋任意 IPC、CLI builtin
+tools、credentials、daemon／host restart、完整資源限制或其它 runtime。
+七項原生背景程序控制與三種 transport 的局部成功均不建立完整 N1；
+production registry 與 qualification flags 不由此開啟。
 方法及反例 tracked，raw readbacks／ledger／receipt 位於 private Git 外位置；重跑
 重建相同 assertions，CID、nonce、時間與各次授權身分不要求相同。

@@ -556,3 +556,19 @@ candidate／整合前後以 bounded process table 核對同一個 live 降權 ch
 未知副作用不重播，隔離／checkpoint／authority 漂移須拒絕。這不替換 R2 saved
 backend、不啟用 production registry、不接 provider，不完成全域 authority 或
 完整 N3／原生工具／訂閱資格。工程方法與反例 tracked，原始證據留 Git 外。
+
+### N1 Mac 原生 socket 補充控制
+
+既有 `verify-model-permissions.py` 增加 opt-in `--network-controls`，在相同
+私有 workspace／filesystem profile 上對照 network 開關。固定 C client
+只用 system libraries；可信 host 分別驗證 loopback TCP／UDP 與允許路徑的
+Unix socket 正控制 nonce 往返，再觀察負控制到完整期限。TCP／Unix 必須在
+connect、UDP 必須在 sendto 得到明確拒絕，且 host 沒有負控制收件或 stream
+accept；其它錯誤、缺失／逾期證據、compiler 或 observer 不可用保留 unknown。
+Binary／設定漂移不得沿用原結果，收到負階段連線或 nonce 就回報 failed。
+
+此包可在 Docker 不可用及自架來源不可達時測量 Mac 原生 sandbox 的固定
+邊界；相關反例包括實際無隔離收件，不以缺工具或無回應當成功。設計與可重跑
+assertions tracked，原始證據保存在 Git 外，供 code／merge review 讀回。
+它不補足完整 N1、native tool inventory、credentials、restart 或 production
+authority／executor 資格；原 N1–N4 與發行條件保持適用。

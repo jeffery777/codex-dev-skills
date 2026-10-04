@@ -1,5 +1,6 @@
 """Counterexamples for opt-in sandbox probe evidence, without a sandbox/model."""
 import copy
+import errno
 import importlib.util
 import fcntl
 import io
@@ -36,6 +37,160 @@ class ReaderControlTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0)
                 self.assertTrue((root / 'reader-verified').exists())
                 self.assertTrue((root / 'violation').exists())
+
+
+class NativeNetworkControlTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        spec = importlib.util.spec_from_file_location('native_network_probe',
+            pathlib.Path(__file__).resolve().parents[1] / 'scripts/verify-model-permissions.py')
+        cls.probe = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.probe)
+
+    def fixture(self, transport='tcp'):
+        probe = self.probe
+        return {'transport': transport, 'client_sha256': probe.hashlib.sha256(
+                probe.NETWORK_CLIENT.encode()).hexdigest(),
+            'positive_nonce_sha256': 'a' * 64, 'negative_nonce_sha256': 'b' * 64,
+            'positive_filesystem_config_sha256': 'c' * 64,
+            'negative_filesystem_config_sha256': 'c' * 64,
+            'positive': {'started_at': 1.0, 'finished_at': 1.5, 'expires_at': 2.0,
+                'returncode': 0, 'output': {'outcome': 'connected', 'ack_verified': True,
+                    'nonce_sha256': 'a' * 64}},
+            'negative': {'started_at': 3.0, 'finished_at': 3.5, 'expires_at': 4.0,
+                'returncode': 0, 'output': {'outcome': 'denied',
+                    'operation': 'sendto' if transport == 'udp' else 'connect',
+                    'errno': errno.EPERM, 'ack_verified': False, 'nonce_sha256': 'b' * 64}},
+            'listener': {'positive_nonce_count': 1, 'negative_nonce_count': 0,
+                'negative_accept_count': 0, 'late_nonce_count': 0, 'unexpected_count': 0,
+                'overflow': False, 'stopped': True, 'observed_until': 4.1}}
+
+    def test_only_explicit_syscall_denials_after_positive_control_pass(self):
+        for transport in ('tcp', 'udp', 'unix'):
+            for value in (errno.EPERM, errno.EACCES):
+                case = self.fixture(transport)
+                case['negative']['output']['errno'] = value
+                self.assertEqual(self.probe.evaluate_network_case(case), 'passed')
+            for value in (errno.ECONNREFUSED, errno.ECONNRESET, errno.ETIMEDOUT, None, True):
+                case = self.fixture(transport)
+                case['negative']['output']['errno'] = value
+                self.assertEqual(self.probe.evaluate_network_case(case), 'unknown')
+            case = self.fixture(transport)
+            case['negative']['output']['operation'] = 'receive'
+            self.assertEqual(self.probe.evaluate_network_case(case), 'unknown')
+
+    def test_received_negative_or_accepted_stream_is_a_counterexample(self):
+        for transport in ('tcp', 'udp', 'unix'):
+            case = self.fixture(transport)
+            case['listener']['negative_nonce_count'] = 1
+            self.assertEqual(self.probe.evaluate_network_case(case), 'failed')
+        for transport in ('tcp', 'unix'):
+            case = self.fixture(transport)
+            case['listener']['negative_accept_count'] = 1
+            case['negative']['output']['operation'] = 'receive'
+            self.assertEqual(self.probe.evaluate_network_case(case), 'failed')
+
+    def test_missing_duplicate_expired_or_unfinished_observations_are_unknown(self):
+        changes = [
+            (('listener', 'positive_nonce_count'), 0),
+            (('listener', 'positive_nonce_count'), 2),
+            (('listener', 'positive_nonce_count'), True),
+            (('listener', 'late_nonce_count'), 1),
+            (('listener', 'unexpected_count'), 1),
+            (('listener', 'overflow'), True),
+            (('listener', 'stopped'), False),
+            (('listener', 'observed_until'), 3.9),
+            (('listener', 'observed_until'), float('nan')),
+            (('positive', 'finished_at'), 2.0),
+            (('negative', 'finished_at'), 4.0),
+            (('positive', 'returncode'), 1),
+            (('negative', 'output', 'nonce_sha256'), 'a' * 64),
+            (('negative_filesystem_config_sha256',), 'd' * 64),
+            (('client_sha256',), 'e' * 64),
+        ]
+        for path, value in changes:
+            case = self.fixture()
+            field = case
+            for key in path[:-1]:
+                field = field[key]
+            field[path[-1]] = value
+            with self.subTest(path=path):
+                self.assertEqual(self.probe.evaluate_network_case(case), 'unknown')
+        case = self.fixture()
+        del case['negative']
+        self.assertEqual(self.probe.evaluate_network_case(case), 'unknown')
+
+    def test_decisive_negative_receipts_survive_incomplete_observation(self):
+        for transport in ('tcp', 'udp', 'unix'):
+            counters = ['negative_nonce_count']
+            if transport != 'udp':
+                counters.append('negative_accept_count')
+            for counter in counters:
+                for key, value in [('observed_until', 3.8), ('stopped', False),
+                        ('late_nonce_count', 1), ('unexpected_count', 1), ('overflow', True)]:
+                    case = self.fixture(transport)
+                    case['listener'][counter] = 1
+                    case['listener'][key] = value
+                    with self.subTest(transport=transport, counter=counter, key=key):
+                        self.assertEqual(self.probe.evaluate_network_case(case), 'failed')
+                # Corrupt identity or an unverified positive control still
+                # cannot establish which fixture the negative receipt proves.
+                for path, value in [(('positive', 'returncode'), 1),
+                        (('negative_nonce_sha256',), 'a' * 64),
+                        (('listener', counter), True)]:
+                    case = self.fixture(transport)
+                    case['listener'][counter] = 1
+                    field = case
+                    for key in path[:-1]:
+                        field = field[key]
+                    field[path[-1]] = value
+                    self.assertEqual(self.probe.evaluate_network_case(case), 'unknown')
+
+    def test_sandbox_policy_changes_only_network_toggle(self):
+        paths = [pathlib.Path('/private/tmp/network-control') / name
+            for name in ('a', 'b', 'home', 'control')]
+        command = ['/fixed/client', 'tcp', '12345', 'a' * 32, '4']
+        positive = self.probe.sandbox_argv('/fixed/codex', *paths, command,
+            network=True)
+        negative = self.probe.sandbox_argv('/fixed/codex', *paths, command,
+            network=False)
+        self.assertEqual([i for i, values in enumerate(zip(positive, negative))
+            if values[0] != values[1]], [9])
+        self.assertEqual(positive[7], negative[7])
+
+    def test_non_system_library_or_missing_compiler_cannot_be_measured(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            with mock.patch.object(self.probe.shutil, 'which', return_value=None):
+                with self.assertRaises(ValueError):
+                    self.probe.build_network_client(root)
+            def build_then_inventory(argv, **kwargs):
+                if argv[0] == '/usr/bin/otool':
+                    return subprocess.CompletedProcess(argv, 0,
+                        'binary:\n\t/host/private/libfixture.dylib (compatibility version 1.0.0)\n', '')
+                (root / 'network-client').write_bytes(b'fixed-client-fixture')
+                return subprocess.CompletedProcess(argv, 0, b'', b'')
+            with mock.patch.object(self.probe.sys, 'platform', 'darwin'), \
+                    mock.patch.object(self.probe.shutil, 'which', return_value='/fixed/cc'), \
+                    mock.patch.object(self.probe.subprocess, 'run', side_effect=build_then_inventory):
+                with self.assertRaisesRegex(ValueError, 'non-system-client-library'):
+                    self.probe.build_network_client(root)
+
+    def test_unrestricted_real_clients_cannot_report_network_isolation(self):
+        original_run = subprocess.run
+        def without_sandbox(argv, **kwargs):
+            command = argv[argv.index('--') + 1:] if '--' in argv else argv
+            return original_run(command, **kwargs)
+        with tempfile.TemporaryDirectory(prefix='native-network-', dir='/tmp') as directory:
+            root = pathlib.Path(directory).resolve()
+            paths = [root / name for name in ('a', 'b', 'home', 'control')]
+            for path in paths:
+                path.mkdir()
+            with mock.patch.object(self.probe.subprocess, 'run', side_effect=without_sandbox):
+                cases = self.probe.native_network_controls('/fixed/codex', *paths,
+                    {'PATH': '/usr/bin:/bin', 'HOME': str(paths[2])})
+            self.assertEqual([case['outcome'] for case in cases], ['failed'] * 3)
+            self.assertTrue(all(case['listener']['negative_nonce_count'] == 1 for case in cases))
 
 
 class ContainerControlTests(unittest.TestCase):
