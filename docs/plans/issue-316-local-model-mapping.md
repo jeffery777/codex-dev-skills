@@ -676,3 +676,30 @@ Wire／token／close／binding／Docker／C／authority／results／source proof
 零 backend effects，以及 packet binding／generation 漂移不啟動後續 attempt。
 Native CLI＋Docker 實測與獨立 review／scan 留待當輪來源凍結後處理；所有 native／
 tool／startup／isolation／runtime／production／完整 N3 qualification flags false。
+
+### Prestart app-server container 工程包
+
+新增固定 opt-in `verify-model-app-server-container.py --prestart-container-fixture`，
+讓匿名 app-server 在首次 config／discovery／turn 前，已處於 host 完整核對的固定
+network-none container。僅做一次 `packet_probe({})` memory admission；不重做前包
+checkpoint／successor／source integration。固定現有 image／Linux binary SHA，
+no-follow bounded capture 與新 20-file closure；不接受任意 image／provider／model／
+source／commands 或 loader。
+
+固定 image 的 raw Env／Labels／Config snapshot 僅留 Git 外，封存 reference 與完整
+config digest，再注入 expected fullpolicy 精確比對；不新增 image／env override。
+精確非 root host UID/GID 之 private control、RO capture／binary 與 guest ownership
+在 spawn 前核對；無 host parent／engine／auth mounts。Create intent 與原 cidfile
+保留，固定 `--pull=never`，未知只 inspect 原 CID；full created policy 與 durable start intent 合格後，
+只有一次固定 start-attach。OpenStdin／StdinOnce true、Tty false 是明確預期，mapping
+或 policy 不符拒絕，不重新 create／start、reattach／exec 或 host fallback。
+
+Docker client close、原 container policy＋exited 0、同一 guest CLI child 自然 wait 0／
+provider stopped 分開驗證；raw nullable wire、固定 token／turn／call、provider requests、
+spawn／source／policy／failure artifacts 留 Git 外。離線反例覆蓋 journal uncertainty
+的零後續 start、policy／source drift、stdio pollution／partial／duplicate／extra args、
+wrong token、client 0 但 container running、CLI／container nonzero 與 unknown close。
+
+離線 peers 不證明 start-attach EOF 能讓同一 CLI／wrapper 自然退出；此為首個真實
+runtime gap，需當輪 native measurement 與獨立 review／scan。所有 qualification 與
+N1–N3 flags false；same-UID guest receipt 不是 production trusted observer。

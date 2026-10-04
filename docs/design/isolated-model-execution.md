@@ -1209,3 +1209,53 @@ bytes／mode／identity、HEAD／index／metadata、C、control、authority、Do
 離線正反控制不能代替 native CLI＋Docker 的當輪實測或獨立 review。qualified、native、
 tool、startup isolation、isolation、runtime、adapter、production 與完整 N3 flags
 全部 false；此 fixture 不證明模型／訂閱接線、任意工作執行或 production authority。
+
+## 第一次 config／discovery 前的固定 container fixture
+
+`scripts/verify-model-app-server-container.py --prestart-container-fixture` 是另一個
+明確 opt-in；此包只做一次匿名 native admission，不啟動 checkpoint／successor 或
+source integration。固定現有 Linux／arm64 image 與 Linux Codex binary SHA，binary
+path 只供 no-follow fingerprint read 與保護性 copy，沒有 image／model／provider／
+command／source／loader 選項。固定 20-file source closure 另行捕獲；不沿用前包資格。
+
+Host 先持久封存 create intent，固定 `--pull=never` 且僅 create 一次，不觸發下載。未知 create 只從原 cidfile 讀回
+精確 CID 並 inspect，不重新 create。Created／Running false／PID 0 狀態下，完整
+核對 image、Created、argv、全 Env、UID/GID、workdir、OpenStdin／StdinOnce／Tty、
+attach 欄位、readonly root、network none、no ports、cap drop ALL、NNP、CPU／memory／
+pids、private namespaces、restart no／AutoRemove false、no healthcheck／logging，以及
+精確兩個 mounts。唯讀 capture 包含固定 binary／sources；唯一 RW mount 是自有
+UUID control scratch，不掛 host control parent、來源、engine socket、auth 或 HOME。
+
+Control 為 host 非 root UID/GID、0700；capture directories／files 與 binary 為同 UID、
+0500。Guest 在 CLI spawn 前核對精確 UID/GID、owner／mode、image Python version、
+source closure 與 binary hash；Docker Desktop mapping 不符即拒絕，不放寬權限。
+固定 image 的當輪 Env／Labels／Config snapshot 只存於 private evidence，綁定
+完整 config digest／reference，作為 container fullpolicy 的精確比對來源；tracked source
+不保存私人 image metadata，不提供 env 或 image override。Wrapper 用 `/usr/bin/env -i`、Python
+`-I -S -B`，CLI 使用完整固定 clean env、private guest HOME 與空 workspace。
+
+Start intent 落盤、binary／engine／socket／policy 再核對後，只有一次固定
+`docker container start --attach --interactive CID`。Create 使用 `--interactive` 及
+`--attach=stdin/stdout/stderr`，預期 OpenStdin／StdinOnce true、Tty false；Docker CLI
+[29.4.3 固定 options source](https://github.com/docker/cli/blob/v29.4.3/cli/command/container/opts.go)
+把 OpenStdin 與 AttachStdin 同時啟用時設 StdinOnce true，仍以當輪 inspect 為準。
+沒有 exec、reattach、restart、cleanup 或 unisolated host fallback。
+
+Guest wrapper 提供有界、serial、container 內 localhost 的固定兩輪 Responses
+fixture，CLI 繼承 RPC stdin/stdout；wrapper 不讀 RPC stdin、不向 stdout 寫診斷。
+Host 重用固定 AdmissionSession／memory latch、nullable raw envelope 與 metadata。
+Docker client 的 protocol-observed／exit 0、原 CID 同 Created／policy 下的 exited／
+Running false／PID 0／ExitCode 0／RestartCount 0，以及 wrapper 對同一 CLI child 的
+自然 wait 0／provider stopped，是三份分開的必要證據，不能互相代替。
+
+原始 wire／provider requests、source capture、create／start／guest spawn intents、
+policy、token／IDs、guest wait、結果與失敗留 Git 外；journal 完整 bytes 先寫後
+fsync／readback 失敗仍保留 unknown，不覆寫原 artifact、不重播。CLI 與 guest receipt
+共用固定 UID，因此 guest receipt 是有限 fixture observation，並非 production
+trusted observer。所有 native／tool／startup／isolation／runtime／adapter／production／
+N1–N3 qualification flags false。
+
+首次真實缺口是 Docker start-attach 的 stdin EOF，是否讓同一 CLI／wrapper 自然
+退出。離線 Python stdio peers／fake processes 只能驗 framing、ordering 與反例，
+不能證明這項 EOF 行為；client detach／exit 不能形成成功收據。Native runtime、
+獨立 CodeGate／SDS 留待來源凍結後的當輪實測。
