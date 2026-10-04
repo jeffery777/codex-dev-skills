@@ -29,7 +29,8 @@ class HookControlTests(unittest.TestCase):
                 with self.assertRaisesRegex(broker.ProbeError, 'system-configuration-requires-review'):
                     broker.audit_client_directory(client)
 
-    def test_main_rejects_unrelated_tool_errors_despite_hook_marker(self):
+    def patch_fixture(self, *, outputs, hook_fault, readonly=False,
+                      write_allowed=False, invoke_hook=True):
         holder = {}
         class FakeServer:
             def __init__(self, address, handler):
@@ -44,13 +45,16 @@ class HookControlTests(unittest.TestCase):
         def fake_run(*args, **kwargs):
             server = holder['server']
             root = server.context['root']
-            (root / 'control/hook-invoked').write_text('invoked\ninvoked\n')
+            if invoke_hook and hook_fault:
+                (root / 'control/hook-invoked').write_text('invoked\ninvoked\n')
+            if write_allowed:
+                (root / 'workspace/allowed-patch.txt').write_text('synthetic-patch\n')
             for stage in range(1, 4):
                 value = {'tools': [{'type': 'custom', 'name': 'apply_patch'}], 'input': []}
                 if stage > 1:
                     value['input'] = [{'type': 'custom_tool_call_output',
                         'call_id': 'fixture-call-' + str(stage - 1),
-                        'output': 'Error: synthetic unexpected tool failure; operation never reached filesystem'}]
+                        'output': outputs[stage - 2]}]
                 raw = json.dumps(value).encode()
                 request = object.__new__(server.handler)
                 request.path = '/v1/responses'
@@ -61,22 +65,70 @@ class HookControlTests(unittest.TestCase):
                 request.end_headers = lambda: None
                 request.send_error = lambda *status: self.fail(str(status))
                 request.do_POST()
-            return SimpleNamespace(returncode=0, stdout='synthetic runtime failure', stderr='')
+            return SimpleNamespace(returncode=0, stdout='synthetic fixture output', stderr='')
 
         with tempfile.TemporaryDirectory() as directory:
             output = io.StringIO()
-            argv = ['probe', '--evidence-root', directory, '--case', 'patch',
-                '--hook-fault', 'invalid-json', '--host-read-only']
+            argv = ['probe', '--evidence-root', directory, '--case', 'patch']
+            if hook_fault:
+                argv += ['--hook-fault', hook_fault]
+            if readonly:
+                argv += ['--host-read-only']
             with mock.patch.object(sys, 'argv', argv), \
                     mock.patch.object(probe.shutil, 'which', return_value=sys.executable), \
                     mock.patch.object(probe.http.server, 'ThreadingHTTPServer', FakeServer), \
                     mock.patch.object(probe.subprocess, 'run', side_effect=fake_run), \
                     mock.patch.object(sys, 'stdout', output):
                 code = probe.main()
-            receipt = json.loads(output.getvalue())
-            self.assertNotEqual(code, 0)
-            self.assertTrue(receipt['checks']['hook_positive_control'])
-            self.assertFalse(receipt['checks']['patch_boundary_observed'])
+            return code, json.loads(output.getvalue())
+
+    def test_main_rejects_unrelated_tool_errors_despite_hook_marker(self):
+        code, receipt = self.patch_fixture(hook_fault='invalid-json', readonly=True,
+            outputs=['Error: synthetic unexpected tool failure; operation never reached filesystem'] * 2)
+        self.assertNotEqual(code, 0)
+        self.assertTrue(receipt['checks']['hook_positive_control'])
+        self.assertFalse(receipt['checks']['patch_boundary_observed'])
+
+    def test_main_accepts_denied_patch_without_result_in_writable_workspace(self):
+        outputs = ['Command blocked by PreToolUse hook: synthetic-deny. Command: fixed patch'] * 2
+        for readonly in (False, True):
+            with self.subTest(readonly=readonly):
+                code, receipt = self.patch_fixture(outputs=outputs, hook_fault='deny', readonly=readonly)
+                self.assertEqual(code, 0)
+                self.assertTrue(receipt['checks']['allowed_result'])
+                self.assertTrue(receipt['checks']['hook_positive_control'])
+                self.assertTrue(receipt['checks']['patch_boundary_observed'])
+                self.assertTrue(receipt['checks']['tool_roundtrip_observed'])
+                self.assertTrue(receipt['checks']['forbidden_preserved'])
+                self.assertFalse(receipt['production_qualified'])
+
+    def test_main_rejects_written_result_despite_deny_outputs(self):
+        outputs = ['Command blocked by PreToolUse hook: synthetic-deny. Command: fixed patch'] * 2
+        for readonly in (False, True):
+            with self.subTest(readonly=readonly):
+                code, receipt = self.patch_fixture(outputs=outputs, hook_fault='deny',
+                    readonly=readonly, write_allowed=True)
+                self.assertEqual(code, 1)
+                self.assertFalse(receipt['checks']['allowed_result'])
+                self.assertTrue(receipt['checks']['patch_boundary_observed'])
+
+    def test_main_rejects_deny_without_hook_marker(self):
+        code, receipt = self.patch_fixture(hook_fault='deny', invoke_hook=False,
+            outputs=['Command blocked by PreToolUse hook: synthetic-deny. Command: fixed patch'] * 2)
+        self.assertEqual(code, 1)
+        self.assertFalse(receipt['checks']['hook_positive_control'])
+
+    def test_main_requires_expected_patch_for_writable_fallthrough(self):
+        outputs = ['Success. Updated the following files: A allowed-patch.txt',
+            'apply_patch verification failed: Failed to read file to update /synthetic/sentinel: Operation not permitted (os error 1)']
+        for hook_fault in (None, 'exit1', 'exit2-empty', 'invalid-json', 'timeout'):
+            for write_allowed in (False, True):
+                with self.subTest(hook_fault=hook_fault, write_allowed=write_allowed):
+                    code, receipt = self.patch_fixture(outputs=outputs, hook_fault=hook_fault,
+                        write_allowed=write_allowed)
+                    self.assertEqual(code, 0 if write_allowed else 1)
+                    self.assertEqual(receipt['checks']['allowed_result'], write_allowed)
+                    self.assertTrue(receipt['checks']['patch_boundary_observed'])
 
     def test_unrelated_tool_failure_is_not_a_boundary_denial(self):
         unknown = probe.patch_output_kind('Error: synthetic unexpected tool failure; operation never reached filesystem')

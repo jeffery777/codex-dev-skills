@@ -256,7 +256,7 @@ def main():
             'tool_roundtrip_observed': len(receipt['requests']) == limit and all(
                 'tool_output_sha256' in item for item in receipt['requests'][1:]),
             'reader_positive_control': (work / 'reader-verified').exists() if args.case == 'shell' else None,
-            'allowed_result': (not result.exists() if args.host_read_only else
+            'allowed_result': (not result.exists() if args.host_read_only or args.hook_fault == 'deny' else
                 result.exists() and result.read_text().strip() == ('allowed' if args.case == 'shell' else 'synthetic-patch')),
             'hook_positive_control': (control / 'hook-invoked').is_file() if args.hook_fault else None,
             'patch_boundary_observed': patch_boundary_observed(receipt['requests'],
