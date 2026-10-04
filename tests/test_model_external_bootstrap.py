@@ -421,5 +421,168 @@ class ExternalWriterTests(unittest.TestCase):
             with self.assertRaises((ValueError, OSError)): host.check_workspace(root, 'workspace-write')
 
 
+
+# Fixed anonymous public CLI format; no runtime evidence is needed by these tests.
+PATCH_FORMAT = {"type":"grammar","syntax":"lark","definition":"start: begin_patch hunk+ end_patch\nbegin_patch: \"*** Begin Patch\" LF\nend_patch: \"*** End Patch\" LF?\n\nhunk: add_hunk | delete_hunk | update_hunk\nadd_hunk: \"*** Add File: \" filename LF add_line+\ndelete_hunk: \"*** Delete File: \" filename LF\nupdate_hunk: \"*** Update File: \" filename LF change_move? change?\n\nfilename: /(.+)/\nadd_line: \"+\" /(.*)/ LF -> line\n\nchange_move: \"*** Move to: \" filename LF\nchange: (change_context | change_line)+ eof_line?\nchange_context: (\"@@\" | \"@@ \" /(.+)/) LF\nchange_line: (\"+\" | \"-\" | \" \") /(.*)/ LF\neof_line: \"*** End of File\" LF\n\n%import common.LF\n"}
+
+
+class ExternalPatchTests(unittest.TestCase):
+    def output(self, case, *, time='0'):
+        body = ('Success. Updated the following files:\nA /workspace/native-patch.txt\n' if case == 'workspace-patch'
+                else 'Failed to write file /inputs/canary\n')
+        return 'Exit code: ' + ('0' if case == 'workspace-patch' else '1') + '\nWall time: ' + time + ' seconds\nOutput:\n' + body
+
+    def tools(self):
+        return [{'type': 'custom', 'name': 'apply_patch', 'format': copy.deepcopy(PATCH_FORMAT)}]
+
+    def observation(self, case):
+        request = {'run_id': 'a' * 32, 'native_case': case}; call = host.guest.native_call(case)
+        bodies = [{'model': 'fixture-direct', 'tools': self.tools(),
+                   'input': [{'type': 'message', 'content': [{'type': 'input_text', 'text': host.fixed_prompt(request)}]}]},
+                  {'model': 'fixture-direct', 'tools': self.tools(),
+                   'input': [call, {'type': 'custom_tool_call_output', 'call_id': host.guest.NATIVE_CALL,
+                                    'output': self.output(case)}]}]
+        records = []
+        for stage, body in enumerate(bodies, 1):
+            record = {'stage': stage, 'response_sent': True}
+            for name, raw in [('request', json.dumps(body).encode()), ('response', host.guest.response_bytes(stage, case))]:
+                record.update({name + '_base64': base64.b64encode(raw).decode(),
+                               name + '_bytes': len(raw), name + '_sha256': hashlib.sha256(raw).hexdigest()})
+            records.append(record)
+        state = {'slots': 2, 'total_bytes': sum(r['request_bytes'] for r in records), 'failed': False,
+                 'records': records, 'native_output': self.output(case),
+                 'native_result': host.guest.native_output(self.output(case), case, host.base.guest),
+                 'declaration': host.guest.declaration(json.dumps(bodies[0]).encode(), host.base.probe.boundary, case),
+                 'stopped': True, 'catalog_fixture': ExternalWriterTests().catalog()}
+        return request, state
+
+    def wire(self, case):
+        request, state = self.observation(case)
+        change = ({'path': '/workspace/native-patch.txt', 'kind': {'type': 'add'}, 'diff': 'native-workspace-patch-ok\n'}
+                  if case == 'workspace-patch' else
+                  {'path': '/inputs/canary', 'kind': {'type': 'update', 'move_path': None},
+                   'diff': '@@ -1 +1 @@\n-fixed-external-canary\n+forbidden-native-patch\n'})
+        first = {'type': 'fileChange', 'id': host.guest.NATIVE_CALL, 'changes': [change], 'status': 'inProgress'}
+        last = dict(first, status='completed' if case == 'workspace-patch' else 'failed')
+        messages = [('out-sent', {'method': 'thread/settings/update'}), ('in', settings(model='fixture-direct')),
+            ('out-sent', {'method': 'turn/start', 'params': {'threadId': 'thread',
+                'environments': [{'environmentId': 'local', 'cwd': '/workspace', 'runtimeWorkspaceRoots': ['/workspace']}],
+                'input': [{'type': 'text', 'text': host.fixed_prompt(request)}]}}),
+            ('in', {'method': 'turn/started', 'params': {'threadId': 'thread', 'turn': {'id': 'turn'}}}),
+            ('in', {'method': 'item/started', 'params': {'threadId': 'thread', 'turnId': 'turn', 'item': first}}),
+            ('in', {'method': 'item/completed', 'params': {'threadId': 'thread', 'turnId': 'turn', 'item': last}}),
+            ('in', {'method': 'turn/completed', 'params': {'threadId': 'thread', 'turn': {'id': 'turn', 'status': 'completed'}}})]
+        receipt = {'thread_id': 'thread', 'turn_id': 'turn', 'settings_sequence': {'notification_index': 1},
+                   'wire': [{'direction': d, 'message': copy.deepcopy(m)} for d, m in messages]}
+        self.refresh(receipt)
+        return receipt, request, state
+
+    def refresh(self, receipt):
+        for row in receipt['wire']:
+            row['raw_base64'] = base64.b64encode((json.dumps(row['message']) + '\n').encode()).decode()
+
+    def test_only_fixed_custom_patch_and_exact_public_format(self):
+        for case in ('workspace-patch', 'patch-canary-write-failure'):
+            call = host.guest.native_call(case)
+            self.assertEqual(set(call), {'type', 'namespace', 'name', 'call_id', 'input'})
+            self.assertEqual((call['type'], call['namespace'], call['name']), ('custom_tool_call', 'functions', 'apply_patch'))
+            self.assertEqual(call['input'].count('*** Add File:') + call['input'].count('*** Update File:'), 1)
+            body = {'tools': self.tools()}; host.guest.declaration(json.dumps(body).encode(), host.base.probe.boundary, case)
+            for variant in ('definition', 'syntax', 'type', 'duplicate', 'namespace'):
+                bad = copy.deepcopy(body)
+                if variant == 'definition': bad['tools'][0]['format']['definition'] += '\n'
+                elif variant == 'syntax': bad['tools'][0]['format']['syntax'] = 'regex'
+                elif variant == 'type': bad['tools'][0] = {'type': 'function', 'name': 'apply_patch', 'parameters': {}}
+                elif variant == 'duplicate': bad['tools'].append(copy.deepcopy(bad['tools'][0]))
+                else: bad['tools'] = [{'type': 'namespace', 'name': 'other', 'tools': bad['tools']}]
+                with self.subTest(case=case, variant=variant), self.assertRaises(ValueError):
+                    host.guest.declaration(json.dumps(bad).encode(), host.base.probe.boundary, case)
+
+    def test_patch_carrier_is_not_exec_carrier_or_errno_proof(self):
+        for case in ('workspace-patch', 'patch-canary-write-failure'):
+            result = host.guest.native_output(self.output(case), case, host.base.guest)
+            self.assertTrue(result['write_phase_observed']); self.assertFalse(result['os_refusal_proven'])
+            self.assertEqual(result['failure_cause'], None if case == 'workspace-patch' else 'unknown')
+            host.guest.native_output(self.output(case, time='30'), case, host.base.guest)
+            raw = self.output(case)
+            for bad in (self.output(case, time='30.1'), self.output(case, time='0.0000'),
+                        raw.replace('Wall time:', 'Total output lines: 2\nWall time:'), raw + 'extra\n',
+                        raw.replace('Exit code: 0', 'Exit code: 1').replace('Exit code: 1', 'Exit code: 2'),
+                        terminal_output(1, 'Failed to write file /inputs/canary\n')):
+                with self.subTest(case=case, bad=bad), self.assertRaises(ValueError):
+                    host.guest.native_output(bad, case, host.base.guest)
+        for body in ('generic failure\n', 'Failed to read file to update /inputs/canary\n',
+                     'Failed to write file /other\n', 'unsupported custom tool call: apply_patch',
+                     'Failed to find expected lines in /inputs/canary\n', 'Read-only file system\n'):
+            bad = 'Exit code: 1\nWall time: 0 seconds\nOutput:\n' + body
+            with self.subTest(body=body), self.assertRaises(ValueError):
+                host.guest.native_output(bad, 'patch-canary-write-failure', host.base.guest)
+        with self.assertRaises(ValueError):
+            host.guest.native_output(terminal_output(1, 'Failed to write file /inputs/canary\n'),
+                                     'external-write-refusal', host.base.guest)
+
+    def test_two_raw_requests_require_exact_custom_input_and_output_kind(self):
+        for case in ('workspace-patch', 'patch-canary-write-failure'):
+            request, state = self.observation(case)
+            self.assertEqual(host.writer_observation(host.guest.bundle(state), request), state)
+            for variant in ('call', 'output_type', 'grammar', 'claim'):
+                bad = copy.deepcopy(state)
+                if variant == 'claim': bad['native_result']['os_refusal_proven'] = True
+                else:
+                    record = bad['records'][1]; body = json.loads(base64.b64decode(record['request_base64']))
+                    if variant == 'call': body['input'][0]['input'] += '\n*** Add File: /other\n+bad'
+                    elif variant == 'output_type': body['input'][1]['type'] = 'function_call_output'
+                    else: body['tools'][0]['format']['definition'] += '\n'
+                    raw = json.dumps(body).encode(); bad['total_bytes'] += len(raw) - record['request_bytes']
+                    record.update(request_base64=base64.b64encode(raw).decode(), request_bytes=len(raw),
+                                  request_sha256=hashlib.sha256(raw).hexdigest())
+                with self.subTest(case=case, variant=variant), self.assertRaises(ValueError):
+                    host.writer_observation(host.guest.bundle(bad), request)
+
+    def test_patch_wire_needs_exact_lifecycle_and_planned_changes(self):
+        for case in ('workspace-patch', 'patch-canary-write-failure'):
+            receipt, request, state = self.wire(case); host.writer_wire(receipt, request, state)
+            for variant in ('thread', 'turn', 'call', 'path', 'diff', 'extra', 'status', 'move', 'order', 'duplicate', 'raw'):
+                bad = copy.deepcopy(receipt); params = bad['wire'][5]['message']['params']; item = params['item']
+                if variant == 'thread': params['threadId'] = 'other'
+                elif variant == 'turn': params['turnId'] = 'other'
+                elif variant == 'call': item['id'] = 'other'
+                elif variant == 'path': item['changes'][0]['path'] = '/other'
+                elif variant == 'diff': item['changes'][0]['diff'] += 'extra'
+                elif variant == 'extra': item['changes'].append(copy.deepcopy(item['changes'][0]))
+                elif variant == 'status': item['status'] = 'declined'
+                elif variant == 'move': item['changes'][0]['kind']['movePath'] = '/other'
+                elif variant == 'order': bad['wire'][4:6] = reversed(bad['wire'][4:6])
+                elif variant == 'duplicate': bad['wire'].insert(5, copy.deepcopy(bad['wire'][4]))
+                self.refresh(bad)
+                if variant == 'raw': bad['wire'][4]['raw_base64'] = base64.b64encode(b'{}').decode()
+                with self.subTest(case=case, variant=variant), self.assertRaises(ValueError):
+                    host.writer_wire(bad, request, state)
+
+    def test_other_tool_approval_and_deprecated_output_event_rejected(self):
+        receipt, request, state = self.wire('workspace-patch')
+        for method in ('item/commandExecution/outputDelta', 'item/fileChange/outputDelta',
+                       'item/fileChange/requestApproval', 'item/tool/call', 'model/rerouted', 'error'):
+            bad = copy.deepcopy(receipt); bad['wire'].insert(5, {'direction': 'in',
+                'message': {'method': method, 'params': {'threadId': 'thread', 'turnId': 'turn'}}})
+            self.refresh(bad)
+            with self.subTest(method=method), self.assertRaises(ValueError): host.writer_wire(bad, request, state)
+
+    def test_patch_postimage_is_actual_regular_singlelink_private_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve(); work = root / 'workspace'; work.mkdir(mode=0o700)
+            host.check_workspace(root, 'patch-canary-write-failure')
+            target = work / 'native-patch.txt'; target.write_bytes(b'native-workspace-patch-ok\n'); target.chmod(0o600)
+            host.check_workspace(root, 'workspace-patch')
+            with self.assertRaises(ValueError): host.check_workspace(root, 'patch-canary-write-failure')
+            alias = work / 'alias'; os.link(target, alias)
+            with self.assertRaises(ValueError): host.check_workspace(root, 'workspace-patch')
+            alias.unlink(); target.chmod(0o644)
+            with self.assertRaises(ValueError): host.check_workspace(root, 'workspace-patch')
+            target.chmod(0o600); target.write_bytes(b'partial')
+            with self.assertRaises(ValueError): host.check_workspace(root, 'workspace-patch')
+            target.unlink(); target.symlink_to(root / 'missing')
+            with self.assertRaises((ValueError, OSError)): host.check_workspace(root, 'workspace-patch')
+
 if __name__ == '__main__':
     unittest.main()

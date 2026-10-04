@@ -256,7 +256,7 @@ def writer_observation(value, request):
                     raise ValueError('external-provider-turn-prompt-drift')
             else:
                 calls = [item for item in body.get('input', []) if type(item) is dict and item.get('call_id') == guest.NATIVE_CALL
-                         and item.get('type') == 'function_call']
+                         and item.get('type') == call['type']]
                 if len(calls) != 1 or {k: calls[0].get(k) for k in call} != call:
                     raise ValueError('external-provider-native-call-drift')
                 output = base.probe.boundary.output_text(base.probe.boundary.find_output(body, call))
@@ -291,6 +291,9 @@ def writer_wire(receipt, request, state):
     """Public RPC and provider observations must agree; neither grants authority."""
     sent = []; starts = []; ends = []; completed = []; turn_starts = []; turn_ends = []; deltas = []
     thread, turn = receipt['thread_id'], receipt['turn_id']
+    patch_case = request['native_case'] in guest.PATCH_CASES
+    if patch_case:
+        return patch_wire(receipt, request, state)
     command = json.loads(guest.native_call(request['native_case'])['arguments'])['cmd']
     for index, row in enumerate(receipt['wire']):
         message = row['message'] or {}
@@ -358,6 +361,87 @@ def writer_wire(receipt, request, state):
         raise ValueError('external-writer-turn-request-drift')
 
 
+def patch_changes(case, *, progress=False):
+    if case == 'workspace-patch':
+        return [{'path': '/workspace/native-patch.txt', 'kind': {'type': 'add'},
+                 'diff': guest.PATCH_BYTES.decode()}]
+    if case == 'patch-canary-write-failure':
+        diff = guest.PATCH_UPDATE_DIFF
+        if progress: diff = diff.replace('@@ -1 +1 @@', '@@', 1)
+        return [{'path': '/inputs/canary', 'kind': {'type': 'update', 'move_path': None}, 'diff': diff}]
+    raise ValueError('fixed-patch-case-required')
+
+
+def patch_wire(receipt, request, state):
+    """FileChange reports planned changes; host bytes establish actual effects."""
+    sent = []; starts = []; ends = []; turn_starts = []; turn_ends = []; updates = []
+    thread, turn = receipt['thread_id'], receipt['turn_id']; case = request['native_case']
+    terminal = 'completed' if case == 'workspace-patch' else 'failed'
+    for index, row in enumerate(receipt['wire']):
+        message = row['message'] or {}
+        if base.probe.manifest.decode(base64.b64decode(row['raw_base64'], validate=True)) != row['message']:
+            raise ValueError('external-patch-raw-wire-drift')
+        method = message.get('method', '')
+        if row['direction'] == 'out-sent':
+            if method == 'turn/start': sent.append(index)
+            elif method not in ('initialize', 'initialized', 'thread/start', 'thread/settings/update'):
+                raise ValueError('external-patch-unexpected-outbound')
+        if row['direction'] != 'in': continue
+        if ('id' in message and 'method' in message or method in ('error', 'model/rerouted')
+                or 'requestApproval' in method or method == 'item/tool/call'):
+            raise ValueError('external-patch-unexpected-request')
+        params = message.get('params', {})
+        if method == 'thread/settings/updated': settings_match(message, thread, guest.DIRECT_MODEL)
+        if method.startswith(('turn/', 'item/')) and params.get('threadId') != thread:
+            raise ValueError('external-patch-thread-drift')
+        if method in ('turn/started', 'turn/completed'):
+            if params.get('turn', {}).get('id') != turn:
+                raise ValueError('external-patch-turn-drift')
+            (turn_starts if method == 'turn/started' else turn_ends).append(index)
+            if method == 'turn/completed' and params['turn'].get('status') != 'completed':
+                raise ValueError('external-patch-turn-incomplete')
+        elif method == 'turn/diff/updated':
+            # Diff text is a bounded original observation, not adoption authority.
+            if (params.get('turnId') != turn or type(params.get('diff')) is not str
+                    or len(params['diff'].encode()) > 8192):
+                raise ValueError('external-patch-turn-diff-drift')
+        elif method.startswith('turn/'):
+            raise ValueError('external-patch-unexpected-turn-event')
+        elif method.startswith('item/'):
+            if params.get('turnId') != turn:
+                raise ValueError('external-patch-item-turn-drift')
+            item = params.get('item', {})
+            if method in ('item/started', 'item/completed') and item.get('type') == 'fileChange':
+                if (set(item) != {'type', 'id', 'changes', 'status'} or item['id'] != guest.NATIVE_CALL
+                        or item['changes'] != patch_changes(case)
+                        or item['status'] != ('inProgress' if method == 'item/started' else terminal)):
+                    raise ValueError('external-patch-file-change-drift')
+                (starts if method == 'item/started' else ends).append(index)
+            elif method == 'item/fileChange/patchUpdated':
+                if params.get('itemId') != guest.NATIVE_CALL or params.get('changes') != patch_changes(case, progress=True):
+                    raise ValueError('external-patch-progress-drift')
+                updates.append(index)
+            elif method in ('item/started', 'item/completed') and item.get('type') in ('userMessage', 'agentMessage', 'reasoning'):
+                continue
+            elif not method.startswith(('item/agentMessage/', 'item/reasoning/')):
+                # Deprecated fileChange outputDelta is not emitted at this pin.
+                raise ValueError('external-patch-other-tool-or-event')
+    settings = [i for i, row in enumerate(receipt['wire']) if row['direction'] == 'in'
+                and (row['message'] or {}).get('method') == 'thread/settings/updated']
+    if (not len(sent) == len(starts) == len(ends) == len(turn_starts) == len(turn_ends) == 1
+            or settings != [receipt['settings_sequence']['notification_index']]
+            or not settings[0] < sent[0] < turn_starts[0] < starts[0] < ends[0] < turn_ends[0]
+            or len(updates) > 4 or any(not turn_starts[0] < i < ends[0] for i in updates)
+            or state['native_result']['exit_code'] != (0 if terminal == 'completed' else 1)
+            or state['native_result']['os_refusal_proven'] is not False):
+        raise ValueError('external-patch-lifecycle-unconfirmed')
+    expected = {'threadId': thread,
+        'environments': [{'environmentId': 'local', 'cwd': '/workspace', 'runtimeWorkspaceRoots': ['/workspace']}],
+        'input': [{'type': 'text', 'text': fixed_prompt(request)}]}
+    if receipt['wire'][sent[0]]['message'].get('params') != expected:
+        raise ValueError('external-patch-turn-request-drift')
+
+
 def writer_turn(session, receipt, request):
     result = session.request('turn/start', {'threadId': receipt['thread_id'],
         'environments': [{'environmentId': 'local', 'cwd': '/workspace', 'runtimeWorkspaceRoots': ['/workspace']}],
@@ -382,8 +466,9 @@ def check_workspace(root, case):
     workspace = root / 'workspace'
     if not guest.workspace_expected(workspace, case, lambda p, n: helpers._reload_read(workspace, p.name, n)[0]):
         raise ValueError('external-workspace-postimage-drift')
-    if case == 'workspace-write':
-        _, ref = helpers._reload_read(workspace, 'native-write.txt', 128)
+    if case in ('workspace-write', 'workspace-patch'):
+        relative = 'native-write.txt' if case == 'workspace-write' else 'native-patch.txt'
+        _, ref = helpers._reload_read(workspace, relative, 128)
         if stat.S_IMODE(ref['identity'][3]) != 0o600:
             raise ValueError('external-workspace-mode-drift')
         return ref

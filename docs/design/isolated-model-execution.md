@@ -1434,7 +1434,7 @@ source／image／engine identity；缺項仍為 unknown，所有資格 false。
 ### External OS 的固定原生寫入觀測
 
 同一入口另接受明確 `--native-workspace-case workspace-write` 或
-`external-write-refusal`；未提供時仍為零 turn 的 bootstrap。每例使用新的
+`external-write-refusal`，或下述兩個 patch case；未提供時仍為零 turn 的 bootstrap。每例使用新的
 run／CID、原有 22 檔 RO capture、RO inputs、唯一 host RW workspace 及私有
 tmpfs，不掛帳號、controller、engine socket 或 host evidence，不提高權限。
 
@@ -1454,7 +1454,7 @@ truncation bytes 8192、reasoning 與 API flags 都是 fixture 設值，不是�
 模型能力數據；不能宣告官方 catalog、真實 tool mode、tokenizer 或 context capacity，
 也不改官方／host 的全域預設。完整 bundled catalog 的取得不屬此匿名案例。
 Guest loopback fixture 僅接受兩次 `/v1/responses` POST：先返回固定原生
-`functions.exec_command`，再觀察同 call 的 terminal output 並返回固定結束
+`functions.exec_command` 或下述固定 `functions.apply_patch`，再觀察同 call 的 tool output 並返回固定結束
 訊息。未宣告 dynamic admission tool，也不把同 UID guest 觀測當作授權。
 
 第一例只寫 `/workspace/native-write.txt` 的固定 bytes；第二例先讀取
@@ -1491,3 +1491,37 @@ CLI wait、Docker client、原 CID exit、provider 停止及兩層 stderr EOF �
 source authority、真實模型品質或自動接手。Synthetic usage=0 不提供 tokenizer／
 context capacity 證據；完整任務預算仍須包含 input、output／reasoning reserve 與
 margin，保留官方預設並依模型逐一驗證。所有 production 與 N1–N4 資格維持 false。
+
+### External OS 的固定原生 patch 觀測
+
+另提供 `workspace-patch` 與 `patch-canary-write-failure`，使用相同 opt-in、
+新 run／CID、三個 mounts、22 檔 capture、私有 tmpfs、單一 turn 與兩次 HTTP
+上限。Provider 只能返回固定 custom `functions.apply_patch` call：正例新增
+`/workspace/native-patch.txt` 的固定 bytes；負例將 `/inputs/canary` 的固定舊行
+換成固定新行，不允許 move、其他檔案或 shell。兩次 request 必須宣告唯一
+原生 custom tool，完整 Lark format 的 canonical hash 與固定公開版本相符；
+第二次 request 的 call／input、output 與 declaration 也須精確相符。
+
+此控制依 [固定版本 patch runtime](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/runtimes/apply_patch.rs)、
+[patch writer](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/apply-patch/src/lib.rs)
+及 [FileChange 契約](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server-protocol/src/protocol/v2/item.rs)
+建立。Native carrier 必須符合固定有界 plaintext 格式、exit code 與完整
+成功摘要或 `Failed to write file /inputs/canary`，不能接受截斷、其他錯誤
+或一般 nonzero。FileChange 須為唯一同 call 的 started／completed lifecycle，
+固定 path／kind／diff 與 inProgress → completed／failed；update 的欄位為
+`move_path`。負例的 terminal diff 預先依公開 `context_radius(1)` 規則建立，
+不從本次待驗 wire 學習預期值。Progress patchUpdated 若出現，亦須精確
+相符且有界；turn diff 只保存有界、同 turn 的原始觀測，不作採用權限。
+Approval、reroute、dynamic tool、其他 command、重複或亂序事件不能通過。
+FileChange 在此版本沒有輸出／exitCode 欄位，已棄用且未發出的 outputDelta
+也不能作拒寫證據。
+
+負例只能證明已到達固定寫入階段並失敗。該 writer 用 `error.to_string()`
+輸出頂層訊息，丟失底層 errno；receipt 必須記錄 `failure_cause=unknown`、
+`write_phase_observed=true`、`os_refusal_proven=false`。不得把此結果當作
+明確 OS 拒寫，亦不放寬 exec 負例的既有拒寫條件。Failed patch 的 planned
+changes 不代表實際 postimage，寫入失敗亦可能留下部分變更；host 因此仍須
+獨立核對負例 canary 的原 identity／bytes 與空 workspace，正例則只容許
+單一 regular、單 link、本人所有、0600 的精確固定檔案。任一缺項保持 unknown。
+此包不取得 checkpoint intake／整合／程序撤權權限，不完成工具清冊、
+context、真實模型或 N1–N4／production 資格；匿名實測證據留在 Git 外。

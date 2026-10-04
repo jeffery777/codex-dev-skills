@@ -23,7 +23,12 @@ HTTP_TOTAL_BYTES = 2097152
 RESPONSE_BYTES = 8192
 BUNDLE_BYTES = 3145728
 COMPRESSED_BYTES = 16384
-CASES = ('workspace-write', 'external-write-refusal')
+EXEC_CASES = ('workspace-write', 'external-write-refusal')
+PATCH_CASES = ('workspace-patch', 'patch-canary-write-failure')
+CASES = EXEC_CASES + PATCH_CASES
+PATCH_BYTES = b'native-workspace-patch-ok\n'
+PATCH_FORMAT_SHA = '543288394c9cdc41825d2fa7da00574c958b397d7a3fa6dfec77a368070e63ac'
+PATCH_UPDATE_DIFF = '@@ -1 +1 @@\n-fixed-external-canary\n+forbidden-native-patch\n'
 NATIVE_CALL = 'external-native-writer-1'
 DIRECT_MODEL = 'fixture-direct'
 CATALOG_PATH = '/tmp/registry/catalog.json'
@@ -92,6 +97,12 @@ def prepare_catalog(base, receipt):
 def native_call(case):
     if case not in CASES:
         raise ValueError('fixed-external-case-required')
+    if case in PATCH_CASES:
+        patch = ('*** Begin Patch\n*** Add File: /workspace/native-patch.txt\n+native-workspace-patch-ok\n*** End Patch'
+                 if case == 'workspace-patch' else
+                 '*** Begin Patch\n*** Update File: /inputs/canary\n@@\n-fixed-external-canary\n+forbidden-native-patch\n*** End Patch')
+        return {'type': 'custom_tool_call', 'namespace': 'functions', 'name': 'apply_patch',
+                'call_id': NATIVE_CALL, 'input': patch}
     command = ("printf '%s\n' 'native-workspace-write-ok' > /workspace/native-write.txt"
                if case == 'workspace-write' else
                "IFS= read -r canary < /inputs/canary || exit 17; "
@@ -106,6 +117,21 @@ def native_call(case):
 def native_output(output, case, old_guest):
     if type(output) is not str:
         raise ValueError('fixed-native-output-required')
+    if case in PATCH_CASES:
+        if len(output.encode()) > 8192:
+            raise ValueError('fixed-patch-output-bound')
+        match = re.fullmatch(r'Exit code: ([01])\nWall time: (0|[1-9][0-9]?)(?:\.([0-9]))? seconds\nOutput:\n([\s\S]*)', output)
+        if match is None or int(match[2]) * 10 + int(match[3] or '0') > 300:
+            raise ValueError('fixed-patch-carrier-required')
+        positive = case == 'workspace-patch'
+        body = ('Success. Updated the following files:\nA /workspace/native-patch.txt\n' if positive else
+                'Failed to write file /inputs/canary\n')
+        if int(match[1]) != (0 if positive else 1) or match[4] != body:
+            raise ValueError('fixed-patch-phase-output-required')
+        return {'exit_code': int(match[1]), 'body': body,
+                'outcome': 'workspace-patch-written' if positive else 'patch-write-phase-failure-observed',
+                'write_phase_observed': True, 'failure_cause': None if positive else 'unknown',
+                'os_refusal_proven': False}
     # Only the fixed denial path differs; preserve the raw carrier separately.
     if case == 'external-write-refusal' and '/control/external-canary' in output:
         raise ValueError('wrong-denial-path')
@@ -133,19 +159,28 @@ def response_bytes(stage, case):
 
 
 def declaration(raw, boundary, case):
+    if case not in CASES:
+        raise ValueError('fixed-external-case-required')
     inventory = boundary.manifest.advertised_tools(raw)
     body = boundary.manifest.decode(raw); definitions = []
+    expected = ('apply_patch', 'custom') if case in PATCH_CASES else ('exec_command', 'function')
     def visit(entries, prefix=()):
         for item in entries:
             if item['type'] == 'namespace': visit(item['tools'], (*prefix, item['name']))
             elif (prefix in ((), ('functions',))
-                  and (item['name'], item['type']) == ('exec_command', 'function')):
+                  and (item['name'], item['type']) == expected):
                 definitions.append(item)
     visit(body.get('tools', []))
     for item in body.get('input', []):
         if type(item) is dict and item.get('type') == 'additional_tools': visit(item['tools'])
     if len(definitions) != 1:
         raise ValueError('external-native-declaration-required')
+    if case in PATCH_CASES:
+        schema = definitions[0]['format']
+        if (schema.get('type') != 'grammar' or schema.get('syntax') != 'lark'
+                or boundary.manifest.sha(schema) != PATCH_FORMAT_SHA):
+            raise ValueError('external-fixed-patch-grammar-drift')
+        return inventory
     schema = definitions[0]['parameters']; arguments = json.loads(native_call(case)['arguments'])
     properties, required = schema.get('properties', {}), schema.get('required', [])
     if (schema.get('type') != 'object' or type(properties) is not dict or type(required) is not list
@@ -274,6 +309,8 @@ def workspace_expected(path, case, reader):
     names = sorted(p.name for p in path.iterdir())
     if case == 'workspace-write':
         return names == ['native-write.txt'] and reader(path / 'native-write.txt', 128) == b'native-workspace-write-ok\n'
+    if case == 'workspace-patch':
+        return names == ['native-patch.txt'] and reader(path / 'native-patch.txt', 128) == PATCH_BYTES
     return names == []
 
 

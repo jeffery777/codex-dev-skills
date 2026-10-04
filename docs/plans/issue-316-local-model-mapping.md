@@ -785,4 +785,22 @@ HTTP、raw bundle、壓縮資料及 final frame 均固定上限；超限、部�
 不得通過。原始證據仍留 Git 外。此局部包需深入審查、適用完整 Security
 Diff Scan、相關測試與新 head 完整 Merge Review；固定兩例通過也不構成
 context capacity、背景程序撤權、來源／credential broker、production 或 N1–N4
-資格，亦不消除公司環境與正式 subscription 登入的獨立驗收依賴。
+資格，亦不消除自架服務可用環境與正式 subscription 登入的獨立驗收依賴。
+
+### External OS 的兩個固定 native patch case
+
+在上述 exec 控制旁增加 `workspace-patch` 與 `patch-canary-write-failure`，
+沿用新 run／CID、三 mounts、固定匿名 catalog、一次 turn 與兩次有界 HTTP，
+不增加 provider、登入、來源權限、privilege、backend 或 production registry。
+先依固定公開版本的 custom Lark declaration、plaintext carrier、FileChange
+契約與 unified diff 規則建立預期值，再實測正例固定 workspace 檔案與負例
+固定 canary 替換。Host 另核對精確 postimage、原 canary identity／bytes、
+原 CID／client 自然退出與完整 stderr／wire；planned changes 不證明實際寫入。
+
+Patch writer 的頂層錯誤丟失 errno，故負例驗收名稱為「寫入階段失敗觀測」，
+明列 `failure_cause=unknown` 與 `os_refusal_proven=false`。一般錯誤、讀取失敗、
+截斷與其他路徑不能通過，也不能替代 exec 的明確 OS 拒寫控制。工程方法
+與限制列於 design；原始實測、review 與 scan 證據仍不追蹤。局部反例測試、
+深入 review、適用完整 Security Diff Scan、相關驗證及新 head 完整 Merge
+Review 通過後可交付工程包；全工具、checkpoint intake、唯一整合器、撤權、
+restart／handoff E2E、正式登入、真實 context／品質與所有資格仍待後續驗收。
