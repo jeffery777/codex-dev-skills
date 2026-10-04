@@ -703,3 +703,34 @@ wrong token、client 0 但 container running、CLI／container nonzero 與 unkno
 離線 peers 不證明 start-attach EOF 能讓同一 CLI／wrapper 自然退出；此為首個真實
 runtime gap，需當輪 native measurement 與獨立 review／scan。所有 qualification 與
 N1–N3 flags false；same-UID guest receipt 不是 production trusted observer。
+
+### 固定原生 workspace writer 局部工程包
+
+Prestart runner 增加兩個固定 native-workspace-case，各次新 private root／CID。
+沿用原 admission latch／token，再由匿名 provider 發出一次原生 exec_command；
+不是 host callback 代寫。公開 experimental environment object 與 probe-writer
+named permissions 綁定，workspace 為唯一 write 路徑，capture／control／HOME
+保持排除；必要固定公開 binary 與單一 host seeded synthetic canary 僅 read。
+避免同路徑 deny 與父目錄遮罩阻擋必要 helper／canary。三輪原始 provider bytes、
+declaration 相容性／不漂移、call／thread／turn、command lifecycle、terminal output
+與 host no-follow postimage／canary 必須一致。
+
+正例只接受唯一固定檔案／bytes、自然 exit 0；負例只接受固定 canary 的 native
+明確 OS 拒絕及 nonzero exit，且 host identity／bytes 不變、workspace 無新檔。
+Guest CLI bounded stderr 持續 drain，overflow／truncation／缺 EOF 或 reader 未
+結束均 unknown；Docker start-client stderr not-captured，不由此推測故障原因。
+Writer 額外要求 fixed bundle bwrap，只有精確 binary／sidecar read；移除會
+遮住允許子路徑的 parent masks，其他路徑由 root default deny 排除。
+Writer image Config 比較僅允許明列 13 個精確型別空值／缺省等價，原 raw
+snapshot／private metadata 與其他欄位保留；default admission 的 raw-exact gate
+不變，不因遇到 drift 切換規則。新增固定 16 MiB tmpfs 作 wrapper／exec-server
+staging，host map／mounts 與 guest 實際
+tmpfs 另行核對，model 不取得 temp write。Provider／CLI 前的固定有界 namespace
+與 canary probe 失敗就零啟動，不重試；其成功也不代表 native writer 資格。
+原 admission 的 argv／env／capture／mount 契約保持，以上都是 writer-only。
+空白匿名 workspace／HOME 經核對後才使用 project_doc_max_bytes=0。
+Native refusal 須先讀到固定 canary，讀取失敗不能作寫入拒絕正例。
+原 container 限制不升權；預設內層 Linux sandbox 無法建立時不改 sandbox、
+入口或重播。Raw evidence 留 Git 外，shared docs 記方法與限制；當輪 native
+測量、正式獨立 CodeGate／SDS 與完整 merge review 仍需分別執行。這不完成
+N1–N4、production observer／authority 或 provider 資格，所有 flags false。

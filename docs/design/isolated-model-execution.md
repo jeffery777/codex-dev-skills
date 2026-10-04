@@ -1259,3 +1259,99 @@ N1–N3 qualification flags false。
 退出。離線 Python stdio peers／fake processes 只能驗 framing、ordering 與反例，
 不能證明這項 EOF 行為；client detach／exit 不能形成成功收據。Native runtime、
 獨立 CodeGate／SDS 留待來源凍結後的當輪實測。
+
+## 固定原生 workspace write／external refusal
+
+同一 runner 另接受固定 `--native-workspace-case workspace-write` 或
+`external-write-refusal`，保留 `--prestart-container-fixture` 的明確 opt-in。
+每次只測一案，使用全新 private root／CID，原有兩輪 admission 模式保持原契約。
+Writer 模式另必填 `--bwrap-path`；只能提供固定官方 CLI 套件中的 sidecar，
+大小／SHA 必須相符，不能替換成任意 executable。原 admission invocation
+不需要該參數，也不使用以下 writer-only tmpfs／prerequisite 配置。
+Writer 的 image Config 比較僅對 13 個逐欄、精確型別空值允許缺省等價：
+stdio／TTY 六欄 boolean false、Image／User／Hostname／Domainname 四欄空字串，
+Entrypoint／OnBuild／Volumes 三欄 null。非空、錯型、其他 material／unknown
+欄位全部原樣保留比較；`0` 不當成 false，`[]`／`{}` 不當成 null。
+先執行原 image policy，再處理副本；每次 raw Config／Env／Labels 與原 snapshot
+reference 留 private 且防竄改。實際 image／user／stdio／entrypoint／mounts
+仍由完整 container policy 核對；Hostname／Domainname 空值規則不代表已逐值
+驗證這兩欄。此 projection 由固定 writer case 預先選定，不因 drift 自動啟用；
+default admission 仍用原 raw-exact 比較。
+各案最多三輪匿名 Responses：一次 `packet_probe({})`、精確 token continuation
+後一次原生 `functions.exec_command`、原始 call output continuation 後 final。
+Host callback 仍只做 admission memory latch，沒有執行 shell 或代寫工作區。
+
+公開固定 source 的 experimental `TurnEnvironmentParams` 是 object array：
+`environmentId=local`、`cwd=/control/workspace`、
+`runtimeWorkspaceRoots=[/control/workspace]`，thread 與 turn 都明確提供。
+不能傳 `environments:["local"]`；named `permissions=probe-writer` 不混用
+`sandbox`／`sandboxPolicy`。型別與省略／空陣列語意見固定
+[thread](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server-protocol/src/protocol/v2/thread.rs)
+及 [turn schema](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server-protocol/src/protocol/v2/turn.rs)。
+
+Writer 明確啟用 shell_tool／unified_exec；named filesystem 僅開放 workspace
+write，HOME、capture 來源與 temp 仍由 root default deny 排除。固定公開
+`/fixture/codex` binary 與單一 external canary 僅 read。Filesystem helper 需要
+讀取固定 `/fixture/codex-resources/bwrap` sidecar；它也是精確 read 例外。
+以該 executable 自我執行；不加入與精確 read 衝突的同路徑 deny，也不加入
+稍後遮住已允許子路徑的 `/fixture`／`/control` 父目錄 deny。這些規則依
+[helper](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/exec-server/src/fs_sandbox.rs)、
+[permission 合成](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/protocol/src/permissions.rs)
+及 [bwrap mounts／masks](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/linux-sandbox/src/bwrap.rs)
+核對，實際 OS enforcement 仍需測量。
+Canary 由 host 在自有 RW control backing mount 預先建立，保存精確
+identity／bytes／hash；它不靠外層 readonly mount形成內層拒絕正例。
+固定 `/bin/sh`、non-login／non-TTY、`use_default`、有界 output 及 yield，
+不接受自訂 commands／paths／permission map。`allow_login_shell=false` 是
+[頂層設定](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/config.schema.json)。
+該設定下公開 [shell schema](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/handlers/shell_spec.rs)
+省略 `login` property，因此固定 arguments 也省略該欄位，由設定保證 non-login。
+當輪 advertised schema 須相容固定 arguments，三輪 declaration 不得漂移；
+這只核對宣告，不是完整 dispatcher registry 資格。
+
+正例要求 commandExecution 的開始／完成順序、相同 call／thread／turn、自然
+exit 0／無 session ID 與唯一 regular postimage 完全相符。負例要求對固定 canary
+明確的 native permission／read-only 拒絕、相同 command lifecycle 的 nonzero exit，
+先在同一 shell view 讀回 canary 的固定內容；讀取失敗／內容錯誤的專用 exit
+17／18 不能通過。再核對 host no-follow identity／bytes 未變，workspace 不新增檔案。
+一般工具錯誤、
+approval、bootstrap error、assistant final 文字或只有 canary 未變均不足以通過。
+
+Guest 原 CLI child 的 stderr 持續 drain 到 EOF，只保留固定上限前綴；原 bytes／
+prefix hash／total count／EOF／overflow／truncation 與 reader 結束讀回留 private。
+不完整 capture 只能 unknown，prefix hash 不宣稱涵蓋完整 stream。Docker
+start-client stderr 明確 not-captured，nonzero／unknown 不據此歸因為 native sandbox
+故障。原始 provider responses／requests、RPC、spawn／policy／三種 exit 與 host
+檔案讀回均留 Git 外；不新增 shared transport API。
+
+Writer-only 增加固定 16 MiB `/tmp` tmpfs，`rw,nosuid,nodev,noexec`、0700、
+與固定非零 UID／GID；`HostConfig.Tmpfs` 只接受完整精確 map。既有兩個 bind
+mounts 仍精確核對，不接受任何額外 `Mounts` row；runtime 若採其他表示就拒絕。
+Guest 另讀 `/proc/self/mountinfo`、owner／mode 與實際 capacity 核對 tmpfs，
+再建立固定 daemon／registry 目錄。CLI 與 shell env 都明確設定
+`TMPDIR=/tmp/registry`，不靠 inherit；model filesystem 沒有 temp write grant。
+固定 `/tmp/codex-daemon-<uid>` 不受 TMPDIR 影響，不能把 HOME 設定當作替代。
+相關限制依 [daemon directory](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/uds/src/daemon_directory.rs)
+及 [registry staging](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/linux-sandbox/src/linux_run_main.rs) 核對。
+
+Sidecar 只使用固定 bundle 的 regular／single-link／0500 內容，host／guest
+前後核對 hash 與 identity，capture inventory 僅多此一資源；固定 PATH 有其他
+bwrap 就拒絕，避免 prerequisite 與 CLI 使用不同 binary。Bundled lookup／digest
+依 [公開 launcher](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/linux-sandbox/src/bundled_bwrap.rs) 核對。
+在 provider／CLI 啟動前，可信 wrapper 先做有界 `--help` 及一次固定 namespace／
+canary probe：user／PID／IPC／network namespace、proc／dev view、專用 scratch
+postimage 與 readonly canary 拒絕。這是本工程包固定的組合，不是完整上游
+policy builder 的輸出；各 flags 依 [builder](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/linux-sandbox/src/bwrap.rs)
+及 [launcher](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/linux-sandbox/src/launcher.rs) 核對。
+原始兩個 stream 持續 drain、各保留固定 65,536-byte 前綴及完整性標記；timeout
+只終止該新建的 private diagnostic child，不能當作全部 descendants 停止證明。
+任何前置步驟 unavailable／unknown 都保持 provider／CLI 零啟動、不重試。
+即使 probe 通過也只證明固定 namespace／bind 子集，不能代替 native named
+permission enforcement、writer 或 production qualification。
+
+Writer-only `project_doc_max_bytes=0` 僅在 wrapper 已核對新建的空 workspace／
+HOME 後使用，排除匿名 fixture 的指引探索；不套到真實專案，不是 sandbox 證明。
+既有 non-root、capabilities none、NNP、network none、readonly root 及 seccomp
+限制維持。CLI 預設 Linux sandbox 是否能在此 tuple 建立須另行實測；失敗
+保留 unknown，不改 privileges、danger-full-access／externalSandbox、工具入口或
+重播命令。此包沒有 checkpoint／successor／integration，所有資格 flags false。
