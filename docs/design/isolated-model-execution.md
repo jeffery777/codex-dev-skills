@@ -106,7 +106,7 @@ Probe 亦停用 legacy `notify` 及 `agents.enabled`，CodeMode 使用單一
 不能使用不存在的頂層 `code_mode` key，或先 boolean 後 dotted key 而遺失
 `enabled=false`。上述只適用固定版本，須由有效 readback 另行查證。
 
-此 probe 不使用現有登入、公司或官方模型，也不提供 worker bridge、完整工具
+此 probe 不使用現有登入、自架或官方模型，也不提供 worker bridge、完整工具
 清冊、配置／resume 漂移、credential broker 或 production authority reader。
 Receipt 固定保留 `handler_inventory_complete: false`、`production_qualified: false`；
 不得將有限矩陣提升為正式隔離資格。真實訂閱接入前，仍須逐項驗證所有 host
@@ -410,7 +410,7 @@ observation，禁止新啟動、export、採用與 release。Health 恢復不能
 沒有 CLI／JSON loader、production registry、Docker／app-server worker 接線或 OS
 隔離資格。Execution schema 1 要求來源資格新鮮；後述 schema 2 接線僅提供
 V6 未使用來源的 TTL 例外，legacy unused／historical tier 例外仍保守阻擋，
-不能由此宣稱回家時的完整官方 fallback 或公司最佳模型品質驗收完成。真實 reader、
+不能由此宣稱來源不可達時的完整官方 fallback 或自架來源最佳模型品質驗收完成。真實 reader、
 provider、credential broker、原工具 inventory 與跨入口 qualification 仍需後續接線。
 
 
@@ -495,7 +495,7 @@ qualification gate 只接受 replay 產生且綁 exact execution 的私有 typed
 此接線仍限 synthetic host／backend，沒有 production registry、真實 credential
 broker、provider／Docker writer 或使用者 source integrator。測試可重建固定案例
 與 assertions；安全分析／獨立 review 結論另由原生收據保存，不能宣稱可逐 byte 重建。
-公司模型實際能力與 context、CLI／Desktop／bundled／Linux 入口及訂閱登入安排
+自架模型實際能力與 context、CLI／Desktop／bundled／Linux 入口及訂閱登入安排
 仍需各自驗收。
 
 ## R1 執行準備模式（合成接線）
@@ -599,7 +599,7 @@ observe／publish／finish 的原始 proofs 都在 journal 投影建立 monotoni
 目前及 retained-writer inspection 必須包含此完整 frontier，不能以尾端遺失後的
 舊 stopped prefix 產生新鮮 authority。Archive replay 仍只用原 bytes／原時間，
 frontier 欄位篡改會因 projection 不符拒絕。Fixture inspection 的 host clock 與
-60 秒 expiry 不代表 OS 停止租約或公司模型 freshness。
+60 秒 expiry 不代表 OS 停止租約或自架模型 freshness。
 
 Prepare／bootstrap／launch／export 都先持久化 intent，再重新檢查 source、目前
 authority／qualification／context 與真正 journal 歷史能力。在同一 packet fence
@@ -652,13 +652,13 @@ tools／config／credential 或 production 接手資格。Production registry �
 N2 另採固定 image／binary 的乾淨容器執行 `codex exec`，以容器內 loopback
 合成 Responses provider 驅動 native dispatcher。Host 不掛載 source、登入資料或
 daemon socket；唯讀 executable 與該次 private scratch 分開。入口先用 `env -i`
-清除 image environment，再提供固定匿名 HOME／CODEX_HOME。這不需要真實公司模型
+清除 image environment，再提供固定匿名 HOME／CODEX_HOME。這不需要真實自架模型
 或訂閱登入，也不由 host app-server 缺少全工具 deny 入口推定不可行。
 
 此路徑仍須在啟動前盤點 image 內 system／managed／project 設定；exec 的兩個
 ignore flags 不代表忽略全部 layers。Synthetic Direct model entry 可在固定完整 catalog
 中新增專用 fixture entry，保留官方 entries；不修改官方 context defaults，亦不將
-fixture 的 context 值當作公司容量證據。真實 target 仍須核對 input／output／total、
+fixture 的 context 值當作自架來源容量證據。真實 target 仍須核對 input／output／total、
 reasoning 與 handoff payload 預算，不能因合成 provider 接受 request 就取得資格。
 
 Inventory 必須同時綁定 source-derived registration、有效 model／features／environment、
@@ -769,7 +769,7 @@ production qualification；全部資格 flags 仍 false。
 `verify-model-project-hook.py` 另用固定 Mac Docker／Linux arm64 CLI tuple 測量一個
 project-local `PreToolUse` 路徑。兩個新 own containers 共用固定 image／public binary
 副本／程式／UID／CLI argv，各自只掛載唯讀 binary 與全新 synthetic scratch，
-network none，HOME／CODEX_HOME 留在容器內。沒有登入、公司設定或真實 provider。
+network none，HOME／CODEX_HOME 留在容器內。沒有登入、自架來源設定或真實 provider。
 Fixture source 以單次 bounded regular-file descriptor 擷取；host recipe 由同一份
 bytes 載入，兩輪執行與最後收據的 program hash 都使用該 immutable memory snapshot，
 不在每輪或結束後重新讀來源檔。Host owner／root 與 daemon 仍為可信邊界。
@@ -814,7 +814,7 @@ flags 保持 false。Source 與反例 tracked；inputs／outputs、收據、insp
 `verify-model-native-session.py` 在新的固定匿名容器中啟動兩個獨立 CLI，
 分別使用不同 loopback provider、HOME／CODEX_HOME。只有同一份已擷取的公開
 binary 唯讀掛載及本次 private scratch 可寫；沿用固定 image、UID、pids 64、
-memory 512 MiB、network none 與 exact policy。無公司模型、登入或其他 host mounts。
+memory 512 MiB、network none 與 exact policy。無自架模型、登入或其他 host mounts。
 此固定測量仍使用既有匿名容器的 `danger-full-access`，不是正式 CLI 權限預設
 或 sandbox 失敗時的 fallback。
 

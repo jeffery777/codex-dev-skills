@@ -11,24 +11,24 @@ CLI 與 Desktop 分別依公開 runtime 介面驗證；不依賴 private API，�
 
 ## 自動路由擴充需求
 
-本 Issue 後續範圍包含公司與官方模型同時可用的 internal-first 路由，以及
+本 Issue 後續範圍包含自架與官方模型同時可用的 internal-first 路由，以及
 服務失敗與品質返工兩條獨立升級路徑。以下是待實作與驗證的目標，現有
 schema 1 mapping 不具備這些自動切換能力，不得以原有測試通過宣稱完成。
 
 沿用既有 `agent_routing.classify_task`、profile preflight／qualification 及
 `model-selection-policy.md` 的返工重評規則。官方單一 provider 的既有選模
-流程繼續適用；公司目標是新增候選及執行入口，不另建公司專屬選模腦或另訂
+流程繼續適用；自架目標是新增候選及執行入口，不另建部署者專屬選模腦或另訂
 修補門檻。新增 helper 只處理供應商順序、服務預算與返工 lineage 的下一步意圖，
 由既有 V2 classifier 綁定當前 class/tier/scope，不得以自填較低要求繞過分類。
 
 | 情境 | 目標行為 |
 | --- | --- |
-| 公司與官方均可用 | 優先使用適合角色與工作範圍、已取得資格的公司模型。 |
-| 已取得新鮮證據確認公司服務不可達 | 略過公司重試，選擇已核准且可用的官方模型；不能只憑位置或網路名稱判斷。 |
+| 自架與官方均可用 | 優先使用適合角色與工作範圍、已取得資格的自架模型。 |
+| 已取得新鮮證據確認自架服務不可達 | 略過自架來源重試，選擇已核准且可用的官方模型；不能只憑位置或網路名稱判斷。 |
 | 可重試服務錯誤 | 在有界次數及總時間內重試，持續失敗後轉官方；冷卻期間不逐請求重走失敗鏈。 |
-| 合理修補後同一核心驗收仍失敗 | 重新分類並補足診斷；能力不足時先升到同角色／scope 已資格的公司最高能力目標。 |
+| 合理修補後同一核心驗收仍失敗 | 重新分類並補足診斷；能力不足時先升到同角色／scope 已資格的自架來源最高能力目標。 |
 | 同工作包兩輪修補陸續出現不同缺陷 | 保留 correction lineage，檢查完整工作流及契約；能力不足時依相同鏈升級，不因 A 變 B 清零。 |
-| 公司最高能力目標仍無法修復 | 以原驗收與診斷證據轉到已核准的官方目標；重新驗證及獨立 review。 |
+| 自架來源最高能力目標仍無法修復 | 以原驗收與診斷證據轉到已核准的官方目標；重新驗證及獨立 review。 |
 
 「最高能力」由實際角色品質與 class/tier 資格決定，不能由名稱、供應商、
 effort 或可連線狀態推定。官方階段仍失敗時改變診斷／方法並持續已授權工作；
@@ -69,7 +69,7 @@ tier 提升，當前授權、撤銷、身分、scope 與新鮮度
    不能沿用原模型資格與容量。
 
 本次官方存取路徑明確採用 Codex ChatGPT 登入／訂閱；不新增 OpenAI API
-費用，不把 LiteLLM 的 OpenAI API upstream 當成訂閱 fallback。公司端可使用
+費用，不把 LiteLLM 的 OpenAI API upstream 當成訂閱 fallback。自架端可使用
 本機 gateway，官方端須由 Codex 原生訂閱入口執行。不得將 Codex 登入憑證
 抽出交給 LiteLLM。兩端的公開執行能力與資料處理政策分別核對。依
 [官方驗證方式](https://developers.openai.com/codex/auth)核對；服務路由可參考
@@ -77,7 +77,7 @@ tier 提升，當前授權、撤銷、身分、scope 與新鮮度
 
 ### 擴充驗收
 
-- 離線合成案例涵蓋公司優先、公司不可達、重試耗盡／冷卻、公司高能力及官方
+- 離線合成案例涵蓋自架來源優先、自架來源不可達、重試耗盡／冷卻、自架來源高能力及官方
   品質升級、A→B 回歸不清零、原因未知先診斷、外部結果未知不重播。
 - 撤銷／scope／資格／目的地漂移、秘密／機密輸入、較小 context、catalog
   同名模型衝突、工具不相容均須拒絕不安全 dispatch；不僅驗證 selector 輸出。
@@ -121,7 +121,7 @@ Checkpoint 保留原目標與驗收、repository／branch／HEAD、tracked 與 u
 ### 持久工作包協調器設計草案
 
 下列是接手 blocker 的修正方向，尚待設計審查與實作，不是現有功能。
-父代理保留交付與整合責任；公司及官方模型僅執行有界工作包。協調器不另建
+父代理保留交付與整合責任；自架及官方模型僅執行有界工作包。協調器不另建
 選模分類或品質規則，使用同一 V2 classifier、provider 順位與返工 lineage。
 
 | 狀態 | 必須保留的事實與下一步 |
@@ -191,7 +191,7 @@ Linux 優先資格化受限 rootless container 與受控生命週期；cgroup �
    native metadata 的實驗不得作為工具清冊資格。
 3. N3：可信 prepare／launch／inspect／quarantine／export 與唯一整合器，
    驗證 crash、重啟、撤銷、late result fencing、checkpoint 擷取及重放邊界。
-4. N4：逐 provider 驗證真實公司登入及官方訂閱入口、credential broker 與
+4. N4：逐 provider 驗證真實自架來源登入及官方訂閱入口、credential broker 與
    機密排除；以當前 context、能力及授權證據完成新 target 的資格。
 
 本 Issue 的發行評估必須涵蓋上述資格與端到端交付驗收。只有合成隔離測試、
@@ -228,10 +228,10 @@ N2 的固定 PreToolUse hook 故障案例需先讀回 hook 執行標記，再核
 官方訂閱另有固定無工具回覆 smoke probe，保留實際 CLI、catalog、使用者
 instructions digest 與診斷計數，不抽取登入憑證。短請求成功不證明角色品質、
 完整 context、credential broker 或 provider/model 獨立讀回；未解的 CLI
-diagnostic 仍記為缺口。公司模型不可達時仍可完成以上實作與合成驗證，公司
+diagnostic 仍記為缺口。自架模型不可達時仍可完成以上實作與合成驗證，自架來源
 真實連線、工具循環、品質升級及接手驗收則延後，不能宣稱端到端完成。
 
-對未曾派工的不可達公司來源，選模介面可由可信 host 注入 `UnusedSourceGuard`：
+對未曾派工的不可達自架來源，選模介面可由可信 host 注入 `UnusedSourceGuard`：
 真正 packet ledger 須已存在且從未使用，另有新鮮治理讀回，綁定身分、授權、
 撤銷、task／scope／acceptance 與舊能力證據。只有能力資格 TTL 過期可被略過；
 官方目的地仍須全部新鮮資格。JSON 或空 events 不能建立此權限；缺 guard 保留
@@ -241,8 +241,8 @@ diagnostic 仍記為缺口。公司模型不可達時仍可完成以上實作與
 匿名 public app-server probe 另驗證 no-environment 與固定 dynamic tool 的有限
 正反控制；host-only stdio transport 保留 unknown、不重播及 direct-child-only
 退出讀回。它仍未建立完整工具／憑證清冊、隔離 worker bridge 或實際派工能力，
-也未將 C1 治理 reservation 轉為 executor claim。公司不可達不是這些本機接線
-工作的阻擋原因，不能把待公司驗收誤寫成唯一剩餘項目。
+也未將 C1 治理 reservation 轉為 executor claim。自架來源不可達不是這些本機接線
+工作的阻擋原因，不能把待自架來源驗收誤寫成唯一剩餘項目。
 
 匿名配置觀察另使用 public config／requirements／thread feature／MCP status
 readback；固定保留啟動前隔離與 thread 快照未資格化，未知配置在模型 turn 前
@@ -269,8 +269,8 @@ v5 reservation 不因 metadata 觀察成功而取得 writer 權限。
 - 容量未知時不採用；設定合理性檢查不能取代逐 request enforcement。
 - 真實 catalog 載入、長上下文、壓縮後工具續答與角色品質須另外取得證據。
 - 不把 standalone CLI 的驗證當成 Desktop 保證；不把合成資格當 production 資格。
-- 公司後端／gateway 離線時不得自動跨 provider 切回官方模型。Unavailable facts
-  應停止路由；尚未觀察到離線的 facts 不保證請求成功。工作／居家切換須重新
+- 自架後端／gateway 離線時不得自動跨 provider 切回官方模型。Unavailable facts
+  應停止路由；尚未觀察到離線的 facts 不保證請求成功。網路環境切換須重新
   核對 provider、store、baseline 角色載入、catalog/context 與 runtime facts。
 
 以上是現有 schema 1 的邊界；自動路由擴充必須另外明確啟用及完成前述驗收，
@@ -282,7 +282,7 @@ v5 reservation 不因 metadata 觀察成功而取得 writer 權限。
 `.work/verification/issue-316/`，已由 `.gitignore` 排除。歷次輸出使用不同 run
 目錄，保留失敗及過期結果。它們不是套件內容，也不能提交為公開文件。
 
-在 repository root 使用以下程序；不連線公司 gateway，不修改 provider 配置。
+在 repository root 使用以下程序；不連線自架 gateway，不修改 provider 配置。
 全部 Python 驗證使用 pinned resolver。先核對 working tree，確保新的受審檔案
 已納入 Git diff；未追蹤來源須另列路徑與內容 digest，不能只記 HEAD。
 
@@ -412,7 +412,7 @@ created 宣稱 never-started，也不轉為 service／quality outcome。
 independent readback、archives／callback fence、freshness 與 immutable observation
 更新，以及 schema 1 live gate、schema 2 first official unused TTL 和 schema 3
 無 actual history 拒絕。Bootstrap／start／adoption／infra successor 尚未接線；
-Docker／provider／登入與公司驗收分開，發行評估仍保留未就緒。
+Docker／provider／登入與自架來源驗收分開，發行評估仍保留未就緒。
 
 ### B1 固定 bootstrap 接點
 
@@ -426,7 +426,7 @@ archive-only replay、raw input／receipt／observation 綁定、私有檔案與
 fence，以及前／後 intent 的 source／authority／context gates。任何 bootstrap
 狀態都不構成 model failure、writer stopped 或治理完成；owner／unknown 保留。
 完整啟動／runtime／export／安全 finish／同 journal HSG 接手另在新模式實作。
-公司真實模型驗收仍待公司環境；專用 CODEX_HOME 官方訂閱登入安排仍待使用者
+真實自架模型驗收仍待自架服務可用的環境；專用 CODEX_HOME 官方訂閱登入安排仍待使用者
 決策。這些證據不代表 production 或 release readiness。
 
 ### R2 完整 saved-fixture 接點
@@ -445,8 +445,8 @@ R2 journal 的失敗、safe finish 與多次 actual acquire 驗收 HSG：原需�
 取最高需求的正反案例，保留 quality／service 預算、floors 與 predecessor；來源
 模型恢復不得 preempt 接手者。First-official schema 2 另走完整合成鏈。
 
-完整 saved fixture 不等於完整 runtime qualification。公司模型／context／角色
-驗收等公司環境；官方訂閱登入、公開工具／credential 接點、production authority
+完整 saved fixture 不等於完整 runtime qualification。自架模型／context／角色
+驗收等自架服務可用的環境；官方訂閱登入、公開工具／credential 接點、production authority
 reader／sole integrator 與各入口 qualification 仍須各自證據，發行保持未就緒。
 
 ### N1 固定 double-fork／兩輪啟動補充控制
@@ -464,19 +464,19 @@ Protected exact-path mounted positive、daemon／host restart、resource enforce
 authority reader／sole integrator 須先確立上述執行路徑；不能新增另一份合成
 registry 作為全域 authority，也不能由這些補充控制開啟正式派工。
 
-### 不需公司網路的 N2 容器路徑
+### 不需自架服務網路的 N2 容器路徑
 
 固定公開 Codex source 的完整工具註冊查讀支持匿名 native CLI 的 Docker 候選，
 其設計與 inventory 條件見 [匿名原生 CLI](../design/isolated-model-execution.md#匿名原生-cli-的容器候選)。
 先核對固定官方 Linux asset、版本／公開 flags、create intent／cidfile 與前後 policy；
 再用固定 provider 呼叫 native exec／patch 並讀回 scratch 與未掛載的 host canaries。
-這些是可在公司外推進的局部測量，不是全工具、N2 或 production 資格。
+這些是可在不依賴自架服務的環境推進的局部測量，不是全工具、N2 或 production 資格。
 
 後續須補完整 source／runtime inventory 對帳、每個允許工具與排除入口的實測、
 native sessions、巢狀 CLI、hooks、project config、escalation 與可信 observer。
 N1 剩餘隔離控制、N3 真實 backend／authority reader／整合器與官方訂閱登入資格
-亦不能由公司模型端點恢復自動完成；專用登入環境仍待採用者決策。公司環境只負責
-真實公司 target／context／能力／登入與跨 provider 的端到端驗收，不能取代上述工作。
+亦不能由自架模型端點恢復自動完成；專用登入環境仍待採用者決策。自架服務可用的環境只負責
+真實自架 target／context／能力／登入與跨 provider 的端到端驗收，不能取代上述工作。
 
 固定 28-case native container probe 已將重跑 recipe 納入工程 source；證據仍在
 Git 外。涵蓋 default namespace、被排除 handler 名稱、exec 內隱與 argv0 patch、
@@ -501,7 +501,7 @@ readback 仍是 N2 後續工作，不由兩個 ignore flags 或三工具 adverti
 反例覆蓋 mount、身份、數量／案例混用、缺 write、未知 errno、OOM／running、
 canary／reset 漂移，以及 unknown positive 不 reset／不啟動 negative。
 工程 source 與重跑方式納入 repository，證據保留 Git 外；不放寬舊 probe 契約，
-亦不宣稱其餘 N1、N2、N3、訂閱登入或公司環境驗收已完成。
+亦不宣稱其餘 N1、N2、N3、訂閱登入或自架服務可用的環境驗收已完成。
 
 ### N1 固定 PID 上限控制
 
@@ -513,12 +513,12 @@ single-child readiness／wait 正控制，再要求
 EAGAIN、counter／PID／UID／policy／mount 漂移、缺 readiness／wait、child 異常、
 未知 create／start 不重播；離線測試不在 host fork。工程 source 可重跑等價
 assertions，證據留 Git 外。這不完成全部資源隔離、N1／N2／N3 或 production 資格，
-也不由 cgroup events 推定 ancestor 的拒絕因果；公司外可獨立執行此控制。
+也不由 cgroup events 推定 ancestor 的拒絕因果；不依賴自架服務的環境可獨立執行此控制。
 
 ### N2 匿名 project config／hook 局部控制
 
 以固定匿名容器、唯一 exec call／兩次 Responses requests，驗證受控 user provider／
-project trust 與 project-local `PreToolUse` 路徑；不需要公司網路或登入。先盤點固定
+project trust 與 project-local `PreToolUse` 路徑；不需要自架來源網路或登入。先盤點固定
 local config candidates，未知檔案／symlink 停止；不把此清單當成完整 cloud 或
 effective-layer readback。Project hook／self-trust state 兩輪相同，user normalized
 hash 一輪正確、一輪刻意不符；不使用 trust bypass。正控制要求一次 hook event
@@ -530,7 +530,7 @@ N2／startup／hook trust／credentials／production 資格。後續 sessions、
 
 ### N2 匿名 native terminal session 局部控制
 
-公司外可繼續依[app-server 工具清冊設計](../design/app-server-tool-inventory.md)
+不依賴自架服務的環境可繼續依[app-server 工具清冊設計](../design/app-server-tool-inventory.md)
 逐項對帳 source guards、公開 readback 與實際 dispatch；清冊本身不完成資格。
 
 固定 recipe 使用兩個新 CLI／獨立 loopback provider 與匿名 homes。A 的 TTY
@@ -542,5 +542,5 @@ container policy，不宣稱完整 request／input byte 對帳；不把 thread U
 ID，也不從正文推定身分。Poll 是消耗式操作，
 未知結果不重播。Fixture 有整體 50 秒及 subprocess／barrier 上限，證據保存在
 Git 外、方法與反例 tracked。此包不完成 non-TTY、nested CLI、完整配置／工具
-清冊、restart、credentials 或 N2／production 資格；後續分項仍保留。公司
+清冊、restart、credentials 或 N2／production 資格；後續分項仍保留。自架來源
 模型端點恢復不能取代這些驗證，官方訂閱專用登入安排仍待原先提出的決策。

@@ -186,4 +186,4 @@ inventory、host/cell lifecycle 與 OS／授權強制仍 unknown。正式資格�
 允許工具正控制與排除工具的實際負控制、設定／resume 漂移、可信 observer
 與 credential canary。未知 contributor 或無法證明模型不能繞過 worker 時拒絕
 production adoption；有限 negative matrix 或無工具宣告不代替此條件。
-公司端點恢復不會自行完成這些資格；清冊、匿名控制與可信接線可在公司外推進。
+自架來源端點恢復不會自行完成這些資格；清冊、匿名控制與可信接線可在不依賴自架服務的環境推進。

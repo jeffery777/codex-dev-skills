@@ -17,20 +17,41 @@ Project-local provider keys 在官方設定中不受支援；不得放進專案�
 同一 provider 可提供實作模型 A、審查模型 B、主模型 C。跨 provider 組合須先有
 獨立公開 runtime 支援與資料目的地授權，本功能不自動提供。
 
-## 公司連線中斷與居家使用
+## 公開範本與本機身分綁定
+
+自架來源可由個人或其他部署者透過 LiteLLM 或相容 gateway 提供，公開文件
+不記錄部署者、真實模型 ID、私人端點或硬體拓撲。以下是文件占位符，必須由
+採用者填入受保護的本機設定；現有 loader 不會展開這些名稱或環境變數。
+
+| 公開占位符 | 本機設定用途 |
+| --- | --- |
+| `LOCAL_PROVIDER_ID` | 自架來源的 `provider_id`。 |
+| `LOCAL_MODEL_STANDARD` | 經同 role／scope 驗證的一般能力模型 ID。 |
+| `LOCAL_MODEL_STRONG` | 經同 role／scope 驗證的較高能力模型 ID。 |
+| `LOCAL_BASE_URL` | 目的端 provider 設定中的 `base_url`；不是 mapping store 的新增欄位。 |
+| `APPROVED_OFFICIAL_MODEL` | 核准的官方訂閱目標；仍須獨立驗證其 runtime 與登入入口。 |
+
+這些占位符不新增 schema，也不授予自動切換或派工能力。實際 `model`、provider
+configuration、catalog、context policy 與品質資格仍須在 Git 外的 user-owned
+protected root 綁定；別名未變但模型或目的地漂移時，必須重新驗證，不沿用舊資格。
+公開範本僅保留介面與限制；原始 runtime 身分、驗收收據及憑證不隨套件發布。
+憑證使用原有受控登入／秘密管理方式，不填入範本、PR 或公開驗收摘要。
+官方訂閱與付費 API 的契約差異仍須明示，不能以匿名化描述隱藏計費路徑。
+
+## 自架來源不可達時的使用
 
 以下描述目前 schema 1 的行為。Internal-first、服務 fallback 與品質返工
 自動升級仍屬待完成擴充；安裝目前版本不會取得這些能力。
 
 安裝本技能不會啟用 LiteLLM，也不修改個人 provider。若已選 LiteLLM，而
-gateway 或公司後端在離開公司後不可達，不會自動改走 OpenAI 官方 provider。
+gateway 或自架後端因網路環境改變而不可達，不會自動改走 OpenAI 官方 provider。
 可信父代理若已觀察到模型不可用，preflight 會停止；如果當前 facts 尚未反映
 連線中斷，實際 runtime 請求仍可能連線失敗或逾時。此 loader 不自行連線探測，
-既有 API 成功或 catalog entry 不能證明目前公司服務可達。
+既有 API 成功或 catalog entry 不能證明目前自架服務可達。
 
-工作與居家應明確切換各自的 provider、模型、catalog/context 與角色配置。
-只改模型名稱而保留 LiteLLM provider，不代表已切回官方服務。居家配置可
-使用隔離的 user-owned 配置 root；若沿用同一 root，須明確停用整份公司映射
+不同網路環境應明確切換對應的 provider、模型、catalog/context 與角色配置。
+只改模型名稱而保留 LiteLLM provider，不代表已切回官方服務。替代配置可
+使用隔離的 user-owned 配置 root；若沿用同一 root，須明確停用整份自架來源映射
 store，恢復並重新核對 baseline 角色載入及 installed bytes。只停用單個 record
 仍會停止該角色路由，不會自動 fallback。切換後重新取得 runtime facts；
 不能推定既有對話或子代理立即重載配置，也不將工作資料自行送往另一 provider。
@@ -38,13 +59,13 @@ store，恢復並重新核對 baseline 角色載入及 installed bytes。只停�
 ## 訂閱官方模型與自動升級規劃
 
 官方端採 Codex ChatGPT 登入／訂閱時，由官方 parent／原生合格子角色執行，
-公司工作包可使用另行驗證的公開 CLI executor。LiteLLM 的 OpenAI API upstream
+自架來源工作包可使用另行驗證的公開 CLI executor。LiteLLM 的 OpenAI API upstream
 使用 API 計費路徑，不能當成訂閱 fallback；技能不抽取或轉交登入 token。
 
-`loopctl.py model-failover-plan INPUT.json` 是純決策入口：公司目標優先；有
+`loopctl.py model-failover-plan INPUT.json` 是純決策入口：自架目標優先；有
 新鮮證據確認不可達，或可重試服務錯誤耗盡有界預算時規劃官方目標。品質
 返工沿用同一 task/scope/acceptance lineage：合理修補後同一驗收仍失敗，或
-兩輪修補陸續出現缺陷，先分類／診斷；確認能力不足時依公司一般、公司最高
+兩輪修補陸續出現缺陷，先分類／診斷；確認能力不足時依自架來源一般、自架來源最高
 合格目標、官方的順序規劃升級。換 SHA、錯誤名稱或模型不清零總返工紀錄。
 
 此入口**不執行切換**，輸出始終 `dispatched: false`。`planned`／`retry` 僅
@@ -64,11 +85,11 @@ policy、不探測服務、不寫 attempts、不 dispatch，不能取代 product
 既有 V2 task 的 id、qualification scope、class/tier。`INPUT.json` 頂層必須
 是 `task`（既有 agent-route V2 task）及 `model_failover`（可信父代理的目標／
 事件摘要）；輸出包含同一 classifier 的 `classification` 與 advisory `plan`。
-不建立第二套公司專屬分類規則，不替代原 preflight／qualification，也不將
+不建立第二套部署者專屬分類規則，不替代原 preflight／qualification，也不將
 摘要的 `qualified` 欄位當成實際 qualification。官方-only 的既有流程不必
-啟用這項公司／官方目標擴充。
+啟用這項自架／官方目標擴充。
 
-首次採用保持 default-off。目標順位及公司最高能力角色由採用者根據同 scope
+首次採用保持 default-off。目標順位及自架來源最高能力角色由採用者根據同 scope
 證據核准，不依模型名稱或 effort 排序。只有明確啟用的 policy 可規劃官方目標；
 配置損壞、資格撤銷、認證／權限問題、context 超限、機密內容及工具寫入結果
 不明不能藉 fallback 繞過 gate。失敗與結果未知先讀回，不能自動重播外部操作。
@@ -164,7 +185,7 @@ mapped 同名角色。`destination_root` 指向 effective directory；store 的
 
 自訂 model metadata 不可依 generic fallback 資格化。每個 record 的
 `context_policy` 是 protected root 內的 JSON，完整 required 欄位如下；數字僅為
-合成測試範例，不能抄成任何公司模型容量：
+合成測試範例，不能抄成任何自架模型容量：
 
 ```json
 {
