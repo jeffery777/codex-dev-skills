@@ -25,11 +25,14 @@ CALL = {'id': 'server-1', 'method': 'item/tool/call', 'params': {
 
 
 class TransportTests(unittest.TestCase):
-    def session(self, body, *, handshake=True, callback=None, **overrides):
-        limits = transport.Limits(timeout=.15, close_timeout=.02, **overrides)
+    def session(self, body, *, handshake=True, callback=None, capture_stderr=False,
+                allow_thread_settings_update=False, **overrides):
+        close_timeout = overrides.pop('close_timeout', .02)
+        limits = transport.Limits(timeout=.15, close_timeout=close_timeout, **overrides)
         session = transport.Session([sys.executable, '-u', '-c', (PRELUDE if handshake else '') + body],
             cwd=str(pathlib.Path.cwd()), env={}, limits=limits,
-            fixed_tool='packet_probe' if callback else None, tool_callback=callback)
+            fixed_tool='packet_probe' if callback else None, tool_callback=callback,
+            capture_stderr=capture_stderr, allow_thread_settings_update=allow_thread_settings_update)
         def cleanup():
             session.close()
             # Fixtures exit themselves; transport must never kill/relaunch them.
@@ -240,6 +243,103 @@ send({'id':r['id'],'result':{'account':None}})
         with mock.patch.object(transport.subprocess, 'Popen') as popen:
             with self.assertRaises(ValueError): transport.Session('shell string', cwd=os.getcwd(), env={})
             popen.assert_not_called()
+
+    def test_settings_update_is_per_session_opt_in_and_ack_is_not_policy_proof(self):
+        default = self.session("r=read()\nassert r['method']=='thread/read' and r['id']==2\nsend({'id':r['id'],'result':{}})")
+        with self.assertRaises(transport.TransportError) as error:
+            default.request('thread/settings/update', {})
+        self.assertEqual(error.exception.code, 'method_not_allowed')
+        self.assertEqual(default.request('thread/read', {}), {})
+        session = self.session("""r=read()
+assert r['method']=='thread/settings/update' and r['id']==2
+send({'method':'thread/settings/updated','params':{'threadId':'t','threadSettings':{'sandboxPolicy':{'type':'externalSandbox','networkAccess':'restricted'}}}})
+send({'id':r['id'],'result':{}})
+""", allow_thread_settings_update=True)
+        for method in ('config/write', 'config/value/write', 'account/login/start',
+                       'mcpServer/oauth/login', 'experimentalFeature/enablement/set'):
+            with self.assertRaises(transport.TransportError): session.request(method, {})
+        self.assertEqual(session.request('thread/settings/update', {'threadId': 't'}), {})
+        self.assertEqual(session.notification()['method'], 'thread/settings/updated')
+        self.assertNotIn('thread/settings/update', transport.CLIENT_METHODS)
+        ack_only = self.session("r=read()\nsend({'id':r['id'],'result':{}})", allow_thread_settings_update=True)
+        self.assertEqual(ack_only.request('thread/settings/update', {'threadId': 't'}), {})
+        self.fails(ack_only, 'eof')  # No fabricated policy notification.
+
+    def test_capture_options_are_strict_booleans_before_launch(self):
+        with mock.patch.object(transport.subprocess, 'Popen') as popen:
+            for name in ('capture_stderr', 'allow_thread_settings_update'):
+                for value in (0, 1, None, 'true', [], {}):
+                    with self.subTest(name=name, value=value), self.assertRaises(ValueError):
+                        transport.Session([sys.executable], cwd=os.getcwd(), env={}, **{name: value})
+            popen.assert_not_called()
+
+    def test_disabled_stderr_is_discarded_without_reader_or_raw_observation(self):
+        session = self.session("sys.stderr.write('credential-secret')\nsys.stderr.flush()")
+        self.assertIsNone(session.stderr_snapshot())
+        self.assertIsNone(session._stderr)
+        self.assertIsNone(session.process.stderr)
+        self.assertNotIn('credential-secret', repr(session.close()))
+
+    def test_enabled_stderr_keeps_binary_prefix_copy_and_original_close_shape(self):
+        for size in (4, transport.STDERR_BYTES):
+            body = f"os.write(sys.stderr.fileno(), b'\\xff\\0' * {size // 2})"
+            session = self.session(body, capture_stderr=True, close_timeout=.3)
+            result = session.close()
+            self.assertEqual(result, {'protocol':'observed','direct_child':'exited','exit_code':0,'descendants':'unknown'})
+            snap = session.stderr_snapshot()
+            self.assertEqual(snap['raw'], b'\xff\0' * (size // 2))
+            self.assertEqual(snap['captured_bytes'], size); self.assertEqual(snap['total_bytes'], size)
+            self.assertTrue(snap['eof']); self.assertTrue(snap['reader_finished'])
+            self.assertFalse(snap['overflow']); self.assertFalse(snap['truncated']); self.assertFalse(snap['reader_error'])
+            snap['raw'] = b'forged'; snap['eof'] = False
+            self.assertNotEqual(session.stderr_snapshot()['raw'], b'forged')
+            self.assertTrue(session.stderr_snapshot()['eof'])
+
+    def test_stderr_overflow_before_handshake_is_unknown_without_payload_diagnostics(self):
+        body = "import os,sys,time\nos.write(sys.stderr.fileno(),b'x'*65537)\ntime.sleep(.2)"
+        session = self.session(body, handshake=False, capture_stderr=True, close_timeout=.3)
+        with self.assertRaises(transport.TransportError) as error:
+            session.request('initialize', {})
+        self.assertEqual(error.exception.code, 'stderr_capture_uncertain')
+        with mock.patch.object(session.process, 'kill') as kill, mock.patch.object(session.process, 'terminate') as terminate:
+            result = session.close()
+            kill.assert_not_called(); terminate.assert_not_called()
+        snap = session.stderr_snapshot()
+        self.assertEqual(len(snap['raw']), 65536); self.assertEqual(snap['total_bytes'], 65537)
+        self.assertTrue(snap['overflow']); self.assertTrue(snap['truncated'])
+        self.assertEqual(result['protocol'], 'unknown'); self.assertEqual(result['exit_code'], 0)
+        self.assertNotIn('raw', result); self.assertNotIn('x'*100, str(error.exception))
+
+    def test_child_exit_zero_with_inherited_stderr_fd_has_bounded_unknown_close(self):
+        session = self.session("""pid=os.fork()
+if pid==0:
+ os.close(0); os.close(1)
+ time.sleep(.3)
+ os._exit(0)
+send({'method':'warning','params':{'fixture':'inherited-stderr'}})
+""", capture_stderr=True)
+        self.assertEqual(session.notification()['method'], 'warning')
+        started = time.monotonic()
+        with mock.patch.object(session.process, 'kill') as kill, mock.patch.object(session.process, 'terminate') as terminate:
+            result = session.close()
+            kill.assert_not_called(); terminate.assert_not_called()
+        self.assertLess(time.monotonic() - started, .15)
+        self.assertEqual(result['exit_code'], 0); self.assertEqual(result['protocol'], 'unknown')
+        self.assertEqual(result['descendants'], 'unknown')
+        self.assertFalse(session.stderr_snapshot()['eof'])
+        self.assertTrue(session.stderr_snapshot()['truncated'])
+        self.assertEqual(session.close()['protocol'], 'unknown')
+
+    def test_capture_reader_io_failure_is_sanitized_and_blocks_requests(self):
+        class BrokenPipe:
+            def fileno(self): raise OSError('credential-secret')
+            def close(self): pass
+        capture = transport._StderrCapture(BrokenPipe()); capture.start(); capture.reader.join(timeout=.3)
+        self.assertTrue(capture.snapshot()['reader_error']); self.assertTrue(capture.snapshot()['reader_finished'])
+        session = self.session('time.sleep(.1)')
+        session._stderr = capture
+        self.fails(session, 'stderr_capture_uncertain', lambda: session.request('thread/read', {}))
+        self.assertNotIn('credential-secret', repr(session.close()))
 
 
 if __name__ == '__main__':

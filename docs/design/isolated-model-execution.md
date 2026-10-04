@@ -1355,3 +1355,43 @@ HOME 後使用，排除匿名 fixture 的指引探索；不套到真實專案，
 限制維持。CLI 預設 Linux sandbox 是否能在此 tuple 建立須另行實測；失敗
 保留 unknown，不改 privileges、danger-full-access／externalSandbox、工具入口或
 重播命令。此包沒有 checkpoint／successor／integration，所有資格 flags false。
+
+## 外層 OS executor 的傳輸準備
+
+內層 namespace 前置條件不可用時，原 attempt 保留 unknown。後續可另設獨立、
+明確 opt-in 的外層 OS fixture：新建 workspace 是唯一可寫 host bind，capture／
+固定 inputs 僅 RO，HOME／CODEX_HOME／temp 使用有界私有 tmpfs；host control、
+receipts、authority、auth 與 engine socket 都不掛入。這是後續設計，尚未實作
+或驗收；guest HOME／temp 與必要 pseudo-filesystem 仍存在寫入面。
+
+本包先補 `Session(..., allow_thread_settings_update=False, capture_stderr=False)`。
+兩個選項均為嚴格 boolean，在 Popen 前驗證。Default 保持原 client methods、
+stderr DEVNULL 與零 capture reader；只在該 Session 明確 opt-in 時接受公開
+`thread/settings/update`，不提供任意 methods 清單，也不開放 config／auth writes。
+可信 host 負責 params、目標、政策與授權驗證；transport 選項不能代替這些 gate。
+
+Enabled stderr reader 從 launch 起以 nonblocking pipe 持續 drain，只在記憶體
+保留固定 65,536-byte 原始前綴，不要求 UTF-8、不寫檔、不解析 guest frame。
+`stderr_snapshot()` 在 disabled 時回傳 None；enabled 時回傳副本，包含 raw、
+captured／total bytes、prefix SHA、EOF、overflow、truncated、reader error／finished。
+Raw bytes 是 caller 的私有證據，不加入 exceptions、一般 log 或 close 結果。
+
+Capture 模式的 child wait 與 reader join 共用單一 close deadline；缺 EOF、
+reader 未結束、overflow／truncation／error 都保持 unknown。Reader 有 stop event
+與有限 selector wait，已取得的 fd 由 reader 自行關閉，不依賴另一執行緒中斷
+blocking read。Close 的原回傳 keys 保持，direct child exit 0、晚到 EOF 或
+再次 close 都不能清除已觀察的 unknown；不 kill、relaunch 或證明 descendants 停止。
+
+後續 caller 須先查核外層 OS policy，以 read-only 建立新 ephemeral thread，
+再送固定 externalSandbox settings update。空 response 僅為 queue ACK；必須
+從 raw wire 核對該 request out-sent 後、turn/start 前同 thread 的唯一
+thread/settings/updated，包括 sandbox policy、approval、cwd、model、provider
+及無 named permission profile。通知可先於 ACK 到達，舊 queue notification
+不能當成生效證據。Queue 與 notification 見固定公開
+[implementation](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server/src/request_processors/turn_processor.rs)
+及 [schema](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server-protocol/src/protocol/v2/thread.rs)。
+本 transport 不實作該 caller gate，read-only bootstrap 是否可用仍未驗證。
+
+匿名 subprocess controls 只驗證 opt-in、RPC queue、bounded stream 與 unknown
+契約；不證明 native policy 生效、外層隔離、完整工具清冊、production source
+authority 或 N1–N4。原 bwrap runner 不改入口、sandbox 或自動切換，所有資格 false。

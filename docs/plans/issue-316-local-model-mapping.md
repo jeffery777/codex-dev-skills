@@ -734,3 +734,21 @@ Native refusal 須先讀到固定 canary，讀取失敗不能作寫入拒絕正�
 入口或重播。Raw evidence 留 Git 外，shared docs 記方法與限制；當輪 native
 測量、正式獨立 CodeGate／SDS 與完整 merge review 仍需分別執行。這不完成
 N1–N4、production observer／authority 或 provider 資格，所有 flags false。
+
+### 外層 OS executor 傳輸準備工程包
+
+先擴充 canonical transport、plugin mirror 與 transport tests，提供 per-Session
+明確 opt-in 的公開 thread/settings/update 及固定有界 memory-only stderr
+觀測。Default methods／DEVNULL 與 close 回傳契約保持；所有 config／auth writes
+仍拒絕。設定更新 ACK 不代表生效，caller 的 raw notification／target／policy
+核對 gate 尚待後續獨立 fixture 實作，沒有將新介面接入原 bwrap runner。
+
+65,536-byte 原始前綴、持續 drain、copy／hash 與 EOF／overflow／truncation／
+reader 完整性分開記錄，close 使用單一 deadline、不 kill 或 relaunch。
+直接 child exit 0 但其他程序仍持有 stderr pipe 時保持 unknown；晚到觀測
+或再次 close 不提升結果。原始證據留 Git 外，工程方法存放 design。
+
+後續 external OS fixture 須獨立 opt-in、新 run／CID、唯一 host RW workspace、
+RO capture／inputs 與私有有界 tmpfs；不掛 host controller／auth／receipts，
+不升 privilege 或重播失敗 attempt。Bootstrap、設定生效、兩個 native case
+與全部 production／N1–N4 資格仍待驗收；本包只提供傳輸介面與匿名控制。
