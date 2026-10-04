@@ -1401,7 +1401,7 @@ authority 或 N1–N4。原 bwrap runner 不改入口、sandbox 或自動切換�
 `scripts/verify-model-external-bootstrap.py` 另設
 `--external-bootstrap-container-fixture` 明確 opt-in，只驗證新的 ephemeral
 thread 能否由 read-only 啟動，再完成固定 externalSandbox settings 的讀回。
-此入口不送 turn、不宣告 dynamic tool、不讀帳號、不登入、不接外部模型。
+此入口預設不送 turn、不宣告 dynamic tool、不讀帳號、不登入、不接外部模型。
 本輪原生結果未驗證前保持 unknown，不代表 writer／拒寫兩個案例通過。
 
 使用既有固定 Linux CLI、既有固定 image 與新 private run／CID；每次 create
@@ -1430,3 +1430,64 @@ Frame 是同 UID 不可信觀測，不能取得 stop／source／integration auth
 Host 分別核對 Docker client exit、原 CID exit、RO inputs、空 workspace 與
 source／image／engine identity；缺項仍為 unknown，所有資格 false。
 原始 wire／stderr／image／gate 證據留在 Git 外，可重跑產生等價 assertion。
+
+### External OS 的固定原生寫入觀測
+
+同一入口另接受明確 `--native-workspace-case workspace-write` 或
+`external-write-refusal`；未提供時仍為零 turn 的 bootstrap。每例使用新的
+run／CID、原有 22 檔 RO capture、RO inputs、唯一 host RW workspace 及私有
+tmpfs，不掛帳號、controller、engine socket 或 host evidence，不提高權限。
+
+Host 先完成 bootstrap 的 raw settings gate，才送一次固定 turn/start：同
+thread、`environmentId=local`、`cwd=/workspace` 與
+`runtimeWorkspaceRoots=[/workspace]`，並以本次 run ID 綁定固定提示。
+Native case 使用 tracked guest 中的固定 synthetic catalog，只有 `fixture-direct`
+一筆。欄位依 [固定版本公開 ModelInfo 契約](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/protocol/src/openai_models.rs)
+建立，省略 guardian、model_messages 與 auto_review_model_override 等政策 metadata；
+依該版本的相容反序列化規則，提供固定短句 base_instructions，不能缺少指示文字。
+Catalog 上限 4 KiB，只在 case opt-in 時以 EXCL／no-follow／0600 寫入本次私有
+tmpfs，建立後回讀 bytes／identity，task 後再核對 identity／hash。Host 從 tracked
+literal 重建精確 bytes／hash，receipt 明示固定匿名來源及 query spawn count 0。
+Bootstrap、settings、provider request 都核對該固定 alias；預設零-turn 模式
+不增加 catalog，writer 只有一次 task CLI spawn。Context 32768、95% 可用比例、
+truncation bytes 8192、reasoning 與 API flags 都是 fixture 設值，不是任何真實
+模型能力數據；不能宣告官方 catalog、真實 tool mode、tokenizer 或 context capacity，
+也不改官方／host 的全域預設。完整 bundled catalog 的取得不屬此匿名案例。
+Guest loopback fixture 僅接受兩次 `/v1/responses` POST：先返回固定原生
+`functions.exec_command`，再觀察同 call 的 terminal output 並返回固定結束
+訊息。未宣告 dynamic admission tool，也不把同 UID guest 觀測當作授權。
+
+第一例只寫 `/workspace/native-write.txt` 的固定 bytes；第二例先讀取
+`/inputs/canary` 並核對固定 bytes，再嘗試寫該唯讀 mount。Guard exit 17／18、
+generic failure、sandbox 啟動失敗都不是拒寫成功。此 image 的 canonical
+`/usr/bin/sh` 拒寫前綴仍須符合完整固定 canary 與明確 OS denial；原始 bytes
+保留，其他 shell、路徑或額外診斷不能通過。兩例固定 `/bin/sh`、非 TTY、
+`sandbox_permissions=use_default`，且禁止 login shell。Host 核對 raw command
+開始／完成、thread／turn／call、精確 command／cwd、exit／output 與 turn
+完成順序；approval、reroute、其他工具、額外 turn 或重複 lifecycle 均拒收。
+此固定 Linux image 的公開 command display 必須解析為精確
+`/usr/bin/sh -c <固定 command>` argv，不接受其他 shell、login 或額外參數。
+Nullable aggregate 不能代表缺少輸出；同 item 的 outputDelta 合計限 4 KiB，
+須位於 command 開始與完成之間，並與原始 tool result 相符；aggregate 存在時
+亦須相符。原始 display／delta／provider carrier 分別保留，不作文字正規化。
+
+HTTP 每個 body 上限 1 MiB、兩次合計 2 MiB、每個固定 response 上限 8 KiB；
+每個 connection 使用單一 5 秒 deadline。收到 request 即保留不可重用 slot，
+第三次、部分 body、重複 length、encoding、未支援 method 或 close 不確定皆
+留下失敗。原始 request／response 只保留在記憶體，最後以有界 bundle 放入
+私有 stderr frame：raw records 先以嚴格 UTF-8 的可逆表示包裝，避免在壓縮
+JSON 內再疊 base64；無效 UTF-8 不取代或正規化。未壓縮上限 3 MiB、壓縮
+上限 16 KiB、writer frame 上限
+32 KiB；default bootstrap frame 仍為 16 KiB。Host 在 decode 前核對 bounds，
+有限解壓縮後要求單一完整 stream、無 tail／串接資料、byte count／hash 與
+strict JSON；超限不能截斷後算成功，也不自動增加上限。
+失敗 input 仍在 decode 前保存有界 raw record；預先生成的 response bytes
+須另有 `response_sent=true` 才能作成功觀測，不能推定失敗時已送出。
+
+在原 CID 自然退出後，host 獨立核對正例只有單一 regular、單 link、本人所有、
+mode 0600 的固定檔案；負例 workspace 為空，canary identity／bytes 未變。
+CLI wait、Docker client、原 CID exit、provider 停止及兩層 stderr EOF 分開核對。
+此結果只覆蓋固定 mount 路徑，不能證明所有背景 writer 已撤權、sole integrator、
+source authority、真實模型品質或自動接手。Synthetic usage=0 不提供 tokenizer／
+context capacity 證據；完整任務預算仍須包含 input、output／reasoning reserve 與
+margin，保留官方預設並依模型逐一驗證。所有 production 與 N1–N4 資格維持 false。

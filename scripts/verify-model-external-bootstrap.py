@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Explicit anonymous external-OS bootstrap probe; no turns, auth or qualification."""
+"""Explicit anonymous external-OS bootstrap or fixed native probes; no qualification."""
 import argparse
 import base64
 import copy
@@ -9,10 +9,13 @@ import json
 import os
 import pathlib
 import re
+import shlex
 import stat
 import sys
 import tempfile
+import time
 import uuid
+import zlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
@@ -109,26 +112,27 @@ def policy(value, root, name, uid, gid, cid, created=None, *, image_config, stop
         raise ValueError('external-policy-incomplete') from error
 
 
-def settings_match(message, thread):
+def settings_match(message, thread, model='gpt-6-sol'):
     if message.get('method') != 'thread/settings/updated':
         return False
     params = message.get('params', {}); value = params.get('threadSettings', {})
     if (params.get('threadId') != thread or {key: value.get(key) for key in
             ('cwd', 'approvalPolicy', 'sandboxPolicy', 'activePermissionProfile', 'model', 'modelProvider')} !=
             {'cwd': '/workspace', 'approvalPolicy': 'never', 'sandboxPolicy': POLICY,
-             'activePermissionProfile': None, 'model': 'gpt-6-sol', 'modelProvider': 'fixture'}):
+             'activePermissionProfile': None, 'model': model, 'modelProvider': 'fixture'}):
         raise ValueError('external-settings-readback-drift')
     return True
 
 
-def bootstrap(session, receipt):
+def bootstrap(session, receipt, case=None):
+    model = guest.DIRECT_MODEL if case else 'gpt-6-sol'
     session.request('initialize', {'clientInfo': {'name': 'external_bootstrap_only', 'version': '1'},
                                   'capabilities': {'experimentalApi': True}})
-    started = session.request('thread/start', {'model': 'gpt-6-sol', 'modelProvider': 'fixture',
+    started = session.request('thread/start', {'model': model, 'modelProvider': 'fixture',
         'allowProviderModelFallback': False, 'cwd': '/workspace', 'ephemeral': True, 'sandbox': 'read-only',
         'approvalPolicy': 'never', 'environments': []})
     if ({k: started.get(k) for k in ('model', 'modelProvider', 'cwd', 'approvalPolicy')} !=
-            {'model': 'gpt-6-sol', 'modelProvider': 'fixture', 'cwd': '/workspace', 'approvalPolicy': 'never'}
+            {'model': model, 'modelProvider': 'fixture', 'cwd': '/workspace', 'approvalPolicy': 'never'}
             or started.get('sandbox', {}).get('type') != 'readOnly'
             or started.get('sandbox', {}).get('networkAccess') is not False
             or started.get('instructionSources') != []):
@@ -146,7 +150,7 @@ def bootstrap(session, receipt):
         raise ValueError('external-settings-ack-drift')
     for _ in range(256):
         note = session.notification()
-        if settings_match(note, thread):
+        if settings_match(note, thread, model):
             receipt['settings_notification'] = note; break
         if note['method'] in ('error', 'turn/started', 'item/started', 'model/rerouted'):
             raise ValueError('external-unexpected-bootstrap-activity')
@@ -165,15 +169,232 @@ def bootstrap(session, receipt):
                 or row['direction'] == 'out-sent' and method not in
                     ('initialize', 'initialized', 'thread/start', 'thread/settings/update')):
             raise ValueError('external-bootstrap-not-only-settings')
-    settings_match(session.wire[notes[0]]['message'], thread)
+    settings_match(session.wire[notes[0]]['message'], thread, model)
     receipt['settings_sequence'] = {'out_sent_index': sent[0], 'notification_index': notes[0],
                                     'unique_in_observed_wire': True, 'turn_started': False}
+
+
+def decode_bundle(value):
+    if (type(value) is not dict or set(value) != {'encoding', 'raw_bytes', 'raw_sha256', 'compressed_bytes',
+            'compressed_sha256', 'data'} or value['encoding'] != 'zlib-utf8-records-base64'
+            or type(value['raw_bytes']) is not int or not 0 < value['raw_bytes'] <= guest.BUNDLE_BYTES
+            or type(value['compressed_bytes']) is not int or not 0 < value['compressed_bytes'] <= guest.COMPRESSED_BYTES
+            or type(value['data']) is not str or len(value['data']) > 4 * ((guest.COMPRESSED_BYTES + 2) // 3)):
+        raise ValueError('external-bundle-shape-bound')
+    compressed = base64.b64decode(value['data'], validate=True)
+    if (len(compressed) != value['compressed_bytes']
+            or hashlib.sha256(compressed).hexdigest() != value['compressed_sha256']):
+        raise ValueError('external-compressed-integrity')
+    decoder = zlib.decompressobj()
+    raw = decoder.decompress(compressed, guest.BUNDLE_BYTES + 1)
+    # No flush or second stream; no allocation beyond the fixed output ceiling.
+    if (not decoder.eof or decoder.unconsumed_tail or decoder.unused_data
+            or len(raw) != value['raw_bytes'] or len(raw) > guest.BUNDLE_BYTES
+            or hashlib.sha256(raw).hexdigest() != value['raw_sha256']):
+        raise ValueError('external-bundle-integrity-bound')
+    result = helpers._reload_json(raw)
+    if type(result) is not dict:
+        raise ValueError('external-bundle-object-required')
+    if 'records' in result:
+        if type(result['records']) is not list or len(result['records']) > 2:
+            raise ValueError('external-bundle-record-count')
+        total = 0
+        for record in result['records']:
+            if type(record) is not dict: raise ValueError('external-bundle-record-shape')
+            for name, bound in (('request', guest.HTTP_BYTES), ('response', guest.RESPONSE_BYTES)):
+                text = record.pop(name + '_text', None)
+                if type(text) is not str or name + '_base64' in record or len(text) > bound:
+                    raise ValueError('external-bundle-record-text-bound')
+                data = text.encode('utf-8')
+                if len(data) > bound: raise ValueError('external-bundle-record-utf8-bound')
+                record[name + '_base64'] = base64.b64encode(data).decode()
+                if name == 'request': total += len(data)
+        if total > guest.HTTP_TOTAL_BYTES: raise ValueError('external-bundle-record-total-bound')
+    return result
+
+
+def fixed_prompt(request):
+    return 'Fixed anonymous external writer ' + request['run_id'] + ' ' + request['native_case'] + '; no integration requested.'
+
+
+def writer_observation(value, request):
+    state = decode_bundle(value)
+    if (type(state) is not dict or set(state) != {'slots', 'total_bytes', 'failed', 'records', 'native_output',
+            'native_result', 'declaration', 'stopped', 'catalog_fixture'} or type(state['slots']) is not int or state['slots'] != 2
+            or state['failed'] is not False or state['stopped'] is not True
+            or type(state['records']) is not list or len(state['records']) != 2
+            or type(state['total_bytes']) is not int or not 0 < state['total_bytes'] <= guest.HTTP_TOTAL_BYTES):
+        raise ValueError('external-two-request-observation-required')
+    total = 0; declaration = None; output = None
+    case = request['native_case']; call = guest.native_call(case)
+    for stage, record in enumerate(state['records'], 1):
+        if (type(record) is not dict or set(record) != {'stage', 'request_base64', 'request_sha256', 'request_bytes',
+                'response_base64', 'response_sha256', 'response_bytes', 'response_sent'} or type(record['stage']) is not int
+                or record['stage'] != stage or record['response_sent'] is not True):
+            raise ValueError('external-provider-record-shape')
+        for name, bound in (('request', guest.HTTP_BYTES), ('response', guest.RESPONSE_BYTES)):
+            size, encoded = record[name + '_bytes'], record[name + '_base64']
+            if type(size) is not int or not 0 < size <= bound or type(encoded) is not str or len(encoded) > 4 * ((bound + 2) // 3):
+                raise ValueError('external-provider-record-byte-bound')
+            raw = base64.b64decode(encoded, validate=True)
+            if len(raw) != size or hashlib.sha256(raw).hexdigest() != record[name + '_sha256']:
+                raise ValueError('external-provider-record-integrity')
+            if name == 'response':
+                if raw != guest.response_bytes(stage, case):
+                    raise ValueError('external-fixed-response-drift')
+                continue
+            total += size
+            body = base.probe.boundary.manifest.decode(raw)
+            if body.get('model') != guest.DIRECT_MODEL:
+                raise ValueError('external-provider-model-drift')
+            current = guest.declaration(raw, base.probe.boundary, case)
+            if stage == 1:
+                declaration = current
+                texts = [part.get('text') for item in body.get('input', []) if type(item) is dict
+                         for part in item.get('content', []) if type(part) is dict and part.get('type') == 'input_text']
+                if texts.count(fixed_prompt(request)) != 1:
+                    raise ValueError('external-provider-turn-prompt-drift')
+            else:
+                calls = [item for item in body.get('input', []) if type(item) is dict and item.get('call_id') == guest.NATIVE_CALL
+                         and item.get('type') == 'function_call']
+                if len(calls) != 1 or {k: calls[0].get(k) for k in call} != call:
+                    raise ValueError('external-provider-native-call-drift')
+                output = base.probe.boundary.output_text(base.probe.boundary.find_output(body, call))
+                if current['advertised_tools'] != declaration['advertised_tools']:
+                    raise ValueError('external-provider-declaration-drift')
+    result = guest.native_output(output, case, base.guest)
+    if total != state['total_bytes'] or state['declaration'] != declaration or state['native_output'] != output or state['native_result'] != result:
+        raise ValueError('external-provider-result-drift')
+    return state
+
+
+def catalog_observation(state):
+    record = state['catalog_fixture']
+    if (type(record) is not dict or set(record) != {'source_kind', 'query_spawn_count',
+            'fixture_sha256', 'fixture_bytes', 'fixture_identity'}
+            or record['source_kind'] != guest.CATALOG_KIND or type(record['query_spawn_count']) is not int
+            or record['query_spawn_count'] != 0):
+        raise ValueError('external-fixed-catalog-unconfirmed')
+    fixture = guest.catalog_bytes()
+    if (type(record['fixture_bytes']) is not int or len(fixture) != record['fixture_bytes']
+            or hashlib.sha256(fixture).hexdigest() != record['fixture_sha256']):
+        raise ValueError('external-catalog-fixture-drift')
+    identity = record['fixture_identity']
+    if (type(identity) is not list or len(identity) != 9 or any(type(n) is not int or n < 0 for n in identity)
+            or identity[1] == 0 or identity[2:4] != [os.getuid(), os.getgid()]
+            or not stat.S_ISREG(identity[4]) or stat.S_IMODE(identity[4]) != 0o600
+            or identity[5] != 1 or identity[6] != len(fixture)):
+        raise ValueError('external-catalog-file-identity-drift')
+
+
+def writer_wire(receipt, request, state):
+    """Public RPC and provider observations must agree; neither grants authority."""
+    sent = []; starts = []; ends = []; completed = []; turn_starts = []; turn_ends = []; deltas = []
+    thread, turn = receipt['thread_id'], receipt['turn_id']
+    command = json.loads(guest.native_call(request['native_case'])['arguments'])['cmd']
+    for index, row in enumerate(receipt['wire']):
+        message = row['message'] or {}
+        if base.probe.manifest.decode(base64.b64decode(row['raw_base64'], validate=True)) != row['message']:
+            raise ValueError('external-writer-raw-wire-drift')
+        method = message.get('method', '')
+        if row['direction'] == 'out-sent':
+            if method == 'turn/start': sent.append(index)
+            elif method not in ('initialize', 'initialized', 'thread/start', 'thread/settings/update'):
+                raise ValueError('external-writer-unexpected-outbound')
+        if row['direction'] != 'in': continue
+        if ('id' in message and 'method' in message or method in ('error', 'model/rerouted')
+                or 'requestApproval' in method or method == 'item/tool/call'):
+            raise ValueError('external-writer-unexpected-request')
+        params = message.get('params', {})
+        if method == 'thread/settings/updated': settings_match(message, thread, guest.DIRECT_MODEL)
+        if method.startswith(('turn/', 'item/')) and params.get('threadId') != thread:
+            raise ValueError('external-writer-thread-drift')
+        if method in ('turn/started', 'turn/completed'):
+            if params.get('turn', {}).get('id') != turn:
+                raise ValueError('external-writer-turn-drift')
+            (turn_starts if method == 'turn/started' else turn_ends).append(index)
+            if method == 'turn/completed' and params['turn'].get('status') != 'completed':
+                raise ValueError('external-writer-turn-incomplete')
+        elif method.startswith('item/'):
+            if params.get('turnId') != turn:
+                raise ValueError('external-writer-item-turn-drift')
+            item = params.get('item', {})
+            if method in ('item/started', 'item/completed') and item.get('type') == 'commandExecution':
+                displayed = item.get('command')
+                if (item.get('id') != guest.NATIVE_CALL or item.get('cwd') != '/workspace'
+                        or type(displayed) is not str or len(displayed.encode()) > 8192
+                        or shlex.split(displayed) != ['/usr/bin/sh', '-c', command]):
+                    raise ValueError('external-writer-command-drift')
+                if method == 'item/started': starts.append(index)
+                else:
+                    ends.append(index); completed.append(item)
+            elif method == 'item/commandExecution/outputDelta':
+                delta = params.get('delta')
+                if (params.get('itemId') != guest.NATIVE_CALL or type(delta) is not str
+                        or sum(len(text.encode()) for _, text in deltas) + len(delta.encode()) > 4096):
+                    raise ValueError('external-writer-output-delta-drift')
+                deltas.append((index, delta))
+            elif method in ('item/started', 'item/completed') and item.get('type') not in ('userMessage', 'agentMessage', 'reasoning'):
+                raise ValueError('external-writer-other-tool')
+    result = state['native_result']
+    settings = [i for i, row in enumerate(receipt['wire']) if row['direction'] == 'in'
+                and (row['message'] or {}).get('method') == 'thread/settings/updated']
+    if (len(sent) != len(starts) or len(starts) != len(ends) or len(ends) != len(turn_starts)
+            or len(turn_starts) != len(turn_ends) or len(sent) != 1
+            or settings != [receipt['settings_sequence']['notification_index']]
+            or not receipt['settings_sequence']['notification_index'] < sent[0] < turn_starts[0] < starts[0] < ends[0] < turn_ends[0]
+            or type(completed[0].get('exitCode')) is not int or completed[0]['exitCode'] != result['exit_code']
+            or completed[0].get('status') not in ('completed', 'failed')):
+        raise ValueError('external-writer-lifecycle-unconfirmed')
+    aggregate = completed[0].get('aggregatedOutput'); streamed = ''.join(text for _, text in deltas)
+    if ('aggregatedOutput' not in completed[0] or any(not starts[0] < index < ends[0] for index, _ in deltas)
+            or (aggregate is None and streamed != result['body'])
+            or (aggregate is not None and (aggregate != result['body'] or deltas and streamed != result['body']))):
+        raise ValueError('external-writer-output-unconfirmed')
+    expected = {'threadId': thread,
+        'environments': [{'environmentId': 'local', 'cwd': '/workspace', 'runtimeWorkspaceRoots': ['/workspace']}],
+        'input': [{'type': 'text', 'text': fixed_prompt(request)}]}
+    if receipt['wire'][sent[0]]['message'].get('params') != expected:
+        raise ValueError('external-writer-turn-request-drift')
+
+
+def writer_turn(session, receipt, request):
+    result = session.request('turn/start', {'threadId': receipt['thread_id'],
+        'environments': [{'environmentId': 'local', 'cwd': '/workspace', 'runtimeWorkspaceRoots': ['/workspace']}],
+        'input': [{'type': 'text', 'text': fixed_prompt(request)}]})
+    turn = result.get('turn', {}).get('id')
+    if type(turn) is not str or not 0 < len(turn) <= 256:
+        raise ValueError('external-writer-turn-identity')
+    receipt['turn_id'] = turn
+    deadline = time.monotonic() + 30
+    for _ in range(256):
+        if time.monotonic() >= deadline: break
+        note = session.notification()
+        if note['method'] == 'turn/completed': break
+        if note['method'] in ('error', 'model/rerouted') or 'requestApproval' in note['method']:
+            raise ValueError('external-writer-unexpected-activity')
+    else:
+        raise ValueError('external-writer-notification-bound')
+    session._drain_available(session._deadline())
+
+
+def check_workspace(root, case):
+    workspace = root / 'workspace'
+    if not guest.workspace_expected(workspace, case, lambda p, n: helpers._reload_read(workspace, p.name, n)[0]):
+        raise ValueError('external-workspace-postimage-drift')
+    if case == 'workspace-write':
+        _, ref = helpers._reload_read(workspace, 'native-write.txt', 128)
+        if stat.S_IMODE(ref['identity'][3]) != 0o600:
+            raise ValueError('external-workspace-mode-drift')
+        return ref
+    return {'workspace_empty': True}
 
 
 def guest_frame(snapshot, request):
     raw = snapshot['raw']
     if (not snapshot['eof'] or not snapshot['reader_finished'] or snapshot['overflow']
-            or snapshot['truncated'] or snapshot['reader_error'] or len(raw) > guest.FRAME_BYTES
+            or snapshot['truncated'] or snapshot['reader_error'] or len(raw) >
+                (guest.WRITER_FRAME_BYTES if request.get('native_case') else guest.FRAME_BYTES)
             or not raw.startswith(guest.PREFIX) or not raw.endswith(b'\n') or b'\n' in raw[:-1]):
         raise ValueError('external-final-frame-incomplete')
     value = helpers._reload_json(raw[len(guest.PREFIX):-1])
@@ -184,9 +405,14 @@ def guest_frame(snapshot, request):
             or value.get('cli_spawn_count') != 1 or type(value.get('cli_spawn_count')) is not int
             or value.get('cli_wait') != 'observed' or type(value.get('cli_exit_code')) is not int
             or value['cli_exit_code'] != 0 or type(value.get('cli_pid')) is not int or value['cli_pid'] <= 1
-            or value.get('workspace_empty') is not True or value.get('canary_preserved') is not True
-            or value.get('cli_argv') != guest.argv(base.probe.boundary, base.guest)):
+            or (value.get('workspace_expected') is not True if request.get('native_case') else value.get('workspace_empty') is not True)
+            or value.get('canary_preserved') is not True):
         raise ValueError('external-guest-observation-unconfirmed')
+    case = request.get('native_case'); port = value.get('provider_port') if case else 1
+    if type(port) is not int or not 1 <= port <= 65535 or value.get('cli_argv') != guest.argv(base.probe.boundary, base.guest, port=port, native=bool(case)):
+        raise ValueError('external-guest-command-unconfirmed')
+    if case and (value.get('native_case') != case or value.get('catalog_preserved') is not True):
+        raise ValueError('external-guest-case-drift')
     stderr = value.get('cli_stderr', {}); child_raw = base64.b64decode(stderr.get('raw_base64', ''), validate=True)
     if (not base.guest.stderr_complete(stderr) or len(child_raw) != stderr['captured_bytes']
             or hashlib.sha256(child_raw).hexdigest() != stderr['captured_prefix_sha256']):
@@ -195,6 +421,9 @@ def guest_frame(snapshot, request):
 
 
 def run(args):
+    case = getattr(args, 'native_workspace_case', None)
+    if case is not None and case not in guest.CASES:
+        raise ValueError('fixed-external-case-required')
     parent = args.evidence_root.resolve(strict=True)
     if any((d / '.git').exists() for d in (parent, *parent.parents)):
         raise ValueError('external-evidence-outside-git-required')
@@ -217,6 +446,7 @@ def run(args):
         sources, binary = capture(root, args.binary_path)
         request = {'schema_version': 1, 'run_id': run_id, 'uid': os.getuid(), 'gid': os.getgid(),
                    'sources': {k: v['sha256'] for k, v in sources.items()}}
+        if case: request['native_case'] = case
         ref = helpers._reload_save(root / 'inputs', 'request.json', request)
         canary = root / 'inputs/canary'; canary.write_bytes(base.guest.CANARY_BYTES); canary.chmod(0o600)
         _, canary_ref = helpers._reload_read(root / 'inputs', 'canary', 128)
@@ -255,7 +485,8 @@ def run(args):
             limits=base.probe.transport.Limits(timeout=10, close_timeout=5), admission_receipt={},
             allow_thread_settings_update=True, capture_stderr=True)
         try:
-            bootstrap(session, receipt)
+            bootstrap(session, receipt, case)
+            if case: writer_turn(session, receipt, request)
         finally:
             receipt['client_close'] = session.close(); receipt['wire'] = session.wire
             stderr = session.stderr_snapshot(); saved = dict(stderr); saved['raw_base64'] = base64.b64encode(saved.pop('raw')).decode()
@@ -265,16 +496,21 @@ def run(args):
         if receipt['client_close'] != {'protocol': 'observed', 'direct_child': 'exited', 'exit_code': 0, 'descendants': 'unknown'}:
             raise ValueError('external-docker-client-unknown')
         receipt['guest_observation'] = guest_frame(stderr, request)
+        if case:
+            state = writer_observation(receipt['guest_observation'].get('provider_bundle'), request)
+            catalog_observation(state)
+            writer_wire(receipt, request, state)
+            receipt['native_result'] = state['native_result']; receipt['native_case'] = case
         check_capture(root / 'capture', sources)
         helpers._reload_ref(root / 'inputs', ref); helpers._reload_ref(root / 'inputs', canary_ref)
-        if list((root / 'workspace').iterdir()):
-            raise ValueError('external-unexpected-workspace-write')
+        receipt['workspace_postimage'] = check_workspace(root, case)
         helpers._reload_ref(root, image_ref)
         if (base.socket_snapshot(args.endpoint) != socket or engine.identity() != daemon or engine.failures
                 or engine._executable_snapshot() != engine.executable_identity or base.cidfile(root)[1] != cid_ref
                 or helpers.packets.digest(helpers.packets.canonical(base.image_policy(engine.image(base.IMAGE), writer=True))) != digest):
             raise ValueError('external-final-engine-drift')
-        receipt['execution_outcome'] = 'measured-synthetic-external-bootstrap-passed'
+        receipt['execution_outcome'] = ('measured-synthetic-external-native-' + case + '-passed' if case else
+                                         'measured-synthetic-external-bootstrap-passed')
     except Exception as error:
         receipt['failure_class'] = type(error).__name__
         if engine is not None:
@@ -298,6 +534,7 @@ def main():
     parser.add_argument('--binary-path', type=pathlib.Path, required=True)
     parser.add_argument('--endpoint', required=True)
     parser.add_argument('--evidence-root', type=pathlib.Path, required=True)
+    parser.add_argument('--native-workspace-case', choices=guest.CASES)
     args = parser.parse_args()
     if not args.external_bootstrap_container_fixture:
         parser.error('explicit bounded fixture opt-in required')

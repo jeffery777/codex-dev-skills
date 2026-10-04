@@ -5,11 +5,17 @@ import hashlib
 import importlib.util
 import json
 import os
+import io
+import tempfile
 from pathlib import Path
 import sys
+import shlex
+import subprocess
 import unittest
+from unittest import mock
+import zlib
 
-from tests.test_model_app_server_container import observed, CID, CREATED, IMAGE_CONFIG
+from tests.test_model_app_server_container import observed, CID, CREATED, IMAGE_CONFIG, writer_tools, terminal_output
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('external_bootstrap_test', ROOT / 'scripts/verify-model-external-bootstrap.py')
@@ -157,6 +163,262 @@ class ExternalBootstrapTests(unittest.TestCase):
         changed = copy.deepcopy(frame); value = json.loads(frame['raw'][len(host.guest.PREFIX):]); value['cli_stderr']['total_bytes'] += 1
         changed['raw'] = host.guest.PREFIX + json.dumps(value).encode() + b'\n'
         with self.assertRaises(ValueError): host.guest_frame(changed, request)
+
+
+class MemoryConnection:
+    def __init__(self, raw): self.raw = io.BytesIO(raw); self.reply = bytearray()
+    def makefile(self, *args, **kwargs): return io.BytesIO()
+    def settimeout(self, seconds): pass
+    def recv_into(self, buffer):
+        data = self.raw.read(len(buffer))
+        if not data: raise TimeoutError('fixed incomplete request')
+        buffer[:len(data)] = data
+        return len(data)
+    def sendall(self, raw): self.reply.extend(raw)
+
+
+class ExternalWriterTests(unittest.TestCase):
+    def test_fixed_printf_produces_exact_newline_bytes(self):
+        for case, expected in [('workspace-write', b'native-workspace-write-ok\n'),
+                               ('external-write-refusal', b'forbidden-native-write\n')]:
+            command = json.loads(host.guest.native_call(case)['arguments'])['cmd'].split('; ')[-1]
+            arguments = shlex.split(command)
+            self.assertEqual(arguments[0], 'printf')
+            result = subprocess.run(['/usr/bin/printf', *arguments[1:3]], stdin=subprocess.DEVNULL,
+                                    capture_output=True, timeout=3, check=True)
+            self.assertEqual(result.stdout, expected)
+
+    def request(self, case='workspace-write'):
+        return {'run_id': 'a' * 32, 'native_case': case}
+
+    def bodies(self, request):
+        first = {'model': host.guest.DIRECT_MODEL, 'tools': writer_tools(request['native_case']), 'input': [
+            {'type': 'message', 'role': 'user', 'content': [{'type': 'input_text', 'text': host.fixed_prompt(request)}]}]}
+        call = host.guest.native_call(request['native_case'])
+        second = copy.deepcopy(first); second['input'] += [call, {'type': 'function_call_output',
+            'call_id': host.guest.NATIVE_CALL, 'output': terminal_output()}]
+        return first, second
+
+    def state(self):
+        request = self.request(); bodies = self.bodies(request); records = []
+        for stage, body in enumerate(bodies, 1):
+            raw = json.dumps(body).encode(); reply = host.guest.response_bytes(stage, request['native_case'])
+            record = {'stage': stage, 'response_sent': True}
+            for name, data in [('request', raw), ('response', reply)]:
+                record.update({name + '_base64': base64.b64encode(data).decode(), name + '_bytes': len(data),
+                               name + '_sha256': hashlib.sha256(data).hexdigest()})
+            records.append(record)
+        raw = json.dumps(bodies[0]).encode()
+        state = {'slots': 2, 'total_bytes': sum(x['request_bytes'] for x in records), 'failed': False, 'stopped': True,
+            'records': records, 'declaration': host.guest.declaration(raw, host.base.probe.boundary, 'workspace-write'),
+            'native_output': terminal_output(), 'native_result': {'exit_code': 0, 'body': '', 'outcome': 'native-workspace-write'},
+            'catalog_fixture': self.catalog()}
+        return request, state
+
+    def catalog(self):
+        fixture = host.guest.catalog_bytes()
+        return {'source_kind': host.guest.CATALOG_KIND, 'query_spawn_count': 0,
+            'fixture_bytes': len(fixture), 'fixture_sha256': hashlib.sha256(fixture).hexdigest(),
+            'fixture_identity': [1, 2, os.getuid(), os.getgid(), 33152, 1, len(fixture), 3, 4]}
+
+    def test_catalog_file_is_exclusive_private_fixed_and_has_no_query(self):
+        with tempfile.TemporaryDirectory() as name:
+            path = Path(name) / 'catalog.json'; observation = {}
+            with mock.patch.object(host.guest, 'CATALOG_PATH', str(path)), \
+                    mock.patch.object(host.guest.subprocess, 'Popen') as spawn:
+                host.guest.prepare_catalog(host.base, observation); spawn.assert_not_called()
+                self.assertEqual(path.read_bytes(), host.guest.catalog_bytes())
+                self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+                host.catalog_observation(json.loads(json.dumps(observation)))
+                with self.assertRaises(FileExistsError): host.guest.prepare_catalog(host.base, {})
+                path.unlink(); path.symlink_to(Path(name) / 'target')
+                with self.assertRaises(FileExistsError): host.guest.prepare_catalog(host.base, {})
+                self.assertFalse((Path(name) / 'target').exists())
+        with mock.patch.object(host.base.guest, 'read_regular', return_value=b'drift'), \
+                mock.patch.object(host.guest.os, 'open', return_value=os.open(os.devnull, os.O_WRONLY)), \
+                mock.patch.object(host.guest.os, 'fsync'), mock.patch.object(host.guest.os, 'lstat') as identity:
+            identity.return_value = os.stat(os.devnull)
+            observation = {}
+            with self.assertRaises(ValueError): host.guest.prepare_catalog(host.base, observation)
+            self.assertNotIn('catalog_fixture', observation)
+
+    def test_direct_catalog_is_case_only_and_fixed_receipt_cannot_be_substituted(self):
+        record = self.catalog(); state = {'catalog_fixture': record}; host.catalog_observation(state)
+        catalog = json.loads(host.guest.catalog_bytes())
+        self.assertEqual(len(catalog['models']), 1)
+        self.assertEqual(catalog['models'][0]['slug'], host.guest.DIRECT_MODEL)
+        self.assertEqual(catalog['models'][0]['tool_mode'], 'direct')
+        self.assertEqual(catalog['models'][0]['base_instructions'], 'Follow only the fixed anonymous test provider.')
+        self.assertFalse({'guardian', 'model_messages', 'auto_review_model_override'} & set(catalog['models'][0]))
+        default = host.guest.argv(host.base.probe.boundary, host.base.guest)
+        direct = host.guest.argv(host.base.probe.boundary, host.base.guest, native=True, port=1234)
+        self.assertNotIn('model="fixture-direct"', default); self.assertIn('model="fixture-direct"', direct)
+        self.assertNotIn('model="gpt-6-sol"', direct)
+        for key, replacement in [('source_kind', 'bundled-derived'), ('query_spawn_count', 1),
+                                 ('fixture_sha256', '0' * 64), ('fixture_bytes', True)]:
+            bad = copy.deepcopy(state); bad['catalog_fixture'][key] = replacement
+            with self.subTest(key=key), self.assertRaises(ValueError): host.catalog_observation(bad)
+        bad = copy.deepcopy(state); bad['catalog_fixture']['fixture_identity'][5] = 2
+        with self.assertRaises(ValueError): host.catalog_observation(bad)
+
+    def test_bundle_rejects_bomb_truncation_trailing_stream_hash_and_duplicate_json(self):
+        value = host.guest.bundle({'bounded': True}); self.assertEqual(host.decode_bundle(value), {'bounded': True})
+        for raw in (b'x' * (host.guest.BUNDLE_BYTES + 1), b'{"x":1,"x":2}', b'{"x":NaN}'):
+            compressed = zlib.compress(raw); bad = dict(value, raw_bytes=min(len(raw), host.guest.BUNDLE_BYTES),
+                raw_sha256=hashlib.sha256(raw).hexdigest(), compressed_bytes=len(compressed),
+                compressed_sha256=hashlib.sha256(compressed).hexdigest(), data=base64.b64encode(compressed).decode())
+            with self.assertRaises(ValueError): host.decode_bundle(bad)
+        for change in ('truncated', 'trailing', 'second', 'hash', 'bytes', 'base64'):
+            bad = copy.deepcopy(value); compressed = base64.b64decode(bad['data'])
+            if change in ('truncated', 'trailing', 'second'):
+                compressed = compressed[:-1] if change == 'truncated' else compressed + (b'x' if change == 'trailing' else compressed)
+                bad.update(compressed_bytes=len(compressed), compressed_sha256=hashlib.sha256(compressed).hexdigest(),
+                           data=base64.b64encode(compressed).decode())
+            elif change == 'hash': bad['raw_sha256'] = '0' * 64
+            elif change == 'bytes': bad['raw_bytes'] += 1
+            else: bad['data'] += '!'
+            with self.subTest(change=change), self.assertRaises(ValueError): host.decode_bundle(bad)
+
+    def test_raw_two_requests_match_exact_call_prompt_output_and_response(self):
+        request, state = self.state(); self.assertEqual(host.writer_observation(host.guest.bundle(state), request), state)
+        body = self.bodies(request)[0]; root = copy.deepcopy(body); root['tools'] = root['tools'][0]['tools']
+        host.guest.declaration(json.dumps(root).encode(), host.base.probe.boundary, 'workspace-write')
+        duplicate = copy.deepcopy(root); duplicate['tools'] += body['tools']
+        with self.assertRaises(ValueError): host.guest.declaration(json.dumps(duplicate).encode(), host.base.probe.boundary, 'workspace-write')
+        wrong = copy.deepcopy(body); wrong['tools'][0]['name'] = 'other'
+        with self.assertRaises(ValueError): host.guest.declaration(json.dumps(wrong).encode(), host.base.probe.boundary, 'workspace-write')
+        for change in ('slots', 'failed', 'stopped', 'bytes', 'output', 'call', 'prompt', 'response', 'records', 'sent'):
+            bad = copy.deepcopy(state)
+            if change == 'slots': bad['slots'] = 3
+            elif change == 'failed': bad['failed'] = True
+            elif change == 'stopped': bad['stopped'] = False
+            elif change == 'bytes': bad['total_bytes'] += 1
+            elif change == 'output': bad['native_output'] = terminal_output(1, 'generic failure\n')
+            elif change == 'records': bad['records'].append(copy.deepcopy(bad['records'][0]))
+            elif change == 'sent': bad['records'][0]['response_sent'] = False
+            else:
+                index = 1 if change == 'call' else 0; record = bad['records'][index]
+                name = 'response' if change == 'response' else 'request'
+                raw = base64.b64decode(record[name + '_base64'])
+                if change == 'response': raw += b'noise'
+                else:
+                    body = json.loads(raw)
+                    if change == 'call': body['input'][1]['arguments'] = '{}'
+                    else: body['input'][0]['content'][0]['text'] = 'wrong attempt'
+                    raw = json.dumps(body).encode()
+                bad['total_bytes'] += len(raw) - record['request_bytes'] if name == 'request' else 0
+                record.update({name + '_base64': base64.b64encode(raw).decode(), name + '_bytes': len(raw),
+                               name + '_sha256': hashlib.sha256(raw).hexdigest()})
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                host.writer_observation(host.guest.bundle(bad), request)
+
+    def test_reserved_http_slots_and_partial_or_unsupported_requests_are_sticky(self):
+        request = self.request(); receipt = {}
+        with mock.patch.object(host.guest.http.server, 'HTTPServer', side_effect=lambda address, handler: handler):
+            handler = host.guest.provider(host.base, request, receipt)
+        for body in self.bodies(request):
+            raw = json.dumps(body).encode(); connection = MemoryConnection(
+                b'POST /v1/responses HTTP/1.0\r\nContent-Length: ' + str(len(raw)).encode() + b'\r\n\r\n' + raw)
+            handler(connection, ('127.0.0.1', 1), None)
+            self.assertIn(b'200 OK', connection.reply)
+        self.assertFalse(receipt['_provider_state']['failed']); self.assertEqual(receipt['_provider_state']['slots'], 2)
+        handler(MemoryConnection(b'POST /v1/responses HTTP/1.0\r\nContent-Length: 2\r\n\r\n{}'), ('127.0.0.1', 1), None)
+        self.assertTrue(receipt['_provider_state']['failed']); self.assertEqual(receipt['_provider_state']['slots'], 3)
+        for raw in (b'PUT /v1/responses HTTP/1.0\r\n\r\n', b'bad\r\n', b'',
+                b'POST /v1/responses HTTP/1.0\r\nContent-Length: 10\r\n\r\n{}',
+                b'POST /v1/responses HTTP/1.0\r\nContent-Length: 2\r\nContent-Length: 2\r\n\r\n{}',
+                b'POST /v1/responses HTTP/1.0\r\nContent-Length: 1048577\r\n\r\n'):
+            fresh = {}
+            with mock.patch.object(host.guest.http.server, 'HTTPServer', side_effect=lambda address, handler: handler):
+                handler = host.guest.provider(host.base, request, fresh)
+            handler(MemoryConnection(raw), ('127.0.0.1', 1), None)
+            self.assertTrue(fresh['_provider_state']['failed'])
+
+        broken = self.bodies(request)[0]; broken['tools'] = [{'type': 'unknown', 'name': 'unsupported'}]
+        raw = json.dumps(broken).encode(); fresh = {}
+        with mock.patch.object(host.guest.http.server, 'HTTPServer', side_effect=lambda address, handler: handler):
+            handler = host.guest.provider(host.base, request, fresh)
+        handler(MemoryConnection(b'POST /v1/responses HTTP/1.0\r\nContent-Length: ' + str(len(raw)).encode() + b'\r\n\r\n' + raw), ('127.0.0.1', 1), None)
+        state = fresh['_provider_state']; self.assertTrue(state['failed']); self.assertFalse(state['records'][0]['response_sent'])
+        self.assertEqual(base64.b64decode(state['records'][0]['request_base64']), raw)
+        self.assertEqual(host.decode_bundle(host.guest.bundle(state)), state)
+
+    def test_canary_guard_and_generic_failures_never_count_as_os_denial(self):
+        good = terminal_output(2, '/usr/bin/sh: 1: cannot create /inputs/canary: Read-only file system\n')
+        self.assertEqual(host.guest.native_output(good, 'external-write-refusal', host.base.guest)['body'], good.split('Output:\n')[1])
+        for raw in (terminal_output(17), terminal_output(18), terminal_output(1, 'bwrap failure\n'),
+                    good.replace('/inputs/canary', '/other'), good.replace('code 2', 'code 0'),
+                    good.replace('/usr/bin/sh', '/usr/sbin/sh'), good + 'extra diagnostic\n'):
+            with self.assertRaises(ValueError): host.guest.native_output(raw, 'external-write-refusal', host.base.guest)
+
+    def wire(self):
+        request, state = self.state(); command = json.loads(host.guest.native_call('workspace-write')['arguments'])['cmd']
+        item = {'type': 'commandExecution', 'id': host.guest.NATIVE_CALL, 'cwd': '/workspace',
+                'command': shlex.join(['/usr/bin/sh', '-c', command]),
+                'status': 'completed', 'exitCode': 0, 'aggregatedOutput': ''}
+        messages = [('out-sent', {'method': 'thread/settings/update'}), ('in', settings(model=host.guest.DIRECT_MODEL)),
+            ('out-sent', {'method': 'turn/start', 'params': {'threadId': 'thread',
+                'environments': [{'environmentId': 'local', 'cwd': '/workspace', 'runtimeWorkspaceRoots': ['/workspace']}],
+                'input': [{'type': 'text', 'text': host.fixed_prompt(request)}]}}),
+            ('in', {'method': 'turn/started', 'params': {'threadId': 'thread', 'turn': {'id': 'turn'}}}),
+            ('in', {'method': 'item/started', 'params': {'threadId': 'thread', 'turnId': 'turn', 'item': item}}),
+            ('in', {'method': 'item/completed', 'params': {'threadId': 'thread', 'turnId': 'turn', 'item': item}}),
+            ('in', {'method': 'turn/completed', 'params': {'threadId': 'thread', 'turn': {'id': 'turn', 'status': 'completed'}}})]
+        wire = [{'direction': d, 'message': m, 'raw_base64': base64.b64encode((json.dumps(m) + '\n').encode()).decode()} for d, m in messages]
+        return {'thread_id': 'thread', 'turn_id': 'turn', 'wire': wire, 'settings_sequence': {'notification_index': 1}}, request, state
+
+    def test_command_lifecycle_has_one_thread_turn_native_command_and_no_approval(self):
+        receipt, request, state = self.wire(); host.writer_wire(receipt, request, state)
+        for change in ('thread', 'turn', 'command', 'order', 'duplicate', 'approval', 'raw', 'exit'):
+            bad = copy.deepcopy(receipt)
+            if change == 'thread': bad['wire'][4]['message']['params']['threadId'] = 'wrong'
+            elif change == 'turn': bad['wire'][5]['message']['params']['turnId'] = 'wrong'
+            elif change == 'command': bad['wire'][4]['message']['params']['item']['command'] = 'unexpected'
+            elif change == 'exit': bad['wire'][5]['message']['params']['item']['exitCode'] = 17
+            elif change == 'order': bad['wire'][4:6] = reversed(bad['wire'][4:6])
+            elif change == 'duplicate': bad['wire'].insert(5, copy.deepcopy(bad['wire'][4]))
+            elif change == 'approval': bad['wire'].insert(5, {'direction': 'in', 'message': {'id': 42, 'method': 'item/commandExecution/requestApproval'}})
+            elif change == 'raw': bad['wire'][4]['raw_base64'] = base64.b64encode(b'{}').decode()
+            if change != 'raw':
+                for row in bad['wire']: row['raw_base64'] = base64.b64encode((json.dumps(row['message']) + '\n').encode()).decode()
+            with self.subTest(change=change), self.assertRaises(ValueError): host.writer_wire(bad, request, state)
+
+    def test_command_display_and_null_aggregate_require_exact_argv_and_bounded_output(self):
+        receipt, request, state = self.wire()
+        for row in receipt['wire'][4:6]: row['message']['params']['item']['aggregatedOutput'] = None
+        def refresh(value):
+            for row in value['wire']: row['raw_base64'] = base64.b64encode((json.dumps(row['message']) + '\n').encode()).decode()
+        refresh(receipt); host.writer_wire(receipt, request, state)
+        for prefix in ('/bin/bash -c', '/usr/bin/sh -lc', '/usr/bin/sh -c extra'):
+            bad = copy.deepcopy(receipt); command = json.loads(host.guest.native_call('workspace-write')['arguments'])['cmd']
+            bad['wire'][4]['message']['params']['item']['command'] = prefix + ' ' + shlex.quote(command)
+            refresh(bad)
+            with self.assertRaises(ValueError): host.writer_wire(bad, request, state)
+        state['native_result']['body'] = 'bounded output\n'
+        with self.assertRaises(ValueError): host.writer_wire(receipt, request, state)
+        delta = {'method': 'item/commandExecution/outputDelta', 'params': {'threadId': 'thread', 'turnId': 'turn',
+                 'itemId': host.guest.NATIVE_CALL, 'delta': state['native_result']['body']}}
+        receipt['wire'].insert(5, {'direction': 'in', 'message': delta}); refresh(receipt)
+        host.writer_wire(receipt, request, state)
+        for key, value in [('itemId', 'other'), ('delta', 'x' * 4097), ('delta', 'different output')]:
+            bad = copy.deepcopy(receipt); bad['wire'][5]['message']['params'][key] = value; refresh(bad)
+            with self.assertRaises(ValueError): host.writer_wire(bad, request, state)
+
+    def test_host_postimage_rejects_extra_files_symlink_mode_and_wrong_content(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve(); workspace = root / 'workspace'; workspace.mkdir(mode=0o700)
+            self.assertEqual(host.check_workspace(root, 'external-write-refusal'), {'workspace_empty': True})
+            target = workspace / 'native-write.txt'; target.write_bytes(b'native-workspace-write-ok\n'); target.chmod(0o600)
+            host.check_workspace(root, 'workspace-write')
+            with self.assertRaises(ValueError): host.check_workspace(root, 'external-write-refusal')
+            extra = workspace / 'extra'; extra.write_bytes(b'')
+            with self.assertRaises(ValueError): host.check_workspace(root, 'workspace-write')
+            extra.unlink(); target.chmod(0o644)
+            with self.assertRaises(ValueError): host.check_workspace(root, 'workspace-write')
+            target.chmod(0o600); target.write_bytes(b'wrong')
+            with self.assertRaises(ValueError): host.check_workspace(root, 'workspace-write')
+            target.unlink(); target.symlink_to(root / 'outside')
+            with self.assertRaises((ValueError, OSError)): host.check_workspace(root, 'workspace-write')
 
 
 if __name__ == '__main__':

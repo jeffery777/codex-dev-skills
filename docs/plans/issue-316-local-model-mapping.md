@@ -765,3 +765,24 @@ runner，也不提高 privilege 或重播 unknown attempt。
 完整 Merge Review；匿名原生觀測另保存於 Git 外。即使此前置流程通過，
 workspace-write／external-write-refusal、工具清冊、官方原生登入、來源權限、
 唯一整合器、程序撤權及端到端接手仍待後續實作／驗證，全部資格維持 false。
+
+### External OS 的兩個固定 native case
+
+在已完成的 anonymous bootstrap 之上，另設 opt-in native-workspace-case。
+每例建立新 run／CID；host 確認 raw settings 後才送一次固定 turn，以兩次
+有限 loopback HTTP response 觀察原生 exec_command 寫 workspace 或嘗試寫
+RO canary。Case-only catalog 從 tracked literal 建立，固定單一 direct alias、
+4 KiB 上限、EXCL／no-follow／0600，host 重建 bytes／hash 並核對 task 前後的
+file identity。Receipt 標示 synthetic 來源及 query spawn count 0，只有一次 task
+CLI spawn；default bootstrap 不增加 catalog。這不驗證官方 catalog、真實模型
+tool mode 或 context 資格；固定 context 等欄位僅供匿名 client 測試。
+先核對 guard，再核對明確 OS denial，不能以 generic nonzero
+替代拒寫。CLI／provider／client／原 CID 自然退出、完整 EOF、raw call lifecycle
+與 host no-follow postimage 分別驗證，不提高權限、不重播未知 attempt。
+
+HTTP、raw bundle、壓縮資料及 final frame 均固定上限；超限、部分請求、第三次
+請求、錯誤 thread／turn、approval／reroute、額外工具、symlink／額外檔案都
+不得通過。原始證據仍留 Git 外。此局部包需深入審查、適用完整 Security
+Diff Scan、相關測試與新 head 完整 Merge Review；固定兩例通過也不構成
+context capacity、背景程序撤權、來源／credential broker、production 或 N1–N4
+資格，亦不消除公司環境與正式 subscription 登入的獨立驗收依賴。
