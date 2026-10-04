@@ -1525,3 +1525,66 @@ changes 不代表實際 postimage，寫入失敗亦可能留下部分變更；ho
 單一 regular、單 link、本人所有、0600 的精確固定檔案。任一缺項保持 unknown。
 此包不取得 checkpoint intake／整合／程序撤權權限，不完成工具清冊、
 context、真實模型或 N1–N4／production 資格；匿名實測證據留在 Git 外。
+
+### External OS 的固定互動工具拒絕控制
+
+匿名 runner 明確停用 `tools.experimental_request_user_input.enabled`，另鎖
+`features.default_mode_request_user_input=false`。只有 `input-default-guard`
+測試將前者設 true；`input-disabled-dispatch` 保持 false。兩例使用同一組固定、
+合法的一題二選 arguments、同 call ID、Default collaboration mode、一次 turn
+及兩次有界 HTTP；不啟用 Plan mode、不傳真人答案或登入資料。
+
+先依 [固定 handler 與 guard 順序](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/handlers/request_user_input.rs)、
+[tool registration](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/spec_plan.rs)
+及 [error carrier](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/parallel.rs)
+建立精確預期值。第一例須有唯一正確 function declaration／完整 schema hash，
+output body 為 `request_user_input is unavailable in Default mode`；第二例須
+完全不宣告該工具，強制呼叫只可取得 `unsupported call: request_user_input`。
+兩者均須為唯一同 call ID 的 plaintext `function_call_output`，不接受 custom
+carrier、wrapper、root guard、空 call ID、取消、解析錯誤或一般 failure。
+Default guard 在 argument parsing 之前返回，故 host 另獨立核對完整固定
+nested shape／typed values；receipt 明列 `native_arguments_parsed=false`，
+不能由合法 payload 或拒絕文字推定 native parser 已執行。
+
+新案例明確傳 `turn/start.collaborationMode`，核對 settings readback 的
+Default／固定 synthetic model／low effort。初始 settings 的
+`developer_instructions=null`，turn 則指定非空固定字串
+`Fixed anonymous default-mode probe.`。依 [mode normalization](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server/src/request_processors/turn_processor.rs)，
+只有 null 會展開 built-in instructions，指定字串原樣保留；不得將首次量測的
+展開內容補進 allowlist。[設定採納](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/session/turn_input.rs)
+先送 applied event，才啟動 turn task；[snapshot projection](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server/src/request_processors/thread_summary.rs)
+保留指定 mode。整段 wire 必須恰好兩次 settings notification，順序為
+初始 settings → `turn/start` out-sent → 固定字串採納 settings → `turn/started`
+→ `turn/completed`。兩份預期值分開固定，全部綁定同一 thread／turn，其他
+settings 不可漂移；不限定 RPC response 相對通知的順序。
+Bootstrap receipt 的唯一性只描述 bootstrap prefix，另保存完整 adoption
+notification 與 sequence。缺少、重複、第三次、倒序、其他 thread、字串漂移、
+null、built-in 或其他設定改變均保持 unknown。這不改變 mode-before-parse guard。
+
+Input cases 專用 settings update 明確指定 `disabledPluginIds=[]`、
+`approvalsReviewer=user`、`effort=low`、`summary=none`、`serviceTier=default`、
+`personality=none`。其原生 apply 與 snapshot projection 支持預先固定完整
+十四欄 ThreadSettings；兩次觀測均須與對應 dictionary 完全相等，包含精確
+key 集合。`multiAgentMode` 依 pinned projection 固定 `explicitRequestOnly`，
+其他原 Never／external sandbox／fixture model-provider／null active profile
+亦逐欄核對。不得拿第一份 native settings 當任意 baseline；缺漏、額外鍵
+與任何欄位的有效替代值均有拒絕反例。這些額外設定只限兩個 input cases，
+不變更既有 exec／patch 的設定與驗收條件。
+
+`thread/start.experimentalRawEvents` 明確 false。依 [tool future 的收集](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/session/turn.rs)
+與 [app-server projection](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server/src/bespoke_event_handling.rs)，
+這兩條拒絕路徑只記錄 history／raw event，不產生一般 tool item lifecycle；
+raw events 關閉後亦不發出 raw notification。驗證必須要求零
+`functionCallOutput`、command、file-change、dynamic-tool items 與 raw notifications，
+不能等首次測量後再允許 optional tool item。正常有界 message lifecycle 保留，
+所有 server requests 均在共用 dispatch 前拒絕且零回覆，避免共用 approval
+denial 或 user-input callback 被當作本包成功。Reroute、其他工具與不完整 turn
+仍保持 unknown。
+
+兩例沿用原始 CID、source／image／tmpfs／mounts 與自然退出驗證，host 另保存
+固定 canary 的啟動前 ref，供獨立核對前後 identity／bytes；workspace 必須為空。
+這只驗證固定封閉 fixture 的 mode guard／registry exclusion，不驗證 elicitation
+成功、真實模型、來源 broker、background writer 撤權或 native checkpoint intake。
+工具 flag 改變了 argv 與 inventory；舊 revision 的匿名結果保留為歷史證據，
+宣稱新來源的既有案例通過時須以 fresh run／CID 重測並重綁 source closure。
+所有 qualification／N1–N4 flags 仍 false，原始觀測與 review 證據留在 Git 外。

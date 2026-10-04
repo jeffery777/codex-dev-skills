@@ -25,7 +25,12 @@ BUNDLE_BYTES = 3145728
 COMPRESSED_BYTES = 16384
 EXEC_CASES = ('workspace-write', 'external-write-refusal')
 PATCH_CASES = ('workspace-patch', 'patch-canary-write-failure')
-CASES = EXEC_CASES + PATCH_CASES
+INPUT_CASES = ('input-default-guard', 'input-disabled-dispatch')
+CASES = EXEC_CASES + PATCH_CASES + INPUT_CASES
+INPUT_SCHEMA_SHA = '23ee6f1a8cd81c9d2491cbd33a3cb09d755e6c85d368f3beb346753cfd4558a3'
+INPUT_ARGUMENTS = '{"questions":[{"id":"fixed_input_choice","header":"Fixture","question":"Choose the fixed fixture option.","options":[{"label":"A (Recommended)","description":"Fixed option A."},{"label":"B","description":"Fixed option B."}]}]}'
+INPUT_DENIALS = {'input-default-guard': 'request_user_input is unavailable in Default mode',
+                'input-disabled-dispatch': 'unsupported call: request_user_input'}
 PATCH_BYTES = b'native-workspace-patch-ok\n'
 PATCH_FORMAT_SHA = '543288394c9cdc41825d2fa7da00574c958b397d7a3fa6dfec77a368070e63ac'
 PATCH_UPDATE_DIFF = '@@ -1 +1 @@\n-fixed-external-canary\n+forbidden-native-patch\n'
@@ -45,9 +50,11 @@ def load(name, path):
     return module
 
 
-def argv(boundary, guest, *, port=1, native=False):
+def argv(boundary, guest, *, port=1, native=False, case=None):
     if type(native) is not bool:
         raise ValueError('explicit-native-boolean-required')
+    if case is not None and (case not in CASES or not native):
+        raise ValueError('fixed-external-case-required')
     if type(port) is not int or not 1 <= port <= 65535:
         raise ValueError('fixed-loopback-port-required')
     # Fixed localhost discard destination; this bootstrap never sends a turn.
@@ -56,9 +63,15 @@ def argv(boundary, guest, *, port=1, native=False):
     for flag, value in zip(original[4::2], original[5::2]):
         if value.startswith(('permissions.', 'default_permissions=')):
             continue
+        if value.startswith(('tools.experimental_request_user_input.enabled=',
+                             'features.default_mode_request_user_input=')):
+            continue
         if native and value.startswith('model='): continue
         result += [flag, value]
     result += ['-c', 'sandbox_mode="read-only"']
+    result += ['-c', 'tools.experimental_request_user_input.enabled=' +
+               ('true' if case == 'input-default-guard' else 'false'),
+               '-c', 'features.default_mode_request_user_input=false']
     if native:
         result += ['-c', 'model="' + DIRECT_MODEL + '"', '-c', 'model_catalog_json="' + CATALOG_PATH + '"']
     return result
@@ -97,6 +110,9 @@ def prepare_catalog(base, receipt):
 def native_call(case):
     if case not in CASES:
         raise ValueError('fixed-external-case-required')
+    if case in INPUT_CASES:
+        return {'type': 'function_call', 'namespace': 'functions', 'name': 'request_user_input',
+                'call_id': NATIVE_CALL, 'arguments': INPUT_ARGUMENTS}
     if case in PATCH_CASES:
         patch = ('*** Begin Patch\n*** Add File: /workspace/native-patch.txt\n+native-workspace-patch-ok\n*** End Patch'
                  if case == 'workspace-patch' else
@@ -117,6 +133,11 @@ def native_call(case):
 def native_output(output, case, old_guest):
     if type(output) is not str:
         raise ValueError('fixed-native-output-required')
+    if case in INPUT_CASES:
+        if output != INPUT_DENIALS[case]:
+            raise ValueError('fixed-input-denial-required')
+        return {'body': output, 'outcome': case + '-observed', 'denial_observed': True,
+                'native_arguments_parsed': False, 'user_elicitation_observed': False}
     if case in PATCH_CASES:
         if len(output.encode()) > 8192:
             raise ValueError('fixed-patch-output-bound')
@@ -162,6 +183,17 @@ def declaration(raw, boundary, case):
     if case not in CASES:
         raise ValueError('fixed-external-case-required')
     inventory = boundary.manifest.advertised_tools(raw)
+    input_definitions = [item for item in inventory['advertised_tools'] if item['name'] == 'request_user_input']
+    if case in INPUT_CASES:
+        expected_count = 0 if case == 'input-disabled-dispatch' else 1
+        if (len(input_definitions) != expected_count or input_definitions and
+                (input_definitions[0]['namespace'] not in (None, 'functions')
+                 or input_definitions[0]['type'] != 'function'
+                 or input_definitions[0]['schema_sha256'] != INPUT_SCHEMA_SHA)):
+            raise ValueError('external-input-declaration-drift')
+        return inventory
+    if input_definitions:
+        raise ValueError('external-interactive-tool-advertised')
     body = boundary.manifest.decode(raw); definitions = []
     expected = ('apply_patch', 'custom') if case in PATCH_CASES else ('exec_command', 'function')
     def visit(entries, prefix=()):
@@ -380,7 +412,7 @@ def run():
             receipt['_provider_state']['catalog_fixture'] = receipt.pop('catalog_fixture')
             serving = threading.Thread(target=server.serve_forever, kwargs={'poll_interval': .05}, daemon=True)
             serving.start()
-        command = argv(base.probe.boundary, guest, port=port, native=bool(case))
+        command = argv(base.probe.boundary, guest, port=port, native=bool(case), case=case)
         receipt['cli_argv'] = command
         child = subprocess.Popen(command, cwd='/workspace', env=ENV, stdin=None, stdout=None,
                                  stderr=subprocess.PIPE, close_fds=True, pass_fds=())

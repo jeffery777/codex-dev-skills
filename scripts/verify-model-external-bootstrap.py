@@ -29,6 +29,73 @@ WRAPPER = ['-i', 'PATH=' + guest.ENV['PATH'], 'HOME=' + guest.ENV['HOME'], 'LANG
 POLICY = {'type': 'externalSandbox', 'networkAccess': 'restricted'}
 
 
+class InputObservationSession(base.probe.AdmissionSession):
+    """These two negative controls never answer any server request."""
+    def _dispatch(self, message, expected_id, deadline):
+        if 'method' in message and 'id' in message:
+            self._fail('external-input-server-request')
+        return super()._dispatch(message, expected_id, deadline)
+
+
+INPUT_DEVELOPER_INSTRUCTIONS = 'Fixed anonymous default-mode probe.'
+
+
+def input_mode(*, adopted=False):
+    return {'mode': 'default', 'settings': {'model': guest.DIRECT_MODEL,
+            'reasoning_effort': 'low', 'developer_instructions':
+                INPUT_DEVELOPER_INSTRUCTIONS if adopted else None}}
+
+
+def input_settings(*, adopted=False):
+    # Complete pinned ThreadSettings, independent of observed native values.
+    return {'disabledPluginIds': [], 'cwd': '/workspace', 'approvalPolicy': 'never',
+        'approvalsReviewer': 'user', 'sandboxPolicy': dict(POLICY), 'activePermissionProfile': None,
+        'model': guest.DIRECT_MODEL, 'modelProvider': 'fixture', 'serviceTier': 'default',
+        'effort': 'low', 'summary': 'none', 'collaborationMode': input_mode(adopted=adopted),
+        'multiAgentMode': 'explicitRequestOnly', 'personality': 'none'}
+
+
+def input_settings_match(message, thread, *, adopted=False):
+    params = message.get('params')
+    if (message.get('method') != 'thread/settings/updated' or type(params) is not dict
+            or params.get('threadId') != thread
+            or params.get('threadSettings') != input_settings(adopted=adopted)):
+        raise ValueError('external-input-complete-settings-drift')
+
+
+def settings_update_params(thread, case=None):
+    params = {'threadId': thread, 'cwd': '/workspace', 'approvalPolicy': 'never', 'sandboxPolicy': dict(POLICY)}
+    if case in guest.INPUT_CASES:
+        params.update(disabledPluginIds=[], approvalsReviewer='user', effort='low',
+                      summary='none', serviceTier='default', personality='none')
+    return params
+
+
+def input_call_confirmed(call):
+    # Independently fixed host payload. The native mode guard precedes parsing;
+    # its denial cannot prove the native argument parser accepted this object.
+    expected = {'questions': [{'id': 'fixed_input_choice', 'header': 'Fixture',
+        'question': 'Choose the fixed fixture option.', 'options': [
+            {'label': 'A (Recommended)', 'description': 'Fixed option A.'},
+            {'label': 'B', 'description': 'Fixed option B.'}]}]}
+    if (type(call) is not dict or set(call) != {'type', 'namespace', 'name', 'call_id', 'arguments'}
+            or {key: call[key] for key in ('type', 'namespace', 'name', 'call_id')} !=
+                {'type': 'function_call', 'namespace': 'functions', 'name': 'request_user_input',
+                 'call_id': guest.NATIVE_CALL}
+            or type(call['arguments']) is not str or len(call['arguments'].encode()) > 1024
+            or base.probe.manifest.decode(call['arguments'].encode()) != expected):
+        raise ValueError('external-fixed-input-call-drift')
+
+
+def turn_params(thread, request):
+    params = {'threadId': thread,
+        'environments': [{'environmentId': 'local', 'cwd': '/workspace', 'runtimeWorkspaceRoots': ['/workspace']}],
+        'input': [{'type': 'text', 'text': fixed_prompt(request)}]}
+    if request['native_case'] in guest.INPUT_CASES:
+        params['collaborationMode'] = input_mode(adopted=True)
+    return params
+
+
 def capture(root, binary):
     sources, binary_ref = base.capture(root, binary)
     fixture = root / 'capture'
@@ -128,9 +195,12 @@ def bootstrap(session, receipt, case=None):
     model = guest.DIRECT_MODEL if case else 'gpt-6-sol'
     session.request('initialize', {'clientInfo': {'name': 'external_bootstrap_only', 'version': '1'},
                                   'capabilities': {'experimentalApi': True}})
-    started = session.request('thread/start', {'model': model, 'modelProvider': 'fixture',
+    start_params = {'model': model, 'modelProvider': 'fixture',
         'allowProviderModelFallback': False, 'cwd': '/workspace', 'ephemeral': True, 'sandbox': 'read-only',
-        'approvalPolicy': 'never', 'environments': []})
+        'approvalPolicy': 'never', 'environments': []}
+    if case in guest.INPUT_CASES:
+        start_params['experimentalRawEvents'] = False
+    started = session.request('thread/start', start_params)
     if ({k: started.get(k) for k in ('model', 'modelProvider', 'cwd', 'approvalPolicy')} !=
             {'model': model, 'modelProvider': 'fixture', 'cwd': '/workspace', 'approvalPolicy': 'never'}
             or started.get('sandbox', {}).get('type') != 'readOnly'
@@ -144,8 +214,7 @@ def bootstrap(session, receipt, case=None):
     session._drain_available(session._deadline())
     if any(row['message'] and row['message'].get('method') == 'thread/settings/updated' for row in session.wire):
         raise ValueError('external-stale-settings-notification')
-    result = session.request('thread/settings/update', {'threadId': thread,
-        'cwd': '/workspace', 'approvalPolicy': 'never', 'sandboxPolicy': POLICY})
+    result = session.request('thread/settings/update', settings_update_params(thread, case))
     if result != {}:
         raise ValueError('external-settings-ack-drift')
     for _ in range(256):
@@ -170,8 +239,13 @@ def bootstrap(session, receipt, case=None):
                     ('initialize', 'initialized', 'thread/start', 'thread/settings/update')):
             raise ValueError('external-bootstrap-not-only-settings')
     settings_match(session.wire[notes[0]]['message'], thread, model)
+    if case in guest.INPUT_CASES:
+        input_settings_match(receipt['settings_notification'], thread)
     receipt['settings_sequence'] = {'out_sent_index': sent[0], 'notification_index': notes[0],
                                     'unique_in_observed_wire': True, 'turn_started': False}
+    if case in guest.INPUT_CASES:
+        del receipt['settings_sequence']['unique_in_observed_wire']
+        receipt['settings_sequence']['unique_in_bootstrap_prefix'] = True
 
 
 def decode_bundle(value):
@@ -227,6 +301,8 @@ def writer_observation(value, request):
         raise ValueError('external-two-request-observation-required')
     total = 0; declaration = None; output = None
     case = request['native_case']; call = guest.native_call(case)
+    if case in guest.INPUT_CASES:
+        input_call_confirmed(call)
     for stage, record in enumerate(state['records'], 1):
         if (type(record) is not dict or set(record) != {'stage', 'request_base64', 'request_sha256', 'request_bytes',
                 'response_base64', 'response_sha256', 'response_bytes', 'response_sent'} or type(record['stage']) is not int
@@ -249,6 +325,10 @@ def writer_observation(value, request):
                 raise ValueError('external-provider-model-drift')
             current = guest.declaration(raw, base.probe.boundary, case)
             if stage == 1:
+                if case in guest.INPUT_CASES and any(type(item) is dict and item.get('type') in
+                        ('function_call', 'function_call_output', 'custom_tool_call', 'custom_tool_call_output')
+                        for item in body.get('input', [])):
+                    raise ValueError('external-input-initial-tool-history')
                 declaration = current
                 texts = [part.get('text') for item in body.get('input', []) if type(item) is dict
                          for part in item.get('content', []) if type(part) is dict and part.get('type') == 'input_text']
@@ -259,7 +339,16 @@ def writer_observation(value, request):
                          and item.get('type') == call['type']]
                 if len(calls) != 1 or {k: calls[0].get(k) for k in call} != call:
                     raise ValueError('external-provider-native-call-drift')
+                if case in guest.INPUT_CASES:
+                    input_call_confirmed({k: calls[0].get(k) for k in call})
                 output = base.probe.boundary.output_text(base.probe.boundary.find_output(body, call))
+                if case in guest.INPUT_CASES:
+                    tool_items = [item for item in body.get('input', []) if type(item) is dict
+                                  and item.get('type') in ('function_call', 'function_call_output',
+                                                          'custom_tool_call', 'custom_tool_call_output')]
+                    if (len(tool_items) != 2 or any(item.get('call_id') != guest.NATIVE_CALL for item in tool_items)
+                            or type(base.probe.boundary.find_output(body, call)) is not str):
+                        raise ValueError('external-input-carrier-or-other-call-drift')
                 if current['advertised_tools'] != declaration['advertised_tools']:
                     raise ValueError('external-provider-declaration-drift')
     result = guest.native_output(output, case, base.guest)
@@ -291,6 +380,8 @@ def writer_wire(receipt, request, state):
     """Public RPC and provider observations must agree; neither grants authority."""
     sent = []; starts = []; ends = []; completed = []; turn_starts = []; turn_ends = []; deltas = []
     thread, turn = receipt['thread_id'], receipt['turn_id']
+    if request['native_case'] in guest.INPUT_CASES:
+        return input_wire(receipt, request, state)
     patch_case = request['native_case'] in guest.PATCH_CASES
     if patch_case:
         return patch_wire(receipt, request, state)
@@ -359,6 +450,63 @@ def writer_wire(receipt, request, state):
         'input': [{'type': 'text', 'text': fixed_prompt(request)}]}
     if receipt['wire'][sent[0]]['message'].get('params') != expected:
         raise ValueError('external-writer-turn-request-drift')
+
+
+def input_wire(receipt, request, state):
+    """Exact guard text is in HTTP; these branches emit no native tool item."""
+    sent = []; starts = []; ends = []; settings = []
+    thread, turn = receipt['thread_id'], receipt['turn_id']
+    for index, row in enumerate(receipt['wire']):
+        message = row['message'] or {}
+        if base.probe.manifest.decode(base64.b64decode(row['raw_base64'], validate=True)) != row['message']:
+            raise ValueError('external-input-raw-wire-drift')
+        method = message.get('method', '')
+        if row['direction'] == 'out-sent':
+            if method == 'turn/start': sent.append(index)
+            elif method not in ('initialize', 'initialized', 'thread/start', 'thread/settings/update'):
+                raise ValueError('external-input-unexpected-outbound')
+        if row['direction'] != 'in': continue
+        if ('id' in message and 'method' in message or method in ('error', 'model/rerouted')
+                or 'requestApproval' in method or method == 'item/tool/call'
+                or method.startswith('rawResponse')):
+            raise ValueError('external-input-unexpected-request')
+        params = message.get('params', {})
+        if method == 'thread/settings/updated':
+            input_settings_match(message, thread, adopted=bool(settings))
+            settings.append(index)
+        if method.startswith(('turn/', 'item/')) and params.get('threadId') != thread:
+            raise ValueError('external-input-thread-drift')
+        if method in ('turn/started', 'turn/completed'):
+            if params.get('turn', {}).get('id') != turn:
+                raise ValueError('external-input-turn-drift')
+            (starts if method == 'turn/started' else ends).append(index)
+            if method == 'turn/completed' and (params['turn'].get('status') != 'completed'
+                                               or params['turn'].get('error') is not None):
+                raise ValueError('external-input-turn-incomplete')
+        elif method.startswith('turn/'):
+            raise ValueError('external-input-unexpected-turn-event')
+        elif method.startswith('item/'):
+            if params.get('turnId') != turn:
+                raise ValueError('external-input-item-turn-drift')
+            if method in ('item/started', 'item/completed'):
+                if params.get('item', {}).get('type') not in ('userMessage', 'agentMessage', 'reasoning'):
+                    raise ValueError('external-input-native-tool-item')
+            elif not method.startswith(('item/agentMessage/', 'item/reasoning/')):
+                raise ValueError('external-input-other-tool-event')
+    if (not len(sent) == len(starts) == len(ends) == 1 or len(settings) != 2
+            or receipt['settings_sequence'].get('unique_in_bootstrap_prefix') is not True
+            or 'unique_in_observed_wire' in receipt['settings_sequence']
+            or settings[0] != receipt['settings_sequence']['notification_index']
+            or not settings[0] < sent[0] < settings[1] < starts[0] < ends[0]
+            or receipt['wire'][sent[0]]['message'].get('params') != turn_params(thread, request)
+            or state['native_result'] != guest.native_output(state['native_output'], request['native_case'], base.guest)):
+        raise ValueError('external-input-control-unconfirmed')
+    receipt['input_adoption_notification'] = receipt['wire'][settings[1]]['message']
+    receipt['input_adoption_sequence'] = {'bootstrap_notification_index': settings[0],
+        'turn_start_out_sent_index': sent[0], 'adopted_notification_index': settings[1],
+        'turn_started_index': starts[0], 'turn_completed_index': ends[0],
+        'exactly_two_settings_notifications': True,
+        'instructions_source': 'fixed-anonymous-literal'}
 
 
 def patch_changes(case, *, progress=False):
@@ -443,9 +591,7 @@ def patch_wire(receipt, request, state):
 
 
 def writer_turn(session, receipt, request):
-    result = session.request('turn/start', {'threadId': receipt['thread_id'],
-        'environments': [{'environmentId': 'local', 'cwd': '/workspace', 'runtimeWorkspaceRoots': ['/workspace']}],
-        'input': [{'type': 'text', 'text': fixed_prompt(request)}]})
+    result = session.request('turn/start', turn_params(receipt['thread_id'], request))
     turn = result.get('turn', {}).get('id')
     if type(turn) is not str or not 0 < len(turn) <= 256:
         raise ValueError('external-writer-turn-identity')
@@ -494,7 +640,7 @@ def guest_frame(snapshot, request):
             or value.get('canary_preserved') is not True):
         raise ValueError('external-guest-observation-unconfirmed')
     case = request.get('native_case'); port = value.get('provider_port') if case else 1
-    if type(port) is not int or not 1 <= port <= 65535 or value.get('cli_argv') != guest.argv(base.probe.boundary, base.guest, port=port, native=bool(case)):
+    if type(port) is not int or not 1 <= port <= 65535 or value.get('cli_argv') != guest.argv(base.probe.boundary, base.guest, port=port, native=bool(case), case=case):
         raise ValueError('external-guest-command-unconfirmed')
     if case and (value.get('native_case') != case or value.get('catalog_preserved') is not True):
         raise ValueError('external-guest-case-drift')
@@ -535,7 +681,7 @@ def run(args):
         ref = helpers._reload_save(root / 'inputs', 'request.json', request)
         canary = root / 'inputs/canary'; canary.write_bytes(base.guest.CANARY_BYTES); canary.chmod(0o600)
         _, canary_ref = helpers._reload_read(root / 'inputs', 'canary', 128)
-        receipt.update(run_id=run_id, source_capture=sources, binary=binary)
+        receipt.update(run_id=run_id, source_capture=sources, binary=binary, canary_initial_ref=canary_ref)
         socket = base.socket_snapshot(args.endpoint); create = create_argv(root, name, os.getuid(), os.getgid())
         engine = base.Engine(args.endpoint, root, create)
         daemon = engine.identity(); image = engine.image(base.IMAGE)
@@ -566,7 +712,8 @@ def run(args):
         command = [engine.executable, '--host', args.endpoint, 'container', 'start', '--attach', '--interactive', cid]
         helpers._reload_save(root, 'start-intent.json', {'cid': cid, 'created': created, 'argv': command})
         started = True
-        session = base.probe.AdmissionSession(command, cwd=str(root), env=dict(engine.environment),
+        session_class = InputObservationSession if case in guest.INPUT_CASES else base.probe.AdmissionSession
+        session = session_class(command, cwd=str(root), env=dict(engine.environment),
             limits=base.probe.transport.Limits(timeout=10, close_timeout=5), admission_receipt={},
             allow_thread_settings_update=True, capture_stderr=True)
         try:

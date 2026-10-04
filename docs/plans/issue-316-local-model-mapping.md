@@ -804,3 +804,34 @@ Patch writer 的頂層錯誤丟失 errno，故負例驗收名稱為「寫入階�
 深入 review、適用完整 Security Diff Scan、相關驗證及新 head 完整 Merge
 Review 通過後可交付工程包；全工具、checkpoint intake、唯一整合器、撤權、
 restart／handoff E2E、正式登入、真實 context／品質與所有資格仍待後續驗收。
+
+### External OS 的固定互動工具控制
+
+下一個受控包增加 `input-default-guard` 與 `input-disabled-dispatch`：前者
+驗證工具已註冊、Default mode 明確拒絕合法固定呼叫，後者驗證工具未宣告且
+registry 拒絕同一呼叫。匿名 default 明確 disable，另一個可允許 Default mode
+互動的 feature 亦明確 false；新案例固定 Default turn／settings、raw events false、
+零 server-request 回覆、零 native tool items 與兩次有限 HTTP。Guard 在 argument
+parse 前返回，host payload 校驗與原生解析分開，不接受 generic failure。
+
+設定採納須依固定 upstream 契約：bootstrap instructions 為 null，turn 指定
+固定匿名非空字串，核對恰好兩份獨立 settings 值與「bootstrap → turn/start
+out-sent → adopted settings → turn/started → turn/completed」順序，另保存
+採納 notification／sequence；bootstrap 唯一性只適用該 prefix。RPC response
+可在通知之間交錯。缺少、額外、倒序或任何其他 settings 漂移保持 unknown。
+設計與負向測試先核對 normalization／apply／task／projection，才以新來源
+執行；早先因漏掉採納通知而停止的 attempt 維持 unknown，不能追認通過。
+新案例另明確設定 approvals reviewer、空 disabled plugins、effort／summary／
+service tier／personality，依 pinned apply／projection 固定十四欄完整 dictionary
+與精確鍵集合；兩份觀測各有逐欄缺漏、有效值漂移及額外鍵反例。此控制
+不接受從第一筆 native settings 建立任意 baseline，亦不改既有 exec／patch。
+
+先閉合固定 upstream handler／router／future／history／app-server projection，
+再凍結五檔來源並做深入審查、反例測試、實測與適用完整 Security Diff Scan。
+工具設定改變 argv／advertisement；如報告此新來源的完整 runner 已實測，
+須建立 bootstrap、四個既有 native cases 與兩個新 cases 各自的新 run／CID，
+不得重新啟動、重附著或重分類舊 unknown attempt。Host 將固定 canary 的
+initial ref 保存於 Git 外收據，供前後 identity／bytes 的獨立 readback。
+新 head 仍須完整 Merge Review；測量結果不完成 N1–N4 或 production
+DoD，也不消除專用訂閱登入、可信撤權／checkpoint intake、唯一整合器與
+自架來源實際能力／context／E2E 的獨立缺口，發行評估仍與 Issue #316 同案。

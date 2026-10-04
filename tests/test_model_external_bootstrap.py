@@ -584,5 +584,298 @@ class ExternalPatchTests(unittest.TestCase):
             target.unlink(); target.symlink_to(root / 'missing')
             with self.assertRaises((ValueError, OSError)): host.check_workspace(root, 'workspace-patch')
 
+# Independent fixed public schema and payload; neither is built by the guest.
+INPUT_PAYLOAD = {'questions': [{'id': 'fixed_input_choice', 'header': 'Fixture',
+    'question': 'Choose the fixed fixture option.', 'options': [
+        {'label': 'A (Recommended)', 'description': 'Fixed option A.'},
+        {'label': 'B', 'description': 'Fixed option B.'}]}]}
+INPUT_SCHEMA = {'type': 'object', 'properties': {'questions': {'type': 'array',
+    'description': 'Questions to show the user. Prefer 1 and do not exceed 3',
+    'items': {'type': 'object', 'properties': {
+        'id': {'type': 'string', 'description': 'Stable identifier for mapping answers (snake_case).'},
+        'header': {'type': 'string', 'description': 'Short header label shown in the UI (12 or fewer chars).'},
+        'question': {'type': 'string', 'description': 'Single-sentence prompt shown to the user.'},
+        'options': {'type': 'array', 'description': 'Provide 2-3 mutually exclusive choices. Put the recommended option first and suffix its label with "(Recommended)". Do not include an "Other" option in this list; the client will add a free-form "Other" option automatically.',
+            'items': {'type': 'object', 'properties': {
+                'label': {'type': 'string', 'description': 'User-facing label (1-5 words).'},
+                'description': {'type': 'string', 'description': 'One short sentence explaining impact/tradeoff if selected.'}},
+                'required': ['label', 'description'], 'additionalProperties': False}}},
+        'required': ['id', 'header', 'question', 'options'], 'additionalProperties': False}}},
+    'required': ['questions'], 'additionalProperties': False}
+INPUT_ERRORS = {'input-default-guard': 'request_user_input is unavailable in Default mode',
+                'input-disabled-dispatch': 'unsupported call: request_user_input'}
+
+
+class ExternalInputTests(unittest.TestCase):
+    def settings(self, *, adopted=False):
+        return settings(disabledPluginIds=[], approvalsReviewer='user', serviceTier='default',
+            effort='low', summary='none', multiAgentMode='explicitRequestOnly', personality='none',
+            model='fixture-direct', collaborationMode={'mode': 'default', 'settings': {
+                'model': 'fixture-direct', 'reasoning_effort': 'low', 'developer_instructions':
+                    'Fixed anonymous default-mode probe.' if adopted else None}})
+
+    def tools(self, case):
+        return [] if case == 'input-disabled-dispatch' else [
+            {'type': 'function', 'name': 'request_user_input', 'parameters': copy.deepcopy(INPUT_SCHEMA)}]
+
+    def observation(self, case):
+        request = {'run_id': 'a' * 32, 'native_case': case}
+        call = {'type': 'function_call', 'namespace': 'functions', 'name': 'request_user_input',
+                'call_id': 'external-native-writer-1', 'arguments': json.dumps(INPUT_PAYLOAD, separators=(',', ':'))}
+        bodies = [{'model': 'fixture-direct', 'tools': self.tools(case),
+                   'input': [{'type': 'message', 'content': [{'type': 'input_text', 'text': host.fixed_prompt(request)}]}]},
+                  {'model': 'fixture-direct', 'tools': self.tools(case), 'input': [
+                      call, {'type': 'function_call_output', 'call_id': 'external-native-writer-1',
+                             'output': INPUT_ERRORS[case]}]}]
+        records = []
+        for stage, body in enumerate(bodies, 1):
+            record = {'stage': stage, 'response_sent': True}
+            for name, raw in [('request', json.dumps(body).encode()), ('response', host.guest.response_bytes(stage, case))]:
+                record.update({name + '_base64': base64.b64encode(raw).decode(), name + '_bytes': len(raw),
+                               name + '_sha256': hashlib.sha256(raw).hexdigest()})
+            records.append(record)
+        state = {'slots': 2, 'total_bytes': sum(r['request_bytes'] for r in records), 'failed': False,
+            'records': records, 'native_output': INPUT_ERRORS[case], 'native_result': {
+                'body': INPUT_ERRORS[case], 'outcome': case + '-observed', 'denial_observed': True,
+                'native_arguments_parsed': False, 'user_elicitation_observed': False},
+            'declaration': host.guest.declaration(json.dumps(bodies[0]).encode(), host.base.probe.boundary, case),
+            'stopped': True, 'catalog_fixture': ExternalWriterTests().catalog()}
+        return request, state
+
+    def rewrite(self, state, body):
+        record = state['records'][1]; raw = json.dumps(body).encode()
+        state['total_bytes'] += len(raw) - record['request_bytes']
+        record.update(request_base64=base64.b64encode(raw).decode(), request_bytes=len(raw),
+                      request_sha256=hashlib.sha256(raw).hexdigest())
+
+    def wire(self, case):
+        request, state = self.observation(case)
+        mode = {'mode': 'default', 'settings': {'model': 'fixture-direct',
+                'reasoning_effort': 'low', 'developer_instructions': None}}
+        adopted = copy.deepcopy(mode)
+        adopted['settings']['developer_instructions'] = 'Fixed anonymous default-mode probe.'
+        messages = [('out-sent', {'method': 'thread/settings/update'}),
+            ('in', self.settings()),
+            ('out-sent', {'method': 'turn/start', 'params': {'threadId': 'thread',
+                'environments': [{'environmentId': 'local', 'cwd': '/workspace', 'runtimeWorkspaceRoots': ['/workspace']}],
+                'input': [{'type': 'text', 'text': host.fixed_prompt(request)}], 'collaborationMode': adopted}}),
+            ('in', self.settings(adopted=True)),
+            ('in', {'method': 'turn/started', 'params': {'threadId': 'thread', 'turn': {'id': 'turn'}}}),
+            ('in', {'method': 'turn/completed', 'params': {'threadId': 'thread', 'turn': {'id': 'turn', 'status': 'completed'}}})]
+        receipt = {'thread_id': 'thread', 'turn_id': 'turn', 'settings_sequence': {
+                       'out_sent_index': 0, 'notification_index': 1,
+                       'unique_in_bootstrap_prefix': True, 'turn_started': False},
+                   'wire': [{'direction': d, 'message': copy.deepcopy(m)} for d, m in messages]}
+        ExternalPatchTests().refresh(receipt)
+        return receipt, request, state
+
+    def test_fixed_payload_is_host_checked_without_native_parsing_claim(self):
+        for case in INPUT_ERRORS:
+            call = host.guest.native_call(case)
+            self.assertEqual(json.loads(call['arguments']), INPUT_PAYLOAD)
+            host.input_call_confirmed(call)
+            for variant in ('namespace', 'type', 'name', 'extra', 'question-extra', 'missing', 'non-string', 'duplicate'):
+                bad = copy.deepcopy(call)
+                if variant in ('namespace', 'type', 'name'): bad[variant] = 'other'
+                elif variant == 'extra': bad['extra'] = True
+                elif variant == 'duplicate': bad['arguments'] = '{"questions":[],"questions":[]}'
+                else:
+                    args = json.loads(bad['arguments'])
+                    if variant == 'question-extra': args['questions'][0]['extra'] = True
+                    elif variant == 'missing': del args['questions'][0]['options']
+                    else: args['questions'][0]['header'] = False
+                    bad['arguments'] = json.dumps(args)
+                with self.subTest(case=case, variant=variant), self.assertRaises(ValueError): host.input_call_confirmed(bad)
+
+    def test_declaration_schema_and_exclusion_are_separate(self):
+        self.assertEqual(host.base.probe.manifest.sha(INPUT_SCHEMA), '23ee6f1a8cd81c9d2491cbd33a3cb09d755e6c85d368f3beb346753cfd4558a3')
+        for case in INPUT_ERRORS:
+            host.guest.declaration(json.dumps({'tools': self.tools(case)}).encode(), host.base.probe.boundary, case)
+            for variant in ('missing-or-enabled', 'schema', 'namespace', 'custom', 'duplicate'):
+                bad = {'tools': self.tools('input-default-guard')}
+                if variant == 'missing-or-enabled': bad['tools'] = [] if case == 'input-default-guard' else bad['tools']
+                elif variant == 'schema': bad['tools'][0]['parameters']['additionalProperties'] = True
+                elif variant == 'namespace': bad['tools'] = [{'type': 'namespace', 'name': 'other', 'tools': bad['tools']}]
+                elif variant == 'custom': bad['tools'][0] = {'type': 'custom', 'name': 'request_user_input', 'format': {'type': 'text'}}
+                else: bad['tools'].append(copy.deepcopy(bad['tools'][0]))
+                with self.subTest(case=case, variant=variant), self.assertRaises(ValueError):
+                    host.guest.declaration(json.dumps(bad).encode(), host.base.probe.boundary, case)
+
+    def test_explicit_case_flags_never_enable_default_mode_or_plan(self):
+        for case in (None, *host.guest.CASES):
+            args = host.guest.argv(host.base.probe.boundary, host.base.guest, native=bool(case), case=case)
+            flags = args[5::2]
+            self.assertEqual([x for x in flags if x.startswith('tools.experimental_request_user_input.enabled=')],
+                ['tools.experimental_request_user_input.enabled=' + ('true' if case == 'input-default-guard' else 'false')])
+            self.assertEqual([x for x in flags if x.startswith('features.default_mode_request_user_input=')],
+                ['features.default_mode_request_user_input=false'])
+        for case in INPUT_ERRORS:
+            with self.assertRaises(ValueError): host.guest.argv(host.base.probe.boundary, host.base.guest, case=case)
+        self.assertEqual(host.input_mode(), {'mode': 'default', 'settings': {'model': 'fixture-direct',
+                         'reasoning_effort': 'low', 'developer_instructions': None}})
+        self.assertEqual(host.input_mode(adopted=True), {'mode': 'default', 'settings': {'model': 'fixture-direct',
+                         'reasoning_effort': 'low', 'developer_instructions': 'Fixed anonymous default-mode probe.'}})
+
+    def test_exact_denials_reject_cancel_generic_cross_case_and_wrappers(self):
+        for case, body in INPUT_ERRORS.items():
+            result = host.guest.native_output(body, case, host.base.guest)
+            self.assertFalse(result['native_arguments_parsed']); self.assertFalse(result['user_elicitation_observed'])
+            for bad in (body + '\n', 'Error: ' + body, 'unsupported call: functions.request_user_input',
+                        'request_user_input is unavailable in Plan mode', 'request_user_input can only be used by the root thread',
+                        'request_user_input requires non-empty options for every question', 'Cancelled', 'generic failure',
+                        [{'type': 'input_text', 'text': body}], INPUT_ERRORS[next(c for c in INPUT_ERRORS if c != case)]):
+                with self.subTest(case=case, bad=bad), self.assertRaises(ValueError):
+                    host.guest.native_output(bad, case, host.base.guest)
+
+    def test_raw_http_needs_one_exact_function_call_and_plain_output(self):
+        for case in INPUT_ERRORS:
+            request, state = self.observation(case); host.writer_observation(host.guest.bundle(state), request)
+            for variant in ('arguments', 'namespace', 'call-id', 'custom', 'wrapper', 'duplicate-output', 'other-call', 'false-parsing-claim'):
+                bad = copy.deepcopy(state)
+                if variant == 'false-parsing-claim': bad['native_result']['native_arguments_parsed'] = True
+                else:
+                    body = json.loads(base64.b64decode(bad['records'][1]['request_base64']))
+                    if variant == 'arguments': body['input'][0]['arguments'] = '{}'
+                    elif variant == 'namespace': body['input'][0]['namespace'] = 'other'
+                    elif variant == 'call-id': body['input'][1]['call_id'] = 'other'
+                    elif variant == 'custom': body['input'][1]['type'] = 'custom_tool_call_output'
+                    elif variant == 'wrapper': body['input'][1]['output'] = [{'type': 'input_text', 'text': INPUT_ERRORS[case]}]
+                    elif variant == 'duplicate-output': body['input'].append(copy.deepcopy(body['input'][1]))
+                    else: body['input'].append({'type': 'function_call', 'name': 'exec_command', 'call_id': 'other', 'arguments': '{}'})
+                    self.rewrite(bad, body)
+                with self.subTest(case=case, variant=variant), self.assertRaises(ValueError):
+                    host.writer_observation(host.guest.bundle(bad), request)
+
+    def test_wire_requires_default_and_zero_native_tool_or_server_reply(self):
+        for case in INPUT_ERRORS:
+            receipt, request, state = self.wire(case); host.writer_wire(receipt, request, state)
+            for variant in ('mode', 'thread', 'turn', 'failed', 'duplicate', 'order', 'response'):
+                bad = copy.deepcopy(receipt)
+                if variant == 'mode': bad['wire'][2]['message']['params']['collaborationMode']['mode'] = 'plan'
+                elif variant == 'thread': bad['wire'][4]['message']['params']['threadId'] = 'other'
+                elif variant == 'turn': bad['wire'][5]['message']['params']['turn']['id'] = 'other'
+                elif variant == 'failed': bad['wire'][5]['message']['params']['turn']['status'] = 'failed'
+                elif variant == 'duplicate': bad['wire'].append(copy.deepcopy(bad['wire'][5]))
+                elif variant == 'order': bad['wire'][4:6] = reversed(bad['wire'][4:6])
+                else: bad['wire'].insert(4, {'direction': 'out-sent', 'message': {'id': 42, 'result': {'answers': {}}}})
+                ExternalPatchTests().refresh(bad)
+                with self.subTest(case=case, variant=variant), self.assertRaises(ValueError): host.writer_wire(bad, request, state)
+            for method, item in [('item/started', {'type': 'functionCallOutput'}), ('item/completed', {'type': 'commandExecution'}),
+                    ('item/started', {'type': 'fileChange'}), ('item/started', {'type': 'dynamicToolCall'}),
+                    ('item/tool/requestUserInput', {}), ('turn/diff/updated', {}), ('rawResponseItem/completed', {})]:
+                bad = copy.deepcopy(receipt); bad['wire'].insert(4, {'direction': 'in', 'message': {
+                    'method': method, 'params': {'threadId': 'thread', 'turnId': 'turn', 'item': item}}})
+                ExternalPatchTests().refresh(bad)
+                with self.subTest(case=case, method=method), self.assertRaises(ValueError): host.writer_wire(bad, request, state)
+
+    def test_settings_adoption_requires_two_distinct_fixed_observations(self):
+        for case in INPUT_ERRORS:
+            receipt, request, state = self.wire(case)
+            host.writer_wire(receipt, request, state)
+            self.assertEqual(receipt['input_adoption_notification'], receipt['wire'][3]['message'])
+            self.assertEqual(receipt['input_adoption_sequence'], {
+                'bootstrap_notification_index': 1, 'turn_start_out_sent_index': 2,
+                'adopted_notification_index': 3, 'turn_started_index': 4, 'turn_completed_index': 5,
+                'exactly_two_settings_notifications': True, 'instructions_source': 'fixed-anonymous-literal'})
+            for variant in ('missing-bootstrap', 'missing-adopted', 'duplicate-bootstrap', 'duplicate-adopted',
+                    'adopted-before-send', 'adopted-after-start', 'bootstrap-after-send', 'third',
+                    'literal-change', 'null', 'built-in', 'bootstrap-literal', 'thread', 'effort',
+                    'model', 'sandbox', 'approval', 'provider', 'global-unique-claim', 'missing-prefix-proof'):
+                bad = copy.deepcopy(receipt)
+                if variant.startswith('missing-') and variant != 'missing-prefix-proof':
+                    del bad['wire'][1 if variant == 'missing-bootstrap' else 3]
+                elif variant.startswith('duplicate-'):
+                    bad['wire'].insert(3, copy.deepcopy(bad['wire'][1 if variant == 'duplicate-bootstrap' else 3]))
+                elif variant == 'third': bad['wire'].append(copy.deepcopy(bad['wire'][3]))
+                elif variant in ('adopted-before-send', 'adopted-after-start', 'bootstrap-after-send'):
+                    a, b = {'adopted-before-send': (2, 3), 'adopted-after-start': (3, 4),
+                            'bootstrap-after-send': (1, 2)}[variant]
+                    bad['wire'][a], bad['wire'][b] = bad['wire'][b], bad['wire'][a]
+                elif variant == 'global-unique-claim': bad['settings_sequence']['unique_in_observed_wire'] = True
+                elif variant == 'missing-prefix-proof': del bad['settings_sequence']['unique_in_bootstrap_prefix']
+                else:
+                    params = bad['wire'][3]['message']['params']; value = params['threadSettings']
+                    if variant == 'thread': params['threadId'] = 'other'
+                    elif variant in ('effort', 'model'): value['collaborationMode']['settings'][
+                        'reasoning_effort' if variant == 'effort' else 'model'] = 'other'
+                    elif variant in ('sandbox', 'approval', 'provider'):
+                        value[{'sandbox': 'sandboxPolicy', 'approval': 'approvalPolicy',
+                               'provider': 'modelProvider'}[variant]] = 'other'
+                    elif variant == 'bootstrap-literal':
+                        bad['wire'][1]['message']['params']['threadSettings']['collaborationMode']['settings'][
+                            'developer_instructions'] = 'Fixed anonymous default-mode probe.'
+                    else: value['collaborationMode']['settings']['developer_instructions'] = {
+                        'literal-change': 'Fixed anonymous default-mode probe!', 'null': None,
+                        'built-in': 'Unaccepted built-in instructions.'}[variant]
+                ExternalPatchTests().refresh(bad)
+                with self.subTest(case=case, variant=variant), self.assertRaises(ValueError):
+                    host.writer_wire(bad, request, state)
+
+    def test_turn_rpc_response_can_interleave_with_adoption_notifications(self):
+        for case in INPUT_ERRORS:
+            for index in (3, 4, 5, 6):
+                receipt, request, state = self.wire(case)
+                receipt['wire'].insert(index, {'direction': 'in', 'message': {
+                    'id': 4, 'result': {'turn': {'id': 'turn'}}}})
+                ExternalPatchTests().refresh(receipt)
+                with self.subTest(case=case, index=index): host.writer_wire(receipt, request, state)
+
+    def test_complete_settings_reject_each_missing_changed_and_extra_field(self):
+        for case in INPUT_ERRORS:
+            receipt, request, state = self.wire(case)
+            for index in (1, 3):
+                golden = receipt['wire'][index]['message']['params']['threadSettings']
+                self.assertEqual(len(golden), 14)
+                for key in golden:
+                    for variant in ('missing', 'changed'):
+                        bad = copy.deepcopy(receipt); value = bad['wire'][index]['message']['params']['threadSettings']
+                        if variant == 'missing': del value[key]
+                        else:
+                            value[key] = {'disabledPluginIds': ['unexpected'], 'cwd': '/elsewhere',
+                                'approvalPolicy': 'on-request', 'approvalsReviewer': 'auto_review',
+                                'sandboxPolicy': {'type': 'readOnly', 'networkAccess': False},
+                                'activePermissionProfile': {'id': 'unexpected', 'extends': None},
+                                'model': 'other', 'modelProvider': 'other', 'serviceTier': 'priority',
+                                'effort': 'high', 'summary': 'detailed',
+                                'collaborationMode': {'mode': 'plan', 'settings': copy.deepcopy(
+                                    golden['collaborationMode']['settings'])},
+                                'multiAgentMode': 'proactive', 'personality': 'friendly'}[key]
+                        ExternalPatchTests().refresh(bad)
+                        with self.subTest(case=case, index=index, key=key, variant=variant), self.assertRaises(ValueError):
+                            host.writer_wire(bad, request, state)
+                bad = copy.deepcopy(receipt)
+                bad['wire'][index]['message']['params']['threadSettings']['unexpected'] = None
+                ExternalPatchTests().refresh(bad)
+                with self.subTest(case=case, index=index), self.assertRaises(ValueError): host.writer_wire(bad, request, state)
+
+    def test_input_bootstrap_pins_settings_and_prefix_proof(self):
+        for case in INPUT_ERRORS:
+            for before in (False, True):
+                peer = Peer(before_ack=before); peer.note = self.settings()
+                original_request = peer.request
+                def request(method, params):
+                    value = original_request(method, params)
+                    if method == 'thread/start': value['model'] = 'fixture-direct'
+                    return value
+                peer.request = request; receipt = {}; host.bootstrap(peer, receipt, case)
+                self.assertEqual(peer.calls[2][1], {'threadId': 'thread', 'cwd': '/workspace',
+                    'approvalPolicy': 'never', 'sandboxPolicy': {'type': 'externalSandbox', 'networkAccess': 'restricted'},
+                    'disabledPluginIds': [], 'approvalsReviewer': 'user', 'effort': 'low', 'summary': 'none',
+                    'serviceTier': 'default', 'personality': 'none'})
+                self.assertFalse(peer.calls[1][1]['experimentalRawEvents'])
+                self.assertEqual(receipt['settings_notification'], self.settings())
+                self.assertTrue(receipt['settings_sequence']['unique_in_bootstrap_prefix'])
+                self.assertNotIn('unique_in_observed_wire', receipt['settings_sequence'])
+
+    def test_input_session_refuses_server_requests_before_dispatch(self):
+        session = object.__new__(host.InputObservationSession)
+        session._fail = mock.Mock(side_effect=ValueError('fixed-request-denied'))
+        with mock.patch.object(host.base.probe.AdmissionSession, '_dispatch') as common:
+            for method in ('item/tool/requestUserInput', 'item/tool/call', 'item/commandExecution/requestApproval'):
+                with self.subTest(method=method), self.assertRaises(ValueError):
+                    session._dispatch({'id': 42, 'method': method, 'params': {}}, 1, 1)
+            common.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()
