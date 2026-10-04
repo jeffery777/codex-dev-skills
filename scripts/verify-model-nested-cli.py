@@ -25,8 +25,9 @@ PROGRAM='FIXTURE_SOURCE='+repr(SOURCE)+'\n'+SOURCE
 class CanaryMismatch(ValueError):
     """Observed identity or bytes mismatch, distinct from unavailable readback."""
 
-def command(binary,workspace,cidfile,program=PROGRAM):
-    return base.support.command(binary,workspace,'positive',cidfile,program)[:-1]
+def command(binary,workspace,cidfile,program=PROGRAM,case='clean',attempt=fixture.DEFAULT_ATTEMPT):
+    fixture.startup_header(case,attempt)
+    return base.support.command(binary,workspace,'positive',cidfile,program)[:-1]+[case,attempt]
 
 def canonical(data):return hashlib.sha256(json.dumps(data,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
@@ -48,19 +49,79 @@ def check_canaries(rows):
     if type(rows) is not list or len(rows)!=3 or len({x['path'] for x in rows})!=3:raise ValueError('three independent canaries required')
     if any(canary_record(pathlib.Path(row['path']))!=row for row in rows):raise CanaryMismatch('confirmed host canary drift')
 
-def observations(path):
+def journal_prefix(path,limit,count,retain_prefix=False):
     """Read complete bounded prefix records; retain a prior violation on truncation."""
-    if path.is_symlink() or not path.is_file() or path.stat().st_size>16384:raise ValueError('bounded observation journal required')
+    if path.is_symlink() or not path.is_file() or path.stat().st_size>limit:raise ValueError('bounded observation journal required')
     raw=path.read_bytes();lines=raw.splitlines(keepends=True)
-    if len(lines)>8:raise ValueError('fixed observation count required')
+    if len(lines)>count and not retain_prefix:raise ValueError('fixed observation count required')
     result=[]
-    for line in lines:
+    for line in lines[:count]:
         if not line.endswith(b'\n'):break
         try:row=json.loads(line)
         except (UnicodeError,ValueError):break
         if type(row) is not dict:break
         result.append(row)
     return result
+
+def observations(path):return journal_prefix(path,16384,8)
+
+def startup_records(workspace,case,attempt,complete=False):
+    path=workspace/'startup-observations.jsonl';rows=journal_prefix(path,32768,len(fixture.startup_paths())+1,True)
+    if not rows or canonical(rows[0])!=canonical(fixture.startup_header(case,attempt)):raise ValueError('original startup identity required')
+    result=[]
+    for row,value in zip(rows[1:],fixture.startup_paths()):
+        if set(row)!={'path','exists','symlink','canonical'} or row['path']!=value or any(type(row[k]) is not bool for k in ('exists','symlink','canonical')):break
+        result.append(row)
+    raw=path.read_bytes() if complete else b''
+    if complete and (len(result)!=len(fixture.startup_paths()) or len(rows)!=len(result)+1 or len(raw.splitlines())!=len(rows) or not raw.endswith(b'\n')):raise ValueError('complete original startup journal required')
+    return result
+
+def expected_inventory(case):
+    fixture.startup_header(case,fixture.DEFAULT_ATTEMPT)
+    return [dict(path=p,exists=case=='config-file' and p==fixture.STARTUP_TARGET,symlink=case=='dangling-symlink' and p==fixture.STARTUP_TARGET,canonical=not (case=='dangling-symlink' and p==fixture.STARTUP_TARGET)) for p in fixture.startup_paths()]
+
+def validate_startup(workspace,case,attempt):
+    inventory=startup_records(workspace,case,attempt,True)
+    if canonical(inventory)!=canonical(expected_inventory(case)):raise ValueError('exact selected startup metadata required')
+    header=fixture.startup_header(case,attempt);journal=workspace/'startup-observations.jsonl'
+    want=dict(header,status='clear' if case=='clean' else 'blocked',journal_sha256=hashlib.sha256(journal.read_bytes()).hexdigest())
+    if canonical(fixture.read_json(workspace/'startup-result.json',8192))!=canonical(want):raise ValueError('complete original startup decision required')
+    return {'startup_journal_sha256':want['journal_sha256'],'startup_result_sha256':hashlib.sha256((workspace/'startup-result.json').read_bytes()).hexdigest()}
+
+def seed_record(workspace,case):
+    if case not in fixture.STARTUP_CASES[1:]:raise ValueError('fixed rejection seed required')
+    parent=workspace/'.codex';path=parent/'config.toml'
+    try:directory=parent.lstat();info=path.lstat()
+    except FileNotFoundError as error:raise CanaryMismatch('confirmed startup seed absent') from error
+    if not stat.S_ISDIR(directory.st_mode) or parent.resolve(strict=True)!=parent or directory.st_uid!=os.getuid() or stat.S_IMODE(directory.st_mode)!=0o755:raise CanaryMismatch('startup seed directory drift')
+    if info.st_uid!=os.getuid() or info.st_nlink!=1:raise CanaryMismatch('startup seed ownership drift')
+    if case=='config-file':
+        if not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode)!=0o644 or info.st_size!=len(fixture.STARTUP_BYTES) or path.read_bytes()!=fixture.STARTUP_BYTES:raise CanaryMismatch('startup seed bytes drift')
+        content=hashlib.sha256(fixture.STARTUP_BYTES).hexdigest()
+    else:
+        if not stat.S_ISLNK(info.st_mode) or os.readlink(path)!=fixture.STARTUP_LINK:raise CanaryMismatch('startup seed link drift')
+        try:(parent/fixture.STARTUP_LINK).lstat()
+        except FileNotFoundError:pass
+        else:raise CanaryMismatch('startup seed target no longer absent')
+        content=fixture.STARTUP_LINK
+    return {'case':case,'path':str(path),'parent_identity':[directory.st_dev,directory.st_ino,directory.st_uid,directory.st_mode],'identity':[info.st_dev,info.st_ino,info.st_uid,info.st_mode,info.st_size,info.st_nlink],'content':content}
+
+def create_seed(workspace,case):
+    if case=='clean':return None
+    fixture.startup_header(case,fixture.DEFAULT_ATTEMPT)
+    parent=workspace/'.codex';parent.mkdir(mode=0o755);path=parent/'config.toml'
+    if case=='config-file':
+        with path.open('xb') as stream:stream.write(fixture.STARTUP_BYTES);stream.flush();os.fsync(stream.fileno())
+        path.chmod(0o644)
+    else:path.symlink_to(fixture.STARTUP_LINK)
+    return seed_record(workspace,case)
+
+def check_seed(workspace,case,seed):
+    if case=='clean':
+        if seed is not None:raise ValueError('clean case has no startup seed')
+    else:
+        if type(seed) is not dict or seed.get('case')!=case or seed.get('path')!=str(workspace/'.codex/config.toml'):raise ValueError('original host startup seed required')
+        if canonical(seed_record(workspace,case))!=canonical(seed):raise CanaryMismatch('confirmed startup seed identity drift')
 
 def observation_header(phase,marker,thread):
     return {'schema':1,'source_pin':fixture.SOURCE_PIN,'phase':phase,'call_id':'nested-'+phase+'-1','marker':marker,'marker_matches':marker==(fixture.MARKER if phase=='positive' else None),'thread_env':thread}
@@ -77,11 +138,23 @@ def started_thread(raw):
     if len(found)!=1 or type(found[0]) is not str or str(uuid.UUID(found[0]))!=found[0]:raise ValueError('one original CLI identity required')
     return found[0]
 
-def classify_incomplete(workspace,canaries):
+def classify_incomplete(workspace,canaries,case='clean',attempt=fixture.DEFAULT_ATTEMPT,seed=None):
     outcome='unknown'
     try:check_canaries(canaries)
     except CanaryMismatch:outcome='failed'
     except (OSError,ValueError):pass
+    try:check_seed(workspace,case,seed)
+    except CanaryMismatch:outcome='failed'
+    except (OSError,ValueError):pass
+    try:
+        rows=startup_records(workspace,case,attempt)
+        if case=='clean' and any(x['exists'] or x['symlink'] or not x['canonical'] for x in rows):outcome='failed'
+    except (OSError,ValueError,KeyError):pass
+    try:
+        if case!='clean':
+            want=dict(fixture.startup_header(case,attempt),argv=fixture.CATALOG_ARGV,environment=fixture.env('parent'),timeout=12,replayed=False)
+            if canonical(fixture.read_json(workspace/'first-cli-intent.json',8192))==canonical(want):outcome='failed'
+    except (OSError,ValueError,KeyError):pass
     try:
         observed=fixture.read_json(workspace/'wrapper-environment.json',8192)
         thread=started_thread(read_text(workspace/'parent-stdout.jsonl'))
@@ -127,8 +200,11 @@ def validate_stream(row,phase,expected_calls):
     if any({(t['namespace'],t['name'],t['type']) for t in d}!=expected or d!=declarations[0] for d in declarations):raise ValueError('per-turn advertisement drift')
     return declarations[0]
 
-def validate_evidence(value,workspace,canaries):
+def validate_evidence(value,workspace,canaries,attempt=fixture.DEFAULT_ATTEMPT):
     check_canaries(canaries)
+    startup=validate_startup(workspace,'clean',attempt)
+    intent=dict(fixture.startup_header('clean',attempt),argv=fixture.CATALOG_ARGV,environment=fixture.env('parent'),timeout=12,replayed=False)
+    if canonical(fixture.read_json(workspace/'first-cli-intent.json',8192))!=canonical(intent):raise ValueError('original first CLI intent required')
     if (type(value) is not dict or type(value.get('schema')) is not int or value['schema']!=1 or value.get('source_pin')!=fixture.SOURCE_PIN
             or any(value.get(k) is not False for k in ('handler_inventory_complete','startup_isolation_qualified','nested_cli_qualified','production_qualified'))
             or type(value.get('streams')) is not dict or set(value['streams'])!=set(fixture.PHASES)
@@ -191,10 +267,28 @@ def validate_evidence(value,workspace,canaries):
         expected_env.update(home=str(fixture.home(phase)),codex_home=str(fixture.home(phase)))
         if phase=='parent':expected_env={'home':str(fixture.home('parent')),'codex_home':str(fixture.home('parent')),'marker':fixture.MARKER,'native':dict.fromkeys(fixture.NATIVE_KEYS),'keys':sorted(fixture.ENV_KEYS)}
         if environment!=expected_env:raise ValueError('original native guard preservation required')
-    return {'sid':sid,'cli_threads':threads,'raw_cli_hashes':raw_hashes,'advertisement_sha256':canonical(declarations[0]),'fixed_nested_cli_controls_passed':True}
+    return dict(startup,sid=sid,cli_threads=threads,raw_cli_hashes=raw_hashes,advertisement_sha256=canonical(declarations[0]),fixed_nested_cli_controls_passed=True)
 
-def execute(engine,root,binary,workspace,canaries,program=PROGRAM):
-    cidfile=root/'cid';argv=command(binary,workspace,cidfile,program)
+def validate_exited_policy(after,status,cid,argv,binary,workspace,case):
+    fixture.startup_header(case,fixture.DEFAULT_ATTEMPT);expected=0 if case=='clean' else 1
+    if status!=str(expected) or type(after) is not dict or type(after.get('exit')) is not int or after['exit']!=expected:raise ValueError('exact natural case exit required')
+    projection=dict(after,exit=0)
+    base.support.validate_policy(projection,cid,argv,binary,workspace,'exited')
+
+def validate_blocked(workspace,case,attempt,seed,raw,canaries):
+    if case not in fixture.STARTUP_CASES[1:]:raise ValueError('fixed rejection case required')
+    check_canaries(canaries);check_seed(workspace,case,seed);checks=validate_startup(workspace,case,attempt)
+    want=dict(fixture.startup_header(case,attempt),startup_layer_blocked=True)
+    if raw!=json.dumps(want) or canonical(json.loads(raw))!=canonical(want):raise ValueError('exact original guard diagnostic required')
+    expected={'canary-paths.json','startup-observations.jsonl','startup-result.json','.codex','.codex/config.toml'}
+    actual={str(p.relative_to(workspace)) for p in workspace.iterdir()}
+    actual.update('.codex/'+p.name for p in (workspace/'.codex').iterdir())
+    if actual!=expected:raise ValueError('unexpected effect after startup refusal')
+    if fixture.read_json(workspace/'canary-paths.json',8192)!=[x['path'] for x in canaries]:raise ValueError('original canary binding required')
+    return dict(checks,fixed_startup_layer_refusal_passed=True,observed_exit=1)
+
+def execute(engine,root,binary,workspace,canaries,program=PROGRAM,case='clean',attempt=fixture.DEFAULT_ATTEMPT,seed=None):
+    cidfile=root/'cid';argv=command(binary,workspace,cidfile,program,case,attempt);check_seed(workspace,case,seed)
     fixture.write_json(root/'create-intent.json',{'argv':argv,'replayed':False});backend.check_binary(binary)
     try:cid=engine.call(argv)
     except (OSError,subprocess.SubprocessError,ValueError) as error:
@@ -217,30 +311,40 @@ def execute(engine,root,binary,workspace,canaries,program=PROGRAM):
         try:recovery['readback']=engine.call(['docker','inspect','--format','{{.Id}} {{.Image}} {{.State.Status}} {{.State.Pid}}',cid])
         except (OSError,subprocess.SubprocessError,ValueError) as problem:recovery['readback_error_type']=type(problem).__name__
         fixture.write_json(root/'unknown-start.json',recovery);raise
-    status=engine.call(['docker','wait',cid]);after=inspect();fixture.write_json(root/'after.json',after);base.support.validate_policy(after,cid,argv,binary,workspace,'exited')
+    status=engine.call(['docker','wait',cid]);after=inspect();fixture.write_json(root/'after.json',after);validate_exited_policy(after,status,cid,argv,binary,workspace,case)
     raw=engine.call(['docker','logs',cid])
     if len(raw)>32768:raise ValueError('bounded container log required')
     (root/'output.jsonl').write_text(raw+'\n')
     check_canaries(canaries)
-    if status!='0':raise ValueError('container natural exit 0 required')
-    value=fixture.read_json(workspace/'nested-evidence.json');checks=validate_evidence(value,workspace,canaries);backend.check_binary(binary)
-    return {'id':cid,'checks':checks,'evidence_sha256':hashlib.sha256((workspace/'nested-evidence.json').read_bytes()).hexdigest()}
+    if case=='clean':
+        value=fixture.read_json(workspace/'nested-evidence.json');checks=validate_evidence(value,workspace,canaries,attempt);evidence=workspace/'nested-evidence.json'
+    else:checks=validate_blocked(workspace,case,attempt,seed,raw,canaries);evidence=workspace/'startup-result.json'
+    backend.check_binary(binary)
+    return {'id':cid,'case':case,'attempt':attempt,'observed_exit':after['exit'],'checks':checks,'evidence_sha256':hashlib.sha256(evidence.read_bytes()).hexdigest()}
 
-def run(binary_path,evidence_root):
+def run(binary_path,evidence_root,startup_controls=False):
     parent=backend.evidence_root(evidence_root);data=backend.capture_binary(binary_path)
-    root=pathlib.Path(tempfile.mkdtemp(prefix='native-nested-control-',dir=parent));binary=backend.save_binary(root,data);del data
-    workspace=root/'workspace';workspace.mkdir();workspace.chmod(0o777);canaries=create_canaries(root)
-    fixture.write_json(root/'host-canaries.json',canaries);fixture.write_json(workspace/'canary-paths.json',[x['path'] for x in canaries])
+    root=pathlib.Path(tempfile.mkdtemp(prefix='native-startup-control-' if startup_controls else 'native-nested-control-',dir=parent));binary=backend.save_binary(root,data);del data
     engine=backend.LocalDesktop();identity=engine.call(['docker','info','--format','{{.ID}} {{.OSType}}'])
-    try:
-        result=execute(engine,root,binary,workspace,canaries)
-        if engine.call(['docker','info','--format','{{.ID}} {{.OSType}}'])!=identity:raise ValueError('engine identity drift')
-    except (OSError,subprocess.SubprocessError,ValueError) as error:
-        outcome=classify_incomplete(workspace,canaries)
-        fixture.write_json(root/'incomplete.json',{'root':str(root),'outcome':outcome,'error_type':type(error).__name__,'error':str(error),'lifecycle':'unknown','replayed':False,'production_qualified':False})
-        print(json.dumps({'root':str(root),'outcome':outcome,'production_qualified':False}));return 1
-    receipt={'fixed_nested_cli_controls_passed':True,'handler_inventory_complete':False,'startup_isolation_qualified':False,'nested_cli_qualified':False,'production_qualified':False,'root':str(root),'image':backend.IMAGE,'binary_sha256':backend.BINARY_SHA256,'source_sha256':hashlib.sha256(SOURCE.encode()).hexdigest(),'program_sha256':hashlib.sha256(PROGRAM.encode()).hexdigest(),'engine':identity,'result':result,'canaries':canaries,'limits':['fixed user model/argv override/native marker/child tool continuations/unmounted host paths only','same UID provider/CLI/wrapper/probe; not trusted production observer','not complete config/layers/registry/descendants/credentials/restart/Desktop/production qualification']}
-    fixture.write_json(root/'receipt.json',receipt);print(json.dumps({'root':str(root),'fixed_nested_cli_controls_passed':True,'production_qualified':False}));return 0
+    results=[];host_canaries=[]
+    for case in fixture.STARTUP_CASES if startup_controls else ('clean',):
+        case_root=root/case if startup_controls else root
+        if startup_controls:case_root.mkdir(mode=0o700)
+        workspace=case_root/'workspace';workspace.mkdir();workspace.chmod(0o777);canaries=create_canaries(case_root);attempt=str(uuid.uuid4());seed=None
+        fixture.write_json(case_root/'host-canaries.json',canaries);fixture.write_json(workspace/'canary-paths.json',[x['path'] for x in canaries])
+        try:
+            seed=create_seed(workspace,case);fixture.write_json(case_root/'case-intent.json',dict(fixture.startup_header(case,attempt),seed=seed,replayed=False))
+            if engine.call(['docker','info','--format','{{.ID}} {{.OSType}}'])!=identity:raise ValueError('engine identity drift')
+            result=execute(engine,case_root,binary,workspace,canaries,PROGRAM,case,attempt,seed)
+            if any(x['id']==result['id'] for x in results):raise ValueError('fresh case CID required')
+            if engine.call(['docker','info','--format','{{.ID}} {{.OSType}}'])!=identity:raise ValueError('engine identity drift')
+        except (OSError,subprocess.SubprocessError,ValueError) as error:
+            outcome=classify_incomplete(workspace,canaries,case,attempt,seed)
+            fixture.write_json(case_root/'incomplete.json',{'root':str(root),'case':case,'attempt':attempt,'outcome':outcome,'error_type':type(error).__name__,'error':str(error),'lifecycle':'unknown','replayed':False,'production_qualified':False})
+            print(json.dumps({'root':str(root),'case':case,'outcome':outcome,'production_qualified':False}));return 1
+        fixture.write_json(case_root/'case-result.json',result);results.append(result);host_canaries.extend(canaries)
+    receipt={'fixed_nested_cli_controls_passed':True,'fixed_startup_layer_controls_passed':startup_controls,'handler_inventory_complete':False,'startup_isolation_qualified':False,'nested_cli_qualified':False,'production_qualified':False,'root':str(root),'image':backend.IMAGE,'binary_sha256':backend.BINARY_SHA256,'source_sha256':hashlib.sha256(SOURCE.encode()).hexdigest(),'program_sha256':hashlib.sha256(PROGRAM.encode()).hexdigest(),'engine':identity,'results':results,'canaries':host_canaries,'limits':['fixed selected startup paths/user model/argv override/native marker/child tool continuations/unmounted host paths only','same UID provider/CLI/wrapper/probe; not trusted production observer','not complete config/layers/registry/descendants/credentials/restart/Desktop/production qualification']}
+    fixture.write_json(root/'receipt.json',receipt);print(json.dumps({'root':str(root),'fixed_nested_cli_controls_passed':True,'fixed_startup_layer_controls_passed':startup_controls,'production_qualified':False}));return 0
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--binary',required=True);parser.add_argument('--evidence-root',default='/private/tmp');args=parser.parse_args();raise SystemExit(run(args.binary,args.evidence_root))
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--binary',required=True);parser.add_argument('--evidence-root',default='/private/tmp');parser.add_argument('--startup-layer-controls',action='store_true');args=parser.parse_args();raise SystemExit(run(args.binary,args.evidence_root,args.startup_layer_controls))

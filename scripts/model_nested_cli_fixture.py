@@ -10,6 +10,7 @@ import signal
 import subprocess
 import threading
 import time
+import uuid
 
 SOURCE_PIN='01fc69f4026735edfdf6789820549727a4867b11'
 MARKER='fixed-anonymous-nested-control'
@@ -19,6 +20,12 @@ SHELL_KEYS=['PWD','SHLVL','_','NO_COLOR','TERM','LANG','LC_CTYPE','LC_ALL','COLO
 PHASES=('parent','positive','negative')
 CONTROL=pathlib.Path('/tmp/nested-control')
 RELEASE=b'fixed-nested-release\n'
+STARTUP_CASES=('clean','config-file','dangling-symlink')
+STARTUP_TARGET='/workspace/.codex/config.toml'
+STARTUP_LINK='fixed-missing-startup-layer.toml'
+STARTUP_BYTES=b'model="fixed-startup-layer-canary"\n'
+DEFAULT_ATTEMPT='00000000-0000-4000-8000-000000000000'
+CATALOG_ARGV=['/fixture/codex','debug','models','--bundled']
 DISABLED=['apps','hooks','plugins','remote_plugin','multi_agent','multi_agent_v2','goals','memories','code_mode','code_mode_only','code_mode_prewarm','enable_request_compression','browser_use','computer_use','image_generation','skill_search','skill_mcp_dependency_install','tool_suggest','daemon_auto_start','view_image','sleep_tool','current_time_reminder','request_permissions_tool','send_message_to_user_async','token_budget','deferred_executor']
 
 def model(phase):
@@ -86,6 +93,44 @@ def write_json(path,value):
 
 def startup_paths():
     return ['/etc/codex/config.toml','/etc/codex/requirements.toml','/etc/codex/managed_config.toml','/config.toml','/.codex/config.toml','/workspace/config.toml','/workspace/.codex/config.toml',*[str(home(p)/n) for p in PHASES for n in ('config.toml','managed_config.toml','auth.json')],*[str(cwd(p)/'.codex/config.toml') for p in PHASES[1:]]]
+
+class StartupLayerUnknown(ValueError):
+    """Only a complete original startup observation can raise this refusal."""
+
+def startup_header(case,attempt):
+    if case not in STARTUP_CASES or type(attempt) is not str or str(uuid.UUID(attempt))!=attempt:raise ValueError('fixed startup case and canonical attempt required')
+    return {'schema':1,'source_pin':SOURCE_PIN,'case':case,'attempt':attempt}
+
+def startup_row(value):
+    path=pathlib.Path(value)
+    try:info=path.lstat()
+    except FileNotFoundError:exists=False;symlink=False
+    else:
+        import stat
+        symlink=stat.S_ISLNK(info.st_mode)
+        if symlink:
+            try:path.stat()
+            except FileNotFoundError:exists=False
+            else:exists=True
+        else:exists=True
+    return dict(path=value,exists=exists,symlink=symlink,canonical=path.resolve(strict=False)==path)
+
+def observe_startup(work,case,attempt):
+    header=startup_header(case,attempt);journal=work/'startup-observations.jsonl'
+    with journal.open('x'):pass
+    def observe(row):
+        fd=os.open(journal,os.O_WRONLY|os.O_APPEND|os.O_NOFOLLOW)
+        with os.fdopen(fd,'w') as stream:
+            stream.write(json.dumps(row)+'\n');stream.flush();os.fsync(stream.fileno())
+    observe(header);inventory=[]
+    for value in startup_paths():
+        row=startup_row(value);observe(row);inventory.append(row)
+    blocked=any(x['exists'] or x['symlink'] or not x['canonical'] for x in inventory)
+    write_json(work/'startup-result.json',dict(header,status='blocked' if blocked else 'clear',journal_sha256=hashlib.sha256(journal.read_bytes()).hexdigest()))
+    if blocked:raise StartupLayerUnknown('unknown startup layer')
+    return inventory
+
+def env(phase):return {'PATH':'/usr/local/bin:/usr/bin:/bin','HOME':str(home(phase)),'CODEX_HOME':str(home(phase)),'NO_PROXY':'127.0.0.1,localhost','no_proxy':'127.0.0.1,localhost','NESTED_CONTROL_MARKER':MARKER}
 
 def probe():
     work=pathlib.Path.cwd();phase=work.name
@@ -165,18 +210,17 @@ def wrapper():
         if state.get('errors')!=[] or result.get('marker_matches') is not True or any(x.get('outcome')!='denied' for x in result.get('attempts',[])):raise ValueError('child positive/negative control failed')
     print('NESTED_ACK',flush=True)
 
-def run_fixture():
+def run_fixture(case='clean',attempt=DEFAULT_ATTEMPT):
     resource.setrlimit(resource.RLIMIT_FSIZE,(4*1024*1024,4*1024*1024))
     work=pathlib.Path('/workspace');CONTROL.mkdir(mode=0o700)
-    inventory=[dict(path=p,exists=pathlib.Path(p).exists(),symlink=pathlib.Path(p).is_symlink(),canonical=pathlib.Path(p).resolve(strict=False)==pathlib.Path(p)) for p in startup_paths()]
-    if any(x['exists'] or x['symlink'] or not x['canonical'] for x in inventory):raise ValueError('unknown startup layer')
+    inventory=observe_startup(work,case,attempt)
     for phase in PHASES:
         home(phase).mkdir(mode=0o700)
         if phase!='parent':
             cwd(phase).mkdir(mode=0o700);(home(phase)/'config.toml').write_text(config())
     (CONTROL/'fixture.py').write_text(FIXTURE_SOURCE)
-    def env(phase):return {'PATH':'/usr/local/bin:/usr/bin:/bin','HOME':str(home(phase)),'CODEX_HOME':str(home(phase)),'NO_PROXY':'127.0.0.1,localhost','no_proxy':'127.0.0.1,localhost','NESTED_CONTROL_MARKER':MARKER}
-    seed=subprocess.run(['/fixture/codex','debug','models','--bundled'],env=env('parent'),cwd=work,stdin=subprocess.DEVNULL,capture_output=True,timeout=12,check=True,close_fds=True)
+    write_json(work/'first-cli-intent.json',dict(startup_header(case,attempt),argv=CATALOG_ARGV,environment=env('parent'),timeout=12,replayed=False))
+    seed=subprocess.run(CATALOG_ARGV,env=env('parent'),cwd=work,stdin=subprocess.DEVNULL,capture_output=True,timeout=12,check=True,close_fds=True)
     catalog=json.loads(seed.stdout);models=[m for m in catalog['models'] if m['slug']=='gpt-6-luna']
     if len(models)!=1 or any(m['slug'].startswith('fixture-') for m in catalog['models']):raise ValueError('official catalog drift')
     for phase in PHASES:catalog['models'].append(dict(models[0],slug=model(phase),tool_mode='direct',experimental_supported_tools=[],shell_type='unified_exec',apply_patch_tool_type='freeform',supports_search_tool=False))
@@ -256,5 +300,11 @@ if __name__=='__main__':
     signal.signal(signal.SIGALRM,lambda *_:os._exit(124));signal.alarm(50)
     if sys.argv[1:]==['wrapper']:wrapper()
     elif sys.argv[1:]==['probe']:probe()
-    elif not sys.argv[1:]:run_fixture()
-    else:raise ValueError('fixed fixture entry required')
+    else:
+        args=sys.argv[1:] or ['clean',DEFAULT_ATTEMPT]
+        if len(args)!=2:raise ValueError('fixed fixture entry required')
+        header=startup_header(*args)
+        try:run_fixture(*args)
+        except StartupLayerUnknown:
+            print(json.dumps(dict(header,startup_layer_blocked=True)),flush=True)
+            raise SystemExit(1)

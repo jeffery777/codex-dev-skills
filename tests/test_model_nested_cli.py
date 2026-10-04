@@ -15,6 +15,13 @@ SPEC=importlib.util.spec_from_file_location('nested_control',pathlib.Path(__file
 control=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(control)
 fixture=control.fixture
 
+def startup_evidence(workspace,case='clean',attempt=fixture.DEFAULT_ATTEMPT):
+    header=fixture.startup_header(case,attempt);journal=workspace/'startup-observations.jsonl'
+    journal.write_text(''.join(json.dumps(x)+'\n' for x in [header,*control.expected_inventory(case)]))
+    fixture.write_json(workspace/'startup-result.json',dict(header,status='clear' if case=='clean' else 'blocked',journal_sha256=control.hashlib.sha256(journal.read_bytes()).hexdigest()))
+    if case=='clean':fixture.write_json(workspace/'first-cli-intent.json',dict(header,argv=fixture.CATALOG_ARGV,environment=fixture.env('parent'),timeout=12,replayed=False))
+    return json.dumps(dict(header,startup_layer_blocked=True))
+
 def native(body='',sid=None):
     status='Process exited with code 0' if sid is None else 'Process running with session ID '+str(sid)
     return 'Chunk ID: abc123\nWall time: 1.0000 seconds\n'+status+'\nOriginal token count: 4\nOutput:\n'+body
@@ -22,6 +29,7 @@ def native(body='',sid=None):
 def evidence(root):
     root=root.resolve(strict=True)
     workspace=root/'workspace';workspace.mkdir();canaries=control.create_canaries(root)
+    startup_evidence(workspace)
     fixture.write_json(workspace/'canary-paths.json',[x['path'] for x in canaries]);fixture.publish_release(workspace)
     ports={'parent':12345,'positive':23456,'negative':34567};sid=45678
     threads={p:'10000000-0000-4000-8000-00000000000'+str(i+1) for i,p in enumerate(fixture.PHASES)}
@@ -254,11 +262,131 @@ class NestedCliTests(unittest.TestCase):
 
     def test_captured_source_program_and_fixed_command(self):
         self.assertEqual(control.PROGRAM,'FIXTURE_SOURCE='+repr(control.SOURCE)+'\n'+control.SOURCE)
-        self.assertEqual(control.command(pathlib.Path('/b'),pathlib.Path('/w'),pathlib.Path('/c'))[-1],control.PROGRAM)
+        argv=control.command(pathlib.Path('/b'),pathlib.Path('/w'),pathlib.Path('/c'))
+        self.assertEqual(argv[-3:], [control.PROGRAM,'clean',fixture.DEFAULT_ATTEMPT])
         for phase in fixture.PHASES:
             argv=fixture.cli_argv(12345,phase)
             self.assertEqual('--ignore-user-config' in argv,phase=='parent')
             self.assertEqual('model="fixture-user"' in argv,False)
         with self.assertRaises(ValueError):fixture.cli_argv(True,'parent')
+
+    def test_startup_actual_metadata_distinguishes_dangling_and_io_unknown(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=pathlib.Path(directory).resolve();path=root/'config.toml'
+            self.assertEqual(fixture.startup_row(str(path)),dict(path=str(path),exists=False,symlink=False,canonical=True))
+            path.symlink_to(fixture.STARTUP_LINK)
+            self.assertEqual(fixture.startup_row(str(path)),dict(path=str(path),exists=False,symlink=True,canonical=False))
+            with mock.patch('pathlib.Path.lstat',side_effect=PermissionError('unavailable')):
+                with self.assertRaises(PermissionError):fixture.startup_row(str(path))
+            with mock.patch('pathlib.Path.stat',side_effect=OSError(errno.EIO,'unavailable')):
+                with self.assertRaises(OSError):fixture.startup_row(str(path))
+
+    def test_startup_guard_precedes_first_cli_and_provider(self):
+        for case in fixture.STARTUP_CASES[1:]:
+            with tempfile.TemporaryDirectory() as directory:
+                root=pathlib.Path(directory).resolve();work=root/'workspace';work.mkdir();original=fixture.observe_startup
+                rows=iter(control.expected_inventory(case))
+                with mock.patch.object(fixture,'CONTROL',root/'control'),mock.patch.object(fixture.resource,'setrlimit'),mock.patch.object(fixture,'startup_row',side_effect=lambda _:next(rows)),mock.patch.object(fixture,'observe_startup',side_effect=lambda _,c,a:original(work,c,a)),mock.patch.object(fixture.subprocess,'run',side_effect=AssertionError('CLI')) as cli,mock.patch.object(fixture.http.server,'ThreadingHTTPServer',side_effect=AssertionError('provider')) as provider:
+                    with self.assertRaises(fixture.StartupLayerUnknown):fixture.run_fixture(case,fixture.DEFAULT_ATTEMPT)
+                self.assertEqual(cli.call_count,0);self.assertEqual(provider.call_count,0)
+                control.validate_startup(work,case,fixture.DEFAULT_ATTEMPT)
+                self.assertFalse((work/'first-cli-intent.json').exists())
+
+    def test_case_name_cannot_create_startup_refusal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            work=pathlib.Path(directory).resolve();rows=iter(control.expected_inventory('clean'))
+            with mock.patch.object(fixture,'startup_row',side_effect=lambda _:next(rows)):
+                self.assertEqual(fixture.observe_startup(work,'config-file',fixture.DEFAULT_ATTEMPT),control.expected_inventory('clean'))
+            with self.assertRaises(ValueError):control.validate_startup(work,'config-file',fixture.DEFAULT_ATTEMPT)
+
+    def test_startup_prefix_retains_anomaly_after_late_io_or_diagnostic_failure(self):
+        for failure in ('next-path','decision-write','decision-fsync'):
+            with tempfile.TemporaryDirectory() as directory:
+                root=pathlib.Path(directory).resolve();work=root/'workspace';work.mkdir();canaries=control.create_canaries(root)
+                rows=control.expected_inventory('clean');rows[0]['exists']=True;iterator=iter(rows)
+                def row(_):
+                    value=next(iterator)
+                    if failure=='next-path' and value['path']==rows[1]['path']:raise OSError(errno.EIO,'late path')
+                    return value
+                original_write=fixture.write_json;original_fsync=fixture.os.fsync;sync_count=[]
+                def write(path,value):
+                    if failure=='decision-write':raise OSError(errno.EIO,'decision write')
+                    return original_write(path,value)
+                def fsync(fd):
+                    sync_count.append(fd)
+                    if failure=='decision-fsync' and len(sync_count)==len(fixture.startup_paths())+2:raise OSError(errno.EIO,'decision fsync')
+                    return original_fsync(fd)
+                with mock.patch.object(fixture,'startup_row',side_effect=row),mock.patch.object(fixture,'write_json',side_effect=write),mock.patch.object(fixture.os,'fsync',side_effect=fsync):
+                    with self.assertRaises(OSError):fixture.observe_startup(work,'clean',fixture.DEFAULT_ATTEMPT)
+                with (work/'startup-observations.jsonl').open('ab') as stream:stream.write(b'{"truncated":')
+                with mock.patch.object(control,'check_canaries',side_effect=OSError(errno.EIO,'unavailable')):
+                    self.assertEqual(control.classify_incomplete(work,canaries),'failed')
+
+    def test_startup_rejection_needs_complete_original_evidence_and_seed(self):
+        for case in fixture.STARTUP_CASES[1:]:
+            for mutation in ('none','case','source','attempt','schema-alias','row-alias','missing','duplicate','truncated','generic-error','unexpected-cli','seed-drift'):
+                with tempfile.TemporaryDirectory() as directory:
+                    root=pathlib.Path(directory).resolve();work=root/'workspace';work.mkdir();canaries=control.create_canaries(root);seed=control.create_seed(work,case)
+                    fixture.write_json(work/'canary-paths.json',[x['path'] for x in canaries]);raw=startup_evidence(work,case);journal=work/'startup-observations.jsonl'
+                    rows=[json.loads(x) for x in journal.read_text().splitlines()]
+                    if mutation in ('case','source','attempt','schema-alias'):
+                        key={'case':'case','source':'source_pin','attempt':'attempt','schema-alias':'schema'}[mutation];rows[0][key]=True if mutation=='schema-alias' else 'different'
+                    elif mutation=='row-alias':rows[1]['exists']=0
+                    elif mutation=='missing':rows.pop(1)
+                    elif mutation=='duplicate':rows[2]=rows[1]
+                    if mutation in ('case','source','attempt','schema-alias','row-alias','missing','duplicate'):journal.write_text(''.join(json.dumps(x)+'\n' for x in rows))
+                    elif mutation=='truncated':journal.write_bytes(journal.read_bytes()[:-3])
+                    elif mutation=='generic-error':raw='Traceback: ordinary ValueError'
+                    elif mutation=='unexpected-cli':(work/'first-cli-intent.json').write_text('{}')
+                    elif mutation=='seed-drift':
+                        if case=='config-file':(work/'.codex/config.toml').write_bytes(b'changed')
+                        else:(work/'.codex'/fixture.STARTUP_LINK).write_bytes(b'changed')
+                    if mutation=='none':self.assertTrue(control.validate_blocked(work,case,fixture.DEFAULT_ATTEMPT,seed,raw,canaries)['fixed_startup_layer_refusal_passed'])
+                    else:
+                        with self.assertRaises((ValueError,OSError)):control.validate_blocked(work,case,fixture.DEFAULT_ATTEMPT,seed,raw,canaries)
+
+    def test_late_rejection_readback_unknown_does_not_hide_known_violation(self):
+        for violation in ('none','cli','cli-missing-journal','seed','canary'):
+            with tempfile.TemporaryDirectory() as directory:
+                root=pathlib.Path(directory).resolve();work=root/'workspace';work.mkdir();canaries=control.create_canaries(root);seed=control.create_seed(work,'config-file');startup_evidence(work,'config-file')
+                if violation.startswith('cli'):
+                    fixture.write_json(work/'first-cli-intent.json',dict(fixture.startup_header('config-file',fixture.DEFAULT_ATTEMPT),argv=fixture.CATALOG_ARGV,environment=fixture.env('parent'),timeout=12,replayed=False))
+                    if violation=='cli-missing-journal':(work/'startup-observations.jsonl').write_text('')
+                elif violation=='seed':(work/'.codex/config.toml').write_bytes(b'changed')
+                elif violation=='canary':pathlib.Path(canaries[0]['path']).write_bytes(b'changed')
+                self.assertEqual(control.classify_incomplete(work,canaries,'config-file',fixture.DEFAULT_ATTEMPT,seed),'unknown' if violation=='none' else 'failed')
+
+    def test_seed_absence_is_confirmed_drift_and_io_is_unknown(self):
+        for error in (FileNotFoundError('missing'),PermissionError('unavailable'),OSError(errno.EIO,'unavailable')):
+            with tempfile.TemporaryDirectory() as directory:
+                root=pathlib.Path(directory).resolve();work=root/'workspace';work.mkdir();canaries=control.create_canaries(root);seed=control.create_seed(work,'config-file')
+                original=pathlib.Path.lstat
+                def lstat(path,*args,**kwargs):
+                    if path==work/'.codex/config.toml':raise error
+                    return original(path,*args,**kwargs)
+                with mock.patch('pathlib.Path.lstat',new=lstat):
+                    self.assertEqual(control.classify_incomplete(work,canaries,'config-file',fixture.DEFAULT_ATTEMPT,seed),'failed' if isinstance(error,FileNotFoundError) else 'unknown')
+
+    def test_exit_projection_is_local_strict_and_preserves_raw(self):
+        raw={'exit':1,'oom':False};before=copy.deepcopy(raw)
+        with mock.patch.object(control.base.support,'validate_policy') as policy:
+            control.validate_exited_policy(raw,'1','a'*64,[],pathlib.Path('/b'),pathlib.Path('/w'),'config-file')
+            self.assertEqual(policy.call_args.args[0],{'exit':0,'oom':False});self.assertEqual(raw,before)
+        for status,exit_code in [('0',0),('2',2),('124',124),('137',137),('1',True),('0',1),(1,1)]:
+            with mock.patch.object(control.base.support,'validate_policy') as policy:
+                with self.assertRaises(ValueError):control.validate_exited_policy(dict(raw,exit=exit_code),status,'a'*64,[],pathlib.Path('/b'),pathlib.Path('/w'),'config-file')
+                self.assertEqual(policy.call_count,0)
+        from tests.test_model_project_hook import policy
+        binary=pathlib.Path('/b');workspace=pathlib.Path('/w');argv=control.command(binary,workspace,pathlib.Path('/c'),case='config-file')
+        original=policy(binary,workspace,'positive',pathlib.Path('/c'),'exited');original['command']=argv[argv.index(control.backend.IMAGE)+1:];original['exit']=1
+        control.validate_exited_policy(original,'1','a'*64,argv,binary,workspace,'config-file');self.assertEqual(original['exit'],1)
+        with self.assertRaises(ValueError):control.base.support.validate_policy(original,'a'*64,argv,binary,workspace,'exited')
+        for mutation in ('oom','running','id','mount'):
+            changed=copy.deepcopy(original)
+            if mutation=='oom':changed['oom']=True
+            elif mutation=='running':changed['running']=True
+            elif mutation=='id':changed['id']='b'*64
+            else:changed['mounts'].append(dict(changed['mounts'][0],Destination='/extra'))
+            with self.assertRaises(ValueError):control.validate_exited_policy(changed,'1','a'*64,argv,binary,workspace,'config-file')
 
 if __name__=='__main__':unittest.main()

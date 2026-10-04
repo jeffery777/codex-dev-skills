@@ -937,6 +937,37 @@ Provider、CLI、wrapper、probe 共用 UID，都是固定 fixture evidence，�
 ./scripts/project-python scripts/verify-model-nested-cli.py --binary /absolute/path/to/codex --evidence-root /private/tmp
 ```
 
+此 runner 的 opt-in `--startup-layer-controls` 另固定執行 clean、既存 regular
+config 與 dangling symlink 三例。每例使用 fresh workspace、attempt UUID、own
+CID 及 host canaries；同次捕獲的 guest／program／binary bytes 與 engine 身分須
+一致。負例只預置 `/workspace/.codex/config.toml`：固定無害 model canary bytes，
+或指向同一 scratch 內不存在的固定相對 target；不接受任意配置、路徑或 argv。
+Host 保存 seed 的 lstat 身分、bytes／readlink 與 parent 身分，前後都須吻合。
+
+Guest 在首次 `debug models`、provider 建立與所有 CLI spawn 前，逐筆
+flush／file fsync 保存固定 startup paths 的原始 exists／symlink／canonical
+觀察，再保存完整 decision。Case 名稱只綁證據，是否拒絕取決於實際觀察。
+Stat／resolve 的 PermissionError、EIO 等不能轉成 absence；後續 I/O、截斷或
+decision 寫入失敗不能抹去已綁定的先前反例。完整正例另須原始 startup journal
+及首次 CLI intent，並完成原有 P→C+／C− workflow。
+
+兩個拒絕例須完整 journal、seed readback、固定 typed blocked diagnostic 與
+自然 exit 1；workspace 僅容許固定 seed／觀察 artifacts，不得有 first-CLI intent
+或後續工具效果。原始 `after.json` 與收據保留 exit 1；host 先嚴格核對 wait／exit，
+才以記憶體中 exit=0 的副本呼叫既有 policy validator 核對其餘全部欄位，副本不
+保存成 raw evidence。一般例外、只有 exit 1、缺證、OOM 或 unknown readback 均
+不能形成成功收據。確認 seed／canary 漂移或已綁定的 first-CLI intent 違規時，
+後續缺證保留 failed，生命週期另記 unknown；未知 create／start 仍不重播。
+
+`fixed_startup_layer_controls_passed` 僅表示這三個選定控制通過，全部 qualification
+flags 仍 false。Source ordering、原函式 spies 與 artifact absence 不構成可信
+production never-spawn 證明；逐筆 file fsync 也不代表 directory／restart durability。
+它不補足完整配置 layers、dispatcher registry 或正式自動接手資格。
+
+```bash
+./scripts/project-python scripts/verify-model-nested-cli.py --binary /absolute/path/to/codex --evidence-root /private/tmp --startup-layer-controls
+```
+
 ## N3 非空 checkpoint、存活舊 worker 與唯一整合器控制
 
 `verify-model-packet-integrator.py --checkpoint-overlap-only` 明確選取新的固定

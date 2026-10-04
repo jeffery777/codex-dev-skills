@@ -572,6 +572,15 @@ exact continuations、當輪 advertisement、canary 身分／bytes 與容器 pol
 restart、可信 observer、Desktop 與 N2／production 資格仍未完成，flags 保持 false。
 官方訂閱專用登入安排仍等待原先提出的決策，與本匿名控制獨立。
 
+同一 runner 增加 opt-in 三例 startup-layer 控制：clean 完成原 nested workflow，
+固定既存 config 與 dangling symlink 在首次 CLI／provider 前拒絕。逐筆原始
+觀察、完整 decision、host seed 身分／bytes、case／attempt、create argv、own
+CID、engine、policy 與 canaries 必須綁定；負例保持自然 exit 1，不能由一般錯誤
+或缺證冒充拒絕通過。後續 I/O 不能抹去已保存的確定反例，未知效果不重播。
+工程方法與離線反例 tracked，runtime 收據及原始 artifacts 留 Git 外；重跑須
+重建相同 assertions，動態身分可不同。這仍是選定 startup paths 的局部控制，
+不是完整 layers、可信 never-spawn／observer、重啟或 N2／production 資格。
+
 ### N3 固定實體 checkpoint 接手組合控制
 
 沿既有 one-shot container supervisor／sole integrator 補非空 C→存活且隔離的
