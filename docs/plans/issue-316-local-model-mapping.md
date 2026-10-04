@@ -628,3 +628,28 @@ refs／policy 漂移或 backend error 不重送，不宣稱所有 Docker childre
 工程反例與方法 tracked；native runtime 測量、獨立正式 review／Security Diff Scan
 與完整 DoD 仍由後續驗證處理，不能由離線成功推定 READY。這不完成完整 N3、
 self-hosted／auth／daemon restart 或任何 production qualification；flags 保持 false。
+
+### N3 fresh producer／consumer integration 與撤銷工程包
+
+新增互斥 opt-in `--fresh-integration-only` 固定八案：applied-control、intent-crash、
+write-intent-crash、mid-write、commit-crash、reply-lost、revoked-before-intent、
+revoked-after-intent。每案獨立匿名 source／packet；planned callback 封 refs／marker
+後直接 `os._exit`，自然正控制則 exit 0。原 Popen 精確 exit、marker 與實際 durable
+source／ledger 三者相符後，才能啟動不同 PID consumer；沿用 captured private
+bundle／pinned interpreter／clean HOME／closed FDs。兩個 revoked 案由 coordinator
+在 producer 實際退出後，reopen 原 authority 並經既有 revoke API 撤銷，不重發。
+
+Consumer 重新核對原 stopped worker／control／candidate／C 與 authority，僅以
+exact Docker reads 及原 source 的 fixed Git `rev-parse HEAD` 執行 reconciliation。
+禁止 prepare／start／export／source write replay；actual tree／mode／identity／
+HEAD／index／outscope 與原 artifacts 保持，合法單次 canonical result／ledger
+append 後再實際 reconcile 去重。Write-intent 的 record 保持 integration-intent、
+writer_started true；revoked-before-intent 沒有 operation，reconcile 的早期
+unavailable 拒絕與 integrate 的 revoked 拒絕分別保存，不虛構統一 reason。
+
+每案 60 秒、全包 240 秒固定預算；缺 durable state／source lock、identity／
+generation／runtime proof／bundle 漂移、wrong CID／op／authority、unexpected
+exit／marker、journal／cleanup fault 或未知副作用均不得形成成功收據。工程方法
+與 meaningful offline controls tracked；native runtime、獨立 code／security review
+及完整 DoD 留待當輪證據。此包不完成 N3／daemon restart／模型或訂閱 qualification，
+所有 production／runtime／adapter／N3 flags false，原始證據保留 Git 外。

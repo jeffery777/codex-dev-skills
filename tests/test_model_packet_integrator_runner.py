@@ -961,5 +961,207 @@ class ControllerReloadTests(unittest.TestCase):
         self.assertEqual(ledger['supervisors']['old']['observations'][-1]['reason'],'runtime-proof-unavailable')
 
 
+class PlannedFixtureExit(BaseException):
+    def __init__(self,code):self.code=code
+
+
+class FreshDocker(FixtureDocker,runner._FreshDocker):
+    instances=[]
+    def __init__(self,endpoint,root,stage,*,image,cid=None,volume=None,deadline=None):
+        FixtureDocker.__init__(self,root)
+        self.endpoint=endpoint;self.stage=stage;self.image_id=image;self.cid=cid;self.volume_name=volume
+        self.deadline=deadline;self.executable='/synthetic/docker';self.executable_identity=(1,2,'docker')
+        self.trace=[];self.failures=[];self.containers=[];self.volumes=[];self.instances.append(self)
+    def command(self,*argv):
+        self._allowed(argv,None);raw=FixtureDocker.command(self,*argv)
+        if argv[:2]==('container','create'):self.containers.append(raw.decode())
+        if argv[:2]==('volume','create'):self.volumes.append(raw.decode())
+        return raw
+    def archive(self,*argv,input_bytes=None):
+        self._allowed(argv,input_bytes)
+        return FixtureDocker.archive(self,*argv,input_bytes=input_bytes)
+
+
+class FreshIntegrationTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
+        self.root=pathlib.Path(self.temp.name).resolve();self.root.chmod(0o700)
+        self.parent_pid=runner.os.getpid();FreshDocker.instances=[]
+
+    def request(self,case,root=None):
+        root=root or self.root;hashes=runner._reload_capture(root);fd=runner.trust._directory(root)
+        try:identity=runner._reload_identity(runner.os.fstat(fd))[:4]
+        finally:runner.os.close(fd)
+        started=runner.time.monotonic()
+        request={'schema_version':1,'case':case,'run_id':'d'*32,'coordinator_pid':self.parent_pid,
+            'root_identity':identity,'bundle_hashes':hashes,'bundle_sha256':runner.packets.digest(runner.packets.canonical(hashes)),
+            'interpreter':runner._reload_interpreter(),'endpoint':'unix:///synthetic/docker.sock','image':IMAGE,
+            'docker_executable':'/synthetic/docker','docker_identity':[1,2,'docker'],'started_at':started,'deadline':started+60}
+        runner._reload_save(root,'reload-request.json',request)
+        return request
+
+    def producer(self,case,root=None):
+        root=root or self.root;request=self.request(case,root)
+        def exit(code):raise PlannedFixtureExit(code)
+        with mock.patch.object(runner,'_FreshDocker',FreshDocker), \
+                mock.patch.object(runner.os,'getpid',return_value=101), \
+                mock.patch.object(runner.os,'getppid',return_value=self.parent_pid), \
+                mock.patch.object(runner.os,'_exit',side_effect=exit) as stop:
+            if runner._FRESH_CASES[case]['exit']:
+                with self.assertRaises(PlannedFixtureExit) as fault:runner._fresh_produce(root,request)
+                self.assertEqual(fault.exception.code,runner._FRESH_CASES[case]['exit']);stop.assert_called_once()
+            else:runner._fresh_produce(root,request);stop.assert_not_called()
+        producer={'pid':101,'exit_code':runner._FRESH_CASES[case]['exit'],'waited_at':runner.time.monotonic(),
+            'marker':{'stage':'fresh-producer','pid':101,'run_id':request['run_id']}}
+        handoff,handoff_ref,marker_ref=runner._fresh_handoff(root,request,producer)
+        return request,producer,handoff,handoff_ref,marker_ref
+
+    def permit(self,case,root=None):
+        root=root or self.root;request,producer,handoff,href,mref=self.producer(case,root)
+        revoke=runner._fresh_revoke(root,handoff) if case.startswith('revoked-') else None
+        permit={'producer':producer,'handoff_ref':href,'marker_ref':mref,'revocation_ref':revoke,'case':case,'run_id':request['run_id']}
+        runner._reload_save(root,'fresh-consumer-permit.json',permit)
+        return request,handoff,permit
+
+    def consume(self,root,request):
+        with mock.patch.object(runner.os,'getppid',return_value=self.parent_pid):
+            return runner._fresh_consume(root,request)
+
+    def test_all_eight_cases_reconstruct_original_runtime_source_and_authority_without_replay(self):
+        for case in runner._FRESH_CASES:
+            with self.subTest(case=case),tempfile.TemporaryDirectory() as tmp:
+                root=pathlib.Path(tmp).resolve();root.chmod(0o700);request,handoff,permit=self.permit(case,root)
+                with mock.patch.object(runner,'_FreshDocker',FreshDocker), \
+                        mock.patch.object(runner.integration.SyntheticSource,'create') as create, \
+                        mock.patch.object(runner.integration.FixtureGovernance,'issue') as issue, \
+                        mock.patch.object(runner.containers.OneShotSyntheticContainerBackend,'prepare') as prepare, \
+                        mock.patch.object(runner.containers.OneShotSyntheticContainerBackend,'export_patch') as export:
+                    self.consume(root,request)
+                for blocked in (create,issue,prepare,export):blocked.assert_not_called()
+                value=json.loads((root/'fresh-consumer-result.json').read_bytes())
+                self.assertEqual(value['result']['state'],runner._FRESH_CASES[case]['state'])
+                self.assertEqual(value['after']['source_snapshot'],handoff['refs']['source_snapshot'])
+                self.assertFalse(value['production_qualified']);self.assertEqual(value['failures'],[])
+                self.assertEqual(value['transport_failures'],[])
+                self.assertGreater(value['git_trace_count'],0)
+                runner._fresh_audit_git(root,value['git_trace_count'],handoff)
+                self.assertEqual({p.name:p.read_bytes() for p in (root/handoff['source_relative']/'source').iterdir() if p.is_file()},runner._fresh_image(case))
+                calls=FreshDocker.instances[-1].calls
+                self.assertTrue(all(call[:2]==('container','cp') for call in calls))
+                if case in ('intent-crash','write-intent-crash','mid-write','commit-crash'):
+                    self.assertEqual(value['ledger_delta'],'canonical-result-appended')
+                    self.assertEqual(value['after']['ledger']['revision'],handoff['refs']['ledger']['revision']+1)
+                    self.assertEqual(len(value['after']['ledger']['integrations']['operation']['observations']),
+                        len(handoff['refs']['ledger']['integrations']['operation']['observations'])+1)
+                else:self.assertEqual(value['ledger_delta'],'deduplicated')
+                if case=='write-intent-crash':
+                    record=handoff['refs']['ledger']['integrations']['operation']
+                    self.assertEqual(record['state'],'integration-intent');self.assertTrue(record['writer_started'])
+                if case.startswith('revoked-'):
+                    self.assertIsNotNone(permit['revocation_ref'])
+                    self.assertEqual(value['result']['rejections']['integrate'],'source-authority-revoked')
+                    self.assertEqual(value['result']['rejections']['reconcile'],
+                        'source-integration-unavailable' if case=='revoked-before-intent' else 'source-authority-revoked')
+                    self.assertEqual(value['after']['ledger_ref'],handoff['refs']['ledger_ref'])
+
+    def test_planned_nonzero_helpers_require_actual_exit_and_exact_stdout_marker(self):
+        request=self.request('intent-crash')
+        # A fixed Python-only helper tests the original Popen exit boundary;
+        # source fault injection itself is separately checked against real stores.
+        bootstrap='import json,os; print(json.dumps({"stage":"fresh-producer","pid":os.getpid(),"run_id":"'+request['run_id']+'"}),flush=True); os._exit(71)'
+        with mock.patch.object(runner,'_RELOAD_BOOTSTRAP',bootstrap):
+            result=runner._reload_helper(self.root,request,'fresh-producer',100,runner.time.monotonic()+10)
+        self.assertEqual(result['exit_code'],71);self.assertNotEqual(result['pid'],runner.os.getpid())
+        self.assertEqual(json.loads((self.root/'fresh-producer-helper-readback.json').read_bytes())['exit_code'],71)
+        for failure in ('wrong-exit','wrong-marker'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp:
+                root=pathlib.Path(tmp).resolve();root.chmod(0o700)
+                code=bootstrap.replace('os._exit(71)','os._exit(72)') if failure=='wrong-exit' else bootstrap.replace('fresh-producer','other-stage')
+                with mock.patch.object(runner,'_RELOAD_BOOTSTRAP',code),self.assertRaises(runner.packets.PacketError):
+                    runner._reload_helper(root,request,'fresh-producer',100,runner.time.monotonic()+10)
+
+    def test_wrong_exit_pid_order_marker_and_refs_never_authorize_consumer(self):
+        request,producer,handoff,href,mref=self.producer('intent-crash')
+        for failure in ('exit','pid','early','marker'):
+            changed=runner.copy.deepcopy(producer)
+            if failure=='exit':changed['exit_code']=0
+            elif failure=='pid':changed['pid']=runner.os.getpid()
+            elif failure=='early':changed['waited_at']=request['started_at']-1
+            else:changed['marker']['stage']='other'
+            with self.subTest(failure=failure),mock.patch.object(runner,'_FreshDocker') as engine,self.assertRaises(runner.packets.PacketError):
+                runner._fresh_handoff(self.root,request,changed)
+            engine.assert_not_called()
+        path=self.root/'fresh-producer-marker.json';value=json.loads(path.read_bytes());value['fault_phase']='wrong'
+        path.write_bytes(runner.packets.canonical(value))
+        with self.assertRaisesRegex(runner.packets.PacketError,'planned-marker-invalid'):runner._fresh_handoff(self.root,request,producer)
+
+    def test_missing_original_ledger_lock_authority_intent_and_source_lock_fail_before_engine(self):
+        for target in ('ledger','lock','authority','intent','source-lock'):
+            with self.subTest(target=target),tempfile.TemporaryDirectory() as tmp:
+                root=pathlib.Path(tmp).resolve();root.chmod(0o700);request,handoff,_=self.permit('intent-crash',root)
+                if target=='ledger':ref=handoff['refs']['ledger_ref']
+                elif target=='lock':ref=handoff['refs']['lock_ref']
+                elif target=='source-lock':ref=handoff['refs']['source_lock_ref']
+                elif target=='authority':ref=handoff['refs']['authority_ref']
+                else:ref=next(ref for name,ref in handoff['refs']['packet_artifacts'].items() if name.startswith('integration-intent-'))
+                path=root/ref['relative'];path.rename(path.with_name(path.name+'.missing'))
+                with mock.patch.object(runner,'_FreshDocker') as engine, \
+                        self.assertRaises((FileNotFoundError,runner.packets.PacketError)):self.consume(root,request)
+                engine.assert_not_called();self.assertFalse(path.exists())
+
+    def test_source_identity_head_index_bytes_mode_and_outscope_drift_cannot_pass(self):
+        for failure in ('identity','head','index','bytes','mode','outscope'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp:
+                root=pathlib.Path(tmp).resolve();root.chmod(0o700);request,handoff,_=self.permit('intent-crash',root)
+                source=root/handoff['source_relative']/'source';path=source/'example.txt'
+                if failure=='identity':
+                    replacement=source/'replacement';replacement.write_bytes(path.read_bytes());replacement.chmod(0o644);runner.os.replace(replacement,path)
+                elif failure=='head':(source/'.git/HEAD').write_bytes(b'bad\n')
+                elif failure=='index':(source/'.git/index').write_bytes(b'bad')
+                elif failure=='bytes':path.write_bytes(b'drift\n')
+                elif failure=='mode':path.chmod(0o600)
+                else:(source/'remove.txt').write_bytes(b'outscope\n')
+                with mock.patch.object(runner,'_FreshDocker') as engine,self.assertRaises(runner.packets.PacketError):self.consume(root,request)
+                engine.assert_not_called();self.assertFalse((root/'fresh-consumer-result.json').exists())
+
+    def test_generation_runtime_proof_and_wrong_operation_or_authority_are_rejected(self):
+        for failure in ('generation','runtime','operation','authority'):
+            with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp:
+                root=pathlib.Path(tmp).resolve();root.chmod(0o700);request,handoff,_=self.permit('intent-crash',root)
+                if failure=='generation':
+                    path=root/runner._FRESH_PACKET/'ledger.json';ledger=json.loads(path.read_bytes());ledger['generation']+=1;path.write_bytes(runner.packets.canonical(ledger))
+                elif failure=='operation':
+                    path=root/runner._FRESH_PACKET/'ledger.json';ledger=json.loads(path.read_bytes());ledger['integrations']['wrong']=ledger['integrations'].pop('operation');path.write_bytes(runner.packets.canonical(ledger))
+                elif failure=='authority':(root/handoff['refs']['authority_ref']['relative']).write_bytes(b'forged\n')
+                else:
+                    descriptor=handoff['refs']['descriptor'];path=root/(descriptor['container_id']+'.json')
+                    observed=json.loads(path.read_bytes());observed['State']['ExitCode']=1;path.write_bytes(runner.packets.canonical(observed))
+                with mock.patch.object(runner,'_FreshDocker',FreshDocker),self.assertRaises(runner.packets.PacketError):self.consume(root,request)
+                self.assertFalse((root/'fresh-consumer-result.json').exists())
+
+    def test_exact_fresh_consumer_docker_and_git_read_allowlists(self):
+        engine=object.__new__(runner._FreshDocker);engine.stage='fresh-consumer';engine.cid='a'*64
+        engine.image_id=IMAGE;engine.volume_name='control-original'
+        for argv in [('container','inspect',engine.cid),('container','cp',engine.cid+':/control/completion.json','-')]:engine._allowed(argv,None)
+        for argv in [('container','inspect','b'*64),('container','start',engine.cid),('container','cp',engine.cid+':/workspace','-'),
+                ('container','cp','-',engine.cid+':/control'),('container','top',engine.cid),('volume','inspect','wrong')]:
+            with self.subTest(argv=argv),self.assertRaisesRegex(runner.packets.PacketError,'command-denied'):engine._allowed(argv,None)
+        request,_,handoff,_,_=self.producer('intent-crash')
+        source=runner.integration.SyntheticSource.reopen(self.root/handoff['source_relative'],handoff['refs']['source_snapshot']['descriptor_sha256'])
+        for index,(directory,argv) in enumerate([(source.source,('status',)),(self.root,('rev-parse','HEAD'))]):
+            failures=[];trace=[];root=self.root/('guard-'+str(index));root.mkdir(mode=0o700)
+            guard=runner._fresh_git_guard(source,root,failures,trace)
+            with mock.patch.object(runner,'_FRESH_GIT') as git,self.assertRaisesRegex(runner.packets.PacketError,'git-denied'):guard(directory,*argv)
+            git.assert_not_called();self.assertTrue(failures)
+
+    def test_fresh_private_bundle_drift_or_wrong_case_fails_before_effects(self):
+        request=self.request('applied-control')
+        path=self.root/'bundle'/runner._RELOAD_RUNNER;path.write_bytes(path.read_bytes()+b'\n# drift\n')
+        with mock.patch.object(runner.os,'getppid',return_value=self.parent_pid), \
+                mock.patch.object(runner,'_fresh_produce') as produce,self.assertRaisesRegex(runner.packets.PacketError,'bundle-drift'):
+            runner._fresh_entry(self.root,'fresh-producer')
+        produce.assert_not_called()
+
+
 
 if __name__=='__main__': unittest.main()

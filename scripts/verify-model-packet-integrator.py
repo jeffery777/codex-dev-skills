@@ -9,6 +9,7 @@ import argparse
 import ast
 import base64
 import copy
+import contextlib
 import fcntl
 import hashlib
 import json
@@ -334,8 +335,10 @@ def _reload_read(root, relative, limit=_RELOAD_LIMIT, *, private=True):
         before=os.fstat(fd)
         # PacketStore retains its O_EXCL staging hardlink as crash evidence.
         # Permit that fixed immutable layout, binding the observed link count too.
-        links={1,2} if (private and len(parts)==2 and parts[0]==_RELOAD_PACKET
-            and re.fullmatch(r'(?:runtime-)?[a-f0-9]{64}\.(?:json|patch)',parts[1])) else {1}
+        links={1,2} if (private and len(parts)==2 and parts[0] in (_RELOAD_PACKET,'packet-fresh-integration')
+            and re.fullmatch(r'(?:artifact-[a-f0-9]{32}|backend-runtime-[a-f0-9]{32}\.[a-z-]{1,32}'
+                r'|sealed-runtime-[a-f0-9]{32}\.(?:json|patch)'
+                r'|(?:runtime-|bootstrap-|bootstrap-event-|integration-intent-|integration-result-)?[a-f0-9]{64}\.(?:json|patch))',parts[1])) else {1}
         if (not stat.S_ISREG(before.st_mode) or before.st_uid!=os.getuid()
                 or before.st_nlink not in links or before.st_mode & (0o077 if private else 0o022)
                 or before.st_size>limit):
@@ -778,7 +781,7 @@ for relative,digest in request["bundle_hashes"].items():
 path=root/"bundle/scripts/verify-model-packet-integrator.py"; raw=read("bundle/scripts/verify-model-packet-integrator.py")
 namespace={"__name__":"_private_controller_reload","__file__":str(path)}
 exec(compile(raw,str(path),"exec"),namespace)
-namespace["_reload_entry"](root,stage)
+namespace["_fresh_entry" if stage in ("fresh-preflight","fresh-producer","fresh-consumer") else "_reload_entry"](root,stage)
 '''
 
 
@@ -834,7 +837,8 @@ def _reload_helper(root,request,stage,sentinel,deadline):
                     target.extend(chunk)
                     if len(target)>_RELOAD_HELPER_LIMIT:raise packets.PacketError('reload-helper-output-bound')
         code=process.wait(timeout=max(.01,deadline-time.monotonic()));waited=time.monotonic()
-        if code!=0:raise packets.PacketError('reload-helper-nonzero')
+        expected_exit=_FRESH_CASES[request['case']]['exit'] if stage=='fresh-producer' else 0
+        if code!=expected_exit:raise packets.PacketError('reload-helper-nonzero')
         marker=_reload_json(bytes(stdout))
         if marker!={'stage':stage,'pid':process.pid,'run_id':request['run_id']} or stderr:
             raise packets.PacketError('reload-helper-completion-invalid')
@@ -972,7 +976,470 @@ def controller_reload(args):
     return receipt
 
 
+_FRESH_PACKET='packet-fresh-integration'
+_FRESH_CASES={
+    'applied-control':{'exit':0,'phase':'completed','state':'applied','writer':True,'image':'post'},
+    'intent-crash':{'exit':71,'phase':'integration-intent','state':'not-applied','writer':False,'image':'pre'},
+    'write-intent-crash':{'exit':72,'phase':'write-intent','state':'unknown','writer':True,'image':'pre'},
+    'mid-write':{'exit':73,'phase':'first-file-written','state':'unknown','writer':True,'image':'mixed'},
+    'commit-crash':{'exit':74,'phase':'before-result','state':'applied','writer':True,'image':'post'},
+    'reply-lost':{'exit':75,'phase':'after-result','state':'applied','writer':True,'image':'post'},
+    'revoked-before-intent':{'exit':76,'phase':'authority-issued','state':'rejected-revoked','writer':False,'image':'pre'},
+    'revoked-after-intent':{'exit':77,'phase':'integration-intent','state':'rejected-revoked','writer':False,'image':'pre'}}
+_FRESH_GIT=integration._git
+
+
+class _FreshDocker(_ReloadDocker):
+    def _allowed(self,argv,input_bytes):
+        if self.stage!='fresh-consumer':return super()._allowed(argv,input_bytes)
+        exact={('info','--format','{{json .ID}}'),('image','inspect',self.image_id),
+            ('container','inspect',self.cid),('volume','inspect',self.volume_name)}
+        exact.update(('container','cp',self.cid+':/control/'+name,'-')
+            for name in ('input.json','claim.json','completion.json'))
+        if input_bytes is not None or tuple(argv) not in exact:
+            raise packets.PacketError('fresh-consumer-command-denied')
+
+
+def _fresh_image(case):
+    image=_FRESH_CASES[case]['image']
+    if image=='post':return {**containers.BASELINE,'added.txt':b'added\n','example.txt':b'new\n'}
+    if image=='mixed':return {**containers.BASELINE,'added.txt':b'added\n'}
+    return containers.BASELINE
+
+
+def _fresh_inventory(root,relative):
+    directory=trust._directory(root/relative)
+    try:
+        names=sorted(os.listdir(directory))
+        if len(names)>256:raise packets.PacketError('fresh-artifact-count-bound')
+        result={}
+        for name in names:
+            value=os.stat(name,dir_fd=directory,follow_symlinks=False)
+            if name in ('ledger.json','lock') or stat.S_ISDIR(value.st_mode):continue
+            result[name]=_reload_read(root,relative+'/'+name)[1]
+        if sorted(os.listdir(directory))!=names:raise packets.PacketError('fresh-artifact-inventory-drift')
+        return result
+    finally:os.close(directory)
+
+
+def _fresh_source_snapshot(source,source_fd):
+    files=integration._tree(source_fd)
+    metadata=integration._git_metadata(source_fd)
+    if metadata!=source.descriptor['git_metadata_sha256']:raise packets.PacketError('fresh-source-git-metadata-drift')
+    head=integration._git(source.source,'rev-parse','HEAD').strip().decode('ascii')
+    git_fd=os.open('.git',os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=source_fd)
+    try:index_sha=packets.digest(integration._regular(git_fd,'index',integration.MAX_TREE)[0])
+    finally:os.close(git_fd)
+    if head!=source.descriptor['head'] or index_sha!=source.descriptor['index_sha256']:
+        raise packets.PacketError('fresh-source-head-index-drift')
+    result={}
+    for name,raw in sorted(files.items()):
+        value=os.stat(name,dir_fd=source_fd,follow_symlinks=False)
+        result[name]={'bytes_base64':base64.b64encode(raw).decode(),'mode':stat.S_IMODE(value.st_mode),
+            'identity':_reload_identity(value),'sha256':packets.digest(raw)}
+    return {'descriptor_sha256':source.descriptor_sha256,'head':head,'index_sha256':index_sha,
+        'git_metadata_sha256':metadata,'files':result}
+
+
+def _fresh_refs(root,source,store,authority,*,held=None):
+    # Verify existing root/lock/ledger before any core locked() O_CREAT path.
+    fd=trust._directory(root/_FRESH_PACKET)
+    try:packet_identity=_reload_identity(os.fstat(fd))[:4]
+    finally:os.close(fd)
+    _,lock=_reload_read(root,_FRESH_PACKET+'/lock');raw,ledger_ref=_reload_read(root,_FRESH_PACKET+'/ledger.json')
+    ledger=_reload_json(raw)
+    if ledger.get('schema_version') not in (3,4) or ledger.get('packet_id')!=_FRESH_PACKET:
+        raise packets.PacketError('fresh-original-ledger-required')
+    record=ledger['supervisors'].get('attempt')
+    if record is None or record['stage']!='published' or record['schema_version']!=4:
+        raise packets.PacketError('fresh-original-candidate-required')
+    descriptor_sha=record['runtime_descriptor_sha256']
+    descriptor=_reload_json(_reload_read(root,_FRESH_PACKET+'/runtime-'+descriptor_sha+'.json')[0])
+    control=source.root.name+'/control'
+    _,source_lock=_reload_read(root,control+'/writer.lock')
+    _,authority_ref=_reload_read(root,control+'/'+authority.authority_id+'.json')
+    if authority_ref['sha256']!=authority.sha:raise packets.PacketError('fresh-authority-reference-drift')
+    if held is not None:snapshot=_fresh_source_snapshot(source,held['source_fd'])
+    else:
+        with source._locked() as (source_fd,_):snapshot=_fresh_source_snapshot(source,source_fd)
+    return {'ledger':ledger,'ledger_ref':ledger_ref,'packet_identity':packet_identity,'lock_ref':lock,
+        'source_lock_ref':source_lock,'source_snapshot':snapshot,'authority_id':authority.authority_id,
+        'authority_sha256':authority.sha,'authority_ref':authority_ref,'descriptor':descriptor,
+        'checkpoint':ledger['checkpoint'],'binding':record['binding'],
+        'packet_artifacts':_fresh_inventory(root,_FRESH_PACKET),'source_artifacts':_fresh_inventory(root,control)}
+
+
+def _fresh_expected_producer(case,refs):
+    expected=_FRESH_CASES[case];ledger=refs['ledger']
+    actual={name:base64.b64decode(value['bytes_base64'],validate=True) for name,value in refs['source_snapshot']['files'].items()}
+    if actual!=_fresh_image(case) or any(value['mode']!=0o644 for value in refs['source_snapshot']['files'].values()):
+        raise packets.PacketError('fresh-producer-image-unexpected')
+    record=ledger.get('integrations',{}).get('operation')
+    if case=='revoked-before-intent':
+        if ledger['schema_version']!=3 or record is not None:raise packets.PacketError('fresh-pre-intent-state-unexpected')
+        return
+    if ledger['schema_version']!=4 or set(ledger['integrations'])!={'operation'} or record['writer_started']is not expected['writer']:
+        raise packets.PacketError('fresh-producer-durable-state-unexpected')
+    final=case in ('applied-control','reply-lost')
+    phases=['integration-intent']+(['write-intent'] if expected['writer'] else [])+(['applied'] if final else [])
+    if (record['state']!=('applied' if final else 'integration-intent')
+            or [event['phase'] for event in record['observations']]!=phases
+            or (record['result_sha256'] is not None)!=final):
+        raise packets.PacketError('fresh-producer-durable-state-unexpected')
+
+
+def _fresh_seal(root,request,source,store,authority,engine,backend,held=None):
+    if engine.failures:raise packets.PacketError('fresh-producer-transport-unknown')
+    refs=_fresh_refs(root,source,store,authority,held=held)
+    _fresh_expected_producer(request['case'],refs)
+    _reload_validate_bundle(root/'bundle',request['bundle_hashes'])
+    handoff={'schema_version':1,'stage':'fresh-producer','case':request['case'],'run_id':request['run_id'],
+        'pid':os.getpid(),'ppid':os.getppid(),'bundle_sha256':request['bundle_sha256'],
+        'interpreter':_reload_interpreter(),'engine_binding':_reload_binding(backend,engine),
+        'source_relative':source.root.name,'refs':refs,'expected_exit':_FRESH_CASES[request['case']]['exit'],
+        'fault_phase':_FRESH_CASES[request['case']]['phase'],'sealed_at':time.monotonic(),
+        'trace_count':len(engine.trace),'containers_retained':engine.containers,'volumes_retained':engine.volumes}
+    _reload_save(root,'fresh-producer-handoff.json',handoff)
+    _reload_save(root,'fresh-producer-marker.json',{'stage':'fresh-producer','case':request['case'],
+        'pid':os.getpid(),'run_id':request['run_id'],'expected_exit':handoff['expected_exit'],
+        'fault_phase':handoff['fault_phase'],'handoff_sha256':_reload_read(root,'fresh-producer-handoff.json')[1]['sha256']})
+    return handoff
+
+
+def _fresh_produce(root,request):
+    source=integration.SyntheticSource.create(root);store=packets.PacketStore(root,_FRESH_PACKET)
+    store.prepare(packets.digest(packets.canonical({'scope':'fresh-integration','case':request['case']})))
+    engine=_FreshDocker(request['endpoint'],root,'fresh-producer',image=request['image'],deadline=request['deadline'])
+    if engine.executable!=request['docker_executable'] or list(engine.executable_identity)!=request['docker_identity']:
+        raise packets.PacketError('fresh-docker-executable-drift')
+    backend=containers.OneShotSyntheticContainerBackend(store,endpoint=request['endpoint'],image_id=request['image'],
+        opt_in=True,worker='add-update',_engine=engine)
+    supervisor=supervisors.PacketSupervisor(store,backend,host_id=backend.host_id,backend_id=backend.backend_id,
+        policy_sha256=backend.policy_sha256)
+    candidate=supervisor.start('attempt','e'*64,'f'*64,expected_revision=0,**source.requirements('add-update'))
+    candidate=await_candidate(supervisor,store,engine,'attempt',candidate)
+    if candidate.get('outcome')!='integration-candidate' or candidate.get('patch')!=integration.FIXED_PATCH:
+        raise packets.PacketError('fresh-candidate-unavailable')
+    governance=integration.FixtureGovernance(source);authority=governance.issue(supervisor,'attempt',recipe='add-update')
+    integrator=integration.PacketIntegrator(source,governance,supervisor);held={};case=request['case']
+    def stop():
+        _fresh_seal(root,request,source,store,authority,engine,backend,held or None)
+        print(json.dumps({'stage':'fresh-producer','pid':os.getpid(),'run_id':request['run_id']},separators=(',',':')),flush=True)
+        os._exit(_FRESH_CASES[case]['exit'])
+    if case=='revoked-before-intent':stop();raise packets.PacketError('fresh-planned-exit-returned')
+    source_lock=source._locked;packet_lock=store.locked
+    @contextlib.contextmanager
+    def track_source():
+        with source_lock() as (fd,control):
+            held['source_fd']=fd
+            try:yield fd,control
+            finally:held.pop('source_fd',None)
+    @contextlib.contextmanager
+    def track_packet():
+        with packet_lock() as fd:
+            held['packet_fd']=fd
+            try:yield fd
+            finally:held.pop('packet_fd',None)
+    original_write=integrator._write_file;original_finish=store._finish_integration
+    def before_write(*args):stop()
+    def partial_write(*args):original_write(*args);stop()
+    def finish(*args):
+        if case=='reply-lost':original_finish(*args)
+        stop()
+    if case in ('intent-crash','revoked-after-intent'):target,method,fault=store,'_start_integration_write',before_write
+    elif case=='write-intent-crash':target,method,fault=integrator,'_write_file',before_write
+    elif case=='mid-write':target,method,fault=integrator,'_write_file',partial_write
+    elif case in ('commit-crash','reply-lost'):target,method,fault=store,'_finish_integration',finish
+    else:target=None
+    with mock.patch.object(source,'_locked',track_source),mock.patch.object(store,'locked',track_packet):
+        if target:
+            with mock.patch.object(target,method,side_effect=fault):
+                integrator.integrate('attempt',authority,operation_id='operation')
+            raise packets.PacketError('fresh-planned-fault-not-reached')
+        result=integrator.integrate('attempt',authority,operation_id='operation')
+        if result['state']!='applied':raise packets.PacketError('fresh-control-not-applied')
+    _fresh_seal(root,request,source,store,authority,engine,backend)
+
+
+def _fresh_handoff(root,request,producer):
+    if (producer.get('exit_code')!=_FRESH_CASES[request['case']]['exit'] or type(producer.get('pid'))is not int
+            or producer['pid']==os.getpid() or producer.get('marker')!={'stage':'fresh-producer','pid':producer['pid'],'run_id':request['run_id']}):
+        raise packets.PacketError('fresh-producer-exit-unproven')
+    raw,handoff_ref=_reload_read(root,'fresh-producer-handoff.json');handoff=_reload_json(raw)
+    marker,marker_ref=_reload_read(root,'fresh-producer-marker.json')
+    keys={'schema_version','stage','case','run_id','pid','ppid','bundle_sha256','interpreter','engine_binding',
+        'source_relative','refs','expected_exit','fault_phase','sealed_at','trace_count','containers_retained','volumes_retained'}
+    if (type(handoff)is not dict or set(handoff)!=keys or handoff['schema_version']!=1
+            or handoff['stage']!='fresh-producer' or handoff['case']!=request['case'] or handoff['run_id']!=request['run_id']
+            or handoff['pid']!=producer['pid'] or handoff['ppid']!=request['coordinator_pid']
+            or handoff['bundle_sha256']!=request['bundle_sha256'] or handoff['interpreter']!=request['interpreter']
+            or handoff['expected_exit']!=producer['exit_code'] or handoff['fault_phase']!=_FRESH_CASES[request['case']]['phase']
+            or not re.fullmatch(r'source-fixture-[A-Za-z0-9_]+',handoff['source_relative'])
+            or not request['started_at']<=handoff['sealed_at']<=producer['waited_at']<request['deadline']):
+        raise packets.PacketError('fresh-handoff-binding-invalid')
+    expected={'stage':'fresh-producer','case':request['case'],'pid':producer['pid'],'run_id':request['run_id'],
+        'expected_exit':producer['exit_code'],'fault_phase':handoff['fault_phase'],'handoff_sha256':handoff_ref['sha256']}
+    if _reload_json(marker)!=expected:raise packets.PacketError('fresh-planned-marker-invalid')
+    refs=handoff['refs']
+    for key in ('ledger_ref','lock_ref','source_lock_ref','authority_ref'):_reload_ref(root,refs[key])
+    for key in ('packet_artifacts','source_artifacts'):
+        for ref in refs[key].values():_reload_ref(root,ref)
+    _fresh_expected_producer(request['case'],refs)
+    return handoff,handoff_ref,marker_ref
+
+
+def _fresh_revoke(root,handoff):
+    source=integration.SyntheticSource.reopen(root/handoff['source_relative'],handoff['refs']['source_snapshot']['descriptor_sha256'])
+    governance=integration.FixtureGovernance(source)
+    authority=governance.reopen_authority(handoff['refs']['authority_id'],handoff['refs']['authority_sha256'])
+    governance.revoke(authority)
+    name=source.root.name+'/control/revoked-'+authority.authority_id
+    raw,ref=_reload_read(root,name)
+    if raw!=packets.canonical({'authority_sha256':authority.sha}):raise packets.PacketError('fresh-revocation-readback-drift')
+    return ref
+
+
+def _fresh_git_guard(source,root,failures,trace):
+    def git(directory,*argv,input_bytes=None):
+        row={'argv':list(argv),'directory':str(directory),'error':None,'reply_base64':''};name='fresh-git-'+str(len(trace))+'.json'
+        try:
+            _reload_save(root,name+'.intent',row)
+            if pathlib.Path(directory)!=source.source or argv!=('rev-parse','HEAD') or input_bytes is not None:
+                raise packets.PacketError('fresh-consumer-git-denied')
+            raw=_FRESH_GIT(directory,*argv)
+            row['reply_base64']=base64.b64encode(raw).decode();return raw
+        except Exception as error:
+            row['error']=type(error).__name__+':'+str(error)[:160];failures.append(row['error']);raise
+        finally:
+            trace.append(row)
+            try:_reload_save(root,name,row)
+            except Exception as error:failures.append('fresh-git-result-journal:'+str(error)[:160]);raise
+    return git
+
+
+def _fresh_ledger_delta(before,after,result):
+    if before==after:return 'deduplicated'
+    expected=copy.deepcopy(before);record=expected['integrations']['operation']
+    if record['state'] not in ('integration-intent','unknown'):raise packets.PacketError('fresh-ledger-unexpected-drift')
+    sha=packets.digest(packets.canonical(result));expected['revision']+=1
+    record['state']=result['state'];record['result_sha256']=sha
+    record['observations'].append({'phase':result['state'],'revision':expected['revision'],'evidence_sha256':sha})
+    if expected!=after:raise packets.PacketError('fresh-ledger-unexpected-drift')
+    return 'canonical-result-appended'
+
+
+def _fresh_consume(root,request):
+    permit=_reload_json(_reload_read(root,'fresh-consumer-permit.json')[0])
+    if (type(permit)is not dict or set(permit)!={'producer','handoff_ref','marker_ref','revocation_ref','case','run_id'}
+            or permit['case']!=request['case'] or permit['run_id']!=request['run_id']
+            or os.getpid()==permit['producer']['pid'] or os.getppid()!=request['coordinator_pid']):
+        raise packets.PacketError('fresh-consumer-permit-invalid')
+    handoff,handoff_ref,marker_ref=_fresh_handoff(root,request,permit['producer'])
+    if handoff_ref!=permit['handoff_ref'] or marker_ref!=permit['marker_ref']:raise packets.PacketError('fresh-consumer-reference-drift')
+    source=integration.SyntheticSource.reopen(root/handoff['source_relative'],handoff['refs']['source_snapshot']['descriptor_sha256'])
+    store=packets.PacketStore(root,_FRESH_PACKET);governance=integration.FixtureGovernance(source)
+    authority=governance.reopen_authority(handoff['refs']['authority_id'],handoff['refs']['authority_sha256'])
+    revoked=request['case'].startswith('revoked-')
+    if revoked:
+        ref=permit['revocation_ref'];raw=_reload_ref(root,ref)
+        if ref['relative']!=source.root.name+'/control/revoked-'+authority.authority_id or raw!=packets.canonical({'authority_sha256':authority.sha}):
+            raise packets.PacketError('fresh-original-revocation-required')
+    elif permit['revocation_ref']is not None:raise packets.PacketError('fresh-unexpected-revocation')
+    failures=[];git_trace=[]
+    with mock.patch.object(integration,'_git',side_effect=_fresh_git_guard(source,root,failures,git_trace)):
+        before=_fresh_refs(root,source,store,authority)
+        original=copy.deepcopy(handoff['refs'])
+        if revoked:original['source_artifacts']['revoked-'+authority.authority_id]=permit['revocation_ref']
+        if before!=original:raise packets.PacketError('fresh-original-state-drift')
+        descriptor=before['descriptor']
+        engine=_FreshDocker(request['endpoint'],root,'fresh-consumer',image=request['image'],
+            cid=descriptor['container_id'],volume=descriptor['control_volume']['name'],deadline=request['deadline'])
+        backend=containers.OneShotSyntheticContainerBackend(store,endpoint=request['endpoint'],image_id=request['image'],
+            opt_in=True,worker='add-update',_engine=engine)
+        if _reload_binding(backend,engine)!=handoff['engine_binding']:raise packets.PacketError('fresh-engine-binding-drift')
+        supervisor=supervisors.PacketSupervisor(store,backend,host_id=backend.host_id,backend_id=backend.backend_id,policy_sha256=backend.policy_sha256)
+        integrator=integration.PacketIntegrator(source,governance,supervisor)
+        def deny(*args,**kwargs):failures.append('fresh-consumer-write-or-effect-denied');raise packets.PacketError(failures[-1])
+        with contextlib.ExitStack() as stack:
+            for target,method in [(backend,'prepare'),(backend,'bootstrap'),(backend,'launch'),(backend,'export_patch'),
+                    (backend,'read_sealed_patch'),(integrator,'_write_file'),(integrator,'_stage')]:
+                stack.enter_context(mock.patch.object(target,method,side_effect=deny))
+            if revoked:
+                reasons={}
+                for operation in ('integrate','reconcile'):
+                    try:
+                        if operation=='integrate':integrator.integrate('attempt',authority,operation_id='operation')
+                        else:integrator.reconcile('operation',authority)
+                    except packets.PacketError as error:
+                        expected=('source-integration-unavailable' if operation=='reconcile' and request['case']=='revoked-before-intent'
+                            else 'source-authority-revoked')
+                        if str(error)!=expected:raise
+                        reasons[operation]=str(error)
+                    else:raise packets.PacketError('fresh-revoked-operation-accepted')
+                result={'state':'rejected-revoked','rejections':reasons};delta='deduplicated'
+                after=_fresh_refs(root,source,store,authority)
+                if after!=before:raise packets.PacketError('fresh-revoked-state-mutated')
+            else:
+                result=integrator.reconcile('operation',authority)
+                if result['state']!=_FRESH_CASES[request['case']]['state']:raise packets.PacketError('fresh-reconcile-outcome-mismatch')
+                after=_fresh_refs(root,source,store,authority);delta=_fresh_ledger_delta(before['ledger'],after['ledger'],result)
+                if after['source_snapshot']!=before['source_snapshot']:raise packets.PacketError('fresh-source-replayed-or-drifted')
+                if any(after['packet_artifacts'].get(name)!=ref for name,ref in before['packet_artifacts'].items()):
+                    raise packets.PacketError('fresh-original-artifact-drift')
+                additions=set(after['packet_artifacts'])-set(before['packet_artifacts'])
+                if delta=='deduplicated':
+                    if additions:raise packets.PacketError('fresh-unexpected-artifact-append')
+                else:
+                    sha=packets.digest(packets.canonical(result));canonical='integration-result-'+sha+'.json'
+                    staging=additions-{canonical}
+                    if (len(additions)!=2 or canonical not in additions or len(staging)!=1
+                            or not re.fullmatch(r'artifact-[a-f0-9]{32}',next(iter(staging)))
+                            or any(after['packet_artifacts'][name]['sha256']!=sha for name in additions)):
+                        raise packets.PacketError('fresh-unexpected-artifact-append')
+                stable={key:value for key,value in before.items() if key not in ('ledger','ledger_ref','packet_artifacts')}
+                if stable!={key:value for key,value in after.items() if key not in ('ledger','ledger_ref','packet_artifacts')}:
+                    raise packets.PacketError('fresh-original-binding-drift')
+                if integrator.reconcile('operation',authority)!=result or _fresh_refs(root,source,store,authority)!=after:
+                    raise packets.PacketError('fresh-reconcile-not-deduplicated')
+        if failures or engine.failures:raise packets.PacketError('fresh-consumer-proof-unknown')
+    value={'schema_version':1,'stage':'fresh-consumer','case':request['case'],'pid':os.getpid(),'ppid':os.getppid(),
+        'run_id':request['run_id'],'bundle_sha256':request['bundle_sha256'],'result':result,'ledger_delta':delta,
+        'after':after,'failures':failures,'transport_failures':engine.failures,'trace_count':len(engine.trace),
+        'git_trace_count':len(git_trace),'finished_at':time.monotonic(),'production_qualified':False}
+    live_deadline(request['deadline']);_reload_save(root,'fresh-consumer-result.json',value)
+
+
+def _fresh_entry(root,stage):
+    request=_reload_json(_reload_read(root,'reload-request.json')[0])
+    keys={'schema_version','run_id','coordinator_pid','root_identity','bundle_hashes','bundle_sha256','interpreter',
+        'endpoint','image','docker_executable','docker_identity','case','started_at','deadline'}
+    fd=trust._directory(root)
+    try:identity=_reload_identity(os.fstat(fd))[:4]
+    finally:os.close(fd)
+    if (type(request)is not dict or set(request)!=keys or request['schema_version']!=1 or request['case'] not in _FRESH_CASES
+            or request['coordinator_pid']!=os.getppid() or request['root_identity']!=identity
+            or request['interpreter']!=_reload_interpreter() or not re.fullmatch(r'[a-f0-9]{32}',request['run_id'])
+            or request['bundle_sha256']!=packets.digest(packets.canonical(request['bundle_hashes']))
+            or stage not in ('fresh-preflight','fresh-producer','fresh-consumer')
+            or request['deadline']!=request['started_at']+60):raise packets.PacketError('fresh-private-request-invalid')
+    _reload_validate_bundle(root/'bundle',request['bundle_hashes'])
+    for name in _RELOAD_MODULES:
+        module=__import__(name)
+        if pathlib.Path(module.__file__).resolve()!=root/'bundle/skills/loop-engineering/scripts'/(name+'.py'):
+            raise packets.PacketError('fresh-ambient-module-fallback')
+    live_deadline(request['deadline'])
+    if stage=='fresh-producer':_fresh_produce(root,request)
+    elif stage=='fresh-consumer':_fresh_consume(root,request)
+    _reload_validate_bundle(root/'bundle',request['bundle_hashes']);live_deadline(request['deadline'])
+    print(json.dumps({'stage':stage,'pid':os.getpid(),'run_id':request['run_id']},separators=(',',':')),flush=True)
+
+
+def _fresh_audit(root,stage,count,request,handoff):
+    if type(count)is not int or not 1<=count<=512:raise packets.PacketError('fresh-trace-count-invalid')
+    policy=object.__new__(_FreshDocker);policy.stage=stage;policy.cid=handoff['refs']['descriptor']['container_id']
+    policy.image_id=request['image'];policy.volume_name=handoff['refs']['descriptor']['control_volume']['name'];total=0
+    for index in range(count):
+        name=stage+'-transport-'+str(index)+'.json';raw,_=_reload_read(root,name);row=_reload_json(raw)
+        intent=_reload_json(_reload_read(root,name+'.intent')[0]);total+=len(raw)
+        if (set(row)!={'argv','input_bytes','started','reply_base64','error','finished'} or row['error']is not None
+                or intent!={**{key:row[key] for key in row if key!='finished'},'reply_base64':'','error':None}
+                or not request['started_at']<=row['started']<=row['finished']<request['deadline']
+                or len(base64.b64decode(row['reply_base64'],validate=True))>containers.MAX_ENGINE_OUTPUT
+                or total>_RELOAD_TRACE_LIMIT):raise packets.PacketError('fresh-transport-proof-invalid')
+        policy._allowed(row['argv'],row['input_bytes'])
+    return {'count':count,'bytes':total}
+
+
+def _fresh_audit_git(root,count,handoff):
+    if type(count)is not int or not 1<=count<=64:raise packets.PacketError('fresh-git-trace-count-invalid')
+    expected_directory=str(root/handoff['source_relative']/'source')
+    expected_reply=(handoff['refs']['source_snapshot']['head']+'\n').encode()
+    for index in range(count):
+        name='fresh-git-'+str(index)+'.json';row=_reload_json(_reload_read(root,name)[0])
+        intent=_reload_json(_reload_read(root,name+'.intent')[0])
+        if (set(row)!={'argv','directory','error','reply_base64'} or row['argv']!=['rev-parse','HEAD']
+                or row['directory']!=expected_directory or row['error']is not None
+                or base64.b64decode(row['reply_base64'],validate=True)!=expected_reply
+                or intent!={**row,'reply_base64':''}):raise packets.PacketError('fresh-git-trace-invalid')
+    return {'count':count}
+
+
+def fresh_integration(args):
+    fd=trust._directory(args.evidence_root)
+    try:
+        if os.fstat(fd).st_mode&0o077:raise packets.PacketError('evidence-root-must-be-private')
+    finally:os.close(fd)
+    root=pathlib.Path(tempfile.mkdtemp(prefix='model-fresh-integration-',dir=args.evidence_root));root.chmod(0o700)
+    receipt={'schema_version':1,'scope':'synthetic-fresh-process-integration-revocation-fixed-eight',
+        'fixture':str(root),'execution_outcome':'unknown','cases':{},'production_qualified':False,
+        'runtime_qualified':False,'adapter_qualified':False,'n3_complete':False,
+        'limitations':['fixed-synchronous-source-producer-exit-not-daemon-restart-or-production-authority',
+            'planned-exit-requires-original-wait-marker-and-durable-state','no-consumer-source-write-or-authority-reissue',
+            'trusted-host-private-fixed-helpers-not-arbitrary-FD-OS-isolation','synthetic-artifacts-not-formal-review']}
+    deadline=time.monotonic()+240;sentinel=None;hashes=None
+    try:
+        read,write=os.pipe()
+        try:sentinel=fcntl.fcntl(read,fcntl.F_DUPFD,100);os.set_inheritable(sentinel,True)
+        finally:os.close(read);os.close(write)
+        for case in _FRESH_CASES:
+            live_deadline(deadline);home=root/case;home.mkdir(mode=0o700)
+            captured=_reload_capture(home)
+            if hashes is None:hashes=captured;receipt['source_sha256']=hashes
+            elif hashes!=captured:raise packets.PacketError('fresh-cross-case-source-drift')
+            engine=containers.LocalDocker(args.endpoint,home);fd=trust._directory(home)
+            try:identity=_reload_identity(os.fstat(fd))[:4]
+            finally:os.close(fd)
+            started=time.monotonic();request={'schema_version':1,'run_id':uuid.uuid4().hex,'case':case,
+                'coordinator_pid':os.getpid(),'root_identity':identity,'bundle_hashes':hashes,
+                'bundle_sha256':packets.digest(packets.canonical(hashes)),'interpreter':_reload_interpreter(),
+                'endpoint':args.endpoint,'image':args.image,'docker_executable':engine.executable,
+                'docker_identity':list(engine.executable_identity),'started_at':started,'deadline':started+60}
+            _reload_save(home,'reload-request.json',request)
+            _reload_helper(home,request,'fresh-preflight',sentinel,min(deadline,request['deadline']))
+            producer=_reload_helper(home,request,'fresh-producer',sentinel,min(deadline,request['deadline']))
+            handoff,handoff_ref,marker_ref=_fresh_handoff(home,request,producer)
+            source=integration.SyntheticSource.reopen(home/handoff['source_relative'],handoff['refs']['source_snapshot']['descriptor_sha256'])
+            governance=integration.FixtureGovernance(source)
+            authority=governance.reopen_authority(handoff['refs']['authority_id'],handoff['refs']['authority_sha256'])
+            if _fresh_refs(home,source,packets.PacketStore(home,_FRESH_PACKET),authority)!=handoff['refs']:
+                raise packets.PacketError('fresh-coordinator-original-state-drift')
+            revocation=_fresh_revoke(home,handoff) if case.startswith('revoked-') else None
+            permit={'producer':producer,'handoff_ref':handoff_ref,'marker_ref':marker_ref,'revocation_ref':revocation,
+                'case':case,'run_id':request['run_id']}
+            _reload_save(home,'fresh-consumer-permit.json',permit)
+            consumer=_reload_helper(home,request,'fresh-consumer',sentinel,min(deadline,request['deadline']))
+            value=_reload_json(_reload_read(home,'fresh-consumer-result.json')[0])
+            if (value.get('pid')!=consumer['pid'] or consumer['pid']==producer['pid'] or value.get('ppid')!=os.getpid()
+                    or value.get('case')!=case or value.get('run_id')!=request['run_id']
+                    or value.get('bundle_sha256')!=request['bundle_sha256'] or value.get('failures')!=[]
+                    or value.get('transport_failures')!=[] or not producer['waited_at']<value['finished_at']<request['deadline']
+                    or value.get('result',{}).get('state')!=_FRESH_CASES[case]['state']):
+                raise packets.PacketError('fresh-consumer-result-invalid')
+            after=_fresh_refs(home,source,packets.PacketStore(home,_FRESH_PACKET),authority)
+            if after!=value['after'] or after['source_snapshot']!=handoff['refs']['source_snapshot']:
+                raise packets.PacketError('fresh-coordinator-source-or-state-drift')
+            audits={stage:_fresh_audit(home,stage,count,request,handoff) for stage,count in
+                [('fresh-producer',handoff['trace_count']),('fresh-consumer',value['trace_count'])]}
+            audits['git']=_fresh_audit_git(home,value['git_trace_count'],handoff)
+            _reload_validate_bundle(home/'bundle',hashes);live_deadline(request['deadline']);live_deadline(deadline)
+            receipt['cases'][case]={'passed':True,'producer':producer,'consumer':consumer,'handoff_ref':handoff_ref,
+                'marker_ref':marker_ref,'revocation_ref':revocation,'result':value,'transport_audit':audits,
+                'containers_retained':handoff['containers_retained'],'volumes_retained':handoff['volumes_retained']}
+        receipt['execution_outcome']='measured-synthetic-fresh-integration-eight-passed'
+    except Exception as error:
+        receipt['failure_class']=type(error).__name__;receipt['failure_reason']=str(error)[:160];raise
+    finally:
+        if sentinel is not None:os.close(sentinel)
+        _reload_save(root,'fresh-integration-evidence.json',receipt)
+        print(json.dumps({'evidence':str(root/'fresh-integration-evidence.json'),
+            'execution_outcome':receipt['execution_outcome'],'production_qualified':False}))
+    return receipt
+
+
 def run(args,*,_engine_factory=None):
+    if getattr(args,'fresh_integration_only',False):
+        if _engine_factory is not None:raise packets.PacketError('fresh-coordinator-private-helpers-required')
+        return fresh_integration(args)
     if getattr(args,'controller_reload_only',False):
         if _engine_factory is not None:raise packets.PacketError('reload-coordinator-real-private-helpers-required')
         return controller_reload(args)
@@ -1086,6 +1553,7 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--synthetic-qualified-container-fixture',action='store_true',required=True)
     modes=parser.add_mutually_exclusive_group()
+    modes.add_argument('--fresh-integration-only',action='store_true',help='fixed eight-case fresh producer/consumer integration and revocation only')
     modes.add_argument('--controller-reload-only',action='store_true',help='fixed producer exit/fresh readonly original live worker reconstruction only')
     modes.add_argument('--checkpoint-overlap-only',action='store_true',help='fixed nonempty checkpoint/live quarantine/successor fixture only')
     parser.add_argument('--endpoint',required=True); parser.add_argument('--image',required=True)

@@ -1111,3 +1111,60 @@ trace 上限 8 MiB、private artifact 上限 1 MiB。
 self-hosted／auth／daemon restart，所有 qualification flags 維持 false。舊有
 single-process fixture 的 synchronous-nochildren 限制不沿用到此新模式；可信
 host、固定不替換 worker 與有限 readback 窗口仍是本局部證明的前提。
+
+## N3 fresh process integration／revocation 局部工程控制
+
+`verify-model-packet-integrator.py --fresh-integration-only` 與既有模式互斥，必須
+另給 synthetic fixture opt-in。固定八案各有獨立私有 root、synthetic source、
+packet／attempt／operation；沿用 13 檔 captured bundle、pinned interpreter、
+isolated import preflight、匿名 HOME、closed stdin 與 `close_fds`／空 `pass_fds`。
+它不接受任意 fault／argv／source／authority／loader。每案固定 60 秒、全包
+240 秒上限；Docker transport 仍預留 10 秒 timeout＋2 秒 cleanup，任何 deadline、
+journal、cleanup 或 partial reply 不明都保留 unknown，不重送效果。
+
+| 固定案例 | Producer 的真實退出點 | Consumer 預期 |
+| --- | --- | --- |
+| applied-control | 原 integration 自然完成，exit 0 | applied；只讀回既存 result |
+| intent-crash | durable intent 後、write-intent 前，exit 71 | not-applied |
+| write-intent-crash | durable write-intent 後、首次 source write 前，exit 72 | unknown |
+| mid-write | 第一個固定 source file 完成後，exit 73 | unknown；保留 mixed image |
+| commit-crash | 完整 postimage 後、result commit 前，exit 74 | applied |
+| reply-lost | 原 result 已封存後，exit 75 | applied；不重播 source |
+| revoked-before-intent | 原 authority 已發出、尚無 intent，exit 76 | coordinator 撤銷後兩入口拒絕 |
+| revoked-after-intent | 原 durable intent 後、write-intent 前，exit 77 | coordinator 撤銷後兩入口拒絕 |
+
+Planned fault callback 封存完整 handoff／marker 並直接 `os._exit`，不以捕捉
+same-process `SystemExit` 取代退出。Coordinator 必須讀回原 Popen 的精確 exit、
+stdout marker、handoff binding 與實際 durable state，才啟動不同 PID consumer。
+write-intent 的 record 仍是 `integration-intent`，但 `writer_started=true`；
+不能由 record state alone 判斷已寫入。撤銷由 coordinator 在 producer 實際
+退出、原 flock 釋放後，reopen 原 authority 並呼叫既有 `FixtureGovernance.revoke`，
+封存 revocation bytes／identity；callback 不仿寫撤銷 artifact。
+
+Fresh consumer 重新建立原 source／store／backend／supervisor／integrator，核對
+原 stopped worker 的 immutable descriptor、control input／claim／completion 與
+runtime evidence，不能直接信任保存的 candidate JSON。Docker 僅允許固定 info、
+image／原 CID／原 control volume inspect 及三份 control file 的 stdout cp；
+Git 僅允許原 source 的固定 `rev-parse HEAD`。禁止 prepare、bootstrap、launch、
+export、sealed export read、authority reissue、stage 或 source write。每次 Git／
+Docker intent／reply 與 failure 保留私有 trace；journal 完整 bytes 先寫後 fsync／
+readback 失敗也 sticky，不能被 core 的 lawful unknown 掩蓋。
+
+核對實際 source bytes／mode／file identity、HEAD、index、Git metadata 與 outscope
+files；原 C、authority、intent、control／sealed artifacts 皆保留。普通 recovery
+只允許一次 canonical result＋ledger observation append，實際第二次 reconcile
+須去重且 ledger／source／artifact inventory 相同。Revoked source／ledger 均不變；
+`reopen_authority` 只重建 reference，不證明未撤銷。Pre-intent 的 integrate 精確
+拒絕 `source-authority-revoked`，原不存在 operation 的 reconcile 則先拒絕
+`source-integration-unavailable`；after-intent 的兩入口均拒絕撤銷 authority。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_packet_integrator_runner.FreshIntegrationTests
+./scripts/project-python scripts/verify-model-packet-integrator.py --synthetic-qualified-container-fixture --fresh-integration-only --endpoint unix:///absolute/path/to/approved.sock --image sha256:APPROVED_INSTALLED_IMAGE --evidence-root /absolute/path/to/private-evidence-root
+```
+
+上述是工程方法與離線反例，不是已完成 native runtime 測量。原始 refs、markers、
+process／command readbacks 與 receipt 留 Git 外，由當輪 native evidence 另行對帳。
+固定 synchronous producer 的真實退出不證明任意 process-kill／FD OS isolation、
+daemon restart、模型／訂閱接線或完整 N3；production／runtime／adapter／N3 flags
+全部 false，fixture validation artifacts 不取代獨立正式 review。
