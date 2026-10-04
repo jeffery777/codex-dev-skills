@@ -541,9 +541,18 @@ unknown。A 空 poll 不重現 READY，固定 chars 只送一次；唯一 ACK／
 container policy，不宣稱完整 request／input byte 對帳；不把 thread UUID 當工具
 ID，也不從正文推定身分。Poll 是消耗式操作，
 未知結果不重播。Fixture 有整體 50 秒及 subprocess／barrier 上限，證據保存在
-Git 外、方法與反例 tracked。此包不完成 non-TTY、nested CLI、完整配置／工具
+Git 外、方法與反例 tracked。此包不完成 nested CLI、完整配置／工具
 清冊、restart、credentials 或 N2／production 資格；後續分項仍保留。自架來源
 模型端點恢復不能取代這些驗證，官方訂閱專用登入安排仍待原先提出的決策。
+
+補充 `--mode non-tty` 的固定匿名 recipe：以 stdin EOF／READY 啟動，驗證跨 CLI
+ID 拒收、空 poll 消耗性、一次非空輸入的 closed-stdin 拒收及拒收後同 ID 仍
+running，再由匿名 provider 完整寫好 staging file、fsync 並以不覆寫的 hardlink
+單次發布固定 scratch release，允許程式產生唯一 ACK 並
+自然退出。Host 要求 Schema 2 與當次 terminal mode 精確相符，non-TTY 不接受
+輸入 echo；舊 TTY Schema 1 收據保留為原版本紀錄。此補充不驗證 interrupt、
+nested CLI、production observer 或完整 N2；資格 flags 仍 false，實測證據留
+Git 外。工程方法與反例按同一驗收強度審查，不能由 public source 推定實測成功。
 
 ### N3 固定實體 checkpoint 接手組合控制
 

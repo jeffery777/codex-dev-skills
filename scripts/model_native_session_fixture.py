@@ -15,6 +15,34 @@ INPUT='session-input-control\n'
 OTHER_INPUT='cross-thread-reject\n'
 CHILD="import pathlib,signal,sys;signal.alarm(20);print('SESSION_READY',flush=True);value=sys.stdin.readline();assert value=='session-input-control\\n';p=pathlib.Path('session-marker');assert not p.exists();p.write_text('session-ack-control\\n');print('SESSION_ACK',flush=True)"
 TOOL_COMMAND="python3 -I -S -B -c "+shlex.quote(CHILD)
+STDIN_CLOSED='write_stdin failed: stdin is closed for this session; rerun exec_command with tty=true to keep stdin open'
+RELEASE=b'non-tty-release-control\n'
+NON_TTY_CHILD="""import pathlib,signal,sys,time
+signal.alarm(20)
+if sys.stdin.readline()!='':raise ValueError('fixed stdin EOF required')
+release=pathlib.Path('session-release')
+if release.exists() or release.is_symlink():raise ValueError('fresh release required')
+print('SESSION_READY',flush=True)
+while not release.exists():time.sleep(0.02)
+if release.is_symlink() or release.read_bytes()!=b'non-tty-release-control\\n':raise ValueError('fixed release required')
+marker=pathlib.Path('session-marker')
+if marker.exists() or marker.is_symlink():raise ValueError('fresh marker required')
+marker.write_text('session-ack-control\\n')
+print('SESSION_ACK',flush=True)
+"""
+NON_TTY_COMMAND="python3 -I -S -B -c "+shlex.quote(NON_TTY_CHILD)
+
+def publish_release(work):
+    staged=work/'session-release-staged'
+    with staged.open('xb') as stream:
+        stream.write(RELEASE);stream.flush();os.fsync(stream.fileno())
+    # Publish complete bytes without replacing an existing final path. Retain
+    # both links; a failure is not replayed or cleaned up.
+    os.link(staged,work/'session-release',follow_symlinks=False)
+
+def terminal(mode):
+    if mode not in ('tty','non-tty'):raise ValueError('fixed terminal mode required')
+    return {'cmd':TOOL_COMMAND if mode=='tty' else NON_TTY_COMMAND,'tty':mode=='tty','login':False,'yield_time_ms':1000,'max_output_tokens':512}
 
 def parse_output(value):
     if type(value) is not str or len(value)>8192:raise ValueError('bounded native string carrier required')
@@ -45,7 +73,8 @@ def cli_argv(port):
         'approval_policy="never"','shell_environment_policy.inherit="none"','web_search="disabled"','notify=[]','agents.enabled=false','tools.experimental_request_user_input.enabled=false','features.code_mode_host={enabled=false,disable_in_process_fallback=false}',*['features.'+x+'=false' for x in disabled]]
     return ['/fixture/codex','exec','--strict-config','--ignore-user-config','--ignore-rules','--ephemeral','--skip-git-repo-check','--json','--sandbox','danger-full-access',*[a for s in settings for a in ['-c',s]],'Follow only the fixed synthetic provider.']
 
-def run_fixture():
+def run_fixture(mode='tty'):
+    tool=terminal(mode)
     work=pathlib.Path('/workspace');control=pathlib.Path('/tmp/session-control');control.mkdir(mode=0o700)
     homes=[pathlib.Path('/tmp/session-home-'+x) for x in ('a','b')]
     paths=['/etc/codex/config.toml','/etc/codex/requirements.toml','/etc/codex/managed_config.toml','/config.toml','/.codex/config.toml','/workspace/config.toml','/workspace/.codex/config.toml',*[str(h/n) for h in homes for n in ('config.toml','managed_config.toml','auth.json')]]
@@ -67,7 +96,7 @@ def run_fixture():
                 return poll('b',sid_holder[0],OTHER_INPUT)
             if stage!=1 or stream['outputs'][0]!='write_stdin failed: Unknown process id '+str(sid_holder[0]):raise ValueError('cross-thread rejection missing')
             b_finished.set();return None
-        if stage==0:return call(0,'exec_command',{'cmd':TOOL_COMMAND,'tty':True,'login':False,'yield_time_ms':1000,'max_output_tokens':512})
+        if stage==0:return call(0,'exec_command',tool)
         if stage==1:
             value=parse_output(stream['outputs'][0])
             if value['status']!='running' or value['body'].replace('\r\n','\n')!='SESSION_READY\n':raise ValueError('fixed live positive missing')
@@ -78,6 +107,25 @@ def run_fixture():
             value=parse_output(stream['outputs'][1])
             if value['status']!='running' or value['sid']!=sid_holder[0] or value['body']!='':raise ValueError('poll consumed output incorrectly')
             return poll(2,sid_holder[0],INPUT)
+        if mode=='non-tty':
+            if stage==3:
+                if stream['outputs'][2]!=STDIN_CLOSED:raise ValueError('non-TTY input rejection missing')
+                return poll(3,sid_holder[0])
+            if stage==4:
+                if parse_output(stream['outputs'][3])!={'status':'running','sid':sid_holder[0],'body':''}:raise ValueError('non-TTY rejection did not preserve live process')
+                publish_release(work)
+                return poll(4,sid_holder[0])
+            if stage==5:
+                value=parse_output(stream['outputs'][4])
+                if value['status']=='running':
+                    if value['sid']!=sid_holder[0]:raise ValueError('process identity changed')
+                    return poll(5,sid_holder[0])
+                return poll(6,sid_holder[0])
+            if stage==6 and stream['calls'][-1]['call_id']=='native-session-5':
+                if parse_output(stream['outputs'][5])['status']!='exited':raise ValueError('bounded non-TTY did not finish')
+                return poll(6,sid_holder[0])
+            if stage not in (6,7) or stream['outputs'][-1]!='write_stdin failed: Unknown process id '+str(sid_holder[0]):raise ValueError('terminated process was not rejected')
+            return None
         if stage==3:
             value=parse_output(stream['outputs'][2])
             if value['status']=='running':
@@ -99,7 +147,7 @@ def run_fixture():
                     stream=state[phase]
                     if self.path!='/v1/responses' or self.headers.get('Authorization') is not None or self.headers.get('Content-Encoding','identity')!='identity':raise ValueError('fixed endpoint/auth/encoding required')
                     size=int(self.headers.get('Content-Length','0'))
-                    if not 0<size<=2097152 or len(stream['requests'])>=7:raise ValueError('fixed request bound')
+                    if not 0<size<=2097152 or len(stream['requests'])>=(8 if mode=='non-tty' else 7):raise ValueError('fixed request bound')
                     raw=self.rfile.read(size)
                     if len(raw)!=size:raise ValueError('truncated request')
                     request=json.loads(raw)
@@ -133,9 +181,11 @@ def run_fixture():
     finally:
         for server in servers:server.shutdown();server.server_close()
         for thread in threads:thread.join(timeout=2)
-    evidence={'schema':1,'source_pin':SOURCE_PIN,'production_qualified':False,'native_session_qualified':False,'inventory':inventory,'streams':state,'cli':results,'errors':errors,'observer_limit':'provider/CLI/terminals share UID; not trusted production observer','official_catalog_sha256':hashlib.sha256(result.stdout).hexdigest()}
+    evidence={'schema':2,'terminal_mode':mode,'source_pin':SOURCE_PIN,'production_qualified':False,'native_session_qualified':False,'inventory':inventory,'streams':state,'cli':results,'errors':errors,'observer_limit':'provider/CLI/terminals share UID; not trusted production observer','official_catalog_sha256':hashlib.sha256(result.stdout).hexdigest()}
     (work/'native-session-evidence.json').write_text(json.dumps(evidence,indent=2)+'\n')
     print(json.dumps({'errors':errors,'cli_exits':{k:v['exit'] for k,v in results.items()},'production_qualified':False}),flush=True)
 
 if __name__=='__main__':
-    signal.signal(signal.SIGALRM,lambda *_:os._exit(124));signal.alarm(50);run_fixture()
+    import sys
+    if sys.argv[1:] not in ([],['non-tty']):raise ValueError('fixed terminal mode argument required')
+    signal.signal(signal.SIGALRM,lambda *_:os._exit(124));signal.alarm(50);run_fixture('non-tty' if sys.argv[1:] else 'tty')

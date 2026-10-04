@@ -840,14 +840,29 @@ Parser 保留原始正文；chars 與 final poll 合併後只正規化一次 CRL
 或 ACK 跨回應切分；額外的 CR 必須在所有切分位置一致拒絕。
 合併內容只能是一次固定 ACK，及至多一次固定輸入的 TTY echo。
 
+`--mode non-tty` 使用另一個固定程式：先確認 stdin EOF，產生 READY 並等待
+scratch 中的固定 release。B 仍須拒收 A 的 process ID；A 空 poll 後嘗試一次
+固定非空輸入，要求 exact closed-stdin error。下一次空 poll 須讀回同一 running
+ID 且沒有重複 READY，確認拒收輸入沒有被誤解為程序結束。匿名 provider 此時
+才把固定 release 完整寫入同目錄 staging file、flush／fsync，再用 hardlink 單次
+發布 final path；既存 final path 不覆寫，失敗不重播，兩個 links 保留。Host 核對
+完整固定 bytes、長度與同一 inode，避免 worker 讀到尚未寫完的檔案。
+程式產生唯一 ACK／marker 並自然退出；允許一次 final poll，
+最後要求 closed-ID unknown。Non-TTY 不能包含輸入 echo，release 也不是模型
+工具或可信 production control。來源：[non-TTY input guard](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/unified_exec/process_manager.rs#L983-L991)、
+[closed-stdin error](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/unified_exec/errors.rs#L20-L22)。
+Schema 2 把 terminal mode 納入收據與 host 預期；不能用 TTY 證據替代 non-TTY，
+舊 Schema 1 證據保留為原版本的局部紀錄，不由新版 validator 重新背書。
+
 B 先到達 provider，A 身分與 B exact continuation 以有界 barrier 交接；
 不依 assistant 完成文字解開 barrier。A／B subprocess 分別限 35／30 秒，
 整個 fixture 的 PID 1 使用明確 SIGALRM handler，50 秒即失敗退出；SSE idle
-15 秒不是整體期限。Normal flow 至多八個 requests、兩次空 poll，不重送 exec、
+15 秒不是整體期限。TTY 至多八個 requests；non-TTY 至多十個，增加拒收輸入後的
+live poll 與固定 release 後的 poll。每種模式至多一次 final poll，不重送 exec、
 chars 或未知結果。Create／start unknown 只記錄及讀回 exact CID，不 replay。
 
-這只量測固定 TTY、消耗式 poll、一次輸入、自然退出、跨 CLI 與 closed-ID
-正反控制。Non-TTY stdin、nested CLI、截斷、完整 config／registry、credentials、
+這只量測固定 TTY／non-TTY、消耗式 poll、一次輸入或 closed-stdin 拒收、自然退出、
+跨 CLI 與 closed-ID 正反控制。Non-TTY interrupt、nested CLI、截斷、完整 config／registry、credentials、
 restart 與可信 production observer 仍另行驗證；provider／CLI／terminal 共用 UID，
 `native_session_qualified` 與 `production_qualified` 固定 false。工程 source、
 反例與方法 tracked；raw requests／outputs、收據及 inspect 留在 Git 外。重跑
@@ -856,6 +871,7 @@ restart 與可信 production observer 仍另行驗證；provider／CLI／termina
 ```bash
 ./scripts/project-python -m unittest tests.test_model_native_session
 ./scripts/project-python scripts/verify-model-native-session.py --binary /absolute/path/to/codex --evidence-root /private/tmp
+./scripts/project-python scripts/verify-model-native-session.py --mode non-tty --binary /absolute/path/to/codex --evidence-root /private/tmp
 ```
 
 ## N3 非空 checkpoint、存活舊 worker 與唯一整合器控制
