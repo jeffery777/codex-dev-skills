@@ -191,8 +191,8 @@ def evaluate_network_case(case):
                     ('positive_nonce_count', 'negative_nonce_count', 'negative_accept_count',
                      'late_nonce_count', 'unexpected_count'))
                 or any(type(value) not in {int, float} or not math.isfinite(value) for value in
-                    [listener['observed_until'], *[phase[key] for phase in (positive, negative)
-                        for key in ('started_at', 'finished_at', 'expires_at')]])):
+                    [phase[key] for phase in (positive, negative)
+                        for key in ('started_at', 'finished_at', 'expires_at')])):
             return 'unknown'
         output = positive['output']
         if (positive['returncode'] != 0 or output['outcome'] != 'connected'
@@ -207,7 +207,11 @@ def evaluate_network_case(case):
         if (listener['negative_nonce_count'] > 0
                 or (case['transport'] != 'udp' and listener['negative_accept_count'] > 0)):
             return 'failed'
-        if (listener['observed_until'] < negative['expires_at']
+        # The observer records its end time only on exit. That timestamp is
+        # needed to prove absence, not to retain an already observed escape.
+        if (type(listener['observed_until']) not in {int, float}
+                or not math.isfinite(listener['observed_until'])
+                or listener['observed_until'] < negative['expires_at']
                 or listener['late_nonce_count'] != 0
                 or listener['unexpected_count'] != 0
                 or listener['overflow'] is not False
@@ -386,7 +390,8 @@ def native_network_controls(executable, workspace, other, home, control, env):
             if thread is not None and thread.is_alive():
                 # Do not rebind the closures or start another listener while
                 # this fixture observer's lifecycle remains unknown.
-                case['outcome'] = 'unknown'
+                if case['outcome'] != 'failed':
+                    case['outcome'] = 'unknown'
                 case['listener_lifecycle_unknown'] = True
                 return cases
     return cases

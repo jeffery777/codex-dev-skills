@@ -126,13 +126,18 @@ class NativeNetworkControlTests(unittest.TestCase):
             if transport != 'udp':
                 counters.append('negative_accept_count')
             for counter in counters:
-                for key, value in [('observed_until', 3.8), ('stopped', False),
+                for key, value in [('observed_until', 3.8), ('observed_until', None),
+                        ('observed_until', float('nan')), ('stopped', False),
                         ('late_nonce_count', 1), ('unexpected_count', 1), ('overflow', True)]:
                     case = self.fixture(transport)
                     case['listener'][counter] = 1
                     case['listener'][key] = value
                     with self.subTest(transport=transport, counter=counter, key=key):
                         self.assertEqual(self.probe.evaluate_network_case(case), 'failed')
+                case = self.fixture(transport)
+                case['listener'][counter] = 1
+                del case['listener']['observed_until']
+                self.assertEqual(self.probe.evaluate_network_case(case), 'failed')
                 # Corrupt identity or an unverified positive control still
                 # cannot establish which fixture the negative receipt proves.
                 for path, value in [(('positive', 'returncode'), 1),
@@ -157,6 +162,73 @@ class NativeNetworkControlTests(unittest.TestCase):
         self.assertEqual([i for i, values in enumerate(zip(positive, negative))
             if values[0] != values[1]], [9])
         self.assertEqual(positive[7], negative[7])
+
+    def test_runner_preserves_confirmed_failure_when_listener_stop_is_unknown(self):
+        # Inject host observations without starting a thread, socket or client.
+        # Exercise the outer runner, including its evaluator and finally path.
+        for observed, negative_received, identity_drift, expected in [
+                (True, True, False, 'failed'),
+                (True, False, False, 'unknown'),
+                (False, True, False, 'failed'),
+                (False, False, False, 'unknown'),
+                (True, True, True, 'unknown')]:
+            with self.subTest(observed=observed, negative_received=negative_received,
+                    identity_drift=identity_drift):
+                now, observers = [10.0], []
+                binary = mock.MagicMock()
+                binary.__str__.return_value = '/fixed/client'
+                binary.read_bytes.side_effect = [b'fixed-client',
+                    b'changed-client' if identity_drift else b'fixed-client']
+
+                class LiveObserver:
+                    def __init__(self, *, target, daemon):
+                        closure = dict(zip(target.__code__.co_freevars,
+                            (cell.cell_contents for cell in target.__closure__)))
+                        self.state, self.phase = closure['state'], closure['phase']
+                        observers.append(self)
+                    def start(self):
+                        pass
+                    def join(self, *, timeout):
+                        if observed:
+                            self.state['observed_until'] = now[0]
+                    def is_alive(self):
+                        return True
+
+                def run_client(argv, **kwargs):
+                    observer = observers[-1]
+                    negative = 'negative' in observer.phase
+                    if negative:
+                        observer.state['negative_nonce_count'] = int(negative_received)
+                        observer.state['negative_accept_count'] = int(negative_received)
+                    else:
+                        observer.state['positive_nonce_count'] = 1
+                    payload = {'outcome': 'connected', 'operation': 'receive',
+                        'errno': 0, 'nonce': argv[-2], 'ack_verified': True}
+                    return subprocess.CompletedProcess(argv, 0,
+                        json.dumps(payload).encode(), b'')
+
+                def advance(seconds):
+                    now[0] += seconds
+
+                listener = mock.MagicMock()
+                listener.getsockname.return_value = ('127.0.0.1', 12345)
+                paths = [pathlib.Path('/private/tmp/network-runner') / name
+                    for name in ('a', 'b', 'home', 'control')]
+                with mock.patch.object(self.probe, 'build_network_client', return_value=binary), \
+                        mock.patch.object(self.probe.socket, 'socket', return_value=listener), \
+                        mock.patch.object(self.probe.threading, 'Thread', LiveObserver), \
+                        mock.patch.object(self.probe.subprocess, 'run', side_effect=run_client), \
+                        mock.patch.object(self.probe.time, 'monotonic', side_effect=lambda: now[0]), \
+                        mock.patch.object(self.probe.time, 'sleep', side_effect=advance):
+                    cases = self.probe.native_network_controls('/fixed/codex', *paths, {})
+                self.assertEqual(len(cases), 1)
+                self.assertEqual(len(observers), 1)
+                self.assertEqual(cases[0]['outcome'], expected)
+                self.assertTrue(cases[0]['listener_lifecycle_unknown'])
+                self.assertFalse(cases[0]['listener']['stopped'])
+                self.assertEqual(cases[0]['client_identity_unchanged'], not identity_drift)
+                self.assertEqual(cases[0]['listener']['negative_nonce_count'], int(negative_received))
+                listener.close.assert_called_once()
 
     def test_non_system_library_or_missing_compiler_cannot_be_measured(self):
         with tempfile.TemporaryDirectory() as directory:
