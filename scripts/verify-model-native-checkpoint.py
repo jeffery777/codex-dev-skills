@@ -268,6 +268,9 @@ def control_chain(value, binding, descriptor):
 
 
 def worker_observation(raw, request, descriptor):
+    case = request['case']
+    if case not in native.EXECUTION_CASES:
+        raise packets.PacketError('native-observation-case-invalid')
     if not raw.startswith(guest.PREFIX) or not raw.endswith(b'\n') or raw.count(b'\n') != 1:
         raise packets.PacketError('native-worker-frame-shape')
     compressed=base64.b64decode(raw[len(guest.PREFIX):-1],validate=True)
@@ -291,7 +294,7 @@ def worker_observation(raw, request, descriptor):
             blob=base64.b64decode(record[label+'_base64'],validate=True); blobs[label]=blob
             if len(blob) != record[label+'_bytes'] or packets.digest(blob) != record[label+'_sha256']:
                 raise packets.PacketError('native-provider-raw-drift')
-        if record['stage'] != stage or record['response_sent'] is not True or blobs['response'] != guest.response(stage):
+        if record['stage'] != stage or record['response_sent'] is not True or blobs['response'] != guest.response(stage, case):
             raise packets.PacketError('native-provider-response-drift')
         declarations.append(external.guest.declaration(blobs['request'],external.base.probe.boundary,'workspace-patch'))
         body=external.base.probe.manifest.decode(blobs['request']); bodies.append(body)
@@ -312,7 +315,8 @@ def worker_observation(raw, request, descriptor):
     if type(final) is not list or final[:-2]!=initial or len(final)!=len(initial)+2:
         raise packets.PacketError('native-provider-tool-history-drift')
     call,output=final[-2:]
-    if ({k:v for k,v in call.items() if k!='id'}!=guest.CALL
+    expected_call = guest.native_call(case)
+    if ({k:v for k,v in call.items() if k!='id'}!=expected_call
             or {k:v for k,v in output.items() if k!='id'}!={'type':'custom_tool_call_output',
                 'call_id':guest.CALL['call_id'],'output':state['native_output']}):
         raise packets.PacketError('native-provider-fixed-call-drift')
@@ -320,13 +324,16 @@ def worker_observation(raw, request, descriptor):
     if (not external.base.guest.stderr_complete(stderr) or len(stderr_raw)!=stderr.get('captured_bytes')
             or packets.digest(stderr_raw)!=stderr.get('captured_prefix_sha256')):
         raise packets.PacketError('native-cli-stderr-incomplete')
-    wire=receipt['wire']; validate_wire(wire,receipt,external)
+    wire=receipt['wire']; validate_wire(wire,receipt,external,case=case)
     return {'sha256':packets.digest(raw),'wire_messages':len(wire),'http_requests':2,'native_calls':1,
         'complete_settings_fields':14,'worker_statement_is_authority':False}
 
 
-def validate_wire(wire,receipt,external):
+def validate_wire(wire,receipt,external,*,case='checkpoint'):
     """Closed native activity plus exact outgoing intent/sent pairs, never authority."""
+    if case not in native.EXECUTION_CASES:
+        raise packets.PacketError('native-wire-case-invalid')
+    fixed_diff = '@@ -1 +1 @@\n-new\n+done\n' if case == 'successor-checkpoint' else '@@ -1 +1 @@\n-old\n+new\n'
     thread,turn=receipt['thread_id'],receipt['turn_id']; events={}; settings=[]; items={}; replies={}; pending=None
     start={'model':external.guest.DIRECT_MODEL,'modelProvider':'fixture','allowProviderModelFallback':False,
         'cwd':'/workspace','ephemeral':True,'sandbox':'read-only','approvalPolicy':'never',
@@ -375,7 +382,7 @@ def validate_wire(wire,receipt,external):
             item=params.get('item',{}); kind=item.get('type'); name=item.get('id')
             if kind=='fileChange':
                 expected={'type':'fileChange','id':guest.CALL['call_id'],
-                    'changes':[{'path':'/workspace/example.txt','kind':{'type':'update','move_path':None},'diff':'@@ -1 +1 @@\n-old\n+new\n'}],
+                    'changes':[{'path':'/workspace/example.txt','kind':{'type':'update','move_path':None},'diff':fixed_diff}],
                     'status':'inProgress' if method=='item/started' else 'completed'}
                 if item!=expected: raise packets.PacketError('native-file-change-drift')
             elif kind=='userMessage':

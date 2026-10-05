@@ -33,8 +33,15 @@ def turn_params(external, thread):
         'collaborationMode':external.input_mode(adopted=True)}
 
 
-def response(stage):
-    item = CALL if stage == 1 else {'type':'message','role':'assistant','id':'native-checkpoint-final',
+def native_call(case):
+    if case not in ('checkpoint','quarantine','claim-replay','successor-checkpoint'):
+        raise ValueError('fixed-native-call-case-required')
+    return (dict(CALL, input=CALL['input'].replace('-old\n+new\n', '-new\n+done\n'))
+            if case == 'successor-checkpoint' else CALL)
+
+
+def response(stage, case='checkpoint'):
+    item = native_call(case) if stage == 1 else {'type':'message','role':'assistant','id':'native-checkpoint-final',
         'content':[{'type':'output_text','text':'Fixed anonymous update finished.'}]}
     rows = [{'type':'response.created','response':{'id':'native-checkpoint-'+str(stage)}},
         {'type':'response.output_item.done','item':item},
@@ -74,7 +81,7 @@ def provider(external, state):
                     raise ValueError('native-http-shape')
                 length = int(lengths[0]); state['total_bytes'] += length
                 if length > 1048576 or state['total_bytes'] > 2097152: raise ValueError('native-http-bound')
-                raw = self.rfile.read(length); reply = response(stage)
+                raw = self.rfile.read(length); reply = response(stage, state['case'])
                 state['records'].append({'stage':stage,'request_base64':base64.b64encode(raw).decode(),
                     'request_sha256':hashlib.sha256(raw).hexdigest(),'request_bytes':len(raw),
                     'response_base64':base64.b64encode(reply).decode(),
@@ -125,7 +132,7 @@ def run():
         'passed':False,'production_qualified':False}; session = server = serving = None; state = None
     try:
         case, nonce = sys.argv[1:]
-        if case not in ('checkpoint','quarantine','claim-replay') or not re.fullmatch(r'[a-f0-9]{64}',nonce):
+        if case not in ('checkpoint','quarantine','claim-replay','successor-checkpoint') or not re.fullmatch(r'[a-f0-9]{64}',nonce):
             raise ValueError('fixed-native-recipe-required')
         receipt.update(case=case,nonce=nonce,privileges=privileges())
         if dict(os.environ) != {'PATH':'/usr/local/bin:/usr/bin:/bin','HOME':'/tmp','LANG':'C.UTF-8'}:
@@ -148,14 +155,14 @@ def run():
             if hashlib.file_digest(stream,'sha256').hexdigest() != manifest['binary_sha256']:
                 raise ValueError('native-guest-binary-drift')
         if (sorted(p.name for p in pathlib.Path('/workspace').iterdir()) != ['example.txt','remove.txt']
-                or pathlib.Path('/workspace/example.txt').read_bytes() != b'old\n'
+                or pathlib.Path('/workspace/example.txt').read_bytes() != (b'new\n' if case == 'successor-checkpoint' else b'old\n')
                 or pathlib.Path('/workspace/remove.txt').read_bytes() != b'delete\n'
                 or list(pathlib.Path('/tmp').iterdir())):
             raise ValueError('native-initial-workspace-drift')
         for name in ('home','home/.codex','registry','codex-daemon-65534'):
             (pathlib.Path('/tmp')/name).mkdir(mode=0o700)
         old.prepare_catalog(external.base,receipt)
-        state = {'slots':0,'total_bytes':0,'failed':False,'records':[]}
+        state = {'slots':0,'total_bytes':0,'failed':False,'records':[], 'case':case}
         server = provider(external,state); serving = threading.Thread(target=server.serve_forever,kwargs={'poll_interval':.05},daemon=True); serving.start()
         command = old.argv(external.base.probe.boundary,external.base.guest,port=server.server_port,native=True,case='workspace-patch')
         class Session(external.InputObservationSession): pass
@@ -176,7 +183,7 @@ def run():
         receipt['wire'] = session.wire
         receipt['client_close'] = session.close(); stderr = session.stderr_snapshot()
         stderr['raw_base64'] = base64.b64encode(stderr.pop('raw')).decode(); receipt['cli_stderr'] = stderr
-        if (pathlib.Path('/workspace/example.txt').read_bytes() != b'new\n'
+        if (pathlib.Path('/workspace/example.txt').read_bytes() != (b'done\n' if case == 'successor-checkpoint' else b'new\n')
                 or pathlib.Path('/workspace/remove.txt').read_bytes() != b'delete\n'):
             raise ValueError('native-postimage-drift')
         receipt['passed'] = True

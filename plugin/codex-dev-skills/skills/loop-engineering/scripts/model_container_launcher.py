@@ -129,7 +129,7 @@ def render(binding, volume, nonce, worker, fault='none'):
 
 def render_native(binding, volume, nonce, case):
     """Closed fixture helper only; never accepts a worker program or argv."""
-    if case not in {'checkpoint','quarantine','claim-replay'} or type(nonce) is not str or not re.fullmatch(r'[a-f0-9]{64}',nonce):
+    if case not in {'checkpoint','quarantine','claim-replay','successor-checkpoint'} or type(nonce) is not str or not re.fullmatch(r'[a-f0-9]{64}',nonce):
         raise ValueError('fixed-native-launcher-recipe-required')
     config = {'binding':binding,'volume':volume,'nonce':nonce,
               'launcher_sha256':CONTRACT_SHA256,'fault':'none'}

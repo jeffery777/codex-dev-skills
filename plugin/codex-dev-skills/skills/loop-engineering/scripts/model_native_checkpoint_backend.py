@@ -16,6 +16,7 @@ import model_packet_supervisor as supervisors
 CONTRACT_SHA256 = packets.digest(pathlib.Path(__file__).read_bytes())
 IMAGE = 'sha256:916619b289581c9a4f2941745a09b2934cee4bd354049355b4d4d53485d67573'
 CASES = frozenset({'checkpoint', 'quarantine', 'claim-replay'})
+EXECUTION_CASES = CASES | {'successor-checkpoint'}
 GUEST_SCRIPT = 'scripts/model_native_checkpoint_fixture.py'
 HOST_SCRIPT = 'scripts/verify-model-native-checkpoint.py'
 FIXED_PATCH = integration.NATIVE_UPDATE_PATCH
@@ -28,7 +29,8 @@ SOURCE_FILES = (
         'agent_qualification', 'model_packet_store', 'model_packet_supervisor',
         'model_packet_integrator', 'model_container_backend', 'model_container_launcher',
         'model_control_archive', 'model_packet_governance', 'agent_routing', 'model_failover',
-        'profile_preflight', 'local_model_mapping')),
+        'profile_preflight', 'local_model_mapping', 'model_packet_lifecycle',
+        'model_packet_preparation', 'model_packet_bootstrap', 'model_packet_native')),
     'scripts/verify-model-app-server.py', 'scripts/verify-model-tool-boundary.py',
     'scripts/model_probe_tools.py',
     'skills/loop-engineering/scripts/model_app_server_transport.py',
@@ -132,7 +134,7 @@ def validate_image_config(config):
 class OneShotNativeFixtureBackend(containers.OneShotSyntheticContainerBackend):
     """Closed native intake recipes; descriptor v2 and supervisor v4 unchanged."""
     def __init__(self, *args, capture_root, capture_ref, native_case, **kwargs):
-        if (native_case not in CASES or 'worker' in kwargs or 'launcher_fault' in kwargs
+        if (native_case not in EXECUTION_CASES or 'worker' in kwargs or 'launcher_fault' in kwargs
                 or kwargs.get('image_id') != IMAGE):
             raise packets.PacketError('fixed-native-checkpoint-recipe-required')
         self.capture_root = pathlib.Path(capture_root)

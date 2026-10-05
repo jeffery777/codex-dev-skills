@@ -14,7 +14,6 @@ from unittest import mock
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'skills/loop-engineering/scripts'))
 import model_failover as failover
-import loopctl
 import agent_routing
 import model_packet_store as packets
 
@@ -179,6 +178,9 @@ class FailoverTests(unittest.TestCase):
         self.assertEqual(self.select()['reason'], 'official-subscription-required')
 
     def test_loopctl_actual_entrypoint(self):
+        # Keep anonymous reader fixtures importable without the unrelated CLI
+        # dependency graph; this test still executes the actual entrypoint.
+        import loopctl
         with tempfile.TemporaryDirectory() as folder:
             path = pathlib.Path(folder)/'input.json'
             for raw, expected in [(json.dumps(route_fixture()), 0), ('{"enabled":true,"enabled":false}', 1), (' '*(failover.MAX_BYTES+1), 1), (None, 1)]:

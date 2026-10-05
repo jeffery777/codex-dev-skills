@@ -35,6 +35,7 @@ BOOTSTRAP_FIXTURE_KINDS = frozenset({'admit-bootstrap-fixture', 'acquire',
 EXECUTED_KINDS = frozenset({'admit-bootstrap', 'acquire', 'prepare-intent', 'prepared',
     'bootstrap-intent', 'bootstrapped', 'outcome', 'resolve', 'quality-floor', 'cooldown',
     'health', 'launch-intent', 'observe', 'export-intent', 'publish', 'finish'})
+NATIVE_KINDS = (EXECUTED_KINDS - {'admit-bootstrap'}) | {'admit-native'}
 
 
 class LifecycleError(packets.PacketError):
@@ -306,7 +307,8 @@ def validate_ledger(ledger, packet_id):
     mode = refs[0].get('kind') if type(refs[0]) is dict else None
     allowed = (KINDS if mode == 'admit' else PREPARED_KINDS if mode == 'admit-prepared'
         else BOOTSTRAP_FIXTURE_KINDS if mode == 'admit-bootstrap-fixture'
-        else EXECUTED_KINDS if mode == 'admit-bootstrap' else frozenset())
+        else EXECUTED_KINDS if mode == 'admit-bootstrap'
+        else NATIVE_KINDS if mode == 'admit-native' else frozenset())
     for ref in refs:
         governance._obj(ref, 'operation_id kind binding committed_at request_sha256 record_sha256 classification_sha256 authority_sha256 execution_sha256 runtime_sha256')
         packets._id(ref['operation_id']); governance._int(ref['committed_at'])
@@ -424,6 +426,14 @@ class SyntheticLifecycle:
 
     def _inspect_runtime(self, fd, ledger, attempt):
         return self.backend.inspect(copy.deepcopy(ledger['supervisors'][attempt['id']]['binding']))
+
+    def _read_sealed_patch(self, fd, ledger, attempt):
+        return self.backend.read_sealed_patch(
+            copy.deepcopy(ledger['supervisors'][attempt['id']]['binding']), packets.MAX_PATCH)
+
+    def _export_patch(self, fd, ledger, attempt):
+        return self.backend.export_patch(
+            copy.deepcopy(ledger['supervisors'][attempt['id']]['binding']), packets.MAX_PATCH)
 
     def _runtime_projection(self, proof, supervisor):
         pass
@@ -864,7 +874,7 @@ class SyntheticLifecycle:
                     raise LifecycleError('lifecycle-current-runtime-unconfirmed')
                 proof = self._runtime(actual, runtime_binding, now, current['policy']['freshness_seconds'])
                 if kind == 'publish':
-                    patch = self.backend.read_sealed_patch(copy.deepcopy(runtime_binding), packets.MAX_PATCH)
+                    patch = self._read_sealed_patch(fd, ledger, ledger['attempts'][-1])
                     validate_patch(patch)
                     payload = entry['record']['payload']
                     manifest = packets.canonical(dict(binding=runtime_binding, patch_sha256=packets.digest(patch),
@@ -957,7 +967,7 @@ class SyntheticLifecycle:
             state = self._project(fd, ledger, now=now, _historical_caps=caps)
             self._effect_gate(fd, ledger, state, request, now, 'export-intent', historical_caps=caps)
             fence._snapshot()
-            self.backend.export_patch(copy.deepcopy(binding), packets.MAX_PATCH)
+            self._export_patch(fd, ledger, attempt)
         return self._append(operation_id, 'export-intent', expected_revision=expected_revision, now=now, effect=export)
 
     def publish(self, operation_id, *, expected_revision, now):

@@ -1,9 +1,42 @@
 # Issue #316 本機角色模型映射工程計畫
 
-## 下一條原生治理路徑與最小前置範圍
+## 本輪最小原生 v6 接手工程包
 
-原生實體執行仍使用 v4，選模／返工／ownership 治理使用 v6 saved R2；直接
-包裝兩者會混淆 authority。先將既有 container backend 的 journal admission
+解除的 blocker：v4 native execution 與 v6 selection／rework／ownership 尚未
+接線。一次工程包包含獨立 native mode／domain、真實 transaction lease／artifact
+port、原生 predecessor 及 successor recipe、兩個 fresh host processes 的驗證入口；
+不另建 retry journal、不接受 fake v4 record、不啟用 production dispatcher。
+
+DoD：舊 R1／B1／R2 consumer 拒絕新 authority；CID／volume／workspace 與原始
+artifact 在採認前後維持同 transaction；未提交候選不能授權；lost reply 不重播；
+原 checkpoint／失敗／budget／floor／ownership 在兩次實際執行間保留，successor
+還原原 C 並產生 C2。必要驗證依序為 source／import／image／回傳型別 preflight、
+局部契約與既有 consumer 測試、plugin parity／test shard inventory、完整工程包
+前置深入審查、單一兩次執行 E2E、原始證據追加覆核、穩定包的適用完整 SDS。
+
+使用 `scripts/verify-model-native-governance.py --opt-in --preflight-only`，再以相同
+入口的普通 opt-in 進行實驗；各次建立新的 fixture，使用已採認 private 0700 evidence parent、
+固定已核對的 binary 與 Docker Unix endpoint，加入必要 `--evidence-root`、
+`--binary-path`、`--endpoint`。不得重用失敗 CID、unknown attempt 或舊 source
+capture 假稱新測試。Source 和工程文件提交；raw evidence／review／scan 不提交。
+
+匿名核心 E2E 已完成：兩個獨立程序各 create／start 一次，producer 的實際 wait／
+EOF 早於 consumer 啟動；同一 v6 journal 保存原 C、39 個 immutable refs、失敗
+事件與 owner epochs，successor 還原 C 後發布 C2。私有 transport 原始回覆可供
+獨立 review 讀回；未知與失敗紀錄保留，不作後續重播輸入。一次實測約 104.5 秒，
+不是與舊 v4 路徑同範圍的比較，整體流程成本及節省百分比仍未知。
+
+固定 synthetic grants、固定時鐘與單一 quality event 僅證明此匿名接手路徑；
+真實撤權／freshness、elapsed budget、非零升級 floor 與模型品質仍未資格化。
+工程包的正式 review／SDS gate 另依最新內容核對，不能由此 E2E 推定通過。
+一般 source authority／唯一 integrator、官方訂閱受控登入、可信 observer／撤權、全工具／N1–N4 與真實
+context／品質／跨來源驗收仍未完成；完整 DoD、release BLOCKED，draft
+REVIEW_REQUIRED，所有原 qualification false。
+
+## 已完成的 journal admission 前置範圍
+
+前置包的起點是 v4 原生實體執行與 v6 saved R2 選模／返工／ownership 治理；
+直接包裝兩者會混淆 authority。已將既有 container backend 的 journal admission
 與實體 readback 分離，解除 v6 port 無法重用 physical code 的具體相依。
 本前置包不另建 retry／ownership journal，也不接受新的模型、來源或登入權限。
 
@@ -13,8 +46,8 @@ phase、fence、immutable artifacts 與物理 policy 保留；未採認輸入及
 審查及適用 scan 通過。前置安全 review 後，以一條匿名 native-source E2E
 驗證現有原生路徑，不把此次重跑當作 v6 接線成功。
 
-下一個實作仍須獨立 native mode／domain、同 v6 transaction 的 artifact port、
-實際 successor launch 與 predecessor 採用。一般 source authority、受控訂閱
+其後的獨立 native mode／domain、同 v6 transaction artifact port、實際 successor
+launch 與 predecessor 採用，已由上方匿名核心路徑實測。一般 source authority、受控訂閱
 登入及 N1–N4、context／品質／跨來源資格仍是依賴；原完整 DoD 與 release
 保持 BLOCKED、draft REVIEW_REQUIRED。
 

@@ -3,22 +3,61 @@
 Issue #316 的 N1–N4 設計候選。此文件定義待實作及待資格化的邊界，
 不代表 runtime adapter 已啟用；production 清冊仍須維持空，直到完整驗收。
 
-## Native 與 v6 接線的採認邊界
+## 原生 v6 兩次執行候選
 
-目前 native backend 的實體隔離／root claim／completion／walk／seal 可重用，
-但其 journal admission 仍是 v4；v6 的 saved R2 lifecycle 不能直接採認它。
+`model_packet_native.py` 的 closed `NativeLifecycle` 使用獨立 `admit-native`
+mode／domain 與既有 v6 選模、返工、ownership journal。它沒有 production
+loader，不接受 saved R1／B1／R2 的 authority，也不把 v6 記錄投影成 v4。
+同 transaction 的 private lease 綁實際 held fd／lock／ledger bytes、原始
+execution／request、attempt／generation、允許 action 及物理 descriptor。
+候選 confirmation 只能比對，未提交的候選 ledger 不能發出 lease。
+
+實體 backend 保留固定 Docker policy、root claim／completion、原 CID、Created、
+volume 與 workspace inode 採認。原始 plan 的 logical control／32 位 nonce
+與實體 control／64 位 nonce 有明確保存的對應；不忽略其中任一套原 bytes。
+新 runtime domain 採實際完成鏈，可以先觀察到 stopped，不造 saved running
+genesis。舊 controller 的 exact backend type／mode 拒絕及空 production registry
+保持；constructor 僅執行固定本機 daemon／image 的唯讀 preflight。
+
+最小實驗是 producer 寫入 `new` 並封存 C，固定 final `done` 驗收形成匿名
+fixture quality finding，再釋放 owner；actual wait／EOF 後由 fresh host consumer
+在新副本還原 C、執行原生 `new → done`、封存 C2。同一 journal 保留原 failure、
+budget／floor／ownership；相同 patch 亦不能沿用原 checkpoint ID。此 quality
+finding 與 reader 的授權／qualification grants 是明確合成輸入，不證明真實
+模型品質或可用性。所有 production／native／runtime／adapter／isolation／startup
+與 N1–N4 資格保持 false，完整 DoD、readiness 與 release 未完成。
+
+`scripts/verify-model-native-governance.py` 是 repository-only 的明確 opt-in
+入口，使用 captured repository test fixtures；`--preflight-only` 先核對 source
+capture、import、實際 image reply 與新 mode，零 attempts／containers。兩次
+執行實測前仍須完整前置深入審查；證據存 Git 排除的私有目錄。一般 source
+authority／唯一 integrator、受控官方訂閱登入、可信 revocation、完整工具及
+context／實際品質升級／跨來源資格，仍是獨立未完成依賴。
+
+這條匿名 E2E 已以兩個 fresh host processes 實測，保留原 C 與 immutable refs，
+successor 產生 C2。Runtime 名稱綁 protected packet instance；archive lease 限制
+完整 argv、同 CID、固定 control 路徑及 stdout 目的地，bootstrap 另核對原 input。
+私有 transport intent／原始 reply／unknown 紀錄僅供獨立查證，不建立 authority。
+固定時鐘不證明真實 freshness／elapsed budget；單一 quality event 也不證明
+非零升級 floor、真實模型返工品質或跨來源切換。重跑會產生新的 nonce／CID／
+checkpoint 與證據綁定，應比較契約結果，不能追認原 receipt。
+
+## Journal admission 前置介面（既有 v4 consumer）
+
+原 native backend 的實體隔離／root claim／completion／walk／seal 可重用，
+其原始 journal admission 使用 v4；v6 saved R2 lifecycle 不能直接採認它。
 `model_container_backend.py` 將 `_admitted_runtime_descriptor` 與
 `_admitted_bootstrap_digest` 分成私有接點，現有 v4 consumer 先核對原 store、
 immutable descriptor、bootstrap phase／receipt 及 supervisor fence，再讀回實體
 CID／root completion。回傳資料不是資格或 authority；原實體 policy 不變。
 
-後續 v6 port 須從同一 objective journal 取得原始 bytes，綁定有效 transaction
+v6 port 須從同一 objective journal 取得原始 bytes，綁定有效 transaction
 lease、attempt／generation、intent 與 prefix；不能投影假的 v4 ledger、匯入舊
 v4 authority 或把實體 runtime 當成 saved R2 observation。現有 `_save`／`_read`
-是另一個 immutable artifact 接點，v6 實作仍須補自己的 phase／transaction fence。
+是另一個 immutable artifact 接點，v6 實作須保有自己的 phase／transaction fence。
 Native lifecycle 須使用獨立 mode／domain 與真正的 physical descriptor、bootstrap
-及 runtime proof。此介面重構本身不提供 v6 native 執行、通用 source authority、
-登入隔離或任何 production／N1–N4 資格。
+及 runtime proof。上方 closed native mode 已採用這些契約；前置介面重構本身
+不提供通用 source authority、登入隔離或任何 production／N1–N4 資格。
 
 ## 控制面與寫入面
 
