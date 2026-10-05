@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare or independently verify one fixed, runtime-neutral engineering fixture.
+"""Prepare, preflight or independently verify a runtime-neutral engineering fixture.
 
 No model dispatch, credentials, installation or publication. Verification executes
 the reviewed fixture under the caller's permissions; it is not a sandbox or gate.
@@ -79,7 +79,8 @@ def prepare(root: pathlib.Path, runtime: str) -> str:
     return hashlib.sha256((root / 'case.json').read_bytes()).hexdigest()
 
 
-def verify(root: pathlib.Path, expected_case_sha256: str) -> dict:
+def inspect_fixture(root: pathlib.Path, expected_case_sha256: str) -> tuple[dict, dict[str, bytes]]:
+    """Cheap contract readback; never import or execute fixture code."""
     if not root.is_dir():
         raise FixtureError('missing fixture directory')
     # Only known direct children are read. Unexpected files are never opened.
@@ -102,12 +103,24 @@ def verify(root: pathlib.Path, expected_case_sha256: str) -> dict:
         raise FixtureError('invalid case identity')
     if str(uuid.UUID(case['sentinel'])) != case['sentinel']:
         raise FixtureError('invalid sentinel')
+    return case, {p.name: p.read_bytes() for p in paths}
+
+
+def preflight(root: pathlib.Path, expected_case_sha256: str) -> dict:
+    case, _ = inspect_fixture(root, expected_case_sha256)
+    return {'schema_version': 1, 'runtime_label': case['runtime_label'],
+            'contract_passed': True, 'fixture_code_executed': False,
+            'functional_passed': False, 'delivery_ready': False,
+            'runtime_qualified': False, 'identity_verified': False}
+
+
+def verify(root: pathlib.Path, expected_case_sha256: str) -> dict:
+    case, before = inspect_fixture(root, expected_case_sha256)
     readme = (root / 'README.md').read_text(encoding='utf-8')
     checkpoint = (root / 'CHECKPOINT.md').read_text(encoding='utf-8')
     docs = all(word in readme for word in DOCUMENTATION)
     # These are functional observations, never reviewer approval or gate proof.
     continuation = case['sentinel'] in checkpoint and 'review' in checkpoint.lower()
-    before = {p.name: p.read_bytes() for p in paths}
     command = [sys.executable, '-I', '-B', '-c',
                "import runpy,sys,unittest; root=sys.argv[1]; sys.path.insert(0,root); "
                "namespace=runpy.run_path(root+'/test_port.py',run_name='fixture_tests'); "
@@ -142,7 +155,7 @@ def verify(root: pathlib.Path, expected_case_sha256: str) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['prepare', 'verify'])
+    parser.add_argument('action', choices=['prepare', 'preflight', 'verify'])
     parser.add_argument('--fixture-root', required=True)
     parser.add_argument('--runtime', choices=['codex', 'hermes'])
     parser.add_argument('--expected-case-sha256', help='prepare digest retained independently')
@@ -159,10 +172,13 @@ def main() -> int:
                               'runtime_qualified': False}))
             return 0
         if args.runtime is not None:
-            parser.error('verify reads the existing case label; omit --runtime')
+            parser.error('preflight/verify reads the existing case label; omit --runtime')
         if (not args.expected_case_sha256 or len(args.expected_case_sha256) != 64 or
                 any(c not in '0123456789abcdef' for c in args.expected_case_sha256)):
-            parser.error('verify requires the independently retained prepare digest')
+            parser.error('preflight/verify requires the independently retained prepare digest')
+        if args.action == 'preflight':
+            print(json.dumps(preflight(root, args.expected_case_sha256), sort_keys=True))
+            return 0
         result = verify(root, args.expected_case_sha256)
         print(json.dumps(result, sort_keys=True))
         return 0 if result['functional_passed'] else 1

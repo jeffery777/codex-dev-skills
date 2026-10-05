@@ -59,8 +59,10 @@ When a change request exists, follow
 `policies/exact-head-merge-review-contract.md`. Reuse applicable pre-commit
 reviews as input only. Require exact-head deterministic verification, complete
 base-to-head content Merge Review, code/documentation coherence, content
-readiness, and separate merge authority. Every changed head requires a new
-complete Merge Review; after a fix, code/security re-review may be proportional
+readiness, and separate merge authority. A non-ready draft may remain
+`REVIEW_REQUIRED` after applicable pre-commit gates. Every changed head requires
+a new complete Merge Review before readiness, merge or release; draft deferral
+does not alter required CI or platform gates. After a fix, code/security re-review may be proportional
 to the affected boundary when prior assumptions remain valid.
 
 Report provider enforcement separately and apply only the profile selected by

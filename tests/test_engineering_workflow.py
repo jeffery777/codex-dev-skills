@@ -5,6 +5,7 @@ import json
 import pathlib
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location('engineering_fixture', ROOT / 'scripts/verify-engineering-workflow.py')
@@ -58,6 +59,38 @@ class EngineeringFixtureTests(unittest.TestCase):
         result = fixture.verify(self.root, self.digest)
         self.assertFalse(result['functional_passed'])
         self.assertFalse(result['checks']['fixed_tests'])
+
+    def test_preflight_checks_contract_without_executing_or_granting_readiness(self):
+        (self.root / 'port.py').write_text("raise RuntimeError('must not execute')\n")
+        with mock.patch.object(fixture.subprocess, 'run', side_effect=AssertionError('must not spawn')):
+            result = fixture.preflight(self.root, self.digest)
+        self.assertTrue(result['contract_passed'])
+        for claim in ('fixture_code_executed', 'functional_passed', 'delivery_ready',
+                      'runtime_qualified', 'identity_verified'):
+            self.assertIs(result[claim], False)
+
+    def test_preflight_and_verify_reject_protected_drift_before_execution(self):
+        with mock.patch.object(fixture.subprocess, 'run', side_effect=AssertionError('must not spawn')):
+            for name in ('SPEC.md', 'test_port.py', 'case.json'):
+                path = self.root / name
+                original = path.read_bytes()
+                path.write_bytes(original + b'\n')
+                for action in (fixture.preflight, fixture.verify):
+                    with self.subTest(name=name, action=action.__name__), self.assertRaises(fixture.FixtureError):
+                        action(self.root, self.digest)
+                path.write_bytes(original)
+
+    def test_public_preflight_json_shape_on_source_and_plugin_consumers(self):
+        import subprocess
+        import sys
+        for script in (ROOT / 'scripts/verify-engineering-workflow.py',
+                       ROOT / 'plugin/codex-dev-skills/scripts/verify-engineering-workflow.py'):
+            run = subprocess.run([sys.executable, str(script), 'preflight',
+                                  '--fixture-root', str(self.root),
+                                  '--expected-case-sha256', self.digest],
+                                 capture_output=True, text=True, timeout=20)
+            self.assertEqual(0, run.returncode, run.stderr)
+            self.assertEqual(fixture.preflight(self.root, self.digest), json.loads(run.stdout))
 
     def test_early_successful_process_exit_cannot_impersonate_completed_tests(self):
         self.complete()

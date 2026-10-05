@@ -110,8 +110,10 @@ After a fix, select the appropriate review scope from the affected boundary
 and assess Security Diff Scan applicability under the exact-head contract.
 Record scope and rationale when not applicable, and why prior evidence remains
 applicable. Widen the rerun when
-shared assumptions changed. Every changed change-request head still requires a
-complete new base-to-head Merge Review. Repeat provider readback only when the
+shared assumptions changed. A non-ready draft may remain REVIEW_REQUIRED after
+applicable pre-commit gates. Every changed change-request head requires a
+complete new base-to-head Merge Review before readiness, merge or release.
+Draft deferral cannot change required CI or platform gates. Repeat provider readback only when the
 selected profile requires it.
 
 Clean internal reviews and scans advance automatically to the next safe

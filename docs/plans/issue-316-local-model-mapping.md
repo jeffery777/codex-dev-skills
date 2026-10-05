@@ -889,10 +889,21 @@ invocation，fresh consumer 仍保持 unknown／無 C。完整 generation／競�
 Native run 只使用既有固定 digest 的 Python image／Linux CLI，建立各自新的
 scratch container／control volume 並保留資源；不接受既有 repository，不清理、
 重啟共享 daemon、帶入 credentials 或套用來源。原生 raw readback 已完成；正式 code／security review、
-新 head 完整 Merge Review 與 CI 須分別完成。所有 native、
+readiness／merge／release 前最新完整 Merge Review 與必要 CI 須分別完成；
+未 ready draft 可維持 REVIEW_REQUIRED。所有 native、
 runtime、adapter、isolation、startup、production 與 N1–N4 資格仍 false；完整
 DoD 與同案發行評估仍 BLOCKED。
 
 早先匿名 native checkpoint 建立後的嚴格 inspect 核對，因 macOS Docker Desktop 唯讀 fixture bind 的固定路徑轉換而保留 `prepare-reply-unknown`；容器保持 created，沒有 bootstrap／start intent，沒有 native 寫入。不得重用或啟動該 attempt。修正只固定各 host 平台的完整預期 source 並納入 policy digest，完成離線負向驗證及 preexec 重審後，以全新 fixture 重測三案。
 
 另一個歷史匿名 native 實測曾產生非空 C，producer 由 coordinator 實際 wait 成功退出；fresh consumer 因 Docker image inspect 省略原先空白 `User`／`WorkingDir` 而拒絕建構，因此整案仍為失敗，不能宣稱接手完成。保留該原始 C／producer／consumer 失敗證據、不重放舊 attempt；只補官方 API 支援的未設定欄位語義與負向測試，該失敗不追認成功；後續三個全新 fixture 已完成驗收。
+
+## 同案工程流程效率切片
+
+依 [效率需求與 DoD](../requirements/engineering-workflow-efficiency.md)，解除
+draft 每次更新即重做完整 Merge Review、契約／consumer 問題發現過晚與歷史
+敘述測試過度綁定的 blocker。落實共用規範、技能、模板、package 與早期驗證
+入口；先完成低／中／高風險固定代表性路徑，不新增逐項 NIT 交付循環。
+前一穩定 native 工程包的有效測試、獨立審查與封存掃描按 source／scope／
+assumptions／policy／environment 核對後重用；效率切片另審其公開契約及入口。
+原完整 DoD、未解資格與同案發行評估維持 BLOCKED；公司環境可用性只是依賴之一。

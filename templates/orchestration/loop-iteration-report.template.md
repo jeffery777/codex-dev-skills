@@ -71,6 +71,10 @@ Result: `<passed | failed | skipped>`
 - Platform enforcement: `<VERIFIED | UNVERIFIED | BLOCKED | NOT_CONFIGURED>`
 - Selected provider profile/readback: `<evidence-or-none>`
 - Pre-commit evidence reuse rationale: `<rationale-or-none>`
+- Draft REVIEW_REQUIRED / remaining DoD: `<not-ready checkpoint-or-not-applicable>`
+- Latest complete Merge Review due before: `<readiness | merge | release | no-claim>`
+- Affected fix boundaries / batched finding dispositions: `<evidence-or-none>`
+- Test time / review rounds / repeated reads / rework causes: `<measured-values-or-unknown>`
 
 ## Next Decision
 

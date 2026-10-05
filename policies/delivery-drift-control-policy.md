@@ -29,7 +29,9 @@ Prefer repository-owned instructions, specs, plans, status files, review artifac
   reconstruct the affected context when references are missing or conflicting.
 - Do not copy every source or repeat a full bootstrap/report at each phase.
   Report the changed facts and link still-valid evidence. A changed request head
-  still requires complete base-to-head exact-head Merge Review.
+  still requires latest complete base-to-head exact-head Merge Review before
+  readiness, merge or release. Non-ready drafts may remain REVIEW_REQUIRED
+  under that contract; required CI and platform gates are unchanged.
 - Mark stale or missing evidence explicitly.
 - If the current state conflicts with prior summaries, inspect cheaply before deciding.
 - Stop for human decision when the conflict affects behavior, public contract, data, security, or delivery scope.

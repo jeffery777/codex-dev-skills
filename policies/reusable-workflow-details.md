@@ -40,7 +40,8 @@ Discovery 完成正式清單/deferred discovery 與 namespace/schema 分流；
 
 - Formal gates 保留 findings、dispositions、blocking 與完成語意；符合契約的
   primitive 證據可被採用，但原生 review 結果不能自行跳過 gate。變更後的
-  change-request head 仍須完整 base-to-head exact-head Merge Review。
+  change-request head 在 readiness／merge／release 前仍須最新完整 base-to-head
+  exact-head Merge Review；未 ready draft 依該契約保留 REVIEW_REQUIRED。
 - 子代理的模型／角色選擇仍遵守適用資格及整合規則；原生派送能力不能繞過它們。
 - CLI／Desktop adapters 保留身分、授權、schema、回應驗證及操作後讀回要求；
   執行方式替代不授權 session、任務、排程、外部寫入或破壞性操作。
@@ -75,7 +76,8 @@ token、延遲及成本改善須有代表性配對測量，不能由文字縮短
   子代理只回報需主代理決策的 blocker 與最後 receipt；使用者進度由主代理說明。
 - 小任務採用必要且能驗證行為的檢查；完成適用必要 checks 後，只有新變更、
   失敗或未解決疑慮才擴大或重跑。不得以測試預算省略必跑檢查、獨立審查或
-  changed-head 的完整 exact-head review。失敗先分類；資料、環境或權限
+  readiness／merge／release 前最新完整 exact-head review；未 ready draft 可保留
+  REVIEW_REQUIRED，不改 CI 或平台 gate。失敗先分類；資料、環境或權限
   缺失不以提高 effort 處理。複雜度改變則由主代理重新分類，不私改固定 profile。
 - 使用者中途修正範圍時，保留仍適用的成果並重查受影響證據；詢問狀態或
   旁支問題時，先簡短回答再續行原目標，除非使用者明確取消或替換目標。

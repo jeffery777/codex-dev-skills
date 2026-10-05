@@ -83,7 +83,9 @@ and candidate delegation alone do not require a ledger or `decide` invocation.
    That reference owns the complete procedure; qualification discovery and
    runtime-input preparation are parent work, not instructions the user must
    repeat. Preserve baseline fallback when evidence is absent.
-5. Run relevant verification and inspect the diff.
+5. Run cheap contract, environment and consumer smoke checks first, then focused
+   verification and inspect the diff. Apply Workflow Efficiency in the shared
+   engineering contract; record the blocker removed and remaining dependencies.
 6. Route code or mixed changes through `code-review`, high-risk code or mixed changes through `code-review-deep`, and docs-only or docs-dominant changes through `docs-review`.
 7. Use `code-review-gate` or `docs-review-gate` only when commit readiness, PR readiness, merge readiness, or repo policy requires a formal blocking decision.
 8. If reviews or gates produce actionable blockers, close them through the
@@ -102,9 +104,11 @@ and candidate delegation alone do not require a ledger or `decide` invocation.
     the applicable gate and exact-action authority; honor existing authorization
     instead of requesting it again merely because a phase ended.
 11. After an authorized change-request creation or head update, treat
-    pre-commit verdicts as implementation evidence only. Advance through exact-
-    head deterministic verification, complete content Merge Review,
-    code/documentation coherence, and the formal gate. Report optional provider
+    pre-commit verdicts as implementation evidence only. A non-ready draft may
+    remain REVIEW_REQUIRED after applicable pre-commit gates; defer complete
+    Merge Review until a readiness, merge or release claim. Before that claim,
+    require latest complete base-to-head deterministic verification, content
+    Merge Review, code/documentation coherence, and the formal gate. Report optional provider
     enforcement separately. When repository policy selects the GitHub profile,
     also require its authorized receipt publication/readback and dedicated-App
     check without weakening its trust boundary. Relevant drift returns only the
@@ -133,8 +137,8 @@ safeguards and exact action authority from the shared contract.
 Do not stop merely because one internal phase completed. When review and scan
 results are clean, continue to the next safe read-only or already-authorized
 phase. After a fix, choose proportional code/security re-review from the
-affected boundary; always repeat complete exact-head Merge Review for a changed
-change-request head.
+affected boundary; a changed change-request head requires latest complete
+exact-head Merge Review before readiness, merge or release.
 
 ## Output
 

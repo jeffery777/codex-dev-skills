@@ -33,7 +33,8 @@ NITS are non-blocking only after explicit disposition; they must not disappear f
 
 Shared rationale may cover a batch of NITs when every finding id remains
 traceable. Reused pre-commit evidence never replaces complete base-to-head
-exact-head Merge Review for a new change-request head.
+exact-head Merge Review for a new change-request head before readiness, merge
+or release. A non-ready draft may remain REVIEW_REQUIRED under that contract.
 
 ## Output
 

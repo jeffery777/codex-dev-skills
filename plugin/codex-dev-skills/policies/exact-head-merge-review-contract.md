@@ -15,7 +15,8 @@ truth for code, documentation, or version coherence.
 
 Pre-commit code, documentation, deep, and security reviews prove properties of
 the content they inspected. They may be reused when their source revision,
-scope, and assumptions still match, but their verdict does not satisfy
+scope, assumptions, phase, policy, environment and uncommitted content still match,
+but their verdict does not satisfy
 exact-head Merge Review.
 
 Exact-head Merge Review is a complete base-to-head integration review. Bind it
@@ -75,7 +76,20 @@ A new push or a change to repository identity, change-request identity, base,
 head, merge base, diff identity, required verification, finding disposition,
 or coherence evidence returns the content flow to `REVIEW_REQUIRED` at the
 earliest affected state. Every changed head requires a new complete
-base-to-head Merge Review.
+base-to-head Merge Review before any readiness, merge or release claim.
+
+### Draft Checkpoints
+
+A draft head that is not being declared ready may remain `REVIEW_REQUIRED`.
+After its applicable pre-commit gates and authorization, it may be committed,
+pushed or saved as a draft change request without immediately repeating complete
+Merge Review. Record the current head, remaining DoD, findings and dependencies;
+do not publish a READY receipt or reuse an earlier head verdict. `REVIEW_REQUIRED`
+is a workflow state, not a passing formal content-review verdict.
+
+Before declaring readiness, merging or releasing, review the latest complete
+base-to-head range and satisfy every selected provider gate. Draft deferral
+does not modify external rulesets, required CI, checks or platform enforcement.
 
 ## Separate Readiness Dimensions
 
@@ -110,7 +124,7 @@ final live-readback requirements. It must:
 - avoid requiring its provider objects when the profile is not selected.
 
 GitHub repositories that select the existing App/check/receipt/ruleset
-enforcement use `policies/github-exact-head-enforcement-profile.md`. A GitLab
+enforcement use the [GitHub enforcement profile](github-exact-head-enforcement-profile.md). A GitLab
 CE repository may use this content contract without GitHub, and may add a
 separate GitLab profile for MR head, pipeline, discussion, approval, protected-
 branch, and final readback evidence when its deployment exposes those controls.
@@ -120,14 +134,19 @@ branch, and final readback evidence when its deployment exposes those controls.
 After a finding is fixed, rerun the appropriate code or documentation review
 over the smallest scope that proves the fix and affected boundaries. Select
 routine or deep review by the actual risk, not merely because a finding was
-fixed. Record why unchanged prior evidence remains applicable.
+fixed. Record why unchanged prior evidence remains applicable. Reuse valid
+primitive evidence at a formal gate rather than repeating it because of the
+stage name; the first review still covers the complete engineering packet.
 
 Assess Security Diff Scan applicability from the final diff. Require a
 proportional scan when changes affect security or trust boundaries, permissions,
 authentication, sensitive data handling, executable behavior with security
 impact, dependencies or installation paths with security impact, or when a
 concrete security concern remains. A clean code review does not replace a
-required scan. If applicability is uncertain, inspect the affected boundary
+required scan. Complete the formal scan on the stable packet; retain necessary
+independent safety review before side effects or a new permission boundary.
+Sealed scans are immutable; invalidated evidence requires the affected review
+and scan, not rewriting an earlier report. If applicability is uncertain, inspect the affected boundary
 before deciding; unresolved material security risk blocks readiness.
 
 For changes without those impacts, record Security Diff Scan as not applicable

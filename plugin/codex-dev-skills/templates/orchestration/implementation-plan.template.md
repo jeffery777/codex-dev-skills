@@ -6,11 +6,17 @@
 
 ## Task Slices
 
+- Smallest end-to-end deliverable / blocker removed:
+- DoD / remaining dependencies:
+
 ## Ownership
 
 ## Affected Files
 
 ## Verification
+
+- Cheap contract / environment / consumer smoke (before focused tests):
+- Focused behavior checks / risk level:
 
 ## Review Plan
 
@@ -20,6 +26,11 @@
   - `<code-review-gate | docs-review-gate | none>`
 - Formal gate trigger:
   - `<commit readiness | PR readiness | merge readiness | explicit repo-policy blocking decision | none>`
+- Valid primitive evidence reused (content/scope/assumptions/phase/policy/environment):
+- First full packet / affected fix boundaries / batched finding dispositions:
+- Draft checkpoint: `<REVIEW_REQUIRED | not-applicable>`; full latest base-to-head review before readiness/merge/release:
+- Two nonconvergent rounds: changed diagnostic method, integration evidence or smaller slice:
+- Measured test time / review rounds / repeated reads / rework causes, or `unknown`:
 
 ## Rollback Or Recovery
 
