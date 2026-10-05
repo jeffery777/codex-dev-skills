@@ -32,6 +32,17 @@ class FixtureDocker(FakeOneShotDocker):
                     (pathlib.Path(value['Mounts'][0]['Source'])/'remove.txt').write_bytes(containers.BASELINE['remove.txt'])
 
 
+class UpdateOnlyDocker(FixtureDocker):
+    """Offline update-only postimage; live native provenance is verified separately."""
+    def command(self,*argv):
+        result=super().command(*argv)
+        if argv[:2]==('container','start'):
+            workspace=pathlib.Path(self.inspect(argv[2])['Mounts'][0]['Source'])
+            (workspace/'added.txt').unlink(missing_ok=True)
+            (workspace/'remove.txt').write_bytes(containers.BASELINE['remove.txt'])
+        return result
+
+
 class IntegratorTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
@@ -94,6 +105,51 @@ class IntegratorTests(unittest.TestCase):
         ledger=self.snapshot()[0]
         with self.assertRaisesRegex(packets.PacketError,'source-integration-next-claim-unqualified'):
             self.store.claim('next','e'*64,'f'*64,expected_revision=ledger['revision'])
+
+    def native_update(self):
+        integrator=self.fixture('edit',engine=UpdateOnlyDocker(self.root))
+        candidate=integrator.supervisor.start('attempt','e'*64,'f'*64,expected_revision=0,
+            **self.source.requirements('native-update'))
+        self.assertEqual(candidate['patch'],integration.NATIVE_UPDATE_PATCH)
+        authority=integrator.governance.issue(integrator.supervisor,'attempt',recipe='native-update')
+        return integrator,authority
+
+    def test_fixed_native_recipe_updates_only_example_and_reconcile_cannot_replay(self):
+        integrator,authority=self.native_update()
+        previous=os.umask(0o077)
+        try: result=integrator.integrate('attempt',authority,operation_id='operation')
+        finally: os.umask(previous)
+        self.assertEqual(result['state'],'applied')
+        self.assertEqual(self.image(),{**containers.BASELINE,'example.txt':b'new\n'})
+        self.assertEqual(self.snapshot()[2]['scope_paths'],['example.txt'])
+        intent=self.snapshot()[2]
+        for scope in (['remove.txt'],['example.txt','added.txt'],['example.txt','remove.txt'],[],('example.txt',)):
+            altered=copy.deepcopy(intent); altered['scope_paths']=scope
+            with self.subTest(scope=scope),self.assertRaises(packets.PacketError): self.store._validate_integration_intent(altered)
+        altered=copy.deepcopy(intent); altered['postimage']['added.txt']={'bytes':6,'sha256':packets.digest(b'added\n')}
+        altered['postimage_sha256']=packets.digest(packets.canonical(altered['postimage']))
+        with self.assertRaises(packets.PacketError): self.store._validate_integration_intent(altered)
+        with mock.patch.object(integrator,'_write_file',side_effect=AssertionError('replay')):
+            self.assertEqual(integrator.reconcile('operation',authority),result)
+            self.assertEqual(integrator.integrate('attempt',authority,operation_id='operation'),result)
+
+    def test_native_recipe_revocation_source_drift_and_acceptance_mismatch_create_no_intent(self):
+        for case in ('revoked','source-drift','wrong-recipe'):
+            with self.subTest(case=case),tempfile.TemporaryDirectory() as tmp:
+                root=pathlib.Path(tmp).resolve(); root.chmod(0o700)
+                source=integration.SyntheticSource.create(root); store=packets.PacketStore(root,'packet'); store.prepare('d'*64)
+                integrator=self.fixture('edit',store=store,source=source,engine=UpdateOnlyDocker(root))
+                candidate=integrator.supervisor.start('attempt','e'*64,'f'*64,expected_revision=0,**source.requirements('native-update'))
+                authority=integrator.governance.issue(integrator.supervisor,'attempt',recipe='native-update')
+                if case=='revoked': integrator.governance.revoke(authority)
+                elif case=='source-drift': (source.source/'example.txt').write_bytes(b'drift\n')
+                else:
+                    with self.assertRaises(packets.PacketError): integrator.governance._expected(candidate,'add-update')
+                    continue
+                before={p.name:p.read_bytes() for p in source.source.iterdir() if p.is_file()}
+                with self.assertRaises(packets.PacketError): integrator.integrate('attempt',authority,operation_id='operation')
+                self.assertNotIn('integrations',store.supervisor_snapshot('attempt')[0])
+                self.assertEqual({p.name:p.read_bytes() for p in source.source.iterdir() if p.is_file()},before)
 
     def test_forged_and_revoked_authority_never_create_intent(self):
         integrator,authority=self.ready()

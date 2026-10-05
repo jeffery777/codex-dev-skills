@@ -1055,7 +1055,7 @@ class PacketStore:
             'integrator_sha256','scope_paths','no_effect'}
         if (type(value)is not dict or set(value)!=keys or type(value['schema_version'])is not int or value['schema_version']!=1
                 or value['kind']!='synthetic-synchronous-source-integration' or type(value['no_effect'])is not bool
-                or value['scope_paths']!=['added.txt','example.txt'] or type(value['binding'])is not dict
+                or value['scope_paths']not in (['added.txt','example.txt'],['example.txt']) or type(value['binding'])is not dict
                 or not re.fullmatch(r'[a-f0-9]{40}',value['head'])):
             raise PacketError('invalid-source-integration-intent')
         _id(value['operation_id']); _id(value['authority_id'])
@@ -1073,7 +1073,8 @@ class PacketStore:
             if total>1048576 or digest(canonical(manifest))!=value[key+'_sha256']:
                 raise PacketError('invalid-source-integration-image')
         pre,post=value['preimage'],value['postimage']
-        if not set(pre)<=set(post) or any(pre[name]!=post[name] for name in pre if name not in value['scope_paths']) or value['no_effect']!=(pre==post):
+        if (not set(pre)<=set(post) or any(pre.get(name)!=post.get(name) for name in set(pre)|set(post) if name not in value['scope_paths'])
+                or value['no_effect']!=(pre==post)):
             raise PacketError('invalid-source-integration-image')
 
     def _validate_integration_result(self,result,record,intent,state):

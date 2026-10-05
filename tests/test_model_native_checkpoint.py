@@ -18,6 +18,8 @@ sys.path.insert(0,str(ROOT/'skills/loop-engineering/scripts'))
 import model_native_checkpoint_backend as native
 import model_container_launcher as launcher
 import model_packet_store as packets
+import model_packet_integrator as integration
+import model_packet_supervisor as supervisors
 from tests.test_model_container_backend import FakeDocker, IMAGE
 from tests.test_model_external_bootstrap import PATCH_FORMAT
 
@@ -179,6 +181,48 @@ class LauncherPolicyTests(unittest.TestCase):
                 backend.read_sealed_patch({},1024,{})
         with mock.patch.object(native.containers.OneShotSyntheticContainerBackend,'read_sealed_patch',return_value={'patch':native.FIXED_PATCH}):
             self.assertEqual(backend.read_sealed_patch({},1024,{})['patch'],native.FIXED_PATCH)
+
+
+class NativeSourcePortTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
+        self.root=pathlib.Path(self.temp.name).resolve(); self.root.chmod(0o700)
+        self.source=integration.SyntheticSource.create(self.root)
+        self.governance=integration.FixtureGovernance(self.source)
+        self.backend=object.__new__(native.OneShotNativeFixtureBackend)
+        self.backend.native_case='checkpoint'; self.backend._capture=mock.Mock()
+        self.supervisor=object.__new__(supervisors.PacketSupervisor)
+        self.supervisor.backend=self.backend; self.supervisor.store=packets.PacketStore(self.root,'packet')
+
+    def test_standard_port_still_rejects_native_and_native_port_rejects_proxy_and_other_cases(self):
+        with self.assertRaisesRegex(packets.PacketError,'synthetic-one-shot-candidate-required'):
+            integration.PacketIntegrator(self.source,self.governance,self.supervisor)
+        self.backend.native_case='quarantine'
+        with self.assertRaises(packets.PacketError): native.NativeFixturePacketIntegrator(self.source,self.governance,self.supervisor)
+        self.backend.native_case='checkpoint'; self.supervisor.backend=host.Consumer(self.backend)
+        with self.assertRaises(packets.PacketError): native.NativeFixturePacketIntegrator(self.source,self.governance,self.supervisor)
+        self.supervisor.backend=self.backend
+        with self.assertRaises(packets.PacketError): native.NativeFixturePacketIntegrator(object(),self.governance,self.supervisor)
+        with self.assertRaises(packets.PacketError): native.NativeFixturePacketIntegrator(self.source,object(),self.supervisor)
+
+    def test_each_candidate_revalidates_capture_binding_and_fixed_patch(self):
+        integrator=native.NativeFixturePacketIntegrator(self.source,self.governance,self.supervisor)
+        candidate={'patch':native.FIXED_PATCH,'binding':self.source.requirements('native-update')}
+        with mock.patch.object(integration.PacketIntegrator,'_candidate_locked',return_value=({},candidate)):
+            self.assertEqual(integrator._candidate_locked(None,None,'attempt'),({},candidate))
+            self.assertEqual(self.backend._capture.call_count,2)
+            for altered in ({'patch':b'', 'binding':candidate['binding']},
+                            {'patch':native.FIXED_PATCH,'binding':self.source.requirements('noop')}):
+                with mock.patch.object(integration.PacketIntegrator,'_candidate_locked',return_value=({},altered)),self.assertRaises(packets.PacketError):
+                    integrator._candidate_locked(None,None,'attempt')
+        self.backend._capture.side_effect=packets.PacketError('native-private-reference-drift')
+        with self.assertRaises(packets.PacketError): integrator._candidate_locked(None,None,'attempt')
+
+    def test_integration_rejects_worker_source_paths_before_source_or_authority_access(self):
+        for relative in ('../source-fixture-abcdefgh','/source-fixture-abcdefgh','source-fixture-abcdefgh/child'):
+            with mock.patch.object(integration.SyntheticSource,'reopen') as reopen,self.assertRaises(packets.PacketError):
+                host.integrate_checkpoint(self.root,{'source_ref':{'relative':relative,'descriptor_sha256':'a'*64}},None,None)
+            reopen.assert_not_called()
 
 
 class PacketReferenceTests(unittest.TestCase):

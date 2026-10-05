@@ -10,13 +10,15 @@ import sys
 import model_container_backend as containers
 import model_container_launcher as launcher
 import model_packet_store as packets
+import model_packet_integrator as integration
+import model_packet_supervisor as supervisors
 
 CONTRACT_SHA256 = packets.digest(pathlib.Path(__file__).read_bytes())
 IMAGE = 'sha256:916619b289581c9a4f2941745a09b2934cee4bd354049355b4d4d53485d67573'
 CASES = frozenset({'checkpoint', 'quarantine', 'claim-replay'})
 GUEST_SCRIPT = 'scripts/model_native_checkpoint_fixture.py'
 HOST_SCRIPT = 'scripts/verify-model-native-checkpoint.py'
-FIXED_PATCH = b'diff --git a/example.txt b/example.txt\n--- a/example.txt\n+++ b/example.txt\n@@ -1 +1 @@\n-old\n+new\n'
+FIXED_PATCH = integration.NATIVE_UPDATE_PATCH
 TMPFS = 'rw,noexec,nosuid,nodev,size=16m,mode=0700,uid=65534,gid=65534'
 BINARY_BYTES = 247459224
 BINARY_SHA = '54a834b6b16d8a01ff80f7f9cee4aedec35a61c90379e088792623bf1b4c1e3d'
@@ -222,3 +224,34 @@ class OneShotNativeFixtureBackend(containers.OneShotSyntheticContainerBackend):
         if reply['patch'] != FIXED_PATCH:
             raise packets.PacketError('native-checkpoint-patch-drift')
         return reply
+
+
+class NativeFixturePacketIntegrator(integration.PacketIntegrator):
+    """Separate exact-type port for the captured, fixed anonymous native fixture.
+
+    No generic backend, proxy, model grant or user source is accepted. The
+    original PacketIntegrator constructor retains its synthetic-only gate.
+    Inherited synchronous authority/ledger/lock/recovery gates remain in force.
+    """
+    def __init__(self,source,governance,supervisor):
+        if (type(source)is not integration.SyntheticSource
+                or type(governance)is not integration.FixtureGovernance or governance.source is not source):
+            raise packets.PacketError('trusted-synthetic-integrator-capabilities-required')
+        if (type(supervisor)is not supervisors.PacketSupervisor
+                or type(supervisor.backend)is not OneShotNativeFixtureBackend
+                or supervisor.backend.native_case!='checkpoint'):
+            raise packets.PacketError('fixed-native-source-candidate-required')
+        supervisor.backend._capture()
+        self.source,self.governance,self.supervisor=source,governance,supervisor
+        self.store=supervisor.store
+
+    def _candidate_locked(self,packet_fd,ledger,attempt):
+        value=self.supervisor.backend
+        if type(value)is not OneShotNativeFixtureBackend or value.native_case!='checkpoint':
+            raise packets.PacketError('fixed-native-source-candidate-required')
+        value._capture()
+        record,candidate=super()._candidate_locked(packet_fd,ledger,attempt)
+        if (candidate['patch']!=FIXED_PATCH or any(candidate['binding'][key]!=expected
+                for key,expected in self.source.requirements('native-update').items())):
+            raise packets.PacketError('fixed-native-source-candidate-required')
+        return record,candidate

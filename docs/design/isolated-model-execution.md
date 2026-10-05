@@ -1641,3 +1641,31 @@ postimage、worker frame 不變，只有一次 native invocation，fresh consume
 此匿名實驗 backend 對 macOS Docker Desktop 的唯讀 `/fixture` bind，將建立時實際回覆的固定 `/host_mnt` 加原 host 絕對路徑列為精確契約；Linux 仍要求原絕對路徑。host platform 與完整預期 source 納入 policy digest，`Mounts`／`HostConfig.Mounts` 同時核對，不做路徑正規化、任意 prefix 接受或跨平台 alias fallback。不同 Docker Desktop 回覆形狀會拒絕繼續；這是有界實驗相容性，尚未取得 runtime qualification。
 
 固定 image 的 inspect 只將 `User`／`WorkingDir` 未設定（欄位省略或 null）及空字串視為相同預設語義；拒絕非空值及其他型別。這遵循 [Docker Engine API version history](https://docs.docker.com/reference/api/engine/version-history/) 所述 image inspect 省略未設定 OCI 欄位的契約。固定 image ID、Python 3.12.9、Cmd、無 OnBuild／Healthcheck、完整 runtime user／working-directory 核對保持不變，不採用 runtime observation 修補 policy。
+## 固定原生來源整合入口
+
+`verify-model-native-checkpoint.py --native-source-integration-only --case checkpoint`
+只把該輪固定原生 update-only C 納入同輪建立的 private `SyntheticSource`。
+producer 保存 host descriptor；coordinator 以實際 PID／wait 0／stderr EOF
+核對後才啟動 fresh consumer。consumer 先確認原 protected refs 與固定 C，
+再由 host fixture governance 發出 scope 僅 `example.txt` 的 `native-update`
+authority。guest 不能指定 source、路徑或核准 JSON。
+
+`NativeFixturePacketIntegrator` 是獨立 exact-type fixture port；原
+`PacketIntegrator` constructor 的 synthetic-only gate 不變。每次 candidate
+核對／reconcile 重驗 captured source、固定 native recipe／patch／acceptance；
+沿用 source lock、physical descriptor、preimage、HEAD／index、authority
+revocation、packet generation fence、durable intent、同步 writer 與三態收據。
+新 scope／postimage 同時參與 authority、intent 及 recovery；不得以通過測試
+或 caller 自述取得一般來源寫入權。
+
+允許的副作用精確限於 source `example.txt` 與 integration ledger／兩份
+journal 及其 staging links；原 immutable packet refs 保持內容與 identity。
+same-operation reconcile 需保存後再次核對 packet refs 並讀回同一結果。
+receipt 的 `protected_refs_unchanged` 在 source 模式為 false，表示 ledger
+合法更新；另有明確原 immutable refs／C 不變與 intake 前全 refs 不變證據。
+固定 staging `git apply --no-index` child 使用 022 mask，保留 host 077 與
+private staging root；0644 text gate 不放寬。
+
+這條匿名 fixture E2E 不等於一般 repository integration、模型失聯接手、
+production authority 或 N1–N4 資格。舊 intake 模式仍不套用來源；實測原始
+證據留在 Git 外，不重放失敗／unknown attempts，不清理既有 Docker 資源。

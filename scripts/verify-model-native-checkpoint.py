@@ -27,6 +27,7 @@ import model_native_checkpoint_fixture as guest
 import model_packet_store as packets
 import model_packet_supervisor as supervisors
 import model_control_archive as archive
+import model_packet_integrator as integration
 
 IMAGE = native.IMAGE
 PACKET = 'packet-native-checkpoint'
@@ -176,7 +177,8 @@ class Engine(native.containers.LocalDocker):
             self.failures.append('native-transport-failed'); raise
 
 
-def requirements():
+def requirements(source=None):
+    if source is not None: return source.requirements('native-update')
     return {'source_sha256':native.containers.source_digest(),
         'scope_sha256':packets.digest(packets.canonical({'paths':['example.txt'],'kind':'fixed-native-intake'})),
         'acceptance_sha256':packets.digest(native.FIXED_PATCH)}
@@ -410,9 +412,10 @@ def validate_wire(wire,receipt,external):
 
 
 def produce(root, request):
+    source=integration.SyntheticSource.create(root) if request['source_integration'] else None
     store=packets.PacketStore(root,PACKET); store.prepare(packets.digest(packets.canonical(request)))
     engine=Engine(request['endpoint'],root,'producer'); value,supervisor=backend(root,request,store,engine)
-    result=supervisor.start('attempt','e'*64,'f'*64,expected_revision=0,**requirements())
+    result=supervisor.start('attempt','e'*64,'f'*64,expected_revision=0,**requirements(source))
     ledger,record=store.supervisor_snapshot('attempt'); binding=record['binding']; descriptor=store.read_runtime_descriptor('attempt')
     deadline=time.monotonic()+50; quarantine=replay=None
     if request['case'] in ('quarantine','claim-replay') and result!={'outcome':'unknown','reason':'runtime-proof-unavailable','attempt_id':'attempt'}:
@@ -491,6 +494,7 @@ def produce(root, request):
         'binding':binding,'descriptor':descriptor,'packet_refs':packet_refs(store),'capsule_ref':request['capsule_ref'],
         'checkpoint':ledger['checkpoint'],'patch_sha256':packets.digest(patch),'chain':chain,
         'quarantine':quarantine,'replay':replay,'frame_ref':frame_ref,'observation':observation,'engine_identity':engine.identity(),
+        'source_ref':None if source is None else {'relative':source.root.name,'descriptor_sha256':source.descriptor_sha256},
         'docker_identity':list(engine.executable_identity),'finished_at':time.monotonic()})
 
 
@@ -503,6 +507,47 @@ class Consumer:
     def deny(self,*args,**kwargs):
         self.failures.append('consumer-effect-denied'); raise packets.PacketError('native-consumer-effect-denied')
     prepare=bootstrap_input=bootstrap=launch=export_patch=deny
+
+
+def integrate_checkpoint(root,handoff,store,value):
+    """Host-only bounded source port; no worker-supplied source or authority."""
+    ref=handoff['source_ref']
+    if (type(ref)is not dict or set(ref)!={'relative','descriptor_sha256'}
+            or type(ref['relative'])is not str or not re.fullmatch(r'source-fixture-[a-z0-9_]{8}',ref['relative'])):
+        raise packets.PacketError('native-source-reference-invalid')
+    source=integration.SyntheticSource.reopen(root/ref['relative'],ref['descriptor_sha256'])
+    governance=integration.FixtureGovernance(source)
+    supervisor=supervisors.PacketSupervisor(store,value,host_id=value.host_id,backend_id=value.backend_id,policy_sha256=value.policy_sha256)
+    integrator=native.NativeFixturePacketIntegrator(source,governance,supervisor)
+    authority=governance.issue(supervisor,'attempt',recipe='native-update')
+    before=packet_refs(store)
+    result=integrator.integrate('attempt',authority,operation_id='native-source-update')
+    ledger,record,intent=store.integration_snapshot('native-source-update')
+    after=packet_refs(store)
+    if (result['state']!='applied' or result['reason']!='postimage-readback'
+            or intent['scope_paths']!=['example.txt'] or ledger['checkpoint']!=handoff['checkpoint']
+            or any(after.get(name)!=row for name,row in before.items() if name!='ledger.json')):
+        raise packets.PacketError('native-source-integration-readback-drift')
+    # Only the integration's two journal artifacts and their exact staging links
+    # may be appended. Every original immutable artifact keeps its identity.
+    expected={'integration-intent-'+record['intent_sha256']+'.json',
+        'integration-result-'+record['result_sha256']+'.json'}
+    added=set(after)-set(before)
+    if not expected<=added or len(added)!=4:
+        raise packets.PacketError('native-source-integration-journal-drift')
+    for name in added-expected:
+        if not re.fullmatch(r'artifact-[a-f0-9]{32}',name) or not any(after[name]==after[key] for key in expected):
+            raise packets.PacketError('native-source-integration-journal-drift')
+    with source._locked() as (fd,_):
+        if source.snapshot(fd)!=integration._fixed_postimage('native-update'):
+            raise packets.PacketError('native-source-postimage-drift')
+    # This same-operation call must read its result, never apply/restart again.
+    if integrator.reconcile('native-source-update',authority)!=result or packet_refs(store)!=after:
+        raise packets.PacketError('native-source-reconcile-mutated-or-drifted')
+    return {'result':result,'source_descriptor_sha256':source.descriptor_sha256,
+        'intent_sha256':record['intent_sha256'],'result_sha256':record['result_sha256'],
+        'checkpoint_unchanged':True,'original_immutable_refs_unchanged':True,
+        'source_head_index_unchanged':True,'same_operation_reconcile_readonly':True}
 
 
 def consume(root,request):
@@ -542,9 +587,13 @@ def consume(root,request):
     if (ledger['checkpoint']!=handoff['checkpoint'] or packets.digest(patch)!=handoff['patch_sha256']
             or packet_refs(store)!=handoff['packet_refs'] or proxy.failures or engine.failures):
         raise packets.PacketError('native-consumer-mutated-or-drifted')
+    integrated=integrate_checkpoint(root,handoff,store,value) if request['source_integration'] else None
+    if engine.failures: raise packets.PacketError('native-consumer-integration-transport-failed')
     save(root,'consumer-result.json',{'run_id':request['run_id'],'pid':os.getpid(),'ppid':os.getppid(),
         'producer_pid':handoff['pid'],'outcome':outcome,'checkpoint':ledger['checkpoint'],
-        'protected_refs_unchanged':True,'source_applied':False,'production_qualified':False})
+        'protected_refs_unchanged':integrated is None,'intake_refs_unchanged_before_integration':True,
+        'source_applied':integrated is not None,
+        'source_integration':integrated,'production_qualified':False})
 
 
 def stage(root,stage_name,request_sha):
@@ -609,10 +658,15 @@ def run_private(args, root, root_fd):
         'isolation_qualified':False,'startup_qualified':False,'n1_qualified':False,'n2_qualified':False,
         'n3_qualified':False,'n4_qualified':False,'fixture':str(root)}
     try:
+        source_integration=getattr(args,'native_source_integration_only',False)
+        if type(source_integration)is not bool or source_integration and args.case!='checkpoint':
+            raise packets.PacketError('native-source-checkpoint-case-required')
+        if source_integration: receipt['scope']='anonymous-native-checkpoint-synthetic-source-integration'
         ref=capture(root,args.binary_path)
         pinned_engine=native.containers.LocalDocker(args.endpoint,root)
         request={'schema_version':1,'run_id':uuid.uuid4().hex,'case':args.case,'endpoint':args.endpoint,
             'capsule_ref':ref,'coordinator_pid':os.getpid(),'docker_executable':pinned_engine.executable,
+            'source_integration':source_integration,
             'docker_identity':list(pinned_engine.executable_identity)}
         save(root,'run-request.json',request); request_sha=packets.digest(packets.canonical(request))
         command=[sys.executable,'-I','-S','-B',str(root/'capsule/host'/native.HOST_SCRIPT)]
@@ -647,7 +701,9 @@ def run_private(args, root, root_fd):
 def main():
     if len(sys.argv)==5 and sys.argv[1]=='_stage':
         stage(pathlib.Path(sys.argv[3]),sys.argv[2],sys.argv[4]); return 0
-    parser=argparse.ArgumentParser(); parser.add_argument('--native-checkpoint-only',action='store_true',required=True)
+    parser=argparse.ArgumentParser(); modes=parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument('--native-checkpoint-only',action='store_true')
+    modes.add_argument('--native-source-integration-only',action='store_true',help='fixed checkpoint to private synthetic source only')
     parser.add_argument('--evidence-root',type=pathlib.Path,required=True)
     parser.add_argument('--binary-path',type=pathlib.Path,required=True)
     parser.add_argument('--endpoint',required=True); parser.add_argument('--case',choices=sorted(native.CASES),required=True)

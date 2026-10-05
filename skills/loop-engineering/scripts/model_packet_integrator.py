@@ -32,7 +32,27 @@ SOURCE_PATHS=frozenset({'example.txt','remove.txt','added.txt'})
 SCOPE=['added.txt','example.txt']
 FIXED_PATCH=(b'diff --git a/added.txt b/added.txt\nnew file mode 100644\n--- /dev/null\n+++ b/added.txt\n@@ -0,0 +1 @@\n+added\n'
              b'diff --git a/example.txt b/example.txt\n--- a/example.txt\n+++ b/example.txt\n@@ -1 +1 @@\n-old\n+new\n')
+NATIVE_UPDATE_PATCH=b'diff --git a/example.txt b/example.txt\n--- a/example.txt\n+++ b/example.txt\n@@ -1 +1 @@\n-old\n+new\n'
 CONTRACT_SHA256=packets.digest(pathlib.Path(__file__).read_bytes())
+
+
+def _fixed_patch(recipe):
+    if recipe=='add-update': return FIXED_PATCH
+    if recipe=='native-update': return NATIVE_UPDATE_PATCH
+    if recipe=='noop': return b''
+    raise packets.PacketError('fixed-integrator-recipe-required')
+
+
+def _fixed_postimage(recipe):
+    _fixed_patch(recipe)
+    if recipe=='add-update': return {**containers.BASELINE,'example.txt':b'new\n','added.txt':b'added\n'}
+    if recipe=='native-update': return {**containers.BASELINE,'example.txt':b'new\n'}
+    return containers.BASELINE
+
+
+def _fixed_scope(recipe):
+    _fixed_patch(recipe)
+    return ['example.txt'] if recipe=='native-update' else SCOPE
 
 
 def _identity(value):
@@ -111,7 +131,11 @@ def _git(directory,*args,input_bytes=None):
         'GIT_OPTIONAL_LOCKS':'0','LC_ALL':'C','GIT_AUTHOR_DATE':'2000-01-01T00:00:00Z','GIT_COMMITTER_DATE':'2000-01-01T00:00:00Z'}
     process=subprocess.Popen(['git','--no-optional-locks','-c','core.hooksPath=/dev/null','-c','core.fsmonitor=false',
         '-c','user.name=Synthetic Fixture','-c','user.email=synthetic@example.invalid',*args],cwd=directory,
-        env=environment,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,close_fds=True)
+        env=environment,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,close_fds=True,
+        # This fixed command writes only the private staging tree. Git's new
+        # text files must retain 0644 even when the host capture mask is 077.
+        # Do not change the host mask or masks of other Git commands.
+        umask=0o022 if args==('apply','--no-index','--whitespace=nowarn','-') else -1)
     selector=selectors.DefaultSelector(); output=bytearray(); pending=memoryview(input_bytes or b''); offset=0
     deadline=time.monotonic()+10
     try:
@@ -258,9 +282,9 @@ class SyntheticSource:
         return files
 
     def requirements(self,recipe):
-        if recipe not in {'add-update','noop'}: raise packets.PacketError('fixed-integrator-recipe-required')
+        _fixed_patch(recipe)
         return {'source_sha256':containers.source_digest(),
-            'scope_sha256':packets.digest(packets.canonical({'schema_version':1,'paths':SCOPE,'ownership':'exclusive-synthetic-source'})),
+            'scope_sha256':packets.digest(packets.canonical({'schema_version':1,'paths':_fixed_scope(recipe),'ownership':'exclusive-synthetic-source'})),
             'acceptance_sha256':packets.digest(packets.canonical({'schema_version':1,'recipe':recipe,'kind':'synthetic-fixed-content-acceptance'}))}
 
 
@@ -285,7 +309,7 @@ class FixtureGovernance:
     def _expected(self,candidate,recipe):
         requirements=self.source.requirements(recipe)
         if any(candidate['binding'][key]!=value for key,value in requirements.items()): raise packets.PacketError('fixture-scope-acceptance-drift')
-        expected=FIXED_PATCH if recipe=='add-update' else b''
+        expected=_fixed_patch(recipe)
         if candidate['patch']!=expected or candidate['patch_sha256']!=packets.digest(expected): raise packets.PacketError('synthetic-fixed-content-gate-failed')
         return requirements
 
@@ -307,7 +331,7 @@ class FixtureGovernance:
             validation_sha=packets.digest(validation_raw); review_sha=packets.digest(review_raw)
             _save(control,'validation-'+validation_sha+'.json',validation_raw); _save(control,'review-'+review_sha+'.json',review_raw)
             authority={'schema_version':1,'authority_id':authority_id,'kind':'host-issued-synthetic-source-writer',
-                'owner':'synthetic-sole-integrator','scope_paths':SCOPE,'source_descriptor_sha256':self.source.descriptor_sha256,
+                'owner':'synthetic-sole-integrator','scope_paths':_fixed_scope(recipe),'source_descriptor_sha256':self.source.descriptor_sha256,
                 'candidate_sha256':candidate_sha,'scope_sha256':requirements['scope_sha256'],'acceptance_sha256':requirements['acceptance_sha256'],
                 'recipe':recipe,'validation_sha256':validation_sha,'review_sha256':review_sha,'integrator_sha256':CONTRACT_SHA256}
             raw=packets.canonical(authority); sha=packets.digest(raw)
@@ -344,7 +368,7 @@ class FixtureGovernance:
             'scope_sha256','acceptance_sha256','recipe','validation_sha256','review_sha256','integrator_sha256'}
         if (type(value)is not dict or set(value)!=keys or type(value['schema_version'])is not int or value['schema_version']!=1
                 or value['authority_id']!=authority.authority_id or value['kind']!='host-issued-synthetic-source-writer'
-                or value['owner']!='synthetic-sole-integrator' or value['scope_paths']!=SCOPE
+                or value['owner']!='synthetic-sole-integrator' or value['scope_paths']!=_fixed_scope(value['recipe'])
                 or value['source_descriptor_sha256']!=self.source.descriptor_sha256 or value['candidate_sha256']!=_candidate_identity(candidate)
                 or value['integrator_sha256']!=CONTRACT_SHA256): raise packets.PacketError('source-authority-binding-drift')
         requirements=self._expected(candidate,value['recipe'])
@@ -448,6 +472,9 @@ class PacketIntegrator:
                 if _manifest(pre)!=self.source.descriptor['preimage'] or _git(self.source.source,'status','--porcelain=v1','-z','--untracked-files=all'):
                     raise packets.PacketError('source-not-clean-preimage')
                 post=self._stage(pre,candidate['patch'])
+                scope=_fixed_scope(approved['recipe'])
+                if post!=_fixed_postimage(approved['recipe']) or any(post.get(name)!=pre.get(name) for name in set(pre)|set(post) if name not in scope):
+                    raise packets.PacketError('source-fixed-postimage-scope-drift')
                 self.governance.read_verified(control,authority,candidate)
                 if self.source.snapshot(source_fd)!=pre: raise packets.PacketError('source-preimage-drift')
                 intent={'schema_version':1,'kind':'synthetic-synchronous-source-integration','operation_id':operation_id,
@@ -458,7 +485,7 @@ class PacketIntegrator:
                     'preimage':_manifest(pre),'postimage':_manifest(post),
                     'preimage_sha256':packets.digest(packets.canonical(_manifest(pre))), 'postimage_sha256':packets.digest(packets.canonical(_manifest(post))),
                     'authority_id':authority.authority_id,'authority_sha256':authority.sha,'validation_sha256':approved['validation_sha256'],
-                    'review_sha256':approved['review_sha256'],'integrator_sha256':CONTRACT_SHA256,'scope_paths':SCOPE,'no_effect':pre==post}
+                    'review_sha256':approved['review_sha256'],'integrator_sha256':CONTRACT_SHA256,'scope_paths':scope,'no_effect':pre==post}
                 ledger,integration=self.store._begin_integration(packet_fd,ledger,attempt,operation_id,intent,
                     expected_revision=ledger['revision'],record_sha256=packets.digest(packets.canonical(record)))
                 if pre==post:
@@ -489,7 +516,7 @@ class PacketIntegrator:
         intent=self.store._integration_intent(packet_fd,record,ledger)
         candidate_record,candidate=self._candidate_locked(packet_fd,ledger,record['attempt_id'])
         approved=self.governance.read_verified(control,authority,candidate)
-        expected_post={**containers.BASELINE,'example.txt':b'new\n','added.txt':b'added\n'} if approved['recipe']=='add-update' else containers.BASELINE
+        expected_post=_fixed_postimage(approved['recipe'])
         expected={'schema_version':1,'kind':'synthetic-synchronous-source-integration','operation_id':operation,
             'preimage':self.source.descriptor['preimage'],'preimage_sha256':self.source.descriptor['preimage_sha256'],
             'postimage':_manifest(expected_post),'postimage_sha256':packets.digest(packets.canonical(_manifest(expected_post))),
@@ -497,7 +524,7 @@ class PacketIntegrator:
             'review_sha256':approved['review_sha256'],'source_descriptor_sha256':self.source.descriptor_sha256,
             'source_identity_sha256':self.source.descriptor['source_identity_sha256'],'integrator_sha256':CONTRACT_SHA256,
             'candidate_sha256':_candidate_identity(candidate),'checkpoint_sha256':candidate['checkpoint_sha256'],'patch_sha256':candidate['patch_sha256'],
-            'binding':candidate_record['binding'],'scope_paths':SCOPE,'head':self.source.descriptor['head'],'index_sha256':self.source.descriptor['index_sha256']}
+            'binding':candidate_record['binding'],'scope_paths':_fixed_scope(approved['recipe']),'head':self.source.descriptor['head'],'index_sha256':self.source.descriptor['index_sha256']}
         if set(intent)!=set(expected) or packets.canonical(intent)!=packets.canonical(expected): raise packets.PacketError('source-integration-recovery-binding-drift')
         try: files=self.source.snapshot(source_fd)
         except Exception: files=None

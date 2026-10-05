@@ -907,3 +907,36 @@ draft 每次更新即重做完整 Merge Review、契約／consumer 問題發現�
 前一穩定 native 工程包的有效測試、獨立審查與封存掃描按 source／scope／
 assumptions／policy／environment 核對後重用；效率切片另審其公開契約及入口。
 原完整 DoD、未解資格與同案發行評估維持 BLOCKED；公司環境可用性只是依賴之一。
+
+## 原生 checkpoint 到固定來源整合的最小切片
+
+本輪解除「原生非空 C 已取得，但 fresh consumer 尚無來源整合接線」的
+fixture blocker。DoD 是一條固定匿名 `apply_patch → C → producer wait/EOF →
+fresh consumer → host authority → 唯一 integrator → applied → same-operation
+readonly reconcile`；必須核對原 immutable refs／C、來源 HEAD／index、精確
+postimage，且 revoked authority、來源漂移、錯誤 backend／case、capture 漂移、
+acceptance mismatch 在來源寫入前拒絕。
+
+原 `PacketIntegrator` 的 exact synthetic backend gate 保留。另設 exact-type
+`NativeFixturePacketIntegrator`，只接受 captured native checkpoint recipe、
+host-created `SyntheticSource` 與固定 `native-update` authority；scope 僅
+`example.txt`。只建立 Git 外的 private fixture，不能輸入一般 repository，
+不帶 credentials。整合允許 ledger 與兩份 integration journal 及其 staging
+links 增加；原 descriptor／seal／C／runtime evidence 保持原內容與 identity。
+同 operation 重讀不得再 apply 或 start runtime。固定 staging Git child 使用
+022 mask 以維持 text 0644；host capture 仍 077，其他 child 不受改動。
+
+先做 pinned Python／Docker image shape／既有 consumer smoke，再做 scoped
+正負測試與獨立深入 pre-execution review；穩定後才跑 Security Diff Scan。
+有效的未改動 primitive 證據可重用，不作新 bridge 完成證據。
+
+```sh
+./scripts/project-python -m unittest tests.test_model_native_checkpoint tests.test_model_packet_integrator
+./scripts/project-python scripts/verify-model-native-checkpoint.py --native-source-integration-only --case checkpoint --evidence-root "$PRIVATE_EVIDENCE_ROOT" --binary-path "$VERIFIED_LINUX_CLI" --endpoint "$LOCAL_DOCKER_ENDPOINT"
+```
+
+原 intake 的三個模式與 failed／unknown attempts 保留；新 source 模式只有
+checkpoint 正例，不擴為一般模型或任意 patch 接手。原完整 DoD、訂閱登入、
+可信 generic observer／撤權／checkpoint intake、一般來源整合、N1–N4、
+context／quality escalation／跨 provider E2E 與同案 release 仍 BLOCKED。
+production／native／runtime／adapter／isolation／startup／N1–N4 資格全部 false。
