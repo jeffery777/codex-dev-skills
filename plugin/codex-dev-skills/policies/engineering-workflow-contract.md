@@ -75,6 +75,12 @@
    服務／認證／環境／權限／context 失敗與品質返工分開分類；未知外部效果不
    重播。兩輪未完成修正觸發假設、方法與 context 重評；換模型／session 不
    清除 findings、修正歷史或預算。
+6. 基本 provider／模型接入先沿用原生設定、工具 loop、history／context 與
+   sandbox；選模／返工重用既有決策層。執行中接手的 writer 隔離、checkpoint、
+   撤權與成果整合另列進階 DoD。按選定 runtime／scope 獨立驗收基礎與決策，
+   不要求未使用的恢復系統全部資格；缺相依仍阻擋真正 dispatch／接手。
+   新 supervisor、broker、observer、container 或 integrator 必須解除具體的
+   原生能力缺口，不以設定／help 成功、advisory 或 fixture 取得執行資格。
 
 ## Adapter Boundaries
 

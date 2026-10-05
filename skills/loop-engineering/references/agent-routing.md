@@ -13,6 +13,12 @@ radius, latency/cost sensitivity, independence, and verification burden; do not
 select a capability from the task name alone. Model/profile routing never
 changes permissions, scope, human gates, or completion criteria.
 
+基本模型接入沿用 runtime 的原生 provider／工具 loop；自架模型加入既有
+classifier／preflight／qualification 候選。決策、確定靜止邊界上的 dispatch
+與執行中 writer 接手分開驗收；advisory 不宣稱切換，advanced containment
+缺口不一律阻擋不依賴它的基本接入或決策。適用共用工程契約的分層 DoD，
+不另建選模腦、retry loop 或恢復框架來完成普通 routing。
+
 First-review triage maps actual CI admission, installer and cross-module
 contract impact to existing `high` or `public-contract` risk factors; security
 and data retain their hard triggers. Select deep review immediately when these

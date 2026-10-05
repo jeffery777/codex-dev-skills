@@ -927,6 +927,7 @@ group_templates() {
         docs/native-runtime-capabilities.md \
         docs/agent-qualification-autoload.md \
         docs/guides/local-model-mapping.md \
+        docs/design/native-model-integration-layers.md \
         templates/orchestration/loop-engineering-spec.template.md \
         templates/orchestration/loop-decision-input.template.yaml \
         templates/orchestration/loop-event.template.yaml \

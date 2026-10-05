@@ -8,6 +8,8 @@
 
 - Smallest end-to-end deliverable / blocker removed:
 - DoD / remaining dependencies:
+- Native responsibility / existing workflow reused / specific missing capability:
+- Independent delivery layer and runtime/scope; advanced dependencies only when used:
 
 ## Ownership
 

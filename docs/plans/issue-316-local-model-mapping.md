@@ -1,5 +1,44 @@
 # Issue #316 本機角色模型映射工程計畫
 
+## 當前優先順序：原生接入與分層收斂
+
+依[三層設計與 DoD](../design/native-model-integration-layers.md)，A 原生基本接入、
+B 既有選模／返工決策及 C 執行中接手分別驗收；保留原 C 目標及全部證據。
+先完成 standalone CLI 的有限 A 工具循環，再採用既有 B 決策；不以 C 全工具／
+全部 runtime 資格作為 A/B 前置。B advisory 不是自動 dispatch，沒有合格
+executor 仍明示未完成。CLI、bundled CLI、Desktop 與 per-model context 分開。
+
+目前 PR 仍累積 A/B/C 及效率工程，draft REVIEW_REQUIRED；宣稱整份 PR ready
+前須對最新完整 head 審查。有限 A/B 可以獨立評估交付／發行，但尚未取得其
+完整驗收及 gate；原自動接手 DoD 未完成。以下 C 工程段落保留其既有需求與
+歷史結果，不再代表當前先做下一個恢復元件的指令。
+
+本輪只完成責任／相依收斂、共用規範／技能／模板同步與 HC-02 證據檔名
+碰撞修正；新 host-control 尚未實體驗收，不新增 C probe／矩陣或登入權限。
+
+## 下一個最小 host 控制接點工程包
+
+解除的 blocker：原生 v6 現有實體 readback 仍以歷史 committed_at 表示時間，
+且 fixed reader 不提供真實撤銷來源。先加入 host-owned clock／observation／
+experimental permit 限制接點；不把匿名實驗授權轉成 production qualification。
+
+DoD：可信 coordinator 的本輪 issuance／captured-source reference、protected
+packet 身分、mode 與有效 session 必須一致；實際時鐘由 host 取樣，過期、
+rollback、epoch 不明與 descriptor drift 拒絕。撤銷在同一 packet lock 下持久化，
+fresh consumer 不復活 permit；撤銷後仍可唯讀觀察，但不新增效果或採納晚到成果。
+Historical runtime bytes／C 身分不刷新，actual sample interval 另外記錄。
+Control reference 必須持久綁入 admission mode；缺 port 或降回舊 mode 不可
+開啟受控 packet。Session descriptor 不繼承給 child，關閉後不得補 issue 或
+接任 holder；忙鎖撤銷保持 not-applied，coordinator 停止後續協調，不能宣稱
+已撤銷、已停止 writer 或可正常派 successor。
+
+先做接口／型別／session-lock 與既有 consumer smoke，再做局部正負測試、
+完整有界深入審查；只重跑既有單一兩次執行 E2E 驗證新接點，穩定後完成適用
+SDS。不新增局部 Docker probe。原失敗／unknown／sealed evidence 保留。
+此包不完成 journal 的實際 service elapsed budget、一般 authority reader、
+來源整合、登入／provider-client containment、N1–N4 或真實模型資格；原完整
+DoD／release BLOCKED，draft REVIEW_REQUIRED，production registry 保持空。
+
 ## 本輪最小原生 v6 接手工程包
 
 解除的 blocker：v4 native execution 與 v6 selection／rework／ownership 尚未

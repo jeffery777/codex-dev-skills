@@ -362,6 +362,16 @@ class PluginPackagingTests(unittest.TestCase):
             self.assertEqual((ROOT / relative).read_bytes(), installed.read_bytes())
             contract = root / "home/.codex/templates/docs/native-runtime-capabilities.md"
             self.assertEqual((ROOT / "docs/native-runtime-capabilities.md").read_bytes(), contract.read_bytes())
+            guide = root / "home/.codex/templates/docs/guides/local-model-mapping.md"
+            target = (guide.parent / "../design/native-model-integration-layers.md").resolve(strict=True)
+            self.assertTrue(target.is_relative_to(root / "home/.codex/templates"))
+            self.assertEqual((ROOT / "docs/design/native-model-integration-layers.md").read_bytes(), target.read_bytes())
+            for source, installed in (
+                ("policies/engineering-workflow-contract.md", "home/.codex/templates/orchestration/policies/engineering-workflow-contract.md"),
+                ("templates/orchestration/implementation-plan.template.md", "home/.codex/templates/orchestration/implementation-plan.template.md"),
+                ("skills/loop-engineering/references/agent-routing.md", "home/.agents/skills/loop-engineering/references/agent-routing.md"),
+            ):
+                self.assertEqual((ROOT / source).read_bytes(), (root / installed).read_bytes())
 
     def test_manifest_catalog_and_installer_versions_agree(self) -> None:
         manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))

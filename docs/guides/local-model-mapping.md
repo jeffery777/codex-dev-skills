@@ -4,6 +4,11 @@ Issue #316 增加預設停用、供應商中立的 V2 `agent-route` opt-in。未
 停用 store 時沿用原有 profiles／候選資格流程；啟用但不適用時停止該次路由。
 不依賴特定 gateway，也不建立各 gateway 的共享流程副本。
 
+基本接入（A）、選模／升級決策（B）與執行中接手（C）依
+[分層 DoD](../design/native-model-integration-layers.md)各自驗收。基本接入沿用
+原生 provider／工具 loop；既有決策可獨立驗證，advisory 不代表實際切換。
+C 的進階資格缺口不一律阻擋 A/B 有限 scope 交付；目前整份 PR 尚未 ready。
+
 ## 兩個獨立控制面
 
 對話主模型由 Codex 公開設定與入口選擇控制。CLI 可用 `--model`、user-level
