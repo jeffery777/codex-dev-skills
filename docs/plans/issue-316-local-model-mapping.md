@@ -1,5 +1,23 @@
 # Issue #316 本機角色模型映射工程計畫
 
+## 下一條原生治理路徑與最小前置範圍
+
+原生實體執行仍使用 v4，選模／返工／ownership 治理使用 v6 saved R2；直接
+包裝兩者會混淆 authority。先將既有 container backend 的 journal admission
+與實體 readback 分離，解除 v6 port 無法重用 physical code 的具體相依。
+本前置包不另建 retry／ownership journal，也不接受新的模型、來源或登入權限。
+
+DoD：現有 native consumer 使用採認接點；原 descriptor、bootstrap receipt、
+phase、fence、immutable artifacts 與物理 policy 保留；未採認輸入及失效 fence
+不觸發 CID lookup／start；局部 consumer／v6 相容測試、plugin parity、獨立深入
+審查及適用 scan 通過。前置安全 review 後，以一條匿名 native-source E2E
+驗證現有原生路徑，不把此次重跑當作 v6 接線成功。
+
+下一個實作仍須獨立 native mode／domain、同 v6 transaction 的 artifact port、
+實際 successor launch 與 predecessor 採用。一般 source authority、受控訂閱
+登入及 N1–N4、context／品質／跨來源資格仍是依賴；原完整 DoD 與 release
+保持 BLOCKED、draft REVIEW_REQUIRED。
+
 ## 需求與範圍
 
 提供 default-off、provider-neutral 的本機角色模型映射。只有受保護的使用者

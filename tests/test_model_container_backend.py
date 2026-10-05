@@ -157,6 +157,29 @@ class _ContainerFixture(unittest.TestCase):
 
 
 class ContainerBackendTests(_ContainerFixture):
+    def test_descriptor_admission_returns_original_binding_without_aliasing(self):
+        backend = containers.SyntheticContainerBackend(self.store, endpoint='unix:///synthetic/docker.sock',
+            image_id=IMAGE, opt_in=True, _engine=self.engine)
+        self.start(self.new_supervisor(backend))
+        binding, descriptor = self.record()['binding'], self.descriptor()
+        admitted = backend._admitted_runtime_descriptor(binding, descriptor)
+        self.assertEqual(admitted, descriptor)
+        admitted['binding']['generation'] += 1
+        self.assertEqual(backend._admitted_runtime_descriptor(binding, descriptor), descriptor)
+        self.assertEqual(backend._observed(binding, descriptor)['Id'], descriptor['container_id'])
+
+    def test_unadmitted_descriptor_or_journal_never_reaches_physical_inspection(self):
+        backend = containers.SyntheticContainerBackend(self.store, endpoint='unix:///synthetic/docker.sock',
+            image_id=IMAGE, opt_in=True, _engine=self.engine)
+        self.start(self.new_supervisor(backend))
+        binding, descriptor = self.record()['binding'], self.descriptor()
+        wrong = copy.deepcopy(descriptor); wrong['container_id'] = 'f'*64
+        with mock.patch.object(self.engine, 'inspect', side_effect=AssertionError('unadmitted lookup')):
+            with self.assertRaises(packets.PacketError): backend._observed(binding, wrong)
+            with mock.patch.object(self.store, '_read', side_effect=packets.PacketError('unadmitted journal')):
+                with self.assertRaisesRegex(packets.PacketError, 'unadmitted journal'):
+                    backend._observed(binding, descriptor)
+
     def test_daemon_never_bootstraps_original_execution_proof(self):
         backend = containers.SyntheticContainerBackend(self.store, endpoint='unix:///synthetic/docker.sock',
             image_id=IMAGE, opt_in=True, _engine=self.engine)
@@ -643,6 +666,22 @@ class OneShotBackendTests(_ContainerFixture):
     def oneshot(self,engine,**kwargs):
         return containers.OneShotSyntheticContainerBackend(self.store,endpoint='unix:///synthetic/docker.sock',
             image_id=IMAGE,opt_in=True,_engine=engine,**kwargs)
+
+    def test_bootstrap_port_preserves_original_digest_receipt_and_phase_fence(self):
+        self.assertEqual(self.start()['outcome'], 'integration-candidate')
+        record, descriptor = self.record(), self.descriptor()
+        binding = record['binding']; before = copy.deepcopy(self.engine.calls)
+        admitted = self.backend._admitted_bootstrap_digest(binding, descriptor, stage='start-intent')
+        self.assertIs(type(admitted), str)
+        self.assertEqual(admitted, record['bootstrap']['input_sha256'])
+        self.assertEqual(self.engine.calls, before)
+        for stage in ('intent', 'observing', None):
+            with self.subTest(stage=stage), self.assertRaises(packets.PacketError):
+                self.backend._admitted_bootstrap_digest(binding, descriptor, stage=stage)
+        with mock.patch.object(self.store, '_supervisor_fence', side_effect=packets.PacketError('stale fence')):
+            with self.assertRaisesRegex(packets.PacketError, 'stale fence'):
+                self.backend.launch(binding, descriptor)
+        self.assertEqual(self.engine.calls, before)
 
     def test_n3c_descriptor_bootstrap_receipt_same_ledger_and_reconstruction(self):
         result=self.start(); self.assertEqual(result['outcome'],'integration-candidate')

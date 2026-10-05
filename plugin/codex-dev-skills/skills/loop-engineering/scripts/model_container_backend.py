@@ -518,7 +518,14 @@ class SyntheticContainerBackend:
                 'created_at': observed['Created'], 'workspace_sha256': packets.digest(packets.canonical(tree_manifest(initial))),
                 'workspace_identity_sha256': workspace_identity, 'policy_sha256': self.policy_sha256}
 
-    def _observed(self, binding, descriptor):
+    def _admitted_runtime_descriptor(self, binding, descriptor):
+        """v4 journal admission, before physical inspect or artifact access.
+
+        This private port is not a descriptor loader or an authority grant.
+        A future journal adapter must supply its own original-byte admission;
+        projecting a compatible v4 record is not sufficient. The current port
+        retains the original store, schema and immutable descriptor checks.
+        """
         self._binding(binding)
         self.store._validate_runtime_descriptor(descriptor, binding)
         # Never inspect an ID chosen by caller payload. It must already be bound
@@ -533,6 +540,12 @@ class SyntheticContainerBackend:
                 raise packets.PacketError('container-descriptor-not-bound')
         finally:
             os.close(packet_fd)
+        return copy.deepcopy(descriptor)
+
+    def _observed(self, binding, descriptor):
+        # Physical readback consumes only the journal-admitted descriptor.
+        # Keep admission ahead of every engine lookup of the physical CID.
+        descriptor = self._admitted_runtime_descriptor(binding, descriptor)
         if descriptor['daemon_identity_sha256'] != self.daemon_identity_sha256 or descriptor['image_id'] != self.image_id:
             raise packets.PacketError('container-descriptor-drift')
         observed = self.engine.inspect(descriptor['container_id'])
@@ -574,6 +587,9 @@ class SyntheticContainerBackend:
                 'state': 'unknown', 'external_effects': 'excluded', 'evidence_sha256': evidence}
 
     def _save(self, binding, suffix, raw):
+        # This immutable artifact port is distinct from descriptor admission.
+        # Future adapters must enforce their own journal phase/transaction fence
+        # here; none is installed by this refactor.
         fd = self._packet_fd()
         try:
             name = 'backend-'+binding['runtime_id']+'.'+suffix
@@ -763,7 +779,15 @@ class OneShotSyntheticContainerBackend(SyntheticContainerBackend):
             'volume':descriptor['control_volume']['name'],'descriptor_sha256':packets.digest(packets.canonical(descriptor)),
             'container_id':descriptor['container_id'],'launcher_sha256':descriptor['launcher_sha256']})
 
-    def _bootstrap_record(self, binding, descriptor, *, stage):
+    def _admitted_bootstrap_digest(self, binding, descriptor, *, stage):
+        """Read the original v4 intent digest, never synthesize a receipt.
+
+        Descriptor admission and root-container readback remain separate. This
+        port preserves the existing supervisor fence and start-intent receipt
+        validation; callers consume the admitted digest rather than a v4 record.
+        """
+        if stage not in ('intent', 'start-intent'):
+            raise packets.PacketError('control-bootstrap-stage-invalid')
         fd = self._packet_fd()
         try:
             ledger = self.store._read(fd); record = ledger['supervisors'][binding['attempt_id']]
@@ -772,12 +796,12 @@ class OneShotSyntheticContainerBackend(SyntheticContainerBackend):
                 raise packets.PacketError('control-bootstrap-stage-drift')
             if stage=='start-intent':
                 self.store._bootstrap_receipt(fd,record)
-            return record
+            return record['bootstrap']['input_sha256']
         finally: os.close(fd)
 
     def bootstrap(self, binding, descriptor, input_bytes):
-        record = self._bootstrap_record(binding,descriptor,stage='intent')
-        if packets.digest(input_bytes)!=record['bootstrap']['input_sha256'] or input_bytes!=self.bootstrap_input(binding,descriptor):
+        input_sha = self._admitted_bootstrap_digest(binding,descriptor,stage='intent')
+        if packets.digest(input_bytes)!=input_sha or input_bytes!=self.bootstrap_input(binding,descriptor):
             raise packets.PacketError('control-input-binding-drift')
         observed = self._observed(binding,descriptor)
         if observed['State']['Status']!='created' or observed['State']['Running'] is not False:
@@ -793,9 +817,9 @@ class OneShotSyntheticContainerBackend(SyntheticContainerBackend):
             'input_sha256':packets.digest(input_bytes),'volume_sha256':descriptor['control_volume']['identity_sha256']}
 
     def launch(self, binding, descriptor):
-        record = self._bootstrap_record(binding,descriptor,stage='start-intent')
+        input_sha = self._admitted_bootstrap_digest(binding,descriptor,stage='start-intent')
         raw = archive.read_control_file(self.engine.archive('container','cp',descriptor['container_id']+':/control/input.json','-'),'input.json')
-        if packets.digest(raw)!=record['bootstrap']['input_sha256'] or raw!=self.bootstrap_input(binding,descriptor):
+        if packets.digest(raw)!=input_sha or raw!=self.bootstrap_input(binding,descriptor):
             raise packets.PacketError('control-input-readback-drift')
         super().launch(binding,descriptor)
 
@@ -809,7 +833,7 @@ class OneShotSyntheticContainerBackend(SyntheticContainerBackend):
                 or type(observed['RestartCount']) is not int or observed['RestartCount']!=0
                 or state['StartedAt']=='0001-01-01T00:00:00Z' or state['FinishedAt']=='0001-01-01T00:00:00Z'):
             return result
-        record = self._bootstrap_record(binding,descriptor,stage='start-intent')
+        input_sha = self._admitted_bootstrap_digest(binding,descriptor,stage='start-intent')
         cid = descriptor['container_id']
         raw_input = archive.read_control_file(self.engine.archive('container','cp',cid+':/control/input.json','-'),'input.json')
         claim_raw = archive.read_control_file(self.engine.archive('container','cp',cid+':/control/claim.json','-'),'claim.json')
@@ -817,7 +841,7 @@ class OneShotSyntheticContainerBackend(SyntheticContainerBackend):
         value = archive.read_control_json(raw_input); claim = archive.read_control_json(claim_raw); completion = archive.read_control_json(completion_raw)
         expected_claim={'schema_version':1,'input_sha256':packets.digest(raw_input),'input':value}
         expected_completion={'schema_version':1,'claim_sha256':packets.digest(claim_raw),'input_sha256':packets.digest(raw_input),'input':value,'worker_status':0}
-        if (raw_input!=self.bootstrap_input(binding,descriptor) or packets.digest(raw_input)!=record['bootstrap']['input_sha256']
+        if (raw_input!=self.bootstrap_input(binding,descriptor) or packets.digest(raw_input)!=input_sha
                 or claim!={'schema_version':1,'input_sha256':packets.digest(raw_input),'input':value}
                 or completion!={'schema_version':1,'claim_sha256':packets.digest(claim_raw),'input_sha256':packets.digest(raw_input),'input':value,'worker_status':0}
                 or claim_raw!=packets.canonical(expected_claim) or completion_raw!=packets.canonical(expected_completion)):

@@ -3,6 +3,23 @@
 Issue #316 的 N1–N4 設計候選。此文件定義待實作及待資格化的邊界，
 不代表 runtime adapter 已啟用；production 清冊仍須維持空，直到完整驗收。
 
+## Native 與 v6 接線的採認邊界
+
+目前 native backend 的實體隔離／root claim／completion／walk／seal 可重用，
+但其 journal admission 仍是 v4；v6 的 saved R2 lifecycle 不能直接採認它。
+`model_container_backend.py` 將 `_admitted_runtime_descriptor` 與
+`_admitted_bootstrap_digest` 分成私有接點，現有 v4 consumer 先核對原 store、
+immutable descriptor、bootstrap phase／receipt 及 supervisor fence，再讀回實體
+CID／root completion。回傳資料不是資格或 authority；原實體 policy 不變。
+
+後續 v6 port 須從同一 objective journal 取得原始 bytes，綁定有效 transaction
+lease、attempt／generation、intent 與 prefix；不能投影假的 v4 ledger、匯入舊
+v4 authority 或把實體 runtime 當成 saved R2 observation。現有 `_save`／`_read`
+是另一個 immutable artifact 接點，v6 實作仍須補自己的 phase／transaction fence。
+Native lifecycle 須使用獨立 mode／domain 與真正的 physical descriptor、bootstrap
+及 runtime proof。此介面重構本身不提供 v6 native 執行、通用 source authority、
+登入隔離或任何 production／N1–N4 資格。
+
 ## 控制面與寫入面
 
 可信監督器持有 packet ledger、generation、已封存 checkpoint 與成果整合權。
