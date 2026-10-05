@@ -64,6 +64,8 @@ parse_args "$@"
 if [[ "$WORKFLOW_SMOKE" == true ]]; then
   "$SKIP_UNIT_TESTS" && fail "--workflow-smoke cannot be combined with --skip-unit-tests"
   "$PROJECT_PYTHON" -m unittest \
+    tests.test_policy_loading.PolicyLoadingTests.test_required_detail_sections_retain_contract_identifiers \
+    tests.test_policy_loading.PolicyLoadingTests.test_trigger_links_and_legacy_anchors_resolve_in_source_and_plugin \
     tests.test_exact_head_merge_review_contract_docs.ExactHeadMergeReviewContractDocsTests.test_contract_local_links_resolve_independently_of_historical_prose \
     tests.test_exact_head_merge_review_contract_docs.ExactHeadMergeReviewContractDocsTests.test_draft_state_is_consistent_across_common_consumers_and_templates \
     tests.test_exact_head_merge_review_contract_docs.ExactHeadMergeReviewContractDocsTests.test_all_merge_readiness_consumers_require_exact_head_contract \
