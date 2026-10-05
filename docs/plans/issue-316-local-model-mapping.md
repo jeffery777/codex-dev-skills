@@ -835,3 +835,64 @@ initial ref 保存於 Git 外收據，供前後 identity／bytes 的獨立 readb
 新 head 仍須完整 Merge Review；測量結果不完成 N1–N4 或 production
 DoD，也不消除專用訂閱登入、可信撤權／checkpoint intake、唯一整合器與
 自架來源實際能力／context／E2E 的獨立缺口，發行評估仍與 Issue #316 同案。
+
+### 固定原生 checkpoint intake 工程包
+
+本包把匿名原生 `apply_patch` 的固定更新接入受保護的一次執行鏈：只將既有
+`example.txt` 的 `old` 改為 `new`，保留 `remove.txt`，不接受任意程式、路徑或
+patch。獨立 `OneShotNativeFixtureBackend` 維持 descriptor schema 2／supervisor
+schema 4；production dispatcher、CLI registry、source integrator 的 gate 不變。
+
+Host private capture 使用 0700／0600；另一份 guest capture 使用目錄 0555、
+source 0444、固定 binary 0555，僅 guest tree 以 readonly／rprivate 掛載。
+完整來源清冊、各目錄與檔案的 identity／mode／owner／單一 link／hash 由 host
+事先保存，create／start／export／fresh consumer 各階段重新核對。原 capture
+與 unknown attempts 不修改、不重用執行。Root caps 仍精確限於 SETGID、
+SETPCAP、SETUID；claim fsync 後，child 關閉 control FD、清除 capabilities／
+bounding set、groups，改為 UID/GID 65534 與 NNP，再執行固定 helper。
+
+驗收入口須在任何 mkdtemp／capture／write 之前逐層核對 evidence root 的
+完整受信任 ancestry、Git 排除與 0700 leaf，並保留 parent／fixture descriptor。
+每次 stage intent 與 captured-code load 前重新檢查相同 inode；最後收據也須
+維持原 fixture。上層可被其他 UID 替換、symlink、Git 或非 private leaf 都
+在建立子目錄前拒絕。事後 PacketStore guard 不能替代載入前檢查；修正這類
+captured source 後須以三個全新 fixture 重驗，不重分類既有實測或 unknown。
+
+正例只有 host 查證原 CID 的完整 policy、自然退出、protected input／claim／
+completion 與精確 postimage 後，才 export／seal／publish 非空 C。Coordinator
+等待 producer 確實退出後才啟動新的 consumer process；consumer 只 reconcile
+原 attempt，禁止 prepare／bootstrap／launch／export／source apply，且原 C、
+seal、descriptor、ledger 不得改變。這是 checkpoint intake，尚非來源整合。
+
+撤銷案在原生修改與 CLI 關閉後固定保留有界等待；host 核對原 CID 仍 running、
+精確 postimage 與隔離 policy，才 quarantine。合法的遲到 completion 也不能
+發布 C。窗口錯失或證據不足保持 unknown；隔離／採納權撤銷不等於 writer 已停。
+固定 `claim-replay` 案例只再 start 該輪首次已知正常完成的專用 CID，要求第二次
+root exit 73、原控制鏈與原生 frame 不變、無第二次 native invocation、無 C。
+撤銷案另預留新 generation 而不 launch，核對遲到舊結果 fence；不是完整接手驗收。
+2026-10-05 已以三個全新專用匿名 fixture 分別通過上述案例，並讀回原始
+protocol、root control chain、原 CID、source capture、actual PID／wait 與 packet
+refs：正常案由新程序取得同一非空 C；撤銷案 generation 2 不 launch successor，
+遲到結果拒收且 C 保持 null；第二次 start 為 root exit 73，僅一次 native
+invocation，fresh consumer 仍保持 unknown／無 C。完整 generation／競態反例
+與 production 接手資格仍須補足，不由這三案或離線測試代替。
+
+重跑使用 repository pinned Python；原始證據存於 Git 外的 private root：
+
+```sh
+./scripts/project-python -m unittest tests.test_model_native_checkpoint tests.test_model_container_launcher tests.test_model_container_backend
+./scripts/project-python scripts/verify-model-native-checkpoint.py --native-checkpoint-only --case checkpoint --evidence-root "$PRIVATE_EVIDENCE_ROOT" --binary-path "$VERIFIED_LINUX_CLI" --endpoint "$LOCAL_DOCKER_ENDPOINT"
+./scripts/project-python scripts/verify-model-native-checkpoint.py --native-checkpoint-only --case quarantine --evidence-root "$PRIVATE_EVIDENCE_ROOT" --binary-path "$VERIFIED_LINUX_CLI" --endpoint "$LOCAL_DOCKER_ENDPOINT"
+./scripts/project-python scripts/verify-model-native-checkpoint.py --native-checkpoint-only --case claim-replay --evidence-root "$PRIVATE_EVIDENCE_ROOT" --binary-path "$VERIFIED_LINUX_CLI" --endpoint "$LOCAL_DOCKER_ENDPOINT"
+```
+
+Native run 只使用既有固定 digest 的 Python image／Linux CLI，建立各自新的
+scratch container／control volume 並保留資源；不接受既有 repository，不清理、
+重啟共享 daemon、帶入 credentials 或套用來源。原生 raw readback 已完成；正式 code／security review、
+新 head 完整 Merge Review 與 CI 須分別完成。所有 native、
+runtime、adapter、isolation、startup、production 與 N1–N4 資格仍 false；完整
+DoD 與同案發行評估仍 BLOCKED。
+
+早先匿名 native checkpoint 建立後的嚴格 inspect 核對，因 macOS Docker Desktop 唯讀 fixture bind 的固定路徑轉換而保留 `prepare-reply-unknown`；容器保持 created，沒有 bootstrap／start intent，沒有 native 寫入。不得重用或啟動該 attempt。修正只固定各 host 平台的完整預期 source 並納入 policy digest，完成離線負向驗證及 preexec 重審後，以全新 fixture 重測三案。
+
+另一個歷史匿名 native 實測曾產生非空 C，producer 由 coordinator 實際 wait 成功退出；fresh consumer 因 Docker image inspect 省略原先空白 `User`／`WorkingDir` 而拒絕建構，因此整案仍為失敗，不能宣稱接手完成。保留該原始 C／producer／consumer 失敗證據、不重放舊 attempt；只補官方 API 支援的未設定欄位語義與負向測試，該失敗不追認成功；後續三個全新 fixture 已完成驗收。

@@ -7,6 +7,7 @@ remain outside this boundary; model workers have no daemon/control interface.
 import hashlib
 import json
 import pathlib
+import re
 
 CONTRACT_SHA256 = hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()
 FAULTS = frozenset({'none', 'claim-created', 'claim-fsync', 'before-fork', 'completion-created'})
@@ -47,6 +48,7 @@ def create(name,raw):
 def checked(result):
  if result<0: raise OSError(ctypes.get_errno(),'privilege-drop')
 def drop():
+ os.close(control)
  libc=ctypes.CDLL(None,use_errno=True)
  # Clear ambient, inheritable/permitted/effective and the complete bounding set.
  checked(libc.prctl(47,4,0,0,0))
@@ -73,7 +75,7 @@ def drop():
      or status.get('NoNewPrivs')!='1' or any(int(status[key],16) for key in ['CapInh','CapPrm','CapEff','CapBnd','CapAmb'])): raise ValueError('drop-proof')
  os.closerange(3,1048576)
  os.chdir('/workspace')
- os.execve('/usr/local/bin/python3',['/usr/local/bin/python3','-I','-c',WORKER],
+ os.execve('/usr/local/bin/python3',CHILD_ARGV,
            {'PATH':'/usr/local/bin:/usr/bin:/bin','HOME':'/tmp','LANG':'C.UTF-8'})
 
 control=os.open('/control',os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC)
@@ -119,7 +121,21 @@ def render(binding, volume, nonce, worker, fault='none'):
     # source hash self-reference when the full runtime program embeds config.
     launcher_sha = CONTRACT_SHA256
     config = {'binding':binding,'volume':volume,'nonce':nonce,'launcher_sha256':launcher_sha,'fault':fault}
-    return 'CONFIG='+repr(config)+'\nWORKER='+repr(WORKERS[worker])+'\n'+SOURCE
+    # Preserve the existing fixed synthetic recipe declaration for its capture
+    # observers; only the closed native renderer uses a separate helper argv.
+    return 'CONFIG='+repr(config)+'\nWORKER='+repr(WORKERS[worker])+'\n' + \
+        "CHILD_ARGV=['/usr/local/bin/python3','-I','-c',WORKER]\n"+SOURCE
+
+
+def render_native(binding, volume, nonce, case):
+    """Closed fixture helper only; never accepts a worker program or argv."""
+    if case not in {'checkpoint','quarantine','claim-replay'} or type(nonce) is not str or not re.fullmatch(r'[a-f0-9]{64}',nonce):
+        raise ValueError('fixed-native-launcher-recipe-required')
+    config = {'binding':binding,'volume':volume,'nonce':nonce,
+              'launcher_sha256':CONTRACT_SHA256,'fault':'none'}
+    argv = ['/usr/local/bin/python3','-I','-S','-B',
+            '/fixture/scripts/model_native_checkpoint_fixture.py',case,nonce]
+    return 'CONFIG='+repr(config)+'\nCHILD_ARGV='+repr(argv)+'\n'+SOURCE
 
 
 def contract_digest():

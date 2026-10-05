@@ -1588,3 +1588,56 @@ denial 或 user-input callback 被當作本包成功。Reroute、其他工具與
 工具 flag 改變了 argv 與 inventory；舊 revision 的匿名結果保留為歷史證據，
 宣稱新來源的既有案例通過時須以 fresh run／CID 重測並重綁 source closure。
 所有 qualification／N1–N4 flags 仍 false，原始觀測與 review 證據留在 Git 外。
+
+### 固定原生 update 接入 protected checkpoint
+
+獨立匿名 fixture backend 使用既有 protected input／claim／completion 與
+descriptor 2／supervisor 4；固定 helper 經 root launcher 關閉 control FD，
+清除權限、groups、capabilities／bounding set 並設定 NNP=1 後，以 UID/GID 65534
+啟動原生 CLI。只能 update 固定 `example.txt`，沒有 arbitrary patch／argv／
+path 入口，也不註冊 production adapter 或改動唯一整合器 authority gate。
+
+Host private source 與 guest readonly source 是兩份獨立 capture；每份完整
+清冊、hash、mode、owner、link、inode 與目錄 identity 都事先持久化。只有
+guest tree 與固定 Linux binary 能掛載至 fixture；workspace 與 root-only
+control volume 是另外兩個固定 mounts。新 backend policy 綁定完整 capture
+與 native recipe、image、launcher、資源限制，精確驗證新增欄位後才重用既有
+網路／caps／volume policy 的未變動驗證；不能把 drift 正規化成合法狀態。
+此獨立 backend 固定使用符合 plain Python policy 的 image 與 Python 3.12.9；
+不能直接沿用另一個 native container 入口的 image 或推定其 image policy 相同。
+
+Coordinator 在建立任何 fixture 子目錄前，先逐層以既有 trusted-directory
+規則核對 evidence root 的 owner、mode、NOFOLLOW 與 Git 排除，leaf 必須為
+0700；只接受受信任或 root-owned sticky 上層目錄。保留 parent／fixture
+directory descriptor，在 producer／consumer intent 寫入及捕捉程式載入前
+重新比對 pathname 的完整信任鏈與原 inode，最後收據亦核對同一 fixture。
+不能把 leaf 0700、capture hash 或程式載入後的 PacketStore 檢查視為前置
+信任驗證；相同 UID 的可信 host 程式仍在 TCB 內，descriptor 不證明 OS 隔離。
+
+Host 必須查證原 CID、Created、完整隔離 policy、exited 狀態、protected root
+chain 與可讀的精確 postimage，才能接受 export、seal 與非空 C。Worker frame、
+CLI exit 或 file-change 訊息只提供觀測，不構成 stop／publication authority。
+Fresh consumer 在 coordinator 確認 producer 退出後，重建相同 protected refs；
+只 reconcile 原 attempt，禁止 create／bootstrap／launch／export／source apply。
+原 C、seal、descriptor 與 ledger 必須不變，缺 seal 不補 export。
+
+撤銷案另固定保留 post-write live window；host 確認仍隔離且原 CID running
+才 quarantine，後來即使出現合法 root completion，也不能發布 checkpoint。
+這證明撤銷採納權，不等同完整背景 writer 停止。窗口不足、host 不能讀取新
+inode、cap／capture／policy／控制鏈不符均保留 unknown，不加權限補救。
+另有固定 `claim-replay` 案例，只對該輪專用、首次已知正常完成的 CID 再 start，
+要求 root exit 73、原 claim／completion／worker frame／postimage 不變，且不產生 C；
+不重啟既存 unknown attempt。撤銷案另只預留新 generation、不 launch successor，
+用來核對舊結果 fence；不能當成接手執行的驗收。
+2026-10-05 的三個獨立匿名實測已完成：正常 native update 的非空 C 由真正
+不同的新程序讀回；撤銷案的晚到 completion 在新 generation 下拒收，沒有 C
+且沒有 successor launch；第三案同 CID 第二次 start 為 root exit 73，原控制鏈、
+postimage、worker frame 不變，只有一次 native invocation，fresh consumer 無 C。
+這些結果只支持固定 checkpoint intake／採納權 fence；完整 generation／競態
+反例、來源整合與 production observer／credentials／N1–N4 資格仍須各自完成。
+原始驗收與 review 證據留 Git 外，重跑只要求相同 assertions，不要求新 CID／
+時間 byte-identical。
+
+此匿名實驗 backend 對 macOS Docker Desktop 的唯讀 `/fixture` bind，將建立時實際回覆的固定 `/host_mnt` 加原 host 絕對路徑列為精確契約；Linux 仍要求原絕對路徑。host platform 與完整預期 source 納入 policy digest，`Mounts`／`HostConfig.Mounts` 同時核對，不做路徑正規化、任意 prefix 接受或跨平台 alias fallback。不同 Docker Desktop 回覆形狀會拒絕繼續；這是有界實驗相容性，尚未取得 runtime qualification。
+
+固定 image 的 inspect 只將 `User`／`WorkingDir` 未設定（欄位省略或 null）及空字串視為相同預設語義；拒絕非空值及其他型別。這遵循 [Docker Engine API version history](https://docs.docker.com/reference/api/engine/version-history/) 所述 image inspect 省略未設定 OCI 欄位的契約。固定 image ID、Python 3.12.9、Cmd、無 OnBuild／Healthcheck、完整 runtime user／working-directory 核對保持不變，不採用 runtime observation 修補 policy。
