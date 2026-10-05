@@ -376,6 +376,26 @@ class CoordinatorTests(unittest.TestCase):
         with self.assertRaises(packets.trust.Untrusted):
             packets.trust._check(SimpleNamespace(st_mode=0o40777,st_uid=0),directory=True,ancestor=True)
 
+    def test_coordinator_restores_caller_umask_on_success_and_early_rejection(self):
+        previous = os.umask(0o022)
+        self.addCleanup(os.umask, previous)
+        with tempfile.TemporaryDirectory() as tmp:
+            root=pathlib.Path(tmp).resolve(); root.chmod(0o700)
+            def inspect_private_mask(*args):
+                active=os.umask(0o077)
+                self.assertEqual(active,0o077)
+                return {'passed':True}
+            with mock.patch.object(host,'run_private',side_effect=inspect_private_mask):
+                self.assertTrue(host.run(SimpleNamespace(evidence_root=root))['passed'])
+            self.assertEqual(os.umask(0o022),0o022)
+            with mock.patch.object(host,'run_private',side_effect=RuntimeError('fixed test fault')):
+                with self.assertRaises(RuntimeError):
+                    host.run(SimpleNamespace(evidence_root=root))
+            self.assertEqual(os.umask(0o022),0o022)
+            with self.assertRaises(packets.PacketError):
+                host.run(SimpleNamespace(evidence_root=root/'missing'))
+            self.assertEqual(os.umask(0o022),0o022)
+
     def test_stage_path_replacement_after_intent_prevents_process_load(self):
         with tempfile.TemporaryDirectory() as tmp:
             parent=pathlib.Path(tmp).resolve(); parent.chmod(0o700)

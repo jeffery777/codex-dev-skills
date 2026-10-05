@@ -593,11 +593,14 @@ def _run_stage(root,name,command,environment,timeout,root_fd):
 
 
 def run(args):
-    os.umask(0o077)
-    with private_directory(args.evidence_root) as parent_fd:
-        root=pathlib.Path(tempfile.mkdtemp(prefix='model-native-checkpoint-',dir=args.evidence_root))
-        with private_directory(args.evidence_root, parent_fd), private_directory(root) as root_fd:
-            return run_private(args, root, root_fd)
+    previous_umask = os.umask(0o077)
+    try:
+        with private_directory(args.evidence_root) as parent_fd:
+            root=pathlib.Path(tempfile.mkdtemp(prefix='model-native-checkpoint-',dir=args.evidence_root))
+            with private_directory(args.evidence_root, parent_fd), private_directory(root) as root_fd:
+                return run_private(args, root, root_fd)
+    finally:
+        os.umask(previous_umask)
 
 
 def run_private(args, root, root_fd):
