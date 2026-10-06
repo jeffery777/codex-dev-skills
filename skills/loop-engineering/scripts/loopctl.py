@@ -73,9 +73,12 @@ def command_model_task_execute(path: pathlib.Path) -> int:
     try:
         with path.open('rb') as stream:
             document = model_failover.parse_payload(stream.read(model_failover.MAX_BYTES + 1))
-        if not isinstance(document, dict) or set(document) != {'task', 'model_failover', 'cli_request'}:
+        if not isinstance(document, dict) or set(document) not in (
+                {'task', 'model_failover', 'cli_request'},
+                {'task', 'model_failover', 'cli_request', 'task_input_ref'}):
             raise model_task_execution.ExecutionContractError('invalid-model-task-execution-input')
-        result = model_task_execution.execute_next(document['task'], document['model_failover'], document['cli_request'])
+        result = model_task_execution.execute_next(document['task'], document['model_failover'],
+            document['cli_request'], document.get('task_input_ref'))
     except (OSError, ValueError, UnicodeError, RecursionError) as exc:
         render({'status': 'blocked', 'dispatched': False, 'repository_completion_claimed': False,
                 'reason': str(exc) if isinstance(exc, (model_task_execution.ExecutionContractError,

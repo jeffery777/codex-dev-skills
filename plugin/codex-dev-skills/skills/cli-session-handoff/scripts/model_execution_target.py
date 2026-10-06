@@ -162,6 +162,8 @@ class Binding:
     acceptance_sha256: str
     role: str
     checkpoint_sha256: str | None
+    valid_from: int
+    valid_until: int
 
     def reference(self):
         return {'schema_version': 1, 'id': self.target_id, 'store_sha256': self.store_sha256,
@@ -366,7 +368,10 @@ def _resolve(ref, *, prompt, expected_head, executable_sha256, cli_version, sand
     return Binding(record['id'], sha(raw), canonical_sha(record), bound_identity, bound_task,
         home, tuple(args), provider['env_key'], provider['billing']=='chatgpt-subscription', base['developer_instructions'],
         tuple(sorted(planner_identity.items())), catalog_raw, route_task['id'], route_task['qualification_scope'],
-        task['acceptance_sha256'], task['role'], task['checkpoint_sha256'])
+        task['acceptance_sha256'], task['role'], task['checkpoint_sha256'],
+        max(value['observed_at'] for value in values.values()),
+        min(record['expires_at'], *(min(value['expires_at'], value['observed_at'] + TTL + 1)
+                                    for value in values.values())))
 
 
 def target_identity(binding):

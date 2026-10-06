@@ -21,6 +21,17 @@ classifier／preflight／qualification 候選。決策、確定靜止邊界上�
 權限／授權／工具差異才補整合證據，本地安全接手仍須完成。
 不另建選模腦、retry loop 或恢復框架來完成普通 routing。
 
+Typed `model-task-execute` 仍沿用上述決策；規劃成功的工作包須另帶
+`task_input_ref: {path, sha256}`，指向 Git 外 protected `model-task-inputs/`
+原始 task request／驗收／source／允許目的地。唯讀 loader 與實際 CLI packet
+consumer 在派發、launch、封存前核對，不接受 input 自述 granted／qualified。
+耗時原始來源核對後，consumer 再重讀受保護目標並以同一時間核對有效期。
+Disabled/advisory 舊三欄輸入仍可讀；planned 缺原始輸入則零效果拒絕。完整
+schema／限制見 source `docs/guides/local-model-mapping.md` 或 installed
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/docs/guides/local-model-mapping.md`。
+這個限制不授權，也不建立 runtime 資格；同 UID host 屬 TCB，production
+containment registry 仍空。固定 native fixture 不因新增 loader 成為正式 admission。
+
 First-review triage maps actual CI admission, installer and cross-module
 contract impact to existing `high` or `public-contract` risk factors; security
 and data retain their hard triggers. Select deep review immediately when these

@@ -25,6 +25,28 @@ DoD 或 blocker。未來實際 runtime／權限／授權／工具差異才做整
 
 ## 最小 host 控制接點工程包與當前驗收
 
+### 接續工程包：原始任務輸入與來源 consumer 契約
+
+解除的具體缺口是執行 consumer 尚未讀回原始任務／驗收內容與實際來源。
+重用 protected user store、Git 身分查核、現有 routing 與 CLI packet executor；
+加入唯讀薄接點，不新增 authority service、恢復框架或 probe。
+
+最小 DoD：具名 task／scope、原始 CLI request（目的地 reference 除外）、驗收
+內容 digest、允許目的地及來源 HEAD／Git marker／原 origin／index／指定檔案一致；
+派發前及 executor launch 前重查，變更、停用、過期、非正規檔案與偽造 schema
+拒絕。同一任務 packet 身分不因新的 input reference 改變，不能避開 unknown。
+耗時來源讀回後重讀受保護目標，最後同時核對兩者有效期；若已 claim，失效
+維持 unknown，不將有限時效查核宣稱為 OS 原子撤權或完整自動接手。
+先做真實 temporary Git／protected-input consumer smoke，再做局部契約及比例
+獨立審查、必要 SDS。沒有執行資格／containment 仍為零派發。
+
+這是 operator 輸入限制，不是獨立授權或 runtime qualification。固定 native
+reader／admission 不改；一般原生 authority、失聯判定、仍存活 writer 控制與
+安全成果整合仍未完成。本包不以輸入通過宣稱真實 C1 admission 或完整 C。
+只支援有界指定來源的 raw Git blob／mode 一致性；整個 checkout 的 clean gate
+仍由既有 CLI 承擔。Ingress 不執行 working-tree filter；source allowlist 是核對範圍，不是新的
+檔案隔離邊界。既有秘密排除、資格、writer 隔離與 review gate 繼續適用。
+
 解除的 blocker：原生 v6 現有實體 readback 仍以歷史 committed_at 表示時間，
 且 fixed reader 不提供真實撤銷來源。先加入 host-owned clock／observation／
 experimental permit 限制接點；不把匿名實驗授權轉成 production qualification。

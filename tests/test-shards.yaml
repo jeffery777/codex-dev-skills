@@ -38,6 +38,7 @@ shards:
       - tests.test_model_packet_supervisor
       - tests.test_model_packet_unused_source
       - tests.test_model_task_execution
+      - tests.test_model_task_ingress
   - id: installer-runtime
     modules:
       - tests.test_engineering_workflow

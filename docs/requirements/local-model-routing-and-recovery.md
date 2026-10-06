@@ -29,3 +29,12 @@
 context 策略。匿名 fixture 成功不取得一般來源或 production 資格。
 
 具體缺口及下一工程包見[三層設計](../design/native-model-integration-layers.md#本地-c-尚缺能力與下一工程包)。
+
+原始 operator 輸入／source consumer 契約可獨立作為 C 的有限工程包驗收：
+原 request／驗收 bytes、具名 task／scope／目的地、actual Git 身分及
+指定內容需在 dispatch／launch／seal 前一致；缺失、過期、停用與漂移拒絕，
+原輸入與目標資格須在最後查讀後以同一個當前時間有效；unknown 不重播。
+這是限制讀回，不是來源授權或執行資格；完整 C 仍須完成
+真實 admission、一般失聯、未知 writer 控制及安全續作／成果採認。
+指定來源需吻合原 raw HEAD blob／mode／index／origin；派發前不得執行
+repository 自訂 filter。整個 checkout clean gate 維持既有 CLI 的責任。

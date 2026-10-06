@@ -36,6 +36,9 @@ class SharedExecutionTests(unittest.TestCase):
         self.packet.read_checkpoint.return_value = ({'revision': 0}, b'')
         patch = mock.patch.object(execution, '_packet_store', return_value=self.packet)
         patch.start(); self.addCleanup(patch.stop)
+        self.source_input = mock.Mock()
+        patch = mock.patch.object(execution.model_task_ingress, 'read_input', return_value=self.source_input)
+        patch.start(); self.addCleanup(patch.stop)
 
     def execute(self):
         with mock.patch.object(execution, '_cli_adapter', return_value=(self.adapter, self.loader)):
@@ -137,6 +140,13 @@ class SharedExecutionTests(unittest.TestCase):
             'session_call_performed': False, 'repository_completion_claimed': False}}
         result = self.execute()
         self.assertFalse(result['dispatched'])
+
+    def test_source_rejection_is_before_packet_effects(self):
+        self.source_input.verify.side_effect = execution.model_task_ingress.InputError('source drift')
+        with self.assertRaisesRegex(execution.ExecutionContractError, 'launch-preflight'):
+            self.execute()
+        self.adapter.execute_packet_attempt.assert_not_called()
+        self.packet.read_checkpoint.assert_not_called()
 
     def test_entrypoint_never_dispatches_invalid_wrapper(self):
         with tempfile.TemporaryDirectory() as directory:

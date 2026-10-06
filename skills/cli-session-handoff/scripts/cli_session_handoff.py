@@ -33,6 +33,7 @@ LOOP_SCRIPTS = HERE.parents[1] / "loop-engineering" / "scripts"
 sys.path.insert(0, str(LOOP_SCRIPTS))
 import context_continuity  # noqa: E402
 import model_packet_store  # noqa: E402
+import model_task_ingress  # noqa: E402
 sys.path.insert(0, str(HERE))
 import model_execution_target  # noqa: E402
 
@@ -2092,6 +2093,7 @@ def _run_child(
     execution_workspace: pathlib.Path,
     *,
     on_started: Callable[[], None],
+    before_launch: Callable[[], None] | None = None,
 ) -> tuple[int, bytes, str | None]:
     observed_head, _ = _workspace_identity(
         request.workspace, request.expected_head
@@ -2130,6 +2132,8 @@ def _run_child(
     start_new_session = os.name == "posix"
     if os.name == "nt":
         creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    if before_launch is not None:
+        before_launch()
     try:
         process = subprocess.Popen(
             argv,
@@ -2496,7 +2500,7 @@ def _claim_rollover(request: ValidatedRequest) -> bool:
 PACKET_STOP_ADAPTERS: dict[str, Any] = {}
 
 
-def execute_packet_attempt(request, packet, attempt_id, expected_revision, *, stop_adapter_id=None):
+def execute_packet_attempt(request, packet, attempt_id, expected_revision, *, stop_adapter_id=None, source_input=None):
     """Trusted coordinator entry: retain private changes, never integrate source.
 
     A crash or unproven cleanup retains the claim and workspace. This primitive
@@ -2509,6 +2513,8 @@ def execute_packet_attempt(request, packet, attempt_id, expected_revision, *, st
     stop_adapter = PACKET_STOP_ADAPTERS.get(stop_adapter_id)
     if stop_adapter is None:
         raise HandoffValidationError('capability_unavailable', 'Qualified packet writer containment is unavailable.')
+    if type(source_input) is not model_task_ingress.TaskSourceInput:
+        raise HandoffValidationError('execution_target_rejected', 'Original task/source input is required.')
     validated = validate_request(request)
     if validated.operation != 'start' or validated.execution_target is None:
         raise HandoffValidationError('execution_target_rejected', 'A typed start target is required.')
@@ -2517,6 +2523,25 @@ def execute_packet_attempt(request, packet, attempt_id, expected_revision, *, st
             or stop_adapter.supports_target(target) is not True):
         raise HandoffValidationError('capability_unavailable', 'Containment adapter does not support this protected target.')
     ledger, predecessor_patch = packet.read_checkpoint()
+    if ledger['identity_sha256'] != source_input.packet_identity(_canonical_repository_id(validated.workspace)):
+        raise HandoffValidationError('execution_target_rejected', 'Packet original task/source binding differs.')
+
+    def verify_current_input_and_target():
+        source_input.verify(request, target, validated)
+        try:
+            fresh = model_execution_target.resolve(target.reference(), prompt=validated.prompt,
+                expected_head=validated.expected_head, executable_sha256=validated.executable_sha256,
+                cli_version=validated.cli_version, sandbox=validated.sandbox)
+            if fresh != target:
+                raise model_execution_target.TargetError('target-launch-binding-drift')
+        except model_execution_target.TargetError as exc:
+            raise HandoffValidationError('execution_target_rejected', exc.reason) from None
+        source_input.verify_launch_window(fresh)
+
+    try:
+        verify_current_input_and_target()
+    except (OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError):
+        raise HandoffValidationError('execution_target_rejected', 'Original task/source input changed.') from None
     claim = packet.claim(attempt_id, model_packet_store.digest(model_packet_store.canonical(request)),
                          target.identity_sha256, expected_revision=expected_revision)
     receipt = _base_receipt(request, status='stopped')
@@ -2554,8 +2579,10 @@ def execute_packet_attempt(request, packet, attempt_id, expected_revision, *, st
             _run_isolated_git(git, ['-C', str(workspace), 'apply', '--binary', '-'],
                               input_bytes=predecessor_patch, message='The predecessor checkpoint could not be restored.')
         before_patch = _capture_isolated_patch(git, workspace, validated.expected_head)
+        verify_current_input_and_target()
         try:
-            code, raw, _ = _run_child(validated, workspace, on_started=started)
+            code, raw, _ = _run_child(validated, workspace, on_started=started,
+                before_launch=verify_current_input_and_target)
             quiescent = True
             receipt['result']['exit_status'] = code
             if code != 0:
@@ -2578,11 +2605,12 @@ def execute_packet_attempt(request, packet, attempt_id, expected_revision, *, st
         if validated.sandbox == 'read-only' and patch != before_patch:
             raise HandoffValidationError('child_boundary_violation', 'A read-only packet changed repository files.')
         evidence = model_packet_store.digest(model_packet_store.canonical(receipt))
+        verify_current_input_and_target()
         final = packet.publish_checkpoint(attempt_id, patch, evidence)
         receipt['packet'].update(status='checkpointed', revision=final['revision'], checkpoint_sha256=final['checkpoint'])
         receipt['execution_target']['execution_state'] = 'completed' if receipt['status'] == 'completed' else 'stopped'
         return receipt
-    except (OSError, ValueError, RuntimeError):
+    except (OSError, ValueError, RuntimeError, TypeError, KeyError, subprocess.SubprocessError):
         packet.retain_unknown(attempt_id)
         receipt.update(status='unknown', failure_class='packet-reconciliation-required')
         receipt['packet']['status'] = 'unknown'

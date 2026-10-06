@@ -125,6 +125,15 @@ consumer 型別、原 authority／source 綁定與秘密排除，再驗證撤銷
 偽造 input、未知效果及資格不足拒絕。缺真實 runtime authority／目標資格時
 仍不得 dispatch。這只補 task ingress，不宣稱其餘四項或完整 C 已完成。
 
+薄接點先拆成「原始 operator 輸入／來源 consumer 契約」及「真實 authority／
+qualification admission」。前者以 `model_task_ingress.py` 唯讀載入 protected
+原 request／驗收內容，核對具名任務、目的地及 actual Git／指定內容，接入
+`model_task_execution` 與既有 CLI packet 的 claim／launch／seal 邊界。它
+與受保護目標在各邊界共同重查，最後以同一個當前時間核對兩者的有效期；
+只能增加限制，不能授權。後者仍為本地 C blocker；`NativeLifecycle.admit`
+原本即要求完整 authority／qualification，不能將 granted／qualified 寫入
+一般 JSON 就視為完成。固定 native source／scope／patch 維持不變。
+
 此包仍在 Issue #316；先完成當前工程包的比例重審、適用 SDS 與 draft 保存，
 保留全部 unknown／持久狀態，再接續。完整 dots、loop、graphic engineering
 及 memory 系統不納入。

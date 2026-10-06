@@ -48,6 +48,7 @@ Paths below are relative to this skill and ship in source/plugin/install copies.
 | --- | --- |
 | Existing ledger, protected history, any event write, or durable templates | `references/loop-state-and-authorization.md` |
 | Heterogeneous profile routing or routed-worker acceptance | `references/agent-routing.md` |
+| Typed `model-task-execute` original input/source constraints | `references/agent-routing.md` |
 | Candidate delegation, also callable directly from delivery/orchestrator | `references/agent-qualification.md` |
 | Security scan continuation, recovery, or reporting | `references/security-scan-recovery.md` |
 | Context-health threshold, context drift, or fresh rollover | `references/context-continuity.md` |

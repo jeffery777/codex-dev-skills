@@ -106,7 +106,7 @@ policy、不探測服務、不寫 attempts、不 dispatch，不能取代 product
 `loopctl.py model-task-execute INPUT.json` 將同一 V2 決策綁到既有 CLI executor，
 僅接受一個 typed `start` 工作包。**目前 production writer containment adapter
 清冊為空，入口在任何 session 派工前拒絕；不能啟用正式自動接手。** 輸入增加
-`cli_request`，包含 protected
+`cli_request` 與 `task_input_ref`，包含 protected
 `target_ref`（schema version、opaque ID、store 與 record digest）。它讀取
 `${CODEX_HOME}/model-execution-targets.json`，按實際 prompt／HEAD／角色／
 執行檔與版本重驗 protected 目標、資格、context、授權及內容排除；送出前再讀回。
@@ -119,6 +119,50 @@ project 設定合併；不讀該配置或弱化既有 private-clone 隔離與 pa
 `provider_readback` 保留 `unknown`；consumer 進入 executor 後遇到結果不明，
 回傳 `dispatched: null` 並要求獨立查證，不能變成「尚未送出」後自動重試。
 Protected summaries 仍是可信操作人的輸入，不能由 loader 自行產生正式資格。
+
+### 原始任務／來源輸入限制
+
+`task_input_ref` 是 `{path, sha256}`，只指向可信本地操作人預先提供的
+`${CODEX_HOME}/model-task-inputs/` 原始輸入；loader 唯讀，不代發授權、產生
+qualification 或複製登入檔案。目錄須 private、在 Git 外，檔案須 user-owned
+regular／private／單一 hard link；symlink、FIFO、traversal、重複 JSON key
+與超限內容拒絕。同 UID host 程式仍屬 TCB，檔案權限不是其隔離保證。
+
+Record schema version 1 的必要欄位是 `schema_version`、`enabled`、
+`observed_at`、`expires_at`、`task_id`、`scope`、`request`、`acceptance`、
+`source`、`destinations`。有效時間最多 300 秒；`request`／`acceptance` 均
+為 `{path, sha256}`，分別保存原 CLI request JSON（移除 `target_ref`）與原
+驗收內容 bytes。`source` 為 `{workspace, head, index_sha256, origin_sha256, files}`；workspace 是絕對
+canonical Git root，head 是完整 commit SHA，files 是相對路徑到 SHA256 的
+有界 map（1–16 檔、每檔 128 KiB、總計 512 KiB）。index digest 綁原 index
+bytes，origin digest 綁原 origin URL 的 UTF-8 bytes（移除尾端換行）。
+`destinations` 是既有 `model_execution_target.identity(record)` 的 SHA256
+清單，使用穩定 typed execution identity；planner identity／新鮮 context、
+qualification 與授權仍由原 routing／target consumer 核對，兩種 digest 不混用。
+一般 JSON 中的 granted／qualified 欄位拒絕。
+這些原始 bytes 的來源可信性由本地操作人負責，schema 不會自行證明授權。
+
+實際 consumer 先核對原任務、scope、驗收及來源 HEAD、Git marker、原 origin、
+index 與指定檔案；protected target resolve 後核對允許目的地。只讀 Git object／
+index metadata 並比對指定來源的 raw blob／mode，不使用會觸發 clean/process
+filter 的 working-tree status。指定範圍不接受轉換後才吻合 HEAD 的內容；完整
+checkout clean gate 仍由既有 CLI 在 containment gate 後執行。
+Executor 在 claim 前、工具 launch 前與成果
+封存前重查 input 及目標，最後以同一個當前時間核對有效期；失效 input、
+來源漂移或目的地不符不開啟新 writer。已 claim
+後拒絕保留 unknown，不能重試。只允許原 workspace-write ceiling 降到
+read-only，不允許擴權或更換 prompt。同一 repository／task／scope／驗收
+沿用原 packet locator；input alias／renewal 不另開目錄。內容綁定不同須拒絕，
+不追認舊 attempt；舊版未綁 ingress 的 packet 也保持原位置並 fail-closed，
+不得靠改 ID、搬移、補 qualification 或清除未知狀態繼續。既有 PacketStore
+root 須由可信操作人預先在 Git 外建立並保持 private，loader 不自動採認 root。
+
+這只支援乾淨 checkout 的有界輸入核對，files 不是檔案 sandbox；不能證明
+全部內容無秘密，也不替代既有秘密排除、完整 snapshot、資格與 containment
+gate。固定 native reader 不改，真實一般 admission／自動接手仍未完成。
+可重建的局部驗證入口是 `./scripts/project-python -m unittest
+tests.test_model_task_ingress tests.test_model_task_execution`；private originals、
+結果及失敗證據不追蹤進 Git。
 
 持久冷卻、單一 writer 交接、半成品快照與切換後續作仍待實作及深入審查。
 原服務恢復不搶占接手中的工作；品質升級不因恢復而降級。既有 CLI executor

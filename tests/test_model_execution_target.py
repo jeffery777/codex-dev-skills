@@ -35,7 +35,7 @@ class TargetFixture:
             'independence_parallelizability': 'independent', 'verification_burden': 'medium'}}
         provider = {'id': 'openai', 'billing': 'chatgpt-subscription', 'base_url': None, 'wire_api': 'responses', 'env_key': None} if official else {'id': 'synthetic', 'billing': 'internal', 'base_url': 'http://127.0.0.1:4000/v1', 'wire_api': 'responses', 'env_key': 'SYNTHETIC_MODEL_KEY'}
         self.record = {'id': 'fixture-target', 'enabled': True, 'expires_at': self.now+1000,
-            'task': {'route_task': route_task, 'acceptance_sha256': 'c'*64, 'prompt_sha256': targets.sha(prompt.encode()),
+            'task': {'route_task': route_task, 'acceptance_sha256': targets.sha(b'Synthetic acceptance: preserve the original source.\n'), 'prompt_sha256': targets.sha(prompt.encode()),
                      'expected_head': head, 'role': role, 'checkpoint_sha256': None}, 'provider': provider, 'model': model,
             'reasoning_effort': 'low', 'runtime': 'cli', 'canonical_profile': self.artifact('canonical.toml', canonical),
             'effective_profile': self.artifact('effective.toml', effective),
