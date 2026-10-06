@@ -38,3 +38,12 @@ context 策略。匿名 fixture 成功不取得一般來源或 production 資格
 真實 admission、一般失聯、未知 writer 控制及安全續作／成果採認。
 指定來源需吻合原 raw HEAD blob／mode／index／origin；派發前不得執行
 repository 自訂 filter。整個 checkout clean gate 維持既有 CLI 的責任。
+
+同案 C 的下一個 admission 邊界採預設關閉的受信任本機 host 簽發者；
+它只能依原始人工授權及獨立查回的 CLI 目標資格，對同一具名任務、來源、
+目的地與有限 action 發短期可撤銷許可。受保護 input、operator JSON、
+target summaries、模型自述與固定測試 grant 均不能自行取得授權語意。
+先以獨立 fixture domain 驗證精確綁定、讀回、時效與持久撤權；缺真實
+授權／資格來源時拒發 production 許可，不接通正式 dispatch 或 Native C
+admission。Same-UID host code 屬可信邊界，檔案權限不能證明惡意同 UID
+程序無法竄改；此有限契約不完成 C 的失聯接手 DoD。

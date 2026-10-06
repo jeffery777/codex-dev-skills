@@ -1077,3 +1077,21 @@ checkpoint 正例，不擴為一般模型或任意 patch 接手。原完整 DoD�
 可信 generic observer／撤權／checkpoint intake、一般來源整合、N1–N4、
 context／quality escalation／跨 provider E2E 與同案 release 仍 BLOCKED。
 production／native／runtime／adapter／isolation／startup／N1–N4 資格全部 false。
+
+## 本機簽發者的最小前置包（2026-10-06）
+
+使用者核准以預設關閉的受信任本機 host 簽發者承擔具名任務的短期許可，
+不要求不存在的 Desktop-native attestation。先只驗 fixture domain 的
+issue／readback／revoke 契約：重讀已核對的原始 task/source 與 CLI target，
+綁 action、證據 digest、時效、session 與撤權 epoch；可信注入 reader 每次
+重讀受保護 target 原件。缺來源、漂移、過期、時鐘回退、root 替換及撤權後
+renewal 均拒絕；已觀察的過期或時鐘歧義會持久封鎖舊 reference。Fixture grant 不進
+NativeLifecycle 或 production dispatch，原 `synthetic_only` 與空 containment
+registry 不變。原始人工授權及獨立 CLI 資格的真實 reader／證據仍是下一步
+相依；不得由 summaries 或合成 granted 字串補造。
+
+先跑廉價 schema／source/target 契約，再跑聚焦正負測試、package parity、
+比例獨立審查與適用安全掃描。原 877bb36 工程包封存的 27/27 scan 與
+17 個 hosted 成功檢查僅按未變範圍重用；draft 的 exact-head readiness
+因缺最新完整審查憑證未通過，不能以這些局部證據追認。一般失聯、未知
+writer 控制、真實來源成果整合及完整 C、release 的 blocker 維持。

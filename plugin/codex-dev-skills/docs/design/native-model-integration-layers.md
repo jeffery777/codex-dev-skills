@@ -134,6 +134,18 @@ qualification admission」。前者以 `model_task_ingress.py` 唯讀載入 prot
 原本即要求完整 authority／qualification，不能將 granted／qualified 寫入
 一般 JSON 就視為完成。固定 native source／scope／patch 維持不變。
 
+2026-10-06 已核准預設關閉的受信任本機 host 簽發者作為下一個權限邊界。
+第一包只建 fixture domain 的發證／讀回／撤權契約，綁原始 task/source、
+CLI target、action、短期時效與 sticky revoke。受信任的注入 reader 須在
+發證及讀回時重讀受保護 target 原件；失效及時鐘歧義須持久封鎖舊許可。
+沒有 production reader 時
+不產生正式 grant。原始人工授權須由可信 host 取回，CLI 資格須查回獨立
+原證據；`model_execution_target` 的摘要只驗結構與狀態，不能當成來源。
+目前公開 app-server 可處理 thread／turn 與核准互動，但此設計不宣稱它會
+向技能提供 Desktop 原對話的可驗證授權憑證，也不仰賴未公開 internals。
+既有 synthetic-only Native guard、固定來源／patch、空 production
+containment registry 都保留；fixture permit 不進入正式 admission。
+
 此包仍在 Issue #316；先完成當前工程包的比例重審、適用 SDS 與 draft 保存，
 保留全部 unknown／持久狀態，再接續。完整 dots、loop、graphic engineering
 及 memory 系統不納入。
