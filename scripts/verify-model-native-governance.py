@@ -187,40 +187,37 @@ def stage(root,name,request_sha):
             # This is fixture quality evidence, never a real model quality qualification.
             if not request.get('executor_loss', False):h.failure()
             ledger,_=h.publish();c=ledger['checkpoint']
-            late=None
             if request.get('executor_loss', False):
-                # Seal the original generation's late message before losing
-                # the executor. It is never rewritten for the successor.
-                with h.store.locked() as fd:
-                    original=ledger['governance']['records'][-1]
-                    raw=packets.trust._read(fd,'lifecycle-'+original['record_sha256']+'.json',packets.MAX_LEDGER)
-                rev=h.save('late-publish','publish',native.containers._json(raw)['payload'],runtime=True)
-                late=dict(operation_id='late-publish',expected_revision=rev)
-            else:
-                h.finish(result='failed')
+                # This process supplies no recovery sidecar after durable C.
+                # The trusted coordinator observes its exit before dispatching
+                # the consumer, which reconstructs from the original packet.
+                os._exit(EXECUTOR_LOSS_EXIT)
+            h.finish(result='failed')
             host.save(root,'handoff.json',dict(request=h.request,execution=h.execution.decode(),
                 checkpoint=c,immutable_refs=refs(h.store),first_native=first,
-                control_reference_sha256=control.reference_sha256,late_result=late))
-            if request.get('executor_loss', False):
-                host.save(root,name+'-host-observations.json',control.samples)
-                # Deliberate loss after durable C; no finally, owner release or
-                # reliance on this process terminating every writer it started.
-                os._exit(EXECUTOR_LOSS_EXIT)
+                control_reference_sha256=control.reference_sha256))
         elif name=='consumer':
             waited=host.read(root,'producer-waited.json')
             validate_stage_wait(request,'producer',host.read(root,'producer-started.json'),waited)
-            saved=host.read(root,'handoff.json')
-            if saved['control_reference_sha256'] != control.reference_sha256:
-                raise packets.PacketError('native-v6-handoff-control-drift')
-            h=fixture.Harness.reopen(root/'state',engine,root/'capsule',request['capsule_ref'],saved,control=control)
-            before,state=h.current()
+            if request.get('executor_loss', False):
+                h,before,state=fixture.Harness.reopen_published(root/'state',engine,
+                    root/'capsule',request['capsule_ref'],control=control)
+                saved=dict(request=h.request,checkpoint=before['checkpoint'],
+                    immutable_refs=refs(h.store),first_native=host.read(root,'producer-native-evidence.json'))
+                if (root/'handoff.json').exists():
+                    raise packets.PacketError('native-v6-loss-handoff-unexpected')
+            else:
+                saved=host.read(root,'handoff.json')
+                if saved['control_reference_sha256'] != control.reference_sha256:
+                    raise packets.PacketError('native-v6-handoff-control-drift')
+                h=fixture.Harness.reopen(root/'state',engine,root/'capsule',request['capsule_ref'],saved,control=control)
+                before,state=h.current()
             recovery=None
             if request.get('executor_loss', False):
                 if (before['checkpoint']!=saved['checkpoint'] or state['owner'] is None
                         or state['terminal'] or before['attempts'][-1]['status']!='published'
                         or before['generation']!=1 or state['owner']['attempt_id']!=saved['request']['attempt_id']
-                        or state['owner']['generation']!=1 or saved['late_result']!={
-                            'operation_id':'late-publish','expected_revision':before['revision']}
+                        or state['owner']['generation']!=1
                         or any(refs(h.store).get(k)!=v for k,v in saved['immutable_refs'].items())):
                     raise packets.PacketError('native-v6-loss-checkpoint-or-owner-drift')
                 # Original descriptor/execution and fresh physical readback are
@@ -266,17 +263,6 @@ def stage(root,name,request_sha):
             replay_before=ledger
             h.host.launch_reserved('launch2',expected_revision=0,now=110)
             if h.current()[0]!=replay_before:raise packets.PacketError('native-v6-launch-reconcile-wrote')
-            if recovery is not None:
-                calls=engine.transcript_count
-                try:
-                    h.host.publish(saved['late_result']['operation_id'],
-                        expected_revision=saved['late_result']['expected_revision'],now=110)
-                except flow.lifecycle.LifecycleError as error:
-                    if str(error)!='lifecycle-revision-conflict':raise
-                else:raise packets.PacketError('native-v6-late-result-accepted')
-                if h.current()[0]!=ledger or engine.transcript_count!=calls:
-                    raise packets.PacketError('native-v6-late-result-effects')
-                recovery.update(late_result_rejected=True,late_result_effects=0)
             host.save(root,'result.json',dict(passed=True,checkpoint=saved['checkpoint'],
                 successor_checkpoint=ledger['checkpoint'],predecessor=attempt['predecessor_sha256'],
                 immutable_refs_preserved=True,terminal=True,generation=2,

@@ -136,6 +136,44 @@ class Harness:
         value.host=value.controller();value.current()
         return value
 
+    @classmethod
+    def reopen_published(cls, root, engine, capsule, ref, *, control=None):
+        """Recover the fixed fixture from committed packet evidence, not producer handoff."""
+        store=packets.PacketStore(pathlib.Path(root)/'packets','packet-native-v6')
+        with store.locked() as fd:
+            raw=packets.trust._read(fd,'ledger.json',packets.MAX_LEDGER)
+            ledger=json.loads(raw,object_pairs_hook=packets.trust._pairs)
+            lifecycle.validate_ledger(ledger,store.packet_id)
+            records=ledger['governance']['records']
+            acquired=[item for item in records if item['kind']=='acquire']
+            if (packets.canonical(ledger)!=raw or len(acquired)!=1
+                    or ledger['generation']!=1 or len(ledger['attempts'])!=1
+                    or ledger['attempts'][0]['status']!='published'
+                    or records[-1]['kind']!='publish' or ledger['checkpoint'] is None):
+                raise packets.PacketError('native-v6-recovery-prefix-unavailable')
+            origin=acquired[0]
+            originals={}
+            for field in ('request','execution'):
+                sha=origin[field+'_sha256']
+                if sha is None:raise packets.PacketError('native-v6-recovery-original-unavailable')
+                original=packets.trust._read(fd,'lifecycle-'+sha+'.json',lifecycle.governance.MAX_EVIDENCE)
+                if packets.digest(original)!=sha:
+                    raise packets.PacketError('native-v6-recovery-original-drift')
+                value=json.loads(original,object_pairs_hook=packets.trust._pairs)
+                if packets.canonical(value)!=original:
+                    raise packets.PacketError('native-v6-recovery-original-noncanonical')
+                originals[field]=value
+            prefix=packets.digest(raw)
+        saved=dict(request=originals['request'],execution=packets.canonical(originals['execution']).decode())
+        recovered=cls.reopen(root,engine,capsule,ref,saved,control=control)
+        current,state=recovered.current()
+        if (packets.digest(packets.canonical(current))!=prefix
+                or state['owner'] is None or state['terminal']
+                or state['owner']['generation']!=1
+                or state['owner']['attempt_id']!=saved['request']['attempt_id']):
+            raise packets.PacketError('native-v6-recovery-prefix-drift')
+        return recovered,current,state
+
     def planning(self):
         p=fixture(); scope='fixed-native-two-attempt'; sha=packets.digest(flow.FINAL_PATCH)
         for key in ('task','authorization','secret_check'):
@@ -296,6 +334,26 @@ class NativeLifecycleTests(unittest.TestCase):
         self.assertEqual(h.current()[0],ledger);self.assertEqual(len(self.engine.calls),calls)
         self.assertTrue(state['terminal']);self.assertEqual(state['events'][0]['kind'],'service')
         self.assertNotEqual(ledger['checkpoint'],checkpoint)
+
+    def test_published_checkpoint_reopens_without_producer_handoff(self):
+        h=self.h;h.acquire();h.chain();h.launch();h.observe();ledger,state=h.publish()
+        self.assertIsNotNone(state['owner'])
+        restored,prefix,projection=Harness.reopen_published(h.root,self.engine,
+            h.backend.drivers['checkpoint'].capture_root,{})
+        self.assertEqual(prefix,ledger)
+        self.assertEqual(restored.request['attempt_id'],'a1')
+        self.assertEqual(projection['owner']['generation'],1)
+
+    def test_published_recovery_rejects_missing_checkpoint_and_changed_original(self):
+        h=self.h;h.acquire();h.chain();h.launch();h.observe()
+        args=(h.root,self.engine,h.backend.drivers['checkpoint'].capture_root,{})
+        with self.assertRaisesRegex(packets.PacketError,'native-v6-recovery-prefix-unavailable'):
+            Harness.reopen_published(*args)
+        ledger,_=h.publish()
+        origin=next(ref for ref in ledger['governance']['records'] if ref['kind']=='acquire')
+        path=h.store.root/h.store.packet_id/('lifecycle-'+origin['request_sha256']+'.json')
+        path.write_bytes(b'{}')
+        with self.assertRaises(packets.PacketError):Harness.reopen_published(*args)
 
     def test_unleased_lookup_and_artifact_write_have_zero_transport_effects(self):
         h=self.h;h.acquire();h.chain();count=len(self.engine.calls)

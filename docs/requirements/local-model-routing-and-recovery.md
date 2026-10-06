@@ -39,7 +39,9 @@ context 策略。匿名 fixture 成功不取得一般來源或 production 資格
 指定來源需吻合原 raw HEAD blob／mode／index／origin；派發前不得執行
 repository 自訂 filter。整個 checkout clean gate 維持既有 CLI 的責任。
 
-同案 C 的下一個 admission 邊界採預設關閉的受信任本機 host 簽發者；
+同案 C 若需要獨立於本地 agent 的授權證明，可採預設關閉的受信任本機 host
+簽發者。先核對選定 Codex 本地任務的既有授權與明確 scope 是否足夠；不為
+追求更強的證明，把管理員安裝當成匿名安全恢復路徑的前置。若啟用簽發者，
 它只能依原始人工授權及獨立查回的 CLI 目標資格，對同一具名任務、來源、
 目的地與有限 action 發短期可撤銷許可。受保護 input、operator JSON、
 target summaries、模型自述與固定測試 grant 均不能自行取得授權語意。
@@ -51,3 +53,9 @@ target summaries、模型自述與固定測試 grant 均不能自行取得授權
 授權／資格來源時拒發 production 許可，不接通正式 dispatch 或 Native C
 admission。Same-UID host code 屬可信邊界，檔案權限不能證明惡意同 UID
 程序無法竄改；此有限契約不完成 C 的失聯接手 DoD。
+
+最小 C 路徑先限於本地可信 coordinator 存活、單一受管 executor、已持久化
+checkpoint、確定停止或隔離的 writer、同一原任務範圍與一個新隔離副本。
+executor 在 checkpoint 後不需再寫交接檔；consumer 必須由原 journal 與
+不可變來源重建，拒收舊 generation。coordinator 自身失聯、任意工具與
+未驗證任務來源仍是其他邊界，不以此有限成功宣稱 production。

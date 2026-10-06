@@ -94,6 +94,14 @@ owner 與受管 runtime 身分及 writer 狀態，再用既有 lifecycle 釋放�
 未新增 journal／工具效果。這是匿名 fixture 的實體整合證據，不是一般執行器
 失聯或 production 資格；正式工程包 gate 與整份 PR readiness 另行判定。
 
+範圍收斂後，只沿用此一受控本地路徑繼續驗收，不為其他 runtime、工具或
+失聯時點預建恢復平台。新增的 fixture 把失聯點提前到 C 持久化後、producer
+寫交接檔前；存活 coordinator 完成 wait／EOF，fresh consumer 從原 ledger
+與不可變 request／execution 重建，重核 writer 停止後才釋放 owner、取得
+generation 2。實體路徑驗證舊 generation export 拒收；遲到 publish 拒收仍由
+既有局部測試支撐。沒有重用舊 attempt 或增加服務。這不證明任意失聯、
+coordinator 重啟、真實 task admission 或 production C。
+
 首輪 consumer 等待逾時，原 attempt 保留 unknown／export-intent，不重播或
 追認。依原始 transport 與來源核對耗時，僅調整 verifier 的有界 stage 預算為
 producer 140 秒、consumer 220 秒，session 400 秒；保留完整 capture hash、
@@ -113,12 +121,13 @@ writer。尚缺能力須在選定本地 scope 補足，不能用未驗證 dots �
 | 本地缺口 | 現有可重用能力與缺少的證據 |
 | --- | --- |
 | 真實 task／source admission | `FixedReader`／固定 grants 不是真實任務授權；需由可信本地 host 綁定一個具名任務的原 acceptance、source 身分、scope、目的地授權與秘密排除，並由既有完整 gates 讀回。一般 JSON／模型自述不能授權 |
-| 一般失聯與可信進度讀回 | 現有 actual Popen wait／EOF、immutable journal／C 與原始執行身分可重用；目前依固定退出點及 producer 的 handoff 文件，尚須證明失聯時能從可信持久狀態判定可續作或 blocked，不能要求失聯執行器最後補文件 |
+| 一般失聯與可信進度讀回 | 現有 actual Popen wait／EOF、immutable journal／C 與原始執行身分可重用；固定 checkpoint 後退出已能不靠 producer 的 handoff 文件續作。其他失聯位置仍須從可信持久狀態判定可續作或 blocked，不能要求失聯執行器最後補文件 |
 | 仍存活或未知 writer 的控制 | 新副本與 generation fence 可重用；目前 finish 只接受 stopped，尚須證明舊受管環境無法影響新副本或正式成果，隔離缺證不得釋放 owner／派 successor。不能以 PID 消失代替 writer 控制 |
 | 新鮮資格、撤權與服務預算 | Host permit 已有實際 clock、held session 與 sticky revoke；journal reader 的 `now=110`／合成 qualification 仍未證明真實 service elapsed、目標資格或授權撤銷。不得刷新歷史證據補成新資格 |
 | 安全續作及成果採認 | C→C2／stale refusal 與既有唯一 integrator 可重用；目前任務、patch、來源 authority 與選模均固定，需驗證所選本地任務的成果與原驗收／review、一般 source integration、必要 provider/context／工具邊界。其餘未用工具保持停用 |
 
-下一個最小工程包先解除第一項：重用既有 native admission／source readback
+checkpoint 後仍依賴 producer 交接檔的 blocker 已由上述路徑解除。下一個
+最小工程包先解除第一項：重用既有 native admission／source readback
 與 host-control，在一個具名本地任務建立 host-owned task/source 薄接點；不
 新增 supervisor、broker、observer、container 或 integrator。先檢查實際
 consumer 型別、原 authority／source 綁定與秘密排除，再驗證撤銷、來源漂移、
@@ -134,7 +143,7 @@ qualification admission」。前者以 `model_task_ingress.py` 唯讀載入 prot
 原本即要求完整 authority／qualification，不能將 granted／qualified 寫入
 一般 JSON 就視為完成。固定 native source／scope／patch 維持不變。
 
-2026-10-06 已核准預設關閉的受信任本機 host 簽發者作為下一個權限邊界。
+2026-10-06 已核准預設關閉的受信任本機 host 簽發者作為可用的權限邊界。
 每個具名任務先經受信任本機介面核准一次，核准內容固定原驗收／來源、
 允許目的地、action、sandbox ceiling 與 grant 最長期限；限期內可自動
 接手，不可由 agent 自行擴權或延長原核准。第一包只建 fixture domain 的
@@ -152,6 +161,9 @@ qualification admission」。前者以 `model_task_ingress.py` 唯讀載入 prot
 無法自行偽造的本機授權邊界。macOS 與 Linux 各自驗證其公開、可部署的
 OS 身分／權限機制及實際安裝條件；未驗證前維持預設關閉。目標 CLI
 資格仍須從獨立原證據讀回，不能由授權介面代替。
+本輪先不安裝管理員簽發工具；先核對 Codex 本地任務的既有授權與明確 scope
+是否足以支撐選定路徑。若需改變原 authority／信任邊界，再以具體差異與
+失敗證據決策，不能把 fixture grant 或同 UID 檔案升格為正式許可。
 既有 synthetic-only Native guard、固定來源／patch、空 production
 containment registry 都保留；fixture permit 不進入正式 admission。
 

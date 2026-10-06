@@ -70,14 +70,19 @@ authority／唯一 integrator、受控官方訂閱登入、可信 revocation、�
 context／實際品質升級／跨來源資格，仍是獨立未完成依賴。
 
 同入口的 `--executor-loss` 另限定「監督端健康、原生 writer 已確認停止、C
-持久化後且 owner 尚未釋放」：producer 實際退出 86 並保留原 owner／journal，
-監督端核對 wait PID／exit／完整 stderr EOF；fresh consumer 重讀原 C、owner
+持久化後且 owner 尚未釋放」：producer 在寫入交接 sidecar 前實際退出 86，
+保留原 owner／journal；監督端核對 wait PID／exit／完整 stderr EOF。fresh
+consumer 從既有 ledger 與不可變 request／execution 重建最小接手資料，重讀原 C、owner
 與實體 runtime，再記錄單一 service failure，透過既有 lifecycle 釋放 owner
 及取得 generation 2。從 C 建立不同隔離副本、完成 C2；舊 generation export
-及預先封存的新遲到 publish 必須拒絕且零新增效果。這不證明仍存活 writer 的
+必須拒絕且零新增效果；遲到 publish 拒收仍由既有局部測試驗證，這次實體
+路徑沒有產生預先封存的 late-publish。這不證明仍存活 writer 的
 接手、coordinator 自身恢復、任意失聯位置或真實跨 provider。
 
 2026-10-06 這條匿名路徑實測通過；原第一輪逾時的 unknown 另行保留。
+新增的 checkpoint→handoff 空窗路徑亦在同日以新私有 fixture 通過：沒有
+`handoff.json`，原 C 與不可變來源維持一致，後繼端取得 generation 2；
+原先失聯點與其封存證據仍保留，不能用新結果改寫舊 attempt。
 Verifier 的 producer／consumer 等待上限為 140／220 秒，held session 為
 400 秒，仍受既有 600 秒硬上限約束；這些是實驗預算，不是 model service
 elapsed 資格。期限、撤銷、原始 capture 與 runtime 身分檢查不因逾時放寬。

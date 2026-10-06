@@ -1103,3 +1103,24 @@ macOS 與 Linux 各自核對 OS 權限／身分邊界與部署條件；未有可
 17 個 hosted 成功檢查僅按未變範圍重用；draft 的 exact-head readiness
 因缺最新完整審查憑證未通過，不能以這些局部證據追認。一般失聯、未知
 writer 控制、真實來源成果整合及完整 C、release 的 blocker 維持。
+
+## 單一路徑收斂：checkpoint 後失聯（2026-10-06）
+
+此節調整上一節的實作順序，不撤銷其 fixture 結果或既有授權。暫不把
+管理員簽發安裝、任意背景 writer 或 coordinator 重啟擴成新的恢復平台。
+本包只修一個實際 blocker：先前 producer 在 C 封存後仍須寫
+`handoff.json`，fresh consumer 才能續作；若兩者間失聯，就無法使用可信
+進度。現在 producer 封存 C 後立即退出，不再寫交接檔；存活 coordinator
+讀回 wait／EOF，fresh consumer 從原 ledger 與不可變 request／execution
+重建，核對 writer 停止、owner 與 checkpoint 後取得 generation 2。
+
+同一固定匿名 Docker／CLI fixture 實測通過：無 `handoff.json`、原 C 保留、
+新隔離副本完成 C2、舊 generation export 零效果拒收。遲到 publish 拒收
+沿用既有局部測試；本次實體路徑不聲稱有該項證據。原失敗、unknown 與
+先前封存證據保留，production／native／runtime／adapter／isolation／
+startup／N1–N4 資格仍 false。
+
+下一工程包只選一個具名本地任務接到現有 admission／source reader；先核對
+Codex 原生授權邊界與當前 CLI 資格，不能用 fixture grant 代替。管理員
+簽發工具暫不安裝；若現有能力對具體信任缺口不足，再提出精確差異與
+驗證，不預建一般服務。完整 C、PR readiness 與 release 仍未完成。
