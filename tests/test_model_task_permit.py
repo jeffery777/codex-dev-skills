@@ -15,8 +15,8 @@ sys.path.insert(0, str(ROOT/'skills/loop-engineering/scripts'))
 import model_task_ingress as ingress
 import model_task_permit as permits
 import model_packet_store as packets
-from test_model_task_ingress import InputFixture
-from test_model_execution_target import TargetFixture, targets
+from tests.test_model_task_ingress import InputFixture
+from tests.test_model_execution_target import TargetFixture, targets
 
 
 class FixturePermitTests(unittest.TestCase):
