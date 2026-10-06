@@ -1090,6 +1090,14 @@ NativeLifecycle 或 production dispatch，原 `synthetic_only` 與空 containmen
 registry 不變。原始人工授權及獨立 CLI 資格的真實 reader／證據仍是下一步
 相依；不得由 summaries 或合成 granted 字串補造。
 
+具名任務採一次初始人工核准，限期內以短期 permit 接手；初始 grant 固定
+原驗收、來源、允許目的地與 action、sandbox ceiling 及最長期限，撤銷與
+到期後不能由 agent 自行續期。fixture 已把 task grant 與 session permit
+分開並驗證同一 grant 的 successor、越界拒絕；這不證明核准者身分。
+下一包只處理實際受信任本機入口及獨立資格 reader 的最小接點，先在
+macOS 與 Linux 各自核對 OS 權限／身分邊界與部署條件；未有可信根時
+保持 default-off，不能把 TTY 確認或同 UID 私有檔當成授權。
+
 先跑廉價 schema／source/target 契約，再跑聚焦正負測試、package parity、
 比例獨立審查與適用安全掃描。原 877bb36 工程包封存的 27/27 scan 與
 17 個 hosted 成功檢查僅按未變範圍重用；draft 的 exact-head readiness

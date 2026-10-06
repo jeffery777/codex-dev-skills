@@ -70,12 +70,20 @@ class FixturePermitTests(unittest.TestCase):
                                    monotonic=mock.Mock(return_value=mono))
 
     def evidence(self, source=None, request=None, binding=None, options=None):
-        constraints = self.issuer._constraints(source or self.source, request or self.request,
+        source = source or self.source
+        constraints = self.issuer._constraints(source, request or self.request,
                                              binding or self.binding, **(options or self.options))
         for kind, name in permits.EVIDENCE.items():
             path = self.root/name
-            path.write_bytes(packets.canonical({'domain': permits.DOMAIN, 'kind': kind,
-                                               'constraints': constraints}))
+            if kind == 'authorization':
+                approved = int(time.time())
+                value = {'domain': permits.DOMAIN, 'kind': kind,
+                         'scope': self.issuer._grant_scope(source, constraints),
+                         'actions': sorted(permits.ACTIONS), 'approved_at': approved,
+                         'expires_at': approved + 600}
+            else:
+                value = {'domain': permits.DOMAIN, 'kind': kind, 'constraints': constraints}
+            path.write_bytes(packets.canonical(value))
             path.chmod(0o600)
 
     def issue(self, **kwargs):
@@ -156,8 +164,8 @@ class FixturePermitTests(unittest.TestCase):
         record = self.readback(reference)
         expiry = record['expires_at']
         original = self.issuer._evidence
-        def elapsed(fd, constraints):
-            result = original(fd, constraints)
+        def elapsed(fd, constraints, source, now):
+            result = original(fd, constraints, source, now)
             permits.time.time.return_value = expiry
             permits.time.monotonic.return_value = record['issued_monotonic']+(expiry-record['issued_at'])
             return result
@@ -269,6 +277,97 @@ class FixturePermitTests(unittest.TestCase):
             self.rejected(lambda: self.readback(reference))
             self.assertEqual(self.readback(renewed)['epoch'], 1)
 
+    def test_one_task_grant_covers_new_session_within_its_bound(self):
+        approved = (self.root/permits.EVIDENCE['authorization']).read_bytes()
+        reference = self.issue(ttl=10)
+        record = self.readback(reference)
+        with self.virtual_clock(record['expires_at'], record['issued_monotonic']+10):
+            self.options = {'action': 'fixture-read-only', 'session_sha256': '2'*64}
+            constraints = self.issuer._constraints(self.source, self.request,
+                                                   self.binding, **self.options)
+            path = self.root/permits.EVIDENCE['cli-qualification']
+            path.write_bytes(packets.canonical({'domain': permits.DOMAIN,
+                'kind': 'cli-qualification', 'constraints': constraints}))
+            renewed = self.issue()
+            self.assertEqual(renewed['epoch'], 1)
+            self.assertEqual((self.root/permits.EVIDENCE['authorization']).read_bytes(), approved)
+            self.rejected(lambda: self.readback(reference))
+
+    def test_task_grant_action_scope_and_lifetime_are_enforced(self):
+        path = self.root/permits.EVIDENCE['authorization']
+        original = permits._decode(path.read_bytes())
+        for change in ({'actions': ['fixture-start']},
+                       {'domain': 'production'}, {'kind': 'cli-qualification'},
+                       {'domain': None}, {'kind': False},
+                       {'expires_at': original['approved_at'] + permits.MAX_GRANT_LIFETIME + 1},
+                       {'scope': {**original['scope'], 'acceptance_sha256': '1'*64}}):
+            value = {**original, **change}
+            path.write_bytes(packets.canonical(value))
+            if change == {'actions': ['fixture-start']}:
+                self.rejected(lambda: self.issuer.issue(self.source, self.request,
+                    self.binding, action='fixture-read-only',
+                    session_sha256=self.options['session_sha256']))
+            else:
+                self.rejected(lambda: self.issue())
+        path.write_bytes(packets.canonical({**original, 'expires_at': original['approved_at']}))
+        self.rejected(lambda: self.issue())
+
+    def test_observed_grant_expiry_fences_successor_after_reopen_and_clock_rollback(self):
+        path = self.root/permits.EVIDENCE['authorization']
+        grant = permits._decode(path.read_bytes())
+        grant['expires_at'] = grant['approved_at'] + 15
+        path.write_bytes(packets.canonical(grant))
+        reference = self.issue(ttl=10)
+        permit = self.readback(reference)
+        expiry = grant['expires_at']
+        elapsed = expiry - permit['issued_at']
+        with self.virtual_clock(expiry, permit['issued_monotonic'] + elapsed):
+            self.rejected(lambda: self.issue())
+            event = permits._decode((self.root/permits.JOURNAL).read_bytes().splitlines()[-1])
+            self.assertEqual(event['kind'], 'grant-expire')
+        with self.virtual_clock(expiry - 1, permit['issued_monotonic'] + elapsed + 1):
+            self.issuer = self.reopen()
+            self.rejected(lambda: self.issue())
+            self.rejected(lambda: self.readback(reference))
+
+    def test_expired_grant_without_prior_permit_stays_fenced(self):
+        path = self.root/permits.EVIDENCE['authorization']
+        grant = permits._decode(path.read_bytes())
+        grant['expires_at'] = grant['approved_at'] + 5
+        path.write_bytes(packets.canonical(grant))
+        now = time.time()
+        mono = self.issuer.last_monotonic
+        with self.virtual_clock(grant['expires_at'], mono + (grant['expires_at'] - now)):
+            self.rejected(lambda: self.issue())
+        with self.virtual_clock(grant['expires_at'] - 1,
+                                mono + (grant['expires_at'] - now) + 1):
+            self.issuer = self.reopen()
+            self.rejected(lambda: self.issue())
+
+    def test_grant_expiry_during_original_reads_is_fenced(self):
+        path = self.root/permits.EVIDENCE['authorization']
+        grant = permits._decode(path.read_bytes())
+        grant['expires_at'] = grant['approved_at'] + 15
+        path.write_bytes(packets.canonical(grant))
+        reference = self.issue(ttl=10)
+        permit = self.readback(reference)
+        expiry = grant['expires_at']
+        start_mono = permit['issued_monotonic'] + (expiry - 1 - permit['issued_at'])
+        original = self.issuer._evidence
+        def cross_expiry(fd, constraints, source, now):
+            result = original(fd, constraints, source, now)
+            permits.time.time.return_value = expiry
+            permits.time.monotonic.return_value = start_mono + 1
+            return result
+        with self.virtual_clock(expiry - 1, start_mono):
+            with mock.patch.object(self.issuer, '_evidence', side_effect=cross_expiry):
+                self.rejected(lambda: self.issue())
+            event = permits._decode((self.root/permits.JOURNAL).read_bytes().splitlines()[-1])
+            self.assertEqual(event['kind'], 'grant-expire')
+        with self.virtual_clock(expiry - 1, start_mono + 2):
+            self.issuer = self.reopen()
+            self.rejected(lambda: self.issue())
+
     def test_missing_qualification_production_summaries_and_disabled_original_fail_closed(self):
         path = self.root/permits.EVIDENCE['cli-qualification']
         original = path.read_bytes(); path.unlink()
@@ -303,8 +402,8 @@ class FixturePermitTests(unittest.TestCase):
 
     def test_source_changed_during_evidence_reads_is_rejected_before_issue(self):
         original = self.issuer._evidence
-        def drift(fd, constraints):
-            result = original(fd, constraints)
+        def drift(fd, constraints, source, now):
+            result = original(fd, constraints, source, now)
             (self.repo/'README.md').write_text('drift during readback\n')
             return result
         with mock.patch.object(self.issuer, '_evidence', side_effect=drift):
@@ -355,8 +454,8 @@ class FixturePermitTests(unittest.TestCase):
     def test_wall_rollback_within_one_readback_is_durably_fenced(self):
         reference = self.issue(ttl=10); record = self.readback(reference)
         original = self.issuer._evidence
-        def rollback_during_originals(fd, constraints):
-            result = original(fd, constraints)
+        def rollback_during_originals(fd, constraints, source, now):
+            result = original(fd, constraints, source, now)
             permits.time.time.return_value = record['issued_at']+4
             permits.time.monotonic.return_value = record['issued_monotonic']+6
             return result

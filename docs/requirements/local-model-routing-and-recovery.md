@@ -43,6 +43,10 @@ repository 自訂 filter。整個 checkout clean gate 維持既有 CLI 的責任
 它只能依原始人工授權及獨立查回的 CLI 目標資格，對同一具名任務、來源、
 目的地與有限 action 發短期可撤銷許可。受保護 input、operator JSON、
 target summaries、模型自述與固定測試 grant 均不能自行取得授權語意。
+每個具名任務須由受信任的本機介面先核准一次，明示原驗收、來源、允許的
+目的地與 action、sandbox 上限及最長有效期；限期內接手僅能縮小此範圍，
+不可由 agent 自行延長原核准或將終端提示當成人員身分證明。撤銷、範圍
+漂移或原核准到期即停止自動接手；新任務須重新核准。
 先以獨立 fixture domain 驗證精確綁定、讀回、時效與持久撤權；缺真實
 授權／資格來源時拒發 production 許可，不接通正式 dispatch 或 Native C
 admission。Same-UID host code 屬可信邊界，檔案權限不能證明惡意同 UID

@@ -135,14 +135,23 @@ qualification admission」。前者以 `model_task_ingress.py` 唯讀載入 prot
 一般 JSON 就視為完成。固定 native source／scope／patch 維持不變。
 
 2026-10-06 已核准預設關閉的受信任本機 host 簽發者作為下一個權限邊界。
-第一包只建 fixture domain 的發證／讀回／撤權契約，綁原始 task/source、
-CLI target、action、短期時效與 sticky revoke。受信任的注入 reader 須在
+每個具名任務先經受信任本機介面核准一次，核准內容固定原驗收／來源、
+允許目的地、action、sandbox ceiling 與 grant 最長期限；限期內可自動
+接手，不可由 agent 自行擴權或延長原核准。第一包只建 fixture domain 的
+發證／讀回／撤權契約，綁原始 task/source、CLI target、action、短期時效
+與 sticky revoke。fixture 中 task grant 與每次 session permit 分離，
+同一 grant 可涵蓋其允許範圍內的 successor；這仍不證明真實人工核准。
+受信任的注入 reader 須在
 發證及讀回時重讀受保護 target 原件；失效及時鐘歧義須持久封鎖舊許可。
 沒有 production reader 時
 不產生正式 grant。原始人工授權須由可信 host 取回，CLI 資格須查回獨立
 原證據；`model_execution_target` 的摘要只驗結構與狀態，不能當成來源。
 目前公開 app-server 可處理 thread／turn 與核准互動，但此設計不宣稱它會
 向技能提供 Desktop 原對話的可驗證授權憑證，也不仰賴未公開 internals。
+終端 TTY／同 UID 可寫檔案無法獨立證明核准者；真正簽發者需有 agent
+無法自行偽造的本機授權邊界。macOS 與 Linux 各自驗證其公開、可部署的
+OS 身分／權限機制及實際安裝條件；未驗證前維持預設關閉。目標 CLI
+資格仍須從獨立原證據讀回，不能由授權介面代替。
 既有 synthetic-only Native guard、固定來源／patch、空 production
 containment registry 都保留；fixture permit 不進入正式 admission。
 

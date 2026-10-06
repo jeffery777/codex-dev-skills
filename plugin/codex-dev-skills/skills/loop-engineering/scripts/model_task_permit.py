@@ -30,6 +30,7 @@ JOURNAL = 'fixture-permits.jsonl'
 MAX_BYTES = 1048576
 MAX_EVENTS = 512
 MAX_TTL = 60
+MAX_GRANT_LIFETIME = 3600
 MAX_DRIFT = 5
 ACTIONS = {'fixture-start', 'fixture-read-only'}
 EVIDENCE = {'authorization': 'fixture-authorization.json',
@@ -38,6 +39,10 @@ EVIDENCE = {'authorization': 'fixture-authorization.json',
 
 class PermitError(ValueError):
     """Expose only fixed reason identifiers, never input content."""
+
+
+class GrantExpired(PermitError):
+    """A valid task grant whose expiry was observed and must be fenced."""
 
 
 def _require(condition, reason):
@@ -258,6 +263,18 @@ class FixturePermitIssuer:
                 prior['epoch'] = payload['epoch']
                 prior['revoked'] = kind == 'revoke'
                 prior['expired'] = kind == 'expire'
+            elif kind == 'grant-expire':
+                _shape(payload, {'task_key', 'epoch'})
+                key = _sha(payload['task_key'])
+                prior = tasks.get(key)
+                _require(type(payload['epoch']) is int
+                         and ((prior is None and payload['epoch'] == 0)
+                         or (prior is not None and not prior['revoked']
+                             and now >= prior['permit']['expires_at']
+                             and payload['epoch'] == prior['epoch'] + 1)),
+                         'fixture-grant-expiry-history-drift')
+                tasks[key] = {'permit': None, 'epoch': payload['epoch'],
+                              'revoked': True, 'expired': True}
             else:
                 raise PermitError('fixture-event-rejected')
             previous, observed, observed_mono = packets.digest(line), now, mono
@@ -340,21 +357,55 @@ class FixturePermitIssuer:
                 'input_sha256': source.identity_sha256, 'request_sha256': _digest(request),
                 'target_sha256': _digest(target), 'source_sha256': _digest(source.source_identity)}
 
-    def _evidence(self, fd, constraints):
+    @staticmethod
+    def _grant_scope(source, constraints):
+        # A single initial approval covers a bounded task, not each session.
+        # The original input still limits every destination and sandbox.
+        return {'task_key': constraints['task_key'],
+                'input_sha256': source.identity_sha256,
+                'request_sha256': _digest(source.request),
+                'source_sha256': constraints['source_sha256'],
+                'acceptance_sha256': source.record['acceptance']['sha256'],
+                'destinations_sha256': _digest(source.record['destinations']),
+                'sandbox_ceiling': source.request['authorization']['sandbox_ceiling']}
+
+    def _evidence(self, fd, constraints, source, now):
         identities = {}
         for kind, name in EVIDENCE.items():
             raw = _read(fd, name)
-            expected = {'domain': DOMAIN, 'kind': kind, 'constraints': constraints}
-            _require(_decode(raw) == expected, 'fixture-original-evidence-mismatch')
+            value = _decode(raw)
+            if kind == 'authorization':
+                _shape(value, {'domain', 'kind', 'scope', 'actions', 'approved_at', 'expires_at'})
+                actions = value['actions']
+                _require(value['domain'] == DOMAIN and value['kind'] == kind
+                         and type(actions) is list and actions == sorted(set(actions))
+                         and actions and set(actions) <= ACTIONS and constraints['action'] in actions
+                         and type(value['approved_at']) is int and type(value['expires_at']) is int
+                         and value['approved_at'] <= now
+                         and value['approved_at'] < value['expires_at']
+                         <= value['approved_at'] + MAX_GRANT_LIFETIME
+                         and value['scope'] == self._grant_scope(source, constraints),
+                         'fixture-task-grant-mismatch')
+                if now >= value['expires_at']:
+                    raise GrantExpired('fixture-task-grant-expired')
+                grant_expiry = value['expires_at']
+            else:
+                _require(value == {'domain': DOMAIN, 'kind': kind, 'constraints': constraints},
+                         'fixture-original-evidence-mismatch')
             info = os.stat(name, dir_fd=fd, follow_symlinks=False)
             identities[kind] = {'sha256': packets.digest(raw), 'identity': _identity(info)}
-        return _digest(identities)
+        return _digest(identities), grant_expiry
 
-    def _recheck(self, fd, source, request, binding, constraints, evidence):
+    def _recheck(self, fd, source, request, binding, constraints, evidence, now):
         _require(self._constraints(source, request, binding, constraints['action'],
                                   constraints['session_sha256']) == constraints
-                 and self._evidence(fd, constraints) == evidence,
+                 and self._evidence(fd, constraints, source, now)[0] == evidence,
                  'fixture-live-readback-drift')
+
+    def _fence_grant(self, fd, journal_fd, raw, constraints, prior, now):
+        self._append(fd, journal_fd, raw, 'grant-expire', {
+            'task_key': constraints['task_key'],
+            'epoch': 0 if prior is None else prior['epoch'] + 1}, now)
 
     def issue(self, source, request, binding, *, action, session_sha256, ttl=30):
         _require(type(ttl) is int and 0 < ttl <= MAX_TTL, 'fixture-lifetime-rejected')
@@ -366,11 +417,20 @@ class FixturePermitIssuer:
             prior = tasks.get(constraints['task_key'])
             _require(prior is None or (not prior['revoked'] and now >= prior['permit']['expires_at']),
                      'fixture-task-revoked-or-already-issued')
-            evidence = self._evidence(fd, constraints)
-            self._recheck(fd, source, request, binding, constraints, evidence)
+            try:
+                evidence, grant_expiry = self._evidence(fd, constraints, source, now)
+            except GrantExpired:
+                # Record the observed grant expiry before returning rejection.
+                # This also fences a task that never had a session permit.
+                self._fence_grant(fd, journal_fd, raw, constraints, prior, now)
+                raise
+            self._recheck(fd, source, request, binding, constraints, evidence, now)
             # Slow source/evidence reads cannot extend the sampled lifetime.
             final = self._now(now)
-            end = min(now + ttl, source.record['expires_at'], binding.valid_until)
+            end = min(now + ttl, grant_expiry, source.record['expires_at'], binding.valid_until)
+            if final >= grant_expiry:
+                self._fence_grant(fd, journal_fd, raw, constraints, prior, final)
+                raise GrantExpired('fixture-task-grant-expired')
             _require(final < end and self.last_monotonic-start_monotonic < ttl,
                      'fixture-expired-during-issue')
             value = {'domain': DOMAIN, **constraints, 'epoch': 0 if prior is None else prior['epoch']+1,
@@ -424,10 +484,13 @@ class FixturePermitIssuer:
             value = self._lookup(tasks, reference)
             now = self._live_time(fd, journal_fd, raw, value, observed)
             constraints = self._constraints(source, request, binding, action, session_sha256)
+            evidence, grant_expiry = self._evidence(fd, constraints, source, now)
             _require(all(value[key] == entry for key, entry in constraints.items())
-                     and self._evidence(fd, constraints) == value['evidence_sha256'],
+                     and evidence == value['evidence_sha256']
+                     and value['expires_at'] <= grant_expiry,
                      'fixture-permit-constraint-drift')
-            self._recheck(fd, source, request, binding, constraints, value['evidence_sha256'])
+            self._recheck(fd, source, request, binding, constraints,
+                          value['evidence_sha256'], now)
             final = self._live_time(fd, journal_fd, raw, value, now)
             self._append(fd, journal_fd, raw, 'observe', {
                 'task_key': value['task_key'], 'epoch': value['epoch']}, final)
