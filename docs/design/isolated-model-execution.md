@@ -3,6 +3,41 @@
 Issue #316 的 N1–N4 設計候選。此文件定義待實作及待資格化的邊界，
 不代表 runtime adapter 已啟用；production 清冊仍須維持空，直到完整驗收。
 
+## 原生實驗的 host 控制限制接點
+
+`model_native_host_control.py` 由已授權、captured-source 的可信匿名 coordinator
+發出單一 packet 的 experimental permit。它不是 provider／source authority 或
+qualification reader；purpose 固定、qualification false，原 synthetic grants
+與空 production registry 不改。Hash、PID、0700 或 ordinary JSON 本身不授權。
+
+Permit 綁完整 captured host 身分、packet root／inode／identity、canonical
+objective、base mode／policy、隨機 session 及有界期限。原 packet 的 immutable
+binding 與 admission protocol digest 包含 control reference；fresh consumer
+缺 port、降回舊 mode、改 reference 或補 issue 均拒絕，不能繞過撤銷。
+
+Coordinator 持有精確 session inode 的 exclusive flock；FD 使用 CLOEXEC，
+stage spawn 的 close_fds=True 不傳鎖。Child 重新開啟並核對同 inode／原 bytes，
+probe 必須因衝突而失敗且立即關閉；取得鎖時拒絕，不能接任 holder。這是
+既有可信 host／啟動鏈內的存活條件，不是 OS／PID 身分證明；same UID 與
+daemon admin 仍屬 TCB。Coordinator 結束／重啟不得恢復原 permit。
+
+Clock 由 host 的 wall／monotonic clock 取樣，不接受 caller now。期限至多
+600 秒，兩者相對 issuance 的差異超過5秒或時間倒退就拒絕效果；因此 suspend
+後可能 fail closed。單一 clock high-water mark 在原 packet lock 下更新，
+fresh consumer 不重置；read-only reconcile 不更新它。寫入中斷／損壞則拒絕，
+不補造時間。這只限制實驗 permit，不宣稱 journal service elapsed budget 合格。
+
+同一 held transaction／prefix 下重核 binding、實際 clock 與 sticky revoked
+marker，再進入效果；撤銷也取得同一 packet lock 並 fsync。忙鎖是 not-applied，
+coordinator 必須停止後續協調；不能宣稱已撤銷或繼續派 successor。撤銷成功後
+不接受新效果／publication／finish，仍允許純讀；已過 gate 的 in-flight 效果
+可能完成或 unknown。Session 關閉不等於終止 writer。
+
+歷史 runtime bytes、原時戳與 C digest 保留，confirmation 仍精確相等。實際
+inspect 的起迄 clock、permit／prefix 及原 runtime digest 另存 host observation；
+它只增加本次限制，不刷新歷史 TTL，序列化 JSON observation 不建立採納權。
+一般來源整合、官方受控登入、完整工具／N1–N4／provider 資格仍未完成。
+
 ## 原生 v6 兩次執行候選
 
 `model_packet_native.py` 的 closed `NativeLifecycle` 使用獨立 `admit-native`
@@ -33,6 +68,23 @@ capture、import、實際 image reply 與新 mode，零 attempts／containers。
 執行實測前仍須完整前置深入審查；證據存 Git 排除的私有目錄。一般 source
 authority／唯一 integrator、受控官方訂閱登入、可信 revocation、完整工具及
 context／實際品質升級／跨來源資格，仍是獨立未完成依賴。
+
+同入口的 `--executor-loss` 另限定「監督端健康、原生 writer 已確認停止、C
+持久化後且 owner 尚未釋放」：producer 實際退出 86 並保留原 owner／journal，
+監督端核對 wait PID／exit／完整 stderr EOF；fresh consumer 重讀原 C、owner
+與實體 runtime，再記錄單一 service failure，透過既有 lifecycle 釋放 owner
+及取得 generation 2。從 C 建立不同隔離副本、完成 C2；舊 generation export
+及預先封存的新遲到 publish 必須拒絕且零新增效果。這不證明仍存活 writer 的
+接手、coordinator 自身恢復、任意失聯位置或真實跨 provider。
+
+2026-10-06 這條匿名路徑實測通過；原第一輪逾時的 unknown 另行保留。
+Verifier 的 producer／consumer 等待上限為 140／220 秒，held session 為
+400 秒，仍受既有 600 秒硬上限約束；這些是實驗預算，不是 model service
+elapsed 資格。期限、撤銷、原始 capture 與 runtime 身分檢查不因逾時放寬。
+重建時用新私有、非 repository-controlled evidence root、同一核對過的
+native binary／image 與所選本機 engine；先跑 `--preflight-only`，完成適用
+前置審查後，再以 `--opt-in --executor-loss` 跑一次。比較契約結果及完整原始
+紀錄，不要求新 nonce／CID／checkpoint／時間與舊證據逐 byte 相同。
 
 這條匿名 E2E 已以兩個 fresh host processes 實測，保留原 C 與 immutable refs，
 successor 產生 C2。Runtime 名稱綁 protected packet instance；archive lease 限制

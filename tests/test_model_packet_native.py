@@ -100,12 +100,12 @@ class FixedReader(ProofReader):
 
 class Harness:
     """Fixed synthetic host authority; optionally uses actual opt-in Docker."""
-    def __init__(self, root, engine, capsule, ref):
+    def __init__(self, root, engine, capsule, ref, *, control=None):
         self.root=pathlib.Path(root)
-        for name in ('packets','reader'): (self.root/name).mkdir(mode=0o700)
+        for name in ('packets','reader'): (self.root/name).mkdir(mode=0o700, exist_ok=True)
         self.store=packets.PacketStore(self.root/'packets','packet-native-v6'); self.store.prepare('a'*64)
         self.backend=flow.NativeBackend(self.store,endpoint='unix:///fixed.sock',image_id=native.IMAGE,
-            capture_root=capsule,capture_ref=ref,opt_in=True,_engine=engine)
+            capture_root=capsule,capture_ref=ref,opt_in=True,_engine=engine,control=control)
         p=self.planning()
         self.request=dict(schema_version=1, objective=dict(repository=str(self.root),task_id='T1',
             scope='fixed-native-two-attempt',acceptance_sha256=packets.digest(flow.FINAL_PATCH),authority_id='authority'),
@@ -125,12 +125,12 @@ class Harness:
             backend_id=self.backend.backend_id,policy_sha256=self.backend.policy_sha256)
 
     @classmethod
-    def reopen(cls, root, engine, capsule, ref, state):
+    def reopen(cls, root, engine, capsule, ref, state, *, control=None):
         """Only the opt-in anonymous verifier uses this fixed saved-reader factory."""
         value=object.__new__(cls);value.root=pathlib.Path(root)
         value.store=packets.PacketStore(value.root/'packets','packet-native-v6')
         value.backend=flow.NativeBackend(value.store,endpoint='unix:///fixed.sock',image_id=native.IMAGE,
-            capture_root=capsule,capture_ref=ref,opt_in=True,_engine=engine)
+            capture_root=capsule,capture_ref=ref,opt_in=True,_engine=engine,control=control)
         value.request=copy.deepcopy(state['request']);value.execution=state['execution'].encode()
         value.reader=FixedReader(value.root/'reader',value.store,value.backend,value.request)
         value.host=value.controller();value.current()
@@ -211,11 +211,11 @@ class Harness:
         rev=self.save('publish'+suffix,'publish',dict(patch_sha256=packets.digest(patch),checkpoint_sha256=packets.digest(manifest)),runtime=True)
         return self.host.publish('publish'+suffix,expected_revision=rev,now=110)
 
-    def failure(self):
-        # Fixed final-postimage acceptance fails on the first actual 'new' image.
+    def failure(self, *, kind='quality', cause='capability', defect_id='fixed-final-postimage'):
+        # The fixed reader records one independently selected outcome per attempt.
         payload=dict(attempt_id=self.request['attempt_id'],task_id='T1',scope=self.request['objective']['scope'],
             acceptance_sha256=self.request['objective']['acceptance_sha256'],target_id='internal',observed_at=110,
-            kind='quality',cause='capability',defect_id='fixed-final-postimage',correction=False,
+            kind=kind,cause=cause,defect_id=defect_id,correction=False,
             source_sha256=self.request['source_sha256'],transition=None)
         rev=self.save('outcome','outcome',payload)
         return self.host.record('outcome','outcome',expected_revision=rev,now=110)
@@ -254,6 +254,48 @@ class NativeLifecycleTests(unittest.TestCase):
         with self.h.store.locked() as fd:
             with self.assertRaises(packets.PacketError):self.h.store._read(fd)
             with self.assertRaises(packets.PacketError):self.h.store._immutable(fd,'bypass',b'{}')
+
+    def test_executor_loss_cannot_release_a_writer_that_is_no_longer_confirmed_stopped(self):
+        h=self.h;h.acquire();h.chain();h.launch();h.observe();ledger,_=h.publish()
+        checkpoint=ledger['checkpoint']
+        with h.store.locked() as fd:
+            with h.host._lease(fd,ledger['attempts'][-1]) as lease:
+                cid=lease.descriptor()[1]['physical_descriptor']['container_id']
+        value=self.engine.inspect(cid)
+        value['State'].update(Status='running',Running=True,Pid=42,FinishedAt='0001-01-01T00:00:00Z')
+        self.engine._write(cid,value)
+        starts=sum(call[:2]==('container','start') for call in self.engine.calls)
+        with self.assertRaises(packets.PacketError):
+            h.observe('lost');h.failure(kind='service',cause='retriable-service',defect_id='executor-loss-after-checkpoint')
+            h.finish('lost',result='failed');h.acquire('2');h.chain('2');h.launch('2')
+        self.assertEqual(sum(call[:2]==('container','start') for call in self.engine.calls),starts)
+        ledger,state=h.current();self.assertEqual(ledger['checkpoint'],checkpoint)
+        self.assertIsNotNone(state['owner']);self.assertEqual(ledger['generation'],1)
+
+    def test_published_checkpoint_survives_executor_loss_and_rejects_late_generation(self):
+        h=self.h;h.acquire();h.chain();h.launch();h.observe();ledger,state=h.publish()
+        checkpoint=ledger['checkpoint'];self.assertIsNotNone(state['owner'])
+        with h.store.locked() as fd:
+            original=ledger['governance']['records'][-1]
+            raw=packets.trust._read(fd,'lifecycle-'+original['record_sha256']+'.json',packets.MAX_LEDGER)
+        late_rev=h.save('late-publish','publish',json.loads(raw)['payload'],runtime=True)
+        saved=dict(request=h.request,execution=h.execution.decode())
+        h=Harness.reopen(h.root,self.engine,h.backend.drivers['checkpoint'].capture_root,{},saved)
+        h.observe('lost');h.failure(kind='service',cause='retriable-service',defect_id='executor-loss-after-checkpoint')
+        ledger,state=h.finish('lost',result='failed')
+        self.assertEqual(ledger['checkpoint'],checkpoint);self.assertIsNone(state['owner'])
+        h.acquire('2');h.chain('2');ledger,_=h.current();calls=len(self.engine.calls)
+        with h.store.locked() as fd:
+            with self.assertRaisesRegex(lifecycle.LifecycleError,'native-lease-owner-or-phase-drift'):
+                with h.host._lease(fd,ledger['attempts'][0],action='export'):pass
+        self.assertEqual(len(self.engine.calls),calls)
+        h.launch('2');h.observe('2');h.publish('2');ledger,state=h.finish('2')
+        calls=len(self.engine.calls)
+        with self.assertRaisesRegex(lifecycle.LifecycleError,'lifecycle-revision-conflict'):
+            h.host.publish('late-publish',expected_revision=late_rev,now=110)
+        self.assertEqual(h.current()[0],ledger);self.assertEqual(len(self.engine.calls),calls)
+        self.assertTrue(state['terminal']);self.assertEqual(state['events'][0]['kind'],'service')
+        self.assertNotEqual(ledger['checkpoint'],checkpoint)
 
     def test_unleased_lookup_and_artifact_write_have_zero_transport_effects(self):
         h=self.h;h.acquire();h.chain();count=len(self.engine.calls)

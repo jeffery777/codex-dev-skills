@@ -1,22 +1,29 @@
 # Issue #316 本機角色模型映射工程計畫
 
-## 當前優先順序：原生接入與分層收斂
+## 當前優先順序：最小受管失聯恢復與分層收斂
 
 依[三層設計與 DoD](../design/native-model-integration-layers.md)，A 原生基本接入、
 B 既有選模／返工決策及 C 執行中接手分別驗收；保留原 C 目標及全部證據。
-先完成 standalone CLI 的有限 A 工具循環，再採用既有 B 決策；不以 C 全工具／
+先完成 C 的一條最小恢復路徑，再逐步擴充；A/B 仍可獨立驗收，不以 C 全工具／
 全部 runtime 資格作為 A/B 前置。B advisory 不是自動 dispatch，沒有合格
 executor 仍明示未完成。CLI、bundled CLI、Desktop 與 per-model context 分開。
 
 目前 PR 仍累積 A/B/C 及效率工程，draft REVIEW_REQUIRED；宣稱整份 PR ready
 前須對最新完整 head 審查。有限 A/B 可以獨立評估交付／發行，但尚未取得其
 完整驗收及 gate；原自動接手 DoD 未完成。以下 C 工程段落保留其既有需求與
-歷史結果，不再代表當前先做下一個恢復元件的指令。
+歷史結果。未來 dots 無人值守仍需要本 Issue 的可靠恢復與安全接手；不擴大
+到完整 dots 排程、loop、graphic engineering 或 memory 系統。
 
-本輪只完成責任／相依收斂、共用規範／技能／模板同步與 HC-02 證據檔名
-碰撞修正；新 host-control 尚未實體驗收，不新增 C probe／矩陣或登入權限。
+本輪最小 DoD：監督端健康、執行器在可信 C 持久化後且未釋放 owner 時失聯，
+以原 journal、C、實際 writer 狀態重新接續；新隔離副本安全完成 C→C2，拒收
+舊 generation 的新成果且零工具／journal 副作用。沿用既有 verifier 及 lifecycle，
+不新增 C 框架／矩陣或登入權限。先核對契約與環境，局部測試及獨立前置
+安全審查後才實測；工程包穩定後做適用 scan。一般 authority、監督端失聯、
+真實跨 provider 仍未完成，不把此切片包裝成完整自動接手。工具直接使用者是
+本地 agent；dots 只派工／協調並由 Desktop 建立任務，其入口資格不列本地
+DoD 或 blocker。未來實際 runtime／權限／授權／工具差異才做整合驗證。
 
-## 下一個最小 host 控制接點工程包
+## 最小 host 控制接點工程包與當前驗收
 
 解除的 blocker：原生 v6 現有實體 readback 仍以歷史 committed_at 表示時間，
 且 fixed reader 不提供真實撤銷來源。先加入 host-owned clock／observation／
@@ -38,6 +45,24 @@ SDS。不新增局部 Docker probe。原失敗／unknown／sealed evidence 保�
 此包不完成 journal 的實際 service elapsed budget、一般 authority reader、
 來源整合、登入／provider-client containment、N1–N4 或真實模型資格；原完整
 DoD／release BLOCKED，draft REVIEW_REQUIRED，production registry 保持空。
+
+2026-10-06 已完成上述有限失聯切片與 host-control 接線實測：producer exit 86／
+完整 wait/EOF、原 C 與 immutable refs 保留、實體 runtime 重新確認、不同副本
+generation 2 完成 C2，舊 generation 新效果拒絕且零副作用。首輪 consumer
+等待逾時的 packet 仍保留 unknown；診斷後只調整匿名 verifier 的 stage／session
+有界預算，兩項局部契約及比例獨立重審後，一次 fresh fixture 在 263.35 秒通過。
+原受影響模組的 25 項測試及未漂移的十二檔審查重用，不因進入正式 gate 而
+全套重跑。正式 Security Diff Scan／pre-commit gate 是保存此 draft head 的
+前置；整份 PR 仍 REVIEW_REQUIRED，一般 authority、實際服務時鐘、
+真實跨 provider／登入及選定 runtime／工具邊界仍未資格。
+
+下一最小工程包：先解除固定 `FixedReader` 的真實 task/source admission 缺口，
+以一個具名本地任務的 host-owned admission/source readback 薄接點重用原
+native lifecycle、host control 與完整 gates，不新增協調／排程框架。必要驗證
+是 consumer 契約、原 scope／acceptance／source／授權與秘密排除、撤銷／
+漂移／偽造 input／資格不足的拒絕；沒有真實 authority 或合格目標仍不得派工。
+其他本地 C 缺口依[具體盤點](../design/native-model-integration-layers.md#本地-c-尚缺能力與下一工程包)
+逐包完成，不以未驗證 dots 或新增固定故障矩陣代替。
 
 ## 本輪最小原生 v6 接手工程包
 

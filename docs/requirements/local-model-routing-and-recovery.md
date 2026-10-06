@@ -1,0 +1,31 @@
+# 本地模型接入、升級與安全接手需求
+
+來源：[Issue #316](https://github.com/jeffery777/codex-dev-skills/issues/316)。
+本需求保留同案原自動切換與[工程流程效率 DoD](engineering-workflow-efficiency.md)。
+
+## 責任與範圍
+
+責任鏈是 dots 持續派工／協調 → Codex Desktop 建立本地對話／任務 →
+本地 agent 使用技能與工具 → 受管執行器工作。工具直接使用者是本地 agent。
+本專案提供本地可靠執行能力，不實作 dots 工具入口、排程或協調系統。
+人工或 dots 發起都適用相同本地 DoD；未來派工若實際改變 runtime、權限、
+授權或工具可用性，才驗證該差異，不預建 dots 矩陣或列為本地完成 blocker。
+
+## 分層 DoD
+
+- A：原生 provider／模型接入、工具 continuation、串流及逐模型 context；
+  以選定 runtime／模型／scope 驗收，不以設定、help 或 API 可達代替能力。
+- B：重用角色 classifier、qualification 與服務／品質返工決策；保留 floors、
+  findings／lineage、服務預算及明確目的地授權。Advisory 與實際 dispatch 分開。
+- C：在選定本地 runtime／任務／工具邊界，受管執行器失聯後能無人值守、
+  安全自動接手：可信進度與 checkpoint、有效 writer 控制、單一 owner／generation、
+  失效及遲到成果拒收、未知效果不重播，從新隔離副本安全續作及受控成果採認。
+  不承諾任意 detached 程序全部停止；舊環境確實失去影響新副本／受保護成果的
+  能力才可繼續，缺證則保持 blocked。
+
+各層可有限交付，全部 C 資格不套用到 A/B。未驗證 runtime／工具明確限制或
+停用，選定邊界必要的隔離、秘密排除、獨立審查與最新 head gate 不得降低。
+官方端沿用原生 ChatGPT 訂閱，不新增付費 API、不複製登入憑證；保留原
+context 策略。匿名 fixture 成功不取得一般來源或 production 資格。
+
+具體缺口及下一工程包見[三層設計](../design/native-model-integration-layers.md#本地-c-尚缺能力與下一工程包)。

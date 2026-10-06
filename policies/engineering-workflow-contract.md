@@ -81,6 +81,9 @@
    不要求未使用的恢復系統全部資格；缺相依仍阻擋真正 dispatch／接手。
    新 supervisor、broker、observer、container 或 integrator 必須解除具體的
    原生能力缺口，不以設定／help 成功、advisory 或 fixture 取得執行資格。
+   工具直接使用者與上游派工者分開；本地 agent 的完成 DoD 不預加外部排程
+   入口資格。上游若實際改變 runtime、權限、授權或工具可用性，再驗證差異；
+   本地受管執行器失聯後的安全接手責任仍須完成。
 
 ## Adapter Boundaries
 

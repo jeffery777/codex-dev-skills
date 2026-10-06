@@ -10,6 +10,7 @@
 - DoD / remaining dependencies:
 - Native responsibility / existing workflow reused / specific missing capability:
 - Independent delivery layer and runtime/scope; advanced dependencies only when used:
+- 直接工具使用者／上游派工者；實際 runtime／權限／授權／工具差異才補驗證：
 
 ## Ownership
 

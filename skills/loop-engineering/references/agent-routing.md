@@ -17,6 +17,8 @@ changes permissions, scope, human gates, or completion criteria.
 classifier／preflight／qualification 候選。決策、確定靜止邊界上的 dispatch
 與執行中 writer 接手分開驗收；advisory 不宣稱切換，advanced containment
 缺口不一律阻擋不依賴它的基本接入或決策。適用共用工程契約的分層 DoD，
+工具直接使用者是本地 agent；不預加上游派工者的入口資格，實際 runtime／
+權限／授權／工具差異才補整合證據，本地安全接手仍須完成。
 不另建選模腦、retry loop 或恢復框架來完成普通 routing。
 
 First-review triage maps actual CI admission, installer and cross-module

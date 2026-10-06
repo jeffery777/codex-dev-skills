@@ -14,6 +14,7 @@ import agent_qualification as trust
 import model_container_backend as containers
 import model_control_archive as archive
 import model_native_checkpoint_backend as native
+import model_native_host_control as host_control
 import model_packet_bootstrap as bootstrap
 import model_packet_governance as governance
 import model_packet_lifecycle as lifecycle
@@ -49,6 +50,12 @@ class _Lease:
         if not self.active or self.fence._store is not self.backend.store:
             raise lifecycle.LifecycleError('native-lease-expired')
         fd, current = self.fence._snapshot()
+        if self.backend.control is None:
+            # This fd/prefix was just verified. Check the persistent no-downgrade
+            # marker without replaying the same complete ledger a second time.
+            self.backend._reject_control_downgrade(fd)
+        else:
+            self.backend._check_host_control(self.fence, self.action)
         if (current['schema_version'] != 6 or not current['attempts']
                 or current['governance']['records'][0]['kind'] != 'admit-native'
                 or packets.canonical(current) != packets.canonical(self.ledger)):
@@ -284,10 +291,20 @@ class NativeBackend:
     synthetic_only = True
     requires_runtime_descriptor = requires_runtime_bootstrap = True
 
-    def __init__(self, store, *, endpoint, image_id, capture_root, capture_ref, opt_in=False, _engine=None):
+    def __init__(self, store, *, endpoint, image_id, capture_root, capture_ref, opt_in=False,
+                 _engine=None, control=None):
         if type(store) is not packets.PacketStore or opt_in is not True:
             raise lifecycle.LifecycleError('native-host-opt-in-required')
         self.store = store
+        if control is not None and type(control) is not host_control.NativeHostControl:
+            raise lifecycle.LifecycleError('native-exact-host-control-required')
+        self.control = control
+        with store.locked() as fd:
+            try: trust._read(fd, host_control.BINDING_FILE, host_control.MAX_BYTES)
+            except FileNotFoundError:
+                if control is not None: raise lifecycle.LifecycleError('native-host-control-binding-missing')
+            else:
+                if control is None: raise lifecycle.LifecycleError('native-host-control-required')
         self.drivers = {case:_Physical(store, endpoint=endpoint, image_id=image_id, capture_root=capture_root,
             capture_ref=capture_ref, native_case=case, opt_in=True, _engine=_engine)
             for case in ('checkpoint','successor-checkpoint')}
@@ -301,8 +318,26 @@ class NativeBackend:
             packet=store.packet_id, inode=self._inode)))
 
     def mode(self):
+        result = self._base_mode()
+        if self.control is not None:
+            result['protocol_sha256'] = packets.digest(packets.canonical(dict(
+                protocol=PROTOCOL_SHA, host_control_sha256=self.control.reference_sha256)))
+        return result
+
+    def _base_mode(self):
         return dict(protocol_sha256=PROTOCOL_SHA, recipe_sha256=RECIPE_SHA,
             runtime_policy_sha256=self.policy_sha256, backend_instance_sha256=self.instance_sha256)
+
+    def _check_host_control(self, fence, action, *, persist=False):
+        if self.control is not None:
+            return self.control.check(fence, self._base_mode(), action, persist=persist)
+        fd, _ = fence._snapshot()
+        self._reject_control_downgrade(fd)
+
+    def _reject_control_downgrade(self, fd):
+        try: trust._read(fd, host_control.BINDING_FILE, host_control.MAX_BYTES)
+        except FileNotFoundError: return
+        raise lifecycle.LifecycleError('native-host-control-required')
 
     @contextmanager
     def _transaction(self, fence, attempt_id, action):
@@ -520,9 +555,11 @@ class NativeLifecycle(preparation.SyntheticPreparedLifecycle):
                 raise lifecycle.LifecycleError('native-independent-confirmation-drift')
 
     def _effect_gate(self, fd, ledger, state, request, now, kind, **kwargs):
+        self.backend._check_host_control(self._fence(fd), kind)
         # Avoid Prepared's unleased assert_instance; the physical lease rechecks
         # packet inode, capsule, daemon, image and complete descriptor policy.
         lifecycle.SyntheticLifecycle._effect_gate(self, fd, ledger, state, request, now, kind, **kwargs)
+        self.backend._check_host_control(self._fence(fd), kind, persist=True)
         if kind in {'export-intent','publish','finish'}:
             attempt = ledger['attempts'][-1]
             actual = self._inspect_runtime(fd, ledger, attempt)
@@ -544,7 +581,10 @@ class NativeLifecycle(preparation.SyntheticPreparedLifecycle):
         request = governance._parse(trust._read(fd, 'lifecycle-'+attempt['request_sha256']+'.json', governance.MAX_EVIDENCE))
         kind = {'prepare':'prepare-intent','bootstrap':'bootstrap-intent','launch':'launch-intent','export':'export-intent'}[action]
         self._effect_gate(fd, ledger, state, request, now, kind, historical_caps=caps)
-        with self._lease(fd, attempt, action) as lease: callback(lease)
+        with self._lease(fd, attempt, action) as lease:
+            self.backend._check_host_control(lease.fence, action, persist=True)
+            callback(lease)
+            self.backend._check_host_control(lease.fence, action)
 
     def preparation_evidence(self, *, now):
         return self._evidence_readback(now, 'preparation_evidence')
@@ -604,11 +644,18 @@ class NativeLifecycle(preparation.SyntheticPreparedLifecycle):
         return value
 
     def _inspect_runtime(self, fd, ledger, attempt):
-        # Stable original commit time makes independent confirmation byte-exact;
-        # callers still validate freshness against their current operation time.
+        # Canonical historical bytes stay byte-exact. Live host time is a separate
+        # restriction/sample; it must not extend the historical evidence TTL.
         now = ledger['governance']['records'][-1]['committed_at']
         with self._lease(fd, attempt) as lease:
-            return self.backend.inspect(lease, now, ledger['governance']['policy']['freshness_seconds'])
+            inspect = lambda:self.backend.inspect(lease, now, ledger['governance']['policy']['freshness_seconds'])
+            if self.backend.control is None: return inspect()
+            return self.backend.control.observe(lease.fence, self.backend._base_mode(), inspect)
+
+    def _current(self, ledger, now, kind):
+        fd = self.store._planning_lease[1]
+        self.backend._check_host_control(self._fence(fd), kind)
+        return super()._current(ledger, now, kind)
 
     def runtime_evidence(self, *, now):
         with self.store.locked() as fd:

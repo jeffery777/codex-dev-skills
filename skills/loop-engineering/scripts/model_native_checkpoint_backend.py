@@ -30,7 +30,7 @@ SOURCE_FILES = (
         'model_packet_integrator', 'model_container_backend', 'model_container_launcher',
         'model_control_archive', 'model_packet_governance', 'agent_routing', 'model_failover',
         'profile_preflight', 'local_model_mapping', 'model_packet_lifecycle',
-        'model_packet_preparation', 'model_packet_bootstrap', 'model_packet_native')),
+        'model_packet_preparation', 'model_packet_bootstrap', 'model_packet_native', 'model_native_host_control')),
     'scripts/verify-model-app-server.py', 'scripts/verify-model-tool-boundary.py',
     'scripts/model_probe_tools.py',
     'skills/loop-engineering/scripts/model_app_server_transport.py',

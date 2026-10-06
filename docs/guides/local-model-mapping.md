@@ -9,6 +9,10 @@ Issue #316 增加預設停用、供應商中立的 V2 `agent-route` opt-in。未
 原生 provider／工具 loop；既有決策可獨立驗證，advisory 不代表實際切換。
 C 的進階資格缺口不一律阻擋 A/B 有限 scope 交付；目前整份 PR 尚未 ready。
 
+技能與工具的直接使用者是本地 agent；上游人工或 dots 派工不改本地完成
+契約。本地 C 仍須完成受管執行器失聯後的安全自動接手，dots 入口資格不列
+為 blocker；只有上游造成實際 runtime／權限／授權／工具差異時另驗該差異。
+
 ## 兩個獨立控制面
 
 對話主模型由 Codex 公開設定與入口選擇控制。CLI 可用 `--model`、user-level
