@@ -32,6 +32,10 @@ HERE = pathlib.Path(__file__).resolve().parent
 LOOP_SCRIPTS = HERE.parents[1] / "loop-engineering" / "scripts"
 sys.path.insert(0, str(LOOP_SCRIPTS))
 import context_continuity  # noqa: E402
+import model_packet_store  # noqa: E402
+import model_task_ingress  # noqa: E402
+sys.path.insert(0, str(HERE))
+import model_execution_target  # noqa: E402
 
 
 ADAPTER_VERSION = "0.3.0"
@@ -70,6 +74,7 @@ ALLOWED_REQUEST_FIELDS = {
     "prompt_boundary_version",
     "authorization",
     "continuity_assessment",
+    "target_ref",
 }
 ALLOWED_AUTHORIZATION_FIELDS = {
     "marker",
@@ -176,6 +181,7 @@ class ValidatedRequest:
     checkpoint_sha256: str | None
     repository_id: str | None
     destination_writer: str | None
+    execution_target: model_execution_target.Binding | None = None
 
 
 @dataclass
@@ -1054,9 +1060,11 @@ def _validate_continuity_assessment(
 
 
 def _probe_version(
-    executable: pathlib.Path, *, on_started: Callable[[], None] | None = None
+    executable: pathlib.Path, *, on_started: Callable[[], None] | None = None, protected_target: bool = False
 ) -> str:
     environment = _environment_without_git_targeting()
+    if protected_target:
+        environment = model_execution_target.probe_environment(environment)
     environment["NO_COLOR"] = "1"
     environment.pop("OLDPWD", None)
     creationflags = 0
@@ -1180,6 +1188,26 @@ def _probe_version(
     return match.group(1)
 
 
+def _typed_project_config_boundary(workspace: pathlib.Path) -> None:
+    """Stat only: inherited project provider config is not yet qualified."""
+    directory = workspace/".codex"
+    try:
+        observed = directory.lstat()
+    except FileNotFoundError:
+        return
+    except OSError:
+        raise HandoffValidationError("execution_target_rejected", "target-project-config-unknown") from None
+    if not stat.S_ISDIR(observed.st_mode):
+        raise HandoffValidationError("execution_target_rejected", "target-project-config-unknown")
+    try:
+        (directory/"config.toml").lstat()
+    except FileNotFoundError:
+        return
+    except OSError:
+        raise HandoffValidationError("execution_target_rejected", "target-project-config-unknown") from None
+    raise HandoffValidationError("execution_target_rejected", "target-project-config-unqualified")
+
+
 def validate_request(
     request: dict[str, Any], *, on_version_probe_started: Callable[[], None] | None = None
 ) -> ValidatedRequest:
@@ -1216,7 +1244,11 @@ def validate_request(
         raise HandoffValidationError(
             "validation_error", "operation must be start, resume, fork, or fresh-continuation."
         )
+    if "target_ref" in request and operation != "start":
+        raise HandoffValidationError("validation_error", "Typed execution targets require start.")
     workspace = _canonical_workspace(request.get("workspace"))
+    if "target_ref" in request:
+        _typed_project_config_boundary(workspace)
     observed_head, workspace_label = _workspace_identity(
         workspace, request.get("expected_head")
     )
@@ -1269,7 +1301,27 @@ def validate_request(
     ) + "\n\n" + PROMPT_BOUNDARY_APPENDIX
     session_id = _validate_session_id(operation, request.get("session_id"))
     executable_sha256 = _sha256_file(executable)
-    cli_version = _probe_version(executable, on_started=on_version_probe_started)
+    if "target_ref" in request:
+        try:
+            model_execution_target.preprobe(request["target_ref"], prompt=prompt,
+                expected_head=observed_head, executable_sha256=executable_sha256, sandbox=sandbox)
+        except model_execution_target.TargetError as exc:
+            raise HandoffValidationError("execution_target_rejected", exc.reason) from None
+        cli_version = _probe_version(executable, on_started=on_version_probe_started, protected_target=True)
+    else:
+        cli_version = _probe_version(executable, on_started=on_version_probe_started)
+    execution_target = None
+    if "target_ref" in request:
+        try:
+            execution_target = model_execution_target.resolve(request["target_ref"],
+                prompt=prompt, expected_head=observed_head, executable_sha256=executable_sha256,
+                cli_version=cli_version, sandbox=sandbox)
+            # Existing redaction patterns also reject target-bound prompts that
+            # carry explicit credentials; a summary cannot override this check.
+            if any(pattern.search(prompt) for pattern in SENSITIVE_PATTERNS):
+                raise model_execution_target.TargetError("target-prompt-contains-secret")
+        except model_execution_target.TargetError as exc:
+            raise HandoffValidationError("execution_target_rejected", exc.reason) from None
     return ValidatedRequest(
         operation=operation,
         executable=executable,
@@ -1286,6 +1338,7 @@ def validate_request(
         checkpoint_sha256=checkpoint_digest,
         repository_id=repository_id,
         destination_writer=destination_writer,
+        execution_target=execution_target,
     )
 
 
@@ -1293,6 +1346,7 @@ def build_argv(
     request: ValidatedRequest,
     *,
     execution_workspace: pathlib.Path | None = None,
+    target_catalog_path: pathlib.Path | None = None,
 ) -> list[str]:
     workspace = execution_workspace or request.workspace
     prefix = [
@@ -1309,6 +1363,11 @@ def build_argv(
         str(workspace),
         "exec",
     ]
+    if request.execution_target is not None:
+        # Generated only from the protected typed binding, never raw flags.
+        if request.operation != "start":
+            raise HandoffValidationError("validation_error", "Typed execution targets require start.")
+        return [*prefix, "--ignore-user-config", *model_execution_target.config_argv(request.execution_target, catalog_path=target_catalog_path), "--json", "-"]
     if request.operation in {"start", "fresh-continuation"}:
         return [*prefix, "--ignore-user-config", "--json", "-"]
     assert request.session_id is not None
@@ -1876,6 +1935,17 @@ def _prepare_isolated_workspace(
 ) -> tuple[pathlib.Path, pathlib.Path]:
     git = _native_git(request.workspace)
     workspace = root / "workspace"
+    if request.execution_target is not None:
+        # Cross-provider packets expose only the approved HEAD tree. A full
+        # clone also exposes unrelated refs/tags/history outside that binding.
+        _run_isolated_git(git, ["init", "--quiet", "--template=", str(workspace)],
+                          message="A private HEAD snapshot could not be initialized.")
+        _run_isolated_git(git, ["-C", str(workspace), "fetch", "--quiet", "--depth=1",
+            "--no-tags", "--no-write-fetch-head", "--", str(request.workspace), request.expected_head],
+            message="The approved HEAD snapshot could not be fetched.")
+        _run_isolated_git(git, ["-C", str(workspace), "checkout", "--quiet", "--detach", request.expected_head],
+                          message="The private HEAD snapshot could not be checked out.")
+        return git, workspace
     _run_isolated_git(
         git,
         [
@@ -1980,6 +2050,23 @@ def _capture_isolated_patch(
     return patch
 
 
+def _verify_current_execution_target(request: ValidatedRequest) -> None:
+    previous = request.execution_target
+    if previous is None:
+        return
+    try:
+        fresh = model_execution_target.resolve(previous.reference(), prompt=request.prompt,
+            expected_head=request.expected_head, executable_sha256=request.executable_sha256,
+            cli_version=request.cli_version, sandbox=request.sandbox)
+        if fresh != previous:
+            raise model_execution_target.TargetError('target-final-binding-drift')
+        final = time.time()
+        if not fresh.valid_from <= final < fresh.valid_until:
+            raise model_execution_target.TargetError('target-expired-during-readback')
+    except model_execution_target.TargetError as exc:
+        raise HandoffValidationError('execution_target_rejected', exc.reason) from None
+
+
 def _apply_isolated_patch(
     request: ValidatedRequest,
     git: pathlib.Path,
@@ -2008,6 +2095,7 @@ def _apply_isolated_patch(
         failure_class="integration_error",
         message="Child changes did not apply cleanly to the authorized workspace.",
     )
+    _verify_current_execution_target(request)
     _run_isolated_git(
         git,
         [*common, "-"],
@@ -2023,6 +2111,7 @@ def _run_child(
     execution_workspace: pathlib.Path,
     *,
     on_started: Callable[[], None],
+    before_launch: Callable[[], None] | None = None,
 ) -> tuple[int, bytes, str | None]:
     observed_head, _ = _workspace_identity(
         request.workspace, request.expected_head
@@ -2035,8 +2124,24 @@ def _run_child(
         raise HandoffValidationError(
             "executable_changed", "Codex executable changed before launch."
         )
-    argv = build_argv(request, execution_workspace=execution_workspace)
+    if request.execution_target is not None:
+        _typed_project_config_boundary(request.workspace)
+        _typed_project_config_boundary(execution_workspace)
+    target_catalog_path = None
     child_env = _environment_without_git_targeting()
+    if request.execution_target is not None:
+        try:
+            previous = request.execution_target
+            fresh = model_execution_target.resolve(previous.reference(), prompt=request.prompt,
+                expected_head=request.expected_head, executable_sha256=request.executable_sha256,
+                cli_version=request.cli_version, sandbox=request.sandbox)
+            if fresh != previous:
+                raise model_execution_target.TargetError("target-launch-binding-drift")
+            child_env = model_execution_target.child_environment(fresh, child_env)
+            target_catalog_path = model_execution_target.snapshot_catalog(fresh, execution_workspace.parent)
+        except model_execution_target.TargetError as exc:
+            raise HandoffValidationError("execution_target_rejected", exc.reason) from None
+    argv = build_argv(request, execution_workspace=execution_workspace, target_catalog_path=target_catalog_path)
     child_env[HANDOFF_DEPTH_ENV] = "1"
     child_env["NO_COLOR"] = "1"
     child_env["PWD"] = str(execution_workspace)
@@ -2045,6 +2150,8 @@ def _run_child(
     start_new_session = os.name == "posix"
     if os.name == "nt":
         creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    if before_launch is not None:
+        before_launch()
     try:
         process = subprocess.Popen(
             argv,
@@ -2408,6 +2515,126 @@ def _claim_rollover(request: ValidatedRequest) -> bool:
     return True
 
 
+PACKET_STOP_ADAPTERS: dict[str, Any] = {}
+
+
+def execute_packet_attempt(request, packet, attempt_id, expected_revision, *, stop_adapter_id=None, source_input=None):
+    """Trusted coordinator entry: retain private changes, never integrate source.
+
+    A crash or unproven cleanup retains the claim and workspace. This primitive
+    cannot qualify a provider, recover an unknown OS process or approve a patch.
+    """
+    # Sampling a process tree cannot prove absence of detached descendants.
+    # Production dispatch remains unavailable until a trusted host adapter has
+    # independently qualified complete writer containment and stop readback.
+    # No request/JSON can install an adapter or assert its own quiescence.
+    stop_adapter = PACKET_STOP_ADAPTERS.get(stop_adapter_id)
+    if stop_adapter is None:
+        raise HandoffValidationError('capability_unavailable', 'Qualified packet writer containment is unavailable.')
+    if type(source_input) is not model_task_ingress.TaskSourceInput:
+        raise HandoffValidationError('execution_target_rejected', 'Original task/source input is required.')
+    validated = validate_request(request)
+    if validated.operation != 'start' or validated.execution_target is None:
+        raise HandoffValidationError('execution_target_rejected', 'A typed start target is required.')
+    target = validated.execution_target
+    if (not callable(getattr(stop_adapter, 'supports_target', None))
+            or stop_adapter.supports_target(target) is not True):
+        raise HandoffValidationError('capability_unavailable', 'Containment adapter does not support this protected target.')
+    ledger, predecessor_patch = packet.read_checkpoint()
+    if ledger['identity_sha256'] != source_input.packet_identity(_canonical_repository_id(validated.workspace)):
+        raise HandoffValidationError('execution_target_rejected', 'Packet original task/source binding differs.')
+
+    def verify_current_input_and_target():
+        source_input.verify(request, target, validated)
+        try:
+            fresh = model_execution_target.resolve(target.reference(), prompt=validated.prompt,
+                expected_head=validated.expected_head, executable_sha256=validated.executable_sha256,
+                cli_version=validated.cli_version, sandbox=validated.sandbox)
+            if fresh != target:
+                raise model_execution_target.TargetError('target-launch-binding-drift')
+        except model_execution_target.TargetError as exc:
+            raise HandoffValidationError('execution_target_rejected', exc.reason) from None
+        source_input.verify_launch_window(fresh)
+
+    try:
+        verify_current_input_and_target()
+    except (OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError):
+        raise HandoffValidationError('execution_target_rejected', 'Original task/source input changed.') from None
+    claim = packet.claim(attempt_id, model_packet_store.digest(model_packet_store.canonical(request)),
+                         target.identity_sha256, expected_revision=expected_revision)
+    receipt = _base_receipt(request, status='stopped')
+    receipt['capability'].update(version_probe_performed=True, cli_version=validated.cli_version,
+                                 executable_sha256=validated.executable_sha256)
+    receipt['target'].update(workspace=validated.workspace_label, observed_head=validated.expected_head)
+    receipt['boundaries']['durable_replay_record_written'] = claim['claimed']
+    receipt['boundaries']['child_summary_omitted'] = True
+    receipt['execution_target'] = {'id': target.target_id, 'binding_sha256': target.binding_sha256,
+        'identity_sha256': target.identity_sha256, 'execution_state': 'not-started', 'provider_readback': 'unknown'}
+    receipt['packet'] = {'attempt_id': attempt_id, 'revision': claim['ledger']['revision'],
+                         'status': claim['attempt']['status'], 'replayed': not claim['claimed']}
+    if not claim['claimed']:
+        # Existing claim is not evidence that its session was never launched.
+        receipt['status'] = 'unknown'
+        receipt['boundaries']['session_call_performed'] = None
+        receipt['failure_class'] = 'existing_packet_attempt'
+        return receipt
+    if claim['attempt']['predecessor_sha256'] != ledger['checkpoint'] or target.checkpoint_sha256 != ledger['checkpoint']:
+        packet.retain_unknown(attempt_id)
+        raise HandoffValidationError('execution_target_rejected', 'The target is not bound to the packet checkpoint.')
+
+    def started():
+        receipt['boundaries']['session_call_performed'] = True
+        receipt['execution_target']['execution_state'] = 'started'
+
+    quiescent = False
+    try:
+        holder = packet.create_attempt_directory(attempt_id)
+        git, workspace = _prepare_isolated_workspace(validated, holder)
+        receipt['boundaries']['child_workspace_isolated'] = True
+        if predecessor_patch:
+            _run_isolated_git(git, ['-C', str(workspace), 'apply', '--binary', '--check', '-'],
+                              input_bytes=predecessor_patch, message='The predecessor checkpoint could not be validated.')
+            _run_isolated_git(git, ['-C', str(workspace), 'apply', '--binary', '-'],
+                              input_bytes=predecessor_patch, message='The predecessor checkpoint could not be restored.')
+        before_patch = _capture_isolated_patch(git, workspace, validated.expected_head)
+        verify_current_input_and_target()
+        try:
+            code, raw, _ = _run_child(validated, workspace, on_started=started,
+                before_launch=verify_current_input_and_target)
+            quiescent = True
+            receipt['result']['exit_status'] = code
+            if code != 0:
+                receipt.update(status='failed', failure_class='nonzero_exit')
+            else:
+                session_id, terminal, _ = _parse_jsonl(raw, validated)
+                receipt['result'].update(session_id=session_id, terminal_event=terminal)
+                receipt.update(status='completed', failure_class=None)
+        except HandoffValidationError as exc:
+            # These errors are raised only after tracker and I/O cleanup passed.
+            quiescent = exc.failure_class in {'timeout', 'interrupted', 'output_limit'} or quiescent
+            receipt.update(status='failed', failure_class=exc.failure_class)
+        if not quiescent:
+            raise HandoffValidationError('termination_error', 'Packet writer stop could not be established.')
+        if stop_adapter.verify_stopped(validated, workspace) is not True:
+            raise HandoffValidationError('termination_error', 'Complete packet writer stop could not be established.')
+        if _run_git(git, workspace, 'rev-parse', 'HEAD').lower() != validated.expected_head:
+            raise HandoffValidationError('child_boundary_violation', 'The packet changed its Git HEAD.')
+        patch = _capture_isolated_patch(git, workspace, validated.expected_head)
+        if validated.sandbox == 'read-only' and patch != before_patch:
+            raise HandoffValidationError('child_boundary_violation', 'A read-only packet changed repository files.')
+        evidence = model_packet_store.digest(model_packet_store.canonical(receipt))
+        verify_current_input_and_target()
+        final = packet.publish_checkpoint(attempt_id, patch, evidence)
+        receipt['packet'].update(status='checkpointed', revision=final['revision'], checkpoint_sha256=final['checkpoint'])
+        receipt['execution_target']['execution_state'] = 'completed' if receipt['status'] == 'completed' else 'stopped'
+        return receipt
+    except (OSError, ValueError, RuntimeError, TypeError, KeyError, subprocess.SubprocessError):
+        packet.retain_unknown(attempt_id)
+        receipt.update(status='unknown', failure_class='packet-reconciliation-required')
+        receipt['packet']['status'] = 'unknown'
+        return receipt
+
+
 def execute_handoff(request: dict[str, Any]) -> dict[str, Any]:
     receipt = _base_receipt(request, status="stopped")
 
@@ -2456,6 +2683,11 @@ def execute_handoff(request: dict[str, Any]) -> dict[str, Any]:
         }
     )
 
+    if validated.execution_target is not None:
+        target = validated.execution_target
+        receipt["execution_target"] = {"id": target.target_id, "binding_sha256": target.binding_sha256,
+            "identity_sha256": target.identity_sha256, "execution_state": "not-started", "provider_readback": "unknown"}
+
     try:
         replay_record = _claim_rollover(validated)
     except HandoffValidationError as exc:
@@ -2465,6 +2697,8 @@ def execute_handoff(request: dict[str, Any]) -> dict[str, Any]:
 
     def mark_session_started() -> None:
         receipt["boundaries"]["session_call_performed"] = True
+        if validated.execution_target is not None:
+            receipt["execution_target"]["execution_state"] = "started"
 
     try:
         patch = b""
@@ -2505,6 +2739,7 @@ def execute_handoff(request: dict[str, Any]) -> dict[str, Any]:
                 patch = _capture_isolated_patch(
                     git, execution_workspace, validated.expected_head
                 )
+        _verify_current_execution_target(validated)
         if validated.sandbox == "workspace-write":
             assert git is not None
             receipt["boundaries"][
@@ -2529,6 +2764,8 @@ def execute_handoff(request: dict[str, Any]) -> dict[str, Any]:
         )
         return receipt
 
+    if validated.execution_target is not None:
+        receipt["execution_target"]["execution_state"] = "completed"
     receipt.update({"status": "completed", "failure_class": None, "message": None})
     receipt["result"].update(
         {

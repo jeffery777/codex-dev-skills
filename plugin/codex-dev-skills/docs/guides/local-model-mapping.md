@@ -19,7 +19,7 @@ JSON schema 與合成測試不證明摘要真實、使用者授權或 runtime �
 仍只作用於已選 provider；這個 advisory plan 不會連接 `agent-route`、CLI
 或 Desktop 的實際模型執行。真正跨目標接手、持久 lineage／冷卻、內容與
 外部寫入讀回、CLI／Desktop 混合模型工具循環及獨立 runtime 資格，留待
-[後續交付](https://github.com/jeffery777/codex-dev-skills/blob/main/docs/plans/issue-316-local-model-mapping.md)分別完成。不能把官方 API
+[後續 Issue #323](https://github.com/jeffery777/codex-dev-skills/issues/323)分別完成。不能把官方 API
 upstream 當成 Codex ChatGPT 訂閱路徑，也不能由連線成功推定模型品質。
 
 ## 兩個獨立控制面

@@ -1,0 +1,1787 @@
+# 隔離模型執行與可信接手
+
+原 Issue #316 的 N1–N4 設計候選保留為歷史；目前僅由
+[Issue #323](https://github.com/jeffery777/codex-dev-skills/issues/323) 追蹤
+受限 C 情境。此文件定義待實作及待資格化的邊界，
+不代表 runtime adapter 已啟用；production 清冊仍須維持空，直到完整驗收。
+
+## 原生實驗的 host 控制限制接點
+
+`model_native_host_control.py` 由已授權、captured-source 的可信匿名 coordinator
+發出單一 packet 的 experimental permit。它不是 provider／source authority 或
+qualification reader；purpose 固定、qualification false，原 synthetic grants
+與空 production registry 不改。Hash、PID、0700 或 ordinary JSON 本身不授權。
+
+Permit 綁完整 captured host 身分、packet root／inode／identity、canonical
+objective、base mode／policy、隨機 session 及有界期限。原 packet 的 immutable
+binding 與 admission protocol digest 包含 control reference；fresh consumer
+缺 port、降回舊 mode、改 reference 或補 issue 均拒絕，不能繞過撤銷。
+
+Coordinator 持有精確 session inode 的 exclusive flock；FD 使用 CLOEXEC，
+stage spawn 的 close_fds=True 不傳鎖。Child 重新開啟並核對同 inode／原 bytes，
+probe 必須因衝突而失敗且立即關閉；取得鎖時拒絕，不能接任 holder。這是
+既有可信 host／啟動鏈內的存活條件，不是 OS／PID 身分證明；same UID 與
+daemon admin 仍屬 TCB。Coordinator 結束／重啟不得恢復原 permit。
+
+Clock 由 host 的 wall／monotonic clock 取樣，不接受 caller now。期限至多
+600 秒，兩者相對 issuance 的差異超過5秒或時間倒退就拒絕效果；因此 suspend
+後可能 fail closed。單一 clock high-water mark 在原 packet lock 下更新，
+fresh consumer 不重置；read-only reconcile 不更新它。寫入中斷／損壞則拒絕，
+不補造時間。這只限制實驗 permit，不宣稱 journal service elapsed budget 合格。
+
+同一 held transaction／prefix 下重核 binding、實際 clock 與 sticky revoked
+marker，再進入效果；撤銷也取得同一 packet lock 並 fsync。忙鎖是 not-applied，
+coordinator 必須停止後續協調；不能宣稱已撤銷或繼續派 successor。撤銷成功後
+不接受新效果／publication／finish，仍允許純讀；已過 gate 的 in-flight 效果
+可能完成或 unknown。Session 關閉不等於終止 writer。
+
+歷史 runtime bytes、原時戳與 C digest 保留，confirmation 仍精確相等。實際
+inspect 的起迄 clock、permit／prefix 及原 runtime digest 另存 host observation；
+它只增加本次限制，不刷新歷史 TTL，序列化 JSON observation 不建立採納權。
+一般來源整合、官方受控登入、完整工具／N1–N4／provider 資格仍未完成。
+
+## 原生 v6 兩次執行候選
+
+`model_packet_native.py` 的 closed `NativeLifecycle` 使用獨立 `admit-native`
+mode／domain 與既有 v6 選模、返工、ownership journal。它沒有 production
+loader，不接受 saved R1／B1／R2 的 authority，也不把 v6 記錄投影成 v4。
+同 transaction 的 private lease 綁實際 held fd／lock／ledger bytes、原始
+execution／request、attempt／generation、允許 action 及物理 descriptor。
+候選 confirmation 只能比對，未提交的候選 ledger 不能發出 lease。
+
+實體 backend 保留固定 Docker policy、root claim／completion、原 CID、Created、
+volume 與 workspace inode 採認。原始 plan 的 logical control／32 位 nonce
+與實體 control／64 位 nonce 有明確保存的對應；不忽略其中任一套原 bytes。
+新 runtime domain 採實際完成鏈，可以先觀察到 stopped，不造 saved running
+genesis。舊 controller 的 exact backend type／mode 拒絕及空 production registry
+保持；constructor 僅執行固定本機 daemon／image 的唯讀 preflight。
+
+最小實驗是 producer 寫入 `new` 並封存 C，固定 final `done` 驗收形成匿名
+fixture quality finding，再釋放 owner；actual wait／EOF 後由 fresh host consumer
+在新副本還原 C、執行原生 `new → done`、封存 C2。同一 journal 保留原 failure、
+budget／floor／ownership；相同 patch 亦不能沿用原 checkpoint ID。此 quality
+finding 與 reader 的授權／qualification grants 是明確合成輸入，不證明真實
+模型品質或可用性。所有 production／native／runtime／adapter／isolation／startup
+與 N1–N4 資格保持 false，完整 DoD、readiness 與 release 未完成。
+
+`scripts/verify-model-native-governance.py` 是 repository-only 的明確 opt-in
+入口，使用 captured repository test fixtures；`--preflight-only` 先核對 source
+capture、import、實際 image reply 與新 mode，零 attempts／containers。兩次
+執行實測前仍須完整前置深入審查；證據存 Git 排除的私有目錄。一般 source
+authority／唯一 integrator、受控官方訂閱登入、可信 revocation、完整工具及
+context／實際品質升級／跨來源資格，仍是獨立未完成依賴。
+
+同入口的 `--executor-loss` 另限定「監督端健康、原生 writer 已確認停止、C
+持久化後且 owner 尚未釋放」：producer 在寫入交接 sidecar 前實際退出 86，
+保留原 owner／journal；監督端核對 wait PID／exit／完整 stderr EOF。fresh
+consumer 從既有 ledger 與不可變 request／execution 重建最小接手資料，重讀原 C、owner
+與實體 runtime，再記錄單一 service failure，透過既有 lifecycle 釋放 owner
+及取得 generation 2。從 C 建立不同隔離副本、完成 C2；舊 generation export
+必須拒絕且零新增效果；遲到 publish 拒收仍由既有局部測試驗證，這次實體
+路徑沒有產生預先封存的 late-publish。這不證明仍存活 writer 的
+接手、coordinator 自身恢復、任意失聯位置或真實跨 provider。
+
+2026-10-06 這條匿名路徑實測通過；原第一輪逾時的 unknown 另行保留。
+新增的 checkpoint→handoff 空窗路徑亦在同日以新私有 fixture 通過：沒有
+`handoff.json`，原 C 與不可變來源維持一致，後繼端取得 generation 2；
+原先失聯點與其封存證據仍保留，不能用新結果改寫舊 attempt。
+Verifier 的 producer／consumer 等待上限為 140／220 秒，held session 為
+400 秒，仍受既有 600 秒硬上限約束；這些是實驗預算，不是 model service
+elapsed 資格。期限、撤銷、原始 capture 與 runtime 身分檢查不因逾時放寬。
+重建時用新私有、非 repository-controlled evidence root、同一核對過的
+native binary／image 與所選本機 engine；先跑 `--preflight-only`，完成適用
+前置審查後，再以 `--opt-in --executor-loss` 跑一次。比較契約結果及完整原始
+紀錄，不要求新 nonce／CID／checkpoint／時間與舊證據逐 byte 相同。
+
+這條匿名 E2E 已以兩個 fresh host processes 實測，保留原 C 與 immutable refs，
+successor 產生 C2。Runtime 名稱綁 protected packet instance；archive lease 限制
+完整 argv、同 CID、固定 control 路徑及 stdout 目的地，bootstrap 另核對原 input。
+私有 transport intent／原始 reply／unknown 紀錄僅供獨立查證，不建立 authority。
+固定時鐘不證明真實 freshness／elapsed budget；單一 quality event 也不證明
+非零升級 floor、真實模型返工品質或跨來源切換。重跑會產生新的 nonce／CID／
+checkpoint 與證據綁定，應比較契約結果，不能追認原 receipt。
+
+## Journal admission 前置介面（既有 v4 consumer）
+
+原 native backend 的實體隔離／root claim／completion／walk／seal 可重用，
+其原始 journal admission 使用 v4；v6 saved R2 lifecycle 不能直接採認它。
+`model_container_backend.py` 將 `_admitted_runtime_descriptor` 與
+`_admitted_bootstrap_digest` 分成私有接點，現有 v4 consumer 先核對原 store、
+immutable descriptor、bootstrap phase／receipt 及 supervisor fence，再讀回實體
+CID／root completion。回傳資料不是資格或 authority；原實體 policy 不變。
+
+v6 port 須從同一 objective journal 取得原始 bytes，綁定有效 transaction
+lease、attempt／generation、intent 與 prefix；不能投影假的 v4 ledger、匯入舊
+v4 authority 或把實體 runtime 當成 saved R2 observation。現有 `_save`／`_read`
+是另一個 immutable artifact 接點，v6 實作須保有自己的 phase／transaction fence。
+Native lifecycle 須使用獨立 mode／domain 與真正的 physical descriptor、bootstrap
+及 runtime proof。上方 closed native mode 已採用這些契約；前置介面重構本身
+不提供通用 source authority、登入隔離或任何 production／N1–N4 資格。
+
+## 控制面與寫入面
+
+可信監督器持有 packet ledger、generation、已封存 checkpoint 與成果整合權。
+模型服務與官方訂閱的登入由控制面處理；模型可呼叫的寫入工具只能作用於
+當次 attempt 的隔離副本。官方訂閱入口不能改成付費 API fallback。
+
+候選 bridge 使用固定 stdio MCP 協定接收工作操作，再交給本機 Docker 或
+rootless Podman 的受限 worker。MCP 只是 transport，不提供隔離保證。
+bridge 不接受模型指定 host command、engine socket、mount、credential path、
+container flags 或動態工具清冊；shell 文字只在固定 worker 邊界內執行。
+既有 packet ledger 與 generation 契約仍是唯一接手狀態，不另建重試狀態機。
+
+Host client 的模型工具須受獨立的作業系統 enforcement 限制：來源副本僅唯讀，
+控制面、登入資料與其他 attempt 不可由模型工具讀寫。預設 deny，再逐項給予
+必要權限；不得把授權給 provider client 的登入能力同時給 worker。
+這是待驗證要求，named profile 的設定值本身不能證明成立。
+
+若無法證明上述控制面與工具隔離，bridge 只能進行無憑證的合成實驗，不能
+接入真實 provider。另一候選是 provider client 本身也放在受隔離環境，並由
+可信 credential broker 提供最小登入能力；其公開介面與訂閱支援須另行資格化。
+此設計不預設未公開的訂閱 API 或任意 credential forwarding 可用。
+
+## 公開 CLI 限制
+
+以下呼叫鏈核對固定 `openai/codex@01fc69f4026735edfdf6789820549727a4867b11`
+（0.159.3），不推定其他版本、bundled CLI 或 Desktop 同樣成立：
+
+- `shell_tool=false` 阻止 shell handler 註冊；`unified_exec=false` 單獨使用
+  不能證明所有 exec 停用。patch 的註冊另由 environment 與 model metadata
+  控制，不能靠這兩個旗標排除。
+  [工具註冊](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/spec_plan.rs#L1079-L1116)。
+- 此版本的 feature normalization 在沒有 managed requirement pin 時強制
+  啟用 `UnifiedExec`；普通 `features.unified_exec=false` 仍會讀回 `true`。
+  因此，要求所有指定 features 為 false 的嚴格驗證須保留 unknown，不靠
+  調整參數順序或修改全域 managed 設定放行。
+  [固定版本 normalization](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/config/managed_features.rs#L153-L161)。
+- `PreToolUse` 有效 deny 在 patch handler 之前執行；但 hook 的執行錯誤、
+  無效 JSON、逾時等失敗不保證阻擋工具。hook 僅作額外防護，不能承擔唯一
+  隔離邊界。必須測試 hook 失敗時 host sentinel 仍不變。
+  [失敗語意](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/hooks/src/events/pre_tool_use.rs#L193-L290)、
+  [工具呼叫順序](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/registry.rs#L603-L655)。
+- `--ignore-user-config` 不會同時設為忽略 project configuration。Host client
+  不以可寫 worker checkout 為配置探索根；啟動前核對固定 CWD、祖先配置、
+  instructions、plugins、hooks 與有效設定層，漂移時拒絕啟動。
+  [CLI overrides](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/exec/src/lib.rs#L364-L370)、
+  [project layers](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/config/src/loader/mod.rs#L337-L407)。
+
+不能只依送給模型的 tools schema 判定 handler 已移除；native metadata 未解析
+時尤其不能建立完整工具清冊。須驗證 provider 強制回傳未宣告或已停用工具時，
+runtime 仍拒絕副作用；未資格入口不能放行。
+
+Native request 的工具宣告也可能位於 `input[].type="additional_tools"` 中，並以
+namespace 包住 function／custom tools。驗證器須解析此結構與頂層 `tools`，
+不能從一般文字或 TypeScript 描述推定 handler 已登錄。Receipt 分別保留
+advertised tools、固定 forced calls 與實際 dispatch outcomes；Code Mode 或 agent
+即使仍出現在 native 宣告中，也不能因 feature flag 值而略過。公開的
+model-visible input 不是完整 runtime handler inventory；缺乏完整讀回時保留
+`handler_inventory_complete: false`，有限負向矩陣不開放 production adapter。
+
+另行明確啟用的無憑證合成觀測，可以記錄該固定版本強制啟用的
+`UnifiedExec` 及其餘指定 features 的實際狀態，再量測固定呼叫的 dispatch
+結果與檔案副作用。它不能取得原本「全部停用」契約的資格，也不證明完整
+handler inventory、Code Mode、agent 或登入資料隔離；嚴格模式不自動切入此觀測。
+
+## 公開 app-server 的受控工具候選
+
+Contributor、設定 guard 與 source/readback 差異另見
+[工具註冊與設定對帳設計](app-server-tool-inventory.md)。該清冊是固定 source 的
+工程設計，不能替代當次完整 registry 或 production qualification。
+
+另一條候選使用公開 `codex app-server --stdio`，由 host 接收固定 dynamic tool
+呼叫，再交給隔離 worker。固定 0.159.3 schema 的 `thread/start` 與 `turn/start`
+均明確傳入 `environments: []`；省略此欄位不能作為沒有執行環境的證據。
+Dynamic tools 仍是 experimental API；必須先 `initialize` 並宣告能力，再送出
+`initialized`。此候選不依賴 Desktop 私有介面。
+[公開協定與版本化 schema](https://developers.openai.com/codex/app-server)。
+
+`model_app_server_transport.py` 提供 host-only、有界 stdio primitive：限制 frame、
+總 bytes、messages、notifications、outbound bytes 及 I/O 等待；嚴格關聯 RPC ID，
+拒絕重複 JSON keys、非有限數字、未知 server request、額外工具及重播 call。
+已知 approval request 回覆 deny 後仍鎖定 unknown，不自動續行。未知結果不
+重試、重啟或推定停止；`close()` 只觀察 direct child，descendants 永遠保留
+unknown。Callback 必須是可信且有界的 host code；同步 primitive 不能中斷
+任意 Python callback。它不提供 JSON loader、sandbox 或 production adoption。
+
+公開的唯讀設定、requirements、feature 與 MCP status 方法另可用於匿名觀察。
+`model_app_server_metadata.py` 限制頁數、列數及 cursor，拒絕重複或未知結構；
+只保留固定來源類別計數、指定公開 feature 的實際 boolean 及必要狀態，不保留
+完整配置、路徑、provider secrets 或 requirements 內容。MCP 配置非空或未知時
+在 status/discovery 前停止，不能把空 overlay 當成已清除 lower layer。
+Feature 缺席不補為 false；即使列舉完成，仍不證明全部 handler 已停用。
+
+`verify-model-app-server.py` 使用獨立匿名 HOME／CODEX_HOME、本機 Responses
+fixture、唯讀 client directory 及單一固定 `packet_probe` 正控制。它驗證真正
+function／custom carrier 的十個負控制，包含 Code Mode、agent、權限請求、
+stdin 與未知 dynamic tool；使用精確拒絕文字及相同 turn 身分核對結果，亦核對
+CLI version、binary digest、thread configuration、sentinel 及 direct child exit。
+工具仍出現在 model-visible 宣告時，不能以宣告取代實際 handler 拒絕證據。
+Probe 亦停用 legacy `notify` 及 `agents.enabled`，CodeMode 使用單一
+`features.code_mode_host={enabled=false,disable_in_process_fallback=false}` override；
+不能使用不存在的頂層 `code_mode` key，或先 boolean 後 dotted key 而遺失
+`enabled=false`。上述只適用固定版本，須由有效 readback 另行查證。
+
+此 probe 不使用現有登入、自架或官方模型，也不提供 worker bridge、完整工具
+清冊、配置／resume 漂移、credential broker 或 production authority reader。
+Receipt 固定保留 `handler_inventory_complete: false`、`production_qualified: false`；
+不得將有限矩陣提升為正式隔離資格。真實訂閱接入前，仍須逐項驗證所有 host
+callback、MCP／extensions／hooks、Code Mode helper、子代理、網路與憑證入口。
+
+固定版本的 app-server 不提供 exec 的 `--ignore-user-config`／`--ignore-rules`。
+獨立 `CODEX_HOME` 只切開 user config／auth storage；system、managed／MDM、cloud、
+project 與祖先設定仍須啟動前盤點。事後 `config/read` 排除 package defaults，
+thread feature readback 又可能重新載入配置，故 receipt 保留
+`startup_isolation_qualified: false` 與 `thread_snapshot_verified: false`。
+不能將有效設定觀察提升成啟動前防線或既有 thread 快照證明。
+
+正式訂閱接入的候選是由官方登入流程直接 provision host 管理的專用
+`CODEX_HOME`，讓設定與 worker 可寫範圍分開；不複製、symlink、抽取或轉送
+既有 `auth.json`／keyring token。公開介面未提供另一個獨立 auth root，專用
+登入與管理設定盤點尚待採用者確認及資格驗證；匿名程序不需要登入。
+來源：[固定 CLI dispatch](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/cli/src/main.rs)、
+[公開設定 schema](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/config.schema.json)、
+[原生 auth storage](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/login/src/auth/storage.rs)。
+
+可重跑命令（須允許啟動本機 loopback fixture）：
+
+```bash
+./scripts/project-python -m unittest tests.test_model_app_server_transport tests.test_model_app_server_metadata tests.test_model_app_server_probe
+./scripts/project-python scripts/verify-model-app-server.py --evidence-root /private/tmp --case code_mode
+```
+
+其他固定案例由 `--help` 的 `--case` 列表選取。Evidence root 必須在 Git 外；
+每次建立獨立私有目錄，保留 raw synthetic requests 與 receipt，不覆寫舊失敗。
+重跑可重建同一組 assertions；臨時路徑、port、IDs、時間與 hash 可因輸入變化。
+
+## 準備與啟動契約
+
+1. 從核准 source／checkpoint 建立獨立副本；不以硬連結或共享 Git 可寫資料
+   複製。核對 symlink、inode aliases、路徑與機密排除，不能只比較目錄名稱。
+2. 在啟動前固定完整隔離條件及目標身分。關閉非必要 inherited FD，worker
+   environment 不包含 provider 登入或 host ambient credentials。
+3. Worker 不掛載 engine socket、控制面、其他副本或憑證；預設無網路、唯讀
+   root filesystem、最小身分與 capabilities，並有可讀回的資源及生命週期限制。
+4. Bridge 每次派工重新核對 packet、attempt、generation、target、隔離身分
+   與撤銷狀態。回覆遺失或逾時保留 `unknown`，不推定未執行、不盲目重播。
+5. 無法確認停止時，只能隔離舊 attempt 並拒收晚到結果；隔離及外部效果排除
+   讀回合格後，新副本從上一個可信 checkpoint 接手，不讀舊環境即時半成品。
+6. 封存、驗證及 review 後，由唯一整合器核對 source HEAD、scope、generation
+   與 artifact digest，才採用成果。模型恢復不搶占目前工作單元。
+
+## 最小資格矩陣
+
+| 面向 | 必測案例與通過條件 |
+| --- | --- |
+| Hook 故障 | 有效 deny、runner error、timeout、invalid JSON；host 資料皆受 OS 邊界保護 |
+| Handler | shell、exec、write_stdin、patch、Code Mode、agent、額外 MCP；禁止入口無副作用 |
+| 配置 | 祖先及巢狀 `.codex`、AGENTS、symlink、plugins、額外 hooks；有效設定及輸入無漂移 |
+| Bridge | path traversal、額外欄位、任意 mount／argv、動態工具；拒絕未知或超範圍請求 |
+| Worker | nested CLI、socket、網路、FD、hardlink、background child；無 host 或 sibling 權限 |
+| 恢復 | crash、lost reply、舊 generation、未停止 writer；不重播、不發布 stale 成果 |
+| 登入與資料 | 先用合成 canary；worker env、stdio、logs、artifacts 不含登入資料；實際訂閱與 provider 另驗 |
+
+先以合成 provider／canary 完成最小案例，再擴大到 N1–N4 正式資格。
+每次變更只重驗受影響邊界，重用內容及假設未變的證據；不逐項重跑全量。
+最終 latest head 的完整 base-to-head Merge Review 及專案 gate／CI 不省略。
+原始證據與 review 收據不進 Git，位置與重建規則見
+[原工程計畫](../plans/issue-316-local-model-mapping.md)；當前 C 交付範圍與
+驗收追蹤見 [Issue #323](https://github.com/jeffery777/codex-dev-skills/issues/323)。
+
+## N3-A 的持久監督介面
+
+`model_packet_supervisor.py` 使用由可信 host 注入的 backend，不從模型 JSON
+載入 module、command 或停止證明。Runtime 身分及 launch intent 先寫入既有
+packet ledger；launch 與 quarantine 使用同一 fence。恢復只 inspect 該身分，
+不重新 launch；export 回覆遺失時只讀回原封存 artifact，不重新 export。
+
+Unknown observation 與查證後 resolution 保存在同一 ledger，綁定 attempt、
+generation、runtime 與 revision。紀錄有界且不保存敏感診斷全文，容量滿時拒絕
+繼續發布。Candidate 讀回在同一鎖內重新核對 canonical checkpoint、sealed
+bytes 及當前 fence；空 patch 也適用相同身分、隔離及停止條件。
+
+`integration-candidate` 是受控封存成果，不代表品質審查通過或 source apply
+授權。後續 N3-B1 提供固定合成 recipe 的本機 Docker backend：先 create，將
+physical container descriptor 封存於同一 ledger，才 start exact ID。恢復不
+重新 create／start，created、missing、running 或身分漂移不視為已停止。
+Export 由可信 host 受限走訪 regular files，不執行 worker Git；連續 checkpoint
+保留相對原 source 的完整成果。Host-only isolation adapter 僅供 opt-in fixture，
+production 清冊及一般 dispatcher 的預設維持空。
+
+共享 daemon 的首次 `StartedAt` 讀回不能證明原始那次 execution；手動 restart
+也不能只靠 `RestartCount` 偵測。缺乏可信原始執行身分或單次執行控制時，保留
+physical-container／隔離觀察與 unknown，不以首次時間觀察發布 candidate。
+單次執行 qualifier 須有獨立驗證，不能由新 flag 或自填證明開放。
+
+這一階段尚未提供任意模型工作、唯一來源整合器、daemon／Desktop restart、
+credential broker 或 provider 資格；固定 container recipe 的實測不能替代它們。
+
+## N3-C 單次執行候選設計
+
+以下是固定合成候選實作的設計，仍待完整資格化。可信 root launcher 在每個 attempt 的獨立
+持久 volume 建立 root-only claim，再降權啟動 worker。Claim 使用固定 dirfd、
+`O_CREAT|O_EXCL|O_NOFOLLOW|O_CLOEXEC`，完成檔案及目錄 fsync 後才允許
+worker 動作。已有 claim、部分寫入、fsync 失敗或回覆遺失均不能刪除後重試。
+這只能保證 worker body 至多執行一次，不保證一定執行或一定完成。
+
+Claim 與 completion 分別封存，綁定 packet／attempt／generation、source、scope、
+acceptance、launcher、image、policy、volume 及 physical descriptor。手動 restart
+必須在 worker body 前拒絕，不採用首次 `StartedAt` 作為原始 execution 身分。
+此邊界不防護具有 Docker 管理權限的惡意 host 修改 volume 或 root exec；可信
+host 的權限與控制介面仍須排除於模型可用工具之外。
+
+Physical descriptor 先封存，再由 host 建立含其 digest／CID 的固定 input。
+Input digest 另記於同 ledger 的 bootstrap receipt，不能回寫 descriptor 形成
+循環。對從未啟動的 exact container，先持久化 bootstrap intent，核對空的
+root-owned control volume，寫入固定 input 並讀回完整 bytes／metadata，再
+持久化 input-ready／start-intent，最後重查 generation 與隔離身分才啟動。
+`docker cp` 不是 exclusive create；此準備階段依賴同 packet lock、單一 host
+writer、尚未啟動的 worker 與可信 daemon。任一階段結果不明只允許查讀，不
+補送 cp 或 start。Launcher 自讀 input 中的 CID 不構成獨立證明，必須由 host
+封存 descriptor、input 讀回及 receipt 鏈共同驗證。
+
+Worker 的 supplementary groups、real／effective／saved UID/GID 與 capabilities
+均須清除，關閉控制 FD，設 `no-new-privileges`。清除 capability bounding set
+需要 launcher 暫時持有 `CAP_SETPCAP`，不能只加入 `CAP_SETUID`／`CAP_SETGID`
+便宣稱完整降權。Launcher 只使用固定 image、絕對程式路徑、isolated Python、
+argv、environment 與工作目錄；不載入 worker workspace 的 module 或設定。
+
+Volume 必須有唯一 attempt 身分、固定 local driver、空 options 與 `volume-nocopy`；
+恢復時缺失或被替換不能重建。停止後讀回 completion 只允許 exact container 的
+固定路徑，輸出以有界單一 regular-file tar parser 解析，不解壓縮到 host，拒絕
+link、額外 entries、路徑逸出、重複 JSON keys 與截斷內容。
+
+Launcher 等待直接 child 不等於背景程序已停止。Candidate 仍須有完整 container
+停止、隔離、外部效果排除及 generation fence；缺 completion、duplicate-start
+拒絕或任一 binding 漂移均不能發布。必要測試包含 lost reply 後首次 inspect 前
+restart、claim／fsync／fork／completion crash、worker 控制檔存取與 FD 逸出、
+child／grandchild 降權、volume／image／policy 漂移，以及 detached child 未停止。
+
+`OneShotSyntheticContainerBackend` 與 `model_container_launcher.py` 提供上述固定
+recipe 候選；同一 ledger 的 supervisor schema 4 與 descriptor schema 2 保存
+bootstrap 三階段 immutable chain。恢復須讀回實際各階段 artifact、input、
+claim 與 completion；舊 schema 可讀，但不能補造新證據或升級既有 attempt。
+`model_control_archive.py` 僅解析固定 USTAR／JSON 結構，不授予 candidate 或
+整合權限。實際 launcher／隔離／停止證據仍由 backend 與 generation fence 核對。
+此候選尚不包含真實 provider、daemon restart、一般模型工具或 production adoption。
+
+## B2 唯一成果整合器的最小驗證範圍
+
+`model_packet_integrator.py` 已實作下列有限 fixture，不能直接用於使用者的工作目錄。可信 host 建立
+clean、獨占的 synthetic Git source；首包只接受有界 regular text files 的新增或
+更新，拒絕刪除、rename、binary、symlink、hardlink、submodule 與特殊檔案。
+整合權來自 host 注入的 source-writer capability，綁定固定 source、scope、
+ownership 與可撤銷授權；模型或 JSON 的 `approved: true` 不能建立此能力。
+
+整合器須讀回實際 canonical checkpoint／sealed patch、當前 generation、source
+HEAD 與完整 preimage，並驗證綁定同一成果的固定驗收及 review fixture artifacts。
+這些合成 artifacts 不代替正式 code review，也不建立 production 採用權。先在
+trusted staging 算出 expected postimage，再固定 source lock／packet fence 的
+取得順序，將 operation identity、candidate／authority digest、preimage／postimage
+與 integration intent fsync 到同一 ledger，才寫入 source。不同 packet 指向
+相同 source 時也必須共享 source-level 單一 writer；advisory lock 本身不防護
+未受管控的其他 writer，所以初始 fixture 必須排除它們。
+
+恢復只讀回原 operation，不重新 apply。確認原 writer 已無法繼續修改後，
+完整 postimage 可證明 applied；完整 preimage 加上可信未套用證據才可證明
+not-applied；其他狀態保留 unknown。多檔案寫入不是檔案系統交易，部分完成
+不能自動 rollback 或覆寫 dirty files。空 patch 也須保留相同授權與綁定收據。
+必要案例包含 authority／review 偽造、撤銷、source drift、generation 漂移、
+不同 packet 競爭、回覆遺失、中途 crash、path aliases 與未知結果不重播。
+
+整合狀態使用同一 packet ledger 的 schema4；intent、write intent 與結果保留
+原 observations。公開讀回須核對 canonical binding 的型別與 bytes、實際
+checkpoint／patch digest，以及當前 host／backend／policy，不能只核對 artifact
+自己的 digest。恢復只 inspect／read，不重播 apply。任何 integration record
+均阻擋下一次 claim，包括 applied；整合後的新來源續作契約仍須另行資格化。
+
+## 未知結果的規劃讀回
+
+`ResolvedUnknownGuard` 是 host-only advisory seam。它在同一 packet lock 內
+核對原事件、完整 ledger、隔離或 descriptor-backed 停止證據、實際封存 bytes，
+並另讀可信失敗原因。Quarantined attempt 使用 predecessor checkpoint；沒有
+predecessor 時須有獨立保存的初始 source bytes 與 canonical manifest。取得
+封存成果或確認隔離不等於已確認可重試服務錯誤或能力不足。External effects
+仍未知、缺失原因、任何 source integration record 或證據漂移均保留 blocked。
+
+判斷用 cause overlay 不修改原 events、時間、correction 與預算。HSG 回放
+schema3 dispatch artifact 時核對原 request digest 及獨立封存的 exact prior
+resolution bytes；現在的讀回不能事後補造原 dispatch 的合法性。任一已查證
+原因屬於 auth、permission、config、context 或 secret，現在與歷史回放都拒絕
+fallback。Schema2 不補造 unknown-prefix resolution。此 seam 沒有 JSON loader、
+production reader 或 dispatcher；規劃通過仍為 `dispatched: false`。
+
+
+## C1 持久治理的首包契約
+
+`model_packet_governance.py` 已實作同一 objective 的 host-only evidence／read／projection；
+已通過限定範圍的獨立深入審查；不接 public dispatcher，也不建立另一份 retry journal。Objective 綁定 canonical repository、
+原 task／scope／acceptance 及可信 authority；work unit、model 或 HEAD 不建立
+新預算，HEAD 漂移沿用既有 conflict。不同 task ID 不自動視為新 objective。
+Module 只保證單一 ledger 內的治理；跨 task aliases／packets 的 canonical
+objective 唯一性與新 objective 採認，必須由外部可信 authority reader 獨立
+保證。Production reader 尚不存在；另建 packet 不能自行取得新預算或派工權。
+
+原 outcome、resolution、V2 classification、ownership 及 health 證據均保存
+實際 immutable bytes，綁定 request／attempt／generation／policy。在同一
+PacketStore lock 內核對 prefix、CAS，先 fsync artifact 再更新 ledger pointer；
+孤兒 artifact 不採認，重複 operation ID 只在 bytes 完全一致時冪等。
+Projection 從完整證據重建；它不是新 authority，也不延長資格或授權 TTL。
+服務失敗、返工、缺陷 lineage 與 elapsed budget 沿用完整原 events；cause
+resolution 只疊加已驗證原因，不改事件、時間或計數。
+
+Capability class 保持不變；累積 required-tier floor、quality-tier floor、品質
+stage floor 與既有 forward-only stage 下限分別保留。完整有效 V2 prefix 中
+較高的 required tier 在 release、health 更新及重啟後仍是後續 acquire 的下限。
+服務 fallback 不提高品質 floor；同 tier 也不能退回已確認不足的 stage。
+單一 ledger 最多一個 active unit，綁定 owner epoch 與 attempt generation；
+跨 packet 的同 objective 排他性仍依賴上述可信 reader。
+健康恢復只更新證據，不更換 owner；結束或接手仍須停止／隔離、effects 及
+有效 authority，timeout 或 cooldown 到期不能奪取寫入權。
+
+Cooldown 綁定 exact target identity、原觸發事件、policy、開始及截止時間。
+到期只產生 recheck-required；新鮮 healthy 證據不能清零預算、降低 floor 或
+解除 active writer。時鐘倒退、未來時間、撤銷、unknown 及禁止 fallback 的
+原因均保守拒絕，較晚 health 不能遮蔽它們。
+
+治理狀態使用 ledger v5；dispatch-envelope version 另行管理。
+首包只採認既有空 schema2 packet；v5 的 top-level generation 保持 0，attempts
+保持空。Owner reservation 不代表實際 executor claim，不能拿來證明已派工。
+舊 reader／writer／supervisor 拒絕 v5，專用治理 API 才能讀回或追加；artifact
+及 ledger write 均在效果前核對，不能降版以繞過治理。
+Schema2／3 dispatch 與 proof bytes 保持唯讀，不補造治理 snapshot。Legacy
+缺證據回報 unavailable，不能視為零次失敗或建立替代 packet。所有能修改新
+ledger 的舊入口必須遵守 ownership／CAS，否則拒絕；整合後續作 blocker 保留。
+首包排除跨 packet 共享 health、反向 stage 恢復及既有非空 packet 治理遷移。
+
+
+## 交易持鎖的規劃接口
+
+`PacketStore.planning_context(fd)` 提供 host-only、交易限定的 legacy snapshot。
+Caller 必須持有該 store 的既有 lock；V2 classifier、unused／historical source
+與 resolved-unknown guards 在同一 context 規劃，不另取鎖。每次入口及完成後
+重新走完整 root／ancestor nofollow，核對有效 lock lease、仍持有的 lock FD／
+inode、當前 lock path、directory identity 與原始 ledger bytes；copy 回傳值不能
+更改 snapshot。離開交易、同 operation 的 prefix 漂移、換 store 或 path 置換
+均拒絕。Context 不是 authority，也不進 JSON、公開 CLI 或 production registry。
+
+這個前置接口仍只讀既有 v2–v4。v5 保守拒絕；v6 實際接線須有完整原始 journal
+回放與 projection 比對後的新 context。Acquire 必須在唯一一次持鎖交易內核對
+完整 history、目前權限／資格／floors／cooldown，使用原 actual execution request
+選模，再 fsync 原始 bytes 並原子提交 owner、attempt、supervisor。不能在鎖內
+呼叫會自行取鎖的 claim、reserve_runtime 或 governance append。
+
+v6 首包必須包含 acquire → once-launch → unknown reconcile → checkpoint →
+release → qualified successor，並驗證 lost reply／crash 不重播 launch 或 export。
+原治理 request 與 actual execution request 有各自 digest；歷史以明確 attempt ID
+及原 acquire prefix 關聯，不用 failure events 的 list index 代替 generation。
+正常 completed 為 objective terminal，不造 failure 或重設預算。撤銷後可信 host
+仍能記錄 containment／unknown，不能啟動新模型或採用結果。非空 v2–v5、dirty
+source、未知 external effects、缺失隔離或原始 evidence 都保留 blocked。
+
+
+## v6 完整 synthetic lifecycle 候選
+
+`model_packet_lifecycle.py` 將原治理 evidence 與實際 execution claim 接在同一
+ordered journal。Attempts、supervisors、checkpoint 均從原始 artifact 完整回放，
+核對 canonical projection bytes；任一缺檔、symlink、digest、request、prefix 或 projection
+漂移都拒絕。V6 使用獨立 code-only write token；舊 reader、writer、supervisor、
+integrator 與 v5 治理 API 不能據此取得執行能力，也不能降版繞過。
+
+`admit_new` 只接受獨立採認的空 v2 packet，保存可信 host 的初始 source bytes
+及 canonical objective locator。不同 alias 必須讀回同一 root／packet／objective／
+authority，不能另建 packet 重設預算；真實全域 authority reader 仍未資格化。
+Source dirty 或 baseline 漂移先阻擋，不 stash、reset 或 clean。
+
+`acquire_attempt` 在唯一一次持鎖交易中回放完整治理，核對目前權限、V2
+classification、服務預算、quality／required floors、health、原始 events、目前
+隔離／停止及逐模型 context，選模後一次提交 owner、實際 attempt 與 supervisor。
+治理 request 和實際 execution request 各自保存原始 bytes；後者綁定 acquire 前
+prefix、目標、前一 checkpoint、host／backend／runtime policy 及 runtime ID。
+啟動只消費這份已封存的 execution bytes。
+
+Launch／export 先提交 intent，再做至多一次 backend 呼叫。Intent commit 或回覆
+遺失後，重試與重啟僅讀回原 operation；reconcile 只 inspect，不重新 launch 或
+export。停機證據與失敗原因各自核對；原 unknown event 保留，resolve 只提供經
+驗證的 cause overlay。未排除 external effects 不釋放 owner，也不採用成果。
+Stopped runtime 的 sealed patch 與 checkpoint 先 fsync 再發佈 pointer；隔離仍活著
+的 writer 只可 quarantine，保留前一 checkpoint 或已保存的初始 source，不能
+採用它持續變動的最新成果。新 acquire 重新確認全部 retained writers 的停止／
+隔離仍有效。
+
+Acquire 通過不延長來源、權限或隔離的有效期限。Launch／export 的 backend 效果前，
+以及 publish／finish 提交前，重新核對來源 baseline／dirty／scope／acceptance、
+完整 prefix 的 sticky revocation 及全部 retained writers 的新鮮停止／隔離證據。
+隔離失效或 effects 未排除時保留 owner，禁止新效果與成果採用；snapshot／
+containment observation 仍可讀回。Export intent 已提交但未取得封存成果時，
+可透過獨立 isolated observation 與原 failure outcome 丟棄本輪成果、quarantine
+並沿用 predecessor；不重播 export，也不補造 checkpoint。
+
+`finish_attempt` 將 release 與實際 attempt 結果一起提交。Failed 結果必須有原始
+outcome；正常 completed 是此 objective 的 terminal，不偽造 failure、不清除
+lineage／floor／budget，也不表示 repository DoD、review、merge 或 release 已完成。
+Revoked 模型權限仍允許有效 host recording authority 做 snapshot／containment
+observation，禁止新啟動、export、採用與 release。Health 恢復不能搶占 owner。
+
+此包僅接受 host 注入的 synthetic reader／backend，descriptor 與 bootstrap 關閉；
+沒有 CLI／JSON loader、production registry、Docker／app-server worker 接線或 OS
+隔離資格。Execution schema 1 要求來源資格新鮮；後述 schema 2 接線僅提供
+V6 未使用來源的 TTL 例外，legacy unused／historical tier 例外仍保守阻擋，
+不能由此宣稱來源不可達時的完整官方 fallback 或自架來源最佳模型品質驗收完成。真實 reader、
+provider、credential broker、原工具 inventory 與跨入口 qualification 仍需後續接線。
+
+
+## v6 未使用來源的交易契約（合成接線）
+
+這個擴充處理 source slot 0 從未 actual acquired、其能力資格僅 TTL 過期，且
+availability 仍為新鮮 unavailable 的情況。它涵蓋第一次 official acquire 與
+同 official stage 的後續 retry；不是只要求整個 packet 的 generation 為 0。
+原始 source ID／identity 固定於 admission 與各份 execution；任何原 acquire
+以相同 ID 或 identity 使用來源，即使未 launch、沒有 outcome 或已 quarantine，
+都不能採用這個例外。缺少原 execution、owner 仍存在或 isolation 未確認均拒絕。
+這個來源錨定限制只用於 schema 2 的例外邊界；schema 1 不新增 admission target
+等於 planning source 0 的要求，也不因此拒讀既有合法 journal。
+
+沿用 V2 classifier／selector；legacy unused guard 不變。新私有 V6 guard 僅
+接受 forward replay 產生的不可變 prefix capability，綁定真正 store、交易 lease
+及 full-ledger fence。它只表示特定 source 尚未 acquired，不替換實際 ledger
+snapshot，不可由 JSON、structural token 或 validated=true 建立。每份原 execution
+按其 acquire 前的 owner／完整 journal 事實回放，不以 failure index 代替 generation。
+Legacy／V6 unused guards 同時提供時拒絕。
+
+Execution schema 2 內保存一份 canonical UTF-8 原 proof；schema 1 不接受新增
+欄位。Proof 有獨立 V6 domain，綁 packet／objective／policy、pre-acquire prefix、
+operation／attempt／runtime、治理 request、原 planning／effective decision、source
+identity／qualification／availability、destination、authorization 及 secret check。
+Execution core digest 排除 proof 欄位，避免自我雜湊；外層 authority 再綁含 proof
+的完整 execution bytes。Proof 與整份 execution 均有大小限制及嚴格型別。
+
+每次新 claim 都由獨立 host reader 讀回自己的新原始 proof，與 execution 內
+bytes 完全相等；第一次 proof 不授權第二次 acquire。Historical replay 只讀原
+archive、按原時間驗證，不查今天的 proof、不遞迴 full replay、不再次取鎖。
+新效果仍使用目前的 destination 資格／availability／executor／context 與 authority
+讀回，綁實際 execution request、當前 prefix 及原 task；source proof 不延長
+目的地資格，也不以單一 qualified boolean 取代完整 context budget 檢查。
+目前來源 qualification 的 observed_at 必須不晚於 now；TTL 豁免不能接受未來證據。
+
+例外僅略過 source 的 qualification TTL。Revocation、identity／scope／class／tier、
+authority 漂移仍阻擋；source 成為 destination 或沒有 candidate 時不使用例外。
+Destination 的授權、訂閱 billing、公開 executor 及完整 input／output／reasoning／
+margin／client context 限制仍須新鮮通過。Official retry、service count／elapsed、
+quality lineage／floors、predecessor 與 retained-writer gate 保留；耗盡照原政策停止，
+不藉此重設預算。此契約不處理 historical-tier exception 或 production qualification。
+
+
+## v6 歷史能力需求的交易契約（合成接線）
+
+Execution schema 3 擴充前述 schema 1／2：只對已 actual acquired、且不再作為
+本次 destination 的來源，使用當時同一 objective／class 的最高原能力需求。
+來源曾被 admission、events 或 health 提及不構成使用證據；未 launch、被 quarantine
+或沒有 outcome 不會抹除 actual acquire。Owner 未釋放、completed terminal 或
+品質返工尚未達門檻時仍拒絕接手。提高分類 tier 本身不改變 stage。
+
+Forward replay 在原始 acquire 驗證通過後，保存六份原始 evidence bytes 與完整
+ordered acquire references；私有不可變 capability 以真實 store、lease、full-ledger
+fence 及 acquire 前 prefix 綁定這份歷史。逐來源核對原 request、V2 classification、
+identity、stage、原時間下完整 destination qualification 與 authority，包含目前
+已符合新 tier、不需要例外的所有原 acquired targets；使用同來源
+所有原 acquire 的最高需求，不能選較早較低的一輪。Aggregate 原 acquire bytes
+上限為 8 MiB；proof 上限 16 KiB，execution 維持 256 KiB 上限。缺檔或漂移拒絕，
+今天的 callback 不能補造原證據；回放不遞迴 full replay 或再次取鎖。
+
+Schema 3 的 `historical_source_bytes` 保存 canonical 原 proof；domain 為
+`v6-historical-source/1`。Proof 綁定原 acquire manifest、來源需求與 qualification、
+本次 classification、planning／effective decision、完整 prefix、operation／attempt／
+runtime、execution core、destination、authorization 及 secret exclusion。
+只有 own proof 欄位不納入 core digest；authority 仍綁含 proof 的完整 execution。
+每次新 claim 都要求 `readback_v6_historical_sources` 獨立讀回相同 canonical bytes，
+完整 coverage、新鮮 granted／qualified 證據；前一輪 proof 不授權 successor。
+未被 selector 消費的 proof 拒絕。Schema 3 不與 unused／legacy guard 混合；
+舊 schema 1／2 與 legacy selector 契約保留。
+
+Source exception 僅調整能力 tier 比較，不豁免 freshness／future time、revocation、
+identity、scope、class、authorization 或 secret check。Schema 3 不延用 schema 2
+source slot 0 的 TTL 例外。Destination 一律符合目前完整分類需求、公開 executor、
+訂閱 billing 與 input／output／reasoning／margin／client context 限制；live context
+reservation 不可縮小原估算。Claim、launch／export 前後、publish／finish 的目前
+qualification gate 只接受 replay 產生且綁 exact execution 的私有 typed capability，
+不接受 JSON 的 old-tier map。服務 attempt／elapsed、quality／required floors、
+未知 cause overlay、predecessor、retained writer containment 與 recovered model
+不得 preempt 的規則維持不變。
+
+此接線仍限 synthetic host／backend，沒有 production registry、真實 credential
+broker、provider／Docker writer 或使用者 source integrator。測試可重建固定案例
+與 assertions；安全分析／獨立 review 結論另由原生收據保存，不能宣稱可逐 byte 重建。
+自架模型實際能力與 context、CLI／Desktop／bundled／Linux 入口及訂閱登入安排
+仍需各自驗收。
+
+## R1 執行準備模式（合成接線）
+
+`SyntheticPreparedLifecycle` 是 host 明確建構的獨立模式，首筆 immutable
+`admit-prepared` 綁固定 protocol／recipe／runtime policy／saved backend instance。
+同一 v6 journal 的 structural validator 依首筆選擇閉集合；flat host 拒絕 prepared
+模式，prepared host 拒絕 flat 模式，沒有既有工作包遷移、JSON backend registry
+或 v4 capability flags 包裝。只有已驗證的 admission entry 副本正規化為治理
+`admit`／空 payload；保存的 record、ref、digest 與六類 evidence artifacts 不變。
+
+R1 順序限定為 `admit-prepared → acquire → prepare-intent → prepared`。
+Acquire 仍只是 owner／generation reservation，不建立資源。Host 先產生 canonical
+plan，將 operation／prefix、actual execution／request／runtime binding、固定 mode、
+nonce／logical control、source／objective／scope／acceptance／predecessor 保存到
+原 authenticated record 的 payload；每段 artifact 上限 16 KiB。Intent 必須先
+durable commit 並讀回，再通過同一 full-ledger fence 與目前完整 source／destination／
+authority／context gate，才至多一次呼叫固定 saved backend 的 `prepare`。
+Physical instance descriptor 只能在建立資源後，依實際保存的檔案獨立讀回。
+
+Saved backend instance identity 綁 private root inode 與持久 nonce；重新建構同一
+host instance 可核對，其他實例、寬鬆權限、symlink／hardlink artifact 拒絕。
+每次效果及 readback 都在持有的同一 backend directory FD 驗證原 inode／identity，
+並在效果後核對 path 與 identity；原 bytes 被複製到替換目錄也不被接收。
+Descriptor 綁原 plan／runtime／mode／control／nonce 與實際 fixture instance。
+`prepared` 再獨立讀回 descriptor 及新鮮 observation 的 exact bytes，核對所有
+binding 後保存。Observation 可另產生 immutable receipt 更新觀察時間，不覆寫
+原證據、不重新 prepare；callback 的回傳值本身不構成確認。
+
+已提交 operation 只以 actual immutable archives、原時間與完整 fence 回放；不
+呼叫今日的 locator／authority／evidence／destination／backend。新 operation ID
+不能重做同一 phase。提交後讀回或效果失敗、lost reply、partial／absent resource
+都保留 intent 與 owner；descriptor 只代表 `created`，不證明 stopped／isolated／
+never-started。原始 bytes 缺失或漂移不能由今日 readback 補造。
+
+共用 execution schema 1／2／3 parser 與原歷史規則保留；prepared 模式的 schema 1
+也必須通過目前完整 destination／source gate，schema 2 僅保留核可 unused TTL
+例外。R1 沒有 release／多次 acquired 歷史鏈，因此不宣稱 schema 3 的完整正向
+prepared 續作已驗收；新工作包缺 actual history 時仍拒絕。
+
+Bootstrap、launch、runtime observation、outcome、export、publish、finish、cancel
+及 successor 在 R1 全部拒絕，infra 不確定狀態不換成模型失敗或清空預算／floors。
+本包只建立 private saved fixture files，不啟動 worker／Docker／provider，也沒有
+credential broker、source integrator、OS／CLI／Desktop／bundled／Linux 或 production
+qualification；完整準備／啟動／接手鏈仍需後續接線。
+
+## B1 固定 bootstrap 模式（合成接線）
+
+`SyntheticBootstrapFixtureLifecycle` 使用獨立 `admit-bootstrap-fixture`、固定
+`synthetic-bootstrap-fixture-journal/B1` protocol 與 `saved-bootstrap-fixture/B1`
+recipe。六類 phase 為 admission、acquire、prepare-intent、prepared、
+bootstrap-intent、bootstrapped；與 flat／R1 的 admission、backend exact type
+及 protocol 閉集合互斥。不升級既有 journal，也不預先開放 inherited launch 或
+治理入口。後續完整執行模式必須使用新 mode 與新 packet，重新建立完整證據鏈；
+B1 的 descriptor／receipt 不能直接作為新 packet 的 bootstrap authority。
+
+Input 是已封存 plan＋descriptor 的純函式，保存有界 canonical raw bytes，沒有
+任意 command、path 或 recipe 入口。先在原 ordered journal 保存 authenticated
+bootstrap-intent，完整 readback 後，在同一 packet fence 下重建目前 gates／
+historical capability，再至多一次執行固定 saved backend。Backend 在同一 private
+directory FD 依序獨占保存 input、actual committed intent ref、receipt；receipt
+綁 input 與 intent ref digest，不回寫 descriptor 造成循環。這三份檔案的任一
+寫入失敗、partial 或 lost reply 均保留 intent／unknown／owner，不補送 bootstrap。
+
+獨立 observation 綁 input／intent／receipt 與新鮮度，另保存 immutable artifact。
+`bootstrapped` 必須將 backend 實際保存的四份 exact bytes 與原 journal projection
+比對；成功回傳值不構成 confirmation。新觀察可以另存，不改寫既有 artifacts；
+舊 operation 仍只按原 bytes／原時間 replay，不呼叫今日 callback 或重做效果。
+Backend inode／identity、private file metadata 與 packet full-ledger fence 均沿用
+R1 實體核對，新的 phase ID 不能重做效果。
+
+到 bootstrapped 為止是目前支援的 phase 範圍，不是治理 terminal 或任務完成。
+Attempt 保持 unknown、owner 保留；created／bootstrapped／absent 不證明 writer
+未啟動或已停止。Launch、runtime observation、model outcome、export、publish、
+finish、infra cancellation／successor 均拒絕。沒有 worker、Docker、provider、
+credential 或 source adoption 效果；完整同 journal HSG 多次 acquire 正向鏈、
+OS containment 及各 CLI／Desktop／bundled／Linux 入口仍待後續完整模式驗收。
+
+## R2 完整執行模式（saved fixture 接線）
+
+實體 backend 的非空 checkpoint／存活 quarantine／唯一整合器控制另見下方
+[N3 固定接手控制](#n3-非空-checkpoint存活舊-worker-與唯一整合器控制)。兩條模式
+不能互換 authority 或把 saved runtime proof 升成 OS 證據。
+
+`SyntheticExecutedLifecycle` 在新 packet 使用 `admit-bootstrap`、固定 R2 protocol／
+recipe／domain 與 explicit phase 閉集合；flat／R1／B1 journal 均拒絕。共用 private
+hooks 的預設行為不改舊模式；B1 仍只到 bootstrapped。R2 原六類 evidence、
+execution schema 1／2／3 與 acquire binding 原樣封存。只有新的 launch-intent
+將 supervisor binding 推導成完整鏈，另保留 acquisition binding；鏈包含原
+plan／descriptor／input／bootstrap intent／receipt 及 actual committed launch ref
+digests。沒有 descriptor 回填或任意 worker command 入口。
+
+Launch 先保存 immutable artifact，再由同一次效果獨占建立 running／excluded
+genesis。只有此 running genesis 與完整 saved chain 才構成 fixture 已啟動；
+launch artifact 單獨存在時 inspect／後續 state observation 拒絕，不補造 genesis。
+這是 saved fixture 定義，不是 OS process 或 model service 啟動證據。模型 outcome
+須已有 independently read-back、authenticated runtime observation；bootstrap／
+partial launch 的 infra 不確定狀態不改成 service／quality failure。
+
+可信 host 另保存 bounded immutable runtime events，最多 64 筆。每筆綁完整
+runtime binding、launch artifact、sequence 與 predecessor；inspection 讀取全部
+實際檔案，拒絕 gap／分叉／partial／偽造 genesis，不採 writable head。
+獨立 schema 2 runtime proof 使用 R2 domain、ordered event hashes 與最新 digest；
+observe／publish／finish 的原始 proofs 都在 journal 投影建立 monotonic frontier。
+目前及 retained-writer inspection 必須包含此完整 frontier，不能以尾端遺失後的
+舊 stopped prefix 產生新鮮 authority。Archive replay 仍只用原 bytes／原時間，
+frontier 欄位篡改會因 projection 不符拒絕。Fixture inspection 的 host clock 與
+60 秒 expiry 不代表 OS 停止租約或自架模型 freshness。
+
+Prepare／bootstrap／launch／export 都先持久化 intent，再重新檢查 source、目前
+authority／qualification／context 與真正 journal 歷史能力。在同一 packet fence
+和 backend FD／inode／identity 下執行固定檔案效果；lost reply 只 reconcile，
+新 operation 不能重做 phase。Export 只建立固定空 patch，publish／finish 在其他
+reader gates 後再獨立核對當前 runtime exact bytes；running／unknown／未排除外部
+效果不能發佈或釋放 owner。沒有原生 source 整合器接線或實際 source adoption。
+
+Stopped 且 independently sealed output 才能保存 checkpoint；failed 且 isolated 的
+fixture 僅 quarantine 並沿用 predecessor。既有治理 event／safe finish／下一次
+actual acquire 保持同 journal、預算、stage／tier floors 與 source identity。
+Schema 3 HSG 使用所有真實原 acquire 六類 bytes 及其最高 tier，不接受 B1／flat
+歷史匯入或手製 acquire ref；schema 2 first-official unused TTL 例外仍受目前完整
+destination／context／authority gate 約束。原模型恢復不奪取既有 owner。
+
+本模式固定建立 private fixture files／空 patch，不啟動 worker、Docker 或任何
+模型，不載入憑證、不調用 provider。OS containment、production reader／canonical
+objective uniqueness、sole-integrator 續作、完整工具與 credential 邊界、CLI／
+Desktop／bundled／Linux 及真實模型品質／context qualification 仍分開驗收；不能
+用合成完整鏈宣稱 production 或 release readiness。
+
+## N1 脫離程序及再次啟動的固定控制
+
+`verify-model-isolation.py --lifecycle` 在既有檔案／FD／socket 正反控制外，
+另使用固定 Python supervisor 留住 container PID 1。Launcher double-fork／setsid
+後退出，脫離 writer 重新由 PID 1 收養；host 讀回完整 image／command／mount／
+policy，並以 engine process inventory 核對唯一 supervisor 與其 Python child。
+Writer marker、supervisor 的 live check 與 host inventory 是不同觀察；缺任一
+控制或未完成實際嘗試不視為通過。Writer 先成功寫 private copy，再實際嘗試
+source／checkpoint／sibling 的固定 path write；每輪完成後核對 host canary。
+
+只對本 probe 新建且已讀回 exited 的 exact container ID 再次 start。第二輪
+需新的實際 StartedAt、process inventory、執行標記與完整靜態 policy readback；
+不以 RestartCount 或 PID 數字單獨證明新啟動。程序有期限並自行退出，沒有
+stop／remove、daemon restart、image pull 或使用者 repository 效果。
+
+Receipt 綁 probe／engine executable／image 及觀察到的 engine 身分，保存
+兩輪 runtime／process readback。Inspect artifacts 只保存驗證所需的白名單欄位，
+排除 `Config.Env`、labels 及不必要的 diagnostics。Writer 自己讀 private cgroup v2 的 CPU／memory／
+PID 數值，與 engine inspect 交叉核對；缺失保持 unknown。這只證明讀回數值，
+不是資源耗盡／壓力測試或完整祖先限制證明。Own-write positive 驗證相同 write
+primitive 可用，但沒有將 protected exact paths 刻意 mount 的獨立 positive。
+
+這些固定控制不能證明任意 descendant、Docker daemon／host 重啟、Codex native
+tools／config／credential 或 production 接手資格。Production registry 仍空，
+正式 N1／N2／N3／N4 仍須完整證據；實測收據與 inspect artifacts 保存在 Git 外。
+
+## 匿名原生 CLI 的容器候選
+
+N2 另採固定 image／binary 的乾淨容器執行 `codex exec`，以容器內 loopback
+合成 Responses provider 驅動 native dispatcher。Host 不掛載 source、登入資料或
+daemon socket；唯讀 executable 與該次 private scratch 分開。入口先用 `env -i`
+清除 image environment，再提供固定匿名 HOME／CODEX_HOME。這不需要真實自架模型
+或訂閱登入，也不由 host app-server 缺少全工具 deny 入口推定不可行。
+
+此路徑仍須在啟動前盤點 image 內 system／managed／project 設定；exec 的兩個
+ignore flags 不代表忽略全部 layers。Synthetic Direct model entry 可在固定完整 catalog
+中新增專用 fixture entry，保留官方 entries；不修改官方 context defaults，亦不將
+fixture 的 context 值當作自架來源容量證據。真實 target 仍須核對 input／output／total、
+reasoning 與 handoff payload 預算，不能因合成 provider 接受 request 就取得資格。
+
+Inventory 必須同時綁定 source-derived registration、有效 model／features／environment、
+MCP／extensions／dynamic contributors、每輪 structured advertisement 與實際 dispatch。
+Hidden、deferred、namespace advertisement 過濾與 Code Mode 的工具可能仍保留於
+registry；namespace 省略、空字串與 `functions` 的 canonical identity 另須對帳。
+此外 native exec 內的 `apply_patch`／`applypatch` interception 與 argv0 路徑必須列為
+可達能力，不能從獨立 patch handler 未廣告推定沒有 patch 能力。
+來源：[組裝](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/spec_plan.rs#L123-L187)、
+[dispatch](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/registry.rs#L491-L600)、
+[exec interception](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs#L378-L404)、
+[argv0](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/arg0/src/lib.rs#L97-L120)。
+
+資格矩陣逐項包含允許工具正控制、canonical／carrier 負控制、native session、巢狀
+CLI、hooks／project config 與 escalation。Container 內沒有額外 CLI sandbox 的固定
+測量僅適用該 synthetic scratch；不能弱化正式 runtime 的權限契約。Provider 與 CLI
+共用 fixture UID 的 observer 不能充當可信 production exporter。版本／help 或少量
+exec／patch 成功均不完成 N2；unknown 與未測項保留，production registry 仍空。
+
+`verify-model-container-native.py` 是 opt-in macOS Docker 的固定匿名 CLI 測量，
+只接受已存在的固定 Linux arm64 binary 與 image；不下載、登入、拉取、停止或
+刪除資源。Host 在啟動前建立固定 28-case recipe，拒絕 worker 回報的空案例、
+子集合、重排或篡改 expectations；逐筆核對 exact continuation、scratch bytes、
+精確拒絕與每輪三工具 advertisement，並核對前後 engine／policy／mount 身分。
+Context 名稱不能證明本機目標；程式先讀回並核對目前使用者的標準 Desktop
+Unix socket，以該 endpoint 固定 transport，拒絕 SSH／TCP、socket 或 engine
+身分漂移。證據根目錄僅允許 owner／mode 已核對的系統 `/private/tmp`，不接受
+共享子目錄或 symlink 祖先；每次新建的 private 目錄保留，不覆寫舊結果。
+來源 binary 以有界 regular-file descriptor 讀取，只有固定公開 SHA 符合的 bytes
+才保存至新 private 目錄的單一唯讀副本；container 掛載副本而非原輸入路徑。
+Create／start 前再核對副本身分與內容，原檔後續替換不影響本次測量；host owner、
+root 與 Docker daemon 屬可信邊界，這不宣稱能抵抗它們改寫副本。
+它涵蓋 exec／custom patch 的四種 default namespace、排除名稱、非預設 namespace、
+exec heredoc patch、明確 argv0／hidden-arg patch 及升權拒絕。這不是完整 registry
+或 startup config fence；此 CLI 使用預設 `local` environment，不能與 app-server
+候選的明確 `environments: []` 混用。Provider 與 CLI 仍共用 fixture UID。
+
+測試程式與 recipe 是 tracked 工程產物；實測 inputs／outputs、inspect、收據與
+advertisement 在 Git 外的獨立 private temporary directory。重跑產生相同 28 個
+語意 assertions，container IDs、路徑、時間及相關 hashes 可改變。使用既有固定
+官方 0.159.3 Linux arm64 executable 的絕對路徑：
+
+```bash
+./scripts/project-python -m unittest tests.test_model_container_native
+./scripts/project-python scripts/verify-model-container-native.py --binary /absolute/path/to/codex --evidence-root /private/tmp
+```
+
+此命令只適用已核對的 Mac Docker 測量 tuple；不推定 bundled CLI、Desktop、
+Linux host、其他 image／binary 或官方登入支援。完整有效 layers、nested CLI、
+hooks、sessions 與可信 observer 仍須各自驗證；既有 session 局部測量不由本
+28-case probe 取得完整資格。所有 qualification flags 維持 false。
+
+## N1 exact-path 讀寫對照
+
+`verify-model-isolation-path-controls.py` 另建固定 Mac Docker 控制：三份全新 synthetic
+canary 分別代表 source／checkpoint／sibling，全部留在經核對的 private temporary
+root；不掛載實際 repository 或使用者資料。兩個不同 own containers 使用同一
+image、UID、program、target arguments 及政策。正控制僅額外掛載三個 canary file
+至其 host exact absolute paths；host 核對實際 read、write、readback 及自然退出，
+才可用核對過的 descriptor 重設原 synthetic inodes。負控制使用相同 paths 與
+read/write primitive，但不掛載 canaries；每項都實際嘗試 read 與 write，僅
+boundary errno 可接受，EIO／ENOMEM 等未知結果不可算通過。兩輪各有獨立 workspace
+讀寫正控制，host 再核對 canary bytes／identity、精確 mount／policy 與 engine。
+
+未知正控制結果不得 reset 或啟動負控制；create／start 不重播，receipt 保留在
+Git 外。既有 isolation probe 的單 workspace mount 契約不變。這只補三個固定
+paths 的 read/write 對照，不代表 rename／link、resource enforcement、daemon／
+host restart、native Codex、credentials 或完整 N1／production qualification。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_isolation_path_controls
+./scripts/project-python scripts/verify-model-isolation-path-controls.py --evidence-root /private/tmp
+```
+
+## N1 固定 PID 上限控制
+
+`verify-model-isolation-pid-limit.py` 使用同一已核對的本機 Docker transport 與固定
+image，另建沒有 host mounts 的 own container；固定 UID1000、private PID／cgroup、
+network none、唯讀 root、PID 上限 32、memory／CPU 上限及 restart no。它不是任意
+負載工具，上限控制階段最多嘗試 32 次 fork，含正控制整輪最多 33 次；不做 host
+process exhaustion 或 memory／CPU 壓測。
+
+Python PID1 明確安裝 30 秒 deadline handler，逾時 exit 124 不算成功。先核對單一
+task、private cgroup v2 與 `pids.max=32`／`pids.current=1`，再以 readiness 管道、
+單一 child 正控制及 EOF／wait 回收確認 `1 → 2 → 1`、events 不變。正控制不完整
+不得開始上限控制。上限控制須有 31 個不同且已回報 readiness 的 children、第
+32 次 fork 精確 Linux EAGAIN（11，不使用 Mac host errno）、current 32、
+`pids.events` 與 `pids.events.local` 的 max
+各增加一次；EAGAIN 單獨不足以通過。釋放所有 children 後逐一 wait exit 0、回到
+current 1，計數不得再變。計數表示 tasks；本 fixture 是單執行緒的固定程式。
+
+Host 核對 exact CID、前後完整 policy、沒有 host bind／volume mounts、自然退出／PID0／非 OOM 與
+engine 身分。缺 counter、異常格式、清理不完整、逾時或 unknown 都不得算通過；
+create／start 不重播，結果留在 Git 外的全新 private 目錄。此觀察不歸因是哪層
+cgroup 導致拒絕，也不宣稱完整資源隔離、restart、native CLI／credentials 或 N1／
+production qualification；全部資格 flags 仍 false。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_isolation_pid_limit
+./scripts/project-python scripts/verify-model-isolation-pid-limit.py --evidence-root /private/tmp
+```
+
+重跑重建固定 fork／counter／wait assertions，CID、PID、時間與路徑可不同；測試
+程式及反例 tracked，實測收據、inspect 與 outputs 不納入 Git。
+
+## N2 匿名 project config／hook 正反控制
+
+`verify-model-project-hook.py` 另用固定 Mac Docker／Linux arm64 CLI tuple 測量一個
+project-local `PreToolUse` 路徑。兩個新 own containers 共用固定 image／public binary
+副本／程式／UID／CLI argv，各自只掛載唯讀 binary 與全新 synthetic scratch，
+network none，HOME／CODEX_HOME 留在容器內。沒有登入、自架來源設定或真實 provider。
+Fixture source 以單次 bounded regular-file descriptor 擷取；host recipe 由同一份
+bytes 載入，兩輪執行與最後收據的 program hash 都使用該 immutable memory snapshot，
+不在每輪或結束後重新讀來源檔。Host owner／root 與 daemon 仍為可信邊界。
+
+先逐項盤點固定 Linux system／managed、CODEX_HOME、cwd 與 ancestor config 位置的
+metadata；有既存檔案、symlink 或非 canonical 路徑時，在執行 CLI 前停止。這份
+清單只涵蓋固定 local candidates，沒有完整 cloud layer／effective config readback。
+受控 user config 提供匿名 loopback provider、fixture-only Direct entry、project
+trust 與 `features.hooks=true`；保留官方 catalog entries／context defaults。
+不使用 `--ignore-user-config`，`--strict-config` 只對未知欄位 fail，不代表全 layer
+隔離。`--sandbox danger-full-access` 只用於此無登入的固定容器 scratch，不能用於
+正式派工或降低其 sandbox ceiling。
+
+Project config 的單一 matcher `^Bash$` hook 執行固定 Python 程式，寫出 bounded
+stdin event。Hook 的 registry 名稱與 `tool_name=Bash` 為不同層；預期事件是
+`PreToolUse`、`tool_input={"command": <固定命令>}`。Host 固定唯一 exec call、兩次
+Responses requests／exact continuation、每輪三工具 advertisement、tool marker，
+並對照實際 project config bytes、前後 CID／mounts／policy／engine／自然退出。
+
+兩輪 project hook 與其 self-trust state 完全相同；user state 的 normalized
+trusted hash 在正控制精確相符，在負控制則刻意不相符。沒有 hook-trust bypass。
+正控制須觀察一次 hook event 與 tool 效果；負控制須沒有 hook event，但原 tool
+仍執行成功。這只支持本 tuple 的 user trust 正反樣本，以及 project state 不能
+替自己的 hook 建立信任；未信任 hook 是略過，不是拒絕原 tool 的 deny gate。
+Hash 依固定公開 source 的 normalized handler／TOML／canonical JSON 計算，不能
+用原 TOML bytes 的 hash 代替。來源：[state layers](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/hooks/src/config_rules.rs#L8-L29)、
+[hash](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/hooks/src/engine/discovery.rs#L775-L791)。
+
+未知 positive 不啟動 negative；create／start 不重播。這不完成 startup closure、
+完整 registry、其他 hook failure modes、native sessions／nested CLI、credentials
+或可信 production observer；provider／CLI／hook 共用 fixture UID，所有 qualification
+flags 保持 false。Source 與反例 tracked；inputs／outputs、收據、inspect 位於 Git
+外的 private temporary root，重跑重建等價 assertions，ports／CID／時間可不同。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_project_hook
+./scripts/project-python scripts/verify-model-project-hook.py --binary /absolute/path/to/codex --evidence-root /private/tmp
+```
+
+## N2 匿名 native terminal session 控制
+
+`verify-model-native-session.py` 在新的固定匿名容器中啟動兩個獨立 CLI，
+分別使用不同 loopback provider、HOME／CODEX_HOME。只有同一份已擷取的公開
+binary 唯讀掛載及本次 private scratch 可寫；沿用固定 image、UID、pids 64、
+memory 512 MiB、network none 與 exact policy。無自架模型、登入或其他 host mounts。
+此固定測量仍使用既有匿名容器的 `danger-full-access`，不是正式 CLI 權限預設
+或 sandbox 失敗時的 fallback。
+
+工具 `session_id` 是當前 CLI Session 的 process manager ID，不是 `thread.started`
+的對話 UUID。它可在釋放後重用；只接受本輪固定 exec call 原始 continuation
+的 header 所帶 ID，再對帳各 CLI 的 UUID、固定 call sequence、當輪 continuation、
+model 與工具宣告；不宣稱完整 request 或所有 input 的 byte 對帳。
+只解析第一個 `Output:` 之前的 native string header，不從正文的假 header
+擷取身分；非本包的 MCP carrier 拒收。工具宣告完整比對既有三項 identity、
+namespace、type 與 schema，不能把 advertisement 當作完整 registry。
+
+A 只啟動一個有 20 秒期限的 TTY 程式，先產生 `SESSION_READY` 並等待固定一行。
+B 在尚無 terminal 的另一個 CLI 中，實際嘗試向 A 的 ID 寫入不同控制字串，
+須收到 exact unknown-process error。A 隨後空 poll，不能再收到已消耗的 READY；
+只傳送一次核准的固定輸入，要求唯一 ACK 與 scratch marker。若該回應仍 running，
+只允許一次有界 final poll；必須讀回 exit 0 且無 running ID，下一次同 ID poll
+才要求 unknown。不能以 ACK、背景 end event 或 CLI shutdown 取代自然工具退出。
+Parser 保留原始正文；chars 與 final poll 合併後只正規化一次 CRLF，包含換行
+或 ACK 跨回應切分；額外的 CR 必須在所有切分位置一致拒絕。
+合併內容只能是一次固定 ACK，及至多一次固定輸入的 TTY echo。
+
+`--mode non-tty` 使用另一個固定程式：先確認 stdin EOF，產生 READY 並等待
+scratch 中的固定 release。B 仍須拒收 A 的 process ID；A 空 poll 後嘗試一次
+固定非空輸入，要求 exact closed-stdin error。下一次空 poll 須讀回同一 running
+ID 且沒有重複 READY，確認拒收輸入沒有被誤解為程序結束。匿名 provider 此時
+才把固定 release 完整寫入同目錄 staging file、flush／fsync，再用 hardlink 單次
+發布 final path；既存 final path 不覆寫，失敗不重播，兩個 links 保留。Host 核對
+完整固定 bytes、長度與同一 inode，避免 worker 讀到尚未寫完的檔案。
+程式產生唯一 ACK／marker 並自然退出；允許一次 final poll，
+最後要求 closed-ID unknown。Non-TTY 不能包含輸入 echo，release 也不是模型
+工具或可信 production control。來源：[non-TTY input guard](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/unified_exec/process_manager.rs#L983-L991)、
+[closed-stdin error](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/unified_exec/errors.rs#L20-L22)。
+Schema 2 把 terminal mode 納入收據與 host 預期；不能用 TTY 證據替代 non-TTY，
+舊 Schema 1 證據保留為原版本的局部紀錄，不由新版 validator 重新背書。
+
+B 先到達 provider，A 身分與 B exact continuation 以有界 barrier 交接；
+不依 assistant 完成文字解開 barrier。A／B subprocess 分別限 35／30 秒，
+整個 fixture 的 PID 1 使用明確 SIGALRM handler，50 秒即失敗退出；SSE idle
+15 秒不是整體期限。TTY 至多八個 requests；non-TTY 至多十個，增加拒收輸入後的
+live poll 與固定 release 後的 poll。每種模式至多一次 final poll，不重送 exec、
+chars 或未知結果。Create／start unknown 只記錄及讀回 exact CID，不 replay。
+
+這只量測固定 TTY／non-TTY、消耗式 poll、一次輸入或 closed-stdin 拒收、自然退出、
+跨 CLI 與 closed-ID 正反控制。Non-TTY interrupt、nested CLI、截斷、完整 config／registry、credentials、
+restart 與可信 production observer 仍另行驗證；provider／CLI／terminal 共用 UID，
+`native_session_qualified` 與 `production_qualified` 固定 false。工程 source、
+反例與方法 tracked；raw requests／outputs、收據及 inspect 留在 Git 外。重跑
+重建同一組 assertions，session／thread IDs、ports、CID 與時間可不同。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_native_session
+./scripts/project-python scripts/verify-model-native-session.py --binary /absolute/path/to/codex --evidence-root /private/tmp
+./scripts/project-python scripts/verify-model-native-session.py --mode non-tty --binary /absolute/path/to/codex --evidence-root /private/tmp
+```
+
+## N2 匿名 nested CLI 配置與環境局部控制
+
+`verify-model-nested-cli.py` 沿用已驗證的 public CLI bytes、固定本機 Docker
+image／policy，只有 read-only binary 與本次 synthetic workspace 兩個 mounts。
+Parent P 的原生 `exec_command` 啟動固定 wrapper；wrapper 先 READY 等待，
+provider 從原始 header 取得 live ID 後，完整寫入／fsync staging file，再以
+不覆寫 hardlink 單次發布 release。兩個 child C+／C− 依序各啟動一次新
+`codex exec`，使用不同匿名 HOME／CODEX_HOME、cwd、provider port 與 thread UUID。
+Wrapper 原樣保留實際收到的原生環境，只修改 child 的 HOME 身分；未知鍵先
+停止查明，不剔除 guard、重送 spawn 或偽裝 argv0。
+
+C+ 由受控 user `config.toml` 取得唯一 model canary，argv 不覆寫 model；
+C− 保持同一 user config，由固定 argv 覆寫成另一 fixture model。實際 Responses
+request 必須讀回對應 model。安全設定、匿名 loopback provider、catalog、feature
+開關及工具 recipe 由固定 argv 約束。這只核對選定 user model 與 argv precedence，
+不宣稱完整 effective layers；startup candidates 的 absence 也不是完整 config inventory。
+
+Parent 與 C+ 用 `inherit="all"`、明確 `include_only`、`exclude=[]`、`set={}`，
+保留 default sensitive-name exclusion；C− 只改 `inherit="none"`。固定 synthetic
+marker 僅由 parent 啟動環境提供，wrapper 不補值。兩個 child 的原生 tool 各自
+讀回 marker 存在／缺席及自己的 `CODEX_THREAD_ID`，不能把 launch intent 當成
+實際 tool env。`include_only` 之後仍有原生身分與 unified-exec 固定鍵注入，
+因此不宣稱 tool env 恰好只有 allowlist。Source-derived 規則綁定
+[pinned TOML schema](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/config/src/shell_environment_policy.rs)、
+[環境建構](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/protocol/src/shell_environment.rs) 與
+[原生 tool 注入](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/unified_exec/process_manager.rs)。
+這是固定 source contract 的查讀，不是 package build attestation 或完整 nested guards 清冊。
+
+每個 child 在建立自己的 terminal 前，先空 `write_stdin` 使用 P 的 live ID，
+要求 exact unknown-process error，再實際執行固定 probe。Probe 先完成自身 scratch
+讀寫，才以相同 open/read/write primitive 嘗試三個未掛載的 host source／control／
+sibling canary paths；write 不用 `O_CREAT`／`O_TRUNC`。Host 保存並重讀 canary
+identity／mode／size／hash。這只測量本次未掛載 paths，不能推定任意 filesystem
+或所有 descendant 的隔離。Parent tool 僅回短 ACK；host 另讀 child 原始 JSON
+stdout／stderr、user-config bytes 記錄、exact call-ID/output continuation、
+per-turn advertised schema 與 container inspect。Advertisement hash 不稱為 registry hash。
+
+PID 1 整體 50 秒，parent CLI 35 秒，wrapper 32 秒，每個 child 12 秒，release 等待
+六秒；parent 至多一次 exec 加 24 次空 poll，各 child 固定兩次 tool calls。
+這些固定期限包含自然退出驗證；timeout、spawn unknown、截斷、缺原始證據或
+自然 exit 未確認均不通過，unknown 不 replay。已觀察到 canary 變更／開啟或
+marker 控制違規保留 failed，另記生命週期 unknown。Create／start intents 先
+保存，結果未知只能讀回 exact own CID；不刪除資源或重啟 daemon。
+Probe 以逐筆 flush／fsync 的有界 observation journal 保存原始 marker 與每次
+canary 操作；後續 EIO、截斷或期限不能抹去已綁定的先前反例。Host 讀回 unavailable
+保持 unknown，只有確切 identity／bytes mismatch 或已記錄違規才標 failed。
+父層 wrapper 也先 flush／fsync 保存原始 marker、source／call 與 native thread 綁定，
+才判定 marker；缺席／錯值造成早期停止時，不因尚無 child journals 而降為 unknown。
+缺觀察、錯誤 source／thread／call 或讀回 unavailable 不能製造 failed 或 pass。
+
+Provider、CLI、wrapper、probe 共用 UID，都是固定 fixture evidence，不能作為
+可信 production observer。`handler_inventory_complete`、`startup_isolation_qualified`、
+`nested_cli_qualified`、`production_qualified` 固定 false；窄欄位
+`fixed_nested_cli_controls_passed` 只表示上述 controls。Credentials、restart／revocation、
+完整 registry／config、Desktop 與 N1–N4／production 資格仍另行驗證。工程方法與
+離線反例 tracked，原始 readbacks、host-only receipt／canaries 留 Git 外；重跑
+重建同一組 assertions，UUID、SID、ports、CID、路徑與時間可不同。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_nested_cli
+./scripts/project-python scripts/verify-model-nested-cli.py --binary /absolute/path/to/codex --evidence-root /private/tmp
+```
+
+此 runner 的 opt-in `--startup-layer-controls` 另固定執行 clean、既存 regular
+config 與 dangling symlink 三例。每例使用 fresh workspace、attempt UUID、own
+CID 及 host canaries；同次捕獲的 guest／program／binary bytes 與 engine 身分須
+一致。負例只預置 `/workspace/.codex/config.toml`：固定無害 model canary bytes，
+或指向同一 scratch 內不存在的固定相對 target；不接受任意配置、路徑或 argv。
+Host 保存 seed 的 lstat 身分、bytes／readlink 與 parent 身分，前後都須吻合。
+
+Guest 在首次 `debug models`、provider 建立與所有 CLI spawn 前，逐筆
+flush／file fsync 保存固定 startup paths 的原始 exists／symlink／canonical
+觀察，再保存完整 decision。Case 名稱只綁證據，是否拒絕取決於實際觀察。
+Stat／resolve 的 PermissionError、EIO 等不能轉成 absence；後續 I/O、截斷或
+decision 寫入失敗不能抹去已綁定的先前反例。完整正例另須原始 startup journal
+及首次 CLI intent，並完成原有 P→C+／C− workflow。
+
+兩個拒絕例須完整 journal、seed readback、固定 typed blocked diagnostic 與
+自然 exit 1；workspace 僅容許固定 seed／觀察 artifacts，不得有 first-CLI intent
+或後續工具效果。原始 `after.json` 與收據保留 exit 1；host 先嚴格核對 wait／exit，
+才以記憶體中 exit=0 的副本呼叫既有 policy validator 核對其餘全部欄位，副本不
+保存成 raw evidence。一般例外、只有 exit 1、缺證、OOM 或 unknown readback 均
+不能形成成功收據。確認 seed／canary 漂移或已綁定的 first-CLI intent 違規時，
+後續缺證保留 failed，生命週期另記 unknown；未知 create／start 仍不重播。
+
+`fixed_startup_layer_controls_passed` 僅表示這三個選定控制通過，全部 qualification
+flags 仍 false。Source ordering、原函式 spies 與 artifact absence 不構成可信
+production never-spawn 證明；逐筆 file fsync 也不代表 directory／restart durability。
+它不補足完整配置 layers、dispatcher registry 或正式自動接手資格。
+
+```bash
+./scripts/project-python scripts/verify-model-nested-cli.py --binary /absolute/path/to/codex --evidence-root /private/tmp --startup-layer-controls
+```
+
+## N3 非空 checkpoint、存活舊 worker 與唯一整合器控制
+
+`verify-model-packet-integrator.py --checkpoint-overlap-only` 明確選取新的固定
+匿名案例；不改既有八個 B2 案例，也不把 R2 saved backend 換成 Docker。
+Host 只建立本次 private synthetic Git source、packet、三個 attempt 的獨立
+workspace／control volume／own CID。沿用 host 選定且已安裝的 image、固定
+root-latch launcher 與降權 worker，沒有登入、provider、使用者 repository 或
+production registry；資源及原始收據保留 Git 外，不 cleanup 或重啟 daemon。
+
+Seed 用 `add-update` 封存非空 checkpoint C，尚不整合 source。A 從 C 執行固定
+35 秒 `hold-overlap`，host 核對 exact physical identity／policy、實際 `holding` 效果及
+running state，才能 quarantine；quarantine 不宣稱停止 A，也不擷取其活躍半成品。
+B 用 `noop`，但保留同一 `add-update` scope／驗收，只能從 C 的 immutable bytes
+建立新副本。B 的累積 patch、workspace files、predecessor 與 C 的原始 manifest／
+patch bytes 須相符，CID／workspace identity／control volume 須與 A 不同。
+因此錯用空 baseline，或把 A 的 `holding` 帶入 B，均不能通過。
+
+B 成為 candidate、整合前及整合後仍須由 host 讀回同一個非 zombie／dead 的 A worker。
+Container init running 不等於 worker 存活；每次以 exact CID 的 bounded `top`
+對帳 root PID、唯一 child 的 PID／PPID／UID／process state／固定 command，要求
+四次 worker PID 相同、實際 `holding` 階段及 root control 的 input／claim 原始
+綁定相符且無 completion。Control tar 僅接受固定 USTAR directory 與兩份 regular
+files，拒絕 links、額外 entries、metadata／JSON 漂移，不解壓至 host。
+每次 readback 前後核對 physical policy；有八秒期限，底層同步呼叫可能跨期限，
+但到期結果只能 unknown，不能通過。固定 hold 不 fork／替換 worker、可信 host
+無其他 exec／signal，是這個有限存活證明的前提。沒有建立時間
+重疊就回報未完成，不把停止後結果稱為存活接手。原有 15 秒 `hold` 不變；新的
+35 秒固定 recipe 只供本匿名 overlap 測量，低於既有 launcher 的 40 秒 alarm；
+僅核對實際讀回期間的重疊，超出窗口只能 unknown，不宣稱永久存活。不接受任意
+timeout／命令，亦不重啟已退出的 worker。固定
+FixtureGovernance 讀回 host-issued source authority；唯一 PacketIntegrator 才
+能將 B 合格累積 patch 寫入 synthetic source。A 的晚到 reconcile、admit、publish
+與 integrate 分別要求確切 gate 拒絕；原 source 在 B 整合前須保持 baseline。
+整合結果及完整 postimage 另讀回，reconcile 禁止再次 source write。
+
+未知 prepare／start／export／write 不重送；缺 top、格式／phase／completion 未知、
+child 已結束而 root 尚 running、隔離失效、checkpoint 漂移、未建立
+重疊或 authority 撤銷不能取得成功收據。Root ledger 保留原 intent／結果，不因
+此測量失敗而 rollback 或重做原 operation。離線反例不在 host fork 或連 Docker。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_packet_integrator_runner tests.test_model_packet_integrator
+./scripts/project-python scripts/verify-model-packet-integrator.py --synthetic-qualified-container-fixture --checkpoint-overlap-only --endpoint unix:///absolute/path/to/approved.sock --image sha256:APPROVED_INSTALLED_IMAGE --evidence-root /absolute/path/to/private-evidence-root
+```
+
+這是固定 recipe 的實體合成組合控制，不是完整 N3、真實模型／原生 CLI 接線、
+全域 objective authority 或 production qualification。Fixture validation/review
+artifacts 不代替正式 review；formal gate 仍獨立執行，qualification 維持 false。
+
+## N1 Mac 原生 socket 正反控制
+
+`verify-model-permissions.py --network-controls` 在既有原生背景程序案例後，
+分別測量 TCP、UDP 與私有 Unix socket。它不需要 Docker、provider 或登入；
+controller 以專案 Python 執行，固定 C client 由已存在的 system compiler 建立。
+Mac client 的 linked libraries 只接受 `/System/` 或 `/usr/lib/`，不擴充原
+filesystem profile 的可讀路徑。缺 compiler、編譯失敗、未知 linked library 或
+Unix socket 路徑過長都保留 unknown。
+
+可信 host 為每個 transport 建立同一個 listener：TCP／UDP 僅綁定 loopback
+的 ephemeral port，Unix socket 留在允許寫入的私有 workspace。正、負階段
+使用不同 nonce 與單調時鐘期限；兩階段的固定 client、binary、工作目錄、
+環境及 filesystem 設定相同，只切換 `network.enabled`。Mac client 使用
+`mach_absolute_time` 與所選 Python 的時間域對齊；Linux 控制測試使用
+`CLOCK_MONOTONIC`。這些輸入由 host 固定產生，不接受模型提供的程式或目的地。
+
+正控制須由 host 獨立收到一次 nonce、回傳精確 ACK，且 client 在期限前核對
+成功，才執行負控制。TCP／Unix 的負控制只接受 `connect`、UDP 只接受
+`sendto` 本身的 `EACCES`／`EPERM`；connection refused、reset、timeout、
+程序失敗、重複／逾期 nonce 或缺 readback 不能當成隔離成功。Host 保持觀察
+到負階段期限並完成 observer 停止讀回；負階段任何 stream accept 或 nonce
+收件都是 counterexample。Observer lifecycle 不明時保留 unknown 並停止
+建立後續 listener。Receipt 同時核對固定 client／CLI 的 bytes identity。
+
+執行時應使用已存在、Git 外且路徑長度足以容納 Unix socket 的私有 evidence
+目錄；原始收據與診斷留 Git 外。重跑重建相同 assertions，nonce、port、
+timestamp、私有路徑及 build identity 須重新核對，不要求逐 byte 相同。
+純邏輯反例另涵蓋錯誤分類、缺失／重複／過期證據、觀察期限不足及設定漂移；
+無 sandbox 的實際 client 必須因 host 收到負控制而失敗。
+
+這只測量固定 no-fork client 的本機 socket 操作，不涵蓋任意 IPC、CLI builtin
+tools、credentials、daemon／host restart、完整資源限制或其它 runtime。
+七項原生背景程序控制與三種 transport 的局部成功均不建立完整 N1；
+production registry 與 qualification flags 不由此開啟。
+方法及反例 tracked，raw readbacks／ledger／receipt 位於 private Git 外位置；重跑
+重建相同 assertions，CID、nonce、時間與各次授權身分不要求相同。
+
+## N3 私有 controller process reload 局部控制
+
+`verify-model-packet-integrator.py --controller-reload-only` 是互斥、明確 opt-in 的
+固定匿名案例。Coordinator 捕獲 runner 與其固定 import closure 的私有 bytes
+bundle，目前為 13 檔，包含 immutable write 所需 governance／routing／failover／
+preflight 及 routing 的 deferred local mapping dependency；不載入完整 repository、
+使用者 HOME、auth 或 saved lifecycle schema。每份來源採 no-follow regular
+bounded read，對帳前後 file identity／digest。固定 `-I -S -B` bootstrap 先執行
+import preflight，任何 missing／額外 dependency 或 ambient fallback 在 Docker
+效果前拒絕；選定 interpreter 的 canonical path、stat、digest 與 3.12.9 version
+亦須相符。Helper 環境只保留固定 PATH／私有 HOME／disabled Docker config／locale，
+stdin 關閉、`close_fds=True`、`pass_fds=()`；own inheritable sentinel FD 負控制不
+代表所有 FD 的 OS isolation。
+
+Producer 建立 synthetic S，沿固定 seed recipe 封存非空 C，再啟動 35 秒
+`hold-overlap` old worker。它封存 original packet／attempt／revision、ledger 與
+runtime descriptor 原始 refs、checkpoint manifest／patch、source descriptor 與
+baseline Git metadata、engine／image／host／policy binding、CID／Created／worker
+PID、run UUID／PID／PPID／bundle／interpreter 及 T0／sealed time。Producer
+關閉 handles 並自然 exit 0；coordinator 必須從原 Popen 的 wait 證明退出及完整
+handoff，才能建立不同 PID 的 fresh consumer。未退出、非零、缺失 handoff、
+unknown spawn、timeout 或 partial output 不重送。
+
+Consumer 在任何 engine read 前驗證原始 refs 與既存 packet directory／ledger／
+lock，不補建 missing store；只 reopen source 並唯讀對帳 baseline。重新建立
+原 PacketStore／backend／supervisor 後只 reconcile old 一次，要求精確
+`unknown/runtime-proof-unavailable`。沒有 quarantine、successor、authority 或
+source write。Transport 層保留每次 intent、bounded raw reply／partial error，
+consumer 只接受固定 daemon info、image inspect、原 CID inspect／top、原 control
+volume inspect 及原 CID control input／claim 的 stdout cp；stdin archive、任意
+CID／volume／path 與所有 mutator 均拒絕。每次原 CID inspect 必須仍 running；
+sticky backend proxy 另拒絕 stopped proof 及 prepare／bootstrap／launch／export／
+sealed-read，避免 live check 後 worker 停止而先寫 export-intent。Supervisor 即使
+合法轉 unknown，也不能掩蓋 backend／transport error。前後完整 observation
+要求同一 live worker／holding／control binding；C、descriptor、source 不變。
+Ledger 只准原 unknown observation 的合法 append／dedup，保留原 raw SHA 與
+讀回差異，不強求整份 ledger bytes 永遠相同。Coordinator 另讀回原始 command
+trace、結果、checkpoint、descriptor 與 source。
+
+總測量預算從 old start 前 T0 起固定 25 秒；每個 Docker transport 預留既有
+10 秒 timeout 與 2 秒 cleanup，期限不足或逾期只保留 unknown，不延長 hold 或
+restart。兩個 helper 均須自然 exit 0，最後 readback 仍在期限內才可通過。
+Own helper 被終止不證明 Docker children 已停止；任意 I/O stall 也沒有 35 秒
+完成保證。Raw evidence 留在既存、Git 外的私有 evidence root，resources retained。
+每個 helper stdout／stderr 上限各 64 KiB、transport reply 上限 64 KiB、每 stage
+trace 上限 8 MiB、private artifact 上限 1 MiB。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_packet_integrator_runner
+./scripts/project-python scripts/verify-model-packet-integrator.py --synthetic-qualified-container-fixture --controller-reload-only --endpoint unix:///absolute/path/to/approved.sock --image sha256:APPROVED_INSTALLED_IMAGE --evidence-root /absolute/path/to/private-evidence-root
+```
+
+此方法與離線反例不等於已完成實測；只有另外保存的當輪 native receipt 能證明
+有限測量成功。它不完成 N3、production／adapter／runtime qualification、
+self-hosted／auth／daemon restart，所有 qualification flags 維持 false。舊有
+single-process fixture 的 synchronous-nochildren 限制不沿用到此新模式；可信
+host、固定不替換 worker 與有限 readback 窗口仍是本局部證明的前提。
+
+## N3 fresh process integration／revocation 局部工程控制
+
+`verify-model-packet-integrator.py --fresh-integration-only` 與既有模式互斥，必須
+另給 synthetic fixture opt-in。固定八案各有獨立私有 root、synthetic source、
+packet／attempt／operation；沿用 13 檔 captured bundle、pinned interpreter、
+isolated import preflight、匿名 HOME、closed stdin 與 `close_fds`／空 `pass_fds`。
+它不接受任意 fault／argv／source／authority／loader。每案固定 60 秒、全包
+240 秒上限；Docker transport 仍預留 10 秒 timeout＋2 秒 cleanup，任何 deadline、
+journal、cleanup 或 partial reply 不明都保留 unknown，不重送效果。
+
+| 固定案例 | Producer 的真實退出點 | Consumer 預期 |
+| --- | --- | --- |
+| applied-control | 原 integration 自然完成，exit 0 | applied；只讀回既存 result |
+| intent-crash | durable intent 後、write-intent 前，exit 71 | not-applied |
+| write-intent-crash | durable write-intent 後、首次 source write 前，exit 72 | unknown |
+| mid-write | 第一個固定 source file 完成後，exit 73 | unknown；保留 mixed image |
+| commit-crash | 完整 postimage 後、result commit 前，exit 74 | applied |
+| reply-lost | 原 result 已封存後，exit 75 | applied；不重播 source |
+| revoked-before-intent | 原 authority 已發出、尚無 intent，exit 76 | coordinator 撤銷後兩入口拒絕 |
+| revoked-after-intent | 原 durable intent 後、write-intent 前，exit 77 | coordinator 撤銷後兩入口拒絕 |
+
+Planned fault callback 封存完整 handoff／marker 並直接 `os._exit`，不以捕捉
+same-process `SystemExit` 取代退出。Coordinator 必須讀回原 Popen 的精確 exit、
+stdout marker、handoff binding 與實際 durable state，才啟動不同 PID consumer。
+write-intent 的 record 仍是 `integration-intent`，但 `writer_started=true`；
+不能由 record state alone 判斷已寫入。撤銷由 coordinator 在 producer 實際
+退出、原 flock 釋放後，reopen 原 authority 並呼叫既有 `FixtureGovernance.revoke`，
+封存 revocation bytes／identity；callback 不仿寫撤銷 artifact。
+
+Fresh consumer 重新建立原 source／store／backend／supervisor／integrator，核對
+原 stopped worker 的 immutable descriptor、control input／claim／completion 與
+runtime evidence，不能直接信任保存的 candidate JSON。Docker 僅允許固定 info、
+image／原 CID／原 control volume inspect 及三份 control file 的 stdout cp；
+Git 僅允許原 source 的固定 `rev-parse HEAD`。禁止 prepare、bootstrap、launch、
+export、sealed export read、authority reissue、stage 或 source write。每次 Git／
+Docker intent／reply 與 failure 保留私有 trace；journal 完整 bytes 先寫後 fsync／
+readback 失敗也 sticky，不能被 core 的 lawful unknown 掩蓋。
+
+核對實際 source bytes／mode／file identity、HEAD、index、Git metadata 與 outscope
+files；原 C、authority、intent、control／sealed artifacts 皆保留。普通 recovery
+只允許一次 canonical result＋ledger observation append，實際第二次 reconcile
+須去重且 ledger／source／artifact inventory 相同。Revoked source／ledger 均不變；
+`reopen_authority` 只重建 reference，不證明未撤銷。Pre-intent 的 integrate 精確
+拒絕 `source-authority-revoked`，原不存在 operation 的 reconcile 則先拒絕
+`source-integration-unavailable`；after-intent 的兩入口均拒絕撤銷 authority。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_packet_integrator_runner.FreshIntegrationTests
+./scripts/project-python scripts/verify-model-packet-integrator.py --synthetic-qualified-container-fixture --fresh-integration-only --endpoint unix:///absolute/path/to/approved.sock --image sha256:APPROVED_INSTALLED_IMAGE --evidence-root /absolute/path/to/private-evidence-root
+```
+
+上述是工程方法與離線反例，不是已完成 native runtime 測量。原始 refs、markers、
+process／command readbacks 與 receipt 留 Git 外，由當輪 native evidence 另行對帳。
+固定 synchronous producer 的真實退出不證明任意 process-kill／FD OS isolation、
+daemon restart、模型／訂閱接線或完整 N3；production／runtime／adapter／N3 flags
+全部 false，fixture validation artifacts 不取代獨立正式 review。
+
+## 匿名 native admission 與固定 packet 因果綁定
+
+`--native-packet-admission-only` 是與其他 integrator fixtures 互斥的明確 opt-in。
+匿名 Responses fixture 只送固定 `packet_probe({})`，不接受命令、來源、loader、
+provider 或配置輸入。同步 callback 僅核對完整 envelope、message ID、thread／turn／
+call IDs、固定 tool 與精確空 arguments，完成一次記憶體 latch 並立即回覆固定 run token；
+callback 不執行 Docker、fsync、wait 或來源整合。Namespace 僅接受省略或公開原生
+請求的 `null`，並保留原始欄位與 wire；重複、非空 namespace 或額外欄位均拒絕。
+
+Fixture 必須讀回精確 token continuation，同一 turn 必須 completed；binary／client／
+sentinel 不變、fixture thread 停止，以及 `Session.close` 的 protocol observed／direct
+child exited 0 都是前置。原始有界 JSON-line wire bytes、送出 intent／sent confirmation、
+Responses requests 與 close 讀回保留 Git 外。未知 callback、timeout、缺 token、錯誤
+completion、unknown close 或任一前置失敗，均不得建立 backend 或 synthetic source。
+Direct child exit 不證明所有 descendants 停止。
+
+前置全部合格後，唯一 host coordinator 才封存原 admission binding，將其 digest
+納入既有 packet identity／request／target。沿用唯一 `packet-checkpoint-overlap` 的
+seed → 非空 C → old live quarantine → 不同 successor 從 C stop／export → sole
+integrator／readback／reconcile；不建立新 broker、MCP 或 dispatch registry。每一
+後續階段核對 binding／來源清冊與原 lineage；identity、request、target、generation、
+C、descriptor 或 runtime policy 漂移只能拒絕，不重開 packet 或重播。Quarantined
+old 不重新 export；source authority 仍由既有 `FixtureGovernance` 核發，admission
+只證明因果關聯。Tool response 僅代表 admission，不能聲稱已包含最後整合結果。
+
+此模式是固定可信 host coordinator，不是前包 fresh-process bundle。另行盤點
+18 份 runner／probe／backend／store／governance 與 app-server transport／metadata
+來源，捕獲 bounded no-follow regular bytes、identity 與 digest，驗 imports 與已載入
+module origins；未啟用 saved lifecycle。前包 13-file bundle 資格不沿用。原 source
+bytes／mode／identity、HEAD／index／metadata、C、control、authority、Docker traces、
+結果及失敗收據保留於私有 evidence root，不納入 Git。
+
+```bash
+./scripts/project-python -m unittest tests.test_model_app_server_probe tests.test_model_packet_integrator_runner
+./scripts/project-python scripts/verify-model-packet-integrator.py --synthetic-qualified-container-fixture --native-packet-admission-only --endpoint unix:///absolute/path/to/approved.sock --image sha256:APPROVED_INSTALLED_IMAGE --evidence-root /absolute/path/to/private-evidence-root
+```
+
+離線正反控制不能代替 native CLI＋Docker 的當輪實測或獨立 review。qualified、native、
+tool、startup isolation、isolation、runtime、adapter、production 與完整 N3 flags
+全部 false；此 fixture 不證明模型／訂閱接線、任意工作執行或 production authority。
+
+## 第一次 config／discovery 前的固定 container fixture
+
+`scripts/verify-model-app-server-container.py --prestart-container-fixture` 是另一個
+明確 opt-in；此包只做一次匿名 native admission，不啟動 checkpoint／successor 或
+source integration。固定現有 Linux／arm64 image 與 Linux Codex binary SHA，binary
+path 只供 no-follow fingerprint read 與保護性 copy，沒有 image／model／provider／
+command／source／loader 選項。固定 20-file source closure 另行捕獲；不沿用前包資格。
+
+Host 先持久封存 create intent，固定 `--pull=never` 且僅 create 一次，不觸發下載。未知 create 只從原 cidfile 讀回
+精確 CID 並 inspect，不重新 create。Created／Running false／PID 0 狀態下，完整
+核對 image、Created、argv、全 Env、UID/GID、workdir、OpenStdin／StdinOnce／Tty、
+attach 欄位、readonly root、network none、no ports、cap drop ALL、NNP、CPU／memory／
+pids、private namespaces、restart no／AutoRemove false、no healthcheck／logging，以及
+精確兩個 mounts。唯讀 capture 包含固定 binary／sources；唯一 RW mount 是自有
+UUID control scratch，不掛 host control parent、來源、engine socket、auth 或 HOME。
+
+Control 為 host 非 root UID/GID、0700；capture directories／files 與 binary 為同 UID、
+0500。Guest 在 CLI spawn 前核對精確 UID/GID、owner／mode、image Python version、
+source closure 與 binary hash；Docker Desktop mapping 不符即拒絕，不放寬權限。
+固定 image 的當輪 Env／Labels／Config snapshot 只存於 private evidence，綁定
+完整 config digest／reference，作為 container fullpolicy 的精確比對來源；tracked source
+不保存私人 image metadata，不提供 env 或 image override。Wrapper 用 `/usr/bin/env -i`、Python
+`-I -S -B`，CLI 使用完整固定 clean env、private guest HOME 與空 workspace。
+
+Start intent 落盤、binary／engine／socket／policy 再核對後，只有一次固定
+`docker container start --attach --interactive CID`。Create 使用 `--interactive` 及
+`--attach=stdin/stdout/stderr`，預期 OpenStdin／StdinOnce true、Tty false；Docker CLI
+[29.4.3 固定 options source](https://github.com/docker/cli/blob/v29.4.3/cli/command/container/opts.go)
+把 OpenStdin 與 AttachStdin 同時啟用時設 StdinOnce true，仍以當輪 inspect 為準。
+沒有 exec、reattach、restart、cleanup 或 unisolated host fallback。
+
+Guest wrapper 提供有界、serial、container 內 localhost 的固定兩輪 Responses
+fixture，CLI 繼承 RPC stdin/stdout；wrapper 不讀 RPC stdin、不向 stdout 寫診斷。
+Host 重用固定 AdmissionSession／memory latch、nullable raw envelope 與 metadata。
+Docker client 的 protocol-observed／exit 0、原 CID 同 Created／policy 下的 exited／
+Running false／PID 0／ExitCode 0／RestartCount 0，以及 wrapper 對同一 CLI child 的
+自然 wait 0／provider stopped，是三份分開的必要證據，不能互相代替。
+
+原始 wire／provider requests、source capture、create／start／guest spawn intents、
+policy、token／IDs、guest wait、結果與失敗留 Git 外；journal 完整 bytes 先寫後
+fsync／readback 失敗仍保留 unknown，不覆寫原 artifact、不重播。CLI 與 guest receipt
+共用固定 UID，因此 guest receipt 是有限 fixture observation，並非 production
+trusted observer。所有 native／tool／startup／isolation／runtime／adapter／production／
+N1–N3 qualification flags false。
+
+首次真實缺口是 Docker start-attach 的 stdin EOF，是否讓同一 CLI／wrapper 自然
+退出。離線 Python stdio peers／fake processes 只能驗 framing、ordering 與反例，
+不能證明這項 EOF 行為；client detach／exit 不能形成成功收據。Native runtime、
+獨立 CodeGate／SDS 留待來源凍結後的當輪實測。
+
+## 固定原生 workspace write／external refusal
+
+同一 runner 另接受固定 `--native-workspace-case workspace-write` 或
+`external-write-refusal`，保留 `--prestart-container-fixture` 的明確 opt-in。
+每次只測一案，使用全新 private root／CID，原有兩輪 admission 模式保持原契約。
+Writer 模式另必填 `--bwrap-path`；只能提供固定官方 CLI 套件中的 sidecar，
+大小／SHA 必須相符，不能替換成任意 executable。原 admission invocation
+不需要該參數，也不使用以下 writer-only tmpfs／prerequisite 配置。
+Writer 的 image Config 比較僅對 13 個逐欄、精確型別空值允許缺省等價：
+stdio／TTY 六欄 boolean false、Image／User／Hostname／Domainname 四欄空字串，
+Entrypoint／OnBuild／Volumes 三欄 null。非空、錯型、其他 material／unknown
+欄位全部原樣保留比較；`0` 不當成 false，`[]`／`{}` 不當成 null。
+先執行原 image policy，再處理副本；每次 raw Config／Env／Labels 與原 snapshot
+reference 留 private 且防竄改。實際 image／user／stdio／entrypoint／mounts
+仍由完整 container policy 核對；Hostname／Domainname 空值規則不代表已逐值
+驗證這兩欄。此 projection 由固定 writer case 預先選定，不因 drift 自動啟用；
+default admission 仍用原 raw-exact 比較。
+各案最多三輪匿名 Responses：一次 `packet_probe({})`、精確 token continuation
+後一次原生 `functions.exec_command`、原始 call output continuation 後 final。
+Host callback 仍只做 admission memory latch，沒有執行 shell 或代寫工作區。
+
+公開固定 source 的 experimental `TurnEnvironmentParams` 是 object array：
+`environmentId=local`、`cwd=/control/workspace`、
+`runtimeWorkspaceRoots=[/control/workspace]`，thread 與 turn 都明確提供。
+不能傳 `environments:["local"]`；named `permissions=probe-writer` 不混用
+`sandbox`／`sandboxPolicy`。型別與省略／空陣列語意見固定
+[thread](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server-protocol/src/protocol/v2/thread.rs)
+及 [turn schema](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server-protocol/src/protocol/v2/turn.rs)。
+
+Writer 明確啟用 shell_tool／unified_exec；named filesystem 僅開放 workspace
+write，HOME、capture 來源與 temp 仍由 root default deny 排除。固定公開
+`/fixture/codex` binary 與單一 external canary 僅 read。Filesystem helper 需要
+讀取固定 `/fixture/codex-resources/bwrap` sidecar；它也是精確 read 例外。
+以該 executable 自我執行；不加入與精確 read 衝突的同路徑 deny，也不加入
+稍後遮住已允許子路徑的 `/fixture`／`/control` 父目錄 deny。這些規則依
+[helper](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/exec-server/src/fs_sandbox.rs)、
+[permission 合成](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/protocol/src/permissions.rs)
+及 [bwrap mounts／masks](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/linux-sandbox/src/bwrap.rs)
+核對，實際 OS enforcement 仍需測量。
+Canary 由 host 在自有 RW control backing mount 預先建立，保存精確
+identity／bytes／hash；它不靠外層 readonly mount形成內層拒絕正例。
+固定 `/bin/sh`、non-login／non-TTY、`use_default`、有界 output 及 yield，
+不接受自訂 commands／paths／permission map。`allow_login_shell=false` 是
+[頂層設定](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/config.schema.json)。
+該設定下公開 [shell schema](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/handlers/shell_spec.rs)
+省略 `login` property，因此固定 arguments 也省略該欄位，由設定保證 non-login。
+當輪 advertised schema 須相容固定 arguments，三輪 declaration 不得漂移；
+這只核對宣告，不是完整 dispatcher registry 資格。
+
+正例要求 commandExecution 的開始／完成順序、相同 call／thread／turn、自然
+exit 0／無 session ID 與唯一 regular postimage 完全相符。負例要求對固定 canary
+明確的 native permission／read-only 拒絕、相同 command lifecycle 的 nonzero exit，
+先在同一 shell view 讀回 canary 的固定內容；讀取失敗／內容錯誤的專用 exit
+17／18 不能通過。再核對 host no-follow identity／bytes 未變，workspace 不新增檔案。
+一般工具錯誤、
+approval、bootstrap error、assistant final 文字或只有 canary 未變均不足以通過。
+
+Guest 原 CLI child 的 stderr 持續 drain 到 EOF，只保留固定上限前綴；原 bytes／
+prefix hash／total count／EOF／overflow／truncation 與 reader 結束讀回留 private。
+不完整 capture 只能 unknown，prefix hash 不宣稱涵蓋完整 stream。Docker
+start-client stderr 明確 not-captured，nonzero／unknown 不據此歸因為 native sandbox
+故障。原始 provider responses／requests、RPC、spawn／policy／三種 exit 與 host
+檔案讀回均留 Git 外；不新增 shared transport API。
+
+Writer-only 增加固定 16 MiB `/tmp` tmpfs，`rw,nosuid,nodev,noexec`、0700、
+與固定非零 UID／GID；`HostConfig.Tmpfs` 只接受完整精確 map。既有兩個 bind
+mounts 仍精確核對，不接受任何額外 `Mounts` row；runtime 若採其他表示就拒絕。
+Guest 另讀 `/proc/self/mountinfo`、owner／mode 與實際 capacity 核對 tmpfs，
+再建立固定 daemon／registry 目錄。CLI 與 shell env 都明確設定
+`TMPDIR=/tmp/registry`，不靠 inherit；model filesystem 沒有 temp write grant。
+固定 `/tmp/codex-daemon-<uid>` 不受 TMPDIR 影響，不能把 HOME 設定當作替代。
+相關限制依 [daemon directory](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/uds/src/daemon_directory.rs)
+及 [registry staging](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/linux-sandbox/src/linux_run_main.rs) 核對。
+
+Sidecar 只使用固定 bundle 的 regular／single-link／0500 內容，host／guest
+前後核對 hash 與 identity，capture inventory 僅多此一資源；固定 PATH 有其他
+bwrap 就拒絕，避免 prerequisite 與 CLI 使用不同 binary。Bundled lookup／digest
+依 [公開 launcher](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/linux-sandbox/src/bundled_bwrap.rs) 核對。
+在 provider／CLI 啟動前，可信 wrapper 先做有界 `--help` 及一次固定 namespace／
+canary probe：user／PID／IPC／network namespace、proc／dev view、專用 scratch
+postimage 與 readonly canary 拒絕。這是本工程包固定的組合，不是完整上游
+policy builder 的輸出；各 flags 依 [builder](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/linux-sandbox/src/bwrap.rs)
+及 [launcher](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/linux-sandbox/src/launcher.rs) 核對。
+原始兩個 stream 持續 drain、各保留固定 65,536-byte 前綴及完整性標記；timeout
+只終止該新建的 private diagnostic child，不能當作全部 descendants 停止證明。
+任何前置步驟 unavailable／unknown 都保持 provider／CLI 零啟動、不重試。
+即使 probe 通過也只證明固定 namespace／bind 子集，不能代替 native named
+permission enforcement、writer 或 production qualification。
+
+Writer-only `project_doc_max_bytes=0` 僅在 wrapper 已核對新建的空 workspace／
+HOME 後使用，排除匿名 fixture 的指引探索；不套到真實專案，不是 sandbox 證明。
+既有 non-root、capabilities none、NNP、network none、readonly root 及 seccomp
+限制維持。CLI 預設 Linux sandbox 是否能在此 tuple 建立須另行實測；失敗
+保留 unknown，不改 privileges、danger-full-access／externalSandbox、工具入口或
+重播命令。此包沒有 checkpoint／successor／integration，所有資格 flags false。
+
+## 外層 OS executor 的傳輸準備
+
+內層 namespace 前置條件不可用時，原 attempt 保留 unknown。後續可另設獨立、
+明確 opt-in 的外層 OS fixture：新建 workspace 是唯一可寫 host bind，capture／
+固定 inputs 僅 RO，HOME／CODEX_HOME／temp 使用有界私有 tmpfs；host control、
+receipts、authority、auth 與 engine socket 都不掛入。這是後續設計，尚未實作
+或驗收；guest HOME／temp 與必要 pseudo-filesystem 仍存在寫入面。
+
+本包先補 `Session(..., allow_thread_settings_update=False, capture_stderr=False)`。
+兩個選項均為嚴格 boolean，在 Popen 前驗證。Default 保持原 client methods、
+stderr DEVNULL 與零 capture reader；只在該 Session 明確 opt-in 時接受公開
+`thread/settings/update`，不提供任意 methods 清單，也不開放 config／auth writes。
+可信 host 負責 params、目標、政策與授權驗證；transport 選項不能代替這些 gate。
+
+Enabled stderr reader 從 launch 起以 nonblocking pipe 持續 drain，只在記憶體
+保留固定 65,536-byte 原始前綴，不要求 UTF-8、不寫檔、不解析 guest frame。
+`stderr_snapshot()` 在 disabled 時回傳 None；enabled 時回傳副本，包含 raw、
+captured／total bytes、prefix SHA、EOF、overflow、truncated、reader error／finished。
+Raw bytes 是 caller 的私有證據，不加入 exceptions、一般 log 或 close 結果。
+
+Capture 模式的 child wait 與 reader join 共用單一 close deadline；缺 EOF、
+reader 未結束、overflow／truncation／error 都保持 unknown。Reader 有 stop event
+與有限 selector wait，已取得的 fd 由 reader 自行關閉，不依賴另一執行緒中斷
+blocking read。Close 的原回傳 keys 保持，direct child exit 0、晚到 EOF 或
+再次 close 都不能清除已觀察的 unknown；不 kill、relaunch 或證明 descendants 停止。
+
+後續 caller 須先查核外層 OS policy，以 read-only 建立新 ephemeral thread，
+再送固定 externalSandbox settings update。空 response 僅為 queue ACK；必須
+從 raw wire 核對該 request out-sent 後、turn/start 前同 thread 的唯一
+thread/settings/updated，包括 sandbox policy、approval、cwd、model、provider
+及無 named permission profile。通知可先於 ACK 到達，舊 queue notification
+不能當成生效證據。Queue 與 notification 見固定公開
+[implementation](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server/src/request_processors/turn_processor.rs)
+及 [schema](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server-protocol/src/protocol/v2/thread.rs)。
+本 transport 不實作該 caller gate，read-only bootstrap 是否可用仍未驗證。
+
+匿名 subprocess controls 只驗證 opt-in、RPC queue、bounded stream 與 unknown
+契約；不證明 native policy 生效、外層隔離、完整工具清冊、production source
+authority 或 N1–N4。原 bwrap runner 不改入口、sandbox 或自動切換，所有資格 false。
+
+### 匿名 external OS bootstrap 前置探針
+
+`scripts/verify-model-external-bootstrap.py` 另設
+`--external-bootstrap-container-fixture` 明確 opt-in，只驗證新的 ephemeral
+thread 能否由 read-only 啟動，再完成固定 externalSandbox settings 的讀回。
+此入口預設不送 turn、不宣告 dynamic tool、不讀帳號、不登入、不接外部模型。
+本輪原生結果未驗證前保持 unknown，不代表 writer／拒寫兩個案例通過。
+
+使用既有固定 Linux CLI、既有固定 image 與新 private run／CID；每次 create
+與 start 各一次，未知結果不重試、重播或重設。來源擴充為固定 22 檔 RO
+capture；RO inputs 只有固定 request 與 canary，唯一 host RW bind 是空
+`/workspace`。HOME／CODEX_HOME／registry 位於有界 16 MiB 私有 tmpfs，
+不掛 host controller、evidence、auth 或 Docker socket。沿用非 root、network
+none、RO root、cap-drop ALL、no-new-privileges 與資源限制，無 privilege fallback。
+固定 image 的 13 個 typed-empty 欄位投影只在此明確入口使用，原始 snapshot
+與其他欄位仍核對，不由 drift failure 自動啟用。
+
+物理三個 mounts、wrapper command 與 cwd 先逐項核對，才在獨立副本中將
+這三個已核對的 layout 欄位轉成既有完整 policy checker 的固定表示；其餘
+image、host、資源與原 CID／Created／state 欄位不變，raw engine evidence
+不修改。這是有限 fixture 的 policy reuse，並非 production OS qualification。
+
+Host 核對 read-only、network disabled、固定 cwd／model／provider／approval
+及空 instruction sources 的 thread/start；空 ACK 不足。必須在 raw wire
+看見 settings request out-sent 之後、同 thread、固定 externalSandbox／restricted
+network 與無 named profile 的唯一已觀察 notification；舊通知、重複、drift、
+任何 turn／item activity 都保持 unknown。此有限觀測不承諾未来通知永不重複。
+
+Guest stdout 僅傳 CLI RPC；最後 guest observation 以單一固定有界 stderr
+frame 傳給 host，CLI stderr 使用有界 drain 並另核對 EOF、完整性與 hash。
+Frame 是同 UID 不可信觀測，不能取得 stop／source／integration authority。
+Host 分別核對 Docker client exit、原 CID exit、RO inputs、空 workspace 與
+source／image／engine identity；缺項仍為 unknown，所有資格 false。
+原始 wire／stderr／image／gate 證據留在 Git 外，可重跑產生等價 assertion。
+
+### External OS 的固定原生寫入觀測
+
+同一入口另接受明確 `--native-workspace-case workspace-write` 或
+`external-write-refusal`，或下述兩個 patch case；未提供時仍為零 turn 的 bootstrap。每例使用新的
+run／CID、原有 22 檔 RO capture、RO inputs、唯一 host RW workspace 及私有
+tmpfs，不掛帳號、controller、engine socket 或 host evidence，不提高權限。
+
+Host 先完成 bootstrap 的 raw settings gate，才送一次固定 turn/start：同
+thread、`environmentId=local`、`cwd=/workspace` 與
+`runtimeWorkspaceRoots=[/workspace]`，並以本次 run ID 綁定固定提示。
+Native case 使用 tracked guest 中的固定 synthetic catalog，只有 `fixture-direct`
+一筆。欄位依 [固定版本公開 ModelInfo 契約](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/protocol/src/openai_models.rs)
+建立，省略 guardian、model_messages 與 auto_review_model_override 等政策 metadata；
+依該版本的相容反序列化規則，提供固定短句 base_instructions，不能缺少指示文字。
+Catalog 上限 4 KiB，只在 case opt-in 時以 EXCL／no-follow／0600 寫入本次私有
+tmpfs，建立後回讀 bytes／identity，task 後再核對 identity／hash。Host 從 tracked
+literal 重建精確 bytes／hash，receipt 明示固定匿名來源及 query spawn count 0。
+Bootstrap、settings、provider request 都核對該固定 alias；預設零-turn 模式
+不增加 catalog，writer 只有一次 task CLI spawn。Context 32768、95% 可用比例、
+truncation bytes 8192、reasoning 與 API flags 都是 fixture 設值，不是任何真實
+模型能力數據；不能宣告官方 catalog、真實 tool mode、tokenizer 或 context capacity，
+也不改官方／host 的全域預設。完整 bundled catalog 的取得不屬此匿名案例。
+Guest loopback fixture 僅接受兩次 `/v1/responses` POST：先返回固定原生
+`functions.exec_command` 或下述固定 `functions.apply_patch`，再觀察同 call 的 tool output 並返回固定結束
+訊息。未宣告 dynamic admission tool，也不把同 UID guest 觀測當作授權。
+
+第一例只寫 `/workspace/native-write.txt` 的固定 bytes；第二例先讀取
+`/inputs/canary` 並核對固定 bytes，再嘗試寫該唯讀 mount。Guard exit 17／18、
+generic failure、sandbox 啟動失敗都不是拒寫成功。此 image 的 canonical
+`/usr/bin/sh` 拒寫前綴仍須符合完整固定 canary 與明確 OS denial；原始 bytes
+保留，其他 shell、路徑或額外診斷不能通過。兩例固定 `/bin/sh`、非 TTY、
+`sandbox_permissions=use_default`，且禁止 login shell。Host 核對 raw command
+開始／完成、thread／turn／call、精確 command／cwd、exit／output 與 turn
+完成順序；approval、reroute、其他工具、額外 turn 或重複 lifecycle 均拒收。
+此固定 Linux image 的公開 command display 必須解析為精確
+`/usr/bin/sh -c <固定 command>` argv，不接受其他 shell、login 或額外參數。
+Nullable aggregate 不能代表缺少輸出；同 item 的 outputDelta 合計限 4 KiB，
+須位於 command 開始與完成之間，並與原始 tool result 相符；aggregate 存在時
+亦須相符。原始 display／delta／provider carrier 分別保留，不作文字正規化。
+
+HTTP 每個 body 上限 1 MiB、兩次合計 2 MiB、每個固定 response 上限 8 KiB；
+每個 connection 使用單一 5 秒 deadline。收到 request 即保留不可重用 slot，
+第三次、部分 body、重複 length、encoding、未支援 method 或 close 不確定皆
+留下失敗。原始 request／response 只保留在記憶體，最後以有界 bundle 放入
+私有 stderr frame：raw records 先以嚴格 UTF-8 的可逆表示包裝，避免在壓縮
+JSON 內再疊 base64；無效 UTF-8 不取代或正規化。未壓縮上限 3 MiB、壓縮
+上限 16 KiB、writer frame 上限
+32 KiB；default bootstrap frame 仍為 16 KiB。Host 在 decode 前核對 bounds，
+有限解壓縮後要求單一完整 stream、無 tail／串接資料、byte count／hash 與
+strict JSON；超限不能截斷後算成功，也不自動增加上限。
+失敗 input 仍在 decode 前保存有界 raw record；預先生成的 response bytes
+須另有 `response_sent=true` 才能作成功觀測，不能推定失敗時已送出。
+
+在原 CID 自然退出後，host 獨立核對正例只有單一 regular、單 link、本人所有、
+mode 0600 的固定檔案；負例 workspace 為空，canary identity／bytes 未變。
+CLI wait、Docker client、原 CID exit、provider 停止及兩層 stderr EOF 分開核對。
+此結果只覆蓋固定 mount 路徑，不能證明所有背景 writer 已撤權、sole integrator、
+source authority、真實模型品質或自動接手。Synthetic usage=0 不提供 tokenizer／
+context capacity 證據；完整任務預算仍須包含 input、output／reasoning reserve 與
+margin，保留官方預設並依模型逐一驗證。所有 production 與 N1–N4 資格維持 false。
+
+### External OS 的固定原生 patch 觀測
+
+另提供 `workspace-patch` 與 `patch-canary-write-failure`，使用相同 opt-in、
+新 run／CID、三個 mounts、22 檔 capture、私有 tmpfs、單一 turn 與兩次 HTTP
+上限。Provider 只能返回固定 custom `functions.apply_patch` call：正例新增
+`/workspace/native-patch.txt` 的固定 bytes；負例將 `/inputs/canary` 的固定舊行
+換成固定新行，不允許 move、其他檔案或 shell。兩次 request 必須宣告唯一
+原生 custom tool，完整 Lark format 的 canonical hash 與固定公開版本相符；
+第二次 request 的 call／input、output 與 declaration 也須精確相符。
+
+此控制依 [固定版本 patch runtime](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/runtimes/apply_patch.rs)、
+[patch writer](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/apply-patch/src/lib.rs)
+及 [FileChange 契約](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server-protocol/src/protocol/v2/item.rs)
+建立。Native carrier 必須符合固定有界 plaintext 格式、exit code 與完整
+成功摘要或 `Failed to write file /inputs/canary`，不能接受截斷、其他錯誤
+或一般 nonzero。FileChange 須為唯一同 call 的 started／completed lifecycle，
+固定 path／kind／diff 與 inProgress → completed／failed；update 的欄位為
+`move_path`。負例的 terminal diff 預先依公開 `context_radius(1)` 規則建立，
+不從本次待驗 wire 學習預期值。Progress patchUpdated 若出現，亦須精確
+相符且有界；turn diff 只保存有界、同 turn 的原始觀測，不作採用權限。
+Approval、reroute、dynamic tool、其他 command、重複或亂序事件不能通過。
+FileChange 在此版本沒有輸出／exitCode 欄位，已棄用且未發出的 outputDelta
+也不能作拒寫證據。
+
+負例只能證明已到達固定寫入階段並失敗。該 writer 用 `error.to_string()`
+輸出頂層訊息，丟失底層 errno；receipt 必須記錄 `failure_cause=unknown`、
+`write_phase_observed=true`、`os_refusal_proven=false`。不得把此結果當作
+明確 OS 拒寫，亦不放寬 exec 負例的既有拒寫條件。Failed patch 的 planned
+changes 不代表實際 postimage，寫入失敗亦可能留下部分變更；host 因此仍須
+獨立核對負例 canary 的原 identity／bytes 與空 workspace，正例則只容許
+單一 regular、單 link、本人所有、0600 的精確固定檔案。任一缺項保持 unknown。
+此包不取得 checkpoint intake／整合／程序撤權權限，不完成工具清冊、
+context、真實模型或 N1–N4／production 資格；匿名實測證據留在 Git 外。
+
+### External OS 的固定互動工具拒絕控制
+
+匿名 runner 明確停用 `tools.experimental_request_user_input.enabled`，另鎖
+`features.default_mode_request_user_input=false`。只有 `input-default-guard`
+測試將前者設 true；`input-disabled-dispatch` 保持 false。兩例使用同一組固定、
+合法的一題二選 arguments、同 call ID、Default collaboration mode、一次 turn
+及兩次有界 HTTP；不啟用 Plan mode、不傳真人答案或登入資料。
+
+先依 [固定 handler 與 guard 順序](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/handlers/request_user_input.rs)、
+[tool registration](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/spec_plan.rs)
+及 [error carrier](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/tools/parallel.rs)
+建立精確預期值。第一例須有唯一正確 function declaration／完整 schema hash，
+output body 為 `request_user_input is unavailable in Default mode`；第二例須
+完全不宣告該工具，強制呼叫只可取得 `unsupported call: request_user_input`。
+兩者均須為唯一同 call ID 的 plaintext `function_call_output`，不接受 custom
+carrier、wrapper、root guard、空 call ID、取消、解析錯誤或一般 failure。
+Default guard 在 argument parsing 之前返回，故 host 另獨立核對完整固定
+nested shape／typed values；receipt 明列 `native_arguments_parsed=false`，
+不能由合法 payload 或拒絕文字推定 native parser 已執行。
+
+新案例明確傳 `turn/start.collaborationMode`，核對 settings readback 的
+Default／固定 synthetic model／low effort。初始 settings 的
+`developer_instructions=null`，turn 則指定非空固定字串
+`Fixed anonymous default-mode probe.`。依 [mode normalization](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server/src/request_processors/turn_processor.rs)，
+只有 null 會展開 built-in instructions，指定字串原樣保留；不得將首次量測的
+展開內容補進 allowlist。[設定採納](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/session/turn_input.rs)
+先送 applied event，才啟動 turn task；[snapshot projection](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server/src/request_processors/thread_summary.rs)
+保留指定 mode。整段 wire 必須恰好兩次 settings notification，順序為
+初始 settings → `turn/start` out-sent → 固定字串採納 settings → `turn/started`
+→ `turn/completed`。兩份預期值分開固定，全部綁定同一 thread／turn，其他
+settings 不可漂移；不限定 RPC response 相對通知的順序。
+Bootstrap receipt 的唯一性只描述 bootstrap prefix，另保存完整 adoption
+notification 與 sequence。缺少、重複、第三次、倒序、其他 thread、字串漂移、
+null、built-in 或其他設定改變均保持 unknown。這不改變 mode-before-parse guard。
+
+Input cases 專用 settings update 明確指定 `disabledPluginIds=[]`、
+`approvalsReviewer=user`、`effort=low`、`summary=none`、`serviceTier=default`、
+`personality=none`。其原生 apply 與 snapshot projection 支持預先固定完整
+十四欄 ThreadSettings；兩次觀測均須與對應 dictionary 完全相等，包含精確
+key 集合。`multiAgentMode` 依 pinned projection 固定 `explicitRequestOnly`，
+其他原 Never／external sandbox／fixture model-provider／null active profile
+亦逐欄核對。不得拿第一份 native settings 當任意 baseline；缺漏、額外鍵
+與任何欄位的有效替代值均有拒絕反例。這些額外設定只限兩個 input cases，
+不變更既有 exec／patch 的設定與驗收條件。
+
+`thread/start.experimentalRawEvents` 明確 false。依 [tool future 的收集](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/core/src/session/turn.rs)
+與 [app-server projection](https://github.com/openai/codex/blob/01fc69f4026735edfdf6789820549727a4867b11/codex-rs/app-server/src/bespoke_event_handling.rs)，
+這兩條拒絕路徑只記錄 history／raw event，不產生一般 tool item lifecycle；
+raw events 關閉後亦不發出 raw notification。驗證必須要求零
+`functionCallOutput`、command、file-change、dynamic-tool items 與 raw notifications，
+不能等首次測量後再允許 optional tool item。正常有界 message lifecycle 保留，
+所有 server requests 均在共用 dispatch 前拒絕且零回覆，避免共用 approval
+denial 或 user-input callback 被當作本包成功。Reroute、其他工具與不完整 turn
+仍保持 unknown。
+
+兩例沿用原始 CID、source／image／tmpfs／mounts 與自然退出驗證，host 另保存
+固定 canary 的啟動前 ref，供獨立核對前後 identity／bytes；workspace 必須為空。
+這只驗證固定封閉 fixture 的 mode guard／registry exclusion，不驗證 elicitation
+成功、真實模型、來源 broker、background writer 撤權或 native checkpoint intake。
+工具 flag 改變了 argv 與 inventory；舊 revision 的匿名結果保留為歷史證據，
+宣稱新來源的既有案例通過時須以 fresh run／CID 重測並重綁 source closure。
+所有 qualification／N1–N4 flags 仍 false，原始觀測與 review 證據留在 Git 外。
+
+### 固定原生 update 接入 protected checkpoint
+
+獨立匿名 fixture backend 使用既有 protected input／claim／completion 與
+descriptor 2／supervisor 4；固定 helper 經 root launcher 關閉 control FD，
+清除權限、groups、capabilities／bounding set 並設定 NNP=1 後，以 UID/GID 65534
+啟動原生 CLI。只能 update 固定 `example.txt`，沒有 arbitrary patch／argv／
+path 入口，也不註冊 production adapter 或改動唯一整合器 authority gate。
+
+Host private source 與 guest readonly source 是兩份獨立 capture；每份完整
+清冊、hash、mode、owner、link、inode 與目錄 identity 都事先持久化。只有
+guest tree 與固定 Linux binary 能掛載至 fixture；workspace 與 root-only
+control volume 是另外兩個固定 mounts。新 backend policy 綁定完整 capture
+與 native recipe、image、launcher、資源限制，精確驗證新增欄位後才重用既有
+網路／caps／volume policy 的未變動驗證；不能把 drift 正規化成合法狀態。
+此獨立 backend 固定使用符合 plain Python policy 的 image 與 Python 3.12.9；
+不能直接沿用另一個 native container 入口的 image 或推定其 image policy 相同。
+
+Coordinator 在建立任何 fixture 子目錄前，先逐層以既有 trusted-directory
+規則核對 evidence root 的 owner、mode、NOFOLLOW 與 Git 排除，leaf 必須為
+0700；只接受受信任或 root-owned sticky 上層目錄。保留 parent／fixture
+directory descriptor，在 producer／consumer intent 寫入及捕捉程式載入前
+重新比對 pathname 的完整信任鏈與原 inode，最後收據亦核對同一 fixture。
+不能把 leaf 0700、capture hash 或程式載入後的 PacketStore 檢查視為前置
+信任驗證；相同 UID 的可信 host 程式仍在 TCB 內，descriptor 不證明 OS 隔離。
+
+Host 必須查證原 CID、Created、完整隔離 policy、exited 狀態、protected root
+chain 與可讀的精確 postimage，才能接受 export、seal 與非空 C。Worker frame、
+CLI exit 或 file-change 訊息只提供觀測，不構成 stop／publication authority。
+Fresh consumer 在 coordinator 確認 producer 退出後，重建相同 protected refs；
+只 reconcile 原 attempt，禁止 create／bootstrap／launch／export／source apply。
+原 C、seal、descriptor 與 ledger 必須不變，缺 seal 不補 export。
+
+撤銷案另固定保留 post-write live window；host 確認仍隔離且原 CID running
+才 quarantine，後來即使出現合法 root completion，也不能發布 checkpoint。
+這證明撤銷採納權，不等同完整背景 writer 停止。窗口不足、host 不能讀取新
+inode、cap／capture／policy／控制鏈不符均保留 unknown，不加權限補救。
+另有固定 `claim-replay` 案例，只對該輪專用、首次已知正常完成的 CID 再 start，
+要求 root exit 73、原 claim／completion／worker frame／postimage 不變，且不產生 C；
+不重啟既存 unknown attempt。撤銷案另只預留新 generation、不 launch successor，
+用來核對舊結果 fence；不能當成接手執行的驗收。
+2026-10-05 的三個獨立匿名實測已完成：正常 native update 的非空 C 由真正
+不同的新程序讀回；撤銷案的晚到 completion 在新 generation 下拒收，沒有 C
+且沒有 successor launch；第三案同 CID 第二次 start 為 root exit 73，原控制鏈、
+postimage、worker frame 不變，只有一次 native invocation，fresh consumer 無 C。
+這些結果只支持固定 checkpoint intake／採納權 fence；完整 generation／競態
+反例、來源整合與 production observer／credentials／N1–N4 資格仍須各自完成。
+原始驗收與 review 證據留 Git 外，重跑只要求相同 assertions，不要求新 CID／
+時間 byte-identical。
+
+此匿名實驗 backend 對 macOS Docker Desktop 的唯讀 `/fixture` bind，將建立時實際回覆的固定 `/host_mnt` 加原 host 絕對路徑列為精確契約；Linux 仍要求原絕對路徑。host platform 與完整預期 source 納入 policy digest，`Mounts`／`HostConfig.Mounts` 同時核對，不做路徑正規化、任意 prefix 接受或跨平台 alias fallback。不同 Docker Desktop 回覆形狀會拒絕繼續；這是有界實驗相容性，尚未取得 runtime qualification。
+
+固定 image 的 inspect 只將 `User`／`WorkingDir` 未設定（欄位省略或 null）及空字串視為相同預設語義；拒絕非空值及其他型別。這遵循 [Docker Engine API version history](https://docs.docker.com/reference/api/engine/version-history/) 所述 image inspect 省略未設定 OCI 欄位的契約。固定 image ID、Python 3.12.9、Cmd、無 OnBuild／Healthcheck、完整 runtime user／working-directory 核對保持不變，不採用 runtime observation 修補 policy。
+## 固定原生來源整合入口
+
+`verify-model-native-checkpoint.py --native-source-integration-only --case checkpoint`
+只把該輪固定原生 update-only C 納入同輪建立的 private `SyntheticSource`。
+producer 保存 host descriptor；coordinator 以實際 PID／wait 0／stderr EOF
+核對後才啟動 fresh consumer。consumer 先確認原 protected refs 與固定 C，
+再由 host fixture governance 發出 scope 僅 `example.txt` 的 `native-update`
+authority。guest 不能指定 source、路徑或核准 JSON。
+
+`NativeFixturePacketIntegrator` 是獨立 exact-type fixture port；原
+`PacketIntegrator` constructor 的 synthetic-only gate 不變。每次 candidate
+核對／reconcile 重驗 captured source、固定 native recipe／patch／acceptance；
+沿用 source lock、physical descriptor、preimage、HEAD／index、authority
+revocation、packet generation fence、durable intent、同步 writer 與三態收據。
+新 scope／postimage 同時參與 authority、intent 及 recovery；不得以通過測試
+或 caller 自述取得一般來源寫入權。
+
+允許的副作用精確限於 source `example.txt` 與 integration ledger／兩份
+journal 及其 staging links；原 immutable packet refs 保持內容與 identity。
+same-operation reconcile 需保存後再次核對 packet refs 並讀回同一結果。
+receipt 的 `protected_refs_unchanged` 在 source 模式為 false，表示 ledger
+合法更新；另有明確原 immutable refs／C 不變與 intake 前全 refs 不變證據。
+固定 staging `git apply --no-index` child 使用 022 mask，保留 host 077 與
+private staging root；0644 text gate 不放寬。
+
+這條匿名 fixture E2E 不等於一般 repository integration、模型失聯接手、
+production authority 或 N1–N4 資格。舊 intake 模式仍不套用來源；實測原始
+證據留在 Git 外，不重放失敗／unknown attempts，不清理既有 Docker 資源。

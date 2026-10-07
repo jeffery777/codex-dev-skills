@@ -28,7 +28,8 @@
 - 在授權範圍內完成必要步驟，自行處理沿用模式的局部選擇，記錄重要假設。
   內部階段切換不重問既有授權；缺決策先做獨立安全準備，相依部分等待答案。
 - 採用能驗證行為的必要檢查；必跑 checks 完成後，只有新變更、失敗或未解
-  疑慮才擴大／重跑。不得省略獨立審查、必要驗證或 changed-head 完整審查。
+  疑慮才擴大／重跑。不得省略獨立審查、必要驗證或 readiness／merge／release
+  前最新完整 head 審查；未 ready draft 依 exact-head contract 保留 REVIEW_REQUIRED。
 - 中途修正保留適用成果並重查受影響證據；狀態詢問先簡答再續行，除非目標
   明確取消／替換。使用者摘要精簡，review／gate 證據保留必填欄位、findings、
   commands、skipped checks 與限制。模型專屬提示需實測，不建立 model×effort 矩陣。
@@ -55,7 +56,7 @@ Release、deploy 的目標、範圍、授權與 gate；已授權且前置通過�
 | --- | --- | --- |
 | 能力替代／重用的相容性不明 | [Capability Selection](reusable-workflow-details.md#contract-preserving-capability-selection) | 比對完整義務；必要技能缺失不推定等價。 |
 | 正式 commit／PR／merge gate | [Review And Merge](reusable-workflow-details.md#review-and-merge)、[Decision And Stop Conditions](reusable-workflow-details.md#decision-and-stop-conditions) 及適用 review gate 技能 | findings、dispositions、blocking、獨立審查；gate 不授權寫入。 |
-| 已有 change request、head 改變或宣稱 merge content readiness | [exact-head contract](exact-head-merge-review-contract.md) | 最新完整 base-to-head review；pre-commit verdict 不替代。內容與 provider 分開；只有 repo 選定 GitHub profile 才讀 [GitHub profile](github-exact-head-enforcement-profile.md)。 |
+| 已有 change request、head 改變或宣稱 merge content readiness | [exact-head contract](exact-head-merge-review-contract.md) | 未 ready 的 draft 可保留 REVIEW_REQUIRED；readiness／merge／release 前做最新完整 base-to-head review，pre-commit verdict 不替代。內容與 provider 分開；只有 repo 選定 GitHub profile 才讀 [GitHub profile](github-exact-head-enforcement-profile.md)。 |
 | 驗收失敗或返工 | [Decision And Stop Conditions](reusable-workflow-details.md#decision-and-stop-conditions) 及 [model selection](model-selection-policy.md) 的「返工分類、升級與續行」 | 不放寬驗收或角色資格；兩輪未完成 review/fix 觸發 context-continuity 評估，非自動停工／建立任務。 |
 | 委派、角色選取或編排多階段交付 | [Contextual Prompt Composition](reusable-workflow-details.md#contextual-prompt-composition)、[Shared Phases](reusable-workflow-details.md#shared-phases) 及適用編排技能 | 主代理資格核對、ownership、整合與完成責任；reviewer 唯讀、作者獨立；worker 不繼承外寫權。 |
 | thread／session／adapter 或持久資料操作 | [Protected Boundaries](reusable-workflow-details.md#protected-boundaries)、[Runtime Differences](reusable-workflow-details.md#runtime-differences)、[Capability Selection](reusable-workflow-details.md#contract-preserving-capability-selection) 及適用操作技能 | runtime discovery、schema、讀回與資料專屬契約；不自行啟用、遷移、雙寫或刪除。 |
@@ -63,7 +64,8 @@ Release、deploy 的目標、範圍、授權與 gate；已授權且前置通過�
 
 ## Shared Phases
 
-具體工程階段與證據見 [共用工程契約](engineering-workflow-contract.md)。
+具體工程階段、依風險調整成本及有效證據重用見
+[共用工程契約](engineering-workflow-contract.md#workflow-efficiency)。
 一般任務依適用技能讀來源、規劃最小範圍、執行、驗證、檢查 diff、必要審查
 及文件同步；有界多階段交付另讀上表的 Shared Phases 細則。
 

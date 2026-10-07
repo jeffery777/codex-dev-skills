@@ -13,6 +13,28 @@ radius, latency/cost sensitivity, independence, and verification burden; do not
 select a capability from the task name alone. Model/profile routing never
 changes permissions, scope, human gates, or completion criteria.
 
+基本模型接入沿用 runtime 的原生 provider／工具 loop；自架模型加入既有
+classifier／preflight／qualification 候選。決策、確定靜止邊界上的 dispatch
+與執行中 writer 接手分開驗收；advisory 不宣稱切換，advanced containment
+缺口不一律阻擋不依賴它的基本接入或決策。適用共用工程契約的分層 DoD，
+工具直接使用者是本地 agent；不預加上游派工者的入口資格，實際 runtime／
+權限／授權／工具差異才補整合證據。一般 subagent 失敗由存活主 agent 在
+已知靜止邊界用 Codex 原生編排重新派工；Issue #316 的 C 僅限存活本地
+coordinator、單一受管執行器、持久 checkpoint 與已停止／隔離 writer，
+其資格不作 A/B 的共同前置。LiteLLM 本地模型不接入 Hermes。
+不另建選模腦、retry loop 或恢復框架來完成普通 routing。
+
+Typed `model-task-execute` 仍沿用上述決策；規劃成功的工作包須另帶
+`task_input_ref: {path, sha256}`，指向 Git 外 protected `model-task-inputs/`
+原始 task request／驗收／source／允許目的地。唯讀 loader 與實際 CLI packet
+consumer 在派發、launch、封存前核對，不接受 input 自述 granted／qualified。
+耗時原始來源核對後，consumer 再重讀受保護目標並以同一時間核對有效期。
+Disabled/advisory 舊三欄輸入仍可讀；planned 缺原始輸入則零效果拒絕。完整
+schema／限制見 source `docs/guides/local-model-mapping.md` 或 installed
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/docs/guides/local-model-mapping.md`。
+這個限制不授權，也不建立 runtime 資格；同 UID host 屬 TCB，production
+containment registry 仍空。固定 native fixture 不因新增 loader 成為正式 admission。
+
 First-review triage maps actual CI admission, installer and cross-module
 contract impact to existing `high` or `public-contract` risk factors; security
 and data retain their hard triggers. Select deep review immediately when these

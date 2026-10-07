@@ -30,10 +30,13 @@ Use this skill for a focused implementation task where the target behavior is cl
 ## Workflow
 
 1. Read repo instructions, relevant files, tests, and current git state when available.
-2. Identify affected files and likely verification before editing.
+2. Identify the smallest deliverable, affected files, DoD, blocker removed and
+   dependencies. Before editing, run cheap contract/environment/consumer smoke
+   checks, including actual return types and CLI reply shapes when applicable.
 3. Make the smallest scoped change that satisfies the objective.
 4. Avoid unrelated refactors and do not overwrite unrelated user changes.
-5. Run the smallest relevant verification.
+5. Run the smallest relevant verification after smoke checks. Follow the shared
+   contract's Workflow Efficiency section for risk-based review and evidence reuse.
 6. Inspect the diff before reporting.
 
 ## Commit Behavior

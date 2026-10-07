@@ -37,6 +37,10 @@ tasks:
       - "<done-criterion>"
     verification:
       - "<command>"
+      # Typed model-task execution additionally verifies protected originals,
+      # acceptance/destination and source at the consumer/launch boundary.
+      # Keep task_input_ref/private original bytes outside this tracked manifest;
+      # successful input readback is not authority or runtime qualification.
     review:
       required: false
       mode: "<none | code-review | code-review-deep | docs-review | formal-gate>"

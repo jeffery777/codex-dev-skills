@@ -27,6 +27,7 @@ import agent_routing  # noqa: E402
 import agent_qualification  # noqa: E402
 import local_model_mapping  # noqa: E402
 import model_failover  # noqa: E402
+import model_task_execution  # noqa: E402
 import context_continuity  # noqa: E402
 
 CANONICAL_PROFILE_REGISTRY = (
@@ -65,6 +66,28 @@ def command_model_failover_plan(path: pathlib.Path) -> int:
         return 1
     render(result)
     return 0 if result['plan']['status'] in {'planned', 'retry'} else 1
+
+
+def command_model_task_execute(path: pathlib.Path) -> int:
+    """Execute one protected target through the existing CLI handoff contract."""
+    try:
+        with path.open('rb') as stream:
+            document = model_failover.parse_payload(stream.read(model_failover.MAX_BYTES + 1))
+        if not isinstance(document, dict) or set(document) not in (
+                {'task', 'model_failover', 'cli_request'},
+                {'task', 'model_failover', 'cli_request', 'task_input_ref'}):
+            raise model_task_execution.ExecutionContractError('invalid-model-task-execution-input')
+        result = model_task_execution.execute_next(document['task'], document['model_failover'],
+            document['cli_request'], document.get('task_input_ref'))
+    except (OSError, ValueError, UnicodeError, RecursionError) as exc:
+        render({'status': 'blocked', 'dispatched': False, 'repository_completion_claimed': False,
+                'reason': str(exc) if isinstance(exc, (model_task_execution.ExecutionContractError,
+                    model_failover.FailoverError, agent_routing.AgentRoutingContractError))
+                else 'invalid-or-unreadable-model-task-input'})
+        return 1
+    render(result)
+    execution = result['execution']
+    return 0 if execution is not None and execution['status'] == 'completed' else 1
 
 
 def _trusted_current_time() -> dt.datetime:
@@ -1815,6 +1838,8 @@ def main(argv: list[str] | None = None) -> int:
     context_health.add_argument("path", type=pathlib.Path)
     failover_plan = subparsers.add_parser("model-failover-plan")
     failover_plan.add_argument("path", type=pathlib.Path)
+    model_task = subparsers.add_parser("model-task-execute")
+    model_task.add_argument("path", type=pathlib.Path)
     agent_route = subparsers.add_parser("agent-route")
     agent_route.add_argument("path", type=pathlib.Path)
     agent_route.add_argument("--runtime-facts", required=True, type=pathlib.Path)
@@ -1892,6 +1917,8 @@ def main(argv: list[str] | None = None) -> int:
             return command_context_health(args.path)
         if args.command == "model-failover-plan":
             return command_model_failover_plan(args.path)
+        if args.command == "model-task-execute":
+            return command_model_task_execute(args.path)
         if args.command == "agent-route":
             return command_agent_route(
                 args.path, runtime_facts_path=args.runtime_facts

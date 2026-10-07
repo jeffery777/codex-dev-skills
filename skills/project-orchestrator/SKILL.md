@@ -67,6 +67,9 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
 - If ordinary review evidence is needed, route code or mixed changes to `code-review`, high-risk code or mixed changes to `code-review-deep`, and docs-only or docs-dominant changes to `docs-review`.
 - If a formal blocking decision is required for commit readiness, PR readiness, merge readiness, or repo policy, route through `code-review-gate` or `docs-review-gate`.
 - If review findings need closure, route fixes through the smallest primitive workflow: `implementation-slice` for code or mixed changes, `docs-update` for docs-only changes, then rerun the relevant review primitive or formal gate for the current stage.
+- A non-ready draft may remain REVIEW_REQUIRED after applicable pre-commit gates;
+  full Merge Review is due before readiness, merge or release. Do not reuse an
+  old-head verdict or change required CI/platform gates for a draft checkpoint.
 - If a change request exists, never route pre-commit review evidence directly
   to merge readiness. Require deterministic verification, complete exact-head
   content Merge Review, code/documentation coherence, and the formal gate. A

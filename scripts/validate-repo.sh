@@ -22,6 +22,7 @@ ok() {
 }
 
 SKIP_UNIT_TESTS=false
+WORKFLOW_SMOKE=false
 UNIT_TEST_GROUP_SKIPPED=false
 
 parse_args() {
@@ -30,6 +31,10 @@ parse_args() {
       --skip-unit-tests)
         "$SKIP_UNIT_TESTS" && fail "duplicate option: $1"
         SKIP_UNIT_TESTS=true
+        ;;
+      --workflow-smoke)
+        "$WORKFLOW_SMOKE" && fail "duplicate option: $1"
+        WORKFLOW_SMOKE=true
         ;;
       --)
         fail "unexpected option: $1"
@@ -54,6 +59,33 @@ run_unit_tests() {
 }
 
 parse_args "$@"
+
+# Bounded behavioral samples, not complete repository or readiness validation.
+if [[ "$WORKFLOW_SMOKE" == true ]]; then
+  "$SKIP_UNIT_TESTS" && fail "--workflow-smoke cannot be combined with --skip-unit-tests"
+  "$PROJECT_PYTHON" -m unittest \
+    tests.test_policy_loading.PolicyLoadingTests.test_required_detail_sections_retain_contract_identifiers \
+    tests.test_policy_loading.PolicyLoadingTests.test_trigger_links_and_legacy_anchors_resolve_in_source_and_plugin \
+    tests.test_exact_head_merge_review_contract_docs.ExactHeadMergeReviewContractDocsTests.test_contract_local_links_resolve_independently_of_historical_prose \
+    tests.test_exact_head_merge_review_contract_docs.ExactHeadMergeReviewContractDocsTests.test_draft_state_is_consistent_across_common_consumers_and_templates \
+    tests.test_exact_head_merge_review_contract_docs.ExactHeadMergeReviewContractDocsTests.test_all_merge_readiness_consumers_require_exact_head_contract \
+    tests.test_agent_routing.ClassificationTests.test_v2_routine_review_separates_read_only_class_from_required_tier \
+    tests.test_agent_routing.ClassificationTests.test_v2_cost_aware_tiers \
+    tests.test_agent_routing.ClassificationTests.test_v2_named_first_review_risks_map_to_deep_despite_cost_bias \
+    tests.test_agent_routing.ClassificationTests.test_v2_security_risk_cannot_be_cost_downgraded \
+    tests.test_agent_routing.ReceiptTests.test_valid_worker_receipt_is_coordination_only \
+    tests.test_agent_routing.ReceiptTests.test_partial_failed_stale_and_conflicting_receipts_are_rejected \
+    tests.test_agent_routing.ReceiptTests.test_main_agent_must_verify_before_integration \
+    tests.test_context_continuity.ContextContinuityTests.test_two_round_threshold_only_assesses_and_never_authorizes_action \
+    tests.test_context_continuity.ContextContinuityTests.test_missing_comparison_measurements_regrounds \
+    tests.test_engineering_workflow.EngineeringFixtureTests.test_both_labels_observe_same_functional_outcomes_without_granting_readiness \
+    tests.test_engineering_workflow.EngineeringFixtureTests.test_preflight_and_verify_reject_protected_drift_before_execution \
+    tests.test_exact_head_merge_review.ExactHeadMergeReviewTests.test_only_open_non_draft_pr_and_bound_receipt_url_pass \
+    tests.test_engineering_workflow.EngineeringFixtureTests.test_preflight_checks_contract_without_executing_or_granting_readiness \
+    tests.test_engineering_workflow.EngineeringFixtureTests.test_public_preflight_json_shape_on_source_and_plugin_consumers
+  printf '[OK] representative workflow smoke; full CI, review and qualification remain required\n'
+  exit 0
+fi
 
 TMP_BASE="${TMPDIR:-/tmp}"
 case "$TMP_BASE" in

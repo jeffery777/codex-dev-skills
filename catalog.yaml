@@ -92,6 +92,7 @@ groups:
       - source: docs/native-runtime-capabilities.md
       - source: docs/agent-qualification-autoload.md
       - source: docs/guides/local-model-mapping.md
+      - source: docs/design/native-model-integration-layers.md
       - source: templates/orchestration/loop-engineering-spec.template.md
       - source: templates/orchestration/loop-decision-input.template.yaml
       - source: templates/orchestration/loop-event.template.yaml

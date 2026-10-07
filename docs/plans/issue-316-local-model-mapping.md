@@ -11,7 +11,9 @@ CLI 與 Desktop 分別依公開 runtime 介面驗證；不依賴 private API，�
 
 ## 本次有限交付與後續工作
 
-本次從最新 `main` 拆出角色映射（A）及純建議式 failover planner（B）。
+PR #322 已從當時最新 `main` 拆出角色映射（A）及純建議式 failover planner（B），
+並於 2026-10-07 合併；Issue #316 因此關閉。未完成項以
+[Issue #323](https://github.com/jeffery777/codex-dev-skills/issues/323) 為現行追蹤入口。
 `model-failover-plan` 重用 V2 分類，只讀可信父代理摘要並輸出
 `dispatched: false`。合成測試驗證輸入契約、服務／品質事件及拒絕條件；
 不能把它視為實際 A/B 混合模型執行。來源與套件版本為候選，未宣稱已發版。
@@ -21,7 +23,11 @@ CLI 與 Desktop 分別依公開 runtime 介面驗證；不依賴 private API，�
 與執行器的連接、保護性授權與機密排除；有界交接、持久事件／冷卻、單一 writer
 與外部寫入結果讀回；逐模型長 context、品質及獨立 review。若公開 Desktop
 能力不足，記錄有限支援，不以私有介面補足。原 #317 draft 的執行／接手歷史
-保留；只有本次 PR 合併後才依最新 `main` 重新調和其重疊內容並重審。
+保留；#317 仍是 draft，須依已合併的 `main` 調和重疊內容並完整重審。
+拆分前的 C 工程計畫與指南原文保留於
+[歷史計畫](../history/issue-317-c-draft-plan-95d9584.md)及
+[歷史指南](../history/issue-317-c-draft-guide-95d9584.md)，僅供追溯，
+不作為當前操作或資格依據。
 
 ## 設計與實作順序
 

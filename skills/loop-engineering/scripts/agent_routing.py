@@ -460,8 +460,16 @@ def _classify_v2(
     }
 
 
-def plan_model_failover(task: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
-    """Bind an advisory failover plan to the current V2 classification."""
+def plan_model_failover(task: dict[str, Any], payload: dict[str, Any], *,
+                        _trusted_unused_source_guard=None, _trusted_historical_source_guard=None,
+                        _trusted_resolved_unknown_guard=None, _trusted_locked_context=None,
+                        _trusted_v6_unused_source_guard=None, _trusted_v6_historical_source_guard=None) -> dict[str, Any]:
+    """Extend the current V2 classifier with provider-aware failure planning.
+
+    This is advisory. Existing qualification/preflight and runtime dispatch still
+    own their contracts; a plan is never an executed agent-route receipt.
+    Optional source guards are injected host code, never loaded from task/JSON.
+    """
     import model_failover
 
     allowed = {'id', 'factors', 'workload_kind', 'qualification_scope', 'quality_preference'}
@@ -473,14 +481,22 @@ def plan_model_failover(task: dict[str, Any], payload: dict[str, Any]) -> dict[s
     classification = classify_task(task['factors'], contract_version=2,
                                    workload_kind=task['workload_kind'],
                                    quality_preference=task.get('quality_preference'))
-    model_failover._validate(payload)
+    model_failover._validate(payload, _defer_transitions=_trusted_resolved_unknown_guard is not None)
     expected = {'id': task['id'], 'scope': task['qualification_scope'],
                 'capability_class': classification['capability_class'],
                 'capability_tier': classification['capability_tier']}
     if any(payload['task'][key] != value for key, value in expected.items()):
         raise AgentRoutingContractError('failover task does not match current V2 classification')
+    extra = {} if _trusted_v6_unused_source_guard is None else {
+        '_trusted_v6_unused_source_guard': _trusted_v6_unused_source_guard}
+    if _trusted_v6_historical_source_guard is not None:
+        extra['_trusted_v6_historical_source_guard'] = _trusted_v6_historical_source_guard
     return {'classification': classification,
-            'plan': model_failover.select_next(payload), 'dispatched': False}
+            'plan': model_failover.select_next(payload,
+                _trusted_unused_source_guard=_trusted_unused_source_guard,
+                _trusted_historical_source_guard=_trusted_historical_source_guard,
+                _trusted_resolved_unknown_guard=_trusted_resolved_unknown_guard,
+                _trusted_locked_context=_trusted_locked_context, **extra), 'dispatched': False}
 
 
 def _sandbox_is_non_widening(profile: dict[str, Any]) -> bool:

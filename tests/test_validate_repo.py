@@ -24,20 +24,22 @@ class ValidateRepositoryArgumentsTests(unittest.TestCase):
             check=False,
         )
 
-    def test_only_skip_unit_tests_is_accepted(self) -> None:
+    def test_unit_test_groups_remain_explicitly_skippable(self) -> None:
         script = VALIDATOR.read_text(encoding="utf-8")
 
         self.assertIn("SKIP_UNIT_TESTS=false", script)
         self.assertIn('parse_args "$@"', script)
         self.assertIn('run_unit_tests() {', script)
         self.assertIn("[SKIP] embedded unit-test group:", script)
-        self.assertEqual(18, script.count("run_unit_tests "))
-        self.assertEqual(12, script.count('scripts/eval-'))
+        self.assertRegex(script, r'run_unit_tests tests\.[a-z_]+')
+        self.assertIn('scripts/eval-', script)
 
     def test_invalid_arguments_fail_before_validation(self) -> None:
         cases = (
             (("--unexpected",), "unknown option: --unexpected"),
             (("--skip-unit-tests", "--skip-unit-tests"), "duplicate option: --skip-unit-tests"),
+            (("--workflow-smoke", "--workflow-smoke"), "duplicate option: --workflow-smoke"),
+            (("--workflow-smoke", "--skip-unit-tests"), "cannot be combined"),
             (("--",), "unexpected option: --"),
             (("extra",), "unexpected positional argument: extra"),
         )

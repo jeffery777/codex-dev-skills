@@ -4,7 +4,10 @@ import copy
 import importlib.util
 import json
 import pathlib
+import sys
+from types import SimpleNamespace
 import unittest
+from unittest import mock
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -109,6 +112,31 @@ def route_v2(workload_kind, task_factors=None, runtime=None, quality_preference=
         source_revision={"head_sha": "def456"},
         authority_contract={"scope": "P2", "external_write": False},
     )
+
+
+class FailoverHostInjectionTests(unittest.TestCase):
+    def test_only_explicit_host_keywords_reach_selector_after_current_v2_classification(self):
+        task = {'id': 'T1', 'workload_kind': 'implementation', 'qualification_scope': 'repair', 'factors': factors()}
+        payload = {'task': {'id': 'T1', 'scope': 'repair', 'capability_class': 'balanced-worker', 'capability_tier': 'everyday'}}
+        unused = object(); historical = object(); resolved = object()
+        selector = SimpleNamespace(_validate=mock.Mock(), select_next=mock.Mock(return_value={'status': 'blocked'}))
+        with mock.patch.dict(sys.modules, {'model_failover': selector}):
+            routing.plan_model_failover(task, payload, _trusted_unused_source_guard=unused,
+                                       _trusted_historical_source_guard=historical, _trusted_resolved_unknown_guard=resolved)
+            selector.select_next.assert_called_once_with(payload, _trusted_unused_source_guard=unused,
+                                                        _trusted_historical_source_guard=historical,
+                                                        _trusted_resolved_unknown_guard=resolved, _trusted_locked_context=None)
+            selector.select_next.reset_mock()
+            v6 = object()
+            routing.plan_model_failover(task, payload, _trusted_v6_unused_source_guard=v6)
+            selector.select_next.assert_called_once_with(payload, _trusted_unused_source_guard=None,
+                _trusted_historical_source_guard=None, _trusted_resolved_unknown_guard=None,
+                _trusted_locked_context=None, _trusted_v6_unused_source_guard=v6)
+            selector.select_next.reset_mock()
+            task['factors']['reasoning_depth'] = 'deep'
+            with self.assertRaises(routing.AgentRoutingContractError):
+                routing.plan_model_failover(task, payload, _trusted_historical_source_guard=historical)
+            selector.select_next.assert_not_called()
 
 
 class ClassificationTests(unittest.TestCase):

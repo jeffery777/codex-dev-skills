@@ -41,4 +41,5 @@ comments, review submissions, destructive action or publication, and at unclear
 findings, scope expansion or material security, data, migration or public-contract
 risk requiring a decision. Existing exact authorization remains valid while its
 target, scope and risk match. A changed request head still requires complete
-base-to-head exact-head Merge Review.
+base-to-head exact-head Merge Review before readiness, merge or release. A
+non-ready draft may remain REVIEW_REQUIRED under the exact-head contract.

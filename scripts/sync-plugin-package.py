@@ -32,6 +32,7 @@ SHARED_FILES = {
     "docs/native-runtime-capabilities.md",
     "docs/agent-qualification-autoload.md",
     "docs/guides/local-model-mapping.md",
+    "docs/design/native-model-integration-layers.md",
 }
 SHARED_PREFIXES = ("templates/orchestration/",)
 

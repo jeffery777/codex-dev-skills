@@ -35,7 +35,8 @@ NITS are non-blocking only after they are fixed, explicitly rejected with ration
 
 Shared rationale may cover a batch of NITs while preserving every finding id.
 Reused pre-commit evidence cannot replace complete base-to-head exact-head Merge
-Review for a new change-request head.
+Review for a new change-request head before readiness, merge or release. A
+non-ready draft may remain REVIEW_REQUIRED under that contract.
 
 ## Output
 

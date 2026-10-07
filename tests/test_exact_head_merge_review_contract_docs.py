@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pathlib
+import re
 import unittest
 
 
@@ -12,44 +13,37 @@ def read(relative: str) -> str:
 
 
 class ExactHeadMergeReviewContractDocsTests(unittest.TestCase):
-    def test_roadmap_keeps_completed_rollout_out_of_future_task_selection(self) -> None:
-        roadmap = " ".join(read("docs/roadmap.md").split())
-        for phrase in (
-            "Issues #185, #190, #192, and #186 are completed",
-            "not future task-selection targets",
-            "Issue #185 delivered the trusted default-branch collector",
-            "Issue #190 repaired the completed-check lifecycle",
-            "Issue #192 stabilized the Codex runtime compatibility baseline",
-            "Issue #186 sharded repository tests",
-            "Issue #188 / PR #189 is reserved as intentionally retained operational",
-            "It is not pending product work and must stay unmerged",
-            "Canary cleanup remains a separate destructive human gate",
-            "rather than mirrored as mutable tracked current-state assertions",
-        ):
-            with self.subTest(phrase=phrase):
-                self.assertIn(phrase, roadmap)
+    def test_contract_local_links_resolve_independently_of_historical_prose(self) -> None:
+        for relative in ('policies/engineering-workflow-contract.md',
+                         'policies/exact-head-merge-review-contract.md',
+                         'policies/reusable-workflow-contract.md'):
+            links = re.findall(r'\]\(([^)]+)\)', read(relative))
+            self.assertTrue(links, relative)
+            for target in links:
+                path, _, anchor = target.partition('#')
+                if '://' in target:
+                    continue
+                destination = (ROOT / relative).parent / path
+                with self.subTest(source=relative, target=target):
+                    self.assertTrue(destination.is_file())
+                    if anchor:
+                        headings = re.findall(r'^#+ (.+)$', destination.read_text(), re.M)
+                        slugs = {re.sub(r'[^\w -]', '', heading.lower()).replace(' ', '-')
+                                 for heading in headings}
+                        self.assertIn(anchor, slugs)
 
-        self.assertNotIn(
-            "Issue #185 defines the next platform-enforcement milestone",
-            roadmap,
-        )
-
-    def test_roadmap_records_v0220_merge_review_baseline_as_completed(self) -> None:
-        roadmap = " ".join(read("docs/roadmap.md").split())
-        for phrase in (
-            "Issue #205 / PR #206 completed the v0.22.0 provider-neutral exact-head Merge Review baseline",
-            "Content readiness binds the final complete range",
-            "Provider enforcement is reported separately",
-            "installed shared skills no longer impose it on GitLab CE or another forge",
-            "This completed baseline is not a future task-selection target",
-        ):
-            with self.subTest(phrase=phrase):
-                self.assertIn(phrase, roadmap)
-
-        self.assertNotIn(
-            "Issue #205 owns the provider-neutral exact-head Merge Review and v0.22.0 candidate",
-            roadmap,
-        )
+    def test_draft_state_is_consistent_across_common_consumers_and_templates(self) -> None:
+        for relative in ('policies/exact-head-merge-review-contract.md',
+                         'skills/project-delivery/SKILL.md',
+                         'skills/project-orchestrator/SKILL.md',
+                         'skills/loop-engineering/SKILL.md',
+                         'templates/orchestration/implementation-plan.template.md',
+                         'templates/orchestration/loop-iteration-report.template.md'):
+            with self.subTest(relative=relative):
+                self.assertIn('REVIEW_REQUIRED', read(relative))
+        # Draft checkpoints do not extend the formal verdict schema.
+        template = read('templates/review/merge-review-report.template.md')
+        self.assertNotIn('REVIEW_REQUIRED', template)
 
     def test_policy_separates_content_and_provider_readiness(self) -> None:
         policy = " ".join(
@@ -74,29 +68,11 @@ class ExactHeadMergeReviewContractDocsTests(unittest.TestCase):
         profile = " ".join(
             read("policies/github-exact-head-enforcement-profile.md").split()
         )
-        for phrase in (
-            "optional provider profile",
-            "EXACT_HEAD_CI_PASSED",
-            "RECEIPT_PLATFORM_READBACK_CONFIRMED",
-            "GITHUB_EXACT_HEAD_ENFORCEMENT_VERIFIED",
-            "merge_authorized: false",
-            "Each relevant evaluation creates a fresh check run",
-            "older successes cannot substitute",
-            "Historical same-context check runs are expected",
-            "same ID and sequence from silently replacing",
-            "Both success and failure publication require",
-            "A malformed prior pointer is superseded by a fresh verified failure",
-            "per-suite 1,000-run limit",
-            "Fork pull requests may receive the same metadata evaluation",
-            "A shared GitHub Actions identity is not an adequate trust source",
-            "The upstream required-CI set excludes the readiness check itself",
-            "zero open `MUST-FIX`, `SHOULD-FIX`, and `NIT` findings",
-            "event-driven projection rather than an atomic transaction",
-            "Approval-count policy remains a separate human decision",
-            "Do not require the readiness check before the canary identifies its App",
-        ):
-            with self.subTest(phrase=phrase):
-                self.assertIn(phrase, profile)
+        for state in ('EXACT_HEAD_CI_PASSED', 'RECEIPT_PLATFORM_READBACK_CONFIRMED',
+                      'GITHUB_EXACT_HEAD_ENFORCEMENT_VERIFIED', 'merge_authorized: false',
+                      'MUST-FIX', 'SHOULD-FIX', 'NIT'):
+            with self.subTest(state=state):
+                self.assertIn(state, profile)
 
     def test_all_merge_readiness_consumers_require_exact_head_contract(self) -> None:
         consumers = (

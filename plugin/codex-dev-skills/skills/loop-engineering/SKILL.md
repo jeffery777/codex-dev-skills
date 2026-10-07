@@ -48,6 +48,7 @@ Paths below are relative to this skill and ship in source/plugin/install copies.
 | --- | --- |
 | Existing ledger, protected history, any event write, or durable templates | `references/loop-state-and-authorization.md` |
 | Heterogeneous profile routing or routed-worker acceptance | `references/agent-routing.md` |
+| Typed `model-task-execute` original input/source constraints | `references/agent-routing.md` |
 | Candidate delegation, also callable directly from delivery/orchestrator | `references/agent-qualification.md` |
 | Security scan continuation, recovery, or reporting | `references/security-scan-recovery.md` |
 | Context-health threshold, context drift, or fresh rollover | `references/context-continuity.md` |
@@ -110,8 +111,10 @@ After a fix, select the appropriate review scope from the affected boundary
 and assess Security Diff Scan applicability under the exact-head contract.
 Record scope and rationale when not applicable, and why prior evidence remains
 applicable. Widen the rerun when
-shared assumptions changed. Every changed change-request head still requires a
-complete new base-to-head Merge Review. Repeat provider readback only when the
+shared assumptions changed. A non-ready draft may remain REVIEW_REQUIRED after
+applicable pre-commit gates. Every changed change-request head requires a
+complete new base-to-head Merge Review before readiness, merge or release.
+Draft deferral cannot change required CI or platform gates. Repeat provider readback only when the
 selected profile requires it.
 
 Clean internal reviews and scans advance automatically to the next safe

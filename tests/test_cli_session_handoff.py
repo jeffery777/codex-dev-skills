@@ -299,6 +299,7 @@ class CodexPublicHelpCompatibilityTests(unittest.TestCase):
                 workspace=ROOT,
                 operation=operation,
                 session_id=None if operation == "start" else SESSION_ID,
+                execution_target=None,
             )
             argv = handoff.build_argv(request)
             self.assertEqual("-", argv[-1])
@@ -635,6 +636,662 @@ class CliSessionHandoffTests(unittest.TestCase):
                 "fresh_rollover": metric,
             },
         }
+
+    def _typed_request(self, *, official=True, sandbox="read-only"):
+        from tests.test_model_execution_target import TargetFixture
+        request = self.request(sandbox=sandbox)
+        request["authorization"]["sandbox_ceiling"] = sandbox
+        home = self.root.resolve()/"typed-target-home"
+        target = TargetFixture(home, prompt=request["prompt"].rstrip()+"\n\n"+handoff.PROMPT_BOUNDARY_APPENDIX,
+            head=self.head, executable_sha256=handoff._sha256_file(self.executable), official=official)
+        request["target_ref"] = target.ref
+        return request, target
+
+    def _packet_attempt(self, request, packet, attempt_id, revision):
+        source_input = self._packet_input
+        # Synthetic stop adapter is fixture evidence, never production adoption.
+        adapter = types.SimpleNamespace(verify_stopped=lambda *_: True, supports_target=lambda *_: True)
+        with mock.patch.dict(handoff.PACKET_STOP_ADAPTERS, {'synthetic': adapter}):
+            return handoff.execute_packet_attempt(request, packet, attempt_id, revision,
+                stop_adapter_id='synthetic', source_input=source_input)
+
+    def _prepare_packet_input(self, target, request, packet):
+        from tests.test_model_task_ingress import InputFixture
+        identity = handoff.model_execution_target.identity(target.record)
+        f = InputFixture(target.home, request, scope=target.record['task']['route_task']['qualification_scope'],
+            destinations=[handoff.model_execution_target.canonical_sha(identity)])
+        self._packet_input = f.read(identity=identity)
+        packet.prepare(self._packet_input.packet_identity(handoff._canonical_repository_id(self.workspace)))
+
+    def _routed_input(self, target, request):
+        from tests.test_model_failover import route_fixture
+        from tests.test_model_task_ingress import InputFixture
+        with mock.patch.object(handoff.model_execution_target, 'root', return_value=target.home):
+            binding = target.resolve(sandbox=request['sandbox'])
+        route = route_fixture(); route['task'] = target.record['task']['route_task']
+        policy = route['model_failover']
+        for key in ('task', 'authorization', 'secret_check'):
+            policy[key].update(task_id='T1' if key != 'task' else None,
+                scope=binding.scope, acceptance_sha256=binding.acceptance_sha256)
+        policy['task'].pop('task_id'); policy['task']['id'] = binding.task_id
+        for candidate in policy['targets']:
+            candidate['qualification']['scopes'] = [binding.scope]
+        selected = policy['targets'][2 if target.record['provider']['billing'] == 'chatgpt-subscription' else 0]
+        selected.update(id=binding.target_id, identity=handoff.model_execution_target.target_identity(binding))
+        selected['qualification']['identity_sha256'] = handoff.model_execution_target.canonical_sha(selected['identity'])
+        if selected['stage'] == 'official':
+            policy['targets'][0]['availability']['status'] = 'unavailable'
+        else:
+            policy['current_target'] = binding.target_id
+        policy['authorization']['target_identity_sha256'] = [handoff.model_execution_target.canonical_sha(c['identity']) for c in policy['targets']]
+        fixture = InputFixture(target.home, request, scope=binding.scope, destinations=[binding.identity_sha256])
+        # The operator prepares the existing protected PacketStore root;
+        # neither original-input loader nor executor adopts a missing store.
+        (target.home/'model-packets').mkdir(mode=0o700, exist_ok=True)
+        return route, fixture, binding
+
+    def test_actual_routing_original_input_to_typed_target_and_packet_chain(self):
+        import model_task_execution as execution
+        request, target = self._typed_request(official=True)
+        route, fixture, binding = self._routed_input(target, request)
+        stop = types.SimpleNamespace(supports_target=lambda value: value.identity_sha256 == binding.identity_sha256,
+            verify_stopped=lambda *_: True)
+        with mock.patch.object(handoff.model_execution_target, 'root', return_value=target.home), mock.patch.dict(handoff.PACKET_STOP_ADAPTERS, {'synthetic': stop}):
+            result = execution.execute_next(route['task'], route['model_failover'], request, fixture.ref)
+        self.assertTrue(result['dispatched'])
+        self.assertEqual(result['execution']['status'], 'completed')
+        self.assertEqual(result['execution']['execution_target']['provider_readback'], 'unknown')
+        self.assertFalse(result['repository_completion_claimed'])
+        self.assertEqual((self.workspace/'README.md').read_text(), 'fixture\n')
+
+    def test_legacy_unknown_locator_is_not_replaced_by_new_ingress(self):
+        import model_task_execution as execution
+        request, target = self._typed_request(official=True)
+        route, fixture, binding = self._routed_input(target, request)
+        stable = {'repository': handoff._canonical_repository_id(self.workspace), 'task_id': binding.task_id,
+            'scope': binding.scope, 'acceptance_sha256': binding.acceptance_sha256}
+        store = handoff.model_packet_store
+        packet_id = store.digest(store.canonical(stable))
+        directory = target.home/'model-packets'
+        packet = store.PacketStore(directory, packet_id)
+        packet.prepare(store.digest(store.canonical({**stable, 'source_head': self.head})))
+        packet.claim('legacy-attempt', 'a'*64, binding.identity_sha256, expected_revision=0)
+        packet.retain_unknown('legacy-attempt')
+        before = (directory/packet_id/'ledger.json').read_bytes()
+        stop = types.SimpleNamespace(supports_target=lambda *_: True, verify_stopped=lambda *_: True)
+        with mock.patch.object(handoff.model_execution_target, 'root', return_value=target.home), mock.patch.dict(handoff.PACKET_STOP_ADAPTERS, {'synthetic': stop}), mock.patch.object(handoff, '_run_child') as run:
+            result = execution.execute_next(route['task'], route['model_failover'], request, fixture.ref)
+        self.assertIsNone(result['dispatched']); self.assertEqual(result['execution']['status'], 'unknown')
+        run.assert_not_called()
+        self.assertEqual((directory/packet_id/'ledger.json').read_bytes(), before)
+        self.assertEqual([p.name for p in directory.iterdir()], [packet_id])
+
+    def test_packet_without_qualified_stop_adapter_never_starts(self):
+        with mock.patch.object(handoff, 'validate_request') as validate:
+            with self.assertRaisesRegex(handoff.HandoffValidationError, 'containment is unavailable'):
+                handoff.execute_packet_attempt({}, None, 'attempt-1', 0)
+        validate.assert_not_called()
+
+    def test_packet_cannot_omit_or_forge_original_input_guard(self):
+        adapter = types.SimpleNamespace(supports_target=lambda *_: True)
+        with mock.patch.dict(handoff.PACKET_STOP_ADAPTERS, {'synthetic': adapter}), mock.patch.object(handoff, 'validate_request') as validate:
+            for source_input in (None, {'granted': True, 'qualified': True}):
+                with self.assertRaisesRegex(handoff.HandoffValidationError, 'Original task/source input is required'):
+                    handoff.execute_packet_attempt({}, None, 'attempt-1', 0,
+                        stop_adapter_id='synthetic', source_input=source_input)
+        validate.assert_not_called()
+
+    def test_packet_source_drift_before_launch_retains_claim_without_start(self):
+        request, target = self._typed_request(sandbox='workspace-write')
+        directory = target.home/'packets'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        self._prepare_packet_input(target, request, packet)
+        capture = handoff._capture_isolated_patch
+        def drift(*args):
+            patch = capture(*args)
+            (self.workspace/'README.md').write_text('source changed before launch\n')
+            return patch
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff, '_capture_isolated_patch', side_effect=drift), mock.patch.object(handoff, '_run_child') as run:
+            result = self._packet_attempt(request, packet, 'attempt-1', 0)
+        self.assertEqual(result['status'], 'unknown')
+        run.assert_not_called()
+        ledger, patch = packet.read_checkpoint()
+        self.assertEqual(ledger['attempts'][0]['status'], 'unknown')
+        self.assertIsNone(ledger['checkpoint']); self.assertEqual(patch, b'')
+
+    def test_packet_source_drift_after_child_rejects_checkpoint_and_retains_unknown(self):
+        request, target = self._typed_request(sandbox='workspace-write')
+        directory = target.home/'packets'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        self._prepare_packet_input(target, request, packet)
+        def drift(validated, workspace, *, on_started, before_launch):
+            before_launch()
+            on_started(); (workspace/'new.txt').write_text('private unaccepted result\n')
+            (self.workspace/'README.md').write_text('source changed after launch\n')
+            return 1, b'', None
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff, '_run_child', side_effect=drift) as run:
+            result = self._packet_attempt(request, packet, 'attempt-1', 0)
+        self.assertEqual(result['status'], 'unknown'); run.assert_called_once()
+        ledger, _ = packet.read_checkpoint()
+        self.assertIsNone(ledger['checkpoint'])
+        self.assertEqual(ledger['attempts'][0]['status'], 'unknown')
+        self.assertTrue((directory/'synthetic-packet/attempt-attempt-1/workspace/new.txt').is_file())
+
+    def test_packet_launch_source_readback_crossing_expiry_keeps_unknown_without_child(self):
+        request, target = self._typed_request(sandbox='workspace-write')
+        directory = target.home/'packets'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        self._prepare_packet_input(target, request, packet)
+        ingress = handoff.model_task_ingress; original = ingress._source
+        count = 0; expiry = self._packet_input.record['expires_at']
+        with mock.patch.object(ingress.time, 'time', return_value=expiry-1) as clock:
+            def delayed(source):
+                nonlocal count
+                result = original(source); count += 1
+                if count == 2: clock.return_value = expiry
+                return result
+            with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(ingress, '_source', side_effect=delayed), mock.patch.object(handoff, '_run_child') as run:
+                result = self._packet_attempt(request, packet, 'attempt-1', 0)
+        self.assertEqual(result['status'], 'unknown'); run.assert_not_called()
+        ledger, _ = packet.read_checkpoint()
+        self.assertEqual(ledger['attempts'][0]['status'], 'unknown'); self.assertIsNone(ledger['checkpoint'])
+
+    def test_actual_child_preparation_crossing_input_expiry_never_launches_session(self):
+        request, target = self._typed_request(sandbox='workspace-write')
+        directory = target.home/'packets'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        self._prepare_packet_input(target, request, packet)
+        expiry = self._packet_input.record['expires_at']; launches = []
+        original_snapshot = handoff.model_execution_target.snapshot_catalog
+        original_popen = subprocess.Popen
+        with mock.patch.object(handoff.model_task_ingress.time, 'time', return_value=expiry-1) as clock:
+            def delayed(*args):
+                result = original_snapshot(*args); clock.return_value = expiry
+                return result
+            def observed(argv, **kwargs):
+                if pathlib.Path(str(argv[0])).resolve() == self.executable.resolve() and 'exec' in argv:
+                    launches.append(argv)
+                    raise AssertionError('Expired input attempted an actual session launch')
+                return original_popen(argv, **kwargs)
+            with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff.model_execution_target, 'snapshot_catalog', side_effect=delayed), mock.patch.object(handoff.subprocess, 'Popen', side_effect=observed):
+                result = self._packet_attempt(request, packet, 'attempt-1', 0)
+        self.assertEqual(result['status'], 'unknown'); self.assertEqual(launches, [])
+        ledger, _ = packet.read_checkpoint()
+        self.assertEqual(ledger['attempts'][0]['status'], 'unknown'); self.assertIsNone(ledger['checkpoint'])
+
+    def test_packet_target_changes_during_source_readback_never_launches_session(self):
+        for case in ('revoked', 'expired'):
+            with self.subTest(case=case):
+                request, target = self._typed_request(sandbox='workspace-write')
+                if case == 'expired':
+                    target.record['expires_at'] = target.now + 10
+                    for name, value in list(target.summary_values.items()):
+                        target.write_summary(name, {**value, 'expires_at': target.now + 10}, refresh=False)
+                    target.refresh(); request['target_ref'] = target.ref
+                directory = target.home/('packets-'+case); directory.mkdir(mode=0o700)
+                packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+                self._prepare_packet_input(target, request, packet)
+                original_source = handoff.model_task_ingress._source
+                original_popen = subprocess.Popen
+                calls, launches = [], []
+                with mock.patch.object(handoff.model_task_ingress.time, 'time', return_value=target.now) as clock:
+                    def readback(source):
+                        value = original_source(source); calls.append(True)
+                        if len(calls) == 3:
+                            if case == 'revoked': target.refresh(enabled=False)
+                            else: clock.return_value = target.now + 11
+                        return value
+                    def observe(argv, **kwargs):
+                        if pathlib.Path(str(argv[0])).resolve() == self.executable.resolve() and 'exec' in argv:
+                            launches.append(True)
+                            raise AssertionError('A changed target reached the session boundary')
+                        return original_popen(argv, **kwargs)
+                    with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff.model_task_ingress, '_source', side_effect=readback), mock.patch.object(handoff.subprocess, 'Popen', side_effect=observe):
+                        result = self._packet_attempt(request, packet, 'attempt-1', 0)
+                self.assertGreaterEqual(len(calls), 3)
+                self.assertEqual(launches, [])
+                self.assertEqual(result['status'], 'unknown')
+                ledger, _ = packet.read_checkpoint()
+                self.assertEqual(ledger['attempts'][0]['status'], 'unknown')
+                self.assertIsNone(ledger['checkpoint'])
+
+    def test_packet_input_changes_during_final_target_readback_never_launches_session(self):
+        for case in ('revoked', 'expired', 'grant-revoked'):
+            with self.subTest(case=case):
+                request, target = self._typed_request(sandbox='workspace-write')
+                directory = target.home/('packets-input-'+case); directory.mkdir(mode=0o700)
+                packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+                self._prepare_packet_input(target, request, packet)
+                fixture = self._packet_input
+                original_resolve = handoff.model_execution_target.resolve
+                original_child = handoff._run_child
+                original_popen = subprocess.Popen
+                calls, launches = [], []
+                stage = {'inside_child': False, 'child_resolves': 0}
+                with mock.patch.object(handoff.model_task_ingress.time, 'time', return_value=target.now) as clock:
+                    def readback(*args, **kwargs):
+                        value = original_resolve(*args, **kwargs); calls.append(True)
+                        if stage['inside_child']:
+                            stage['child_resolves'] += 1
+                        if stage['child_resolves'] == 2:
+                            if case == 'grant-revoked':
+                                handoff.model_task_ingress.revoke_task(target.home, fixture.reference)
+                            elif case == 'revoked':
+                                record_path = target.home/fixture.reference['path']
+                                record_path.write_bytes(handoff.model_packet_store.canonical({**fixture.record, 'enabled': False}))
+                            else:
+                                clock.return_value = fixture.record['expires_at']
+                        return value
+                    def actual_child(*args, **kwargs):
+                        stage['inside_child'] = True
+                        return original_child(*args, **kwargs)
+                    def observe(argv, **kwargs):
+                        if pathlib.Path(str(argv[0])).resolve() == self.executable.resolve() and 'exec' in argv:
+                            launches.append(True)
+                            raise AssertionError('A changed input reached the session boundary')
+                        return original_popen(argv, **kwargs)
+                    with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff.model_execution_target, 'resolve', side_effect=readback), mock.patch.object(handoff, '_run_child', side_effect=actual_child), mock.patch.object(handoff.subprocess, 'Popen', side_effect=observe):
+                        result = self._packet_attempt(request, packet, 'attempt-1', 0)
+                self.assertGreaterEqual(len(calls), 4)
+                self.assertEqual(stage['child_resolves'], 2)
+                self.assertEqual(launches, [])
+                self.assertEqual(result['status'], 'unknown')
+                ledger, _ = packet.read_checkpoint()
+                self.assertEqual(ledger['attempts'][0]['status'], 'unknown')
+                self.assertIsNone(ledger['checkpoint'])
+
+    def test_packet_target_summary_expires_during_final_readback_never_launches_session(self):
+        request, target = self._typed_request(sandbox='workspace-write')
+        value = target.summary_values['qualification']
+        target.write_summary('qualification', {**value, 'expires_at': target.now + 10})
+        request['target_ref'] = target.ref
+        directory = target.home/'packets-summary-expiry'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        self._prepare_packet_input(target, request, packet)
+        original_resolve = handoff.model_execution_target.resolve
+        original_child = handoff._run_child
+        original_popen = subprocess.Popen
+        stage = {'inside_child': False, 'child_resolves': 0}
+        launches = []
+        with mock.patch.object(handoff.model_task_ingress.time, 'time', return_value=target.now) as clock:
+            def readback(*args, **kwargs):
+                binding = original_resolve(*args, **kwargs)
+                if stage['inside_child']:
+                    stage['child_resolves'] += 1
+                    if stage['child_resolves'] == 2:
+                        clock.return_value = target.now + 11
+                return binding
+            def actual_child(*args, **kwargs):
+                stage['inside_child'] = True
+                return original_child(*args, **kwargs)
+            def observe(argv, **kwargs):
+                if pathlib.Path(str(argv[0])).resolve() == self.executable.resolve() and 'exec' in argv:
+                    launches.append(True)
+                    raise AssertionError('An expired target summary reached the session boundary')
+                return original_popen(argv, **kwargs)
+            with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff.model_execution_target, 'resolve', side_effect=readback), mock.patch.object(handoff, '_run_child', side_effect=actual_child), mock.patch.object(handoff.subprocess, 'Popen', side_effect=observe):
+                result = self._packet_attempt(request, packet, 'attempt-1', 0)
+        self.assertEqual(stage['child_resolves'], 2)
+        self.assertEqual(launches, [])
+        self.assertEqual(result['status'], 'unknown')
+        ledger, _ = packet.read_checkpoint()
+        self.assertEqual(ledger['attempts'][0]['status'], 'unknown')
+        self.assertIsNone(ledger['checkpoint'])
+
+    def test_typed_official_start_preserves_executor_and_unknown_provider_readback(self):
+        request, target = self._typed_request()
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home), "OPENAI_API_KEY": "synthetic-sentinel"}):
+            response = self.execute(request=request)
+        self.assertEqual(response["status"], "completed")
+        self.assertTrue(response["boundaries"]["child_workspace_isolated"])
+        self.assertEqual(response["execution_target"]["execution_state"], "completed")
+        self.assertEqual(response["execution_target"]["provider_readback"], "unknown")
+        self.assertNotIn("synthetic-sentinel", json.dumps(response))
+        self.assertNotIn(str(target.home), json.dumps(response))
+        self.assertFalse(response["boundaries"]["repository_completion_claimed"])
+
+    def test_typed_company_start_and_fixed_argv(self):
+        request, target = self._typed_request(official=False)
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home), "SYNTHETIC_MODEL_KEY": "synthetic-sentinel"}):
+            validated = handoff.validate_request(request)
+            argv = handoff.build_argv(validated)
+            response = self.execute(request=request)
+        self.assertIn('model_provider="synthetic"', argv)
+        self.assertNotIn("synthetic-sentinel", " ".join(argv))
+        self.assertIn("--ignore-user-config", argv)
+        self.assertEqual(response["status"], "completed")
+        self.assertEqual(response["execution_target"]["provider_readback"], "unknown")
+
+    def test_typed_snapshot_excludes_unapproved_tag_objects_and_source_path(self):
+        request, target = self._typed_request()
+        (self.workspace/'other-ref.txt').write_text('synthetic-unapproved-sentinel')
+        self._git('add', 'other-ref.txt')
+        self._git('commit', '-qm', 'unapproved ref fixture')
+        other = self._git('rev-parse', 'HEAD').stdout.strip()
+        self._git('tag', 'unapproved-data')
+        self._git('checkout', '--detach', self.head)
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}):
+            validated = handoff.validate_request(request)
+        with tempfile.TemporaryDirectory() as directory:
+            git, isolated = handoff._prepare_isolated_workspace(validated, pathlib.Path(directory))
+            def read(*args):
+                return subprocess.run([str(git), '-C', str(isolated), *args], capture_output=True, text=True)
+            self.assertEqual(read('rev-parse', 'HEAD').stdout.strip(), self.head)
+            self.assertEqual(read('tag', '--list').stdout.strip(), '')
+            self.assertNotEqual(read('cat-file', '-e', other).returncode, 0)
+            self.assertFalse((isolated/'other-ref.txt').exists())
+            self.assertFalse((isolated/'.git/FETCH_HEAD').exists())
+            self.assertEqual(read('remote').stdout.strip(), '')
+
+    def test_packet_failure_keeps_partial_patch_and_replay_never_launches(self):
+        request, target = self._typed_request(sandbox='workspace-write')
+        directory = target.home/'packets'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        self._prepare_packet_input(target, request, packet)
+        def partial(validated, workspace, *, on_started, before_launch):
+            before_launch()
+            on_started()
+            (workspace/'README.md').write_text('partial packet work\n')
+            (workspace/'new.txt').write_text('partial untracked work\n')
+            return 1, b'', None
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff, '_run_child', side_effect=partial) as run:
+            receipt = self._packet_attempt(request, packet, 'attempt-1', 0)
+            self.assertEqual(receipt['status'], 'failed')
+            self.assertEqual(receipt['packet']['status'], 'checkpointed')
+            self.assertFalse(receipt['boundaries']['adapter_repository_write_performed'])
+            self.assertEqual((self.workspace/'README.md').read_text(), 'fixture\n')
+            ledger, patch = packet.read_checkpoint()
+            self.assertIn(b'partial packet work', patch)
+            self.assertIn(b'partial untracked work', patch)
+            replay = self._packet_attempt(request, packet, 'attempt-1', 0)
+            self.assertTrue(replay['packet']['replayed'])
+            run.assert_called_once()
+        self.assertTrue((directory/'synthetic-packet/attempt-attempt-1/workspace/new.txt').exists())
+
+    def test_packet_uncertain_termination_retains_workspace_and_blocks_new_writer(self):
+        request, target = self._typed_request(sandbox='workspace-write')
+        directory = target.home/'packets'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        self._prepare_packet_input(target, request, packet)
+        def uncertain(validated, workspace, *, on_started, before_launch):
+            before_launch()
+            on_started(); (workspace/'new.txt').write_text('uncertain partial work')
+            raise handoff.HandoffValidationError('termination_error', 'synthetic unproven stop')
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff, '_run_child', side_effect=uncertain) as run:
+            receipt = self._packet_attempt(request, packet, 'attempt-1', 0)
+            self.assertEqual(receipt['status'], 'unknown')
+            with self.assertRaisesRegex(handoff.model_packet_store.PacketError, 'predecessor-outcome-unknown'):
+                self._packet_attempt(request, packet, 'attempt-2', 2)
+            run.assert_called_once()
+        self.assertTrue((directory/'synthetic-packet/attempt-attempt-1/workspace/new.txt').exists())
+
+    def test_packet_real_fake_process_nonzero_retains_changes_without_source_integration(self):
+        self.executable.write_text(self.executable.read_text().replace('mode = os.environ.get("FAKE_CODEX_MODE", "success")', 'mode = "write-workspace"')+'\nsys.exit(1)\n')
+        request, target = self._typed_request(sandbox='workspace-write')
+        directory = target.home/'packets'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        self._prepare_packet_input(target, request, packet)
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}):
+            receipt = self._packet_attempt(request, packet, 'attempt-1', 0)
+        self.assertEqual(receipt['status'], 'failed')
+        self.assertEqual(receipt['failure_class'], 'nonzero_exit')
+        self.assertEqual(receipt['packet']['status'], 'checkpointed')
+        self.assertIn(b'changed by child', packet.read_checkpoint()[1])
+        self.assertEqual((self.workspace/'README.md').read_text(), 'fixture\n')
+
+    def test_packet_second_attempt_restores_checkpoint_in_a_new_private_workspace(self):
+        request, target = self._typed_request(sandbox='workspace-write')
+        directory = target.home/'packets'; directory.mkdir(mode=0o700)
+        packet = handoff.model_packet_store.PacketStore(directory, 'synthetic-packet')
+        self._prepare_packet_input(target, request, packet)
+        paths = []
+        def first(validated, workspace, *, on_started, before_launch):
+            before_launch()
+            paths.append(workspace); on_started()
+            (workspace/'new.txt').write_text('first partial content\n')
+            return 1, b'', None
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff, '_run_child', side_effect=first):
+            self._packet_attempt(request, packet, 'attempt-1', 0)
+        ledger, patch = packet.read_checkpoint()
+        target.record['task']['checkpoint_sha256'] = ledger['checkpoint']
+        for name, value in list(target.summary_values.items()):
+            value = dict(value, task_sha256=handoff.model_execution_target.canonical_sha(target.record['task']))
+            target.write_summary(name, value, refresh=False)
+        target.refresh(); request['target_ref'] = target.ref
+        def second(validated, workspace, *, on_started, before_launch):
+            before_launch()
+            paths.append(workspace); on_started()
+            self.assertEqual((workspace/'new.txt').read_text(), 'first partial content\n')
+            (workspace/'new.txt').write_text('second repair content\n')
+            return 1, b'', None
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff, '_run_child', side_effect=second):
+            receipt = self._packet_attempt(request, packet, 'attempt-2', ledger['revision'])
+        self.assertEqual(receipt['packet']['status'], 'checkpointed')
+        self.assertNotEqual(paths[0], paths[1])
+        self.assertEqual((paths[0]/'new.txt').read_text(), 'first partial content\n')
+        self.assertIn(b'second repair content', packet.read_checkpoint()[1])
+        self.assertFalse((self.workspace/'new.txt').exists())
+        ledger, _ = packet.read_checkpoint()
+        target.record['task']['checkpoint_sha256'] = ledger['checkpoint']
+        for name, value in list(target.summary_values.items()):
+            target.write_summary(name, dict(value, task_sha256=handoff.model_execution_target.canonical_sha(target.record['task'])), refresh=False)
+        target.refresh(); request['target_ref'] = target.ref
+        request['sandbox'] = 'read-only'; request['authorization']['sandbox_ceiling'] = 'read-only'
+        def readonly(validated, workspace, *, on_started, before_launch):
+            before_launch()
+            on_started()
+            self.assertEqual((workspace/'new.txt').read_text(), 'second repair content\n')
+            return 1, b'', None
+        with mock.patch.dict(os.environ, {'CODEX_HOME': str(target.home)}), mock.patch.object(handoff, '_run_child', side_effect=readonly):
+            receipt = self._packet_attempt(request, packet, 'attempt-3', ledger['revision'])
+        self.assertEqual(receipt['packet']['status'], 'checkpointed')
+        self.assertEqual(receipt['failure_class'], 'nonzero_exit')
+
+    def test_typed_start_only_and_raw_override_rejection(self):
+        for operation in ["resume", "fork", "fresh-continuation"]:
+            request, target = self._typed_request(); request["operation"] = operation
+            with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}):
+                result = self.execute(request=request)
+            self.assertFalse(result["boundaries"]["session_call_performed"])
+            self.assertFalse(result["capability"]["version_probe_performed"])
+        request, target = self._typed_request(); request["model"] = "arbitrary"
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}): result = self.execute(request=request)
+        self.assertFalse(result["capability"]["version_probe_performed"])
+
+    def test_typed_launch_rereads_artifacts_and_rejects_drift(self):
+        request, target = self._typed_request()
+        prepare = handoff._prepare_isolated_workspace
+        def drift(*args, **kwargs):
+            result = prepare(*args, **kwargs)
+            (target.home/target.record["summaries"]["authorization"]["path"]).write_text("{}")
+            return result
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(handoff, "_prepare_isolated_workspace", side_effect=drift):
+            result = self.execute(request=request)
+        self.assertEqual(result["failure_class"], "execution_target_rejected")
+        self.assertFalse(result["boundaries"]["session_call_performed"])
+        self.assertEqual(result["execution_target"]["execution_state"], "not-started")
+
+    def test_typed_missing_company_key_stops_before_child(self):
+        request, target = self._typed_request(official=False)
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}):
+            os.environ.pop("SYNTHETIC_MODEL_KEY", None)
+            result = self.execute(request=request)
+        self.assertEqual(result["failure_class"], "execution_target_rejected")
+        self.assertFalse(result["boundaries"]["session_call_performed"])
+        self.assertEqual(result["message"], "target-credential-unavailable")
+
+    def test_typed_write_reuses_private_clone_and_bounded_patch_apply(self):
+        self.executable.write_text(self.executable.read_text().replace('mode = os.environ.get("FAKE_CODEX_MODE", "success")', 'mode = "write-workspace"'))
+        request, target = self._typed_request(sandbox="workspace-write")
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}): result = self.execute(request=request)
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual((self.workspace/"README.md").read_text(), "changed by child\n")
+        self.assertEqual((self.workspace/"new.txt").read_text(), "new child file\n")
+        self.assertFalse((self.workspace/"typed-model-catalog.json").exists())
+        self.assertTrue(result["boundaries"]["child_workspace_isolated"])
+
+    def test_typed_target_revoked_after_child_cannot_integrate_patch(self):
+        self.executable.write_text(self.executable.read_text().replace(
+            'mode = os.environ.get("FAKE_CODEX_MODE", "success")', 'mode = "write-workspace"'))
+        request, target = self._typed_request(sandbox="workspace-write")
+        original_run = handoff._run_child
+
+        def revoke_after_child(*args, **kwargs):
+            result = original_run(*args, **kwargs)
+            target.record["enabled"] = False
+            target.refresh()
+            return result
+
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(
+            handoff, "_run_child", side_effect=revoke_after_child
+        ):
+            result = self.execute(request=request)
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["failure_class"], "execution_target_rejected")
+        self.assertTrue(result["boundaries"]["session_call_performed"])
+        self.assertFalse(result["boundaries"]["adapter_repository_write_performed"])
+        self.assertEqual((self.workspace/"README.md").read_text(), "fixture\n")
+        self.assertFalse((self.workspace/"new.txt").exists())
+
+    def test_typed_target_revoked_after_patch_check_cannot_integrate(self):
+        self.executable.write_text(self.executable.read_text().replace(
+            'mode = os.environ.get("FAKE_CODEX_MODE", "success")', 'mode = "write-workspace"'))
+        request, target = self._typed_request(sandbox="workspace-write")
+        original_git = handoff._run_isolated_git
+        checked = []
+
+        def revoke_after_check(git, argv, **kwargs):
+            result = original_git(git, argv, **kwargs)
+            if (argv[0] == "-C" and pathlib.Path(argv[1]).resolve() == self.workspace.resolve()
+                    and "--check" in argv):
+                checked.append(True)
+                target.record["enabled"] = False
+                target.refresh()
+            return result
+
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(
+            handoff, "_run_isolated_git", side_effect=revoke_after_check
+        ):
+            result = self.execute(request=request)
+        self.assertEqual(checked, [True])
+        self.assertEqual(result["failure_class"], "execution_target_rejected")
+        self.assertFalse(result["boundaries"]["adapter_repository_write_performed"])
+        self.assertEqual((self.workspace/"README.md").read_text(), "fixture\n")
+        self.assertFalse((self.workspace/"new.txt").exists())
+
+    def test_typed_target_revoked_during_final_readback_cannot_integrate(self):
+        self.executable.write_text(self.executable.read_text().replace(
+            'mode = os.environ.get("FAKE_CODEX_MODE", "success")', 'mode = "write-workspace"'))
+        request, target = self._typed_request(sandbox="workspace-write")
+        original_git = handoff._run_isolated_git
+        original_artifact = handoff.model_execution_target._artifact
+        armed = []
+        revoked = []
+
+        def after_check(git, argv, **kwargs):
+            result = original_git(git, argv, **kwargs)
+            if (argv[0] == "-C" and pathlib.Path(argv[1]).resolve() == self.workspace.resolve()
+                    and "--check" in argv):
+                armed.append(True)
+            return result
+
+        def revoke_inside_resolve(*args, **kwargs):
+            result = original_artifact(*args, **kwargs)
+            if armed and not revoked:
+                target.record["enabled"] = False
+                target.refresh()
+                revoked.append(True)
+            return result
+
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(
+            handoff, "_run_isolated_git", side_effect=after_check
+        ), mock.patch.object(handoff.model_execution_target, "_artifact", side_effect=revoke_inside_resolve):
+            result = self.execute(request=request)
+        self.assertEqual(armed, [True])
+        self.assertEqual(revoked, [True])
+        self.assertEqual(result["failure_class"], "execution_target_rejected")
+        self.assertFalse(result["boundaries"]["adapter_repository_write_performed"])
+        self.assertEqual((self.workspace/"README.md").read_text(), "fixture\n")
+        self.assertFalse((self.workspace/"new.txt").exists())
+
+    def test_typed_read_only_revocation_after_child_is_not_completed(self):
+        request, target = self._typed_request()
+        original_run = handoff._run_child
+
+        def revoke_after_child(*args, **kwargs):
+            result = original_run(*args, **kwargs)
+            target.record["enabled"] = False
+            target.refresh()
+            return result
+
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(
+            handoff, "_run_child", side_effect=revoke_after_child
+        ):
+            result = self.execute(request=request)
+        self.assertEqual(result["failure_class"], "execution_target_rejected")
+        self.assertTrue(result["boundaries"]["session_call_performed"])
+        self.assertEqual(result["execution_target"]["execution_state"], "started")
+
+    def test_typed_target_expiring_during_final_readback_is_rejected(self):
+        request, target = self._typed_request()
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}):
+            validated = handoff.validate_request(request)
+        binding = validated.execution_target
+        with mock.patch.object(handoff.model_execution_target, 'resolve', return_value=binding), \
+                mock.patch.object(handoff.time, 'time', return_value=binding.valid_until):
+            with self.assertRaisesRegex(handoff.HandoffValidationError, 'target-expired-during-readback'):
+                handoff._verify_current_execution_target(validated)
+
+    def test_typed_unapproved_executable_or_revocation_prevents_version_process(self):
+        for mode in ["executable", "revoked"]:
+            request, target = self._typed_request()
+            summary = dict(target.summary_values["capability" if mode == "executable" else "authorization"])
+            if mode == "executable": summary["executable_sha256"] = "0"*64
+            else: summary["status"] = "revoked"
+            target.write_summary("capability" if mode == "executable" else "authorization", summary)
+            request["target_ref"] = target.ref
+            with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(handoff, "_probe_version") as probe:
+                result = self.execute(request=request)
+            probe.assert_not_called()
+            self.assertEqual(result["failure_class"], "execution_target_rejected")
+            self.assertFalse(result["capability"]["version_probe_performed"])
+            self.assertFalse(result["boundaries"]["session_call_performed"])
+
+    def test_typed_source_project_config_stops_without_read_or_probe(self):
+        directory = self.workspace/".codex"; directory.mkdir()
+        (directory/"config.toml").write_text("model='synthetic-project-model'\n")
+        self._git("add", ".codex/config.toml"); self._git("commit", "-q", "-m", "synthetic project config")
+        self.head = self._git("rev-parse", "HEAD").stdout.strip()
+        request, target = self._typed_request()
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(handoff, "_probe_version") as probe:
+            result = self.execute(request=request)
+        probe.assert_not_called()
+        self.assertEqual(result["message"], "target-project-config-unqualified")
+        self.assertFalse(result["boundaries"]["session_call_performed"])
+        # Opt-out retains the prior executor contract.
+        result = self.execute(request=self.request())
+        self.assertEqual(result["status"], "completed")
+        self.assertNotIn("execution_target", result)
+
+    def test_typed_private_clone_project_config_stops_before_child(self):
+        request, target = self._typed_request(); prepare = handoff._prepare_isolated_workspace
+        def inject(*args, **kwargs):
+            git, clone = prepare(*args, **kwargs)
+            (clone/".codex").mkdir()
+            (clone/".codex"/"config.toml").write_text("model='synthetic-project-model'\n")
+            return git, clone
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(handoff, "_prepare_isolated_workspace", side_effect=inject):
+            result = self.execute(request=request)
+        self.assertEqual(result["message"], "target-project-config-unqualified")
+        self.assertFalse(result["boundaries"]["session_call_performed"])
+        self.assertEqual(result["execution_target"]["execution_state"], "not-started")
+
+    def test_typed_dirty_source_still_rejected_before_probe(self):
+        request, target = self._typed_request()
+        (self.workspace/"README.md").write_text("dirty")
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}): result = self.execute(request=request)
+        self.assertFalse(result["capability"]["version_probe_performed"])
+        self.assertFalse(result["boundaries"]["session_call_performed"])
 
     def test_start_success_uses_fixed_argv_and_emits_bounded_receipt(self) -> None:
         request = self.request()
