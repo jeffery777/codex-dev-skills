@@ -285,6 +285,48 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(self.backend.export_count, 0)
         self.assertIsNotNone(self.current()[1]['owner'])
 
+    def test_export_rechecks_current_writer_after_confirmation(self):
+        self.acquire(); self.start(); binding = self.stop(); self.observe()
+        ledger, state = self.current()
+        original_source = self.host._source
+
+        def resume_during_final_gate(request):
+            original_source(request)
+            self.backend.set_state(binding, 'running')
+
+        with self.store.locked() as fd, mock.patch.object(
+            self.host, '_source', side_effect=resume_during_final_gate
+        ):
+            with self.assertRaises(lifecycle.LifecycleError):
+                self.host._effect_gate(fd, ledger, state, self.request, 110, 'export-intent')
+        self.assertEqual(self.backend.export_count, 0)
+
+    def test_publish_rechecks_current_writer_after_confirmation(self):
+        self.acquire(); self.start(); binding = self.stop(); self.observe()
+        revision = self.save('export', 'export-intent', {})
+        self.host.seal('export', expected_revision=revision, now=110)
+        raw = self.backend.inspect(binding)
+        manifest = packets.canonical(dict(binding=binding, patch_sha256=packets.digest(b''),
+            runtime_sha256=packets.digest(raw)))
+        revision = self.save('publish', 'publish', dict(
+            patch_sha256=packets.digest(b''), checkpoint_sha256=packets.digest(manifest)), runtime=True)
+        with mock.patch.object(self.host, '_extra_confirmation',
+                               side_effect=lambda *_: self.backend.set_state(binding, 'unknown', 'unknown')):
+            with self.assertRaises(lifecycle.LifecycleError):
+                self.host.publish('publish', expected_revision=revision, now=110)
+        self.assertIsNone(self.current()[0]['checkpoint'])
+        self.assertEqual(self.current()[0]['revision'], revision)
+
+    def test_finish_rechecks_current_writer_after_confirmation(self):
+        self.acquire(); self.start(); binding = self.stop(); self.observe(); self.publish()
+        revision = self.save('finish', 'finish', dict(result='completed', owner_id='owner', epoch=1), runtime=True)
+        with mock.patch.object(self.host, '_extra_confirmation',
+                               side_effect=lambda *_: self.backend.set_state(binding, 'running')):
+            with self.assertRaises(lifecycle.LifecycleError):
+                self.host.finish_attempt('finish', expected_revision=revision, now=110)
+        self.assertIsNotNone(self.current()[1]['owner'])
+        self.assertEqual(self.current()[0]['revision'], revision)
+
     def test_lost_export_reply_can_read_saved_seal_without_export_replay(self):
         self.acquire(); self.start(); self.stop(); self.observe()
         self.backend.lose_export_reply = True

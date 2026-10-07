@@ -143,6 +143,24 @@ class ExecutionTargetTests(unittest.TestCase):
         self.f.ref['store_sha256'] = '0'*64
         with self.assertRaisesRegex(targets.TargetError, 'target-store-drift'): self.f.resolve()
 
+    def test_authorization_artifact_changed_during_resolve_is_rejected(self):
+        original_artifact = targets._artifact
+        changed = []
+
+        def revoke_after_summary_read(home, ref, **kwargs):
+            raw = original_artifact(home, ref, **kwargs)
+            if ref['path'].endswith('secret_check.json') and not changed:
+                self.f.write_summary('authorization', {
+                    **self.f.summary_values['authorization'], 'status': 'revoked'
+                }, refresh=False)
+                changed.append(True)
+            return raw
+
+        with mock.patch.object(targets, '_artifact', side_effect=revoke_after_summary_read):
+            with self.assertRaisesRegex(targets.TargetError, 'target-artifact-drift'):
+                self.f.resolve()
+        self.assertEqual(changed, [True])
+
     def test_profile_cannot_widen_instructions_or_sandbox(self):
         path = self.home/self.f.record['effective_profile']['path']
         raw = path.read_bytes().replace(b'workspace-write', b'danger-full-access')

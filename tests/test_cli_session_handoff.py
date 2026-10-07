@@ -1130,6 +1130,118 @@ class CliSessionHandoffTests(unittest.TestCase):
         self.assertFalse((self.workspace/"typed-model-catalog.json").exists())
         self.assertTrue(result["boundaries"]["child_workspace_isolated"])
 
+    def test_typed_target_revoked_after_child_cannot_integrate_patch(self):
+        self.executable.write_text(self.executable.read_text().replace(
+            'mode = os.environ.get("FAKE_CODEX_MODE", "success")', 'mode = "write-workspace"'))
+        request, target = self._typed_request(sandbox="workspace-write")
+        original_run = handoff._run_child
+
+        def revoke_after_child(*args, **kwargs):
+            result = original_run(*args, **kwargs)
+            target.record["enabled"] = False
+            target.refresh()
+            return result
+
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(
+            handoff, "_run_child", side_effect=revoke_after_child
+        ):
+            result = self.execute(request=request)
+        self.assertEqual(result["status"], "failed")
+        self.assertEqual(result["failure_class"], "execution_target_rejected")
+        self.assertTrue(result["boundaries"]["session_call_performed"])
+        self.assertFalse(result["boundaries"]["adapter_repository_write_performed"])
+        self.assertEqual((self.workspace/"README.md").read_text(), "fixture\n")
+        self.assertFalse((self.workspace/"new.txt").exists())
+
+    def test_typed_target_revoked_after_patch_check_cannot_integrate(self):
+        self.executable.write_text(self.executable.read_text().replace(
+            'mode = os.environ.get("FAKE_CODEX_MODE", "success")', 'mode = "write-workspace"'))
+        request, target = self._typed_request(sandbox="workspace-write")
+        original_git = handoff._run_isolated_git
+        checked = []
+
+        def revoke_after_check(git, argv, **kwargs):
+            result = original_git(git, argv, **kwargs)
+            if (argv[0] == "-C" and pathlib.Path(argv[1]).resolve() == self.workspace.resolve()
+                    and "--check" in argv):
+                checked.append(True)
+                target.record["enabled"] = False
+                target.refresh()
+            return result
+
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(
+            handoff, "_run_isolated_git", side_effect=revoke_after_check
+        ):
+            result = self.execute(request=request)
+        self.assertEqual(checked, [True])
+        self.assertEqual(result["failure_class"], "execution_target_rejected")
+        self.assertFalse(result["boundaries"]["adapter_repository_write_performed"])
+        self.assertEqual((self.workspace/"README.md").read_text(), "fixture\n")
+        self.assertFalse((self.workspace/"new.txt").exists())
+
+    def test_typed_target_revoked_during_final_readback_cannot_integrate(self):
+        self.executable.write_text(self.executable.read_text().replace(
+            'mode = os.environ.get("FAKE_CODEX_MODE", "success")', 'mode = "write-workspace"'))
+        request, target = self._typed_request(sandbox="workspace-write")
+        original_git = handoff._run_isolated_git
+        original_artifact = handoff.model_execution_target._artifact
+        armed = []
+        revoked = []
+
+        def after_check(git, argv, **kwargs):
+            result = original_git(git, argv, **kwargs)
+            if (argv[0] == "-C" and pathlib.Path(argv[1]).resolve() == self.workspace.resolve()
+                    and "--check" in argv):
+                armed.append(True)
+            return result
+
+        def revoke_inside_resolve(*args, **kwargs):
+            result = original_artifact(*args, **kwargs)
+            if armed and not revoked:
+                target.record["enabled"] = False
+                target.refresh()
+                revoked.append(True)
+            return result
+
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(
+            handoff, "_run_isolated_git", side_effect=after_check
+        ), mock.patch.object(handoff.model_execution_target, "_artifact", side_effect=revoke_inside_resolve):
+            result = self.execute(request=request)
+        self.assertEqual(armed, [True])
+        self.assertEqual(revoked, [True])
+        self.assertEqual(result["failure_class"], "execution_target_rejected")
+        self.assertFalse(result["boundaries"]["adapter_repository_write_performed"])
+        self.assertEqual((self.workspace/"README.md").read_text(), "fixture\n")
+        self.assertFalse((self.workspace/"new.txt").exists())
+
+    def test_typed_read_only_revocation_after_child_is_not_completed(self):
+        request, target = self._typed_request()
+        original_run = handoff._run_child
+
+        def revoke_after_child(*args, **kwargs):
+            result = original_run(*args, **kwargs)
+            target.record["enabled"] = False
+            target.refresh()
+            return result
+
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}), mock.patch.object(
+            handoff, "_run_child", side_effect=revoke_after_child
+        ):
+            result = self.execute(request=request)
+        self.assertEqual(result["failure_class"], "execution_target_rejected")
+        self.assertTrue(result["boundaries"]["session_call_performed"])
+        self.assertEqual(result["execution_target"]["execution_state"], "started")
+
+    def test_typed_target_expiring_during_final_readback_is_rejected(self):
+        request, target = self._typed_request()
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(target.home)}):
+            validated = handoff.validate_request(request)
+        binding = validated.execution_target
+        with mock.patch.object(handoff.model_execution_target, 'resolve', return_value=binding), \
+                mock.patch.object(handoff.time, 'time', return_value=binding.valid_until):
+            with self.assertRaisesRegex(handoff.HandoffValidationError, 'target-expired-during-readback'):
+                handoff._verify_current_execution_target(validated)
+
     def test_typed_unapproved_executable_or_revocation_prevents_version_process(self):
         for mode in ["executable", "revoked"]:
             request, target = self._typed_request()

@@ -778,6 +778,16 @@ class SyntheticLifecycle:
                 ledger['governance']['policy']['freshness_seconds'])
             if proof['runtime_state'] not in ('stopped', 'isolated') or proof['external_effects'] != 'excluded':
                 raise LifecycleError('lifecycle-retained-writer-unconfirmed')
+        if kind in ('export-intent', 'publish', 'finish'):
+            attempt = ledger['attempts'][-1]
+            binding = ledger['supervisors'][attempt['id']]['binding']
+            actual = self._inspect_runtime(fd, ledger, attempt)
+            proof = self._runtime(actual, binding, now, ledger['governance']['policy']['freshness_seconds'])
+            if current_entry is not None and kind in ('publish', 'finish') and actual != current_entry['evidence'].runtime:
+                raise LifecycleError('lifecycle-final-runtime-readback-drift')
+            allowed = ('stopped', 'isolated') if kind == 'finish' else ('stopped',)
+            if proof['runtime_state'] not in allowed or proof['external_effects'] != 'excluded':
+                raise LifecycleError('lifecycle-effect-runtime-unconfirmed')
         fence._snapshot()
 
     def _fence(self, fd):

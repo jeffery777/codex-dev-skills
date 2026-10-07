@@ -2050,6 +2050,23 @@ def _capture_isolated_patch(
     return patch
 
 
+def _verify_current_execution_target(request: ValidatedRequest) -> None:
+    previous = request.execution_target
+    if previous is None:
+        return
+    try:
+        fresh = model_execution_target.resolve(previous.reference(), prompt=request.prompt,
+            expected_head=request.expected_head, executable_sha256=request.executable_sha256,
+            cli_version=request.cli_version, sandbox=request.sandbox)
+        if fresh != previous:
+            raise model_execution_target.TargetError('target-final-binding-drift')
+        final = time.time()
+        if not fresh.valid_from <= final < fresh.valid_until:
+            raise model_execution_target.TargetError('target-expired-during-readback')
+    except model_execution_target.TargetError as exc:
+        raise HandoffValidationError('execution_target_rejected', exc.reason) from None
+
+
 def _apply_isolated_patch(
     request: ValidatedRequest,
     git: pathlib.Path,
@@ -2078,6 +2095,7 @@ def _apply_isolated_patch(
         failure_class="integration_error",
         message="Child changes did not apply cleanly to the authorized workspace.",
     )
+    _verify_current_execution_target(request)
     _run_isolated_git(
         git,
         [*common, "-"],
@@ -2721,6 +2739,7 @@ def execute_handoff(request: dict[str, Any]) -> dict[str, Any]:
                 patch = _capture_isolated_patch(
                     git, execution_workspace, validated.expected_head
                 )
+        _verify_current_execution_target(validated)
         if validated.sandbox == "workspace-write":
             assert git is not None
             receipt["boundaries"][

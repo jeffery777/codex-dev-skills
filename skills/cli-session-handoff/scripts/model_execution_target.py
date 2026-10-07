@@ -365,6 +365,18 @@ def _resolve(ref, *, prompt, expected_head, executable_sha256, cli_version, sand
         'model': record['model'], 'runtime': 'cli', 'profile_sha256': record['effective_profile']['sha256'],
         'context_policy_sha256': record['summaries']['context']['sha256'],
         'model_catalog_sha256': record['catalog']['sha256'], 'billing': provider['billing']}
+    # Artifact reads can outlive the first store read. Confirm the whole
+    # protected snapshot still matches before returning an accepted binding.
+    for file_ref in (record['canonical_profile'], record['effective_profile'], record['catalog']):
+        _artifact(home, file_ref)
+    for file_ref in summaries.values():
+        _artifact(home, file_ref, limit=trust.MAX_STORE_BYTES)
+    fd = trust._directory(home)
+    try:
+        if trust._read(fd, STORE, trust.MAX_STORE_BYTES) != raw:
+            raise TargetError('target-store-drift')
+    finally:
+        os.close(fd)
     return Binding(record['id'], sha(raw), canonical_sha(record), bound_identity, bound_task,
         home, tuple(args), provider['env_key'], provider['billing']=='chatgpt-subscription', base['developer_instructions'],
         tuple(sorted(planner_identity.items())), catalog_raw, route_task['id'], route_task['qualification_scope'],
