@@ -1,6 +1,8 @@
 # 隔離模型執行與可信接手
 
-Issue #316 的 N1–N4 設計候選。此文件定義待實作及待資格化的邊界，
+原 Issue #316 的 N1–N4 設計候選保留為歷史；目前僅由
+[Issue #323](https://github.com/jeffery777/codex-dev-skills/issues/323) 追蹤
+受限 C 情境。此文件定義待實作及待資格化的邊界，
 不代表 runtime adapter 已啟用；production 清冊仍須維持空，直到完整驗收。
 
 ## 原生實驗的 host 控制限制接點
@@ -282,7 +284,8 @@ thread feature readback 又可能重新載入配置，故 receipt 保留
 每次變更只重驗受影響邊界，重用內容及假設未變的證據；不逐項重跑全量。
 最終 latest head 的完整 base-to-head Merge Review 及專案 gate／CI 不省略。
 原始證據與 review 收據不進 Git，位置與重建規則見
-[工程計畫](../plans/issue-316-local-model-mapping.md)。
+[原工程計畫](../plans/issue-316-local-model-mapping.md)；當前 C 交付範圍與
+驗收追蹤見 [Issue #323](https://github.com/jeffery777/codex-dev-skills/issues/323)。
 
 ## N3-A 的持久監督介面
 

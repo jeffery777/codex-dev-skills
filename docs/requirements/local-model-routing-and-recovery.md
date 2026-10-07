@@ -1,7 +1,9 @@
 # 本地模型接入、升級與安全接手需求
 
-來源：[Issue #316](https://github.com/jeffery777/codex-dev-skills/issues/316)。
-本需求保留同案的模型選擇／返工目標與
+來源：[Issue #316](https://github.com/jeffery777/codex-dev-skills/issues/316) 的
+有限基礎已由 PR #322 合併；未完成的原生模型實測、選模執行與 C 接手改由
+[Issue #323](https://github.com/jeffery777/codex-dev-skills/issues/323) 追蹤。
+本需求保留模型選擇／返工目標與
 [工程流程效率 DoD](engineering-workflow-efficiency.md)。以下「本期」邊界
 取代較早的廣泛失聯恢復候選；既有實驗及失敗紀錄不因此改寫。
 

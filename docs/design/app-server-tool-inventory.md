@@ -1,13 +1,15 @@
 # app-server 工具註冊與設定對帳設計
 
-Issue #316 N2 的工程清冊。此文件用固定公開 source 定義待對帳的 contributor、
+原 Issue #316 N2 的工程清冊；後續驗收由
+[Issue #323](https://github.com/jeffery777/codex-dev-skills/issues/323) 追蹤。
+此文件用固定公開 source 定義待對帳的 contributor、
 設定條件與收據欄位，不保存執行證據，不宣稱完整 registry 或 production 資格。
 Runtime 收據與原始輸出留在 Git 外；重跑須重建等價 assertions。
 
 範圍固定為 `openai/codex@01fc69f4026735edfdf6789820549727a4867b11`
 的 `codex app-server --stdio`。Source 事實不推定 bundled CLI、Desktop 或其他版本。
-相關隔離要求見[主設計](isolated-model-execution.md)，交付條件見
-[工程計畫](../plans/issue-316-local-model-mapping.md)。
+相關隔離要求見[主設計](isolated-model-execution.md)，現行交付範圍見
+[Issue #323](https://github.com/jeffery777/codex-dev-skills/issues/323)。
 
 ## 工具組裝與觀察界線
 

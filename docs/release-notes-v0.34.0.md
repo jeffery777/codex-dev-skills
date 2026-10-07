@@ -1,10 +1,10 @@
 # Release Notes: v0.34.0
 
-Status: release candidate prepared through Issue #316.
+Status: limited release candidate for Issue #316; publication unverified.
 
-Prepared on 2026-10-02 for Issue #316, branch
-`codex/issue-316-local-model-mapping`. This is a point-in-time preparation
-record, not evidence of an annotated tag, published Release, or installation.
+Prepared on 2026-10-07 for the Issue #316 A/B foundation branch
+`codex/issue-316-ab-foundation`. This records candidate contents only, not an
+annotated tag, published Release, or installation.
 
 ## Local Role Model Mapping
 
@@ -18,6 +18,9 @@ record, not evidence of an annotated tag, published Release, or installation.
 - Keep standalone CLI, bundled CLI and Desktop capability evidence separate.
   Desktop arbitrary custom model selection remains unverified; no real model
   receives production qualification from the synthetic transport PoC.
+- Add a default-off, pure advisory failover planner bound to V2 classification.
+  It returns `dispatched: false`; actual mixed-model CLI/Desktop execution,
+  planner wiring, persistent handoff and live role qualification remain separate.
 
 Verification procedure: [Issue #316 engineering plan](plans/issue-316-local-model-mapping.md).
 Execution and review evidence stays in ignored `.work/verification/issue-316/`.
@@ -41,5 +44,5 @@ truth must be read from the exact tag and non-draft, non-prerelease Release.
 
 Issue #316: <https://github.com/jeffery777/codex-dev-skills/issues/316>
 
-Branch: `codex/issue-316-local-model-mapping`. No PR, merge,
+Branch: `codex/issue-316-ab-foundation`. No PR, merge,
 annotated tag or Release is asserted by this preparation record.
