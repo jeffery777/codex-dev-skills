@@ -46,3 +46,8 @@ The format and trust boundary are in
 `../../../docs/agent-qualification-autoload.md` in source/plugin checkouts, or
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/docs/agent-qualification-autoload.md`
 after filesystem installation.
+
+任意本機模型替換另用 `agent-model-mapping.json`，不能沿用 Astra candidate
+開關。父代理先讀 source/plugin 的 `../../../docs/guides/local-model-mapping.md`，
+filesystem 安裝改讀 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/docs/guides/local-model-mapping.md`。
+已啟用 mapping 優先於候選流程；無效時停止，不跨 provider fallback。

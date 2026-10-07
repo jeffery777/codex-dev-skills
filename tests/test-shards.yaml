@@ -19,6 +19,8 @@ shards:
       - tests.test_agent_profiles
       - tests.test_agent_qualification
       - tests.test_installer_agent_profiles
+      - tests.test_local_model_mapping
+      - tests.test_model_failover
   - id: installer-runtime
     modules:
       - tests.test_engineering_workflow
