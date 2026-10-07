@@ -18,7 +18,10 @@ classifier／preflight／qualification 候選。決策、確定靜止邊界上�
 與執行中 writer 接手分開驗收；advisory 不宣稱切換，advanced containment
 缺口不一律阻擋不依賴它的基本接入或決策。適用共用工程契約的分層 DoD，
 工具直接使用者是本地 agent；不預加上游派工者的入口資格，實際 runtime／
-權限／授權／工具差異才補整合證據，本地安全接手仍須完成。
+權限／授權／工具差異才補整合證據。一般 subagent 失敗由存活主 agent 在
+已知靜止邊界用 Codex 原生編排重新派工；Issue #316 的 C 僅限存活本地
+coordinator、單一受管執行器、持久 checkpoint 與已停止／隔離 writer，
+其資格不作 A/B 的共同前置。LiteLLM 本地模型不接入 Hermes。
 不另建選模腦、retry loop 或恢復框架來完成普通 routing。
 
 Typed `model-task-execute` 仍沿用上述決策；規劃成功的工作包須另帶

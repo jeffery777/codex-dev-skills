@@ -1,15 +1,23 @@
 # 原生模型接入、選模與執行中接手
 
-Issue #316 的三層需求分別驗收，仍保留原自動切換目標。工程流程效率是每層
+Issue #316 的三層需求分別驗收，模型選擇與返工目標保留。2026-10-07 起
+本期 C 僅限下述單一受管執行器情境；較早的廣泛恢復候選與工程紀錄保留
+為歷史證據，不定義當前完成條件。工程流程效率是每層
 DoD：沿用原生能力及既有決策，先做廉價契約檢查，重用有效證據，避免以完整
 恢復系統作為基本接入的前置。本文件是設計與交付邊界，不是 runtime 資格收據。
 
 ## 當前公開能力與限制
 
-2026-10-05 查讀：standalone CLI 0.159.3、Desktop-bundled CLI 0.160.0，
+2026-10-05 本機查讀：standalone CLI 0.159.3、Desktop-bundled CLI 0.160.0，
 Desktop 為 ChatGPT app 26.930.31730／build 12947。分別由實際 executable
 產生 version-matched experimental JSON schema；未啟動 session、登入或推論。
 版本、help 及 schema 只證明介面，不能證明 gateway、權限或工具生命週期。
+2026-10-07 再讀 standalone CLI 為 0.159.3；bundled CLI／Desktop 版本未重查。
+[官方配置參照](https://learn.chatgpt.com/docs/config-file/config-reference)公開
+user-level 自訂 provider、`base_url` 與 `responses` wire API；
+[官方 subagent 說明](https://learn.chatgpt.com/docs/agent-configuration/subagents)
+公開主 agent 編排、custom agent 的 model／effort 配置及 CLI／app 活動入口。
+文件存在不證明 LiteLLM 在任一主對話或 subagent 入口已通過實際執行驗收。
 
 | 責任 | Codex 原生能力 | 現有 workflow／技能 | 真正缺口與新增元件理由 |
 | --- | --- | --- | --- |
@@ -19,13 +27,20 @@ Desktop 為 ChatGPT app 26.930.31730／build 12947。分別由實際 executable
 | B：目的地切換 | CLI app-server `thread/start`／`thread/resume` schema 有 `modelProvider`；`turn/start` 有 model/effort，沒有 provider 欄位 | 保留 acceptance／findings／correction lineage、目的地授權與秘密排除 | Provider 跨 session 接續需實測；欄位存在不證明既有對話熱切換，Desktop callable 不提供任意 provider 選擇 |
 | C：中斷與背景程序 | `turn/interrupt`；experimental background-terminal list/terminate；session history/resume | 原生 CLI handoff adapter、目前實验 packet journal／containment／checkpoint | 中斷 turn 或終止已知 terminal 不證明所有 detached writer 已失去寫入權；只有需要執行中接手時才需額外可證明的 containment／撤權 |
 | C：半成品與正式整合 | 原生檔案／Git／session 工具，不提供本專案的成果採認資格 | generation fence、unknown 不重播、可信 checkpoint、單一 integrator 的進階實验 | 失聯後隔離舊 writer、拒收遲到成果及採認一般來源；不得以 native resume 取代此契約 |
-| Hermes：接續 | 本機已安裝 source `af8839df10` 的 CLI 有 session ID／`--resume`／`--continue` 及 cwd 恢復；未執行登入或推論 | 已部署 shared workflow 與薄 Hermes adapter；H-04 仍限手動新 session＋repo checkpoint | 原生 history 可重用，不等於 OS writer 隔離、撤權或一般成果採認；本輪不新增 Hermes 自動接手資格 |
+| Hermes：獨立範圍 | 本機已安裝 source `af8839df10` 的 CLI 有 session ID／`--resume`／`--continue` 及 cwd 恢復；未執行登入或推論 | 已部署 shared workflow 與薄 Hermes adapter；H-04 仍限手動新 session＋repo checkpoint | Issue #316 的 LiteLLM 本地模型不接入 Hermes；此處僅保留既有 session 證據，不納入 A/B/C 驗收 |
 
 Standalone 與 bundled schema 各自有上述 start/resume/turn/background-terminal
 欄位，尚未驗證執行語意。當前 Desktop `codex_app.create_thread`／
 `send_message_to_thread` 的公開 schema 僅提供所列官方 model／thinking，沒有
 custom provider 欄位；本入口的任意 LiteLLM 目標不相容，其他 UI 入口仍未驗證。
 不使用 Desktop private internals，也不從 bundled CLI 推定 Desktop 可派自架模型。
+Codex CLI／Desktop 主對話與 subagent 是 A/B 的四個入口；官方模型與
+LiteLLM 本地模型各自記錄實際支援狀態。當前公開文件支持配置與編排
+介面，尚未提供這四個入口、兩類 provider 的完整實測收據。
+當前 Desktop task callable 未提供任意 custom provider 選擇，該入口的
+LiteLLM 派發維持「尚未支援／待核對其他公開入口」，不可由 bundled CLI
+的成功推論。一般 subagent 失敗時，存活主 agent 只在已知靜止邊界透過
+Codex 原生編排重新派工；有未知效果則先查證，不走 C 的失聯 controller。
 
 依[官方配置](https://learn.chatgpt.com/docs/config-file/config-reference)，provider
 與 profile 等 machine-local keys 不接受 project-local overrides；profiles 使用
@@ -44,10 +59,11 @@ Codex 原生 request／stream retry 已有有界設定；B 只處理可查證的
 | --- | --- | --- |
 | A 基本接入 | 一個具名 runtime／模型／scope 的原生入口：版本與配置身分、實際協定、至少一個工具結果回送後的 continuation、串流終結、獨立結果讀回；逐模型驗證完整 input＋output/reasoning reserve＋margin、正常 compaction，既有 workflow／角色約束不變 | 依賴 gateway 與容量／工具證據。可以有限 scope 獨立交付；短輸入不取得 long-context 資格，未驗證工具／Desktop 入口限制或停用。C 的全部 runtime／故障情境不是前置 |
 | B 選模與升級 | 決策部分：既有 classifier 不降低 class/tier、default-off、internal-first、服務／品質分計、兩輪不收斂改診斷、升級 floor／lineage 保留、認證／context／unknown 拒絕；局部正負案例及獨立 review。執行部分另驗證已完成或確定靜止邊界上的合格目標與讀回 | 決策可獨立交付為 advisory，始終 `dispatched: false`。真正切換依賴 A 的各目標資格、授權／秘密排除與所選公開 adapter；尚無合格 executor 時保持未完成，不能稱完整自動切換。沒有背景 writer 的邊界不要求全部 C |
-| C 執行中自動接手 | 可信半成品/checkpoint、實際 writer 隔離／撤權、單 owner/generation fence、遲到結果拒絕、unknown 不重播；新副本續作、唯一 integrator 採認及原驗收／獨立 review | 進階獨立範圍；一般來源 authority、登入／provider-client containment、可信時間／撤權、完整選定工具邊界及真實跨來源接手仍未資格。匿名 fixture 不能變成 production 證據；registry 保持空 |
+| C 選定失聯情境 | 存活本地 coordinator、單一受管執行器失聯、可信 checkpoint 已持久化、舊 writer 已證明停止或隔離；同一原授權下新隔離副本續作、單 owner/generation fence、遲到結果拒絕、unknown 不重播、原驗收與獨立 review | 任一前提缺證即停止自動接手並回報。僅對所選來源、工具、效果邊界驗證；匿名 fixture 不能變成 production 證據，registry 保持空。主 agent／coordinator／dots 失聯、任意時點／工具／外部副作用恢復不屬本期 DoD |
 
-A/B 的完成判定須寫明 runtime、scope 及「決策／執行」部分，不能把 advisory
-成功包裝成 B 自動執行。原完整自動接手 DoD 仍未完成，與各層的有限交付分開。
+A/B 的完成判定須寫明 CLI／Desktop、主對話／subagent、provider、模型、
+scope 及「決策／執行」部分，不能把 advisory 成功包裝成 B 自動執行。
+本期 C 的選定情境仍未取得正式資格，與 A/B 的有限交付分開。
 所有既有未取得的 production/native/runtime/adapter/isolation/startup/N1–N4
 資格保留 false；建立分層 DoD 不追認舊結果或刷新舊收據。
 
@@ -55,10 +71,12 @@ A/B 的完成判定須寫明 runtime、scope 及「決策／執行」部分，�
 
 責任鏈是 dots 派工／協調 → Desktop 建立本地任務 → 本地 agent 使用技能與
 工具 → 受管執行器。可靠恢復與安全接手是本地工具能力，人工或 dots 發起
-皆適用，仍在 Issue #316 實作範圍。先完成一條最小 C 恢復路徑，再逐步擴充；不把完整 dots
+皆適用，仍在 Issue #316 的有界範圍。暫停下一包 C 實作，先按公開入口
+完成 A/B 驗收；不把完整 dots
 排程、loop、graphic engineering 或 memory 系統拉入本輪。驗收核心是可信
 進度、有效 writer 控制、失效成果拒收與安全續作，不承諾任意 detached 程序
-全部停止。Codex／Hermes 的 session 接續不能代替檔案隔離與成果 fence。
+全部停止。Codex 的 session 接續不能代替檔案隔離與成果 fence；本地
+LiteLLM 模型不接入 Hermes。
 
 最小 C 切片先限定：監督端仍健康，執行器在可信 checkpoint 持久化後、釋放
 owner 前失聯。監督端記錄實際 wait／EOF；接手端重新讀回原 journal、checkpoint、
@@ -68,9 +86,9 @@ owner 與受管 runtime 身分及 writer 狀態，再用既有 lifecycle 釋放�
 「有序 quality rework 被當成失聯恢復」的整合證據缺口，不新增恢復框架。
 
 必要驗證是廉價輸入／回覆契約、局部正負案例、一次受控 native 端到端實測、
-獨立前置安全審查及穩定工程包的適用 scan。尚不涵蓋監督端自身失聯、任意
-失聯位置、一般來源 authority、真實跨 provider／登入 client。
-這些相依繼續在同一 Issue 追蹤；局部成功不取得 production qualification。
+獨立前置安全審查及穩定工程包的適用 scan。監督端自身失聯、任意失聯位置
+及任意工具／外部副作用恢復是本期 C 範圍外。選定情境的來源 authority、
+必要 provider/context／工具資格仍須核對；局部成功不取得 production qualification。
 
 1. A 先選 standalone CLI → 原生 provider/profile → LiteLLM 相容協定 →
    合成唯讀工具循環 → terminal/result 讀回。僅核准該入口、模型與有限 scope；
@@ -78,8 +96,8 @@ owner 與受管 runtime 身分及 writer 狀態，再用既有 lifecycle 釋放�
 2. B 先重用現有 mapping／classifier／planner 與局部契約；取得目的模型的 A
    證據後，才在確定靜止邊界驗證下一次公開 dispatch。官方端沿用原生訂閱，
    不新增 paid API，也不複製／抽取登入憑證給 gateway 或新 executor。
-3. C 優先完成上述最小失聯恢復切片，重用既有工程與證據；不新增完整恢復
-   框架或全 runtime 驗收矩陣。現有
+3. C 下一包暫停；保留上述最小失聯恢復切片的工程與證據，待 A/B 優先
+   驗收及所選 C 情境再啟動。不新增完整恢復框架或全 runtime 驗收矩陣。現有
    `model-task-execute` 因 containment registry 為空而拒絕，屬該 advanced
    packet dispatch 路徑的相依；不解除 gate，也不把它套用到全部 A/B。
 
@@ -114,25 +132,25 @@ dots 入口不屬本地工具完成 blocker，也不建立本專案的直接 dot
 
 ## 本地 C 尚缺能力與下一工程包
 
-原始 C 需求仍是受管執行器失聯後無人值守、安全自動接手。已通過的匿名
+本期 C 需求限於上述受管執行器單一情境。已通過的匿名
 路徑只覆蓋健康 coordinator、固定任務／reader、特定退出點及已確認停止的
-writer。尚缺能力須在選定本地 scope 補足，不能用未驗證 dots 代替。
+writer。尚缺能力只在選定本地 scope 補足，不能用未驗證 dots 代替。
 
 | 本地缺口 | 現有可重用能力與缺少的證據 |
 | --- | --- |
 | 真實 task／source admission | `FixedReader`／固定 grants 不是真實任務授權；選定路徑接受 Codex 本地任務與可信 agent 的初始授權，仍須綁定原 acceptance、source 身分、scope、目的地與 action 上限，並由既有完整 gates 讀回。目標資格與秘密排除須另查原證據；外部 JSON／未綁定任務的模型自述不能授權 |
-| 一般失聯與可信進度讀回 | 現有 actual Popen wait／EOF、immutable journal／C 與原始執行身分可重用；固定 checkpoint 後退出已能不靠 producer 的 handoff 文件續作。其他失聯位置仍須從可信持久狀態判定可續作或 blocked，不能要求失聯執行器最後補文件 |
+| 選定失聯點與可信進度讀回 | 現有 actual Popen wait／EOF、immutable journal／C 與原始執行身分可重用；固定 checkpoint 後退出已能不靠 producer 的 handoff 文件續作。若不能證明 checkpoint 已持久化或舊 writer 已停止／隔離，即停止自動接手並回報；其他失聯時點不屬本期驗收 |
 | 仍存活或未知 writer 的控制 | 新副本與 generation fence 可重用；目前 finish 只接受 stopped，尚須證明舊受管環境無法影響新副本或正式成果，隔離缺證不得釋放 owner／派 successor。不能以 PID 消失代替 writer 控制 |
 | 新鮮資格、撤權與服務預算 | Host permit 已有實際 clock、held session 與 sticky revoke；journal reader 的 `now=110`／合成 qualification 仍未證明真實 service elapsed、目標資格或授權撤銷。不得刷新歷史證據補成新資格 |
-| 安全續作及成果採認 | C→C2／stale refusal 與既有唯一 integrator 可重用；目前任務、patch、來源 authority 與選模均固定，需驗證所選本地任務的成果與原驗收／review、一般 source integration、必要 provider/context／工具邊界。其餘未用工具保持停用 |
+| 安全續作及成果採認 | C→C2／stale refusal 與既有唯一 integrator 可重用；目前任務、patch、來源 authority 與選模均固定，需驗證所選本地任務的成果與原驗收／review、必要 source integration、provider/context／工具邊界。其餘未用工具保持停用 |
 
-checkpoint 後仍依賴 producer 交接檔的 blocker 已由上述路徑解除。下一個
-最小工程包先解除第一項：重用既有 native admission／source readback
+checkpoint 後仍依賴 producer 交接檔的 blocker 已由上述路徑解除。下一包 C
+實作暫停；重啟時才考慮第一項：重用既有 native admission／source readback
 與 host-control，在一個具名本地任務建立可信 agent 所提供的 task/source 薄接點；不
 新增 supervisor、broker、observer、container 或 integrator。先檢查實際
 consumer 型別、原 authority／source 綁定與秘密排除，再驗證撤銷、來源漂移、
 偽造 input、未知效果及資格不足拒絕。缺可信 task authority 接點／目標資格時
-仍不得 dispatch。這只補 task ingress，不宣稱其餘四項或完整 C 已完成。
+仍不得 dispatch。這只補 task ingress，不宣稱所選 C 情境或 production 已完成。
 
 薄接點先拆成「原始 operator 輸入／來源 consumer 契約」及「真實 authority／
 qualification admission」。前者以 `model_task_ingress.py` 唯讀載入 protected
@@ -169,8 +187,8 @@ grant（最長 24 小時）與 task-key revocation 標記；短期 record／refe
 reader／source／patch 沒有因此變成真實任務 consumer；時鐘回退、session
 啟動競態、目標資格與 writer containment 仍需各自的真實證據。
 
-此包仍在 Issue #316；先完成當前工程包的比例重審、適用 SDS 與 draft 保存，
-保留全部 unknown／持久狀態，再接續。完整 dots、loop、graphic engineering
+以上工程包的比例重審、適用 SDS 與 draft 保存已是點時紀錄；下一包 C 實作
+暫停，保留全部 unknown／持久狀態。完整 dots、loop、graphic engineering
 及 memory 系統不納入。
 
 PR #317 目前仍包含 A/B/C 與效率改善的累積工程，不能以 A/B 部分成功宣稱

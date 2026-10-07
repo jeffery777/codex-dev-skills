@@ -7,11 +7,14 @@ Issue #316 增加預設停用、供應商中立的 V2 `agent-route` opt-in。未
 基本接入（A）、選模／升級決策（B）與執行中接手（C）依
 [分層 DoD](../design/native-model-integration-layers.md)各自驗收。基本接入沿用
 原生 provider／工具 loop；既有決策可獨立驗證，advisory 不代表實際切換。
-C 的進階資格缺口不一律阻擋 A/B 有限 scope 交付；目前整份 PR 尚未 ready。
+C 的選定失聯情境不阻擋 A/B 按已驗證入口有限交付；目前整份 PR 尚未 ready。
 
 技能與工具的直接使用者是本地 agent；上游人工或 dots 派工不改本地完成
-契約。本地 C 仍須完成受管執行器失聯後的安全自動接手，dots 入口資格不列
-為 blocker；只有上游造成實際 runtime／權限／授權／工具差異時另驗該差異。
+契約。本期 C 只處理存活 coordinator、單一受管執行器在可信 checkpoint
+持久化後失聯且舊 writer 已停止或隔離的接手；缺任一證據即停止並回報。
+一般 subagent 失敗由存活主 agent 在已知靜止邊界以 Codex 原生編排重新
+派工。dots 入口資格不列為 blocker；只有上游造成實際 runtime／權限／
+授權／工具差異時另驗該差異。LiteLLM 本地模型不接入 Hermes。
 
 ## 兩個獨立控制面
 
@@ -19,6 +22,20 @@ C 的進階資格缺口不一律阻擋 A/B 有限 scope 交付；目前整份 PR
 `model_provider`／`model_providers` 與隔離配置；Desktop 必須核對當次公開
 模型選單與 callable schema。技能不注入選項，修改檔案也不證明既有對話切模。
 Project-local provider keys 在官方設定中不受支援；不得放進專案共享配置。
+
+各入口的接口能力與實際資格分開記錄：
+
+| Codex 入口 | 官方模型 | LiteLLM 本地模型 |
+| --- | --- | --- |
+| CLI 主對話 | 原生登入與模型選擇可用；具名模型／scope 待實測 | user-level custom provider 配置可用；Responses、工具及 context 待實測 |
+| CLI subagent | 原生委派與 model／effort 配置可用；該角色待實測 | provider 繼承／跨 provider 派工需依實際 CLI 入口核對；不得由主對話成功推定 |
+| Desktop 主對話 | 公開模型選單可用；具名模型／scope 待實測 | 當前 task callable 無任意 provider 欄位；其他公開 UI 入口尚未驗證 |
+| Desktop subagent | 公開委派與 custom agent 配置可用；該角色待實測 | 當前 task callable 無任意 provider 欄位；其他公開入口與繼承語意尚未驗證 |
+
+表中「可用」只指公開介面，未取得的執行資格須標有限支援或尚未支援。
+依[官方配置參照](https://learn.chatgpt.com/docs/config-file/config-reference)與
+[官方 subagent 說明](https://learn.chatgpt.com/docs/agent-configuration/subagents)
+查核；CLI／Desktop、主對話／subagent 各自驗證，不使用 Desktop private API。
 
 角色映射只替換 canonical TOML 的 `model` 與 `model_reasoning_effort`。
 指令、sandbox、scope、capability class/tier、完成與審查要求維持原值。
@@ -420,8 +437,10 @@ lost reply 保留 unknown，重複呼叫不得再次派送。原始證據與保�
 此原型只量測單次固定操作的 transport／隔離／checkpoint，不量測 host patch
 enforcement、真實 provider、訂閱登入或完整故障矩陣，也不登錄 production adapter。
 
-正式採用另須完成 N1（完整檔案／FD／socket邊界）、N2（全部啟用工具）、
-N3（supervisor／重啟／撤銷／可信export）、N4（實際provider及官方訂閱憑證）資格。
+本期 C 正式採用只針對所選受管執行器、已啟用工具與資料目的地完成必要
+檔案／FD／socket、writer 停止或隔離、撤銷／可信 checkpoint、provider／
+context 及原驗收資格。舊 N1–N4 全矩陣屬廣泛恢復候選，不是 A/B 或本期
+C 的共同前置；未驗證工具與外部副作用保持停用／blocked，不藉此放寬安全 gate。
 
 隔離 probe 現在包含 rename／link／symlink、繼承 FD 與 TCP／UDP／Unix socket
 正反控制。Socket 案例要求既有映像提供 Python 標準函式庫；工具缺失或正控制

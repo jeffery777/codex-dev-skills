@@ -1,27 +1,64 @@
 # Issue #316 本機角色模型映射工程計畫
 
-## 當前優先順序：最小受管失聯恢復與分層收斂
+## 當前優先順序與本期產品邊界（2026-10-07）
 
-依[三層設計與 DoD](../design/native-model-integration-layers.md)，A 原生基本接入、
-B 既有選模／返工決策及 C 執行中接手分別驗收；保留原 C 目標及全部證據。
-先完成 C 的一條最小恢復路徑，再逐步擴充；A/B 仍可獨立驗收，不以 C 全工具／
-全部 runtime 資格作為 A/B 前置。B advisory 不是自動 dispatch，沒有合格
-executor 仍明示未完成。CLI、bundled CLI、Desktop 與 per-model context 分開。
+依[需求](../requirements/local-model-routing-and-recovery.md)及
+[三層設計與 DoD](../design/native-model-integration-layers.md)，先驗收 A 原生模型
+接入與 B 角色選模／返工，再評估是否重啟下一包 C。目標是 Codex CLI／Desktop
+主對話與 subagent 的官方模型及 LiteLLM 本地模型；LiteLLM 不接入 Hermes。
+CLI、bundled CLI、Desktop 及各自的模型／context／工具資格不能互相推定。
 
-目前 PR 仍累積 A/B/C 及效率工程，draft REVIEW_REQUIRED；宣稱整份 PR ready
-前須對最新完整 head 審查。有限 A/B 可以獨立評估交付／發行，但尚未取得其
-完整驗收及 gate；原自動接手 DoD 未完成。以下 C 工程段落保留其既有需求與
-歷史結果。未來 dots 無人值守仍需要本 Issue 的可靠恢復與安全接手；不擴大
-到完整 dots 排程、loop、graphic engineering 或 memory 系統。
+1. A 按 CLI／Desktop × 主對話／subagent × 官方／LiteLLM 的實際公開入口
+   建立支援表；先驗證原生配置、工具結果 continuation、串流終結、context
+   容量、權限與獨立結果讀回。無公開派工入口者標「尚未支援」，不以合成
+   gateway 成功填格；可用入口按具名模型／scope 有限交付。
+2. B 沿用現有 classifier、qualification、planner 與返工 lineage。先交付
+   default-off advisory；實際切換須分別有 A 的目標資格、目的地授權、秘密
+   排除與公開 dispatch 讀回。一般 subagent 失敗由存活主 agent 在已知靜止
+   邊界用 Codex 原生編排重新派工；未知效果先查證，不交給 C controller。
+3. C 下一包實作暫停。僅保留存活本地 coordinator、單一受管執行器失聯、
+   可信 checkpoint 已持久化、舊 writer 已證明停止或隔離的有界情境。
+   新隔離副本只在原授權內續作，遲到成果拒收、unknown 不重播，原驗收及
+   獨立審查不變；任一前提缺證即停止自動接手並回報。主 agent／coordinator／
+   dots 失聯、任意時點／工具／外部副作用恢復不屬本期 C DoD。
 
-本輪最小 DoD：監督端健康、執行器在可信 C 持久化後且未釋放 owner 時失聯，
-以原 journal、C、實際 writer 狀態重新接續；新隔離副本安全完成 C→C2，拒收
-舊 generation 的新成果且零工具／journal 副作用。沿用既有 verifier 及 lifecycle，
-不新增 C 框架／矩陣或登入權限。先核對契約與環境，局部測試及獨立前置
-安全審查後才實測；工程包穩定後做適用 scan。一般 authority、監督端失聯、
-真實跨 provider 仍未完成，不把此切片包裝成完整自動接手。工具直接使用者是
-本地 agent；dots 只派工／協調並由 Desktop 建立任務，其入口資格不列本地
-DoD 或 blocker。未來實際 runtime／權限／授權／工具差異才做整合驗證。
+下方既有 C 工程包、N1–N4 與測試紀錄保留其發生時的目的、失敗與證據；
+凡稱「下一包」「完整 C」「全工具」或 release blocker 的舊段落不覆蓋本節
+選定範圍。現有 C 程式與 fixture 保留為 default-off 的有界能力，production
+registry 仍空；不刪除持久 unknown 或重寫已封存掃描。工具直接使用者是本地
+agent；dots 派工入口不另列本地資格。A/B 的驗收與本期 C 分開，但現有
+PR #317 累積 A/B/C 與效率工程、仍是 draft／REVIEW_REQUIRED；一份混合 PR
+不能只用 A/B 的 PASS 取得整份 PR readiness。
+
+### A/B 獨立交付的 PR 處置提案（尚未執行）
+
+若要在 C 未完成時先合併 A/B，須先從 PR #317 的最新 base-to-head 差異盤點
+A/B、C、共用依賴與安裝資源；以 Issue #316 的新分支從當前 main 製作最小
+A/B-only 變更及相應文件／測試，不盲目依 commit 日期 cherry-pick，也不改寫
+或 force-push #317。新 PR 逐入口標示完整／有限／尚未支援，獨立完成適用
+審查、Security Diff Scan、CI 與 exact-head receipt；#317 繼續保留 C 與原始
+歷史為 draft，待 A/B 合併後再核對重疊差異、重新調整 base 與完整審查。
+若依賴無法安全分離，先提出受影響檔案與替代切分供使用者決定；不以文件
+宣告消除實際 PR 耦合。未取得拆分決策前，只更新本 Issue 與 #317 的範圍，
+不建立新 PR 或宣稱 A/B 已可發行。
+
+對 `4451a0d` 的初步唯讀盤點：#317 的 base-to-head 已有 183 檔差異，
+早期 `13da0fd` 包含較乾淨的 default-off A mapping 基線；`8123ff0` 的
+初版 `model_failover.py` 可作 B 純 advisory 起點，但同一 commit 也加入 C
+packet／task execution，不能整個 cherry-pick。現行 `loopctl.py` 入口、
+`model_failover.py` 的後續 packet guards 與 `cli_session_handoff.py` 的 C
+imports 是具體交纏點。建議先提 A mapping＋Codex 原生角色／已知靜止邊界
+返工；若要同時交付新的 B advisory planner，只選初版純決策、
+`agent_routing.py` wrapper、`model-failover-plan` 命令及對應測試，排除
+`model-task-execute`、journal／packet 與 isolation probes，並做獨立 review。
+兩種切法都須
+重新核對實際檔案相依、installer／plugin parity、入口資格與原驗收，不能
+以這份初盤清單直接生成可合併 patch。
+`13da0fd` 的 parent 早於目前 main；`catalog.yaml`、`install.sh`、plugin
+manifest／同步器、test shards、roadmap 及 0.34.0 候選說明要按新 PR 的實際
+內容重建，不從舊 commit 或 #317 receipt 沿用。A/B 合併後，#317 再吸收
+main、處理重疊並核對完整最新差異；若無法安全保留既有 C 工作，須先提出
+精確的檔案／狀態處置方案，不清理或覆寫。
 
 ## 最小 host 控制接點工程包與當前驗收
 
@@ -1165,5 +1202,7 @@ scope／source／grant 漂移都 fail closed。
 patch，也沒有創建正式 target qualification 或 writer containment。Grant
 仍由可信本地 agent／同 UID host 管理，不是防偽的獨立簽發證據；跨重啟
 時鐘回退及撤銷與 session 啟動之間的競態仍待真實 host-control 邊界驗證。
-下一包先查當前 CLI／Native 目標資格、秘密排除及選定 task 的 Native
-consumer 型別；未取得各項證據前 registry 保持空、C successor 不派發。
+此後 C 工程包暫停。若依本期有界情境重啟，先查當前 CLI／Native 目標資格、
+秘密排除、選定 task 的 Native consumer 型別與四項接手前提；未取得各項
+證據前 registry 保持空、C successor 不派發。當前先執行上方 A/B 入口驗收
+與獨立交付評估。

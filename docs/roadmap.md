@@ -69,10 +69,14 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 ## Backlog
 
 - Issue #316 優先處理[本機角色模型映射](guides/local-model-mapping.md)：default-off、
-  provider-neutral、CLI／Desktop 分別核對。候選發版評估與版本準備沿用同案，
+  provider-neutral、CLI／Desktop 主對話與 subagent 分別核對官方模型及
+  LiteLLM 本地模型；LiteLLM 不接入 Hermes。候選發版評估與版本準備沿用同案，
   見 [交付計畫](plans/issue-316-local-model-mapping.md)；API／合成傳輸不等於角色資格。
   同案擴充 internal-first、服務失敗與品質返工升級；官方端採 Codex 訂閱。
-  純選模決策與實際 runtime dispatch 分開驗收，擴充完成前不合併／發行。
+  純選模決策與實際 runtime dispatch 分開驗收，A/B 優先按公開入口有限交付；
+  下一包 C 暫停，C 僅限存活 coordinator、單一受管執行器、持久 checkpoint
+  與已停止／隔離 writer 的安全接手。#317 仍混合 A/B/C 且保持 draft，
+  拆出 A/B-only PR 前不能以 A/B 的部分 PASS 合併／發行整份 #317。
   記憶 production qualification、M2／V3-C 的既有 gate 保持不變。
 
 - [Issue #320](https://github.com/jeffery777/codex-dev-skills/issues/320) 接續 Hermes
