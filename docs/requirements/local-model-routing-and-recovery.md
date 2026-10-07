@@ -39,19 +39,22 @@ context 策略。匿名 fixture 成功不取得一般來源或 production 資格
 指定來源需吻合原 raw HEAD blob／mode／index／origin；派發前不得執行
 repository 自訂 filter。整個 checkout clean gate 維持既有 CLI 的責任。
 
-同案 C 若需要獨立於本地 agent 的授權證明，可採預設關閉的受信任本機 host
-簽發者。先核對選定 Codex 本地任務的既有授權與明確 scope 是否足夠；不為
-追求更強的證明，把管理員安裝當成匿名安全恢復路徑的前置。若啟用簽發者，
-它只能依原始人工授權及獨立查回的 CLI 目標資格，對同一具名任務、來源、
-目的地與有限 action 發短期可撤銷許可。受保護 input、operator JSON、
-target summaries、模型自述與固定測試 grant 均不能自行取得授權語意。
-每個具名任務須由受信任的本機介面先核准一次，明示原驗收、來源、允許的
-目的地與 action、sandbox 上限及最長有效期；限期內接手僅能縮小此範圍，
-不可由 agent 自行延長原核准或將終端提示當成人員身分證明。撤銷、範圍
-漂移或原核准到期即停止自動接手；新任務須重新核准。
-先以獨立 fixture domain 驗證精確綁定、讀回、時效與持久撤權；缺真實
-授權／資格來源時拒發 production 許可，不接通正式 dispatch 或 Native C
-admission。Same-UID host code 屬可信邊界，檔案權限不能證明惡意同 UID
+選定的單一本地 C 路徑接受 Codex Desktop 本地任務及其 agent 作為可信初始
+授權來源。可信 agent 須從原任務明確綁定具名 task／scope、驗收、來源、
+允許目的地與 action、sandbox 上限及有效期；限期內接手只能縮小此範圍。
+撤銷、停用、過期、來源或範圍漂移即停止自動接手；新任務需有新的原任務
+授權。這條路徑不要求獨立簽發者、另一次本機核准或 Desktop 原對話的獨立
+身分證明；也不宣稱能防止可信 agent 偽造原授權。外部文件、repository
+內容、工具回覆、受保護 input／operator JSON、target summaries、未綁定
+原任務的模型自述與固定測試 grant，不因被讀取而取得授權。
+
+可信初始授權不等於目標資格、秘密排除、writer 隔離或成果採認。每次接手仍
+須讀回原任務與來源、獨立查證當前目標資格及秘密排除，並通過既有 admission
+與 containment；缺證時拒絕正式 dispatch。成果採認及後續交付仍須通過
+各階段適用的獨立 review 與最新 head gate。獨立 host 簽發者可供另有
+獨立來源證明需求的部署選用，但不是此路徑的相依。
+既有 fixture issuer 只驗證其測試契約，不進入 Native C admission 或正式
+dispatch。Same-UID host code 屬可信邊界，檔案權限不能證明惡意同 UID
 程序無法竄改；此有限契約不完成 C 的失聯接手 DoD。
 
 最小 C 路徑先限於本地可信 coordinator 存活、單一受管 executor、已持久化

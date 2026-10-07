@@ -120,7 +120,7 @@ writer。尚缺能力須在選定本地 scope 補足，不能用未驗證 dots �
 
 | 本地缺口 | 現有可重用能力與缺少的證據 |
 | --- | --- |
-| 真實 task／source admission | `FixedReader`／固定 grants 不是真實任務授權；需由可信本地 host 綁定一個具名任務的原 acceptance、source 身分、scope、目的地授權與秘密排除，並由既有完整 gates 讀回。一般 JSON／模型自述不能授權 |
+| 真實 task／source admission | `FixedReader`／固定 grants 不是真實任務授權；選定路徑接受 Codex 本地任務與可信 agent 的初始授權，仍須綁定原 acceptance、source 身分、scope、目的地與 action 上限，並由既有完整 gates 讀回。目標資格與秘密排除須另查原證據；外部 JSON／未綁定任務的模型自述不能授權 |
 | 一般失聯與可信進度讀回 | 現有 actual Popen wait／EOF、immutable journal／C 與原始執行身分可重用；固定 checkpoint 後退出已能不靠 producer 的 handoff 文件續作。其他失聯位置仍須從可信持久狀態判定可續作或 blocked，不能要求失聯執行器最後補文件 |
 | 仍存活或未知 writer 的控制 | 新副本與 generation fence 可重用；目前 finish 只接受 stopped，尚須證明舊受管環境無法影響新副本或正式成果，隔離缺證不得釋放 owner／派 successor。不能以 PID 消失代替 writer 控制 |
 | 新鮮資格、撤權與服務預算 | Host permit 已有實際 clock、held session 與 sticky revoke；journal reader 的 `now=110`／合成 qualification 仍未證明真實 service elapsed、目標資格或授權撤銷。不得刷新歷史證據補成新資格 |
@@ -128,10 +128,10 @@ writer。尚缺能力須在選定本地 scope 補足，不能用未驗證 dots �
 
 checkpoint 後仍依賴 producer 交接檔的 blocker 已由上述路徑解除。下一個
 最小工程包先解除第一項：重用既有 native admission／source readback
-與 host-control，在一個具名本地任務建立 host-owned task/source 薄接點；不
+與 host-control，在一個具名本地任務建立可信 agent 所提供的 task/source 薄接點；不
 新增 supervisor、broker、observer、container 或 integrator。先檢查實際
 consumer 型別、原 authority／source 綁定與秘密排除，再驗證撤銷、來源漂移、
-偽造 input、未知效果及資格不足拒絕。缺真實 runtime authority／目標資格時
+偽造 input、未知效果及資格不足拒絕。缺可信 task authority 接點／目標資格時
 仍不得 dispatch。這只補 task ingress，不宣稱其餘四項或完整 C 已完成。
 
 薄接點先拆成「原始 operator 輸入／來源 consumer 契約」及「真實 authority／
@@ -143,29 +143,29 @@ qualification admission」。前者以 `model_task_ingress.py` 唯讀載入 prot
 原本即要求完整 authority／qualification，不能將 granted／qualified 寫入
 一般 JSON 就視為完成。固定 native source／scope／patch 維持不變。
 
-2026-10-06 已核准預設關閉的受信任本機 host 簽發者作為可用的權限邊界。
-每個具名任務先經受信任本機介面核准一次，核准內容固定原驗收／來源、
-允許目的地、action、sandbox ceiling 與 grant 最長期限；限期內可自動
-接手，不可由 agent 自行擴權或延長原核准。第一包只建 fixture domain 的
-發證／讀回／撤權契約，綁原始 task/source、CLI target、action、短期時效
-與 sticky revoke。fixture 中 task grant 與每次 session permit 分離，
-同一 grant 可涵蓋其允許範圍內的 successor；這仍不證明真實人工核准。
-受信任的注入 reader 須在
-發證及讀回時重讀受保護 target 原件；失效及時鐘歧義須持久封鎖舊許可。
-沒有 production reader 時
-不產生正式 grant。原始人工授權須由可信 host 取回，CLI 資格須查回獨立
-原證據；`model_execution_target` 的摘要只驗結構與狀態，不能當成來源。
-目前公開 app-server 可處理 thread／turn 與核准互動，但此設計不宣稱它會
-向技能提供 Desktop 原對話的可驗證授權憑證，也不仰賴未公開 internals。
-終端 TTY／同 UID 可寫檔案無法獨立證明核准者；真正簽發者需有 agent
-無法自行偽造的本機授權邊界。macOS 與 Linux 各自驗證其公開、可部署的
-OS 身分／權限機制及實際安裝條件；未驗證前維持預設關閉。目標 CLI
-資格仍須從獨立原證據讀回，不能由授權介面代替。
-本輪先不安裝管理員簽發工具；先核對 Codex 本地任務的既有授權與明確 scope
-是否足以支撐選定路徑。若需改變原 authority／信任邊界，再以具體差異與
-失敗證據決策，不能把 fixture grant 或同 UID 檔案升格為正式許可。
-既有 synthetic-only Native guard、固定來源／patch、空 production
-containment registry 都保留；fixture permit 不進入正式 admission。
+2026-10-07 的選定信任邊界接受 Codex Desktop 本地任務及其 agent 作為
+可信初始授權來源。agent 從原任務提供具名、不可擴張的 task／source 綁定：
+原 request／驗收、Git/source、目的地、action、sandbox ceiling 與有效期。
+同一原任務內的 successor 可在有效範圍內接手；停用、撤銷、過期、漂移或
+擴權必須拒絕。此路徑不需要另一次本機核准或獨立簽發者，也不提供防止可信
+agent 偽造原授權的獨立證明。一般 JSON、工具回覆、repository 內容及
+fixture 仍不能自行成為授權來源。
+
+2026-10-06 建立的 `FixturePermitIssuer` 保留 fixture-only 的精確綁定、
+短期 permit、讀回、持久撤權與時鐘歧義回歸；它不接通正式 dispatch 或
+Native C admission。獨立 host 簽發者只在另有獨立原授權證明需求時考慮，
+不是此單一路徑的前置，也不安裝管理員簽發工具。`model_task_ingress.py`
+仍是限制讀回，授權來自可信 caller，不由 loader 或 JSON 自行產生。
+`model_execution_target` 的摘要只驗結構與狀態；目標資格、秘密排除與
+writer containment 仍需各自的原證據及獨立 consumer。原始 agent 信任
+不能使固定 source／patch、synthetic-only Native guard 或空 production
+containment registry 變成正式資格。現有 NativeHostControl 綁定 live
+session、撤銷及 clock watermark，和初始授權的獨立簽發者是不同邊界；
+不可因移除後者而繞過前者。
+目前 `TaskSourceInput` 有 300 秒輸入新鮮度與停用檢查，也容許更換 reference
+及更新觀察時間；它沒有獨立的原任務 grant lifetime 或跨 alias 持久撤權。
+接線時須另驗原授權到期、撤銷及重開後的拒絕，不能將短期 input 更新當成
+延長原任務授權的能力。
 
 此包仍在 Issue #316；先完成當前工程包的比例重審、適用 SDS 與 draft 保存，
 保留全部 unknown／持久狀態，再接續。完整 dots、loop、graphic engineering

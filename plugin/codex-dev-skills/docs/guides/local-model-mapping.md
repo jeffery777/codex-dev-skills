@@ -122,7 +122,7 @@ Protected summaries 仍是可信操作人的輸入，不能由 loader 自行產�
 
 ### 原始任務／來源輸入限制
 
-`task_input_ref` 是 `{path, sha256}`，只指向可信本地操作人預先提供的
+`task_input_ref` 是 `{path, sha256}`，只指向可信本地任務 agent 預先提供的
 `${CODEX_HOME}/model-task-inputs/` 原始輸入；loader 唯讀，不代發授權、產生
 qualification 或複製登入檔案。目錄須 private、在 Git 外，檔案須 user-owned
 regular／private／單一 hard link；symlink、FIFO、traversal、重複 JSON key
@@ -140,7 +140,14 @@ bytes，origin digest 綁原 origin URL 的 UTF-8 bytes（移除尾端換行）�
 清單，使用穩定 typed execution identity；planner identity／新鮮 context、
 qualification 與授權仍由原 routing／target consumer 核對，兩種 digest 不混用。
 一般 JSON 中的 granted／qualified 欄位拒絕。
-這些原始 bytes 的來源可信性由本地操作人負責，schema 不會自行證明授權。
+選定本地路徑接受 Codex Desktop 任務及其 agent 作為可信初始授權來源；
+agent 必須將原任務與驗收、來源、目的地、action、sandbox 上限及有效期
+綁定，接手不得擴張。此路徑無需獨立簽發者或另一次本機核准，但這些
+bytes、schema 與 loader 本身不會證明授權。外部文件、工具回覆及未綁定
+任務的自述不能授權；目標資格、秘密排除與 writer containment 仍需另驗。
+目前的 300 秒 record 新鮮度不是原任務授權的最長期限；更新 reference／
+觀察時間不會自行取得續權。跨更新的原授權到期與撤銷仍待正式 task authority
+接點驗證，因此此入口仍不派正式 successor。
 
 實際 consumer 先核對原任務、scope、驗收及來源 HEAD、Git marker、原 origin、
 index 與指定檔案；protected target resolve 後核對允許目的地。只讀 Git object／

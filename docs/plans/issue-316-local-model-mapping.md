@@ -1124,3 +1124,26 @@ startup／N1–N4 資格仍 false。
 Codex 原生授權邊界與當前 CLI 資格，不能用 fixture grant 代替。管理員
 簽發工具暫不安裝；若現有能力對具體信任缺口不足，再提出精確差異與
 驗證，不預建一般服務。完整 C、PR readiness 與 release 仍未完成。
+
+## 選定本地任務的初始授權邊界（2026-10-07）
+
+本節更新上一節的待決信任選擇，保留 2026-10-06 fixture 工程與其限定
+證據。使用者接受 Codex Desktop 本地任務及其 agent 作為單一本地 C 路徑
+的可信初始授權來源。具名任務的原 request／驗收、source、scope、允許
+目的地、action、sandbox ceiling 及有效期由可信 agent 明確綁定；接手
+只能在原範圍內縮小，停用、撤銷、到期、來源漂移與擴權拒絕。新任務需要
+自己的原授權。此選擇不要求獨立簽發者、另一次本機核准或 Desktop 原
+對話的獨立身分證明；因此也不宣稱防止可信 agent 偽造原授權。
+
+`FixturePermitIssuer` 仍只提供 fixture 回歸，不升格為正式 authority。
+獨立 host 簽發者退出本路徑的必要條件；`NativeHostControl` 的 live
+session、撤銷及 clock watermark 仍保留。下一個有界工程包應先驗證
+可信 task/source 與既有 Native admission 的接點，再分別讀回當前 CLI／
+Native 目標資格、秘密排除及 writer containment。不可將 `TaskSourceInput`
+的 digest、target summary 或 agent 信任當成資格、隔離與成果採認證據。
+目前 Native reader 仍 synthetic-only、固定 source／patch，正式 containment
+registry 為空；尚無選定真實任務的 dispatch 或完整 C 資格。缺真實
+consumer 時維持拒絕，不用新簽發平台填補其他四項 C 缺口。現有
+`TaskSourceInput` 的 300 秒新鮮度可更新，尚無跨 reference 的原任務最長
+授權期限／持久撤權；下一包需在可信本地入口驗證這兩項，不以更新 input
+當成原授權續期。
