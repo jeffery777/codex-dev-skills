@@ -22,6 +22,7 @@ import model_packet_store as packets
 MAX_BYTES = 131072
 MAX_FILES = 16
 MAX_SOURCE_BYTES = 524288
+MAX_GRANT_LIFETIME = 86400
 
 
 class InputError(ValueError):
@@ -93,6 +94,119 @@ def _artifact(home, ref):
     if packets.digest(raw) != ref['sha256']:
         raise InputError('task-input-digest-mismatch')
     return raw
+
+
+def _task_key(record):
+    return packets.digest(packets.canonical({'task_id': record['task_id'],
+        'workspace': record['source']['workspace']}))
+
+
+def _revocation_directory(home):
+    fd = trust._directory(pathlib.Path(home))
+    try:
+        for part in ('model-task-inputs', 'revocations'):
+            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+            os.close(fd); fd = child
+            info = os.fstat(fd); trust._check(info, directory=True)
+            if info.st_mode & 0o077:
+                raise InputError('task-revocation-store-not-private')
+            try:
+                os.stat('.git', dir_fd=fd, follow_symlinks=False)
+            except FileNotFoundError:
+                pass
+            else:
+                raise InputError('task-revocation-store-repository-controlled')
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def _not_revoked(home, record):
+    fd = _revocation_directory(home)
+    try:
+        try:
+            os.stat(_task_key(record) + '.json', dir_fd=fd, follow_symlinks=False)
+        except FileNotFoundError:
+            return
+        raise InputError('task-grant-revoked')
+    finally:
+        os.close(fd)
+
+
+def revoke_task(home, reference):
+    """Revoke the task named by a protected record, even after source expiry."""
+    try:
+        record = _shape(json.loads(_artifact(home, reference), object_pairs_hook=trust._pairs),
+            {'schema_version', 'enabled', 'observed_at', 'expires_at', 'task_id', 'scope',
+             'request', 'acceptance', 'source', 'destinations', 'grant'})
+        workspace = record['source']['workspace']
+        if (record['schema_version'] != 2 or type(record['task_id']) is not str or not record['task_id']
+                or type(workspace) is not str or not pathlib.PurePath(workspace).is_absolute()
+                or str(pathlib.PurePath(workspace)) != workspace):
+            raise InputError('task-revoke-identity-rejected')
+        key = _task_key(record)
+        if record['grant']['path'] != 'model-task-inputs/grants/' + key + '.json':
+            raise InputError('task-revoke-grant-mismatch')
+    except (OSError, ValueError, TypeError, KeyError, RecursionError):
+        raise InputError('task-revoke-record-rejected') from None
+    fd = _revocation_directory(home)
+    try:
+        name = key + '.json'
+        try:
+            marker = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                             0o600, dir_fd=fd)
+            created = True
+        except FileExistsError:
+            marker = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
+            created = False
+        try:
+            info = os.fstat(marker); trust._check(info)
+            if info.st_nlink != 1 or info.st_mode & 0o077:
+                raise InputError('task-revocation-marker-rejected')
+            if created:
+                raw = packets.canonical({'schema_version': 1, 'task_key': key, 'revoked_at': int(time.time())})
+                while raw:
+                    count = os.write(marker, raw)
+                    if count <= 0:
+                        raise InputError('task-revocation-write-failed')
+                    raw = raw[count:]
+            os.fsync(marker)
+        finally:
+            os.close(marker)
+        os.fsync(fd)
+        return key
+    finally:
+        os.close(fd)
+
+
+def _grant(home, record, original, source_identity, now):
+    task_key = _task_key(record)
+    ref = record['grant']
+    if (type(ref) is not dict or ref.get('path') != 'model-task-inputs/grants/' + task_key + '.json'):
+        raise InputError('task-grant-reference-rejected')
+    grant = _shape(json.loads(_artifact(home, ref), object_pairs_hook=trust._pairs),
+        {'schema_version', 'task_key', 'task_id', 'scope', 'request_sha256',
+         'acceptance_sha256', 'source_sha256', 'destinations', 'actions',
+         'sandbox_ceiling', 'issued_at', 'expires_at'})
+    if (type(grant['schema_version']) is not int or grant['schema_version'] != 1
+            or grant['task_key'] != task_key or grant['task_id'] != record['task_id']
+            or grant['scope'] != record['scope']
+            or grant['request_sha256'] != record['request']['sha256']
+            or grant['acceptance_sha256'] != record['acceptance']['sha256']
+            or grant['source_sha256'] != source_identity[2]
+            or grant['destinations'] != record['destinations']
+            or grant['actions'] != ['start'] or original.get('operation') != 'start'
+            or type(original.get('authorization')) is not dict
+            or grant['sandbox_ceiling'] != original['authorization'].get('sandbox_ceiling')
+            or grant['sandbox_ceiling'] not in {'read-only', 'workspace-write'}
+            or type(grant['issued_at']) is not int or type(grant['expires_at']) is not int
+            or not grant['issued_at'] <= now < grant['expires_at']
+            or grant['expires_at'] > grant['issued_at'] + MAX_GRANT_LIFETIME
+            or record['expires_at'] > grant['expires_at']):
+        raise InputError('task-grant-scope-or-time-rejected')
+    _not_revoked(home, record)
+    return grant
 
 
 def _source(record):
@@ -167,6 +281,7 @@ class TaskSourceInput:
     request: dict
     record: dict
     source_identity: tuple
+    grant: dict
 
     @property
     def identity_sha256(self):
@@ -205,6 +320,8 @@ class TaskSourceInput:
                 **original['authorization'], 'sandbox_ceiling': self.request['authorization']['sandbox_ceiling']}}
         if original != self.request or _source(record['source']) != self.source_identity:
             raise InputError('task-input-or-source-mismatch')
+        if _grant(self.home, record, self.request, self.source_identity, now) != self.grant:
+            raise InputError('task-grant-changed')
         if validated is not None and (str(validated.workspace), validated.expected_head) != (
                 record['source']['workspace'], record['source']['head']):
             raise InputError('task-input-cli-source-mismatch')
@@ -221,7 +338,10 @@ class TaskSourceInput:
         _artifact(self.home, self.reference)
         _artifact(self.home, record['request'])
         _artifact(self.home, record['acceptance'])
-        if not record['observed_at'] <= time.time() < record['expires_at']:
+        _grant(self.home, record, self.request, self.source_identity, time.time())
+        final = time.time()
+        if not (record['observed_at'] <= final < record['expires_at']
+                and self.grant['issued_at'] <= final < self.grant['expires_at']):
             raise InputError('task-input-expired-during-readback')
         return self.identity_sha256
 
@@ -233,8 +353,12 @@ class TaskSourceInput:
         _artifact(self.home, record['request'])
         _artifact(self.home, record['acceptance'])
         now = time.time()
-        if not (record['observed_at'] <= now < record['expires_at']
-                and binding.valid_from <= now < binding.valid_until):
+        if _grant(self.home, record, self.request, self.source_identity, now) != self.grant:
+            raise InputError('task-grant-changed')
+        final = time.time()
+        if not (record['observed_at'] <= final < record['expires_at']
+                and self.grant['issued_at'] <= final < self.grant['expires_at']
+                and binding.valid_from <= final < binding.valid_until):
             raise InputError('task-input-or-target-expired-during-readback')
 
 
@@ -243,8 +367,10 @@ def read_input(home, reference, task, failover_input, request):
     try:
         raw = _artifact(home, reference)
         record = _shape(json.loads(raw, object_pairs_hook=trust._pairs), {'schema_version', 'enabled',
-            'observed_at', 'expires_at', 'task_id', 'scope', 'request', 'acceptance', 'source', 'destinations'})
-        if type(record['schema_version']) is not int or record['schema_version'] != 1:
+            'observed_at', 'expires_at', 'task_id', 'scope', 'request', 'acceptance', 'source', 'destinations', 'grant'})
+        if (type(record['schema_version']) is not int or record['schema_version'] != 2
+                or type(record['task_id']) is not str or not record['task_id']
+                or type(record['scope']) is not str or not record['scope']):
             raise InputError('task-input-schema-rejected')
         original = json.loads(_artifact(home, record['request']), object_pairs_hook=trust._pairs)
         if type(original) is not dict or 'target_ref' in original:
@@ -258,7 +384,9 @@ def read_input(home, reference, task, failover_input, request):
             raise InputError('task-input-destinations-rejected')
         for destination in destinations:
             packets._sha(destination)
-        item = TaskSourceInput(home, dict(reference), original, record, _source(record['source']))
+        source_identity = _source(record['source'])
+        grant = _grant(home, record, original, source_identity, time.time())
+        item = TaskSourceInput(home, dict(reference), original, record, source_identity, grant)
         item.verify(request)
         return item
     except (OSError, ValueError, TypeError, KeyError, RecursionError, subprocess.SubprocessError):

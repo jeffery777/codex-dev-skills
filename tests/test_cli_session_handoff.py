@@ -856,7 +856,7 @@ class CliSessionHandoffTests(unittest.TestCase):
                 self.assertIsNone(ledger['checkpoint'])
 
     def test_packet_input_changes_during_final_target_readback_never_launches_session(self):
-        for case in ('revoked', 'expired'):
+        for case in ('revoked', 'expired', 'grant-revoked'):
             with self.subTest(case=case):
                 request, target = self._typed_request(sandbox='workspace-write')
                 directory = target.home/('packets-input-'+case); directory.mkdir(mode=0o700)
@@ -874,7 +874,9 @@ class CliSessionHandoffTests(unittest.TestCase):
                         if stage['inside_child']:
                             stage['child_resolves'] += 1
                         if stage['child_resolves'] == 2:
-                            if case == 'revoked':
+                            if case == 'grant-revoked':
+                                handoff.model_task_ingress.revoke_task(target.home, fixture.reference)
+                            elif case == 'revoked':
                                 record_path = target.home/fixture.reference['path']
                                 record_path.write_bytes(handoff.model_packet_store.canonical({**fixture.record, 'enabled': False}))
                             else:

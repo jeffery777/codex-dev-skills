@@ -1147,3 +1147,23 @@ consumer 時維持拒絕，不用新簽發平台填補其他四項 C 缺口。�
 `TaskSourceInput` 的 300 秒新鮮度可更新，尚無跨 reference 的原任務最長
 授權期限／持久撤權；下一包需在可信本地入口驗證這兩項，不以更新 input
 當成原授權續期。
+
+### 原任務期限與持久撤銷的 CLI consumer 切片（2026-10-07）
+
+既有 `model-task-execute` 的 planned 路徑現要求 protected schema v2：可信
+本地 agent 提供與具名 task／workspace 固定對應的原 grant，綁定 request、
+acceptance、source、目的地、唯一 `start` action、sandbox ceiling 與最長
+24 小時期限。短期 record 仍限 300 秒，其更新／alias 不能越過原 grant 到期。
+同一 task key 的 protected revocation 標記跨 reference 與重開後保持拒絕；
+撤銷 key 從 protected record 而非 caller workspace 字串導出；同步失敗後
+重試須再同步既存 marker 與目錄。缺少標記目錄、舊 schema 或
+scope／source／grant 漂移都 fail closed。
+實際 CLI packet 的 claim、launch、封存邊界沿原 `TaskSourceInput` 讀回；
+撤銷發生於最後 target readback 時，不啟動 session 且保留 unknown。
+
+此切片只收緊既有 CLI consumer；沒有接通固定 `NativeLifecycle` 的 source／
+patch，也沒有創建正式 target qualification 或 writer containment。Grant
+仍由可信本地 agent／同 UID host 管理，不是防偽的獨立簽發證據；跨重啟
+時鐘回退及撤銷與 session 啟動之間的競態仍待真實 host-control 邊界驗證。
+下一包先查當前 CLI／Native 目標資格、秘密排除及選定 task 的 Native
+consumer 型別；未取得各項證據前 registry 保持空、C successor 不派發。

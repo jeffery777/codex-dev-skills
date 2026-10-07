@@ -162,10 +162,12 @@ writer containment 仍需各自的原證據及獨立 consumer。原始 agent 信
 containment registry 變成正式資格。現有 NativeHostControl 綁定 live
 session、撤銷及 clock watermark，和初始授權的獨立簽發者是不同邊界；
 不可因移除後者而繞過前者。
-目前 `TaskSourceInput` 有 300 秒輸入新鮮度與停用檢查，也容許更換 reference
-及更新觀察時間；它沒有獨立的原任務 grant lifetime 或跨 alias 持久撤權。
-接線時須另驗原授權到期、撤銷及重開後的拒絕，不能將短期 input 更新當成
-延長原任務授權的能力。
+既有 CLI consumer 的 `TaskSourceInput` 已以 protected schema v2 綁定原
+grant（最長 24 小時）與 task-key revocation 標記；短期 record／reference
+更新不能延長原 grant，重新開啟仍讀回撤銷。這是選定可信 agent 路徑的
+局部 lifetime／revoke 檢查，不將 grant 檔升格為獨立簽發證明。固定 native
+reader／source／patch 沒有因此變成真實任務 consumer；時鐘回退、session
+啟動競態、目標資格與 writer containment 仍需各自的真實證據。
 
 此包仍在 Issue #316；先完成當前工程包的比例重審、適用 SDS 與 draft 保存，
 保留全部 unknown／持久狀態，再接續。完整 dots、loop、graphic engineering

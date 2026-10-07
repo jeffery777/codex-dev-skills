@@ -128,9 +128,9 @@ qualification 或複製登入檔案。目錄須 private、在 Git 外，檔案�
 regular／private／單一 hard link；symlink、FIFO、traversal、重複 JSON key
 與超限內容拒絕。同 UID host 程式仍屬 TCB，檔案權限不是其隔離保證。
 
-Record schema version 1 的必要欄位是 `schema_version`、`enabled`、
+計畫派工現在要求 record schema version 2；version 1 不能作為降級入口。必要欄位是 `schema_version`、`enabled`、
 `observed_at`、`expires_at`、`task_id`、`scope`、`request`、`acceptance`、
-`source`、`destinations`。有效時間最多 300 秒；`request`／`acceptance` 均
+`source`、`destinations`、`grant`。Record 有效時間最多 300 秒；`request`／`acceptance` 均
 為 `{path, sha256}`，分別保存原 CLI request JSON（移除 `target_ref`）與原
 驗收內容 bytes。`source` 為 `{workspace, head, index_sha256, origin_sha256, files}`；workspace 是絕對
 canonical Git root，head 是完整 commit SHA，files 是相對路徑到 SHA256 的
@@ -141,13 +141,25 @@ bytes，origin digest 綁原 origin URL 的 UTF-8 bytes（移除尾端換行）�
 qualification 與授權仍由原 routing／target consumer 核對，兩種 digest 不混用。
 一般 JSON 中的 granted／qualified 欄位拒絕。
 選定本地路徑接受 Codex Desktop 任務及其 agent 作為可信初始授權來源；
-agent 必須將原任務與驗收、來源、目的地、action、sandbox 上限及有效期
-綁定，接手不得擴張。此路徑無需獨立簽發者或另一次本機核准，但這些
-bytes、schema 與 loader 本身不會證明授權。外部文件、工具回覆及未綁定
-任務的自述不能授權；目標資格、秘密排除與 writer containment 仍需另驗。
-目前的 300 秒 record 新鮮度不是原任務授權的最長期限；更新 reference／
-觀察時間不會自行取得續權。跨更新的原授權到期與撤銷仍待正式 task authority
-接點驗證，因此此入口仍不派正式 successor。
+agent 須在 Git 外的 private `model-task-inputs/grants/<task_key>.json` 保存原任務
+grant，record 的 `grant: {path, sha256}` 須指向該固定路徑。`task_key` 是
+`{task_id, workspace}` 的 canonical SHA256。Grant schema version 1 必含
+`schema_version`、`task_key`、`task_id`、`scope`、`request_sha256`、
+`acceptance_sha256`、`source_sha256`、`destinations`、`actions`、
+`sandbox_ceiling`、`issued_at`、`expires_at`；`source_sha256` 是上述 source
+物件的 canonical SHA256，目前唯一 action 是 `['start']`。Grant 將原任務、
+驗收、來源、目的地、action、sandbox 上限及有效期綁定；期限最多 24 小時，
+record 到期不得超過 grant，到期後更新 record／reference 不能取得續權。
+可信本地 caller 撤銷時，以原 protected record 的 `{path, sha256}` 呼叫
+`model_task_ingress.revoke_task(home, task_input_ref)`；它從原 record 讀出
+task／workspace，於預先存在的 private `model-task-inputs/revocations/` 建立以
+task_key 命名的持久標記。同一 task key 的 reference alias／新 grant 皆拒絕；
+缺少或不安全的 revocation 目錄也拒絕。此標記不得刪除，重新開啟仍須讀回；
+若首次同步失敗，重試須同步既存 marker 與目錄才可回報成功。撤銷入口不以
+caller 提供的 workspace 字串另算 key，避免路徑別名造成假成功。
+Grant 與 revocation 由可信 agent／同 UID host 管理，並非獨立簽發證明；
+外部文件、工具回覆及未綁定任務的自述不能授權。目標資格、秘密排除、
+writer containment 與跨重啟時鐘回退防護仍須另驗，因此此入口不派正式 C successor。
 
 實際 consumer 先核對原任務、scope、驗收及來源 HEAD、Git marker、原 origin、
 index 與指定檔案；protected target resolve 後核對允許目的地。只讀 Git object／
