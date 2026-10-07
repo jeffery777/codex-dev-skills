@@ -460,6 +460,29 @@ def _classify_v2(
     }
 
 
+def plan_model_failover(task: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    """Bind an advisory failover plan to the current V2 classification."""
+    import model_failover
+
+    allowed = {'id', 'factors', 'workload_kind', 'qualification_scope', 'quality_preference'}
+    required = allowed - {'quality_preference'}
+    if not isinstance(task, dict) or set(task) - allowed or not required <= set(task):
+        raise AgentRoutingContractError('failover requires a current V2 route task')
+    if not isinstance(task['id'], str) or not task['id'].strip() or not isinstance(task['qualification_scope'], str) or not task['qualification_scope'].strip():
+        raise AgentRoutingContractError('failover task identity and qualification scope are required')
+    classification = classify_task(task['factors'], contract_version=2,
+                                   workload_kind=task['workload_kind'],
+                                   quality_preference=task.get('quality_preference'))
+    model_failover._validate(payload)
+    expected = {'id': task['id'], 'scope': task['qualification_scope'],
+                'capability_class': classification['capability_class'],
+                'capability_tier': classification['capability_tier']}
+    if any(payload['task'][key] != value for key, value in expected.items()):
+        raise AgentRoutingContractError('failover task does not match current V2 classification')
+    return {'classification': classification,
+            'plan': model_failover.select_next(payload), 'dispatched': False}
+
+
 def _sandbox_is_non_widening(profile: dict[str, Any]) -> bool:
     sandbox = profile.get("sandbox")
     parent = profile.get("parent_sandbox_mode")
@@ -527,6 +550,8 @@ def _profile_config_evidence(
         "sandbox_non_widening": profile["sandbox_non_widening"],
         "allowed_workflow_scope": sorted(profile["allowed_workflow_scope"]),
     }
+    if "local_model_mapping" in profile:
+        evidence["local_model_mapping"] = profile["local_model_mapping"]
     if include_tier:
         evidence["capability_tier"] = profile["capability_tier"]
     return evidence
@@ -1114,6 +1139,21 @@ def validate_route_receipt(route_receipt: dict[str, Any]) -> dict[str, Any]:
         or evidence_sha256 != _digest(evidence)
     ):
         issues.append("profile-config-evidence-mismatch")
+    selection = route_receipt.get("profile_selection")
+    if selection is not None and not isinstance(selection, dict):
+        issues.append("invalid-profile-selection")
+    selection = selection if isinstance(selection, dict) else {}
+    mapping = evidence.get("local_model_mapping") if isinstance(evidence, dict) else None
+    if mapping is not None:
+        import local_model_mapping
+        if (not local_model_mapping.validate_binding(mapping)
+            or contract_version != 2 or execution_mode != "custom-agent-profile"
+            or mapping.get("role") != route_receipt.get("runtime_mapping")
+            or mapping.get("profile_sha256") != profile_digest
+            or selection.get("policy") != "local-model-mapping-opt-in"):
+            issues.append("local-model-mapping-binding-mismatch")
+    elif selection.get("policy") == "local-model-mapping-opt-in":
+        issues.append("local-model-mapping-binding-missing")
     return {"valid": not issues, "issues": issues, "route_receipt_id": receipt_id}
 
 
