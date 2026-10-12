@@ -19,7 +19,8 @@ JSON schema 與合成測試不證明摘要真實、使用者授權或 runtime �
 仍只作用於已選 provider；這個 advisory plan 不會連接 `agent-route`、CLI
 或 Desktop 的實際模型執行。真正跨目標接手、持久 lineage／冷卻、內容與
 外部寫入讀回、CLI／Desktop 混合模型工具循環及獨立 runtime 資格，留待
-[後續交付](https://github.com/jeffery777/codex-dev-skills/blob/main/docs/plans/issue-316-local-model-mapping.md)分別完成。不能把官方 API
+[Issue #323](https://github.com/jeffery777/codex-dev-skills/issues/323) 的 A/B 驗收與
+後續獨立交付；C 保留於 [#317 draft](https://github.com/jeffery777/codex-dev-skills/pull/317)。不能把官方 API
 upstream 當成 Codex ChatGPT 訂閱路徑，也不能由連線成功推定模型品質。
 
 ## 兩個獨立控制面
@@ -34,6 +35,18 @@ Project-local provider keys 在官方設定中不受支援；不得放進專案�
 所有角色必須繼承**當前 runtime 已選定的 provider**；本功能不切換 provider。
 同一 provider 可提供實作模型 A、審查模型 B、主模型 C。跨 provider 組合須先有
 獨立公開 runtime 支援與資料目的地授權，本功能不自動提供。
+由 Codex 依官方 custom-agent TOML 載入並委派的角色仍是原生子代理；即使它
+使用 LiteLLM 模型也一樣。實際 provider 路由須與模型名稱分別讀回。Codex
+[角色限制變更](https://github.com/openai/codex/pull/39299)明定子代理保留父代理的
+provider 設定，只讓角色覆寫有界的模型行為；不能因 TOML 含有
+`model_provider` 或子代理事件顯示目標 `model`，就推定跨 provider 請求已送到
+目標 gateway。受測 CLI 版本與未來版本須各自驗證；Desktop 也須獨立驗收。
+Issue #323 先驗收同 provider 的有限原生能力。點時短任務只證明受測
+CLI 的本地主代理與父子**配置為**同模型的本地子代理可完成工具循環；
+子代理實際模型身分尚未獨立驗證。不同本地模型的子代理試驗未完成，
+Desktop 亦未取得 live 路由證據。這些結果尚不足以
+啟用正式角色 mapping；本輪 gateway metadata 也未提供受測模型的容量上限。
+`model-failover-plan` 仍不是派工收據。
 
 ## 一次性採用
 
