@@ -25,8 +25,9 @@ custom-agent TOML 由 Codex 委派機制載入，仍是原生子代理；使用 
 的測試沒有以 `-c model_provider` 指定父 provider，仍在子代理啟動前被官方
 模型支援檢查拒絕。
 
-2026-10-08 合成唯讀短任務的點時觀測如下；真實紀錄與錯誤細節保留在私人
-驗證位置，公開 repo 不保存 gateway alias、URL、credential 或 transcript。
+2026-10-08 合成唯讀短任務的點時觀測如下；去識別化摘要存於 Git 忽略的受限
+位置，原始 JSONL／stderr 的當前留存未驗證。公開 repo 不保存 gateway alias、
+URL、credential 或 transcript。
 此表不代表正式角色、容量或 Desktop 資格。
 
 | 組合 | Standalone CLI `0.159.3` | Bundled CLI `0.162.0-alpha.2` |
