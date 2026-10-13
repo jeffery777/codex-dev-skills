@@ -68,9 +68,24 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Backlog
 
+- [Issue #325](https://github.com/jeffery777/codex-dev-skills/issues/325)
+  將第三方模型接入的公開目標收斂為「使用者在本機自行配置 CC Switch 與
+  provider，專案記錄確切 Codex 入口的驗證結果」。
+  [OpenRouter Gemma 4 31B free](guides/local-model-mapping.md#第三方模型接入目標issue-325)
+  是指定參考案例；CC Switch Direct 配置已讀回。2026-10-12 首輪最小 API
+  請求收到 HTTP 429，同日重試已成功；受控 Codex CLI 將 HTTP 與串流
+  重試設為 `0`，兩次都在工具執行前收到 HTTP 429，live 工具循環**待驗證**；
+  不能由模型上架、API 相容或其他 provider 的測試宣稱已支援。使用者自行
+  決定 provider、憑證與資料目的地；本專案不為其部署和服務狀態背書。
+  限流或服務錯誤沿用 Codex CLI／Desktop 當前版本的原生處理；使用者自行
+  決定是否改選模型或 provider，不新增專案自訂重試或自動跨 provider 切換。
+  CLI／Desktop、主／子代理、模型身分、容量與品質仍分列驗收。
+
 - Issue #316 的[本機角色模型映射](guides/local-model-mapping.md)與純建議式 failover
   是 default-off 的有限基礎；尚未完成 CLI／Desktop 混合模型實際執行及連接。
-  範圍與後續驗證見[交付計畫](plans/issue-316-local-model-mapping.md)。
+  原範圍見[交付計畫](plans/issue-316-local-model-mapping.md)；#323 的公司
+  gateway 原生驗收與 draft PR #324 保留點時紀錄，未取得完整正式資格。
+  #317 的 C 失聯接手獨立保持 draft；#325 不啟用 B 派工或 C。
 
 - [Issue #320](https://github.com/jeffery777/codex-dev-skills/issues/320) 接續 Hermes
   基礎交付，將工程階段與證據抽為[共用契約](../policies/engineering-workflow-contract.md)，
@@ -386,6 +401,13 @@ authorize activation, promotion, real-world efficacy claims, external
 providers, automatic lifecycle behavior, or private/raw data storage.
 
 ## Proposed Memory Governance Milestone
+
+**當前決定（Issue #325）：暫停 Agent Memory 新功能投入。**既有 M0／M1／
+MG1 部分程式與歷史文件保留，仍為 default-off；production adapter 未取得
+完整資格，通用 CLI／Desktop 不應將其描述為可用的正式專案記憶服務。
+以下設計與 G1 → G2 → G3 排序是先前提案及點時交付紀錄，**不是當前執行
+承諾**。重新投入、正式啟用、移除程式或資料清除均須另行決策與驗證；
+本次不回退已合併程式，也不修改歷史發行紀錄。
 
 [Issue #212](https://github.com/jeffery777/codex-dev-skills/issues/212) 追蹤本次
 docs-only 研究與設計；實作須另開 Issue／分支，不以文件交付表示 MG1 功能完成。

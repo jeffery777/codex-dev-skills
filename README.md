@@ -301,6 +301,13 @@ python3 <skill-dir>/scripts/loopctl.py agent-route <decision-input.yaml> \
   --runtime-facts /path/to/current-runtime-facts.json
 ```
 
+第三方模型的當前文件目標，是由使用者自行設定 CC Switch 接入本機 Codex。
+[模型映射指南](docs/guides/local-model-mapping.md)說明 provider 與角色邊界；
+OpenRouter 參考案例仍待 Codex live 工具循環驗證。模型已上架或 provider 已設定，
+本身不代表該 runtime 路由獲得支援。
+遇到限流或服務錯誤時沿用 Codex CLI／Desktop 當前版本的原生處理；
+是否改選模型或 provider，由使用者自行決定。本專案不加自動跨 provider 切換。
+
 Integrate a worker receipt only after reading the current Git checkout, worker
 artifacts, main-agent verification artifacts, and selected profile from their
 trusted roots. The assignment freshness flag is a current-session assertion,
@@ -729,6 +736,10 @@ in v0.14.0 through Issues #145 and #147. M1 remains optional and inactive: its
 publication is not activation, promotion, or efficacy evidence, and missing or
 drifted FTS5 support fails closed to no memory. M2 and V3-C remain behind new
 evidence and explicit human decisions; PlugMem and Mem0 remain excluded.
+
+Issue #325 暫停 Agent Memory 新投入。既有 default-off 程式保留為有限基礎；
+production adapter 與一般 CLI／Desktop 使用尚未取得資格。
+現行狀態見[roadmap](docs/roadmap.md#proposed-memory-governance-milestone)。
 
 V2d-A adds independently usable operational evidence without a backend:
 
