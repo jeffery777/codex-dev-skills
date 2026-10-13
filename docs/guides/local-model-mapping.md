@@ -1,5 +1,33 @@
 # 本機角色模型映射
 
+## 第三方模型接入目標（Issue #325）
+
+本專案的文件目標是說明使用者如何透過自行配置的 CC Switch，讓本機 Codex
+使用第三方模型，並按**確切入口、provider、模型與任務範圍**記錄實測結果。
+CC Switch、API key、provider 帳戶、資料目的地及實際選用模型由使用者管理；
+本專案不代管服務，也不保證任意 provider 或模型與 Codex 相容。
+限流或服務錯誤沿用 Codex CLI／Desktop 當前版本的原生處理；使用者自行
+決定是否重試或改選模型與 provider。本專案不新增自訂重試、自動跨 provider
+切換或替使用者選擇付費路徑。具體錯誤提示與重試行為仍須按入口和版本實測。
+這項目標不改變下述 `agent-route` 的 provider 繼承、預設停用、角色資格或
+`model-failover-plan` 的純建議狀態；後者並非 CC Switch 接入的自動執行路徑。
+
+[OpenRouter 的 `google/gemma-4-31b-it:free`](https://openrouter.ai/google/gemma-4-31b-it:free)
+是指定的公開參考案例。其模型頁列出價格與 API 能力。2026-10-12 的有界
+試驗中，CC Switch Direct 模式已生成該模型與 OpenRouter Responses 端點配置。
+首輪最小 Responses 請求收到 HTTP 429；同日重試已回傳 200 且完成。
+standalone Codex CLI `0.159.3` 用同一授權金鑰進行唯讀工具任務，兩次均於
+工具執行前收到 HTTP 429。試驗將 `request_max_retries` 與
+`stream_max_retries` 設為 `0` 以限制免費請求，不能據此判定 Codex 預設
+重試能力或 429 的確切原因。API 成功證明基本端點與金鑰可用，但不能推斷
+Codex 工具循環相容或不相容。**OpenRouter live 工具循環仍未通過**，狀態為
+「待驗證」，不能寫成「已驗證 OpenRouter」。驗收須在明確授權的使用者配置中，
+分別讀回 standalone CLI／Desktop 的實際 provider 與模型、串流工具呼叫、
+工具結果回送與續答、錯誤／取消，以及逐模型容量和代表性任務品質。
+僅通過一個入口或短任務，只能宣稱該組合的有限支援；其他 provider、模型、
+角色及跨 provider 子代理仍須各自驗證。既有公司 gateway 的失敗只是其受測
+配置的點時結果，不能推論所有第三方 provider 失敗。
+
 Issue #316 增加預設停用、供應商中立的 V2 `agent-route` opt-in。未提供或明確
 停用 store 時沿用原有 profiles／候選資格流程；啟用但不適用時停止該次路由。
 不依賴特定 gateway，也不建立各 gateway 的共享流程副本。
