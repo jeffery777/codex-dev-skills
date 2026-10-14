@@ -199,10 +199,17 @@ Details and bounded examples are in the repository document
 Custom-agent roles and concrete model/reasoning mappings are runtime profiles,
 not shared workflow truth. Preflight the custom-agent surface, profile validity,
 model mapping, reasoning setting, sandbox expectation, and collisions before
-claiming the profile is usable. Require current parent-sandbox evidence for any
-profile that is not intrinsically read-only, and reject a mapping that would
-widen that sandbox. This technical check is separate from workflow write
-authorization. Degrade in this order:
+claiming the profile is usable. Require current parent-sandbox evidence for
+every profile; custom agents inherit the parent's technical sandbox and
+approvals, and profile `sandbox_mode` cannot override them. Retained profile
+sandbox values are workflow expectations. Reject expectations that exceed the
+observed parent boundary; this conservative comparison does not establish
+separate read-only isolation or grant workflow write authorization. A read-only
+reviewer under a workspace-write parent is constrained by workflow instructions,
+not a separate technical sandbox. If technical read-only isolation is required,
+verify a read-only parent/control surface or stop the dependent operation.
+Unknown parent permissions require fallback without a custom-profile readiness
+claim. Degrade in this order:
 
 1. the lowest sufficient available tier in the same class, respecting explicit
    quality preference; compare actual model cost only with measured evidence;

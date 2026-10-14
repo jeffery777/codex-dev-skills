@@ -464,6 +464,8 @@ def _sandbox_is_non_widening(profile: dict[str, Any]) -> bool:
     sandbox = profile.get("sandbox")
     parent = profile.get("parent_sandbox_mode")
     if parent == "unknown-at-least-read-only":
+        # Retained only to validate historical receipts; _valid_profile rejects
+        # this sentinel for new routing. It is not observed parent permissions.
         return sandbox == "read-only"
     return (
         isinstance(sandbox, str)
@@ -502,6 +504,8 @@ def _valid_profile(
         and len(profile_digest) == 64
         and all(character in "0123456789abcdef" for character in profile_digest)
         and profile.get("sandbox") == CLASS_SANDBOX[capability_class]
+        and isinstance(profile.get("parent_sandbox_mode"), str)
+        and profile.get("parent_sandbox_mode") in SANDBOX_RANK
         and profile.get("sandbox_non_widening") is True
         and _sandbox_is_non_widening(profile)
         and isinstance(workflow_scope, list)

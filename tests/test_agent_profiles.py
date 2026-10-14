@@ -305,6 +305,7 @@ class AgentProfileValidationTests(unittest.TestCase):
                     "custom_agent_surface": "available",
                     "available_models": ["gpt-6-luna"],
                     "reasoning_efforts": {"gpt-6-luna": ["high"]},
+                    "parent_sandbox_mode": "workspace-write",
                 }),
                 encoding="utf-8",
             )
@@ -374,6 +375,7 @@ class AgentProfilePreflightTests(unittest.TestCase):
     def ready_facts(self, model: str, effort: str) -> dict[str, object]:
         return {
             "custom_agent_surface": "available",
+            "parent_sandbox_mode": "workspace-write",
             "available_models": [model],
             "reasoning_efforts": {model: [effort]},
         }
@@ -497,6 +499,20 @@ class AgentProfilePreflightTests(unittest.TestCase):
         self.assertEqual("ready", ready["decision"])
         self.assertTrue(ready["route_profile_evidence"]["sandbox_non_widening"])
 
+    def test_read_only_profile_requires_observed_inherited_parent_sandbox(self) -> None:
+        facts = self.ready_facts("gpt-6-luna", "high")
+        facts.pop("parent_sandbox_mode", None)
+        unknown = self.check("loop_v2a_fast_explorer", facts)
+        self.assertEqual("sandbox-constraint-unknown-or-widening", unknown["state"])
+        self.assertNotEqual("ready", unknown["decision"])
+        self.assertNotIn("route_profile_evidence", unknown)
+        for parent in ("read-only", "workspace-write"):
+            with self.subTest(parent=parent):
+                known = self.check("loop_v2a_fast_explorer", {**facts, "parent_sandbox_mode": parent})
+                self.assertEqual("ready", known["decision"])
+                self.assertEqual(parent, known["route_profile_evidence"]["parent_sandbox_mode"])
+                self.assertEqual("read-only", known["route_profile_evidence"]["sandbox"])
+
     def test_runtime_model_id_must_match_exactly(self) -> None:
         result = self.check(
             "loop_v2a_balanced_worker",
@@ -563,6 +579,7 @@ class AgentProfilePreflightTests(unittest.TestCase):
                     "custom_agent_surface": "available",
                     "available_models": ["runtime-fast"],
                     "reasoning_efforts": {"runtime-fast": ["low"]},
+                    "parent_sandbox_mode": "workspace-write",
                     "compatible_profiles": {"fast-read-explorer": candidates},
                     "parent_default": self.capability_evidence(
                         "fast-read-explorer", "efficient"
@@ -578,6 +595,7 @@ class AgentProfilePreflightTests(unittest.TestCase):
                     "custom_agent_surface": "available",
                     "available_models": ["runtime-fast"],
                     "reasoning_efforts": {"runtime-fast": ["low"]},
+                    "parent_sandbox_mode": "workspace-write",
                     "compatible_profiles": {"fast-read-explorer": candidates},
                     "parent_default": self.capability_evidence(
                         "fast-read-explorer", "efficient"

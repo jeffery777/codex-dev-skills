@@ -156,15 +156,22 @@ distinct from user-owned Desktop tasks created with a thread tool.
 Local Codex clients support standalone custom-agent TOML files under
 `~/.codex/agents/` for personal adoption and `.codex/agents/` for trusted-project
 adoption. Each file requires `name`, `description`, and
-`developer_instructions`; supported session configuration keys may include
-`model`, `model_reasoning_effort`, `sandbox_mode`, `mcp_servers`, and
-`skills.config`. See [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents).
+`developer_instructions`; supported overrides include `model`,
+`model_reasoning_effort`, and `skills.config`.
+See [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents).
 
 The profile is a runtime configuration layer, not workflow authority. Its
-technical `sandbox_mode` may differ by role, so preflight compares it with the
-current parent sandbox and refuses a custom profile that would widen that
-boundary. A balanced `workspace-write` profile therefore requires an equal or
-more permissive parent sandbox; read-only roles remain non-widening. Separately,
+custom agents inherit the parent's sandbox, approvals, provider and MCP servers;
+custom files cannot override `sandbox_mode`, `approval_policy`, `model_provider`
+or `mcp_servers`. Retained profile `sandbox_mode` and receipt `sandbox` describe
+workflow expectations. Preflight requires observed parent permissions for every
+role and refuses expectations exceeding that boundary. `sandbox_non_widening`
+proves only this conservative comparison. A read-only role under a workspace-write
+parent has read-only workflow instructions, not separate technical isolation.
+When acceptance requires technical read-only isolation, independently verify a
+read-only parent/control surface or stop the dependent operation. Historical
+`unknown-at-least-read-only` receipts are readable but cannot qualify fresh
+dispatch. Separately,
 neither role nor model choice grants workflow mutation authority, external
 actions, broader assigned scope, gate satisfaction, or completion. Active
 parent permission controls and managed requirements continue to apply.
@@ -522,12 +529,15 @@ Current callable semantics include:
   decision. No adapter may use
   private runtime state or task creation/navigation as a fallback.
   `reorder_sidebar_sections` 要求全部自訂 IDs 恰好一次，另接受要移動的
-  `pinned`／`agents`／`chats`／`projects` 內建 headings；省略的內建 headings
+  `pinned`／`orbit`／`agents`／`chats`／`projects` 內建 headings；`orbit` 對應
+  `Your dot`，可排序不代表取得 rename／delete 權限。省略的內建 headings
   保留位置。`threads`／`null` 不是這個操作的 heading IDs，registry 的
   section 分類不能直接當排序 payload。仍須依當次 schema 與可用公開讀回
   驗證，缺少排序可觀察性時回報未驗證。
   偏好操作另依 `desktop-sidebar-organization/references/preferences.md`：
-  `sorting.chats/projects/pinned` 共用於 Codex／Work；`grouping` 只改已確認
+  排序只接受 `manual`／`updated_at`；`sorting.chats` 同時作用於 Recents 與
+  專案內任務，`sorting.projects` 是它的別名，兩者同時提供須一致；
+  `sorting.pinned` 獨立。排序共用於 Codex／Work；`grouping` 只改已確認
   且可觀察的 surface。以 `list_threads.sidebarPreferences` 讀取現況，
   只送指定且需改變的欄位，省略欄位保持不變；全部已符合則 no-op。
   不為 reorder 自動改偏好，不為偏好更新補送 reorder。目標 surface 不可
@@ -601,9 +611,9 @@ must still behave correctly when hooks are disabled, unsupported, or absent.
 Hooks are not a complete enforcement boundary:
 
 - current command hooks do not intercept every tool or equivalent action path;
-- background command hooks are supported, but may overlap, finish out of
-  order, and be cancelled when the session ends; some parsed non-command
-  handler types remain unsupported;
+- command and `mcp_tool` handlers are documented; the optional repository
+  templates use synchronous command handlers only. Background command hooks
+  may overlap, finish out of order, and be cancelled when the session ends;
 - a `SubagentStart` hook cannot be assumed to stop a subagent;
 - hook output cannot replace sandboxing, approval policy, call-site target
   validation, integration review, or the completion audit.

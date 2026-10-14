@@ -50,6 +50,12 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Maintenance Approach
 
+- Issue #330 從 v0.33.0 的已發布 commit 回移必要的 CLI／Desktop 相容性修正，
+  保留獨立入口與共享分層，不納入 main 的其他未發布內容或暫停工作。
+  [v0.33.1 候選紀錄](release-notes-v0.33.1.md)與
+  [維護版證據](codex-runtime-maintenance-v0.33.1.md)描述此有界範圍；publication
+  另依 annotated tag 與 GitHub Release metadata 查證。
+
 - Issue #306 校正 Desktop local 預設、非同步 worktree 與 fork 中斷回合契約；
   共享層依使用者偏好及隔離需求選 checkout，CLI private-clone 邊界保持不變。
   修補版範圍見 [v0.31.1 候選紀錄](release-notes-v0.31.1.md)。

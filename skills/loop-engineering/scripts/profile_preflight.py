@@ -394,13 +394,15 @@ def runtime_facts(path: pathlib.Path) -> dict[str, Any]:
 
 
 def _sandbox_evidence(profile_sandbox: str, facts: dict[str, Any]) -> dict[str, Any] | None:
-    """Return evidence only when a custom profile cannot widen the parent sandbox."""
+    """Compare workflow expectation with the observed inherited parent sandbox.
+
+    A custom-agent sandbox_mode does not create a separate technical sandbox.
+    Unknown parent permissions cannot become evidence from a read-only profile.
+    """
     if not isinstance(profile_sandbox, str) or profile_sandbox not in SANDBOX_RANK:
         return None
     parent_sandbox = facts.get("parent_sandbox_mode")
-    if profile_sandbox == "read-only" and parent_sandbox is None:
-        parent_sandbox = "unknown-at-least-read-only"
-    elif (
+    if (
         not isinstance(parent_sandbox, str)
         or parent_sandbox not in PARENT_SANDBOX_MODES
     ):

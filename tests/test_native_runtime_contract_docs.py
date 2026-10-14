@@ -392,6 +392,8 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         for marker in (
             "every current custom `sectionId` exactly once",
             "`pinned`、",
+            "`orbit`、",
+            "`Your dot`",
             "`agents`、`chats`、`projects`",
             "省略者保留原位置",
             "自訂區塊不可省略",
@@ -406,6 +408,7 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
                 self.assertIn(marker, skill)
         self.assertNotIn("`sectionId` before deletion, rename, or reorder", skill)
         self.assertIn('["section-b", "section-a"]', skill)
+        self.assertIn('"orbit"', skill)
         self.assertIn("省略 `section-a`、重複 `projects` 或加入 `threads` 都不能送出", skill)
 
     def test_sidebar_preferences_have_an_action_scoped_reference(self) -> None:
@@ -438,7 +441,9 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
                 self.assertTrue(set(example) <= {"sorting", "grouping"})
                 if "sorting" in example:
                     self.assertTrue(set(example["sorting"]) <= {"chats", "projects", "pinned"})
-                    self.assertTrue(set(example["sorting"].values()) <= {"manual", "priority", "updated_at"})
+                    self.assertTrue(set(example["sorting"].values()) <= {"manual", "updated_at"})
+                    if {"chats", "projects"} <= set(example["sorting"]):
+                        self.assertEqual(example["sorting"]["chats"], example["sorting"]["projects"])
                 if "grouping" in example:
                     self.assertEqual({"mode", "surface"}, set(example["grouping"]))
                     self.assertIn(example["grouping"]["mode"], {"project", "connection", "list"})
@@ -455,6 +460,15 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "不得為 reorder 自動切換 sorting", "不假定固定外層 envelope",
             "未指定欄位出現漂移", "回報 `unverified`", "不自動重送、不補償性還原",
             "不證明兩個 UI 已完成重新渲染", "不證明 live mutation",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, body)
+        for marker in (
+            "Recents 與專案內任務共用", "`sorting.chats` 的別名",
+            "當次 schema 不接受\n`priority`", "同時提供時必須一致",
+            "優先只送 `sorting.chats`", "不要求它一定存在",
+            "兩者\n   都存在卻不同時", "要求只改專案內排序、Recents",
+            "不以別名假裝隔離作用範圍",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, body)
