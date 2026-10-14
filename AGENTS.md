@@ -21,6 +21,10 @@ When the user asks for review, stay read-only unless they explicitly ask for fix
 
 ## Checkout Selection
 
+每個話題首次開始 tracked edits 前，必讀並遵守
+[CONTRIBUTING.md 的「實作前先建立 Issue 與遠端分支」](CONTRIBUTING.md#實作前先建立-issue-與遠端分支)。
+該章節是 Issue／分支流程的唯一完整規範；本檔僅提供必讀入口，不另行複製流程。
+
 本專案預設單一進行中話題與單一 writer，優先沿用 local checkout。編排 agent
 依既有修改、ownership、所需 base 及隔離需求決定 local 或 worktree；需要偏離
 local 偏好時，先簡述原因，在既有授權及當次 runtime 契約允許範圍內續行。
