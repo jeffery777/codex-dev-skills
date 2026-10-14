@@ -3901,6 +3901,7 @@ class CliTests(unittest.TestCase):
                         "custom_agent_surface": "available",
                         "available_models": ["gpt-6-luna"],
                         "reasoning_efforts": {"gpt-6-luna": ["high"]},
+                        "parent_sandbox_mode": "workspace-write",
                     }
                 ),
                 encoding="utf-8",

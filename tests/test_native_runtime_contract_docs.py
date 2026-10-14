@@ -439,7 +439,9 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
                 self.assertTrue(set(example) <= {"sorting", "grouping"})
                 if "sorting" in example:
                     self.assertTrue(set(example["sorting"]) <= {"chats", "projects", "pinned"})
-                    self.assertTrue(set(example["sorting"].values()) <= {"manual", "priority", "updated_at"})
+                    self.assertTrue(set(example["sorting"].values()) <= {"manual", "updated_at"})
+                    if {"chats", "projects"} <= set(example["sorting"]):
+                        self.assertEqual(example["sorting"]["chats"], example["sorting"]["projects"])
                 if "grouping" in example:
                     self.assertEqual({"mode", "surface"}, set(example["grouping"]))
                     self.assertIn(example["grouping"]["mode"], {"project", "connection", "list"})
@@ -456,6 +458,15 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             "不得為 reorder 自動切換 sorting", "不假定固定外層 envelope",
             "未指定欄位出現漂移", "回報 `unverified`", "不自動重送、不補償性還原",
             "不證明兩個 UI 已完成重新渲染", "不證明 live mutation",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, body)
+        for marker in (
+            "Recents 與專案內任務共用", "`sorting.chats` 的別名",
+            "當次 schema 不接受\n`priority`", "同時提供時必須一致",
+            "優先只送 `sorting.chats`", "不要求它一定存在",
+            "兩者\n   都存在卻不同時", "要求只改專案內排序、Recents",
+            "不以別名假裝隔離作用範圍",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, body)

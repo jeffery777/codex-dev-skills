@@ -60,11 +60,20 @@ Parent/default and sequential fallbacks remain model-neutral evidence paths;
 they do not prove a selected model is not 5.x. The named GPT-6 profiles
 themselves do not contain 5.x mappings.
 
-Custom-agent `sandbox_mode` is a technical runtime constraint distinct from
-workflow authorization. Preflight must compare it with current-session
-`parent_sandbox_mode` evidence and reject or degrade any profile that would
-widen the parent sandbox. A profile never authorizes writes merely because its
-sandbox technically permits them.
+Custom agents inherit the parent's technical sandbox and approvals. A custom
+agent file's `sandbox_mode` cannot override them or create a separate read-only
+sandbox. This repository retains the field and receipt `sandbox` as workflow
+expectations, not runtime isolation evidence. Preflight requires observed
+`parent_sandbox_mode` for every profile and conservatively compares the expected
+scope with that boundary. `sandbox_non_widening` records that comparison only.
+With a workspace-write parent, a read-only reviewer remains forbidden to edit
+by its workflow instructions, but has no separate technical read-only sandbox.
+When acceptance requires technical read-only isolation, use an independently
+verified read-only parent/control surface or stop that dependent operation.
+Historical `unknown-at-least-read-only` receipts remain readable, but cannot
+qualify a fresh route or establish current permissions. Never dispatch from old
+evidence without current preflight. A profile never authorizes writes merely
+because the inherited sandbox permits them.
 
 Preflight role/profile availability before delegation. Use the lowest
 sufficient same-class profile, then a parent/default mapping with explicit

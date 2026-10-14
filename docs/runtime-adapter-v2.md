@@ -53,6 +53,10 @@ CLI adapter 的 native TUI reference；相同 basename 不代表 payload 或啟�
 ## Contract Family Boundary
 
 Desktop callable 的最新比對見
+[2026-10-14 點時證據](codex-runtime-compatibility-evidence-2026-10-14.md)：
+`sorting.projects` 是 `sorting.chats` 別名，排序只接受 `manual`／`updated_at`；
+共享 custom-agent sandbox 證據明確區分 workflow expectation 與繼承 parent
+權限，未知 parent 不推定唯讀資格。兩入口與共享層保持分開。前次
 [2026-09-29 點時證據](codex-runtime-compatibility-evidence-2026-09-29.md)：
 共享層依偏好與隔離需求選路，`create_thread` 採 local 預設並保留其專屬
 worktree 意圖限制；目前任務 worktree 需處理非同步完成與 remote default
