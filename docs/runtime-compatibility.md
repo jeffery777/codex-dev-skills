@@ -7,6 +7,9 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only.
+[v0.33.1 維護版證據](codex-runtime-maintenance-v0.33.1.md)記錄從 v0.33.0
+回移的共享 parent sandbox 證據與 Desktop 排序／別名／`orbit` 指引修正；
+CLI executor、獨立入口與既有資格限制保持原契約。前次
 [2026-09-29 compatibility evidence](codex-runtime-compatibility-evidence-2026-09-29.md)
 修正 Desktop local/worktree 選路、非同步工作樹建立與 fork 中斷回合語意；共享
 編排依使用者偏好及隔離需求選擇 checkout，CLI private-clone 邊界保持不變。

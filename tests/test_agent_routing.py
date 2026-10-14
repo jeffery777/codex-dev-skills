@@ -379,6 +379,23 @@ class ClassificationTests(unittest.TestCase):
 
 
 class RouteTests(unittest.TestCase):
+    def test_fresh_route_rejects_historical_unknown_parent_sentinel(self):
+        selected = profile("reviewer", "deep-reviewer", "deep")
+        selected["parent_sandbox_mode"] = "unknown-at-least-read-only"
+        receipt = route_v2("review", factors(write_blast_radius="none"),
+                           runtime={"custom_agents_available": True, "profiles": [selected]})
+        self.assertNotEqual("custom-agent-profile", receipt["execution_mode"])
+        self.assertIsNone(receipt["config_evidence"])
+
+    def test_historical_unknown_parent_receipt_remains_readable(self):
+        receipt = route_v2("review", factors(write_blast_radius="none"),
+                           runtime={"custom_agents_available": True, "profiles": [profile("reviewer", "deep-reviewer", "deep")]})
+        receipt["config_evidence"]["parent_sandbox_mode"] = "unknown-at-least-read-only"
+        receipt["config_evidence_sha256"] = routing._digest(receipt["config_evidence"])
+        # Historical integrity validation is distinct from fresh profile selection.
+        receipt["route_receipt_id"] = routing._digest({key: value for key, value in receipt.items() if key != "route_receipt_id"})
+        self.assertTrue(routing.validate_route_receipt(receipt)["valid"])
+
     def test_v2_routine_review_uses_existing_read_only_profile_as_higher_tier_fallback(self):
         receipt = route_v2(
             "review", factors(write_blast_radius="none"),
