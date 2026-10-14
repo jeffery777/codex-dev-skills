@@ -216,10 +216,14 @@ Omit unknown model fields instead of guessing:
 ```
 
 `parent_sandbox_mode` is current-session evidence from the active public
-runtime/configuration. A `workspace-write` worker profile is usable only when
-the parent sandbox is at least `workspace-write`; otherwise routing falls back
-without activating that profile. Read-only profiles cannot widen the supported
-profile sandbox and may remain usable when the parent value is unknown.
+runtime/configuration and is required for every fresh custom-profile route.
+A `workspace-write` workflow expectation requires a parent sandbox at least
+`workspace-write`; unknown parent permissions fall back without declaring that
+profile ready. Custom agents inherit the parent sandbox and approvals; retained
+profile `sandbox_mode` is a workflow expectation, not a separate technical
+sandbox. Read-only reviewers under a writable parent must still follow their
+read-only instructions. If acceptance requires technical read-only isolation,
+verify a read-only parent/control surface or stop the dependent operation.
 Version 2 parent/default and sequential fallbacks require both
 `capability_classes` and `capability_tiers`; version 1 route inputs retain their
 legacy fallback interpretation.
@@ -1338,6 +1342,10 @@ synthetic contract evidence and perform no live sidebar mutation.
 
 The active runtime contract is [docs/native-runtime-capabilities.md](docs/native-runtime-capabilities.md).
 最新維護的比對見
+[Codex runtime compatibility evidence (2026-10-14)](docs/codex-runtime-compatibility-evidence-2026-10-14.md)：
+修正 Desktop 排序的允許值與別名，以及共享 profile／繼承 sandbox 證據；
+未知 parent 不再推定唯讀就緒。CLI 與 Desktop 保持獨立入口；本次不直接
+發行包含其他未發布候選的小版本。前次
 [Codex runtime compatibility evidence (2026-09-29)](docs/codex-runtime-compatibility-evidence-2026-09-29.md)：
 依偏好與隔離需求選擇 checkout，校正 Desktop 新任務 local 預設、目前任務
 worktree 的非同步／起點契約，以及 fork 可能包含中斷回合的語意；CLI 的

@@ -4,21 +4,23 @@ Runtime compatibility: desktop
 
 只在使用者要求修改側邊欄排序偏好或分組時讀取。本 reference 是
 `desktop-sidebar-organization` 的操作分支；不新增 CLI executor、共享選路
-或 task 控制。以當次完整 callable schema 為準，以下為 2026-09-25 的
+或 task 控制。以當次完整 callable schema 為準，以下為 2026-10-14 的
 `update_sidebar_preferences` 契約基線，不是永久 API 保證。
 
 ## 欄位與作用範圍
 
 | 欄位 | 當次允許值 | 語意 |
 | --- | --- | --- |
-| `sorting.chats` | `manual` / `priority` / `updated_at` | 專案以外的任務排序；共用於 Codex／Work。 |
-| `sorting.projects` | `manual` / `priority` / `updated_at` | 專案內任務排序；不是專案項目的排列；共用於 Codex／Work。 |
-| `sorting.pinned` | `manual` / `priority` / `updated_at` | 釘選任務與專案排序；共用於 Codex／Work。 |
+| `sorting.chats` | `manual` / `updated_at` | Recents 與專案內任務共用的排序；共用於 Codex／Work。 |
+| `sorting.projects` | `manual` / `updated_at` | `sorting.chats` 的別名；不是專案項目的排列；共用於 Codex／Work。 |
+| `sorting.pinned` | `manual` / `updated_at` | 釘選任務與專案排序；共用於 Codex／Work。 |
 | `grouping.mode` | `project` / `connection` / `list` | 依專案、依連線或單一清單分組。 |
 | `grouping.surface` | `codex` / `work` | 分組只作用於指定 surface；callable 省略時預設 active surface。 |
 
-`manual` 使用已儲存順序；`priority` 將需要輸入或未讀的任務優先顯示；
-`updated_at` 按最近更新排序。工具沒有 sort direction 或每個專案的設定欄位，
+`manual` 使用已儲存順序；`updated_at` 按最近更新排序。當次 schema 不接受
+`priority`。`sorting.projects` 與 `sorting.chats` 同時提供時必須一致；本 adapter
+優先只送 `sorting.chats`，不能把別名當作獨立設定。
+工具沒有 sort direction 或每個專案的設定欄位，
 不能把「最舊優先」或「只改某一專案」轉成近似 payload。
 這與 `reorder_section`／`reorder_sidebar_projects`／`reorder_sidebar_sections`
 的項目重排不同。不得為 reorder 自動切換 sorting，也不得為偏好更新補送
@@ -29,12 +31,16 @@ reorder；選擇 `manual` 不授權另寫一份項目順序。
 1. 讀當次 schema，再以 `list_threads` 取得新鮮的 `sidebarPreferences`。
    當次 registry 形狀為 `sorting.{chats,projects,pinned}` 與
    `grouping.{mode,surface}`；依實際公開回傳核對，不猜測缺值或預設值。
-   偏好不依賴任務清單完整性，不為此查 `list_projects` 或要求 section IDs。
+   `projects` 若出現在 snapshot，視為 `chats` 的別名，不要求它一定存在；兩者
+   都存在卻不同時保留衝突並停止相依修改，不猜測或覆寫。偏好不依賴任務清單
+   完整性，不為此查 `list_projects` 或要求 section IDs。
 2. 解析使用者指定的欄位、值與範圍。具體請求可直接授權這項可逆操作，
    不因 callable 名稱或原始 JSON 再次詢問。動作摘要須說明排序共用於
    Codex／Work，或分組的確切 surface。「整理一下」不能決定任意偏好；
    明確要求「只改 Codex 的排序、Work 保持不變」與共用排序契約不相容，
-   停止該修改並說明限制，不能悄悄擴大範圍。
+   停止該修改並說明限制，不能悄悄擴大範圍。要求只改專案內排序、Recents
+   保持不變，或指定 `priority` 時同樣不相容；說明共用欄位與目前允許值，
+   不擅自改成最接近的選項。
 3. 分組的目標須來自使用者明確指示，或已讀回的目前 active surface。
    本 adapter 在 grouping payload 明確傳入已確認的 `surface`，避免依賴
    call 時可能改變的預設目標；不能僅由執行環境叫 Codex 就推定 surface。
@@ -76,7 +82,7 @@ Dry-run 保留偏好欄位、既有值、要求值、共用排序範圍／目標
 
 以下都是離線範例，不是本機偏好，也不得由測試或 CI 發送。
 
-使用者要求「專案外任務依最近更新排序」，已確認共用作用範圍及現況需變更：
+使用者要求「Recents 與專案內任務依最近更新排序」，已確認共用作用範圍及現況需變更：
 
 ```json
 {"sorting":{"chats":"updated_at"}}
@@ -90,7 +96,10 @@ Dry-run 保留偏好欄位、既有值、要求值、共用排序範圍／目標
 
 | 案例 | 預期處理 |
 | --- | --- |
-| 只改專案內任務排序 | 只更新 `sorting.projects`；不移動 project IDs。 |
+| Recents 與專案內任務依最近更新排序 | 只更新 `sorting.chats`；不移動 project IDs。 |
+| 只改專案內任務排序、Recents 保持不變 | 不相容；不以別名假裝隔離作用範圍。 |
+| 要求 `priority` 或兩個別名不同值 | 不相容；不送出、不擅自替換允許值。 |
+| Snapshot 兩個別名不同值 | 停止相依修改；保留衝突，不猜測現況。 |
 | 只改目前 Codex 分組 | 確認 snapshot 的 surface 後只送 grouping；不修改 sorting。 |
 | 已符合全部指定值 | `no-op`；沒有 mutation。 |
 | 明確要求只改一個 surface 的排序 | 不相容；不送出跨 Codex／Work 更新。 |
