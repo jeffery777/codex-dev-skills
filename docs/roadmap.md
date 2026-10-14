@@ -69,8 +69,12 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 ## Backlog
 
 - Issue #316 的[本機角色模型映射](guides/local-model-mapping.md)與純建議式 failover
-  是 default-off 的有限基礎；尚未完成 CLI／Desktop 混合模型實際執行及連接。
-  範圍與後續驗證見[交付計畫](plans/issue-316-local-model-mapping.md)。
+  是保留的 default-off 有限基礎。依 2026-10-14 確認的後續方向，local／第三方
+  角色模型接入停止新增投入；尚未完成的 CLI／Desktop 混合模型執行、planner
+  接線、接手與資格化不是目前待交付目標。重新投入須另行決策與驗證。
+  範圍與驗證缺口見[交付計畫](plans/issue-316-local-model-mapping.md)；
+  [v0.34.0 候選紀錄](release-notes-v0.34.0.md)保留歷史內容，不代表目前發布計畫。
+  決策整理由 [Issue #328](https://github.com/jeffery777/codex-dev-skills/issues/328)追蹤。
 
 - [Issue #320](https://github.com/jeffery777/codex-dev-skills/issues/320) 接續 Hermes
   基礎交付，將工程階段與證據抽為[共用契約](../policies/engineering-workflow-contract.md)，

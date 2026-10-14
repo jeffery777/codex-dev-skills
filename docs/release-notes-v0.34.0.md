@@ -6,6 +6,22 @@ Prepared on 2026-10-07 for the Issue #316 A/B foundation branch
 `codex/issue-316-ab-foundation`. This records candidate contents only, not an
 annotated tag, published Release, or installation.
 
+## 後續決策註記（2026-10-14）
+
+本專案後續開發聚焦 Codex 工作流；local／第三方角色模型接入停止新增投入，
+保留既有 default-off 程式與驗證邊界。下列內容保留為 2026-10-07 的候選
+準備紀錄，不代表目前發布計畫、正式發布或 production 支援承諾。
+重新投入須另行決策並取得適用 runtime 的驗證證據。
+
+這項註記補充後續方向，不改寫當時候選內容，也不更動 `catalog.yaml` 的
+來源／套件版本。後續版本與發布範圍須另行評估；正式發布狀態仍依
+[版本契約](../policies/release-state-contract.md)核對 annotated tag 與
+GitHub Release metadata。
+
+決策整理由 [Issue #328](https://github.com/jeffery777/codex-dev-skills/issues/328)
+追蹤；後續範圍見 [Issue #316 工程計畫](plans/issue-316-local-model-mapping.md)
+及 [roadmap](roadmap.md)。
+
 ## Local Role Model Mapping
 
 - Add default-off user-owned role model mappings to V2 agent routing.
