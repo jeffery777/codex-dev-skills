@@ -180,10 +180,13 @@ Cost-aware route contract version 2 keeps capability class separate from
 capability tier. Class continues to bind sandbox and workflow scope; tier
 records the minimum model/reasoning need. The ordered tiers are `mechanical`,
 `efficient`, `everyday`, `senior`, `advanced`, `deep`, and `exceptional`.
-`senior` maps the published Terra-high profile for complex bounded work;
-Terra-xhigh and Luna-max remain eval-only candidates. Selection uses
-registry tier rank rather than profile filename order and may choose a higher
-tier only as an explicit cost-degraded same-class fallback. Parent/default and
+Resolve role identities, model/effort mappings, and baseline/candidate status
+from the canonical `references/agent-profile-registry.json` accompanying the
+selected `loop-engineering` skill. The registry describes configured profiles;
+current-session runtime facts must still establish availability and callable
+support. Selection uses registry tier rank rather than profile filename order
+and may choose a higher tier only as an explicit cost-degraded same-class
+fallback. Parent/default and
 sequential fallbacks require current-session evidence for both class and tier.
 
 General project configuration has higher documented precedence than user
@@ -215,8 +218,9 @@ repository-controlled receipt assertions.
 Astra candidate selection is an additional version 2 opt-in within the canonical
 registry. Current runtime facts must bind qualification to the profile digest and
 identify the observed model interface. Installed presence and model availability
-alone do not qualify a candidate. The eight baseline roles remain available, and
-candidate profiles cannot become implicit fallback targets. This enforcement
+alone do not qualify a candidate. Baseline roles remain available subject to
+current-session runtime facts, and candidate profiles cannot become implicit
+fallback targets. This enforcement
 belongs to `loopctl.py agent-route`, not to direct native role invocation.
 
 The shared parent workflow owns current-fact collection and invocation. When
