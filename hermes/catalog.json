@@ -37,6 +37,20 @@
     "policies/projectspec-alignment-policy.md",
     "scripts/verify-hermes-runtime.py",
     "policies/engineering-workflow-contract.md",
-    "scripts/verify-engineering-workflow.py"
+    "scripts/verify-engineering-workflow.py",
+    "policies/core-contract-loading.md",
+    "scripts/validate-core-contract-snapshot.py",
+    "vendor/engineering-workflow-core.lock.json",
+    "vendor/engineering-workflow-core/LICENSE",
+    "vendor/engineering-workflow-core/README.md",
+    "vendor/engineering-workflow-core/contracts/authorization-and-stops.md",
+    "vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md",
+    "vendor/engineering-workflow-core/contracts/review-and-security.md",
+    "vendor/engineering-workflow-core/contracts/workflow.md",
+    "vendor/engineering-workflow-core/docs/architecture/dependency-inventory.md",
+    "vendor/engineering-workflow-core/docs/architecture/migration-plan.md",
+    "vendor/engineering-workflow-core/docs/architecture/project-split.md",
+    "vendor/engineering-workflow-core/docs/provenance/source-map.md",
+    "vendor/engineering-workflow-core/docs/provenance/upstream-notices.md"
   ]
 }

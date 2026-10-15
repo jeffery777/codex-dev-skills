@@ -1,0 +1,91 @@
+{
+  "contract": "codex-core-document-lock/v1",
+  "source": {
+    "repository": "jeffery777/engineering-workflow-core",
+    "revision": "b4c37798b6d3a9efd91c8c6d518093f2dd847a98",
+    "reviewed_head": "10e97ddde5e04b085da357138ebdae4d0cb5a0f4",
+    "pull_request": 4,
+    "version": null
+  },
+  "consumer": {
+    "repository": "jeffery777/codex-dev-skills",
+    "import_baseline_revision": "ab5e517077df7ce83b8e2dd1a11cafe6d1b3fd35",
+    "assembler_contract": "core-snapshot/v1"
+  },
+  "upstream_markdown_set": {
+    "algorithm": "utf8-path-tab-sha256-lf/v1",
+    "sha256": "8446dfbf5e2820dd696ef411e87cc7a92b39305c369c808122b63554b9be83f6"
+  },
+  "document_set": {
+    "algorithm": "codex-core-document-set/v1",
+    "sha256": "9aed05bf415039319936cd4af4d34c77ae812df80a46f6d095c59182bedd242d",
+    "files": [
+      {
+        "path": "LICENSE",
+        "sha256": "49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f",
+        "size_bytes": 1067,
+        "mode": "100644"
+      },
+      {
+        "path": "README.md",
+        "sha256": "1b32eb6d5ed5e06b4b798dca52a793c21b526b4515be07b7e974341c16024751",
+        "size_bytes": 4155,
+        "mode": "100644"
+      },
+      {
+        "path": "contracts/authorization-and-stops.md",
+        "sha256": "26924aba9211929583d2ae31c14a12f9c220c13c8dfbdc43ddf6970d9d5919d7",
+        "size_bytes": 5010,
+        "mode": "100644"
+      },
+      {
+        "path": "contracts/exact-head-and-evidence.md",
+        "sha256": "c55f08e77a47583485403f7318afe5f2ef1a90ff137279a0c0c59104d5c2e7de",
+        "size_bytes": 6031,
+        "mode": "100644"
+      },
+      {
+        "path": "contracts/review-and-security.md",
+        "sha256": "28acff344b14968ead954903fb6815d283ed1b4bb8dc2e977a3e37fca7845501",
+        "size_bytes": 5361,
+        "mode": "100644"
+      },
+      {
+        "path": "contracts/workflow.md",
+        "sha256": "318380ef6783de944b1992b31c4384c8be5ec022a6b429616c7caa42508dd6e5",
+        "size_bytes": 8275,
+        "mode": "100644"
+      },
+      {
+        "path": "docs/architecture/dependency-inventory.md",
+        "sha256": "c588ebfb8c1c4cc159d56e742832974820a88e326de4ee5eac5204c66c14ef9a",
+        "size_bytes": 58967,
+        "mode": "100644"
+      },
+      {
+        "path": "docs/architecture/migration-plan.md",
+        "sha256": "fadd65adb453bcffde5131fdc3834226a0397914d472712bad037b6ccd24b748",
+        "size_bytes": 8256,
+        "mode": "100644"
+      },
+      {
+        "path": "docs/architecture/project-split.md",
+        "sha256": "5cbb00d07456c56ce52153ab23952ff7626b8b178103229cbaa95f6b25ae8226",
+        "size_bytes": 15027,
+        "mode": "100644"
+      },
+      {
+        "path": "docs/provenance/source-map.md",
+        "sha256": "fe601e2dc914c8370997cf46232dd3a10cb55d72556b07dafe0e9ab5d7cc67db",
+        "size_bytes": 41639,
+        "mode": "100644"
+      },
+      {
+        "path": "docs/provenance/upstream-notices.md",
+        "sha256": "a33e7445a6eea9df9f12dd5b32cb6f08353d00b7d873496d48389dbe36ceb888",
+        "size_bytes": 2332,
+        "mode": "100644"
+      }
+    ]
+  }
+}

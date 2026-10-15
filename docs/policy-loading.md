@@ -1,5 +1,11 @@
 # 一般技能的政策載入
 
+本頁保留 Issue #267 的點時載入設計與文字量紀錄。Issue #335 將共用義務改接
+固定 Core；目前必讀範圍、三佈局與驗證依
+[固定 Core 載入契約](../policies/core-contract-loading.md) 及
+[P3-C 接法](core-contract-snapshot.md)。下列原七 body 與減量數字不是 #335 的
+現況宣稱；historical baseline JSON 保持原樣，不宣稱新增載入後仍有相同減量或模型效益。
+
 Issue #267 將一般 `docs-review` 與 `implementation-slice` 的初始必讀範圍改為
 技能本身加上 `policies/reusable-workflow-contract.md` 完整核心與觸發表。
 核心連到 `reusable-workflow-details.md` 的適用章節；批次、並行或大量工具

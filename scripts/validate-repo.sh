@@ -434,6 +434,8 @@ main() {
   check_catalog_skill_metadata
   check_installer_catalog_consistency
   check_code_mode_tool_policy
+  "$PROJECT_PYTHON" -B scripts/validate-core-contract-snapshot.py
+  ok "fixed Core snapshot identity, bytes, notices and link closure are valid"
   check_plugin_package
   check_installer_target_modes
   check_release_state

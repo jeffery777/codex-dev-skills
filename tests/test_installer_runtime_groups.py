@@ -419,6 +419,14 @@ class RuntimeGroupInstallerTests(unittest.TestCase):
             for path in [root, *sorted(root.rglob("*"))]:
                 if path.is_symlink():
                     raise AssertionError(f"unexpected symlink in trusted legacy fixture: {path}")
+                if path.is_file() and (
+                    (path.name == "core.lock.json" and path.parent.name == "orchestration")
+                    or any(p.name == "core" and p.parent.name == "orchestration" for p in path.parents)
+                ):
+                    # Fixed Core did not exist in v0.14.1. Do not fabricate a
+                    # legacy mode migration for the new private-file contract.
+                    self.assertEqual(0o600, stat.S_IMODE(path.stat().st_mode))
+                    continue
                 if path.is_dir():
                     path.chmod(0o775)
                 elif path.is_file():
