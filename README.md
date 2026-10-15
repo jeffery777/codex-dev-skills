@@ -8,7 +8,7 @@
 獨立審查、文件同步與交接。技能提供可重用步驟與證據要求；當次 runtime 提供工具，
 使用者與專案決定授權。安裝成功、子代理摘要或測試綠燈都不等於可以發布或合併。
 
-繁體中文預設顯示；[English](#english) 可展開。英文以清楚、一致為目標，
+繁體中文預設顯示；[English](#english) 跳到下方後點選展開。英文以清楚、一致為目標，
 完整 ASD-STE100 符合性尚未驗證。
 
 文中四個常用詞：
@@ -125,6 +125,7 @@ Force backup 與 rollback 有明確限制，並非所有失敗都原子回復；
 及[排錯指南](docs/troubleshooting.md)。
 
 <a id="runtime-compatibility"></a>
+<a id="cli-and-desktop-entry-paths"></a>
 <a id="codex-cli-session-handoff"></a>
 <a id="codex-desktop-delegated-delivery"></a>
 ## 原生委派與獨立任務
@@ -251,10 +252,11 @@ Release notes 是 point-in-time 準備／歷史紀錄；出版事實須另外查
 - [Runtime 相容與 fallback](docs/runtime-compatibility.md)、[context continuity](docs/context-continuity.md)
 - [Release readiness](docs/release-readiness.md)、[roadmap](docs/roadmap.md)、[MIT LICENSE](LICENSE)
 
+<a id="english"></a>
 <details>
 <summary>English — purpose, quick start, installation and safety</summary>
 
-## English
+## English overview
 
 `codex-dev-skills` is an open-source engineering workflow pack for Codex CLI and
 Desktop. It takes a bounded objective through planning, implementation,
@@ -262,6 +264,8 @@ verification, independent review, documentation and handoff. Skills define
 steps and evidence; the active runtime supplies tools. The user and project
 retain authority. Installation, a worker summary or green tests alone do not
 authorize publication or merge. Full ASD-STE100 conformance is unverified.
+Traditional Chinese is shown first. The English link leads to the expandable
+summary; select that summary to read this section.
 
 Here, **runtime** means the active environment, tools, version and permissions.
 A **profile** is an optional role/model/effort configuration file; its presence
@@ -323,7 +327,7 @@ scope, DoD, ownership and verification. Existing explicit authority remains
 valid; stop for new scope, destructive actions, risk decisions or unauthorized
 external writes. A review or gate grants no new authority.
 
-### CLI And Desktop Entry Paths
+### CLI And Desktop Entry Paths (English)
 
 Codex CLI enters the shared layer directly. Prefer the active native capability
 when its semantics fit. Native subagents are bounded children of current work;
