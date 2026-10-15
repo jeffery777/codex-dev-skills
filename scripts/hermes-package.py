@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import pathlib
@@ -14,6 +15,15 @@ import sys
 import yaml
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+CORE_SPEC = importlib.util.spec_from_file_location(
+    "core_snapshot", ROOT / "scripts/validate-core-contract-snapshot.py"
+)
+core_snapshot = importlib.util.module_from_spec(CORE_SPEC)
+assert CORE_SPEC.loader
+CORE_SPEC.loader.exec_module(core_snapshot)
+CORE_RESOURCES = {
+    f"vendor/engineering-workflow-core/{path}" for path in core_snapshot.FILES
+} | {"vendor/engineering-workflow-core.lock.json"}
 NAMESPACE = "codex-dev-skills"
 SKILLS = ("hermes-project-delivery", "hermes-review-gate", "hermes-task-continuation")
 MARKER = ".install-incomplete"
@@ -110,9 +120,13 @@ def package(root: pathlib.Path = ROOT) -> dict[str, bytes]:
             raise PackageError(f"invalid skill frontmatter: {name}")
     if not isinstance(catalog["resources"], list):
         raise PackageError("resources must be a list")
+    try:
+        core_snapshot.validate(root)
+    except (ValueError, OSError) as exc:
+        raise PackageError(f"Core snapshot rejected: {exc}") from exc
     for value in catalog["resources"]:
         relative = safe_relative(value)
-        if relative.parts[0] not in {"policies", "templates", "scripts", "docs"}:
+        if relative.parts[0] not in {"policies", "templates", "scripts", "docs"} and str(relative) not in CORE_RESOURCES:
             raise PackageError("resource outside supported dependency roots")
         if str(relative) in files:
             raise PackageError("duplicate resource")

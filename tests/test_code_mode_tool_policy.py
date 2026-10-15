@@ -97,6 +97,7 @@ class CodeModeToolPolicyTests(unittest.TestCase):
         shutil.copy2(ROOT / "catalog.yaml", fixture / "catalog.yaml")
         for item in (
             "agent-profiles",
+            "vendor",
             "docs",
             "policies",
             "scripts",

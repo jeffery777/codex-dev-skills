@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import filecmp
+import importlib.util
 import pathlib
 import shutil
 import stat
@@ -13,9 +14,25 @@ import sys
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+CORE_SPEC = importlib.util.spec_from_file_location(
+    "core_snapshot", ROOT / "scripts/validate-core-contract-snapshot.py"
+)
+core_snapshot = importlib.util.module_from_spec(CORE_SPEC)
+assert CORE_SPEC.loader
+CORE_SPEC.loader.exec_module(core_snapshot)
+CORE_RESOURCES = {
+    f"vendor/engineering-workflow-core/{path}" for path in core_snapshot.FILES
+} | {"vendor/engineering-workflow-core.lock.json"}
 PACKAGE_ROOT = ROOT / "plugin" / "codex-dev-skills"
 MANIFEST_PATH = ".codex-plugin/plugin.json"
 SHARED_FILES = {
+    "policies/agent-delegation-policy.md",
+    "policies/multi-agent-integration-policy.md",
+    "policies/human-gate-policy.md",
+    "policies/review-artifact-policy.md",
+    "policies/security-review-escalation-policy.md",
+    "policies/core-contract-loading.md",
+    "scripts/validate-core-contract-snapshot.py",
     "policies/engineering-workflow-contract.md",
     "scripts/verify-engineering-workflow.py",
     "policies/code-mode-tool-orchestration-policy.md",
@@ -32,7 +49,7 @@ SHARED_FILES = {
     "docs/native-runtime-capabilities.md",
     "docs/agent-qualification-autoload.md",
     "docs/guides/local-model-mapping.md",
-}
+} | CORE_RESOURCES
 SHARED_PREFIXES = ("templates/orchestration/",)
 
 
@@ -48,6 +65,7 @@ def tracked_files() -> set[str]:
             "templates",
             "docs",
             "scripts",
+            "vendor",
         ],
         cwd=ROOT,
         check=True,
@@ -58,6 +76,7 @@ def tracked_files() -> set[str]:
 
 
 def package_sources() -> set[str]:
+    core_snapshot.validate(ROOT)
     tracked = tracked_files()
     selected = {
         path
@@ -138,6 +157,10 @@ def verify(expected: set[str], package_root: pathlib.Path = PACKAGE_ROOT) -> lis
             errors.append(f"generated plugin file differs from canonical source: {relative}")
         elif stat.S_IMODE(source.stat().st_mode) != stat.S_IMODE(target.stat().st_mode):
             errors.append(f"generated plugin file mode differs from canonical source: {relative}")
+    try:
+        core_snapshot.validate(package_root)
+    except (ValueError, OSError) as exc:
+        errors.append(f"generated plugin Core snapshot rejected: {exc}")
     return errors
 
 

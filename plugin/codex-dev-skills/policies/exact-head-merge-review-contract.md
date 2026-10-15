@@ -1,151 +1,75 @@
 # Exact-Head Merge-Review Contract
 
-Use this provider-neutral contract after a change request exists, or whenever a
-workflow reports formal merge content readiness. A change request may be a
-GitHub pull request, GitLab merge request, another forge-native review object,
-or a locally identified base-to-head range when no provider adapter is
-configured.
-
-The contract prevents implementation evidence from being mistaken for review
-of the immutable content that is actually proposed for merge. Provider-native
-enforcement is a separate, optional profile and must never become the source of
-truth for code, documentation, or version coherence.
+Compatible provider-neutral entry for an existing change request or formal merge
+content readiness. Follow [fixed Core loading](core-contract-loading.md) and read
+full Core exact-head/evidence and review/security. A local exact range is available
+when no forge adapter is configured; shared Markdown is not a validator or
+provider-enforcement implementation.
 
 ## Evidence Roles
 
-Pre-commit code, documentation, deep, and security reviews prove properties of
-the content they inspected. They may be reused when their source revision,
-scope, and assumptions still match, but their verdict does not satisfy
-exact-head Merge Review.
-
-Exact-head Merge Review is a complete base-to-head integration review. Bind it
-to:
-
-- repository identity and change-request identity when one exists;
-- exact base, head, and merge-base revisions;
-- deterministic diff or range identity;
-- review mode and applicable Definition of Done;
-- verification commands and results;
-- findings, dispositions, and residual risk; and
-- code, documentation, configuration, package, and version coherence.
-
-A local report, chat handoff, worker summary, goal state, provider status, or
-earlier review is not a substitute for this evidence.
+Core [exact-identity](../vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md#exact-identity)
+binds complete base-to-head review to repository/change request, exact
+base/head/merge-base, deterministic range/diff, mode/DoD, commands/results,
+findings/dispositions/residual risk and code, documentation, configuration, package, and version coherence.
+Pre-commit evidence may be reused while matching; their verdict does not satisfy
+exact-head Merge Review. Keep existing report/template/validator field names.
 
 ## Content-Coherence Review
 
-Every exact-head Merge Review must inspect the final complete range rather than
-only the newest commit or files that happen to be documentation-dominant.
-Reviewers must:
-
-1. run deterministic offline repository, version, package, schema, generated-
-   artifact, or documentation checks that the repository provides;
-2. compare user-visible documentation claims with the code, configuration,
-   specification, tests, and observed behavior that support them;
-3. detect stale names, commands, paths, feature states, compatibility claims,
-   release scope, and superseded descriptions;
-4. confirm that changed user-visible behavior has corresponding documentation
-   or record why no documentation change is required; and
-5. classify every finding and retain a durable disposition before content
-   readiness passes.
-
-Tests alone do not prove semantic documentation coherence. Human or model
-review alone does not replace deterministic checks for facts that can be
-validated mechanically.
+Read Core [exact-coherence](../vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md#exact-coherence).
+Inspect the final complete base-to-head range, run applicable deterministic
+offline checks and compare claims against code/config/spec/tests/observations.
+Tests do not replace semantic coherence; review does not replace mechanical facts.
 
 ## Required Content Transition
 
-The successful provider-neutral transition is:
+Core [exact-transition](../vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md#exact-transition)
+defines the duties. Existing Codex evidence identifiers remain:
 
-```text
-CHANGE_REQUEST_CREATED
-  -> EXACT_HEAD_VERIFICATION_PASSED
-  -> EXACT_HEAD_CONTENT_REVIEW_PASSED
-  -> CONTENT_READINESS_READY
-  -> HUMAN_MERGE_AUTHORIZED
-```
+    CHANGE_REQUEST_CREATED
+      -> EXACT_HEAD_VERIFICATION_PASSED
+      -> EXACT_HEAD_CONTENT_REVIEW_PASSED
+      -> CONTENT_READINESS_READY
+      -> HUMAN_MERGE_AUTHORIZED
 
-When no forge-native change request exists, the first state may instead be
-`EXACT_RANGE_SELECTED`. Do not skip a state or infer content readiness from a
-later provider status. Merge authorization remains a separate human or
-accepted platform action; review evidence must always state that it does not
-authorize merge.
-
-A new push or a change to repository identity, change-request identity, base,
-head, merge base, diff identity, required verification, finding disposition,
-or coherence evidence returns the content flow to `REVIEW_REQUIRED` at the
-earliest affected state. Every changed head requires a new complete
-base-to-head Merge Review.
+Without a forge, use EXACT_RANGE_SELECTED. Identity/verification/finding/coherence
+drift returns to REVIEW_REQUIRED. Every changed head requires a new complete
+base-to-head Merge Review. Review evidence does not itself authorize merge;
+existing explicit authority does not need to be asked again.
 
 ## Separate Readiness Dimensions
 
-Report these dimensions independently:
-
-- `content_review`: `PASSED | BLOCKED | NEEDS_HUMAN_DECISION`
-- `platform_enforcement`: `VERIFIED | UNVERIFIED | BLOCKED | NOT_CONFIGURED`
-
-`content_review: PASSED` means the exact reviewed content satisfies the
-provider-neutral contract. It does not claim that a forge pipeline, discussion,
-approval rule, check, receipt, ruleset, or merge box was inspected.
-
-`platform_enforcement: NOT_CONFIGURED` is valid when repository policy does not
-select a provider profile. `UNVERIFIED` means a profile or relevant provider
-state exists but current evidence was not read successfully. If repository
-policy requires a provider profile, `UNVERIFIED` or `BLOCKED` prevents the
-formal merge gate from reporting overall readiness without erasing otherwise
-valid content-review evidence.
+Core [exact-dimensions](../vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md#exact-dimensions)
+separates content_review and platform_enforcement from operation authority.
+Preserve PASSED/BLOCKED/NEEDS_HUMAN_DECISION and
+VERIFIED/UNVERIFIED/BLOCKED/NOT_CONFIGURED. Content PASSED does not assert provider
+objects were inspected; an unverified/blocked required profile blocks overall
+readiness without erasing valid content evidence.
 
 ## Provider Profiles
 
-Provider profiles are opt-in repository overlays. A profile may add pipeline,
-review-thread, approval, receipt, status-check, protected-branch, release, or
-final live-readback requirements. It must:
-
-- name the selected provider and exact repository;
-- define its normalized evidence and staleness rules;
-- preserve this contract's exact-head and coherence requirements;
-- distinguish provider verification from content review and merge authority;
-- fail closed for claims that require unavailable or stale provider evidence;
-  and
-- avoid requiring its provider objects when the profile is not selected.
-
-GitHub repositories that select the existing App/check/receipt/ruleset
-enforcement use `policies/github-exact-head-enforcement-profile.md`. A GitLab
-CE repository may use this content contract without GitHub, and may add a
-separate GitLab profile for MR head, pipeline, discussion, approval, protected-
-branch, and final readback evidence when its deployment exposes those controls.
+Profiles are project-selected overlays, never inferred from the installed skill.
+The selected GitHub implementation is
+[github-exact-head-enforcement-profile](github-exact-head-enforcement-profile.md).
+A GitLab CE repository may use this content contract without GitHub and choose its
+own MR/pipeline/discussion/approval/protection/final-readback profile. Keep source
+truth, content, provider evidence, live freshness and operation authority separate.
 
 ## Review And Remediation Scope
 
-After a finding is fixed, rerun the appropriate code or documentation review
-over the smallest scope that proves the fix and affected boundaries. Select
-routine or deep review by the actual risk, not merely because a finding was
-fixed. Record why unchanged prior evidence remains applicable.
-
-Assess Security Diff Scan applicability from the final diff. Require a
-proportional scan when changes affect security or trust boundaries, permissions,
-authentication, sensitive data handling, executable behavior with security
-impact, dependencies or installation paths with security impact, or when a
-concrete security concern remains. A clean code review does not replace a
-required scan. If applicability is uncertain, inspect the affected boundary
-before deciding; unresolved material security risk blocks readiness.
-
-For changes without those impacts, record Security Diff Scan as not applicable
-with the examined scope and rationale; never label a skipped scan as passed.
-Model/effort-only configuration, documentation, or generated-file changes do
-not automatically require a scan, nor are those categories blanket exemptions.
-Reassess applicability after scope or assumptions change. Widen review or scan
-scope when shared contracts, data or trust boundaries, generated artifacts,
-packaging, documentation claims, or prior evidence assumptions are affected.
-
-Proportional fix review never permits reusing an old exact-head verdict for a
-new head. Clean internal reviews and scans may advance automatically to later
-read-only or already-authorized stages. Stop only for an actual human decision,
-missing authority, environment or permission failure, material ambiguity or
-risk, destructive action, or an unauthorized external write.
+Core [review-findings](../vendor/engineering-workflow-core/contracts/review-and-security.md#review-findings)
+and [review-security](../vendor/engineering-workflow-core/contracts/review-and-security.md#review-security)
+define proportional fix review over the smallest scope that proves the affected
+boundary, and necessary scan applicability. Record why unchanged evidence applies.
+New heads still need complete range review. Security Diff Scan is assessed from
+actual final diff and concerns; not applicable requires scope/rationale and is not
+Passed. Clean internal reviews/scans may advance to authorized stages, subject to
+real decision, authority, environment, permission, risk and destructive-action gates.
 
 ## Authority Boundary
 
-This contract does not authorize commit, push, change-request creation,
-platform comments or reviews, merge, tag creation, Release publication,
-deployment, provider-policy mutation, or another external write.
+Read Core authorization/stops. This policy and its tools do not authorize commit,
+push, PR/MR, comments/reviews, merge, tags, Releases, deploy or provider-policy changes.
+The [fixed-source obligations](../vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md#exact-pinning)
+do not enable downloads, updates, installations or another runtime.

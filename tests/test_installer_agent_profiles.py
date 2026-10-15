@@ -66,6 +66,7 @@ class AgentProfileInstallerTests(unittest.TestCase):
         shutil.copy2(INSTALLER, destination / "install.sh")
         for item in (
             "agent-profiles",
+            "vendor",
             "docs",
             "policies",
             "scripts",

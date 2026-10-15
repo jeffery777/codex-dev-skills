@@ -106,6 +106,7 @@ shards:
       - tests.test_proposalctl
   - id: plugin-packaging
     modules:
+      - tests.test_core_contract_snapshot
       - tests.test_plugin_packaging
   - id: repository-policy
     modules:

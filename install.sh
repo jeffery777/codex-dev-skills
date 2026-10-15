@@ -742,6 +742,28 @@ acquire_transaction_lock() {
   fi
 }
 
+preflight_core_destination() {
+  local requested="$1" group
+  for group in $(expand_groups "$requested"); do
+    if [[ "$group" == "shared-review-gates" ]]; then
+      PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/scripts/validate-core-contract-snapshot.py" \
+        --root "$CODEX_TEMPLATES_DIR" --layout filesystem --preflight-destination >/dev/null || return 1
+      return 0
+    fi
+  done
+}
+
+verify_installed_core() {
+  local requested="$1" group
+  for group in $(expand_groups "$requested"); do
+    if [[ "$group" == "shared-review-gates" ]]; then
+      PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/scripts/validate-core-contract-snapshot.py" \
+        --root "$CODEX_TEMPLATES_DIR" --layout filesystem >/dev/null || return 1
+      return 0
+    fi
+  done
+}
+
 preflight_filesystem_sync() {
   local action="$1" requested="$2" force="$3"
   local group skill rel target_rel src dst collision=0 backup
@@ -881,6 +903,21 @@ group_templates() {
   case "$1" in
     shared-review-gates)
       printf '%s\n' \
+        docs/native-runtime-capabilities.md \
+        policies/core-contract-loading.md \
+        scripts/validate-core-contract-snapshot.py \
+        vendor/engineering-workflow-core.lock.json \
+        vendor/engineering-workflow-core/LICENSE \
+        vendor/engineering-workflow-core/README.md \
+        vendor/engineering-workflow-core/contracts/authorization-and-stops.md \
+        vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md \
+        vendor/engineering-workflow-core/contracts/review-and-security.md \
+        vendor/engineering-workflow-core/contracts/workflow.md \
+        vendor/engineering-workflow-core/docs/architecture/dependency-inventory.md \
+        vendor/engineering-workflow-core/docs/architecture/migration-plan.md \
+        vendor/engineering-workflow-core/docs/architecture/project-split.md \
+        vendor/engineering-workflow-core/docs/provenance/source-map.md \
+        vendor/engineering-workflow-core/docs/provenance/upstream-notices.md \
         policies/agent-delegation-policy.md \
         policies/code-mode-tool-orchestration-policy.md \
         policies/context-continuity-policy.md \
@@ -924,7 +961,6 @@ group_templates() {
         workflows/merge-readiness-workflow.md ;;
     codex-delivery-workflow)
       printf '%s\n' \
-        docs/native-runtime-capabilities.md \
         docs/agent-qualification-autoload.md \
         docs/guides/local-model-mapping.md \
         templates/orchestration/loop-engineering-spec.template.md \
@@ -946,6 +982,8 @@ group_templates() {
 template_target() {
   local rel="$1"
   case "$rel" in
+    vendor/engineering-workflow-core.lock.json) printf '%s\n' "orchestration/core.lock.json" ;;
+    vendor/engineering-workflow-core/*) printf '%s\n' "orchestration/core/${rel#vendor/engineering-workflow-core/}" ;;
     policies/*) printf '%s\n' "orchestration/$rel" ;;
     templates/*) printf '%s\n' "${rel#templates/}" ;;
     workflows/*) printf '%s\n' "$rel" ;;
@@ -1775,8 +1813,8 @@ apply_force_update_receipts() {
 }
 
 stage_force_update_transaction() {
-  local index src dst label expected target_root backup destination_parent backup_parent staging staged
-  local destination_device backup_device
+  local index src dst label expected target_root backup destination_parent backup_parent staging staged staging_parent
+  local destination_device backup_device staging_device
   for ((index=0; index<${#TX_SRCS[@]}; index++)); do
     src="${TX_SRCS[$index]}"
     dst="${TX_DSTS[$index]}"
@@ -1827,7 +1865,33 @@ stage_force_update_transaction() {
       cleanup_transaction_staging || true
       return 1
     }
-    staging="$(mktemp -d "$destination_parent/.codex-dev-skills.$(basename "$dst").tmp.XXXXXX")" || {
+    staging_parent="$destination_parent"
+    if [[ "${TX_KINDS[$index]}" == "templates" && "${TX_RELS[$index]}" == orchestration/core/* ]]; then
+      # The fixed Core inventory cannot contain transaction-owned staging.
+      # Keep it in a verified sibling on the same filesystem for rename/rollback.
+      staging_parent="$(safe_path_under_root "$target_root" orchestration)" || {
+        cleanup_transaction_staging || true
+        return 1
+      }
+      ensure_owned_safe_directory "$staging_parent" "$label staging parent" || {
+        cleanup_transaction_staging || true
+        return 1
+      }
+      destination_device="$(path_device "$destination_parent")" || {
+        cleanup_transaction_staging || true
+        return 1
+      }
+      staging_device="$(path_device "$staging_parent")" || {
+        cleanup_transaction_staging || true
+        return 1
+      }
+      if [[ "$destination_device" != "$staging_device" ]]; then
+        warn "Refusing cross-filesystem Core staging for $label: $dst"
+        cleanup_transaction_staging || true
+        return 1
+      fi
+    fi
+    staging="$(mktemp -d "$staging_parent/.codex-dev-skills.$(basename "$dst").tmp.XXXXXX")" || {
       cleanup_transaction_staging || true
       return 1
     }
@@ -2039,6 +2103,17 @@ force_update_transaction() {
     cleanup_receipt_staging || true
     return 1
   fi
+  if ! verify_installed_core "$requested"; then
+    begin_recovery_critical_section
+    if [[ "${#TX_SRCS[@]}" -gt 0 ]]; then
+      rollback_force_update_transaction "$(( ${#TX_SRCS[@]} - 1 ))" || true
+    fi
+    TRANSACTION_APPLY_ACTIVE=0
+    cleanup_transaction_staging || true
+    cleanup_receipt_staging || true
+    end_recovery_critical_section
+    return 1
+  fi
   if ! apply_force_update_receipts; then
     begin_recovery_critical_section
     if [[ "${#TX_SRCS[@]}" -gt 0 ]]; then
@@ -2074,6 +2149,7 @@ install_group() {
   for item in $(group_agent_profiles "$group"); do
     install_agent_profile "$item"
   done
+  verify_installed_core "$group" || return 1
   if [[ "$group" == "codex-agent-profiles" ]]; then
     record_agent_profile_state
   fi
@@ -2095,6 +2171,7 @@ update_group() {
   for item in $(group_agent_profiles "$group"); do
     update_agent_profile "$item" "$force" || return 1
   done
+  verify_installed_core "$group" || return 1
   if [[ "$group" == "codex-agent-profiles" ]]; then
     record_agent_profile_state
   fi
@@ -2328,6 +2405,9 @@ main() {
   esac
 
   if [[ "$cmd" == "install" || "$cmd" == "update" ]]; then
+    # Read-only source preflight, before any target/state/promotion mutation.
+    PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/scripts/validate-core-contract-snapshot.py" \
+      --root "$ROOT_DIR" --layout source >/dev/null
     for group in $(expand_groups "$requested"); do
       if [[ "$group" == "codex-agent-profiles" ]]; then
         validate_agent_profile_sources
@@ -2341,6 +2421,7 @@ main() {
       preflight_plugin_distribution_collision
       preflight_targets
       preflight_cross_root_skill_collisions "$requested"
+      preflight_core_destination "$requested"
       preflight_filesystem_sync install "$requested" 0
       for group in $(expand_groups "$requested"); do
         if [[ "$group" == "codex-agent-profiles" ]]; then
@@ -2357,6 +2438,7 @@ main() {
       preflight_plugin_distribution_collision
       preflight_targets
       preflight_cross_root_skill_collisions "$requested"
+      preflight_core_destination "$requested"
       for group in $(expand_groups "$requested"); do
         if [[ "$group" == "codex-agent-profiles" ]]; then
           preflight_agent_target

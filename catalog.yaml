@@ -22,6 +22,21 @@ groups:
       - source: skills/merge-readiness-gate
       - source: skills/review-artifact-cleanup
     templates:
+      - source: docs/native-runtime-capabilities.md
+      - source: policies/core-contract-loading.md
+      - source: scripts/validate-core-contract-snapshot.py
+      - source: vendor/engineering-workflow-core.lock.json
+      - source: vendor/engineering-workflow-core/LICENSE
+      - source: vendor/engineering-workflow-core/README.md
+      - source: vendor/engineering-workflow-core/contracts/authorization-and-stops.md
+      - source: vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md
+      - source: vendor/engineering-workflow-core/contracts/review-and-security.md
+      - source: vendor/engineering-workflow-core/contracts/workflow.md
+      - source: vendor/engineering-workflow-core/docs/architecture/dependency-inventory.md
+      - source: vendor/engineering-workflow-core/docs/architecture/migration-plan.md
+      - source: vendor/engineering-workflow-core/docs/architecture/project-split.md
+      - source: vendor/engineering-workflow-core/docs/provenance/source-map.md
+      - source: vendor/engineering-workflow-core/docs/provenance/upstream-notices.md
       - source: policies/agent-delegation-policy.md
       - source: policies/code-mode-tool-orchestration-policy.md
       - source: policies/context-continuity-policy.md
@@ -89,7 +104,6 @@ groups:
       - source: skills/implementation-slice
       - source: skills/docs-update
     templates:
-      - source: docs/native-runtime-capabilities.md
       - source: docs/agent-qualification-autoload.md
       - source: docs/guides/local-model-mapping.md
       - source: templates/orchestration/loop-engineering-spec.template.md
