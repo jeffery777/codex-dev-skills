@@ -15,9 +15,24 @@
 | Implement | 用已授權能力按既有模式完成切片，保留無關修改 | 可讀回的實際 diff 與新增檔案 |
 | Verify | 主代理獨立讀回成果、受保護 tests 與需求，執行必要固定驗收 | 命令、exit、結果、來源身分、略過／失敗分類；tests 通過不代替 review |
 | Review And Fix | 足夠能力、與作者獨立的 reviewer 唯讀審查當前內容；依風險完成必要 scan | finding IDs、dispositions、修正及重審證據；詳見 [審查契約](review-and-security.md) |
-| Docs Sync | 核對行為、需求與限制，同步適用文件／狀態 | code/docs/configuration/package/version 一致；保留歷史與未驗證事項 |
+| Docs Sync | 核對行為、需求與限制，依 [簡明寫作要求](#wf-writing) 同步適用文件／狀態 | code/docs/configuration/package/version 一致；保留歷史與未驗證事項；在既有 review 記錄適用寫作要求的抽查 |
 | Delivery Gate | 核對驗證、review、授權與所選專案 overlay；已有 change request 另做完整 exact-head review | 內容 readiness、平台 enforcement、操作授權分列，詳見 [exact-head 契約](exact-head-and-evidence.md) |
 | Continue | 中斷前保存有界 checkpoint；接續先查當前來源、修改與 ownership | 同一目標、唯一 writer、剩餘 DoD、findings、證據與下一步；session 記憶僅為 advisory |
+
+<a id="wf-writing"></a>
+
+## 文件與交付摘要的簡明寫作
+
+本節適用於本工作流產出的自然語言文件與交付摘要。正式契約仍以繁體中文為權威；寫作清楚不保證所有技術文件都適合非工程讀者。依文類與任務採用下列要求：
+
+1. 先確認讀者、目的及所需操作深度，再安排內容。按文類交代目的、必要前提、下一步與完成判準；短回覆可合併表達，不必每次重複四個欄位。
+2. 使用直接句型，清楚說出誰要做什麼；一句聚焦一個主題，操作步驟順序明確。一個概念使用一致術語；必要技術詞首次出現時，按讀者需要解釋，保留所需技術細節。
+3. 不得為了簡短而刪除安全、授權、證據、必要前提、風險或限制，也不得犧牲技術精度。必要條件、建議與選用事項須能區分。
+4. 英文技術文件以 ASD-STE100 Issue 9（2025-01-15）為依據。未完整核對正式寫作規則、受控詞典及適用技術詞，不得聲稱符合。未取得全文時，仍依本節可查核的清晰原則寫作；在適用文件或既有審查報告明示「依 ASD-STE100 原則編寫，尚未完成完整符合性驗證」，不得記為 Passed，也不因此阻擋所有文件。工具檢查或模型自評不能取代完整核對；[官方依據與本次取得範圍](../docs/provenance/source-map.md#plain-writing-update) 另有記錄。
+5. 繁體中文採對應的簡明原則調適，不宣稱符合 ASD-STE100，也不稱為官方中文 ASD 標準。不硬套英文單字數或使用無依據的數字規則。
+6. 雙語版本的義務、風險、限制與重要資訊須一致；翻譯不改變正式繁中權威。Code、commands、flags、API、paths、logs 等機器字面，以及須保留的引用與授權原文維持原樣，不為自然語言寫作要求改動。
+
+在既有文件 review 中，按變更範圍抽查讀者與文類是否適切、術語與步驟是否清楚、重要資訊是否保留，以及雙語一致性與符合性宣稱的依據。於既有報告記錄抽查範圍、結果及未驗證限制；發現問題沿用 [finding 與重審流程](review-and-security.md#review-findings)。不新增 gate、receipt 制度或認證系統。
 
 <a id="wf-capability"></a>
 
@@ -54,4 +69,4 @@
 
 改善驗收在既有報告有界記錄缺口、原因依據與下一步，先核對既有 evidence/proposal/evaluation 契約的涵蓋，再提最小補強。Operational Evidence、proposal、評分、evaluation、重播或 promotion packet 都不是授權或完成證據；不因此新增反思 executor、memory、hooks 或 scheduler。P1 的具體涵蓋評估見 [既有改善契約](../docs/provenance/source-map.md#improvement-coverage)。
 
-中途需求修正保留仍適用成果並重查受影響證據；狀態或旁支問題先簡答再續行，除非明確取消／替換目標。使用者摘要清楚精簡；review/gate 產物保留 commands、必填欄位、findings、dispositions、skipped checks 與限制。續行與停止均依 [授權與停止契約](authorization-and-stops.md)。
+中途需求修正保留仍適用成果並重查受影響證據；狀態或旁支問題先簡答再續行，除非明確取消／替換目標。使用者摘要依 [簡明寫作要求](#wf-writing) 清楚精簡；review/gate 產物保留 commands、必填欄位、findings、dispositions、skipped checks 與限制。續行與停止均依 [授權與停止契約](authorization-and-stops.md)。

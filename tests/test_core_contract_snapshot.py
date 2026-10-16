@@ -67,6 +67,11 @@ class CoreSnapshotTests(unittest.TestCase):
         changes = (
             lambda x: x["source"].update(revision="main"),
             lambda x: x["source"].update(revision="0" * 40),
+            lambda x: x["source"].update(
+                revision="b4c37798b6d3a9efd91c8c6d518093f2dd847a98",
+                reviewed_head="10e97ddde5e04b085da357138ebdae4d0cb5a0f4",
+                pull_request=4,
+            ),
             lambda x: x["source"].update(repository="someone/another-core"),
             lambda x: x["source"].update(reviewed_head="0" * 40),
             lambda x: x["source"].update(version="unverified"),

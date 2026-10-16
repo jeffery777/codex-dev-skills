@@ -25,6 +25,10 @@ after filesystem installation.
 
 Use this skill when the changed surface is documentation.
 
+Writing requirements come from fixed Core `wf-writing`, resolved through
+[Documentation Writing And Review](../../policies/engineering-workflow-contract.md#documentation-writing-and-review).
+For filesystem installs, use that section of the installed policy path above.
+
 ## Review Focus
 
 - accuracy against code, specs, or product behavior
@@ -33,13 +37,19 @@ Use this skill when the changed surface is documentation.
 - stale links or names
 - private or machine-specific material
 - unsupported claims
+- reader, purpose, document type and operating depth under Core `wf-writing`
+- consistent terminology, sentence meaning, explicit actors/actions, step order and necessary term explanations
+- preservation of technical detail, safety, authority, evidence, prerequisites, risks and limitations; writing-style changes must preserve exact machine literals, required quotations and license text
+- bilingual equivalence against the authoritative text, including obligations and important information
+- evidence for any full STE claim: formal rules, controlled dictionary, applicable technical terms and reviewed scope; short sentences, a checker or self-assessment alone are insufficient
 
 ## Workflow
 
 1. Inspect docs diff and relevant source evidence.
-2. Separate correctness issues from style preferences.
-3. Report blockers first.
-4. Include verification commands when applicable.
+2. Sample the applicable `wf-writing` requirements in the existing review; record scope, results and unverified limits. For English technical text, verify the evidence for any full STE claim and state when full conformance is unverified, as Core requires. Traditional Chinese uses Core's plain-writing adaptation and must not be reported as STE-conformant.
+3. Separate correctness issues from style preferences.
+4. Report blockers first.
+5. Include verification commands when applicable.
 
 ## Output
 
@@ -53,3 +63,4 @@ limits explicit even when no findings are found.
 - NITS
 - Questions
 - Re-runnable Verification Commands
+- Writing sample scope, results and unverified limits

@@ -12,22 +12,28 @@ Issue #335 的 P3-C 實作接續 [P2 設計](design/core-contract-consumption.md
 [P2 工作包](plans/issue-333-p2c-core-preparation.md)。P0/P2 是點時紀錄，不回寫為
 已固定 P1 或已通過 runtime；本頁記錄目前的文件消費與建置接法。
 
-## 固定來源與兩種 digest
+Issue #341 接入 Core PR #8 的簡明寫作契約，更新固定集合及 docs-update／
+docs-review 的操作指引。docs-review-gate 保持原有薄包裝；本次不更新現有安裝。
 
-來源為 jeffery777/engineering-workflow-core，P1 PR #4 merge
-b4c37798b6d3a9efd91c8c6d518093f2dd847a98。Reviewed head
-10e97ddde5e04b085da357138ebdae4d0cb5a0f4 與 merge 的 Git tree 相同。
-snapshot 明選全部十份 Markdown 與 LICENSE，11 檔共 156,120 bytes；原 UTF-8
+<a id="固定來源與兩種-digest"></a>
+
+## 固定來源與集合 digest
+
+來源為 jeffery777/engineering-workflow-core，本次固定 Core PR #8 merge
+345cd601bffbacc777f87fb24f22b5caefa30a3b。Reviewed head
+fc9bd241cb1a058d349c5952ae80ba74d07c56d0 與 merge 的 Git tree 相同。
+snapshot 明選全部十份 Markdown 與 LICENSE，11 檔共 206,647 bytes；原 UTF-8
 bytes、Core 相對路徑與非 executable Git mode 100644 不變。正式契約繁體中文
 為權威，無翻譯替換，也不宣稱完整 ASD-STE100 符合性。
 
 | 身分 | 精確算法與值 |
 | --- | --- |
-| P1 十份 Markdown handoff 集合 | 按 UTF-8 path bytes 排序；每列 path、TAB、原 bytes 的小寫 SHA256、LF，含最後 LF，不含 LICENSE；SHA256 8446dfbf5e2820dd696ef411e87cc7a92b39305c369c808122b63554b9be83f6 |
+| Consumer 十份 Markdown 集合 | 按 UTF-8 path bytes 排序；每列 path、TAB、原 bytes 的小寫 SHA256、LF，含最後 LF，不含 LICENSE；SHA256 ba32220ff76ad4ee3b48195984cd653637a817268b6ed0876869486b81a5dc00 |
+| Core PR #8 十一檔 handoff 集合 | 同一 path/TAB/hash/LF 算法，但包含 LICENSE；SHA256 269b1d5a05cc5c8ff9624b9988a0568073fd68ad6e9530ebae0da0286e9e2c12；不放入十份 Markdown 欄位 |
 | Core LICENSE | 原 bytes SHA256 49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f |
-| Codex 11 檔集合 | 按 UTF-8 path 排序的 records，每筆只有 path/sha256/size_bytes/mode；UTF-8 JSON，keys 排序、compact separators、非 ASCII 不 escape、無 BOM/尾 LF；SHA256 輸入為 codex-core-document-set/v1、單一 NUL、JSON array；結果 9aed05bf415039319936cd4af4d34c77ae812df80a46f6d095c59182bedd242d |
+| Codex 11 檔集合 | 按 UTF-8 path 排序的 records，每筆只有 path/sha256/size_bytes/mode；UTF-8 JSON，keys 排序、compact separators、非 ASCII 不 escape、無 BOM/尾 LF；SHA256 輸入為 codex-core-document-set/v1、單一 NUL、JSON array；結果 a401253d3179f2037c09ca0cd93e36a822824c68ce22015975578683bde460bf |
 
-兩種集合算法與檔案集合不同，不能互換。Lock 同時綁 repository、immutable
+這些集合的算法或檔案範圍不同，不能互換。Lock 同時綁 repository、immutable
 merge revision、reviewed head/PR、版本 absent、Codex import baseline 與組裝契約。
 import_baseline_revision 是取得此 snapshot 時的 Codex 基線，不冒充將來的
 消費者 HEAD；consumer 實際 revision、source/package version、assembler script
@@ -50,6 +56,7 @@ aliases 沿原入口，不增加自動 lifecycle 或改既有模型／權限預�
 | Core 義務／source-map 單位 | Codex 接點 |
 | --- | --- |
 | workflow 八階段 E02–E10、R19、D28 | engineering-workflow-contract／reusable 的 Shared Phases；原 delivery/planning/implementation/docs/review 技能 |
+| P1 之後新增的 wf-writing／plain-writing-update | engineering-workflow-contract 的 Documentation Writing And Review；docs-update／docs-review 檢查讀者、句意、術語、步驟、雙語語意及符合性宣稱；仍使用既有 review 報告 |
 | 能力相容／新鮮度 E11–E12、R01–R05/R12/R18/R22、D01–D09/D14 | reusable Capability Selection／Protected Boundaries；native discovery、Code Mode 與實際 validator |
 | 委派／runtime E01/E13–E14/E16–E18、R16/R20、D11–D12/D15/D17–D20/D29–D30 | reusable details／engineering Adapter Boundaries；原 model selection、agent delegation、integration、qualification、continuity |
 | 驗收／改善 E15/E19、R08–R09/R15、D21–D23 | workflow verification；既有 OE/proposal/evaluation 保持 advisory 與 default-off |
@@ -132,21 +139,28 @@ and [P2 packet](plans/issue-333-p2c-core-preparation.md). P0 and P2 remain recor
 of their original stages. They do not assert fixed P1 acceptance or runtime
 qualification. This page describes local document consumption and assembly.
 
-### Fixed source and separate digests
+Issue #341 adopts the plain-writing contract from Core PR #8 in the fixed set
+and the docs-update/docs-review instructions. docs-review-gate remains a thin
+wrapper. This update does not change an existing installation.
 
-The source is `jeffery777/engineering-workflow-core`, P1 PR #4 merge revision
-`b4c37798b6d3a9efd91c8c6d518093f2dd847a98`. Reviewed head
-`10e97ddde5e04b085da357138ebdae4d0cb5a0f4` has the same Git tree. All ten Markdown
-files and LICENSE are selected: 11 files, 156,120 bytes. Preserve original UTF-8
+<a id="fixed-source-and-separate-digests"></a>
+
+### Fixed source and distinct set digests
+
+The source is `jeffery777/engineering-workflow-core`, Core PR #8 merge revision
+`345cd601bffbacc777f87fb24f22b5caefa30a3b`. Reviewed head
+`fc9bd241cb1a058d349c5952ae80ba74d07c56d0` has the same Git tree. All ten Markdown
+files and LICENSE are selected: 11 files, 206,647 bytes. Preserve original UTF-8
 bytes, paths and Git mode `100644`. No translation replaces the Core snapshot.
 
 | Identity | Algorithm and SHA-256 |
 | --- | --- |
-| P1 Markdown handoff set | Sort paths by UTF-8 bytes. Join each path, TAB, lowercase file SHA-256 and LF, including the final LF. Exclude LICENSE. `8446dfbf5e2820dd696ef411e87cc7a92b39305c369c808122b63554b9be83f6` |
+| Consumer ten-Markdown set | Sort paths by UTF-8 bytes. Join each path, TAB, lowercase file SHA-256 and LF, including the final LF. Exclude LICENSE. `ba32220ff76ad4ee3b48195984cd653637a817268b6ed0876869486b81a5dc00` |
+| Core PR #8 eleven-file handoff set | Use the same path/TAB/hash/LF algorithm, including LICENSE. `269b1d5a05cc5c8ff9624b9988a0568073fd68ad6e9530ebae0da0286e9e2c12`. Do not put this value in the ten-Markdown field. |
 | Core LICENSE | Hash its original bytes. `49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f` |
-| Codex 11-file set | Sort records by UTF-8 path. Each record has only `path`, `sha256`, `size_bytes` and `mode`. Encode JSON with sorted keys, compact separators, unescaped Unicode, no BOM and no final LF. Hash UTF-8 `codex-core-document-set/v1`, one NUL byte and that JSON array. `9aed05bf415039319936cd4af4d34c77ae812df80a46f6d095c59182bedd242d` |
+| Codex 11-file set | Sort records by UTF-8 path. Each record has only `path`, `sha256`, `size_bytes` and `mode`. Encode JSON with sorted keys, compact separators, unescaped Unicode, no BOM and no final LF. Hash UTF-8 `codex-core-document-set/v1`, one NUL byte and that JSON array. `a401253d3179f2037c09ca0cd93e36a822824c68ce22015975578683bde460bf` |
 
-The two set algorithms and inventories differ. Do not substitute one digest for
+These sets have different algorithms or inventories. Do not substitute one digest for
 the other. The lock binds repository, immutable merge revision, reviewed head/PR,
 absent version, Codex import baseline and assembly contract.
 `import_baseline_revision` records the Codex baseline at import, not a future
@@ -172,6 +186,7 @@ their entries. No automatic lifecycle, model default or permission change follow
 | Core obligation and source-map units | Codex connection |
 | --- | --- |
 | Eight stages: E02–E10, R19, D28 | Engineering/reusable Shared Phases; existing delivery, planning, implementation, docs and review skills |
+| Post-P1 wf-writing/plain-writing-update | Engineering Documentation Writing And Review; docs-update/docs-review check readers, sentence meaning, terminology, steps, bilingual equivalence and conformance claims in the existing review report |
 | Capability compatibility/freshness: E11–E12, R01–R05/R12/R18/R22, D01–D09/D14 | Reusable Capability Selection/Protected Boundaries; native discovery, Code Mode and actual validators |
 | Delegation/runtime: E01/E13–E14/E16–E18, R16/R20, D11–D12/D15/D17–D20/D29–D30 | Details/engineering Adapter Boundaries; model selection, delegation, integration, qualification and continuity |
 | Acceptance/improvement: E15/E19, R08–R09/R15, D21–D23 | Workflow verification; existing OE/proposal/evaluation remain advisory and disabled by default |
