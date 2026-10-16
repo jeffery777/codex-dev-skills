@@ -44,7 +44,12 @@ distinct operations and must never be substituted silently.
 2. Identify canonical task states. Represent safety concerns as `blocked` with a
    safety blocker kind; use `unknown` only as a discovery classification before
    materializing canonical state.
-3. Compare chat or handoff summaries against repository files. Treat summaries as context only.
+3. Compare chat or handoff summaries against repository files. Treat summaries
+   as context only. Under the engineering policy's evidence lifecycle, load the
+   compact cause/fix/version/replacement index and current evidence first; preserve
+   original-failure coverage and unresolved/intermittent/shared/referenced records.
+   Missing originals leave claims unverified. Context slimming is not deletion;
+   absent retention policy/period means retain and mark pending.
 4. Select the smallest ready task that advances the bounded objective without expanding scope.
 5. Choose the recommended execution mode:
    - `continue-current-session`

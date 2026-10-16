@@ -30,11 +30,19 @@ Use this skill for a focused implementation task where the target behavior is cl
 ## Workflow
 
 1. Read repo instructions, relevant files, tests, and current git state when available.
-2. Identify affected files and likely verification before editing.
+2. Identify affected files, actual risk/unknowns and likely verification before
+   editing; reassess on scope/design changes. Unknown is not low. Apply the
+   engineering policy's Risk, Review Timing And Evidence Lifecycle: high-risk
+   design needs early independent deep/security analysis, then deep code review
+   and necessary proportional scan as substantial diff exists; do not wait until
+   the final candidate. Keep cheap applicable checks during development.
 3. Make the smallest scoped change that satisfies the objective.
 4. Avoid unrelated refactors and do not overwrite unrelated user changes.
 5. Run the smallest relevant verification.
-6. Inspect the diff before reporting.
+6. Inspect the diff before reporting. Bind checks/reviews/scans to actual content;
+   after changes, justify affected retest/review/rescan and unaffected evidence
+   reuse. Preserve original failures and compact replacement evidence through the
+   engineering policy's lifecycle; a new PASS does not close intermittent failures.
 
 ## Commit Behavior
 

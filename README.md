@@ -203,6 +203,14 @@ Codex 的固定來源、11 檔 snapshot／lock、兩種 digest 與 notices 見
 [Core 接法](docs/core-contract-snapshot.md)；檔案缺失、身分／digest／root 不明或不符時，
 停止相依工作。Digest 驗證是完整性證據，不自行證明來源信任、runtime 資格或操作授權。
 
+既有執行／review／結案入口依固定 Core 的
+[風險與時機](vendor/engineering-workflow-core/contracts/review-and-security.md#review-risk-timing) 及
+[證據生命週期](vendor/engineering-workflow-core/contracts/workflow.md#wf-evidence-lifecycle)。
+開始與 scope／設計變動即評風險；unknown 不當低風險，高風險及早深入／安全檢查。
+最終 Merge Review 核對當前覆蓋，依影響補測／重審／重掃，不機械重做全庫深掃。
+摘要／索引可縮短上下文，替代須覆蓋原失敗；未解、間歇、共享或仍引用證據受保護。
+缺保存政策／期限就保留；不可逆刪除另須操作當下確認。本次不執行歷史清理。
+
 使用本套的專案保留自己的 `AGENTS.md`、規格、計畫與 provider overlay。
 GitLab／其他 provider 不會因安裝技能被套用本 repo 的 GitHub profile。
 維護本 repo 才依 [CONTRIBUTING.md](CONTRIBUTING.md) 先 Issue/readback、遠端 ID branch/readback、
@@ -398,6 +406,17 @@ consume immutable Core revisions/digests, not runtime Core `main`. See the
 [11-file snapshot, lock and notices](docs/core-contract-snapshot.md). Missing or
 unknown required files/root/trust metadata or mismatched identity/digests stop
 dependent work. Integrity does not establish trust, authority or qualification.
+
+Existing execution, review and closeout entries follow fixed Core's
+[risk/timing](vendor/engineering-workflow-core/contracts/review-and-security.md#review-risk-timing) and
+[evidence lifecycle](vendor/engineering-workflow-core/contracts/workflow.md#wf-evidence-lifecycle).
+Assess risk at start and scope/design changes; unknown is not low. High-risk work
+needs early deep/security checks. Final Merge Review checks current coverage;
+repeat tests/reviews/scans by impact, not a mechanical full-repository deep scan.
+Summaries/indexes reduce context; replacements must cover the original failure.
+Protect unresolved, intermittent, shared and referenced evidence. Missing retention
+policy/period means retain; irreversible deletion needs action-time confirmation.
+This update performs no historical cleanup.
 
 Each adopting project keeps its own instructions/provider overlay. Installing
 shared skills does not impose this repository's GitHub profile on GitLab or

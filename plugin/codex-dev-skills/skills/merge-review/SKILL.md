@@ -43,7 +43,12 @@ review submission, or another external write.
    visible claims, commands, paths, feature states, compatibility statements,
    configuration, release scope, and migration guidance with source evidence.
    Record why no docs change is needed when behavior changes without one.
-6. Classify every finding and retain a durable disposition. Report residual
+6. Check sufficient current final-candidate review/security coverage under the
+   exact-head policy's Early Review And Current Evidence. Evaluate impact-based
+   retest/review/rescan and justified unaffected-evidence reuse; a mechanical
+   whole-repository deep scan is not required at every merge. Keep unresolved
+   failures and original-failure replacement evidence. Classify every finding
+   and retain a durable disposition. Report residual
    risk even when verification passes.
 7. If repository policy selects a provider enforcement profile, inspect that
    profile separately. Do not require GitHub or another provider merely to pass

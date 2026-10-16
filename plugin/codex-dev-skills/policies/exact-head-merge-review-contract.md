@@ -67,6 +67,20 @@ actual final diff and concerns; not applicable requires scope/rationale and is n
 Passed. Clean internal reviews/scans may advance to authorized stages, subject to
 real decision, authority, environment, permission, risk and destructive-action gates.
 
+## Early Review And Current Evidence
+
+Apply Core [review-risk-timing](../vendor/engineering-workflow-core/contracts/review-and-security.md#review-risk-timing)
+at task start and after scope/design changes; high-risk design/security and deep
+code review begin early, with necessary proportional scanning as material diff
+exists. At Merge Review, verify final-candidate coverage and evidence freshness.
+After a change, record affected boundaries and retest/review/rescan as needed;
+reuse only evidence shown unaffected, with rationale and coverage. Unknown impact
+or changed trust boundaries requires wider inspection. This is not an automatic
+full-repository Deep Security Scan at every merge. It never waives necessary
+scanning, unresolved risk or complete new-head base-to-head Merge Review.
+Preserve original failures and replacement evidence under the
+[artifact policy](review-artifact-policy.md); a later PASS alone does not retire them.
+
 ## Authority Boundary
 
 Read Core authorization/stops. This policy and its tools do not authorize commit,

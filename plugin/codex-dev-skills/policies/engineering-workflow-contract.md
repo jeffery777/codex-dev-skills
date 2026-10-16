@@ -13,6 +13,27 @@ Gate and Continue duties are in Core [wf-stages](../vendor/engineering-workflow-
 Keep the existing entry skills and task DoD. Small work may combine stages but
 must retain applicable duties. Plans and session states do not prove completion.
 
+## Risk, Review Timing And Evidence Lifecycle
+
+At task start and after scope/design changes, assess actual impact and unknowns
+under Core [review-risk-timing](../vendor/engineering-workflow-core/contracts/review-and-security.md#review-risk-timing).
+Unknown is not low risk. Read full fixed review/security before selecting review
+timing/depth; high-risk work needs early independent deep design/security analysis,
+then deep code review and necessary proportional scanning as substantial code or
+diff becomes available. Keep cheap applicable checks during development. Final
+candidate binding is an acceptance duty, not a prerequisite for starting review.
+Use the existing [security policy](security-review-escalation-policy.md) and
+project overlay; impact determines retest/review/rescan and justified evidence reuse.
+
+During work and closeout, use Core
+[wf-evidence-lifecycle](../vendor/engineering-workflow-core/contracts/workflow.md#wf-evidence-lifecycle)
+through the full workflow/authorization reading above and the existing
+[artifact policy](review-artifact-policy.md). Keep a compact cause/fix/version/
+replacement index in existing reports. Load current evidence and summaries first;
+context slimming grants no source deletion authority. Unresolved, intermittent,
+shared or still-referenced evidence remains protected. Missing retention policy
+or period means retain and mark pending, not invent a universal deadline.
+
 ## Documentation Writing And Review
 
 For natural-language documents and delivery summaries, apply Core

@@ -97,6 +97,22 @@ Desktop 入口獨立及共享分層。PR 的 Issue linkage 依
 [PR-to-Issue policy](policies/pull-request-issue-linkage-policy.md)；ready PR 的
 closing reference 不取代實作前的 Issue／遠端分支順序，也不證明該順序曾發生。
 
+本 repo 依 [工程契約](policies/engineering-workflow-contract.md) 與
+[安全升級政策](policies/security-review-escalation-policy.md)，在任務開始及 scope／
+設計／影響變動時記錄風險與不確定性；unknown 不當低風險。安全影響的 Markdown
+政策也走高風險深入／安全路徑。高風險設計初期即獨立深入設計／威脅分析，實質
+code／diff 出現即做必要比例審查／掃描；不等最終候選。深度涵蓋受影響資料流、
+上下游與失敗模式。最終候選依影響補測／重審／必要重掃，記明未受影響證據的
+重用理由與 coverage；changed head 仍做完整 Merge Review，不另加每次全庫深掃。
+此 repo 的必要 CI、review、receipt／App gates 不因上述安排而豁免。
+
+依 [artifact policy](policies/review-artifact-policy.md) 在既有報告保留精簡原因、
+修正、版本與替代引用；替代須覆蓋原失敗及受影響邊界。未解、間歇、共享或仍引用
+及安全／資料損失證據保護不變。此 repo 不設定通用保存天數；缺有效保存政策或
+期限時保留並標 pending。摘要／上下文精簡與本次文件接入均不授權歷史清理；
+實際操作另查精確 scope、其他使用者、preview／dry-run 與授權，不可逆刪除須
+操作當下確認。專案 overlay 不能弱化 Core 必要安全、獨立性、授權或保存要求。
+
 將驗證、略過項目、findings disposition、索引維護與剩餘授權邊界如實交接。
 
 ## Historical Desktop Wrapper Retirement Boundary

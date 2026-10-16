@@ -16,11 +16,11 @@ import sys
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-REVISION = "345cd601bffbacc777f87fb24f22b5caefa30a3b"
-REVIEWED_HEAD = "fc9bd241cb1a058d349c5952ae80ba74d07c56d0"
-MARKDOWN_DIGEST = "ba32220ff76ad4ee3b48195984cd653637a817268b6ed0876869486b81a5dc00"
+REVISION = "784ed24f4a09ec35ac7209e0fd2287b214aea260"
+REVIEWED_HEAD = "8148ef323df73bd9c54d83d3f9af87862d4d8022"
+MARKDOWN_DIGEST = "f308093e1dbb6ba2796a3b286406a5f02adde692d05a200b2894e88527bed3c4"
 LICENSE_DIGEST = "49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f"
-SET_DIGEST = "a401253d3179f2037c09ca0cd93e36a822824c68ce22015975578683bde460bf"
+SET_DIGEST = "2c9a09bf3ed96b6a29081399242873dcc9a0447613d418055c7ae41399b89517"
 DOMAIN = "codex-core-document-set/v1"
 FILES = (
     "LICENSE", "README.md",
@@ -199,13 +199,13 @@ def parse_lock(data):
         raise SnapshotError("unsupported lock contract")
     expected_source = {
         "repository": "jeffery777/engineering-workflow-core", "revision": REVISION,
-        "reviewed_head": REVIEWED_HEAD, "pull_request": 8, "version": None,
+        "reviewed_head": REVIEWED_HEAD, "pull_request": 12, "version": None,
     }
     if value["source"] != expected_source or type(value["source"].get("pull_request")) is not int:
         raise SnapshotError("unreviewed source repository/revision/PR/version")
     if value["consumer"] != {
         "repository": "jeffery777/codex-dev-skills",
-        "import_baseline_revision": "ee22e0e9711f452645e845f4679bc76fda7b9dd4",
+        "import_baseline_revision": "459ee9b35d2f872e15735db492cac11fb6fc4924",
         "assembler_contract": "core-snapshot/v1",
     }:
         raise SnapshotError("consumer/import baseline identity mismatch")
