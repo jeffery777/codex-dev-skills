@@ -47,6 +47,8 @@ Provider profiles 是 opt-in 專案 overlay，明列 provider／exact repo、nor
 
 修正後的比例 review 與必要 scan 依 [審查契約](review-and-security.md) 執行，仍須新 head 的完整 Merge Review。合併前立即重查 applicable platform 狀態與 live base/head、review 身分／新鮮度及授權；漂移重回受影響前置。工具能力或 receipt 不授權任何 external write、policy mutation、tag/Release 或 deploy。
 
+深入審查及安全分析依 [任務風險及早啟動](review-and-security.md#review-risk-timing)，不等最終版本固定。Merge Review 核對最終候選所需證據是否充分、當前且覆蓋完整範圍，不因進入合併階段就機械重做全庫深掃；證據失效、新風險或適用政策要求時補足相應深入 review／scan。掃描後改動須有新候選身分與影響分析；未受影響證據的重用理由／coverage 可保留，但不能沿用舊 head 的完整內容 verdict。
+
 <a id="exact-pinning"></a>
 
 ## 固定文件來源、digest 與 notices

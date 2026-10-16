@@ -20,6 +20,8 @@ Readiness 證據與授權分開；[獨立審查](review-and-security.md) 及 [ex
 
 破壞性操作保留明確意圖、精確目標、已理解的影響、可用且查核的 preview/diff/plan、復原方式（或明示不可復原），並確認沒有剩餘較低風險替代。刪除／purge／prune、force push、歷史／ref 覆寫、廣泛或不可逆 API 修改、共享系統 restart/stop/disable、替換／重建、帶刪除同步與持久資料移除均須依有效政策核對，不由一般自主執行指引略過。
 
+不可逆刪除須在操作當下取得明確確認；一般工作包、清理計畫或先前概括同意不能代替。本次證據生命週期文件變更不授權實際刪除或其他歷史證據清理。
+
 工具或外部動作失敗先分類。外部效果未知時保留嘗試與不確定性，透過正常介面讀回；不能盲目重播、刪除或 abort。工具拒絕不代表成功，也不授權改道繞過權限；可採保留同一契約的合規替代，否則如實回報缺口。
 
 <a id="auth-stops"></a>
@@ -43,6 +45,8 @@ Readiness 證據與授權分開；[獨立審查](review-and-security.md) 及 [ex
 
 Memory 與其他持久資料依專屬資料契約。Native recall 不等於已資格化管理 backend，不自行切換儲存、雙寫、啟用、遷移或刪除；scope、來源、版本、精確確認、刪除覆蓋與操作證據仍須驗證。本核心沒有資料 backend 或啟用機制。
 
-Review artifacts 是證據，不取代來源真相；當前、被引用、未解或政策要求的歷史證據須保留。清理先 dry-run；模糊或高價值資料保留並依精確意圖處理。實際 artifact root 由專案或接口決定，不由核心固定私有路徑。
+Review artifacts 是證據，不取代來源真相；當前、被引用、未解或政策要求的歷史證據須保留，依 [證據生命週期](workflow.md#wf-evidence-lifecycle) 核對替代覆蓋、必要 review／merge／acceptance 證據與保護例外。縮短上下文或新增摘要不授權刪除來源。
+
+實際搬移、歸檔或清理前，核對專案保存規則、共享／仍被引用資料、其他使用者、精確範圍及操作授權，並查核必要 preview；清理先 dry-run。缺保留期間或有效政策不推定立即刪除，不自定通用天數；模糊或高價值資料保留並依精確意圖處理。不可逆刪除仍須 [操作當下確認](#auth-destructive)。實際 artifact root 由專案或接口決定，不由核心固定私有路徑。
 
 共用庫不收 secrets、憑證、真實 logs/transcripts/session、機器／使用者識別、私有路徑、runtime state、databases 或 caches；敏感實測證據由接口保存於適當受控位置，公開記錄只保留安全來源、必要限制與可追溯資訊。

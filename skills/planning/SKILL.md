@@ -28,7 +28,11 @@ Use this skill when the user asks for a plan, implementation outline, task break
 ## Workflow
 
 1. Read the requested scope, repo instructions, README, relevant docs, and current git state when available.
-2. Identify facts separately from inference.
+2. Identify facts separately from inference. Assess actual risk and unknowns at
+   task start and when scope/design changes; unknown is not low. Apply Risk,
+   Review Timing And Evidence Lifecycle in the engineering policy above. Plan
+   early independent deep design/security review for high risk, then deep code
+   review and necessary proportional scanning as substantial diff becomes available.
 3. Define the smallest coherent task slices.
 4. List assumptions, risks, human gates, and verification commands.
 5. Stop before editing files unless the user explicitly asks to continue into implementation.

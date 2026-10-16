@@ -60,6 +60,10 @@ Skills 引導讀取與遵循契約，不創造 API 或平台能力。在既有�
 
 [Issue #7](https://github.com/jeffery777/engineering-workflow-core/issues/7) 將 [簡明寫作要求](contracts/workflow.md#wf-writing) 加入共用工作流，來源與限制見 [更新記錄](docs/provenance/source-map.md#plain-writing-update)。接口採用須另包更新固定文件並驗證；本包不改 consumer 或既有安裝。
 
+採用本工作流時，[證據生命週期](contracts/workflow.md#wf-evidence-lifecycle) 是共用預設。專案有效政策可專化位置、保留期與歸檔方式，但不能弱化必要安全、授權、保存義務或指令優先序。索引／摘要可減少重複載入；這不授權刪除來源，缺保留期間也不代表立即清理。不可逆刪除須操作當下確認；[Issue #9](https://github.com/jeffery777/engineering-workflow-core/issues/9) 僅修改文件，不執行歷史證據清理。
+
+[Issue #11](https://github.com/jeffery777/engineering-workflow-core/issues/11) 補明 [依風險及早檢查](contracts/review-and-security.md#review-risk-timing)：任務開始判風險，資訊不足不默認低風險，scope／設計變動重評；高風險初期即深入 review／安全分析，有實質 diff 即做必要比例掃描。最終版本用於證據綁定與 merge 驗收，不是開始深查的前提。依影響補測／重審／重掃，只重用可證未受影響的證據；不機械要求每次全庫深掃，也不保證省成本。接口採用仍須另包固定文件與驗證。
+
 本包不搬程式、不修改接口或既有安裝、不部署、不更新 EdgeInstaller 技能、不執行 Grok Build 或模型／runtime 資格測試，不啟用 memory/hooks/schedulers，不操作公司環境、Orca 或 Space，不 tag/Release/install。P1 抽取來源固定 `codex-dev-skills@993597561881d6ed8c552f9a18c59315015ad245`。官方比較是 2026-10-14 文件證據，不能證明當前 runtime 資格、隔離、模型品質、成本或延遲。
 
 指定協調者承接原「評估 codex-dev-skills 專案拆分」的跨專案協調。各包分別核對 scope、ownership、授權、必要審查與 gates；review／gate 不自行授權 commit、push、PR、merge 或其他外部寫入。Core 未配置 hosted enforcement profile 或 CI；未執行不得回報 Passed。文件無法技術攔截 runtime；使用專案自行選 overlay 並驗證遵循。
@@ -123,6 +127,10 @@ Subagents can inherit the parent sandbox and approval mode. A separate technical
 [PR #6](https://github.com/jeffery777/engineering-workflow-core/pull/6) added bilingual guides to three files. It did not reopen P1 or change formal contracts, provenance, the dependency inventory, LICENSE, or consumer pins. At that time, both consumers were pinned to P1 revision `b4c37798b6d3a9efd91c8c6d518093f2dd847a98`. That package did not update pins or snapshots, or start a rollout.
 
 [Issue #7](https://github.com/jeffery777/engineering-workflow-core/issues/7) adds [plain-writing requirements](contracts/workflow.md#wf-writing) to the shared workflow. See the [update record](docs/provenance/source-map.md#plain-writing-update) for the source and limits. Each interface must update its fixed documents and verify them in a separate package before adoption. This package changes no consumer or existing installation.
+
+When a project adopts this workflow, the [evidence lifecycle rules](contracts/workflow.md#wf-evidence-lifecycle) are shared defaults. A valid project policy can specify storage locations, retention periods, and archive methods. It cannot weaken mandatory safety, authorization, retention duties, or instruction priority. Indexes and summaries can reduce repeated context loading. They do not authorize source deletion, and a missing retention period does not permit immediate cleanup. Irreversible deletion requires confirmation at action time. [Issue #9](https://github.com/jeffery777/engineering-workflow-core/issues/9) changes documents only and performs no historical evidence cleanup.
+
+[Issue #11](https://github.com/jeffery777/engineering-workflow-core/issues/11) adds [early checks based on task risk](contracts/review-and-security.md#review-risk-timing). Assess risk at task start. Do not treat missing information as low risk. Reassess when scope or design changes. High-risk work needs early in-depth review and security analysis. Start required, proportionate scanning when a meaningful diff is available. The final version binds evidence for merge acceptance; it is not a prerequisite for starting in-depth checks. After changes, repeat affected tests, reviews, and scans. Reuse only evidence shown to be unaffected. A full-repository deep scan is not required for every merge, and cost savings are not guaranteed. Interface adoption still needs a separate fixed-document update and verification.
 
 This package moves no code and changes no interface or existing installation. It does not deploy, update EdgeInstaller skills, run Grok Build or model/runtime qualification tests, enable memory/hooks/schedulers, operate company systems, Orca, or Space, or create a tag/Release or install. P1's extraction source is fixed at `codex-dev-skills@993597561881d6ed8c552f9a18c59315015ad245`. The official comparison records documents read on 2026-10-14. It does not prove current runtime qualification, isolation, model quality, cost, or latency.
 

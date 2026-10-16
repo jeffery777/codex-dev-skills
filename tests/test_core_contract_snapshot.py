@@ -72,6 +72,11 @@ class CoreSnapshotTests(unittest.TestCase):
                 reviewed_head="10e97ddde5e04b085da357138ebdae4d0cb5a0f4",
                 pull_request=4,
             ),
+            lambda x: x["source"].update(
+                revision="345cd601bffbacc777f87fb24f22b5caefa30a3b",
+                reviewed_head="fc9bd241cb1a058d349c5952ae80ba74d07c56d0",
+                pull_request=8,
+            ),
             lambda x: x["source"].update(repository="someone/another-core"),
             lambda x: x["source"].update(reviewed_head="0" * 40),
             lambda x: x["source"].update(version="unverified"),

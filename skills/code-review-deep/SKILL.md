@@ -39,6 +39,11 @@ Use this skill when routine review is not enough because the change has material
 
 Follow `code-review`, then add adversarial checks for edge cases, stale assumptions, rollback gaps, and evidence quality.
 
+High-risk work uses independent deep design review and threat/security analysis
+early, then deep code review when implementation exists and necessary proportional
+scanning as substantial diff becomes available. Do not wait for a final candidate;
+use the engineering policy's timing and lifecycle, and bind actual scope/evidence.
+
 首次 triage 即按風險選擇深入審查及合適的已驗證模型／effort；CI 放行、installer、
 安全、資料與跨模組契約不等待重試門檻。零 findings 不等於已證明沒有漏報。
 

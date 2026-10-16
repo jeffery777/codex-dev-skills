@@ -10,14 +10,16 @@
 
 | 階段 | 必要輸入與動作 | 產物與離開條件 |
 | --- | --- | --- |
-| Discover | 讀有效指引、需求、來源與 repo 身分；有 Git 時核對 branch、HEAD、upstream、remotes、完整修改與 ownership；由接口核對當前公開能力／schema／權限 | 目標、scope、DoD、限制、事實／推論／未知；來源衝突先解決 |
-| Plan | 選最小一致切片，指定唯一 writer 或不重疊 ownership、依賴、風險、驗收及 review 強度 | 有界計畫；計畫不授權修改、派工或外寫 |
+| Discover | 讀有效指引、需求、來源與 repo 身分，依目標、設計與預期影響初判任務風險；有 Git 時核對 branch、HEAD、upstream、remotes、完整修改與 ownership；由接口核對當前公開能力／schema／權限 | 目標、scope、DoD、限制、風險及事實／推論／未知；unknown 不默認低風險，來源衝突先解決 |
+| Plan | 選最小一致切片，指定唯一 writer 或不重疊 ownership、依賴、驗收、review 與安全檢查強度／時機；scope 或設計變動重評風險 | 有界計畫；高風險及早深查，不等最終候選；計畫不授權修改、派工或外寫 |
 | Implement | 用已授權能力按既有模式完成切片，保留無關修改 | 可讀回的實際 diff 與新增檔案 |
-| Verify | 主代理獨立讀回成果、受保護 tests 與需求，執行必要固定驗收 | 命令、exit、結果、來源身分、略過／失敗分類；tests 通過不代替 review |
-| Review And Fix | 足夠能力、與作者獨立的 reviewer 唯讀審查當前內容；依風險完成必要 scan | finding IDs、dispositions、修正及重審證據；詳見 [審查契約](review-and-security.md) |
+| Verify | 開發期間持續做快速測試及廉價、適用的安全檢查；主代理獨立讀回成果、受保護 tests 與需求，完成必要驗收 | 命令、exit、結果、來源身分、略過／失敗分類；tests 或快速檢查不代替 review／必要 scan |
+| Review And Fix | 足夠能力、與作者獨立的 reviewer 唯讀審查當前內容；高風險在設計與實作初期即深入審查及安全分析，有實質 diff 即按必要性做比例 scan | finding IDs、dispositions、修正及重審／重測證據；詳見 [審查契約](review-and-security.md) |
 | Docs Sync | 核對行為、需求與限制，依 [簡明寫作要求](#wf-writing) 同步適用文件／狀態 | code/docs/configuration/package/version 一致；保留歷史與未驗證事項；在既有 review 記錄適用寫作要求的抽查 |
 | Delivery Gate | 核對驗證、review、授權與所選專案 overlay；已有 change request 另做完整 exact-head review | 內容 readiness、平台 enforcement、操作授權分列，詳見 [exact-head 契約](exact-head-and-evidence.md) |
-| Continue | 中斷前保存有界 checkpoint；接續先查當前來源、修改與 ownership | 同一目標、唯一 writer、剩餘 DoD、findings、證據與下一步；session 記憶僅為 advisory |
+| Continue | 中斷前保存有界 checkpoint，依 [證據生命週期](#wf-evidence-lifecycle) 維護索引；接續先查當前來源、修改與 ownership | 同一目標、唯一 writer、剩餘 DoD、findings、證據與下一步；session 記憶僅為 advisory |
+
+階段是安排指引，不把深入 review 或安全工作鎖在最後。普通流程可先快速檢查，再獨立 review、修正及重驗，形成較穩定候選；必要安全工作可提早或在無相依衝突時並行。高風險先深查，最終固定版本用於證據綁定與 merge 驗收，詳見 [風險、時機與候選規則](review-and-security.md#review-risk-timing)。
 
 <a id="wf-writing"></a>
 
@@ -41,7 +43,7 @@
 1. 保留使用者指定方法及較高優先指令；先讀適用技能／操作入口的必要契約，再選最小相容的直接推理、原生工具、CLI、服務或本地技能組合。不可略過必讀文件、必要工具／驗證器、獨立審查或適用資格程序。
 2. 接口只查本次操作相關的當前公開能力與完整 schema、model/provider/effort、資料目的地、context、檔案／網路／憑證邊界。缺事實保留 unknown；初始未列出工具不等於不可用，應依公開 discovery 查核，不可觀察仍為 unknown。一般推理不虛構探測呼叫。
 3. 替代方法須逐項保留前置、輸入、目標／scope、讀寫權限、操作、證據、輸出與完成條件。部分相容只重用有效部分並補足缺口；未知、不相容或不可用時採既有安全 fallback。名稱、安裝、help、自述、其他 runtime 紀錄或靜態案例不能證明資格、等價、啟用、授權或完成。不自動讀取或複製其他 runtime credentials。
-4. 證據重用先核對內容（含未提交 diff）、revision、scope、假設、政策、階段、環境與新鮮度；漂移時重查受影響部分。保留原始來源／限制，映射回適用輸出契約。PASS、自評或文案重排不替代必要證據與完整 exact-head review。
+4. 證據重用先核對內容（含未提交 diff）、revision、scope、假設、政策、階段、環境與新鮮度；漂移時重查受影響部分。保留原始來源／限制，映射回適用輸出契約。新成功是否取代舊失敗，另核對 [替代覆蓋](#wf-evidence-lifecycle)。PASS、自評或文案重排不替代必要證據與完整 exact-head review。
 5. 小任務在既有報告簡述方式、重用與缺口，不另建無需要的 receipt 或能力清冊；必要 artifacts 仍須產出。文句縮短不證明品質、token、成本或延遲改善；跨模型比較須有代表性配對量測。
 6. 批次／並行工具編排由當前 surface 證明可用及相容，未知時採順序 fallback。只有各自授權、固定目標且無相依／共享衝突的有界查讀才並行；相依、approval、mutation、wait/resume 保持順序，限制每項及合計輸出並逐項檢查失敗與結果。具體工具 API 留接口。
 
@@ -63,10 +65,40 @@
 
 ## 驗收、失敗與持續改善
 
-工程驗收依當前 repo/Git、必要驗證、獨立 review 與 DoD；Outcome 驗收逐項核對使用者目標、限制及實際可讀回的成果。未執行、失敗、未完成與負面案例都保留，不只記成功案例。Synthetic fixture 只證明列出的 functional outcomes，不能證明模型等價、隔離、獨立 review、正式 gate 或整套 runtime qualification；runtime/model/profile 身分由接口可信查核，私密實測資料不寫入共用庫。
+工程驗收依當前 repo/Git、必要驗證、獨立 review 與 DoD；Outcome 驗收逐項核對使用者目標、限制及實際可讀回的成果。未執行、失敗、未完成與負面案例依 [證據生命週期](#wf-evidence-lifecycle) 保留情境與結果，不能只記成功案例。Synthetic fixture 只證明列出的 functional outcomes，不能證明模型等價、隔離、獨立 review、正式 gate 或整套 runtime qualification；runtime/model/profile 身分由接口可信查核，私密實測資料不寫入共用庫。
 
 必要 checks 通過後，只因新變更、失敗或未解疑慮擴大／重跑；不能以預算省略必跑檢查、獨立 review 或 changed-head 完整審查。服務、認證、環境、資料、權限及 context 失敗與品質返工分開分類，不能靠提高 effort 解決環境或權限缺失。兩輪未完成 review/fix（或適用明定門檻）觸發假設、方法、能力及 context 重評，並非自動停工、新建話題或無限重構。換模型／session 不清除 findings、修正歷史或預算。
 
 改善驗收在既有報告有界記錄缺口、原因依據與下一步，先核對既有 evidence/proposal/evaluation 契約的涵蓋，再提最小補強。Operational Evidence、proposal、評分、evaluation、重播或 promotion packet 都不是授權或完成證據；不因此新增反思 executor、memory、hooks 或 scheduler。P1 的具體涵蓋評估見 [既有改善契約](../docs/provenance/source-map.md#improvement-coverage)。
 
 中途需求修正保留仍適用成果並重查受影響證據；狀態或旁支問題先簡答再續行，除非明確取消／替換目標。使用者摘要依 [簡明寫作要求](#wf-writing) 清楚精簡；review/gate 產物保留 commands、必填欄位、findings、dispositions、skipped checks 與限制。續行與停止均依 [授權與停止契約](authorization-and-stops.md)。
+
+<a id="wf-evidence-lifecycle"></a>
+
+## 長任務的證據生命週期
+
+本節協助執行者、reviewer 與接續者判讀證據，避免反覆載入冗長材料或遺失重要失敗。採用本工作流時，以下是共用預設；專案有效政策可專化位置、保留期與歸檔方式，但不得弱化必要安全、授權、保存義務或指令優先序。分類供人閱讀，不是執行狀態機：
+
+| 分類 | 判讀與保存要求 |
+| --- | --- |
+| Active（現用） | 支持當前判定或仍被引用；保留可讀來源與判定所需證據 |
+| Superseded（已取代） | 已驗證對應替代關係；保留原因、修正、版本及替代引用，不因分類就取得清理權 |
+| Unresolved（未解） | 未解、間歇或結果仍不確定；保留失敗情境、結果、已知限制與後續核對事項，不用較新 PASS 關閉 |
+
+成功替代須覆蓋原失敗情境及受影響邊界，記明原版／修正版 revision、scope、outcome 與可讀替代證據。無關測試 PASS、只知其他版本成功或有限單次成功，都不自動取代原失敗或關閉間歇問題。保留精簡原因／修正／版本／替代線索，以及支持必要驗證、review、merge 與 acceptance 的實質證據；摘要不取代 [exact-head 證據義務](exact-head-and-evidence.md)。
+
+未解／間歇失敗、安全或資料遺失事件，以及共享／仍被引用證據，須依專案有效要求及保護例外適當保留；即使標為已取代，也先核對其他使用者與引用。這不表示每份 raw log 都須永久保存。
+
+接續時可先載入索引、摘要及當前必要證據，再按問題補讀來源。減少上下文載入與刪除來源 records 是兩件事；來源缺失須明記未能驗證，不能偽造已驗證或把摘要升格為原始證據。
+
+只有在安全結案時，才對已取代的冗長材料做有界摘要、索引或歸檔。操作前核對專案 retention（保存與清理規則）、保護例外、共享／引用、精確範圍、實際授權及必要 preview／dry-run。缺少保留期間或有效政策不代表立即刪除；先保留來源並記錄待決事項，不自定通用天數。實際搬移、歸檔與清理仍依 [保存及操作授權](authorization-and-stops.md#auth-data)；不可逆刪除須操作當下確認，本文件變更不授權實際清理。
+
+以下僅示意判讀，不是實際操作、刪除指令或保存期限；在既有 review 報告抽查這些情境，不新增 gate 或 receipt 制度。
+
+| 示意情境 | 應有判讀 |
+| --- | --- |
+| r1 在情境 S 失敗；r2 已完成 S 及受影響邊界的必要驗收 | 記原因／修正、r1/r2、scope、outcome 與替代引用，僅就已覆蓋範圍標為已取代；保留必要 review／merge／acceptance 證據 |
+| S 曾失敗，但只看到無關 T 或其他版本的 PASS | 不證明 S 已修正，原失敗仍保留 |
+| 間歇失敗後單次成功，或安全／資料遺失事件仍有待查事項 | 不自動關閉；依有效事件保存要求保留相關來源與限制 |
+| 冗長材料已有摘要，但其他工作仍引用或多人共用 | 先核對引用、其他使用者與保護例外；摘要與較新 PASS 不釋放保存義務 |
+| 沒有可用 retention 政策或未定保留期間 | 保留來源並記待決事項；不推定可刪除，也不虛構通用天數 |

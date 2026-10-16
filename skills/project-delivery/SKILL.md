@@ -71,6 +71,11 @@ and candidate delegation alone do not require a ledger or `decide` invocation.
    For release-sensitive work, classify source/package version, candidate
    preparation, publication truth, active guidance, and historical records
    before proposing a mutation or readiness result.
+   Assess actual risk now and after scope/design changes; unknown is not low.
+   Apply Risk, Review Timing And Evidence Lifecycle in the engineering policy
+   above. For high risk, obtain independent deep design/security analysis before
+   substantial implementation; schedule early deep code review and necessary
+   proportional scanning as code/diff becomes available, not only at step 6.
 2. Apply `project-orchestrator` routing rules to classify the objective, select the next phase, and decide whether to proceed, hand off, or stop.
 3. Produce or update a plan when the source of truth is incomplete.
 4. Implement in small slices using `implementation-slice` semantics. When
@@ -84,7 +89,11 @@ and candidate delegation alone do not require a ledger or `decide` invocation.
    runtime-input preparation are parent work, not instructions the user must
    repeat. Preserve baseline fallback when evidence is absent.
 5. Run relevant verification and inspect the diff.
-6. Route code or mixed changes through `code-review`, high-risk code or mixed changes through `code-review-deep`, and docs-only or docs-dominant changes through `docs-review`.
+6. Route routine code/mixed changes through `code-review` and prose quality through
+   `docs-review`. High-risk changes, including security-affecting Markdown workflow
+   instructions, require `code-review-deep` and applicable security analysis/scan
+   under the engineering policy; a docs-only classification cannot bypass them.
+   This step consolidates coverage begun early; it is not the first review trigger.
 7. Use `code-review-gate` or `docs-review-gate` only when commit readiness, PR readiness, merge readiness, or repo policy requires a formal blocking decision.
 8. If reviews or gates produce actionable blockers, close them through the
    smallest primitive workflow and rerun the affected review. Honor any explicit
@@ -95,7 +104,12 @@ and candidate delegation alone do not require a ledger or `decide` invocation.
    After the default two unfinished review/fix rounds (or another configured
    threshold), apply the shared context-continuity policy. The threshold starts
    assessment only; it cannot auto-create or auto-roll over a task.
-9. Sync docs or status files when that is part of the repo policy.
+9. Sync docs or status files when that is part of the repo policy. During work
+   and closeout, retain a compact cause/fix/version/replacement evidence index;
+   replacement must cover the original failure and affected boundaries. Protect
+   unresolved/intermittent/shared/referenced records; absent retention means retain.
+   After changes, retest/review/rescan by impact and document valid evidence reuse;
+   final candidate binding does not require blindly repeating every earlier check.
 10. Prepare change-request readiness evidence and continue already-authorized
     actions. Before commit, push, pull/merge request creation, publication,
     merge, deploy, platform comments/reviews, or destructive actions, satisfy

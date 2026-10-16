@@ -57,6 +57,18 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
 
 ## Routing Rules
 
+- At task start and scope/design changes, assess impact and unknowns under the
+  engineering policy's Risk, Review Timing And Evidence Lifecycle. Unknown is
+  not low. Route high-risk design to independent deep design/security analysis
+  early, then deep code review and necessary proportional scan as substantial
+  code/diff exists; final-candidate acceptance is not the starting gate.
+- Select retest/review/rescan by affected boundaries; record rationale/coverage
+  for unaffected evidence reuse. Final Merge Review checks sufficient current
+  evidence and complete new-head range, not automatic whole-repository deep scans.
+- For continuation/closeout, keep the compact evidence index, original-failure
+  replacement coverage and protected unresolved/intermittent/shared/referenced
+  records; context slimming or absent retention never authorizes deletion.
+
 - If the task is already a single clear implementation slice, use `implementation-slice` semantics and do not over-plan.
 - If the user delegates a larger bounded delivery objective, select `project-delivery` as the outer workflow.
 - Select `loop-engineering` only for an explicitly requested durable loop or an
@@ -64,7 +76,10 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
   Ordinary delivery and candidate delegation do not require that entrypoint.
 - If already operating inside `project-delivery`, select the next phase or slice instead of routing back to `project-delivery`.
 - If source-of-truth or task order is unclear, use `planning`, `closure-triage`, or `task-continuation`.
-- If ordinary review evidence is needed, route code or mixed changes to `code-review`, high-risk code or mixed changes to `code-review-deep`, and docs-only or docs-dominant changes to `docs-review`.
+- Route routine code/mixed review to `code-review` and prose quality to
+  `docs-review`; high-risk work, including security-affecting Markdown policies,
+  requires `code-review-deep` and applicable security analysis/scan. File type or
+  docs-dominant classification cannot bypass the risk-first route.
 - If a formal blocking decision is required for commit readiness, PR readiness, merge readiness, or repo policy, route through `code-review-gate` or `docs-review-gate`.
 - If review findings need closure, route fixes through the smallest primitive workflow: `implementation-slice` for code or mixed changes, `docs-update` for docs-only changes, then rerun the relevant review primitive or formal gate for the current stage.
 - If a change request exists, never route pre-commit review evidence directly

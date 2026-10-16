@@ -41,7 +41,12 @@ Use this skill for routine review of working-tree, branch, or patch changes.
    affecting CI admission, installers, security, data or cross-module contracts
    to `code-review-deep` (or the applicable security review); use the verified
    model/effort for that risk without waiting for a failed retry.
-3. Read the changed code and relevant call sites.
+3. Read the changed code and relevant call sites. Reassess risk on scope/design
+   changes; unknown is not low. Review early substantial diffs under the
+   engineering policy's Risk, Review Timing And Evidence Lifecycle, including
+   applicable security scanning. Check actual revision/uncommitted scope,
+   assumptions and affected-boundary coverage before reusing evidence; retain
+   unresolved/intermittent failures and their original context.
 4. Check tests or evidence that cover the changed behavior.
 5. Report findings with file and line evidence.
 
