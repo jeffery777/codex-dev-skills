@@ -2,23 +2,23 @@
   "contract": "codex-core-document-lock/v1",
   "source": {
     "repository": "jeffery777/engineering-workflow-core",
-    "revision": "b4c37798b6d3a9efd91c8c6d518093f2dd847a98",
-    "reviewed_head": "10e97ddde5e04b085da357138ebdae4d0cb5a0f4",
-    "pull_request": 4,
+    "revision": "345cd601bffbacc777f87fb24f22b5caefa30a3b",
+    "reviewed_head": "fc9bd241cb1a058d349c5952ae80ba74d07c56d0",
+    "pull_request": 8,
     "version": null
   },
   "consumer": {
     "repository": "jeffery777/codex-dev-skills",
-    "import_baseline_revision": "ab5e517077df7ce83b8e2dd1a11cafe6d1b3fd35",
+    "import_baseline_revision": "ee22e0e9711f452645e845f4679bc76fda7b9dd4",
     "assembler_contract": "core-snapshot/v1"
   },
   "upstream_markdown_set": {
     "algorithm": "utf8-path-tab-sha256-lf/v1",
-    "sha256": "8446dfbf5e2820dd696ef411e87cc7a92b39305c369c808122b63554b9be83f6"
+    "sha256": "ba32220ff76ad4ee3b48195984cd653637a817268b6ed0876869486b81a5dc00"
   },
   "document_set": {
     "algorithm": "codex-core-document-set/v1",
-    "sha256": "9aed05bf415039319936cd4af4d34c77ae812df80a46f6d095c59182bedd242d",
+    "sha256": "a401253d3179f2037c09ca0cd93e36a822824c68ce22015975578683bde460bf",
     "files": [
       {
         "path": "LICENSE",
@@ -28,8 +28,8 @@
       },
       {
         "path": "README.md",
-        "sha256": "1b32eb6d5ed5e06b4b798dca52a793c21b526b4515be07b7e974341c16024751",
-        "size_bytes": 4155,
+        "sha256": "035a00ad749da99743984083d29c184ff335c64e8ca0b5a1ec845168fa6ca96c",
+        "size_bytes": 14733,
         "mode": "100644"
       },
       {
@@ -52,8 +52,8 @@
       },
       {
         "path": "contracts/workflow.md",
-        "sha256": "318380ef6783de944b1992b31c4384c8be5ec022a6b429616c7caa42508dd6e5",
-        "size_bytes": 8275,
+        "sha256": "567a10e20aa91a5a1302f83b82dda69a5deea11fd4971813fa0c53767b4bf859",
+        "size_bytes": 10670,
         "mode": "100644"
       },
       {
@@ -64,20 +64,20 @@
       },
       {
         "path": "docs/architecture/migration-plan.md",
-        "sha256": "fadd65adb453bcffde5131fdc3834226a0397914d472712bad037b6ccd24b748",
-        "size_bytes": 8256,
+        "sha256": "6fbba9ed9a15d32d63dbe138b673c25aec34a81b262d7ada82108077ca67e8cf",
+        "size_bytes": 23166,
         "mode": "100644"
       },
       {
         "path": "docs/architecture/project-split.md",
-        "sha256": "5cbb00d07456c56ce52153ab23952ff7626b8b178103229cbaa95f6b25ae8226",
-        "size_bytes": 15027,
+        "sha256": "18e3e3b620d917aeff7881f4bfe5d4736725d6cac0eb8c758b810564df5f8d84",
+        "size_bytes": 34720,
         "mode": "100644"
       },
       {
         "path": "docs/provenance/source-map.md",
-        "sha256": "fe601e2dc914c8370997cf46232dd3a10cb55d72556b07dafe0e9ab5d7cc67db",
-        "size_bytes": 41639,
+        "sha256": "d435ce323d2d3c9269ca35bb674fe4562a8d9b8a0ddb8c1fc5da33e4cdf5e57d",
+        "size_bytes": 44590,
         "mode": "100644"
       },
       {

@@ -13,6 +13,17 @@ Gate and Continue duties are in Core [wf-stages](../vendor/engineering-workflow-
 Keep the existing entry skills and task DoD. Small work may combine stages but
 must retain applicable duties. Plans and session states do not prove completion.
 
+## Documentation Writing And Review
+
+For natural-language documents and delivery summaries, apply Core
+[wf-writing](../vendor/engineering-workflow-core/contracts/workflow.md#wf-writing).
+Read the full fixed workflow through the loading contract above. For filesystem
+templates, that clause is in
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/core/contracts/workflow.md#wf-writing`.
+The existing docs-update and docs-review skills apply this shared obligation;
+docs-review-gate retains its existing evidence and blocking duties. This adds no
+separate writing standard, gate or conformance checker.
+
 ## Runtime Capability Selection
 
 Use Core [wf-capability](../vendor/engineering-workflow-core/contracts/workflow.md#wf-capability),

@@ -1,5 +1,22 @@
 # 純 Markdown 核心責任邊界
 
+[繁體中文](#zh-tw) · [English](#en)
+
+使用 GitHub 原生展開／收合區塊：繁中預設展開，英文可另行展開；兩者可同時開啟。這不是互斥頁籤，也不會自動偵測語言。若連結指向收合內容，請先展開該語言。[呈現方式說明](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-collapsed-sections)。
+
+GitHub disclosure sections are independent. Traditional Chinese is open by default. Expand English to read it. Both can stay open. These are not exclusive tabs, and they do not detect your language. Expand a closed section before you follow its internal links.
+
+<a id="zh-tw"></a>
+
+<details open>
+<summary>繁體中文（預設展開）</summary>
+
+本頁是人類導讀。下列 P0／P1 描述是歷史工作包：P1 已於 [PR #4](https://github.com/jeffery777/engineering-workflow-core/pull/4)、revision `b4c37798b6d3a9efd91c8c6d518093f2dd847a98` 完成。接口當前進度仍由各 repo 的實際證據決定。本次只改善三份導讀，不修改正式契約或 consumer pin。
+
+## 如何使用這份導讀
+
+Core 定義共同義務；skills 引導讀取與遵循，不會建立 API 或平台能力。依既有能力選取契約，各 consumer 優先使用當次已發現、且符合任務契約的原生子代理或獨立 session 工具。能力文件說明預期能力；loaded schema 說明當次公開操作；實際資格須有對應驗收證據。三者不能互換。缺能力採既有安全 fallback，缺必要 review／scan 或安全執行能力就阻擋相依 readiness，繼續獨立安全工作。
+
 本文件定義純 Markdown 核心與兩端接口責任。P0 見 [PR #2 固定 revision](https://github.com/jeffery777/engineering-workflow-core/tree/0815b74abe52d57efd032bd075e39c83c2ebf0d6)；本 [P1 #3](https://github.com/jeffery777/engineering-workflow-core/issues/3) 新增 [契約與來源對照](../provenance/source-map.md)，並依章程更新現行順序，保留 P0 歷史。來源見 [相依盤點](dependency-inventory.md)，前置見 [遷移計畫](migration-plan.md)。本包不搬程式或改接來源。
 
 <a id="official-comparison"></a>
@@ -84,3 +101,107 @@ Memory／SQLite/MG1/audit/maintenance、Hermes 專用入口、third-party mappin
 Codex generated plugin 仍從上層 source+allowlist 產生，維持唯一 source 與 bytes/modes/inventory 驗證；接口版本、core 文件 revision、tag/Release/install/deploy 各自記錄。未來 Grok 用自己的組裝與驗證，不從相同 Markdown 或 metadata 推定輸出等價。[E18](dependency-inventory.md#e18) [E19](dependency-inventory.md#e19)
 
 目的 LICENSE 保持原樣；抽取文件／組裝 substantial portions 時保留來源 MIT copyright/permission notice、source revision/path/digest 與修改標記。固定 digest 驗完整性，不能取代來源審查、授權或 license provenance。[E20](dependency-inventory.md#e20)
+
+正式契約仍以繁體中文為權威；本頁英文供人類導讀，不新增規範或改變契約效力。英文依 [ASD-STE100 Issue 9](https://asd-ste100.org/STE_downloads.html) 原則編寫，尚未完成完整符合性驗證；本包未完成全部規則與詞彙核對。繁體中文不宣稱符合英文受控語言標準。
+
+</details>
+
+<a id="en"></a>
+
+<details>
+<summary>English (expand to read)</summary>
+
+This page is a human guide. P0 and P1 below are historical packages. P1 completed in [PR #4](https://github.com/jeffery777/engineering-workflow-core/pull/4), revision `b4c37798b6d3a9efd91c8c6d518093f2dd847a98`. Current interface progress still requires evidence from each repository. This package changes three guides only. It does not change formal contracts or consumer pins.
+
+## How to use this guide
+
+Core defines shared obligations. Skills guide the reader through them; they create no APIs or platform capabilities. Under the existing capability-selection contract, consumers prefer native subagent or independent-session tools discovered for the current task that preserve its contract. Capability documents describe expected features. Loaded schemas describe currently exposed operations. Actual qualification requires matching acceptance evidence. These inputs are not interchangeable. Use the existing safe fallback when a capability is missing. Missing required review, scan, or safe execution blocks dependent readiness. Continue independent safe work.
+
+This guide defines the Core/interface boundary. The P0 design remains at [PR #2's fixed revision](https://github.com/jeffery777/engineering-workflow-core/tree/0815b74abe52d57efd032bd075e39c83c2ebf0d6). [P1 #3](https://github.com/jeffery777/engineering-workflow-core/issues/3) added [contracts and source dispositions](../provenance/source-map.md) and updated the plan under the charter. See the [dependency inventory](dependency-inventory.md) for source facts and the [migration plan](migration-plan.md) for prerequisites. P1 moved no code and changed no source interface.
+
+<a id="official-comparison-en"></a>
+
+## Official documents: the P0 read-only basis
+
+Read date: 2026-10-14. The comparison uses only official OpenAI and xAI/Grok Build documents. It did not invoke the listed runtime actions or run Grok Build. Local document checks and read-only Codex subagents are not qualification tests for either runtime. Official websites can change. They do not identify a fixed source-code revision or qualify the current account or host. The six topics identify shared obligations; implementations stay in the interfaces.
+
+| Topic | Codex document record | Grok Build document record | Design inference or untested capability |
+| --- | --- | --- | --- |
+| Skill loading | `SKILL.md` has name/description. Metadata loads first; selected skills load in full. Local `.agents/skills` and plugins provide loading paths. [Build skills](https://learn.chatgpt.com/docs/build-skills) | Discovery covers `.grok/skills`, plugins, and user `.agents/skills`. `allowed-tools` neither grants nor restricts tools. `model/effort/license/compatibility` fields are accepted but not applied. [Skills](https://docs.x.ai/build/features/skills-plugins-marketplaces) | Shared documents define required reading. Each interface owns frontmatter, reference layouts, and actual load evidence. A readable format does not prove conformance. |
+| Tools | Local Codex supports MCP STDIO/Streamable HTTP. App/CLI/IDE can share MCP configuration on one host. Hosted plugin capabilities can differ. [MCP](https://learn.chatgpt.com/docs/extend/mcp) | MCP tools join built-ins and use `<server>__<tool>` names. The CLI provides tool inclusion/exclusion flags. [MCP Servers](https://docs.x.ai/build/features/mcp-servers), [CLI Reference](https://docs.x.ai/build/cli/reference) | Check public namespaces, schemas, and normal tools separately. Do not assume matching names, payloads, hosted behavior, or local behavior. Tool equivalence was not tested. |
+| Permissions/sandbox | Technical sandbox controls and approval policy are separate. CLI/IDE documents describe OS enforcement. Check each execution environment separately. [Security](https://learn.chatgpt.com/docs/agent-approvals-security#sandbox-and-approvals) | Permissions and sandbox are separate. Sandbox is off by default. The documents distinguish subprocess network limits on Linux/macOS from in-process network access. [Permissions](https://docs.x.ai/build/features/permissions), [Sandbox](https://docs.x.ai/build/features/sandbox) | Documents create no permissions or isolation. Each interface needs current sandbox, data-destination, allow, and block evidence. Equal profile names do not prove equal protection. |
+| Subagents | Delegation is supported. Children inherit parent sandbox/approval. Custom instructions do not create a separate read-only sandbox. [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents#approvals-and-sandbox-controls) | Children have separate context and return summaries. Documented explore/plan tool scopes omit shell/edit. [Subagents](https://docs.x.ai/build/features/subagents) | Parent sandbox/approval inheritance is permitted. Separate technical isolation is not required for every child. Select model/effort for the task; each interface checks effective settings. Ownership, author/reviewer independence, and main-agent integration remain required. |
+| Session | CLI `codex exec` supports resume/fork. An exec fork without a prompt starts no turn. This does not establish Desktop payloads. [Developer commands](https://learn.chatgpt.com/docs/developer-commands#codex-exec) | Sessions describe `-r` resume, `--fork-session`, and `-s` for a new UUID. The Headless table instead describes `-s` as create/resume for a named session. [Sessions](https://docs.x.ai/build/features/sessions), [Headless](https://docs.x.ai/build/cli/headless-scripting) | Preserve exact session/host/ownership and start semantics. Grok `-s` remains unresolved. A later adapter must use complete public schemas and actual tests. Neither document wording is treated as verified behavior. |
+| Results | `codex exec --json` emits newline-delimited events and supports continued non-interactive work. [Developer commands](https://learn.chatgpt.com/docs/developer-commands#codex-exec) | Headless supports plain/json/streaming-json. ACP separates prompt metadata from update text. [Headless](https://docs.x.ai/build/cli/headless-scripting) | Each interface keeps command, exit, result, artifact, and readback evidence. Stream completion, summaries, native goals, and process success do not replace repository DoD/review/exact-head evidence. |
+
+Untested areas include actual skill loading, tool coverage, session recovery, permissions, OS isolation, independent review/scan paths, model quality, cost, and latency. Shared-document feasibility is a design inference. This comparison does not prove equivalent runtime behavior. Source entries are listed at [O01–O11](dependency-inventory.md#official-sources).
+
+## One-way Core/interface responsibilities
+
+| Responsibility | engineering-workflow-core | Interface or consuming project |
+| --- | --- | --- |
+| Engineering contract | Markdown stages: Discover/Plan/Implement/Verify/Review And Fix/Docs Sync/Delivery Gate/Continue; required inputs/outputs, acceptance, and stops | Select entrypoints, load contracts, execute the workflow, and produce conformance evidence |
+| Authority/constraints | Scope/identity/ownership, delegated authority, destructive safeguards, and unknown external effects | Normal permissions/approval controls, exact-action checks, and readback; prose is not enforcement |
+| Independent review/required scan | Independence, risk, applicability, coverage, findings/dispositions, and blockers | Review/scan tools, qualification/preflight, actual results, artifacts, and validators |
+| Exact-head/completion | Complete range, source/diff identity, verification, coherence, new-head review, and completion evidence | Git/forge control planes, CI, receipts/checks/schemas/validators, and accepted project artifacts |
+| Workflow states/evidence format | Text or Markdown tables for states, required fields, and examples | All decision engines, routers, state-machine programs, schemas/parsers/validators, and digest code |
+| Version/source | Document revision, change scope, source, and license notices | Version/revision/digest acquisition, locks, checks, assembly, installers, and packages |
+
+Each interface depends on fixed Core documents. Core imports or calls no Codex/Grok/Orca API and performs no runtime action. It contains no executable decision engine, validator, installer, or software package. Other repositories need not exist to load Core documents. Source permalinks are provenance, not reverse execution dependencies. Interfaces can keep separate code and validators; shared obligations do not require shared executable implementations.
+
+The source already separates stages from adapter responsibilities. Its `shared` label mainly describes Codex surfaces. The label does not qualify Grok or Hermes. [E01](dependency-inventory.md#e01) [E02](dependency-inventory.md#e02) [E03](dependency-inventory.md#e03)
+
+## Executable-source ownership
+
+All canonical/digest, completion-evidence, state, and authority guards in `loop_core.py` remain Codex interface code. Skill `ROUTES`, dynamic `agent_routing`, and Desktop decisions do not move to Core. Markdown can define their obligations. A filename or pure-function design does not transfer ownership. [E05](dependency-inventory.md#e05) [E06](dependency-inventory.md#e06)
+
+Routing/profile/qualification, continuity, Git/filesystem/index/clock, evidence/graph projection, proposal/evaluation, CLI executors, and exact-head validators stay in interfaces or remain deferred. A supplied `completion_evidence` bool, graph node, or schema PASS does not prove authentic source or completion. Interfaces must reread evidence and verify conformance. [E10](dependency-inventory.md#e10) [E12](dependency-inventory.md#e12) [E13](dependency-inventory.md#e13) [E17](dependency-inventory.md#e17) [E27](dependency-inventory.md#e27)
+
+Abstract class/tier, scope, ownership, and review independence can be shared Markdown. Specific model IDs, effort, profile bytes/digests, tool/session mappings, qualification, and dispatch stay in interfaces. Do not inherit another runtime's qualification or treat a read-only role prompt as technical isolation. [E11](dependency-inventory.md#e11)
+
+## Subagent settings and review independence
+
+Children can inherit parent sandbox and approval mode. Separate technical isolation is not required for every child. Each interface checks effective inherited settings, permissions, and approval behavior. Read-only role constraints still apply. Author/reviewer independence concerns work ownership and review evidence. It can hold within one inherited sandbox/approval mode; a new sandbox is not a general delegation prerequisite.
+
+The main agent selects the model and reasoning effort from task depth, risk, context volume, and verification load. Parent settings may be retained when suitable. For different settings, the interface selects supported values and checks what takes effect. It owns inheritance/override order, profile bytes, and required preflight/qualification. Core records obligations, not settings code, a permanent model ID, or a mandatory maximum effort. Keep unknown settings unknown. Prompts and another runtime's records do not prove effective settings. [E11](dependency-inventory.md#e11)
+
+If a task explicitly requires technical isolation, verify it for that task. This does not create a universal child-isolation rule or weaken scope, permissions, independent review, required scan, exact-head, or completion evidence.
+
+## Coordination and parallel preparation
+
+The designated coordinator succeeded the original project-split coordination chat. It coordinates bounded inventory, official research, and interface design alongside Core documents. Packages state revisions, scope, ownership, assumptions, and untested capabilities. Historical P1 added six Markdown contract/provenance files and updated entrypoints. It did not modify interfaces or assign work to them.
+
+Read-only design may cite a draft with its version and assumptions. P3-C/P3-G may proceed only after P1 formally merges, an immutable revision/digest is fixed, both P2 designs match the final Core contract, and package authority is valid. After those common prerequisites, neither side must wait for the other's full implementation. The charter permits separately assigned Grok development and controlled tests. Codex may develop the Grok repository; this does not qualify a Grok worker. P1 ran no Grok Build or runtime qualification. Codex behavior/installations remained unchanged. Consumer rollout, deploy/tag/Release, and EdgeInstaller skill updates are separate. See the [current plan](migration-plan.md); P0's full-deferral proposal remains historical.
+
+## Hosts, forges, and deferred work
+
+Host/forge boundaries describe responsibilities, not a Core runtime API. Interfaces use normal Git/filesystem/shell/connectors/CLIs. They check identity, authority, bounded execution, failures, and readback. Provider details such as GitHub connector-first remain in interfaces/project overlays. Core retains source identity, external-write authority, and exact-head obligations.
+
+The source repository's GitHub App, ruleset, receipt, Issue/branch process, and CI do not apply automatically to Core or other projects. Each project explicitly selects an enforcement profile. Missing required profile evidence blocks readiness. Empty lists are not a pass. [E15](dependency-inventory.md#e15) [E16](dependency-inventory.md#e16) [E17](dependency-inventory.md#e17)
+
+Orca is an optional host entrypoint with upstream-owned operation skills. P1 did not operate, vendor, or change it. A future interface must check upstream versions, the complete operation contract, and authority. Missing capabilities use normal Git/shell or manual checkpoints without lower completion criteria.
+
+Memory/SQLite/MG1/audit/maintenance, Hermes entrypoints, third-party mapping/failover, GitNexus controller/hooks, and schedulers stay at the source and remain deferred/default-off. Core-document loading does not import, activate, or add work to them. The [inventory](dependency-inventory.md) retains test/eval/resource ownership. It does not show that P1 tested or moved them. [E14](dependency-inventory.md#e14)
+
+## Boundaries the document contract retains
+
+1. Read current state and effective instructions. Check target, identity, scope/ownership, Git changes, and environment. Act only within delegated scope. Check authority and gates for each mutation or platform action.
+2. The main agent rereads results and completes required verification. An independent reviewer inspects current content read-only. Fix blockers and review again. Available models/tools, summaries, or passing tests do not replace independence, qualification, or completion evidence.
+3. Assess required Security Diff Scan from final security/trust/permission/data/executable/dependency/installation impact. An incomplete, failed, or insufficient scan is not a pass. With no applicable impact, record scope/rationale as not applicable; never label skipped as passed.
+4. Bind exact-head review to the complete base-to-head range, repository/change request/base/head/merge-base/diff identity, checks, findings/dispositions, and code/docs/package/version coherence. Review a changed head in full. Keep `content_review`, `platform_enforcement`, and authority separate.
+5. Read back unknown external effects before retry. For target/source/ownership/authority conflicts, required review/scan or high-risk verification gaps, or real human decisions, complete independent safe work and stop dependent actions.
+6. Completion depends on current repository/Git, verification, review, accepted platform evidence, and DoD. Native goal/session/subagent/memory state is coordination data only. A receipt from an old repository does not establish new-repository readiness.
+
+These obligations follow the source engineering and exact-head contracts. Trace them individually during extraction. A document-only Core does not weaken them. [E01](dependency-inventory.md#e01) [E04](dependency-inventory.md#e04) [E15](dependency-inventory.md#e15) [E23](dependency-inventory.md#e23)
+
+## Versions, assembly, and source notices
+
+Core provides fixed-revision Markdown and documented source information. Each interface implements build-time locks, digests, allowlists, dependency closure, and license-notice assembly. Runtime uses assembled fixed documents, never mutable Core `main`. Data manifests/schemas, downloaders, validators, plugin/install code, and assemblers stay in interfaces.
+
+Codex's generated plugin still derives from its upper-level source plus allowlist. It keeps one source and checks bytes/modes/inventory. Record interface versions, Core document revisions, tag/Release/install/deploy separately. Grok supplies its own assembly and checks. Shared documents or metadata do not prove equivalent output. [E18](dependency-inventory.md#e18) [E19](dependency-inventory.md#e19)
+
+Keep the destination LICENSE unchanged. Extracted documents or substantial assembled portions retain the upstream MIT copyright/permission notice, source revision/path/digest, and change marks. A fixed digest checks integrity, not source review, authority, or license provenance. [E20](dependency-inventory.md#e20)
+
+Traditional Chinese remains the authoritative language of the formal contracts. This English guide adds no policy and does not change contract authority. The English text is written using [ASD-STE100 Issue 9](https://asd-ste100.org/STE_downloads.html) principles. Full conformance has not been verified. This work has not checked every rule and dictionary entry. The Chinese text does not claim conformance to an English controlled-language standard.
+
+</details>

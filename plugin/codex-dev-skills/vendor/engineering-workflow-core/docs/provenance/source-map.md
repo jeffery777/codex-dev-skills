@@ -2,6 +2,8 @@
 
 P1 的固定抽取來源是 `jeffery777/codex-dev-skills@993597561881d6ed8c552f9a18c59315015ad245`；本機來源只讀，未混用 draft #317/#324/#326。目的基線是 P0 merge `0815b74abe52d57efd032bd075e39c83c2ebf0d6`，工作包為 [Issue #3](https://github.com/jeffery777/engineering-workflow-core/issues/3)。核心的正式契約以繁體中文為權威；英文 identifiers 及 notices 原文不翻譯。全面雙語改造另包評估，不在 P1 宣稱 ASD-STE100 符合性。
 
+上述抽取身分與下列逐條對照記錄 P1 當時的來源及處置。P1 之後的使用者新增要求分開記於 [簡明寫作更新](#plain-writing-update)，不倒寫成原上游義務或 P1 當時已完成的符合性驗證。
+
 以下按來源正文段落、每個編號／bullet 與表格義務列出穩定 ID、exact file/lines、disposition、目的章節及理由。標題／空行隨相鄰單位歸類；不是把整份來源都稱中立。`抽取` 保留義務並整理文字；`改寫` 保留共用義務，移除 runtime 具體映射或明示本次澄清；`接口保留` 不複製具體入口／路徑／程式；`不適用` 須有明確理由（本次主要來源沒有需要丟棄的共用義務）。合併文字不等於刪除義務。核心只保留 Markdown，所有可執行依賴留原接口或保留延後。
 
 ## 固定主要來源
@@ -183,3 +185,24 @@ P1 的固定抽取來源是 `jeffery777/codex-dev-skills@993597561881d6ed8c552f9
 本表記的是上游 bytes，不在自身文件內填自己的 commit/digest，避免自我循環。下游應在 P1 正式合併後讀回 Core immutable revision 與文件集合，依 [固定來源義務](../../contracts/exact-head-and-evidence.md#exact-pinning) 在接口 lock／組裝。P1 PR head 或工作草稿不自動等同已定稿的消費版本；無 tag/Release/install/deploy 聲明。
 
 抽取／改寫部分須隨附 [upstream-notices](upstream-notices.md) 的完整原 MIT copyright／permission／warranty。Core 根 LICENSE 保持原 bytes；它不取代上游 notices。
+
+<a id="plain-writing-update"></a>
+
+## P1 之後新增：簡明雙語寫作
+
+本包於 2026-10-16 依使用者已接受的寫作要求，在 [Issue #7](https://github.com/jeffery777/engineering-workflow-core/issues/7) 新增 [文件與交付摘要的簡明寫作](../../contracts/workflow.md#wf-writing)，並接入既有 Docs Sync、使用者摘要及文件 review。這是新的共同義務，不是從 P1 的固定 Codex revision 抽取；原來源表、107 個對照單位、revision、hash 與完整 notices 保持原有紀錄。接口須另包更新固定文件與各自驗證，Core 文案不代表既有技能或 runtime 已採用。
+
+| 新增要求的來源／處置 | 目的與驗收 |
+| --- | --- |
+| 使用者接受先分清英文標準與繁中調適，再加入可驗收清晰原則 | 按讀者、目的、操作深度與文類寫作；術語一致、句型直接、步驟明確，保留必要細節與安全／授權／證據／風險；短回覆不硬套四欄 |
+| 英文以 ASD-STE100 Issue 9 為依據；繁中採對應原則 | 未完整核對正式規則、受控詞典及適用技術詞不聲稱符合；全文未取得時明示限制，仍可完成清晰原則所涵蓋的文件工作；繁中不宣稱官方 ASD 符合性或硬套英文單字數 |
+| 雙語與原文保護 | 義務、風險、限制與重要資訊一致，正式繁中權威不變；機器字面及須保留的引用／授權原文不改 |
+| 沿用既有 review | 在原 review 報告記抽查範圍、結果與限制；不新增 validator、gate、receipt 制度或認證系統 |
+
+### 官方查核與取得限制（2026-10-16）
+
+- [ASD 官方 About STE](https://asd-ste100.org/about_STE.html) 與 [首頁](https://asd-ste100.org/) 的搜尋擷取確認 Issue 9 發布於 2025-01-15，屬英文技術文件標準。
+- [ASD 官方 FAQ](https://www.asd-ste100.org/STE_faq.html) 的搜尋擷取說明標準包含寫作規則與受控詞典，並允許依規則使用適用技術詞。清晰原則也可用於其他文類，這不等於它們已完整符合標準。
+- [ASD 官方 Tools for STE](https://asd-ste100.org/STEsoftware.html) 的搜尋擷取說明工具不能代替作者或標準。本次直接讀取 About STE、FAQ 及 Tools for STE 皆未成功取得內容，不以搜尋擷取冒稱已讀完整頁面。
+
+本次取得的是官方搜尋擷取內容，未取得完整正式標準，不宣稱已讀完整官方頁面、全部規則或詞典。未提交個資申請，未採用未查證的數字規則；完整 ASD-STE100 符合性未驗證。繁中調適與上述驗收方式是使用者接受的共同設計，不是官方中文標準。此更新不更動 P1 上游 license notices，也不重製完整標準。
