@@ -19,23 +19,28 @@ Issue #343 一起接入 Core PR #10 的證據生命週期與 PR #12 的風險／
 先在既有執行、編排、review、結案入口落實，再同步本頁及 README；不另建技能、
 gate 或清理 framework。共用定義仍以固定 Core 為準，未執行歷史清理或更新現有安裝。
 
+Issue #347 接入 Core PR #14 的安全政策、能力缺口與外部補查規則，
+更新固定集合與既有安全 adapter。有效政策不要求某項檢查，與必要檢查
+尚未執行／能力不可用分開記錄；外證及正式例外依固定 Core 綁定候選、
+檢查與交付動作。這是文件與接口接點採用，不證明 runtime 行為或公司政策實例。
+
 <a id="固定來源與兩種-digest"></a>
 
 ## 固定來源與集合 digest
 
-來源為 jeffery777/engineering-workflow-core，本次固定 Core PR #12 merge
-784ed24f4a09ec35ac7209e0fd2287b214aea260。Reviewed head
-8148ef323df73bd9c54d83d3f9af87862d4d8022 與 merge 的 Git tree 相同。
-snapshot 明選全部十份 Markdown 與 LICENSE，11 檔共 220,971 bytes；原 UTF-8
+來源為 jeffery777/engineering-workflow-core，本次固定 Core PR #14 merge
+3a3fd41e5fb994b4429a67d76d1b0655d972d150。Reviewed head
+139ef2ff29af70c7592910c2ec598a9943cc934f 與 merge 的 Git tree 相同。
+snapshot 明選全部十份 Markdown 與 LICENSE，11 檔共 225,894 bytes；原 UTF-8
 bytes、Core 相對路徑與非 executable Git mode 100644 不變。正式契約繁體中文
 為權威，無翻譯替換，也不宣稱完整 ASD-STE100 符合性。
 
 | 身分 | 精確算法與值 |
 | --- | --- |
-| Consumer 十份 Markdown 集合 | 按 UTF-8 path bytes 排序；每列 path、TAB、原 bytes 的小寫 SHA256、LF，含最後 LF，不含 LICENSE；SHA256 f308093e1dbb6ba2796a3b286406a5f02adde692d05a200b2894e88527bed3c4 |
-| Core PR #12 十一檔 handoff 集合 | 同一 path/TAB/hash/LF 算法，但包含 LICENSE；SHA256 9517d611999058c1667eb255e38791f7189db501ca36d004759a62165d977b53；不放入十份 Markdown 欄位 |
+| Consumer 十份 Markdown 集合 | 按 UTF-8 path bytes 排序；每列 path、TAB、原 bytes 的小寫 SHA256、LF，含最後 LF，不含 LICENSE；SHA256 cf5a027c818967a5c1bc46fabb36aba88b8264bde0c3ee81e2c4aff813d2a428 |
+| Core PR #14 十一檔 handoff 集合 | 同一 path/TAB/hash/LF 算法，但包含 LICENSE；SHA256 3ba2c2115bb582009c925148e0fda8708b4aed3d99f4eed6ed0e3b35b5246e2c；不放入十份 Markdown 欄位 |
 | Core LICENSE | 原 bytes SHA256 49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f |
-| Codex 11 檔集合 | 按 UTF-8 path 排序的 records，每筆只有 path/sha256/size_bytes/mode；UTF-8 JSON，keys 排序、compact separators、非 ASCII 不 escape、無 BOM/尾 LF；SHA256 輸入為 codex-core-document-set/v1、單一 NUL、JSON array；結果 2c9a09bf3ed96b6a29081399242873dcc9a0447613d418055c7ae41399b89517 |
+| Codex 11 檔集合 | 按 UTF-8 path 排序的 records，每筆只有 path/sha256/size_bytes/mode；UTF-8 JSON，keys 排序、compact separators、非 ASCII 不 escape、無 BOM/尾 LF；SHA256 輸入為 codex-core-document-set/v1、單一 NUL、JSON array；結果 348a1307aad1887476f9a483231299931e38f61e7488048a0211f39a67f6504a |
 
 這些集合的算法或檔案範圍不同，不能互換。Lock 同時綁 repository、immutable
 merge revision、reviewed head/PR、版本 absent、Codex import baseline 與組裝契約。
@@ -61,6 +66,7 @@ aliases 沿原入口，不增加自動 lifecycle 或改既有模型／權限預�
 | --- | --- |
 | workflow 八階段 E02–E10、R19、D28 | engineering-workflow-contract／reusable 的 Shared Phases；原 delivery/planning/implementation/docs/review 技能 |
 | P1 之後新增的 wf-writing／plain-writing-update | engineering-workflow-contract 的 Documentation Writing And Review；docs-update／docs-review 檢查讀者、句意、術語、步驟、雙語語意及符合性宣稱；仍使用既有 review 報告 |
+| P1 之後新增的 security-policy-update／review-security／review-evidence | security-review-escalation-policy 引導既有報告記政策權責、檢查狀態、實際工具覆蓋與外查交接；必要 gate、不可豁免、獨立 review、exact-head 與操作授權保留，不新增機器化例外 enforcement |
 | P1 之後新增的 review-risk-timing／review-security | engineering/security/exact-head adapters；planning／implementation／delivery／orchestrator 在開始與變動重評，high-risk Markdown 不繞過早期深入與必要比例 scan；Merge Review 核對當前覆蓋與重用理由 |
 | P1 之後新增的 wf-evidence-lifecycle／auth-data／auth-destructive | artifact policy／cleanup／closure／continuation；既有報告保存原因、修正、版本、替代引用與原失敗覆蓋；保護未解／間歇／共享／仍引用證據，缺 retention 保留，實際不可逆刪除另須當下確認 |
 | 能力相容／新鮮度 E11–E12、R01–R05/R12/R18/R22、D01–D09/D14 | reusable Capability Selection／Protected Boundaries；native discovery、Code Mode 與實際 validator |
@@ -124,11 +130,12 @@ missing/tampered notices、symlinks/FIFO、broken links、錯 root、目的地�
 三種 filesystem roots 和既有 Hermes closure。Tests 與回傳 verified 不授予
 操作權、獨立 review 或 runtime qualification；兩項 false-authority flags 固定 false。
 
-P3 的深入 code/docs review、比例 Security Diff Scan 及正式 exact-head/profile
-gates 與測試分開。CLI/TUI/Desktop/Bundled CLI 的真實工具、有效 model/effort、
-權限、session、載入、失敗/恢復仍各自留 P4 證據；本包不啟動模型 runtime，
-不借 fixture 或別的入口資格。不更新既有 consumer 安裝、不部署或發 Tag/Release，不操作 Memory、
-Hooks、Schedulers、Orca、EdgeInstaller、其他專案或模型路由。
+深入 code/docs review、比例 Security Diff Scan 及正式 exact-head/profile gates
+與測試分開。CLI/TUI/Desktop/Bundled CLI 的入口證據各自保留原 scope 與限制；
+已完成的有界驗收只在內容、環境與假設仍有效時重用。這次固定來源與政策更新
+不重開既有四入口驗收，也不要求全平台 qualification；不借 fixture 或別的入口
+資格。不啟動模型 runtime、不更新既有 consumer 安裝、不部署或發 Tag/Release，
+不操作 Memory、Hooks、Schedulers、Orca、EdgeInstaller、其他專案或模型路由。
 
 <a id="english"></a>
 
@@ -154,22 +161,30 @@ and closeout entries precede this guide and README update. Fixed Core retains th
 shared definitions. No new skill, gate or cleanup framework, historical cleanup
 or update to an existing installation follows.
 
+Issue #347 adopts Core PR #14's security-policy, capability-gap and external-check
+rules through the fixed set and existing security adapter. Record a policy's
+decision that a check is not required separately from a required check that has
+not run or whose capability is unavailable. Bind external evidence and formal
+exceptions to the candidate, check and delivery action under fixed Core. This
+document and adapter update does not prove runtime behavior or a company-policy
+instance.
+
 <a id="fixed-source-and-separate-digests"></a>
 
 ### Fixed source and distinct set digests
 
-The source is `jeffery777/engineering-workflow-core`, Core PR #12 merge revision
-`784ed24f4a09ec35ac7209e0fd2287b214aea260`. Reviewed head
-`8148ef323df73bd9c54d83d3f9af87862d4d8022` has the same Git tree. All ten Markdown
-files and LICENSE are selected: 11 files, 220,971 bytes. Preserve original UTF-8
+The source is `jeffery777/engineering-workflow-core`, Core PR #14 merge revision
+`3a3fd41e5fb994b4429a67d76d1b0655d972d150`. Reviewed head
+`139ef2ff29af70c7592910c2ec598a9943cc934f` has the same Git tree. All ten Markdown
+files and LICENSE are selected: 11 files, 225,894 bytes. Preserve original UTF-8
 bytes, paths and Git mode `100644`. No translation replaces the Core snapshot.
 
 | Identity | Algorithm and SHA-256 |
 | --- | --- |
-| Consumer ten-Markdown set | Sort paths by UTF-8 bytes. Join each path, TAB, lowercase file SHA-256 and LF, including the final LF. Exclude LICENSE. `f308093e1dbb6ba2796a3b286406a5f02adde692d05a200b2894e88527bed3c4` |
-| Core PR #12 eleven-file handoff set | Use the same path/TAB/hash/LF algorithm, including LICENSE. `9517d611999058c1667eb255e38791f7189db501ca36d004759a62165d977b53`. Do not put this value in the ten-Markdown field. |
+| Consumer ten-Markdown set | Sort paths by UTF-8 bytes. Join each path, TAB, lowercase file SHA-256 and LF, including the final LF. Exclude LICENSE. `cf5a027c818967a5c1bc46fabb36aba88b8264bde0c3ee81e2c4aff813d2a428` |
+| Core PR #14 eleven-file handoff set | Use the same path/TAB/hash/LF algorithm, including LICENSE. `3ba2c2115bb582009c925148e0fda8708b4aed3d99f4eed6ed0e3b35b5246e2c`. Do not put this value in the ten-Markdown field. |
 | Core LICENSE | Hash its original bytes. `49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f` |
-| Codex 11-file set | Sort records by UTF-8 path. Each record has only `path`, `sha256`, `size_bytes` and `mode`. Encode JSON with sorted keys, compact separators, unescaped Unicode, no BOM and no final LF. Hash UTF-8 `codex-core-document-set/v1`, one NUL byte and that JSON array. `2c9a09bf3ed96b6a29081399242873dcc9a0447613d418055c7ae41399b89517` |
+| Codex 11-file set | Sort records by UTF-8 path. Each record has only `path`, `sha256`, `size_bytes` and `mode`. Encode JSON with sorted keys, compact separators, unescaped Unicode, no BOM and no final LF. Hash UTF-8 `codex-core-document-set/v1`, one NUL byte and that JSON array. `348a1307aad1887476f9a483231299931e38f61e7488048a0211f39a67f6504a` |
 
 These sets have different algorithms or inventories. Do not substitute one digest for
 the other. The lock binds repository, immutable merge revision, reviewed head/PR,
@@ -198,6 +213,7 @@ their entries. No automatic lifecycle, model default or permission change follow
 | --- | --- |
 | Eight stages: E02–E10, R19, D28 | Engineering/reusable Shared Phases; existing delivery, planning, implementation, docs and review skills |
 | Post-P1 wf-writing/plain-writing-update | Engineering Documentation Writing And Review; docs-update/docs-review check readers, sentence meaning, terminology, steps, bilingual equivalence and conformance claims in the existing review report |
+| Post-P1 security-policy-update/review-security/review-evidence | Security adapter connects existing reports to policy authority, check status, actual tool coverage and external handoff. Preserve required gates, non-waivable obligations, independent review, exact-head and action authority; add no machine-enforced exception mechanism |
 | Post-P1 review-risk-timing/review-security | Engineering/security/exact-head adapters; planning/implementation/delivery/orchestrator reassess at start/change. High-risk Markdown retains early deep review and necessary proportional scan; Merge Review checks current coverage and reuse rationale |
 | Post-P1 wf-evidence-lifecycle/auth-data/auth-destructive | Artifact policy/cleanup/closure/continuation; existing reports retain cause/fix/version/replacement and original-failure coverage. Protect unresolved/intermittent/shared/referenced records; absent retention means retain; actual irreversible deletion needs action-time confirmation |
 | Capability compatibility/freshness: E11–E12, R01–R05/R12/R18/R22, D01–D09/D14 | Reusable Capability Selection/Protected Boundaries; native discovery, Code Mode and actual validators |
@@ -274,9 +290,11 @@ grant no authority, independent review or qualification. Both result authority
 flags remain false.
 
 Deep code/docs review, proportional Security Diff Scan and exact-head/profile
-gates remain separate. P4 must establish actual tools, effective model/effort,
-permissions, sessions, loading and failure/recovery for CLI, TUI, Desktop and
-Bundled CLI independently. This packet starts no model runtime and borrows no
-fixture or other surface's qualification. It performs no existing consumer installation rollout,
-deployment, Tag/Release, Memory, Hooks, Schedulers, Orca, EdgeInstaller,
+gates remain separate from tests. CLI, TUI, Desktop and Bundled CLI evidence
+retains each surface's original scope and limits. Reuse completed bounded
+acceptance only while content, environment and assumptions still match. This
+fixed-source and policy update does not reopen that acceptance or require
+all-platform qualification. It borrows no fixture or other surface's qualification
+and starts no model runtime. It performs no existing consumer installation
+rollout, deployment, Tag/Release, Memory, Hooks, Schedulers, Orca, EdgeInstaller,
 other-project or model-routing operation.
