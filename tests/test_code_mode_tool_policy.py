@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import hashlib
 import pathlib
 import shutil
 import subprocess
@@ -26,35 +25,6 @@ INSTALL_GROUPS = (
     "desktop-delivery-workflow",
     "codex-agent-profiles",
 )
-INSTALLER_ENV_OVERRIDES = (
-    "CODEX_SKILLS_DIR",
-    "CODEX_TEMPLATES_DIR",
-    "CODEX_CUSTOM_AGENTS_DIR",
-    "CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS",
-    "CODEX_DEV_SKILLS_TARGET",
-)
-
-
-def managed_backup_path(
-    state_root: pathlib.Path,
-    target_root: pathlib.Path,
-    artifact_kind: str,
-    relative_target: str,
-) -> pathlib.Path:
-    root_digest = hashlib.sha256(
-        str(target_root.resolve()).encode("utf-8")
-    ).hexdigest()
-    return (
-        state_root
-        / "codex-dev-skills"
-        / "backups"
-        / "v1"
-        / root_digest
-        / artifact_kind
-        / f"{relative_target}.bak"
-    )
-
-
 class CodeModeToolPolicyTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -64,12 +34,13 @@ class CodeModeToolPolicyTests(unittest.TestCase):
     def isolated_env(self, name: str) -> tuple[pathlib.Path, dict[str, str]]:
         home = self.root / name
         home.mkdir()
-        env = os.environ.copy()
-        for variable in INSTALLER_ENV_OVERRIDES:
-            env.pop(variable, None)
+        env = {key: value for key, value in os.environ.items()
+               if not key.startswith(("CODEX_", "GIT_"))}
         env.update(
             {
                 "HOME": str(home),
+                "CODEX_HOME": str(home / ".codex"),
+                "CODEX_CLI": str(self.root / "no-client"),
                 "XDG_STATE_HOME": str(self.root / f"{name}-state"),
             }
         )
@@ -170,12 +141,16 @@ class CodeModeToolPolicyTests(unittest.TestCase):
         )
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
-    def test_force_update_syncs_a_policy_source_change(self) -> None:
-        fixture = self.copy_fixture("update-fixture")
+    def test_force_update_refuses_a_changed_policy_source(self) -> None:
         home, env = self.isolated_env("update-home")
-        installer = fixture / "install.sh"
+        fixture = self.root / "update-source"
+        subprocess.run(["git", "clone", "--quiet", "--no-hardlinks", str(ROOT), str(fixture)],
+                       env=env, check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(fixture), "remote", "set-url", "origin",
+                        "https://github.com/jeffery777/codex-dev-skills.git"],
+                       env=env, check=True, capture_output=True)
         installed = self.run_installer(
-            installer, env, "install", "shared-review-gates"
+            INSTALLER, env, "install", "shared-review-gates", "--source", str(fixture)
         )
         self.assertEqual(0, installed.returncode, installed.stderr)
 
@@ -187,19 +162,20 @@ class CodeModeToolPolicyTests(unittest.TestCase):
             + "\n<!-- isolated update propagation marker -->\n",
             encoding="utf-8",
         )
-
+        state = self.root / "update-home-state"
+        def installed_snapshot():
+            return {(label, str(path.relative_to(root))):
+                    (path.stat().st_mode, path.read_bytes())
+                    for label, root in (("home", home), ("state", state))
+                    for path in root.rglob("*") if path.is_file()}
+        before = installed_snapshot()
         updated = self.run_installer(
-            installer, env, "update", "shared-review-gates", "--force"
+            INSTALLER, env, "update", "shared-review-gates", "--force", "--source", str(fixture)
         )
-        self.assertEqual(0, updated.returncode, updated.stderr)
-        self.assertEqual(source.read_bytes(), target.read_bytes())
-        backup = managed_backup_path(
-            self.root / "update-home-state",
-            home / ".codex" / "templates",
-            "templates",
-            INSTALLED_POLICY.as_posix(),
-        )
-        self.assertEqual(original, backup.read_bytes())
+        self.assertNotEqual(0, updated.returncode)
+        self.assertIn("source payload differs from reviewed catalog", updated.stderr)
+        self.assertEqual(original, target.read_bytes())
+        self.assertEqual(before, installed_snapshot())
         self.assertFalse(target.with_suffix(".md.bak").exists())
 
     def test_consistency_check_rejects_missing_policy(self) -> None:

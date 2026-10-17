@@ -60,10 +60,10 @@ plane before installing files, or keep the plugin and do not run this
 installer. The installer does not mutate plugin state.
 
 If install reports a differing existing or imported artifact, inspect it with
-ordinary filesystem diff tools. A byte-identical target is accepted as an
-idempotent install; different content is never overwritten by `install`.
-Only use `update --force` after establishing that the target is a managed
-filesystem installation and reviewing its backup behavior.
+ordinary filesystem diff tools. An identical managed target with a matching
+inventory supports idempotent install; `install` never overwrites different content.
+Unknown/imported files are not adopted even when identical. `--force` does not
+permit overwriting local edits. See [fixed-source ownership limits](installer-source-integrity.md).
 
 When the active CLI is missing or too old for `codex plugin list --json`, the
 installer warns and retains the filesystem fallback. This warning does not
@@ -138,167 +138,62 @@ write-preflight limitation.
 
 ## Update
 
-Update one group when you want the smallest write:
+更新與回復的雙語規範見 [固定來源安裝與回復](installer-source-integrity.md)。
+只有具 canonical target inventory 的管理檔可以替換。舊 metadata-only receipt 不會自動
+遷移；`--previous-source` 會停止。自訂／unknown／unmanaged 檔即使同 bytes 或使用
+`--force`，也不會被認領、覆寫或刪除。
+
+See [fixed-source installation and recovery](installer-source-integrity.md) for the
+bilingual contract. The current installer consumes the selected supported local Git
+payload. It does not execute old source code. Before any replacement it checks the
+complete old inventory, fixed new payload, state/receipts, paths and identities.
 
 ```bash
-./install.sh update shared-review-gates
-./install.sh update codex-review-workflow
-./install.sh update codex-delivery-workflow
-./install.sh update codex-cli-session-handoff
+./install.sh update --all --source /trusted/fixed-checkout
 ```
 
-`./install.sh update --all` updates every group, including Desktop-only workflows.
-Use it only when that broader scope is intentional.
+A cross-version update/downgrade must explicitly select every managed group. A narrower
+request stops. `--all` does not newly install opt-in profiles; already-managed profiles
+remain part of the complete version replacement. Custom bytes, extra/missing files,
+links and unsafe owner/mode stop. `--force` does not waive ownership or integrity checks.
 
-When installed files have local modifications, update prints a warning and does not overwrite them by default.
-Review `./install.sh diff <group>` before deciding whether to force the update.
+All install/update paths use the same transaction and lock. Staging and temporary
+originals stay in owner-safe state outside known discovery roots and selected targets,
+including canonical/direct-entry aliases. A cross-filesystem rename stops. New files
+and retired files participate in the same transaction. Full payload, retired-file
+absence, Core and inventory-receipt readback precede success.
 
-Before an `install` or a non-force `update` mutates a selected discovery target,
-the installer validates its state and receipt boundary. If that boundary is
-unsafe, the command fails before changing the selected skills, templates, or
-agent profiles. This preflight guarantee is limited to that boundary failure;
-it is not a claim of unconditional atomicity for disk-full, hostile same-UID,
-or every other runtime failure.
-Regular files in selected target trees and existing receipts must have exactly
-one link. A force transaction additionally requires that its sources and staged
-payloads have exactly one link. Existing receipts are also opened for append
-without writing bytes, using final-symlink protection where the platform
-provides it; the opened descriptor identity must still match. A read-only,
-immutable, or append-only receipt therefore fails closed before selected-target
-mutation. Where the platform exposes file flags, immutable and append-only
-flags are rejected directly. On Linux, the installer requires the filesystem
-flag ioctl; an error, including an unsupported filesystem or special ABI, fails
-closed and is not allowed to degrade to append-open/fstat-only validation.
-Other platforms without file-flag support still require the append-open and
-descriptor-identity capability check. The installer never repairs a link count,
-receipt mode, or file flag automatically.
+Regular target files, sources, staged payloads and receipts must have one link. Receipts
+undergo no-write append-open and descriptor checks; read-only/immutable/append-only
+receipts stop. Linux also requires successful filesystem flag inspection. The installer
+does not repair permissions, ownership, links or flags.
 
-Use force only after reviewing the diff and confirming the installed local changes can be replaced:
+Fresh payloads use 0700 directories, 0600 files and 0700 source-executable files.
+After a complete transaction, verified reconstructible originals need no permanent
+whole-package backup. An optional fixed-source cache can support offline recovery;
+future source availability is not guaranteed. Historical backups remain untouched.
 
-```bash
-./install.sh update shared-review-gates --force
-```
+On ordinary failure, the existing reverse rollback restores originals where possible.
+A failed restore reports nonzero and `CRITICAL`, retaining exact recovery paths.
+Preserve those paths and inspect the full state before manual recovery. Cleanup/unlock
+failure after commit also returns nonzero and reports pending work. A history row or
+receipt alone never proves that the full payload is usable.
 
-Risk: update is an external write. With `--force`, the installer backs up the existing target and overwrites installed skills or templates from this repository.
+### Historical Managed Backups
 
-For a forced update, each replaced skill, template, or agent profile is first
-placed in a deterministic managed slot below
-`${XDG_STATE_HOME:-$HOME/.local/state}/codex-dev-skills/backups/v1/`. The slot
-is outside `~/.agents/skills` and `~/.codex/skills`. Its exact shape is
-`<sha256(canonical-target-root)>/<skills|templates|agent-profiles>/<relative-target>.bak`.
-The managed root and backup parents must be current-user-owned, non-symlinked,
-and not group/world writable. Newly created managed state-chain directories use
-`umask 077`; existing state-chain directories are validated rather than having
-their permissions silently changed. The installer rejects a managed root that
-overlaps the checkout, a selected target, or either standard skill discovery
-root.
-
-Before any target replacement, the installer builds the complete expanded
-update, verifies every required slot, validates boundaries and ownership, checks
-same-device rename for each backup, and stages each replacement beside its
-destination. It refuses the whole update before mutation if any required slot
-already exists, a path is unsafe, or a same-device rename cannot be established.
-It never silently overwrites a managed backup.
-For force updates it acquires the managed transaction lock only after complete
-filesystem and profile input preflight; once locked, apply rechecks relevant
-identities and backup slots before replacement. This ordering does not provide
-hostile same-UID process isolation.
-
-### Fresh And Forced Replacement Permissions
-
-Fresh installs and forced replacements normalize newly installed skill
-directories to `0700`, regular files to `0600`, and source-executable files to
-`0700`. This applies equally to default, legacy, and explicitly authorized
-custom/project targets. It can therefore remove read access for other local
-accounts that previously could inspect the target. Existing unsafe target or
-state paths fail closed; the installer does not silently use `chmod` to repair
-their ownership or mode.
-
-If replacement fails, the installer attempts to restore the original from the
-managed slot and rolls earlier replacements back in reverse order. Only a
-successful rollback restores the prior complete state. If a restore step also
-fails, it emits a `CRITICAL` message that identifies the managed backup
-location; preserve the reported target, staged, and backup locations for manual
-recovery rather than assuming an atomic or no-partial result.
-
-### Managed Backup Collisions
-
-A collision reports the installed artifact and the occupied managed slot.
-`--force` does not overwrite that slot. Preserve both versions, inspect their
-contents and provenance, and confirm that no installer transaction is active.
-If a retry is needed, separately authorize moving the exact colliding backup
-to a unique archive outside skill discovery, verify that archive, and retain
-its original slot mapping for recovery. Never delete unknown backups or treat
-a lock alone as proof that no process is active. The existing runbook below
-describes the transaction and recovery boundaries.
-
-**Backup omission design decision:** this change retains local backups and
-does not add a skip-backup option. Matching a published tag can establish a
-potential reconstruction source, but does not establish that source's future
-availability or preserve immediate rollback. A future explicit omission mode
-would need all of the following before replacing any artifact:
-
-- Bind the repository, published release, immutable tag commit and complete
-  artifact manifest, including names, bytes and executable modes. A version
-  label or installer receipt alone is insufficient; extra local files also
-  count as modifications.
-- Verify every old artifact against that manifest and preserve a verified,
-  accessible restoration source for the required recovery period. A remote
-  URL alone cannot guarantee offline recovery or continued availability.
-- Retain the original locally until the whole update and receipt transaction
-  succeeds, so a network failure cannot disable rollback. Omitting a long-term
-  duplicate backup is distinct from omitting the transactional original.
-- Keep backups for local modifications, unknown provenance, incomplete
-  comparisons or unavailable restoration sources. Existing historical backups
-  remain untouched. Any later retirement requires its own explicit scope and
-  recovery decision.
-
-This evaluation does not authorize skipping protection for modified content
-or deleting an existing backup, even if another copy matches a formal tag.
-
-### Managed Backup Runbook
-
-Start with read-only inspection. Run `./install.sh diff <group>` and retain the
-exact `managed backup: PATH` printed by the successful forced update; that path
-is the only managed-backup location the installer reports. Inspect the backup,
-current target, and repository source before making a decision. A pre-existing
-managed slot is a collision disposition, not disposable installer clutter: the
-installer intentionally stops and leaves it untouched. Compare it with the
-current target and decide whether it is recovery evidence, a previous successful
-backup to retain, or a separately approved restoration candidate.
-
-Restore only after an explicit operator decision and after confirming that no
-installer transaction is active. Preserve the current replacement by moving it
-to a newly created recovery directory outside either skill discovery root; do
-not delete it. Then move the exact managed backup back to its original target.
-This is a reversible manual move while both locations are retained. Re-run
-`./install.sh diff <group>` and inspect both standard skill roots before
-resuming work. If any move fails, stop, keep every remaining location, and use
-the reported paths for manual recovery.
+Older installers used deterministic slots under
+`${XDG_STATE_HOME:-$HOME/.local/state}/codex-dev-skills/backups/v1/`.
+This installer does not delete or reuse those historical slots. Inspect their provenance,
+bytes and original target mapping before an operator decides any recovery action.
+Do not delete unknown backups or treat a lock/PID alone as proof that no installer runs.
+For a failed current transaction, use only its reported recovery locations.
 
 ### Legacy Adjacent Backups
 
-Older installer versions may have left `*.bak` directories immediately under a
-skill discovery root. First inventory them without changing anything:
-
-```bash
-find ~/.agents/skills ~/.codex/skills -maxdepth 1 -name '*.bak' -print 2>/dev/null
-```
-
-Treat every result as potentially user-owned data. This installer does not
-automatically delete, move, or adopt legacy backups. For each result, inspect
-its type and contents, identify the canonical sibling without the `.bak`
-suffix, and compare the two before treating it as an installer backup. If the
-canonical sibling or repository source cannot be identified, classify the entry
-as unknown and leave it in place.
-
-After an explicit operator decision, a known legacy backup may be moved to an
-owner-controlled archive outside both discovery roots; retain the original
-relative name and record its source/destination so the move can be reversed.
-Do not delete unknown data. After any authorized move, restart Codex or refresh
-its skill catalog, then re-run the inventory and inspect the catalog to verify
-that the duplicate discovery entry is gone. Do not run a forced update as a
-cleanup mechanism.
+Older installers may have left `*.bak` entries inside skill discovery roots.
+This installer does not move, delete or adopt them. Inventory and inspect them first.
+Any relocation or cleanup requires a separate exact operator decision and a verified
+recovery destination outside discovery. Do not use force-update as a cleanup command.
 
 ### Stale Managed Transaction Lock
 

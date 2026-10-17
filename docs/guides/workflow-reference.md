@@ -442,48 +442,30 @@ CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES \
 ./install.sh uninstall codex-agent-profiles --yes
 ```
 
-Uninstall refuses modified profiles and removes nothing from the group until
-all installed profile files pass its pre-delete check. Preserve and reconcile
-local edits before retrying. A forced update stores each replaced skill,
-template, or profile in a deterministic managed backup slot under
-`${XDG_STATE_HOME:-$HOME/.local/state}/codex-dev-skills/backups/v1/`, outside
-both Codex skill discovery roots. Slots are separated by a digest of the
-canonical target root and by artifact kind; an existing slot blocks the whole
-forced update before mutation rather than being overwritten. The installer
-also fails closed when a backup or destination boundary is unsafe or when a
-same-device rename cannot be guaranteed. To restore after a failed replacement,
-use the reported managed backup location only after reviewing it and the target.
-When rollback succeeds, the original is restored; if any restoration step emits
-`CRITICAL`, preserve all reported locations for manual recovery rather than
-assuming a no-partial-mutation outcome.
+Uninstall requires target-bound inventory ownership and refuses modified/unknown
+content before deleting anything. Updates use the current installer with a supported
+fixed local `--source`. Cross-version changes must explicitly select all managed groups.
+Metadata-only legacy receipts cannot prove target-root ownership; automatic migration
+is unsupported. Identical imported files are not adopted. `--force` does not waive
+content, ownership, path, profile-reservation or receipt checks.
 
-Before an `install` or non-force `update` mutates a selected discovery target,
-the installer validates its state and receipt boundary. If that boundary is
-unsafe, selected skills, templates, and agent profiles remain unchanged. This
-is a bounded preflight guarantee, not unconditional atomicity for disk-full,
-hostile same-UID interference, or every other runtime failure.
-It rejects multiply linked regular target-tree files and receipts in the
-relevant preflight. A force transaction additionally rejects multiply linked
-sources and staged payloads. For an existing receipt it also performs a no-write append open
-(with final-symlink protection where the platform provides it) and verifies the
-opened descriptor's identity. Read-only, immutable, or append-only receipts
-therefore fail closed. It never silently repairs a link count, file flag, or
-receipt permission.
-On Linux, immutable/append-only inspection uses the filesystem flag ioctl; an
-inspection error, including an unsupported filesystem or special ABI, also
-fails closed rather than degrading to open/fstat-only validation.
+Install, update, downgrade and uninstall share the existing transaction engine.
+It handles new and retired files, stages outside known discovery roots/selected
+targets, retains originals through full payload/Core and receipt readback, and rolls
+back failures. Verified reconstructible originals need no permanent whole-package
+backup after success. Historical backups and unknown data remain untouched. Failed
+recovery or cleanup returns nonzero with exact retained locations.
 
-The managed transaction lock coordinates only cooperating installer processes
-that resolve to the same canonical `XDG_STATE_HOME` managed-state namespace.
-For a forced update, it is acquired only after complete filesystem and profile
-input preflight; the locked apply phase rechecks affected identities and backup
-slots before replacement.
-Different state roots targeting the same authorized custom destination do not
-share that lock; apply-time identity checks fail closed on ordinary detected
-drift, but do not provide process isolation. Use OS/account isolation for a
-hostile same-UID process. Within the supported cooperating model, a managed
-backup slot is never silently overwritten.
-Removing the profiles leaves V1 shared/sequential semantics available.
+The lock coordinates cooperating installers with the same canonical state namespace.
+It does not provide hostile same-UID isolation, crash atomicity across roots, or
+coordination across distinct state roots targeting one destination. Use OS/account
+isolation for that threat. Unsafe owner/mode, links, receipts, flags and cross-filesystem
+renames stop; the installer does not repair them.
+
+See [固定來源安裝與回復 / Fixed-source installation and recovery](../installer-source-integrity.md)
+for both language versions, supported source identities, opt-in profile behavior,
+legacy migration limits and recovery steps. Removing profiles leaves V1
+shared/sequential semantics available.
 
 `codex-review-workflow`, `codex-delivery-workflow`, and
 `codex-cli-session-handoff` install their shared dependencies automatically.
@@ -1678,7 +1660,9 @@ Update installed files from this repository:
 ./install.sh update codex-cli-session-handoff
 ```
 
-`./install.sh update --all` updates every non-opt-in group, including Desktop-only workflows; `codex-agent-profiles` remains excluded. Use it only when that is intentional.
+`./install.sh update --all` updates every normal group, including Desktop-only workflows,
+and preserves any already-managed profile opt-in. It does not newly install profiles.
+Use it only when that full managed scope is intentional.
 
 Uninstall is destructive because it removes installed Codex skills and templates for the selected group. It requires explicit confirmation:
 
@@ -1699,9 +1683,9 @@ Installer scope:
 - Codex templates are installed to `~/.codex/templates/...`.
 - Custom `CODEX_SKILLS_DIR` or `CODEX_TEMPLATES_DIR` overrides require `CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES`.
 - The installer refuses symlink target roots and symlink target paths before install, update, diff, or uninstall.
-- Install preflight treats byte-identical existing skills/templates as
-  idempotent and refuses any differing existing or imported artifact before
-  changing an expanded group.
+- Install preflight requires an exact target-bound inventory for existing
+  managed artifacts. It refuses unknown/imported artifacts, including identical
+  copies; a matching source is not ownership evidence.
 - Install/update uses `codex plugin list --json` when available and refuses a
   detected installed `codex-dev-skills` plugin. If the CLI is unavailable or
   too old to provide JSON plugin state, it warns and retains the filesystem
@@ -1712,7 +1696,9 @@ Installer scope:
   accounts' read access. Existing unsafe paths fail closed; the installer does
   not silently repair them with `chmod`.
 - Installer state is stored under `~/.local/state/codex-dev-skills` unless `XDG_STATE_HOME` changes it.
-- State records only non-sensitive metadata such as repository name, version, action, group, and timestamp.
+- State records source revision/version/Core, canonical roots, groups and per-file
+  SHA-256/executable-bit inventory, plus compatible operation history. It contains
+  local paths; do not publish it as a public runtime artifact.
 - The installer never overwrites `~/.codex/AGENTS.md`.
 
 Use only one skill installation target for this pack in a given Codex profile.
