@@ -127,12 +127,18 @@ Desktop 使用 repository marketplace source。安裝後開新 chat/session；�
 `CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES`。
 
 先檢查 `status`／`diff` 再 update；uninstall 是刪除操作，須明確確認。
-新安裝／force replacements 使用 `0700` directories、`0600` regular files、
+新安裝／受管替換使用 `0700` directories、`0600` regular files、
 `0700` source-executable files，可能影響其他本機帳號的讀取權。Unsafe paths／碰撞會拒絕，
 不會偷偷修權限、搬移 imported/plugin state 或覆寫 `~/.codex/AGENTS.md`。
-Force backup 與 rollback 有明確限制，並非所有失敗都原子回復；出現 `CRITICAL` 時保留
+交易 rollback 有明確限制，並非所有失敗都原子回復；出現 `CRITICAL` 時保留
 回報位置，先人工核對。詳細命令與前置見[進階安裝 reference](docs/guides/workflow-reference.md#installation-reference)
 及[排錯指南](docs/troubleshooting.md)。
+
+固定來源更新與降版由目前受審 installer 讀取明選的 `--source` payload；不執行舊
+installer。新 receipt 綁定完整 targets 與每檔內容；舊 `installed.jsonl` 不證明管理權，
+需 Agent 先盤點實際舊安裝並協助換版，不用 `--force` 或刪 receipt 略過。跨版本須選
+全部管理群組；成功後只清理本次可重建 originals，歷史 backups／未知資料與回復失敗
+原件保留。完整前提與失敗限制見[固定來源安裝與回復](docs/installer-source-integrity.md)。
 
 <a id="runtime-compatibility"></a>
 <a id="cli-and-desktop-entry-paths"></a>
@@ -209,7 +215,7 @@ subagent delegation 限定為 Desktop。完整界線見
 | [grok-build-dev-skills](https://github.com/jeffery777/grok-build-dev-skills) | 獨立 Grok 接口及其設定、工具／權限／session、驗證與組裝；不由本套代為操作模型 |
 
 兩端各自消費 immutable Core revision／digest，runtime 不追蹤 mutable Core `main`。
-Codex 的固定來源、11 檔 snapshot／lock、兩種 digest 與 notices 見
+Codex 的固定來源、13 檔 snapshot／lock、兩種 digest 與 notices 見
 [Core 接法](docs/core-contract-snapshot.md)；檔案缺失、身分／digest／root 不明或不符時，
 停止相依工作。Digest 驗證是完整性證據，不自行證明來源信任、runtime 資格或操作授權。
 
@@ -253,6 +259,10 @@ Release notes 是 point-in-time 準備／歷史紀錄；出版事實須另外查
 [exact-head contract](policies/exact-head-merge-review-contract.md) 及專案所選 provider profile；
 本 repo 的 [GitHub profile](policies/github-exact-head-enforcement-profile.md) 保留 CI、strict receipt、
 專用 App、native-latest 與 merge 前 live readback，check 不把自己算作上游 CI。
+
+明確版本的變更見 [Changelog](CHANGELOG.md)。
+[v0.34.0 拆分準備紀錄](docs/releases/v0.34.0-split.md) 是獨立於舊候選的範圍與安裝前提，
+保留歷史取消決策；固定 Core v0.1.0 的完整身分見 Core 接法；發行 gates 不由來源版本字串推定完成。
 
 <a id="skills"></a>
 <a id="workflows"></a>
@@ -348,13 +358,22 @@ deletion. Custom skill/template roots require
 `CODEX_DEV_SKILLS_ALLOW_CUSTOM_TARGETS=YES`. Do not combine filesystem,
 imported or plugin copies with the same skill names. Inspect status/diff
 before update; uninstall deletes installed artifacts and requires explicit
-confirmation. Fresh installs/force replacements use 0700 directories, 0600
+confirmation. Fresh installs/managed replacements use 0700 directories, 0600
 regular files and 0700 source-executable files, which can remove other local
 accounts' access. Unsafe paths/collisions fail closed without silent chmod,
-import migration or an overwrite of `~/.codex/AGENTS.md`. Force backup/rollback
+import migration or an overwrite of `~/.codex/AGENTS.md`. Transaction rollback
 has bounded guarantees; preserve reported locations after `CRITICAL` and
 review recovery manually. See [installation reference](docs/guides/workflow-reference.md#installation-reference)
 and [troubleshooting](docs/troubleshooting.md).
+
+Fixed-source updates/downgrades run the current reviewed installer with the
+selected `--source` payload, not the old installer. New receipts bind the full
+target tuple and file inventory. Legacy `installed.jsonl` cannot prove ownership;
+an Agent must assess the actual old installation before assisting replacement.
+Force or deleted receipts cannot bypass this check. Cross-version operations
+select all managed groups. Success cleans only this transaction's reconstructible
+originals; historical backups, unknown data and failed recovery originals remain.
+See [fixed-source installation and recovery](docs/installer-source-integrity.md).
 
 Read project instructions, specs, plans and Git state before work. Define
 scope, DoD, ownership and verification. Existing explicit authority remains
@@ -429,7 +448,7 @@ model/effort/profiles/session, validators, packaging and installation.
 [Grok](https://github.com/jeffery777/grok-build-dev-skills) owns its independent
 interface and qualification; this pack does not operate its models. Interfaces
 consume immutable Core revisions/digests, not runtime Core `main`. See the
-[11-file snapshot, lock and notices](docs/core-contract-snapshot.md). Missing or
+[13-file snapshot, lock and notices](docs/core-contract-snapshot.md). Missing or
 unknown required files/root/trust metadata or mismatched identity/digests stop
 dependent work. Integrity does not establish trust, authority or qualification.
 
@@ -469,6 +488,11 @@ Offline checks do not prove publication. Follow the [exact-head contract](polici
 and selected provider profile. This repository's [GitHub profile](policies/github-exact-head-enforcement-profile.md)
 requires CI, strict receipt/readback, dedicated App/native-latest and final
 live readback; readiness cannot count itself as upstream CI.
+
+The [changelog](CHANGELOG.md) records explicit version scopes.
+The independent [v0.34.0 split preparation](docs/releases/v0.34.0-split.md)
+preserves the earlier cancellation decisions and states scope/install prerequisites.
+The source version alone does not complete its formal Core pin or release gates.
 
 See [usage model](docs/usage-model.md), [advanced reference/crosswalk](docs/guides/workflow-reference.md),
 [Loop Engineering](docs/loop-engineering.md), [ledger](docs/loop-state-ledger.md),

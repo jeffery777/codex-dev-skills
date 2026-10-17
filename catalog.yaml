@@ -5,6 +5,7 @@
 
 name: codex-dev-skills
 version: "0.34.0"
+release_notes: docs/releases/v0.34.0-split.md
 platforms:
   - codex
   - codex-desktop
@@ -27,6 +28,7 @@ groups:
       - source: scripts/validate-core-contract-snapshot.py
       - source: vendor/engineering-workflow-core.lock.json
       - source: vendor/engineering-workflow-core/LICENSE
+      - source: vendor/engineering-workflow-core/CHANGELOG.md
       - source: vendor/engineering-workflow-core/README.md
       - source: vendor/engineering-workflow-core/contracts/authorization-and-stops.md
       - source: vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md
@@ -37,6 +39,7 @@ groups:
       - source: vendor/engineering-workflow-core/docs/architecture/project-split.md
       - source: vendor/engineering-workflow-core/docs/provenance/source-map.md
       - source: vendor/engineering-workflow-core/docs/provenance/upstream-notices.md
+      - source: vendor/engineering-workflow-core/docs/releases/v0.1.0.md
       - source: policies/agent-delegation-policy.md
       - source: policies/code-mode-tool-orchestration-policy.md
       - source: policies/context-continuity-policy.md

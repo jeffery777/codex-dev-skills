@@ -36,26 +36,33 @@ scan、exact-head、保存或操作授權；本包不聲稱模型或 runtime 已
 
 ## 固定來源與集合 digest
 
-來源為 jeffery777/engineering-workflow-core，本次固定 Core PR #16 merge
-64b19bb5658432c42cd6a26aa357fd6b1d0fd857。Reviewed head
-8b546d8c27a3db416ef7021a01fdae3ffa572ec6 與 merge 的 Git tree 相同。
-snapshot 明選全部十份 Markdown 與 LICENSE，11 檔共 233,826 bytes；原 UTF-8
-bytes、Core 相對路徑與非 executable Git mode 100644 不變。正式契約繁體中文
-為權威，無翻譯替換，也不宣稱完整 ASD-STE100 符合性。
+Issue #353 固定正式 Core v0.1.0。Annotated tag object
+`e984c880a05065c8bcd0d78e83d78220b05bfc32` 解析到 PR #18 merge commit
+`174df2af8dedf813b9bd4e3c184a627ee87d3cd8`；reviewed head
+`bc20699a5c46458647a01c5edb2830d8381219ef` 與 merge 的 tree 相同。
+完整引用 closure 明選 12 份 Markdown 與 LICENSE，共 13 檔、264,088 bytes。
+原 UTF-8 bytes、相對路徑、100644 Git mode、LICENSE 及完整 notices 保留。
+含四份正式 contracts 在內的九個保護檔案維持 PR #16 基線 bytes；新增 CHANGELOG、
+release record 及 README/source-map 發行導讀，不增加 Reason 或 runtime 功能。
 
 | 身分 | 精確算法與值 |
 | --- | --- |
-| Consumer 十份 Markdown 集合 | 按 UTF-8 path bytes 排序；每列 path、TAB、原 bytes 的小寫 SHA256、LF，含最後 LF，不含 LICENSE；SHA256 37ef5cbdfc9461b43dc76dcd1448943405daf8b6d2a77ee0c1857e7ba9088e15 |
-| Core PR #16 十一檔 handoff 集合 | 同一 path/TAB/hash/LF 算法，但包含 LICENSE；SHA256 66f8aa3ef0ca4c02a5143bddf6f3e25b3c68493601c59ebd05950864f0f48986；不放入十份 Markdown 欄位 |
-| Core LICENSE | 原 bytes SHA256 49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f |
-| Codex 11 檔集合 | 按 UTF-8 path 排序的 records，每筆只有 path/sha256/size_bytes/mode；UTF-8 JSON，keys 排序、compact separators、非 ASCII 不 escape、無 BOM/尾 LF；SHA256 輸入為 codex-core-document-set/v1、單一 NUL、JSON array；結果 d0031ab685d6586ce89ed4ac0e53c45f0dca9720874d43019e5d54a0859fb98b |
+| Core 12 份 Markdown 集合 | UTF-8 path 排序，path/TAB/raw SHA256/LF，含最後 LF、不含 LICENSE；`484923e7dc1407dde1702cf88e93afb5a279b25f79a2c6ff9631d58d7589ab13` |
+| Core 完整 13 檔集合 | 同一 path/TAB/hash/LF 算法，含 LICENSE；`3c985420e8017bde6b59f2625d451686202e2f6a03d807a361df166634a88de9` |
+| Core LICENSE | 原 bytes SHA256 `49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f` |
+| Codex 13 檔集合 | UTF-8 path 排序的 path/sha256/size_bytes/mode records；keys 排序、compact JSON、非 ASCII 不 escape、無 BOM/尾 LF；domain `codex-core-document-set/v1`、NUL、JSON array；`91e3153d31f4096e21927e653b74010fbaa504c7f1550ecf56af687db288d482` |
 
-這些集合的算法或檔案範圍不同，不能互換。Lock 同時綁 repository、immutable
-merge revision、reviewed head/PR、版本 absent、Codex import baseline 與組裝契約。
-import_baseline_revision 是取得此 snapshot 時的 Codex 基線，不冒充將來的
-消費者 HEAD；consumer 實際 revision、source/package version、assembler script
-digest、layout、驗證環境與使用章節由當次 build/review/operation 證據另記，
-避免 lock 或 source-map 自我包含 commit/digest 的循環。
+算法或範圍不同，不可互換。Lock 固定 repository、commit、reviewed head/PR、
+version `0.1.0`、tag 及 tag object；runtime 不動態解析 tag。
+`import_baseline_revision` 保留初次匯入的 Codex 歷史基線，不冒充本次或將來
+consumer HEAD。當次 source/package、revision、assembler bytes、layout 與驗證
+範圍由 build/review 證據另外綁定，避免自引用。
+
+既有 Issue #349 的 Core PR #16／11 檔採用是歷史。只有目前受審 installer 明選
+`--allow-reviewed-history` 才接受那份固定歷史集合，用於受管舊來源重裝／降版及
+部分 uninstall；仍驗 exact source、lock、每檔 bytes/mode、集合 digest 與 closure，
+回傳明示歷史 revision／digest／count。一般 loader 不使用此選項，拒絕把舊快照
+當正式 v0.1.0。未知鎖或任意宣告的 hashes 皆不能新增 allowlist。
 
 Digest 驗完整性，不證明信任、授權、runtime 資格或出版狀態。來源審查、單向
 責任與 notices 仍必需。原 copyright/完整 MIT permission/warranty 在
@@ -97,34 +104,32 @@ aliases 沿原入口，不增加自動 lifecycle 或改既有模型／權限預�
   再同步原 bytes/modes，最後驗 plugin inventory 與固定 snapshot。
 - Filesystem templates 使用 orchestration/core 與 orchestration/core.lock.json；
   installer resource lists 與 catalog 同屬 shared-review-gates，所有既有相依
-  groups 都取得完整文件。原技能 root／legacy/custom-root 選擇、碰撞、
-  preview／backup／force transaction 規則保持原樣；非 executable 檔依原規則 0600。
+  groups 都取得完整文件。保留技能 root／legacy/custom-root 入口；修改依固定來源、
+  receipt 管理權與完整交易驗證，force 不豁免；非 executable 檔為 0600。
 - 已有 Hermes 包也引用這四個共用政策，僅補同一固定文件資源 closure；
   不增加 Hermes 功能、投資或 runtime 資格。它保留自己的 source-shaped 子樹，
   regular files 0600；沒有自動更新任何現有安裝。
 
-來源與目的地 preflight 在 installer 的 target/state mutation 前執行。目的地
-可以缺少待新增的列入資源；既有 Core entries 必須符合閉集合、regular/non-symlink、
-0600 與大小限制。額外檔案或權限不符時保留原資料並拒絕，即使 --force 亦然；
-不自動刪檔或更改權限。既有列入檔案的 bytes 差異仍走原 collision/force/backup
-流程。Shared group 同時供應接口所需的 native capabilities 文件。
-驗證失敗不開始 promotion；source plugin 組裝前亦拒絕不符來源。
-安裝／非 force update 在 shared group 記錄成功前驗完整 Core；force transaction
-在發佈 receipts 前驗證，不符時使用既有 rollback，保留非本 transaction 的資料。
-Core replacements 的 transaction 暫存位於 orchestration 內、core 旁的 private directory，
-不放進 Core 閉集合；staging 與 destination 必須同 filesystem，否則拒絕 promotion。
-既有 installer 在 promotion
-中途的錯誤、衝突、backup 與恢復語意沿原契約，不宣稱跨全部檔案的新原子交易。
-缺檔/錯 root/錯 lock/未知版本在 dependent operation 前停止，不能 runtime fetch
-main、借另一安裝或改 sandbox。這是需依工具執行的工作流要求，不是模型行為
-或 OS 攔截保證。
+依[固定來源安裝與回復](installer-source-integrity.md)先驗完整來源與 receipt 綁定的管理權。
+未知、自訂、symlink／hardlink、額外空目錄、缺檔或 unsafe mode 都拒絕，`--force`
+不能認領或強蓋。舊 installed.jsonl 沒有 root binding，實際舊安裝由 Agent 另盤點。
+Core receipt 仍逐檔記錄；交易把已驗完整 Core 目錄作為單一 directory artifact，
+lock 仍是獨立 artifact。這讓 13／11 檔升降版及 rollback 保留精確子目錄集合，
+不額外刪未知空目錄，也不改成跨所有 roots 的原子交易。
+
+完整 staging、暫時 originals 與 receipts 位於已驗 owner-safe state，排除已知
+runtime discovery roots／aliases；不放在 Core 旁或技能探索路徑內。Staging 與
+target 必須同 filesystem。完整 payload／Core／receipt／退休檔讀回後才成功，
+成功僅清理本次可重建 originals；歷史 backups、未知內容與恢復失敗原件保留。
+失敗保留精確 recovery 路徑；沒有斷電／SIGKILL 跨 roots 原子性或敵對 same-UID 保證。
+Filesystem 收據不等於 native plugin manager 的生命週期資格。
 
 ## 驗證與後續界線
 
 Repo 開發驗證只用 tracked project-python；snapshot validator 僅 stdlib，無
 網路、subprocess、外部設定讀取或寫入。它以目錄 descriptors／O_NOFOLLOW
 檢查固定 inventory，拒 symlink/special/executable/unexpected entries；限制
-每檔 128 KiB、總量 256 KiB、lock 16 KiB，驗逐檔 hash／size、固定來源、兩種
+每檔 128 KiB、正式集合總量上限 264,088 bytes、lock 16 KiB，驗逐檔 hash／size、固定來源、兩種
 digest、完整 LICENSE 及相對 links/anchors。既有 source/plugin mode parity
 另由 generator 檢查；filesystem 明驗 0600。Root 由操作人員明選，不從 cwd、
 環境或其他安裝 fallback。
@@ -143,7 +148,8 @@ missing/tampered notices、symlinks/FIFO、broken links、錯 root、目的地�
 與測試分開。CLI/TUI/Desktop/Bundled CLI 的入口證據各自保留原 scope 與限制；
 已完成的有界驗收只在內容、環境與假設仍有效時重用。這次固定來源與政策更新
 不重開既有四入口驗收，也不要求全平台 qualification；不借 fixture 或別的入口
-資格。不啟動模型 runtime、不更新既有 consumer 安裝、不部署或發 Tag/Release，
+資格。不啟動模型 runtime、不更新既有 consumer 安裝。此前採用包不部署或發 Tag/Release；
+Issue #353 的獨立發行另依明確授權與 gates，實裝仍由主話題接續。各包均
 不操作 Memory、Hooks、Schedulers、Orca、EdgeInstaller、其他專案或模型路由。
 
 <a id="english"></a>
@@ -193,26 +199,34 @@ adoption does not prove model or runtime conformance.
 
 ### Fixed source and distinct set digests
 
-The source is `jeffery777/engineering-workflow-core`, Core PR #16 merge revision
-`64b19bb5658432c42cd6a26aa357fd6b1d0fd857`. Reviewed head
-`8b546d8c27a3db416ef7021a01fdae3ffa572ec6` has the same Git tree. All ten Markdown
-files and LICENSE are selected: 11 files, 233,826 bytes. Preserve original UTF-8
-bytes, paths and Git mode `100644`. No translation replaces the Core snapshot.
+Issue #353 pins formal Core v0.1.0. Annotated tag object
+`e984c880a05065c8bcd0d78e83d78220b05bfc32` resolves to PR #18 merge commit
+`174df2af8dedf813b9bd4e3c184a627ee87d3cd8`. Reviewed head
+`bc20699a5c46458647a01c5edb2830d8381219ef` has the same tree.
+The complete reference closure contains twelve Markdown files and LICENSE:
+thirteen files, 264,088 bytes. Preserve original bytes, paths, modes and notices.
+Nine protected files, including the four contracts, retain the PR #16 baseline bytes.
+New release/navigation documents add no Reason or runtime feature.
 
 | Identity | Algorithm and SHA-256 |
 | --- | --- |
-| Consumer ten-Markdown set | Sort paths by UTF-8 bytes. Join each path, TAB, lowercase file SHA-256 and LF, including the final LF. Exclude LICENSE. `37ef5cbdfc9461b43dc76dcd1448943405daf8b6d2a77ee0c1857e7ba9088e15` |
-| Core PR #16 eleven-file handoff set | Use the same path/TAB/hash/LF algorithm, including LICENSE. `66f8aa3ef0ca4c02a5143bddf6f3e25b3c68493601c59ebd05950864f0f48986`. Do not put this value in the ten-Markdown field. |
-| Core LICENSE | Hash its original bytes. `49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f` |
-| Codex 11-file set | Sort records by UTF-8 path. Each record has only `path`, `sha256`, `size_bytes` and `mode`. Encode JSON with sorted keys, compact separators, unescaped Unicode, no BOM and no final LF. Hash UTF-8 `codex-core-document-set/v1`, one NUL byte and that JSON array. `d0031ab685d6586ce89ed4ac0e53c45f0dca9720874d43019e5d54a0859fb98b` |
+| Twelve-Markdown set | UTF-8 path order; path/TAB/raw SHA256/LF, final LF, excluding LICENSE; `484923e7dc1407dde1702cf88e93afb5a279b25f79a2c6ff9631d58d7589ab13` |
+| Full thirteen-file set | Same path/TAB/hash/LF algorithm including LICENSE; `3c985420e8017bde6b59f2625d451686202e2f6a03d807a361df166634a88de9` |
+| LICENSE | Raw SHA256 `49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f` |
+| Codex thirteen-file set | UTF-8-path-sorted path/sha256/size_bytes/mode records; sorted-key compact UTF-8 JSON, unescaped Unicode, no BOM/final LF; domain `codex-core-document-set/v1`, NUL and JSON array; `91e3153d31f4096e21927e653b74010fbaa504c7f1550ecf56af687db288d482` |
 
-These sets have different algorithms or inventories. Do not substitute one digest for
-the other. The lock binds repository, immutable merge revision, reviewed head/PR,
-absent version, Codex import baseline and assembly contract.
-`import_baseline_revision` records the Codex baseline at import, not a future
-consumer HEAD. Record the actual consumer revision, source/package version,
-assembler digest, layout, verification environment and loaded sections in each
-build/review/operation's evidence. This avoids self-referential commit/digest data.
+Do not substitute different algorithms or sets. The lock binds repository, commit,
+reviewed head/PR, version0.1.0, tag and tag object. Runtime never resolves a tag.
+The import baseline remains the historical first Codex import, not a current or
+future consumer HEAD. Build/review evidence separately binds revision, package
+version, assembler, layout and scope without self-reference.
+
+Issue #349's eleven-file PR #16 adoption is historical. Only the current reviewed
+installer explicitly selects `--allow-reviewed-history` for managed historical
+reinstall/downgrade and partial uninstall. It verifies exact source, lock, every
+file/mode, set digests and closure, and reports the selected historical identity.
+Ordinary loading never selects history as formal v0.1.0. Unknown locks or arbitrary
+declared hashes cannot extend the allowlist.
 
 A digest proves integrity, not trust, authority, runtime qualification or
 publication. Preserve source review, one-way responsibilities and notices. The
@@ -259,38 +273,38 @@ required triggers and Codex connections; counts alone do not prove preservation.
 - Filesystem templates use `orchestration/core` and
   `orchestration/core.lock.json`. Catalog and installer place these in
   `shared-review-gates`; existing dependent groups receive the complete set.
-  Keep skill-root/legacy/custom-root selection, collision, preview, backup and
-  force-transaction rules. Non-executable installed files require mode `0600`.
+  Retain skill-root/legacy/custom-root selection. Mutations require fixed-source,
+  receipt-ownership and complete transaction verification; force cannot bypass
+  them. Non-executable installed files require mode `0600`.
 - The existing Hermes package also consumes these shared policies. It receives
   the same fixed-resource closure in its source-shaped tree, with regular files
   at `0600`. This adds no Hermes feature, investment or qualification, and does
   not update an existing installation.
 
-Validate source and existing destination before target/state mutation. A partial
-destination may lack listed resources. Existing Core entries must satisfy closed
-inventory, regular/non-symlink type, `0600` mode and size limits. Preserve and
-reject extra files or invalid permissions, even with `--force`; do not delete or
-repair them automatically. Listed byte differences retain existing collision,
-force and backup handling. The shared group also supplies native-capability docs.
+Follow [fixed-source installation and recovery](installer-source-integrity.md).
+Verify the full source and root-bound receipt ownership. Unknown/custom content,
+links, extra empty directories, missing files and unsafe modes fail closed even
+with force. Legacy installed.jsonl needs a separate Agent-assisted assessment.
+Receipts retain per-file Core inventory. The transaction moves the verified
+complete Core root as one directory artifact; its lock remains separate. Existing
+directory rename/rollback preserves the thirteen/eleven-file subdirectory set
+without broad empty-directory removal or an all-roots atomicity claim.
 
-Reject invalid source before plugin assembly or installer promotion. Install and
-ordinary update validate the complete Core set before shared-group success.
-Force update validates before receipt publication; failure uses existing rollback
-and preserves data outside that transaction. Core replacement staging uses a
-private sibling directory under `orchestration`, outside the closed Core set.
-Staging and destination must share a filesystem or promotion is rejected.
-Existing partial-failure/recovery semantics remain; this adds no atomic
-transaction across every installed file. Missing files, wrong roots/locks and
-unknown versions stop dependent work. Do not fetch mutable main, borrow another
-installation or change the sandbox. These are workflow requirements, not model
-behavior or complete OS enforcement guarantees.
+Stage payload, temporary originals and receipts in verified owner-safe state
+outside known discovery roots/aliases, not beside Core. Require the same filesystem.
+Read back complete payload, Core, receipt and retired-file absence before success.
+Clean only this transaction's reconstructible originals. Preserve historical
+backups, unknown data and failed recovery originals. Report exact recovery paths
+on failure. Power-loss/SIGKILL atomicity across roots and hostile same-UID isolation
+are not guaranteed. Filesystem receipts do not qualify native plugin lifecycle.
 
 ### Verification and later boundaries
 
 Repository verification uses tracked `project-python`. The stdlib-only snapshot
 validator has no network, subprocess, external-config read or write. Directory
 descriptors and `O_NOFOLLOW` guard the fixed inventory. Reject symlinks, special,
-executable and unknown entries. Limits are 128 KiB/file, 256 KiB total and 16 KiB
+executable and unknown entries. Limits are 128 KiB/file, 264,088 bytes for the
+formal set total, and 16 KiB
 for the lock. Verify file hashes/sizes, fixed identity, both set digests, LICENSE
 and local links/anchors. The generator checks source/plugin effective-mode parity;
 upstream Git modes are provenance readback, distinct from runtime permissions.
@@ -317,5 +331,7 @@ acceptance only while content, environment and assumptions still match. This
 fixed-source and policy update does not reopen that acceptance or require
 all-platform qualification. It borrows no fixture or other surface's qualification
 and starts no model runtime. It performs no existing consumer installation
-rollout, deployment, Tag/Release, Memory, Hooks, Schedulers, Orca, EdgeInstaller,
-other-project or model-routing operation.
+rollout. Earlier adoption packets did not deploy or publish. Issue #353 has
+separate release authority and gates; installation remains coordinator-owned.
+No packet activates Memory/Hooks/Schedulers or operates Orca, EdgeInstaller,
+other projects or model routing.

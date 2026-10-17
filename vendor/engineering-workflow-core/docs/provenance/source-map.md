@@ -2,7 +2,7 @@
 
 P1 的固定抽取來源是 `jeffery777/codex-dev-skills@993597561881d6ed8c552f9a18c59315015ad245`；本機來源只讀，未混用 draft #317/#324/#326。目的基線是 P0 merge `0815b74abe52d57efd032bd075e39c83c2ebf0d6`，工作包為 [Issue #3](https://github.com/jeffery777/engineering-workflow-core/issues/3)。核心的正式契約以繁體中文為權威；英文 identifiers 及 notices 原文不翻譯。全面雙語改造另包評估，不在 P1 宣稱 ASD-STE100 符合性。
 
-上述抽取身分與下列逐條對照記錄 P1 當時的來源及處置。P1 之後的使用者新增要求分開記於 [簡明寫作更新](#plain-writing-update)、[證據生命週期更新](#evidence-lifecycle-update)、[風險與審查時機更新](#risk-review-update)、[安全檢查政策更新](#security-policy-update) 與 [前提與改善取捨更新](#assumptions-options-update)，不倒寫成原上游義務或 P1 當時已完成的符合性驗證。
+上述抽取身分與下列逐條對照記錄 P1 當時的來源及處置。P1 之後的使用者新增要求分開記於 [簡明寫作更新](#plain-writing-update)、[證據生命週期更新](#evidence-lifecycle-update)、[風險與審查時機更新](#risk-review-update)、[安全檢查政策更新](#security-policy-update) 、[前提與改善取捨更新](#assumptions-options-update) 與 [首版發行文件更新](#release-version-docs-update)，不倒寫成原上游義務或 P1 當時已完成的符合性驗證。
 
 以下按來源正文段落、每個編號／bullet 與表格義務列出穩定 ID、exact file/lines、disposition、目的章節及理由。標題／空行隨相鄰單位歸類；不是把整份來源都稱中立。`抽取` 保留義務並整理文字；`改寫` 保留共用義務，移除 runtime 具體映射或明示本次澄清；`接口保留` 不複製具體入口／路徑／程式；`不適用` 須有明確理由（本次主要來源沒有需要丟棄的共用義務）。合併文字不等於刪除義務。核心只保留 Markdown，所有可執行依賴留原接口或保留延後。
 
@@ -248,3 +248,23 @@ README 兩語僅導讀共用預設、有效專案專化與不可弱化的界線�
 [工作流](../../contracts/workflow.md#wf-assumptions-and-options) 承載適用觸發、前提／反證／信任邊界、相關方案採拒理由、獨特保障與成本，以及管理措施的實際責任、可驗證前提／維持方式及失效停止／交接。無可信前提時縮限相依自動化，不以同源校驗、timestamp、manifest、digest 或人工同意製造歸屬事實；保留無相依安全工作及不可弱化保障。[獨立審查](../../contracts/review-and-security.md#review-independent) 沿既有報告檢查上述判斷；不以停止改善關閉必要 gate，簡單低風險任務不強制長表或 Loop。README 兩語僅導讀，不聲稱模型／接口已遵循或完整 ASD-STE100 符合性。
 
 本包僅修改上述四檔；其餘七檔 bytes／mode、原 107 單位、固定來源／hash／notices 及先前包歷史保留。六個有限情境（普通 bug、共同錯誤前提、未知歸屬、盤點前改寫、重複防護、DoD 已滿後的非阻擋最佳化）只做文件／靜態走查，非模型行為、runtime、VM 工具或公司案例驗收。不新增 tracked 檔、schema、executor、validator、gate、router 或 callback，不修改接口／consumer／pin／安裝／全域設定，不啟用 memory/hooks/schedulers，不進行外部 render、live 測試、歷史清理、release 或部署。本階段停在未提交候選與審查證據，後續交付須另核授權。
+
+<a id="release-version-docs-update"></a>
+
+## P1 之後新增：首版發行與版本文件
+
+### 繁體中文
+
+2026-10-17 的新發行工作包，依使用者對 Core 正式發行及「文件、changelog、release note 全都要完善」的新增批准，準備獨立 `v0.1.0` 文件版本。這是新的 tag／GitHub 正式 Release 範圍，先前包的不發行／不部署歷史與原 107 單位、來源 revision／hash／notices 均保留，不倒寫舊授權。本條記錄需求來源，不宣稱 Issue、tag 或 Release 已建立；真實 Issue／分支、必要 gates 及 publication 讀回另在當次證據核對。
+
+[README](../../README.md) 兩語說明純 Markdown 核心、Core／consumer 獨立版本與無須獨立安裝；[CHANGELOG](../../CHANGELOG.md) 記版本命名及初版內容／升級影響；[v0.1.0 準備紀錄](../releases/v0.1.0.md) 保留點時 scope、版本及相依、驗收／未驗證限制、清冊算法、license 與 publication 查核入口。這些是來源版本、準備／歷史及穩定導讀；正式 truth 須由新 annotated tag、完整最終 commit 與 GitHub Release metadata 證明，README 不鏡像 mutable latest，歷史 note 不因發布成功而回填。最終 pin／digest 在合併後的 annotation／Release／交接證據提供，不內嵌自身造成自引用。
+
+本文件包範圍為上述四檔，預期 12 份 Markdown＋原 LICENSE，其他九個既有檔案 bytes／mode 保護，四份正式 contracts 不新增行為。各 consumer 自行核對 tag 解析的 immutable commit、所選文件逐檔／集合 digest、allowlist、完整 dependency closure、來源與 notices；新增發行文件須重評清冊與組裝／驗證，不能沿用舊 10 份 Markdown digest 冒稱新版。Core 無 installer、validator、catalog、VERSION、JSON／schema、runtime API、執行套件或 Reason 功能；不改 consumer／安裝、不部署，不因發行證明模型／接口遵循或行為等價。Space 同步由指定協調者處理，不在本 Core writer 的修改範圍。
+
+### English
+
+The new release packet on 2026-10-17 prepares an independent `v0.1.0` document version under the user's new Core publication approval and requirement for complete documents, changelog, and release notes. This is new authority for a tag and formal GitHub Release. Retain earlier no-publication/no-deployment packet history, the original 107 units, and source revisions, hashes, and notices. Do not rewrite earlier authority. This entry records the requirement source. It does not claim an Issue, tag, or Release exists. Verify the real Issue and branch, required gates, and publication readback in the current evidence.
+
+The bilingual [README](../../README.md) explains Markdown-only Core, separate Core/consumer versions, and no separate Core installation. [CHANGELOG](../../CHANGELOG.md) records version names, initial content, and upgrade impact. The [v0.1.0 preparation record](../releases/v0.1.0.md) retains point-in-time scope, versions and dependencies, acceptance and unverified limits, inventory algorithms, licensing, and publication verification entrypoints. These provide source versions, preparation/history, and stable guidance. Publication truth requires the new annotated tag, full final commit, and GitHub Release metadata. README does not mirror mutable latest. Do not update historical notes merely to show publication. After merge, annotations, Release metadata, and handoff evidence provide the final pin and digests without self-reference.
+
+This document packet covers those four files. The expected inventory is 12 Markdown files plus the original LICENSE. Protect the other nine existing files' bytes and modes. Add no behavior to the four formal contracts. Each consumer verifies the tag-resolved immutable commit, selected documents, per-file and set digests, allowlist, complete dependency closure, sources, and notices. New release documents require inventory, assembly, and verification review. The old 10-file Markdown digest cannot identify the new version. Core has no installer, validator, catalog, VERSION, JSON/schema, runtime API, executable package, or Reason feature. This packet does not change consumers or installations, or deploy. Publication does not prove model/interface conformance or equivalent behavior. The designated coordinator handles Space synchronization outside this Core writer's scope.

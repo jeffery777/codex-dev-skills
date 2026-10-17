@@ -814,7 +814,7 @@ verify_installed_core() {
   for group in $(expand_groups "$requested"); do
     if [[ "$group" == "shared-review-gates" ]]; then
       PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/scripts/validate-core-contract-snapshot.py" \
-        --root "$CODEX_TEMPLATES_DIR" --layout filesystem >/dev/null || return 1
+        --root "$CODEX_TEMPLATES_DIR" --layout filesystem --allow-reviewed-history >/dev/null || return 1
       return 0
     fi
   done
@@ -963,6 +963,7 @@ group_templates() {
         policies/core-contract-loading.md \
         scripts/validate-core-contract-snapshot.py \
         vendor/engineering-workflow-core.lock.json \
+        vendor/engineering-workflow-core/CHANGELOG.md \
         vendor/engineering-workflow-core/LICENSE \
         vendor/engineering-workflow-core/README.md \
         vendor/engineering-workflow-core/contracts/authorization-and-stops.md \
@@ -974,6 +975,7 @@ group_templates() {
         vendor/engineering-workflow-core/docs/architecture/project-split.md \
         vendor/engineering-workflow-core/docs/provenance/source-map.md \
         vendor/engineering-workflow-core/docs/provenance/upstream-notices.md \
+        vendor/engineering-workflow-core/docs/releases/v0.1.0.md \
         policies/agent-delegation-policy.md \
         policies/code-mode-tool-orchestration-policy.md \
         policies/context-continuity-policy.md \
@@ -2271,7 +2273,7 @@ run_managed_transaction() {
   info "Managed groups after $action: $MANAGED_GROUPS"
   core="$(printf '%s' "$MANAGED_PLAN" | python3 -c 'import json,sys; print("yes" if json.load(sys.stdin)["receipt"]["source"]["core"] else "no")')"
   if [[ "$core" == "yes" && "$action" != "uninstall" ]]; then
-    PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/scripts/validate-core-contract-snapshot.py" --root "$SOURCE_DIR" --layout source >/dev/null || return 1
+    PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/scripts/validate-core-contract-snapshot.py" --root "$SOURCE_DIR" --layout source --allow-reviewed-history >/dev/null || return 1
     preflight_core_destination shared-review-gates || return 1
   fi
   if printf '%s' "$MANAGED_PLAN" | python3 -c 'import json,sys; p=json.load(sys.stdin); raise SystemExit(0 if any(i["kind"]=="agent_profiles" for i in p["puts"]+p["retired"]+p["receipt"]["artifacts"]) else 1)'; then

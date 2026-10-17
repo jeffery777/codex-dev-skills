@@ -30,6 +30,14 @@ GitHub disclosure sections are independent. Traditional Chinese is open by defau
 
 缺必要文件或能力不能視為豁免。使用接口前，依其自己的載入與固定版本說明操作；Core 沒有安裝器。各 consumer 在建置時鎖定 immutable revision、文件 digest、來源與 notices；runtime 不追蹤 Core `main`。
 
+## 版本、採用與升級
+
+Core 的文件版本與版本命名見 [CHANGELOG](CHANGELOG.md)；各版的範圍、驗收與限制見 [發行準備紀錄](docs/releases/v0.1.0.md)。這些是來源版本／點時歷史，不證明已發布。正式 publication 須核對相應 annotated tag object、解析後完整 commit 與 GitHub 正式 Release metadata；本頁不維護 mutable latest 或當前已發行版本指標。
+
+使用者不需獨立安裝 Core。各 consumer 在自己的建置／組裝工作包核對 tag、固定完整 immutable commit，鎖定所選文件的逐檔／集合 digest、來源、allowlist、完整 dependency closure 及 notices，再各自驗證載入與遵循。Runtime 使用已組裝文件，不追蹤 Core `main` 或動態 tag；installer／validator／套件組裝均留接口。
+
+Core 與接口各自管理版本，沒有 lockstep 升版、模型相容或 runtime 等價保證。新增／移除文件及引用會影響清冊、digest、allowlist 與 dependency closure，consumer 必須審查並更新自己的 lock／snapshot／驗證，不能以舊集合 digest 代替新版本。發行與 consumer 採用、安裝各需自己的授權及證據。
+
 ## 責任邊界
 
 | 專案 | 負責什麼 |
@@ -66,7 +74,7 @@ Skills 引導讀取與遵循契約，不創造 API 或平台能力。在既有�
 
 [前提、方案取捨與停止改善](contracts/workflow.md#wf-assumptions-and-options) 適用於重要／高風險、反覆無效修正、來源矛盾、顯著維護負擔或擬新增實質複雜度的工作。先核支持來源與反證，再比較相關方案及獨特保障、成本與殘餘風險；簡單低風險任務可短述。管理／人工處理須有實際責任與可驗證前提，同意本身不證明歸屬。DoD 及必要風險已處理後，非阻擋最佳化不無限延後交付；必要安全、授權、獨立 review、exact-head、完整性、保存及必跑 gate 仍保留。這是文件義務，不證明模型或接口已遵循。
 
-本包不搬程式、不修改接口或既有安裝、不部署、不更新 EdgeInstaller 技能、不執行 Grok Build 或模型／runtime 資格測試，不啟用 memory/hooks/schedulers，不操作公司環境、Orca 或 Space，不 tag/Release/install。P1 抽取來源固定 `codex-dev-skills@993597561881d6ed8c552f9a18c59315015ad245`。官方比較是 2026-10-14 文件證據，不能證明當前 runtime 資格、隔離、模型品質、成本或延遲。
+上述 P0／P1 及後續契約工作包的不搬程式、不改接口／安裝、不部署及不發行邊界，保留為各包歷史；首版發行文件另見發行準備紀錄，須有該包自己的 tag／Release 授權與證據。Core 文件本身不授權安裝、部署、更新 EdgeInstaller 技能、執行 Grok Build 或模型／runtime 資格測試、啟用 memory/hooks/schedulers，或操作公司環境、Orca 或 Space。P1 抽取來源固定 `codex-dev-skills@993597561881d6ed8c552f9a18c59315015ad245`。官方比較是 2026-10-14 文件證據，不能證明當前 runtime 資格、隔離、模型品質、成本或延遲。
 
 指定協調者承接原「評估 codex-dev-skills 專案拆分」的跨專案協調。各包分別核對 scope、ownership、授權、必要審查與 gates；review／gate 不自行授權 commit、push、PR、merge 或其他外部寫入。Core 未配置 hosted enforcement profile 或 CI；未執行不得回報 Passed。文件無法技術攔截 runtime；使用專案自行選 overlay 並驗證遵循。
 
@@ -99,6 +107,14 @@ Suppose you must assign implementation and review for a change. Read the shared 
 4. For an existing PR/MR (change request), or a merge-readiness decision, read the complete [exact-head and evidence contract](contracts/exact-head-and-evidence.md). Exact-head review binds the exact commits and complete diff. A changed head requires a new review.
 
 A missing required document or capability is not an exemption. Follow the interface's own loading and version-lock instructions. Core has no installer. Each consumer locks the immutable revision, document digests, source, and notices at build time. It does not follow Core `main` at runtime.
+
+## Versions, adoption, and upgrades
+
+See [CHANGELOG](CHANGELOG.md) for the Core document version and version names. See the [release preparation record](docs/releases/v0.1.0.md) for scope, acceptance, and limits. These record source versions and point-in-time history. They do not prove publication. Verify the corresponding annotated tag object, full resolved commit, and formal GitHub Release metadata. This page does not maintain a mutable latest or current-published-version pointer.
+
+Users do not install Core separately. During their own build or assembly packet, consumers verify the tag, lock its full immutable commit, and fix the selected files, per-file and set digests, source, allowlist, complete dependency closure, and notices. Each consumer verifies loading and conformance. Runtime uses assembled documents. It must not follow Core `main` or a dynamic tag. Interfaces retain installers, validators, and package assembly.
+
+Core and interfaces manage their own versions. Matching version numbers, model compatibility, and runtime equivalence are not guaranteed. Added or removed files and references affect inventory, digests, allowlists, and dependency closure. Consumers must review and update their own lock, snapshot, and verification. An old set digest cannot identify a new version. Publication, consumer adoption, and installation each need their own authority and evidence.
 
 ## Responsibility boundaries
 
@@ -136,7 +152,7 @@ When a project adopts this workflow, the [evidence lifecycle rules](contracts/wo
 
 [Assumptions, options, and when to stop improvement](contracts/workflow.md#wf-assumptions-and-options) apply to important or high-risk work, repeated ineffective fixes, conflicting sources, significant maintenance burden, or a proposed substantial increase in complexity. Check supporting sources and counterevidence. Compare relevant options, their unique safeguards, costs, and remaining risks. A simple low-risk task can use a short explanation. Management or manual work needs actual responsibility and verifiable premises. Consent alone does not prove ownership. Once DoD and required risks are addressed, optional improvements must not delay delivery indefinitely. Required safety, authority, independent review, exact-head, integrity, retention, and mandatory gates remain. These document obligations do not prove model or interface conformance.
 
-This package moves no code and changes no interface or existing installation. It does not deploy, update EdgeInstaller skills, run Grok Build or model/runtime qualification tests, enable memory/hooks/schedulers, operate company systems, Orca, or Space, or create a tag/Release or install. P1's extraction source is fixed at `codex-dev-skills@993597561881d6ed8c552f9a18c59315015ad245`. The official comparison records documents read on 2026-10-14. It does not prove current runtime qualification, isolation, model quality, cost, or latency.
+The earlier P0/P1 and later contract packets retain their own historical no-code-move, no-interface-or-installation-change, no-deployment, and no-publication boundaries. See the release preparation record for the first release-document packet. It requires its own tag/Release authority and evidence. Core documents do not authorize installation, deployment, EdgeInstaller skill updates, Grok Build or model/runtime qualification tests, memory/hooks/schedulers, or operations on company systems, Orca, or Space. P1's extraction source is fixed at `codex-dev-skills@993597561881d6ed8c552f9a18c59315015ad245`. The official comparison records documents read on 2026-10-14. It does not prove current runtime qualification, isolation, model quality, cost, or latency.
 
 The designated coordinator succeeded the original project-split coordination chat. Each package checks scope, ownership, authority, required reviews, and gates. A review or gate does not authorize commit, push, PR creation, merge, or another external write. Core has no selected hosted enforcement profile or CI. Do not report an unexecuted check as Passed. Documents cannot technically intercept runtime actions. Each project selects its own overlay and verifies conformance.
 

@@ -10,12 +10,13 @@
 
 ### 支援來源與版本
 
-第一版資料清單只接受以下已核對的 catalog 與完整 payload，包括檔名、內容與 executable bits：
+受審資料清單接受以下固定 catalog 與完整 payload，包括檔名、內容與 executable bits：
 
 | Source/package version | 已核對來源 commit | 內含 Core |
 | --- | --- | --- |
 | 0.33.1 | `6b5b0d0bf4e61119a5a87761fc4a6c4d35002e1c` | 無 |
-| 0.34.0 | `43c650e1196a3a702e2240bd79dd24539fa893a7` | `64b19bb5658432c42cd6a26aa357fd6b1d0fd857` |
+| 0.34.0 開發基線 | `43c650e1196a3a702e2240bd79dd24539fa893a7` | `64b19bb5658432c42cd6a26aa357fd6b1d0fd857` |
+| 0.34.0 split | registry 中 Core version `0.1.0` 紀錄的固定 `reviewed_revision` | `174df2af8dedf813b9bd4e3c184a627ee87d3cd8` |
 
 `installer/source-catalogs.json` 是受審資料清單，並非通用歷史版本解析器。
 未知 catalog 或不同 payload 會停止。後續固定 commit 若只有 installer／非 payload
@@ -32,12 +33,17 @@ Partial/promisor clones 不支援。Repository origin 字串與 digest 是來源
 ./install.sh update --all --source /trusted/other-supported-checkout
 ```
 
-跨版本更新／降版必須明確選取所有既有管理群組；否則停止並提示使用 `--all`。
+跨固定 catalog 更新／降版必須明確選取所有既有管理群組（即使同為 0.34.0）；否則停止並提示使用 `--all`。
 `--all` 不新加入 opt-in agent profiles，但會保留並更新先前已明確安裝的 profiles。
 同版新增群組可保留其他管理群組，重跑同版 install／update 不認領額外檔案。
+移除全部受管內容時，若已裝 profiles，先明選 `uninstall codex-agent-profiles --yes`，
+再選 `uninstall --all --yes`。Uninstall 的 `--all` 不選 profiles；尚有相依就拒絕移除。
 要降版，仍執行目前受審 installer，再用 `--source` 選舊 payload；不要執行舊 installer。
 Core 隨套件固定攜帶，無獨立 installer。選無 Core 的舊版時，交易會退休新版 Core 檔。
-退休檔案的空父目錄可以保留。
+Core 交易將完整受管目錄作為單一 rename／rollback 單位，receipt 仍逐檔驗證；
+Core 退休時其完整 root 不殘留。其他非管理空父目錄可以保留。
+普通 loader 僅接受正式 Core；只有目前 installer 明選受審歷史 descriptor，
+仍逐項驗 metadata／bytes／mode／digest，不以任意 lock 或舊 validator 取代。
 
 ### 管理權與失敗邊界
 
@@ -96,7 +102,8 @@ sources or execute the selected source's old installer, validator, hooks or filt
 It requires Bash, Git and Python 3 stdlib. Integrity checks add no PyYAML dependency;
 existing skill runtime dependencies still apply.
 
-The table above identifies the two reviewed catalogs and payloads. The data allowlist
+The table above identifies three fixed catalogs/payloads, including distinct
+development and formal-Core split snapshots with the same 0.34.0 version. The data allowlist
 binds the full file set, bytes and executable bits. Unknown catalogs or payloads stop.
 A later fixed HEAD with only installer or other non-payload changes is supported when
 its catalog and complete payload still match. The receipt records that actual HEAD.
@@ -106,13 +113,20 @@ a publisher or prove GitHub Tag/Release publication. Here, `0.34.0` is a source 
 
 Use the current installer with `--source /trusted/fixed-checkout` to select a supported
 version. The examples above require a separate operator decision before execution.
-Cross-version update or downgrade must explicitly select all managed groups, or stop.
+Cross-catalog update or downgrade, including the same version, must explicitly select all managed groups, or stop.
 `--all` adds the normal groups. It does not newly opt into agent profiles, but updates
 profiles that were already installed deliberately. Same-version group additions preserve
 other groups. Repeated install/update does not adopt unknown identical files. For a
-downgrade, run the current installer against old payload data. Core travels inside the
+downgrade, run the current installer against old payload data. To remove all managed
+content when profiles are installed, explicitly select `uninstall codex-agent-profiles --yes`
+before `uninstall --all --yes`. Uninstall's `--all` excludes profiles and refuses to remove
+their remaining dependencies. Core travels inside the
 package; it has no separate installer. Downgrade to 0.33.1 retires the new Core files;
-empty parent directories can remain.
+The transaction moves the complete managed Core root as one directory unit,
+while receipts remain per-file; retired Core leaves no Core root. Other unmanaged
+empty parents can remain. Ordinary loading accepts only the formal Core pin. Only
+the current installer explicitly selects the fixed reviewed historical descriptor,
+with full metadata/byte/mode/digest checks and no old validator execution.
 
 The small `managed-<canonical-roots-digest>.json` receipt binds canonical target roots,
 groups, actual source revision/version/Core and per-file hashes/executable bits. The

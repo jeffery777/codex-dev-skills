@@ -23,10 +23,11 @@ class ReleaseStateContractTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.fixture = pathlib.Path(self.temporary.name)
-        self.version = yaml.safe_load(
+        catalog = yaml.safe_load(
             (ROOT / "catalog.yaml").read_text(encoding="utf-8")
-        )["version"]
-        self.notes_relative = f"docs/release-notes-v{self.version}.md"
+        )
+        self.version = catalog["version"]
+        self.notes_relative = catalog.get("release_notes", f"docs/release-notes-v{self.version}.md")
         paths = (
             "catalog.yaml",
             "install.sh",
@@ -81,6 +82,26 @@ class ReleaseStateContractTests(unittest.TestCase):
         with self.assertRaisesRegex(
             release_state.ReleaseStateError, "source/package version 9.9.9"
         ):
+            release_state.validate_repo()
+
+    def test_split_record_metadata_rejects_ambiguous_or_escaping_selection(self) -> None:
+        path = self.fixture / "catalog.yaml"
+        original = path.read_text()
+        for selected in (None, 353, "../private.md", "/tmp/private.md",
+                         "docs/releases/v9.9.9-split.md", "docs/release-notes-v0.34.0.md"):
+            catalog = yaml.safe_load(original)
+            catalog["release_notes"] = selected
+            path.write_text(yaml.safe_dump(catalog, sort_keys=False))
+            with self.subTest(selected=selected), self.assertRaisesRegex(
+                    release_state.ReleaseStateError, "exact versioned split record"):
+                release_state.validate_repo()
+
+    def test_split_record_cannot_be_reached_through_symlink_ancestor(self) -> None:
+        folder = self.fixture / "docs/releases"
+        moved = self.fixture / "held-releases"
+        folder.rename(moved)
+        folder.symlink_to(moved, target_is_directory=True)
+        with self.assertRaisesRegex(release_state.ReleaseStateError, "ancestor must not be a symlink"):
             release_state.validate_repo()
 
     def test_missing_matching_candidate_record_fails_closed(self) -> None:

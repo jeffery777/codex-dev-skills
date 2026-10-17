@@ -74,6 +74,9 @@ def construct_unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, o
 
 def read_regular_text(relative: str) -> str:
     path = ROOT / relative
+    for parent in path.relative_to(ROOT).parents:
+        if parent != pathlib.Path(".") and (ROOT / parent).is_symlink():
+            raise ReleaseStateError(f"release-state ancestor must not be a symlink: {relative}")
     try:
         mode = path.lstat().st_mode
     except FileNotFoundError as exc:
@@ -141,8 +144,19 @@ def validate_version_parity(version: str) -> None:
         )
 
 
+def candidate_record_path(version: str) -> str:
+    catalog = yaml.load(read_regular_text("catalog.yaml"), Loader=UniqueKeyLoader)
+    if "release_notes" not in catalog:
+        return f"docs/release-notes-v{version}.md"
+    selected = catalog["release_notes"]
+    expected = f"docs/releases/v{version}-split.md"
+    if not isinstance(selected, str) or selected != expected:
+        raise ReleaseStateError("release_notes must select the exact versioned split record")
+    return selected
+
+
 def validate_candidate_record(version: str) -> None:
-    relative = f"docs/release-notes-v{version}.md"
+    relative = candidate_record_path(version)
     notes = read_regular_text(relative)
     heading = f"# Release Notes: v{version}"
     first_content = next((line for line in notes.splitlines() if line.strip()), "")
