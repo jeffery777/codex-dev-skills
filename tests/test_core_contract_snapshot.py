@@ -48,7 +48,9 @@ class CoreSnapshotTests(unittest.TestCase):
             value = core.validate(root)
             self.assertEqual(core.REVISION, value["core_revision"])
             self.assertEqual(core.SET_DIGEST, value["document_set_sha256"])
-            self.assertEqual(11, value["files"])
+            self.assertEqual(13, value["files"])
+            self.assertEqual("0.1.0", value["core_version"])
+            self.assertFalse(value["historical_snapshot"])
             self.assertIs(False, value["runtime_qualified"])
             self.assertIs(False, value["authorization_granted"])
 
@@ -62,6 +64,44 @@ class CoreSnapshotTests(unittest.TestCase):
         self.assertNotEqual(core.MARKDOWN_DIGEST, core.canonical_set(rows))
         self.assertEqual(core.SET_DIGEST, core.canonical_set(rows))
         self.assertEqual(core.LICENSE_DIGEST, core.sha256((self.snapshot / "LICENSE").read_bytes()))
+
+    def test_history_requires_explicit_selection_and_reports_its_own_identity(self):
+        old = "43c650e1196a3a702e2240bd79dd24539fa893a7"
+        history_root = self.base / "history"
+        history = core.HISTORICAL_SNAPSHOTS[0]
+        for name in (*history["files"],):
+            target = history_root / "vendor/engineering-workflow-core" / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(subprocess.check_output(
+                ["git", "-C", str(ROOT), "show", f"{old}:vendor/engineering-workflow-core/{name}"]))
+        target = history_root / "vendor/engineering-workflow-core.lock.json"
+        target.write_bytes(subprocess.check_output(
+            ["git", "-C", str(ROOT), "show", f"{old}:vendor/engineering-workflow-core.lock.json"]))
+        with self.assertRaisesRegex(core.SnapshotError, "unreviewed source"):
+            core.validate(history_root)
+        result = core.validate(history_root, allow_reviewed_history=True)
+        self.assertEqual(history["source"]["revision"], result["core_revision"])
+        self.assertEqual(history["set_digest"], result["document_set_sha256"])
+        self.assertEqual(11, result["files"])
+        self.assertTrue(result["historical_snapshot"])
+        lock = json.loads(target.read_text())
+        lock["source"]["revision"] = "0" * 40
+        target.write_text(json.dumps(lock))
+        with self.assertRaisesRegex(core.SnapshotError, "unreviewed source"):
+            core.validate(history_root, allow_reviewed_history=True)
+
+    def test_tag_object_is_not_the_commit_and_history_cannot_mix_sets(self):
+        original = self.lock.read_bytes()
+        for field, value in (("revision", core.CURRENT_SNAPSHOT["source"]["tag_object"]),
+                             ("tag_object", core.REVISION), ("tag", "v0.2.0"),
+                             ("version", None)):
+            self.lock.write_bytes(original)
+            self.mutate_lock(lambda lock: lock["source"].update({field: value}))
+            self.rejected()
+        self.lock.write_bytes(original)
+        self.mutate_lock(lambda lock: lock.update(source=core.HISTORICAL_SNAPSHOTS[0]["source"]))
+        with self.assertRaises(core.SnapshotError):
+            core.validate(self.source, allow_reviewed_history=True)
 
     def test_mutable_wrong_source_or_lock_identities_cannot_repin_the_snapshot(self):
         changes = (
@@ -113,14 +153,14 @@ class CoreSnapshotTests(unittest.TestCase):
 
     def test_missing_or_ambiguous_json_does_not_load_another_lock(self):
         original = self.lock.read_text()
-        for data in ('{"contract":"a","contract":"b"}', original.replace("null", "NaN"), "\ufeff" + original):
+        for data in ('{"contract":"a","contract":"b"}', original.replace('"version": "0.1.0"', '"version": NaN'), "\ufeff" + original):
             with self.subTest(data=data[:30]):
                 self.lock.write_text(data)
                 self.rejected()
         self.lock.unlink()
         self.rejected()
 
-    def test_unknown_entries_are_rejected_before_lock_or_document_byte_reads(self):
+    def test_unknown_entries_allow_only_the_bounded_lock_before_document_reads(self):
         for name in (".env", "unexpected-empty", "e\u0301"):
             extra = self.snapshot / name
             if name == "unexpected-empty":
@@ -129,11 +169,69 @@ class CoreSnapshotTests(unittest.TestCase):
                 extra.write_text("SYNTHETIC unlisted data")
             with self.subTest(name=name), mock.patch.object(core, "regular_bytes", wraps=core.regular_bytes) as read:
                 self.rejected()
-                read.assert_not_called()
+                self.assertEqual(1, read.call_count)
+                self.assertEqual("engineering-workflow-core.lock.json", read.call_args.args[1])
+                self.assertEqual(core.MAX_LOCK_BYTES, read.call_args.args[2])
             if extra.is_dir():
                 extra.rmdir()
             else:
                 extra.unlink()
+
+    def test_invalid_lock_stops_before_inventory_or_document_reads(self):
+        original = self.lock.read_bytes()
+        unsupported = json.loads(original)
+        unsupported["contract"] = "unsupported/v1"
+        unreviewed = json.loads(original)
+        unreviewed["source"]["revision"] = "0" * 40
+        for data in (b"{", json.dumps(unsupported).encode(), json.dumps(unreviewed).encode()):
+            self.lock.write_bytes(data)
+            with self.subTest(data=data[:40]), \
+                    mock.patch.object(core, "regular_bytes", wraps=core.regular_bytes) as read, \
+                    mock.patch.object(core, "inventory") as inventory:
+                with self.assertRaises(core.SnapshotError):
+                    core.validate(self.source)
+                inventory.assert_not_called()
+                self.assertEqual(1, read.call_count)
+                self.assertEqual("engineering-workflow-core.lock.json", read.call_args.args[1])
+                self.assertEqual(core.MAX_LOCK_BYTES, read.call_args.args[2])
+
+    def test_lock_permissions_fail_before_document_reads_in_both_layouts(self):
+        destination = self.base / "filesystem"
+        orchestration = destination / "orchestration"
+        orchestration.mkdir(parents=True)
+        shutil.copytree(self.snapshot, orchestration / "core")
+        shutil.copyfile(self.lock, orchestration / "core.lock.json")
+        for path in orchestration.rglob("*"):
+            if path.is_file():
+                path.chmod(0o600)
+        for root, layout, lock, modes in (
+                (self.source, "source", self.lock, (0o000, 0o620, 0o646, 0o755)),
+                (destination, "filesystem", orchestration / "core.lock.json", (0o644, 0o400))):
+            core.validate(root, layout)  # A valid fixture precedes each negative family.
+            for mode in modes:
+                lock.chmod(mode)
+                with self.subTest(layout=layout, mode=oct(mode)), \
+                        mock.patch.object(core, "regular_bytes", wraps=core.regular_bytes) as read, \
+                        mock.patch.object(core, "inventory") as inventory:
+                    with self.assertRaises((core.SnapshotError, OSError)):
+                        core.validate(root, layout)
+                    inventory.assert_not_called()
+                    self.assertEqual(1, read.call_count)
+                    self.assertEqual(lock.name, read.call_args.args[1])
+            lock.chmod(0o600 if layout == "filesystem" else 0o644)
+
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "FIFO unavailable")
+    def test_lock_fifo_is_rejected_with_a_bounded_cli_call(self):
+        self.lock.unlink()
+        os.mkfifo(self.lock, 0o600)
+        result = subprocess.run(
+            [sys.executable, "-B", str(SCRIPT), "--root", str(self.source)],
+            capture_output=True, text=True, timeout=5,
+        )
+        self.assertEqual(1, result.returncode)
+        self.assertEqual("rejected", json.loads(result.stderr)["status"])
+        self.assertIn("must be regular", json.loads(result.stderr)["error"])
+        self.assertEqual("", result.stdout)
 
     def test_case_alias_cannot_hide_changed_bytes_on_case_insensitive_filesystems(self):
         alias = self.snapshot / "README.MD"
@@ -146,7 +244,9 @@ class CoreSnapshotTests(unittest.TestCase):
             alias.write_text("SYNTHETIC colliding name")
             with mock.patch.object(core, "regular_bytes", wraps=core.regular_bytes) as read:
                 self.rejected()
-                read.assert_not_called()
+                self.assertEqual(1, read.call_count)
+                self.assertEqual("engineering-workflow-core.lock.json", read.call_args.args[1])
+                self.assertEqual(core.MAX_LOCK_BYTES, read.call_args.args[2])
 
     def test_missing_tampered_notice_or_document_and_executable_mode_fail(self):
         for name in ("contracts/workflow.md", "docs/provenance/upstream-notices.md", "LICENSE"):
@@ -270,10 +370,10 @@ class CoreSnapshotTests(unittest.TestCase):
         snapshot = templates / "orchestration/core"
         snapshot.mkdir(parents=True)
         partial = snapshot / "README.md"
-        partial.write_bytes(b"local reviewed force-update candidate\n")
+        partial.write_bytes(b"local reviewed receipt-managed candidate\n")
         partial.chmod(0o600)
         core.preflight_destination(templates)
-        with self.assertRaises(core.SnapshotError):
+        with self.assertRaises((core.SnapshotError, OSError)):
             core.validate(templates, "filesystem")  # Preflight is not full acceptance.
         for kind in ("symlink", "directory", "oversize", "mode"):
             partial.unlink() if partial.is_file() or partial.is_symlink() else partial.rmdir()
@@ -309,8 +409,7 @@ class CoreSnapshotTests(unittest.TestCase):
                     run = subprocess.run([str(ROOT / "install.sh"), *args], cwd=ROOT,
                                          env=self.installer_env(home), capture_output=True, text=True, timeout=20)
                     self.assertNotEqual(0, run.returncode, run.stdout)
-                    self.assertIn("unexpected snapshot entry" if case == "unknown-entry" else
-                                  "unmanaged existing content", run.stderr)
+                    self.assertIn("unmanaged existing content", run.stderr)
                     self.assertEqual(before, snapshot_tree(home))
 
     def test_destination_preflight_bounds_aggregate_bytes_and_rejects_ancestor_links(self):
@@ -417,7 +516,7 @@ main "$@"
         injected += r'''
 eval "$(declare -f path_device | sed '1s/path_device/original_path_device/')"
 path_device() {
-  if [[ "$1" == "$CODEX_TEMPLATES_DIR/orchestration/core" ]]; then
+  if [[ "$1" == "$CODEX_TEMPLATES_DIR/orchestration" ]]; then
     printf 'injected-core-device\n' >&2
     printf 'synthetic-other-device\n'
   else
@@ -429,10 +528,10 @@ main update shared-review-gates --force
         refused = subprocess.run(["bash", "-c", injected, "staging-device-test", str(ROOT)],
                                  cwd=ROOT, env=env, capture_output=True, text=True, timeout=90)
         self.assertNotEqual(0, refused.returncode)
-        self.assertIn("cross-filesystem transaction staging for templates orchestration/core/", refused.stderr)
+        self.assertIn("cross-filesystem transaction staging for templates orchestration/core:", refused.stderr)
         self.assertEqual(1, refused.stderr.count("injected-core-device"))
         self.assertEqual(before, installed_snapshot())
-        self.assertFalse(any(p.is_file() for p in (templates / "orchestration/core").rglob("*")))
+        self.assertFalse((templates / "orchestration/core").exists())
         self.assertFalse(list((templates / "orchestration").rglob(".codex-dev-skills.*")))
         updated = subprocess.run([str(ROOT / "install.sh"), "update", "shared-review-gates", "--force"],
                                  cwd=ROOT, env=env, capture_output=True, text=True, timeout=90)

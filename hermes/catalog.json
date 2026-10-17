@@ -42,6 +42,7 @@
     "scripts/validate-core-contract-snapshot.py",
     "vendor/engineering-workflow-core.lock.json",
     "vendor/engineering-workflow-core/LICENSE",
+    "vendor/engineering-workflow-core/CHANGELOG.md",
     "vendor/engineering-workflow-core/README.md",
     "vendor/engineering-workflow-core/contracts/authorization-and-stops.md",
     "vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md",
@@ -51,6 +52,7 @@
     "vendor/engineering-workflow-core/docs/architecture/migration-plan.md",
     "vendor/engineering-workflow-core/docs/architecture/project-split.md",
     "vendor/engineering-workflow-core/docs/provenance/source-map.md",
-    "vendor/engineering-workflow-core/docs/provenance/upstream-notices.md"
+    "vendor/engineering-workflow-core/docs/provenance/upstream-notices.md",
+    "vendor/engineering-workflow-core/docs/releases/v0.1.0.md"
   ]
 }

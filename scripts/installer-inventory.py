@@ -174,6 +174,37 @@ def artifacts(catalog: dict, groups: list[str]) -> list[dict]:
     return [result[key] for key in sorted(result)]
 
 
+def transaction_artifacts(items: list[dict]) -> list[dict]:
+    """Move the verified complete Core collection as one existing directory unit.
+
+    Receipts keep their per-file format. Directory rename/rollback also retains
+    the exact old subdirectory inventory across thirteen/eleven-file transitions.
+    """
+    prefix = "orchestration/core/"
+    core_items = [item for item in items
+                  if item["kind"] == "templates" and item["relative"].startswith(prefix)]
+    if not core_items:
+        return items
+    result = [item for item in items if item not in core_items]
+    files = {}
+    for item in core_items:
+        if item["type"] != "file" or set(item["files"]) != {""}:
+            fail("unsupported Core collection artifact")
+        files[relative(item["relative"][len(prefix):])] = item["files"][""]
+    result.append({"kind": "templates", "relative": "orchestration/core",
+                   "source": "vendor/engineering-workflow-core", "type": "directory",
+                   "files": dict(sorted(files.items()))})
+    return sorted(result, key=lambda item: item["kind"] + "/" + item["relative"])
+
+
+def reviewed_catalogs() -> list[dict]:
+    catalogs = load_json(read_file(REGISTRY))["catalogs"]
+    digests = [item["catalog_sha256"] for item in catalogs]
+    if not catalogs or len(digests) != len(set(digests)):
+        fail("ambiguous or empty reviewed source catalogs")
+    return catalogs
+
+
 def expand(catalog: dict, groups: list[str]) -> list[str]:
     selected = set()
     def visit(name: str) -> None:
@@ -203,8 +234,14 @@ def check_payload(items: list[dict], roots: dict) -> dict:
     core = [item for item in items if item["kind"] == "templates" and item["relative"].startswith("orchestration/core/")]
     if core:
         expected = {item["relative"][len("orchestration/core/"):]: item["files"][""] for item in core}
-        if manifest(Path(roots["templates"]) / "orchestration/core", "directory") != expected:
+        target = Path(roots["templates"]) / "orchestration/core"
+        before = fingerprint(target, "directory")
+        if manifest(target, "directory") != expected:
             fail("custom or unknown content in the managed Core collection; preserve and inspect")
+        after = fingerprint(target, "directory")
+        if before != after:
+            fail("managed Core collection changed while verifying")
+        identities["templates/orchestration/core"] = after
     return identities
 
 
@@ -251,7 +288,7 @@ def profile_receipt_identity(path: Path, prior: dict | None) -> str:
 
 
 def plan(args: argparse.Namespace) -> dict:
-    catalogs = load_json(read_file(REGISTRY))["catalogs"]
+    catalogs = reviewed_catalogs()
     roots = dict(zip(("skills", "templates", "agent_profiles"), [str(Path(p).resolve()) for p in args.roots]))
     catalog, identity = load_source(Path(args.source), catalogs)
     receipt_before = fingerprint(Path(args.receipt), "file")
@@ -284,17 +321,19 @@ def plan(args: argparse.Namespace) -> dict:
             fail("cross-version replacement requires all managed groups; review and select --all explicitly")
         groups = expand(catalog, sorted(set(requested) | set(old_groups)))
         new_items = artifacts(catalog, groups)
-    old_keys = {(item["kind"], item["relative"]) for item in old_items}
-    new_keys = {(item["kind"], item["relative"]) for item in new_items}
-    for item in new_items:
+    old_transactions = transaction_artifacts(old_items)
+    new_transactions = transaction_artifacts(new_items)
+    old_keys = {(item["kind"], item["relative"]) for item in old_transactions}
+    new_keys = {(item["kind"], item["relative"]) for item in new_transactions}
+    for item in new_transactions:
         target = Path(roots[item["kind"]]) / relative(item["relative"])
         if (item["kind"], item["relative"]) not in old_keys and os.path.lexists(target):
             fail(f"unmanaged existing content; no implicit adoption or overwrite: {target}")
         if (item["kind"], item["relative"]) not in old_keys:
             identities[item["kind"] + "/" + item["relative"]] = "missing"
-    retired = [item for item in old_items if (item["kind"], item["relative"]) not in new_keys]
-    old_by_key = {(item["kind"], item["relative"]): item for item in old_items}
-    puts = [] if args.action == "uninstall" else [item for item in new_items
+    retired = [item for item in old_transactions if (item["kind"], item["relative"]) not in new_keys]
+    old_by_key = {(item["kind"], item["relative"]): item for item in old_transactions}
+    puts = [] if args.action == "uninstall" else [item for item in new_transactions
             if old_by_key.get((item["kind"], item["relative"])) != item]
     receipt = {"schema": 1, "source": identity, "roots": roots, "groups": groups, "artifacts": new_items}
     profile_digest = hashlib.sha256(roots["agent_profiles"].encode()).hexdigest()

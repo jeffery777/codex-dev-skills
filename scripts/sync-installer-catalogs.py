@@ -71,8 +71,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
+    catalogs = [snapshot(rev) for rev in REVISIONS]
+    digests = [item["catalog_sha256"] for item in catalogs]
+    if not catalogs or len(digests) != len(set(digests)):
+        raise ValueError("ambiguous or empty reviewed source catalogs")
     content = json.dumps({"schema": 1, "repository": "jeffery777/codex-dev-skills",
-                          "catalogs": [snapshot(rev) for rev in REVISIONS]}, indent=2) + "\n"
+                          "catalogs": catalogs}, indent=2) + "\n"
     if args.check:
         if OUTPUT.read_text() != content:
             raise SystemExit("installer catalog data differs from the reviewed Git snapshots")

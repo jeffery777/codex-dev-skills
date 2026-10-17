@@ -13,6 +13,15 @@
 由 `.gitignore` 的 `.work/` 規則排除。既有根目錄工程文件、release notes
 及歷史紀錄仍按既有用途維護；本次不遷移其他 Issue 的歷史資料。
 
+版本變更見 [Changelog / 變更紀錄](../CHANGELOG.md)。
+[v0.34.0 split release preparation](releases/v0.34.0-split.md) 記錄新的拆分範圍、
+完整安裝／回復前提與未完成 gates；[Issue #353 計畫](plans/issue-353-release-v0340-split.md)
+記錄正式 Core pin 的相依順序。原 `release-notes-v0.34.0.md` 仍是歷史候選。
+
+The changelog records explicit version scopes. The independent split preparation
+and Issue #353 plan describe installation/recovery prerequisites and pending
+release gates after the formal Core pin. The original v0.34.0 note remains a historical candidate.
+
 Code review 與 merge review 必須能取得並檢查適用證據，包含來源版本／完整
 diff 身分、執行範圍、命令、退出碼、失敗、略過項目、限制與 finding 處置。
 Git 忽略不是免審；換 checkout 或 reviewer 時須重新產生，或提供有版本與

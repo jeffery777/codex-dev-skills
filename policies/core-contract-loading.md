@@ -30,15 +30,26 @@ with explicit templates root and `--layout filesystem`. The source-relative
 Core links below apply to source/plugin. For filesystem loading, replace
 `../vendor/engineering-workflow-core/` with `../core/` relative to these policies.
 
-The validator is offline and read-only. It pins repository/revision, all 11 file
-paths/bytes and recorded source Git modes, both independently defined set digests, LICENSE,
-local links/anchors and required inventory. Filesystem files must be 0600; source
+The validator is offline and read-only. Ordinary loading accepts only Core
+v0.1.0 at commit `174df2af8dedf813b9bd4e3c184a627ee87d3cd8`, annotated tag
+object `e984c880a05065c8bcd0d78e83d78220b05bfc32`. It pins all 13 file
+paths/bytes and recorded source Git modes, both independently defined set digests,
+LICENSE, local links/anchors and required inventory. The closure includes Core's
+CHANGELOG and release record; this does not require loading all files for every
+operation. Filesystem files must be 0600; source
 Git mode 100644 and effective POSIX permissions are distinct. Upstream Git-tree
 modes are provenance readback; this offline validator does not inspect a Git index.
 It rejects unsafe
 entries before reading document bytes. The validator's own reviewed bytes and
 actual selected root remain part of operator evidence; a matching lock does not
 authenticate an installation or prove trust, authority, review or runtime quality.
+
+Only the current installer explicitly uses `--allow-reviewed-history` to reconstruct
+the separately fixed eleven-file development snapshot. That path still checks its
+exact source, lock, inventory, bytes, modes, digests and link closure; it never runs
+an old source's validator. Its output identifies historical acceptance. It cannot
+qualify that snapshot as the ordinary Core v0.1.0 loading root. Unknown snapshots
+are rejected even with this flag.
 
 Missing/unknown lock or loader, mismatched identity/digest, missing document,
 unsafe inventory or unresolved load root stops dependent work. Report the gap;

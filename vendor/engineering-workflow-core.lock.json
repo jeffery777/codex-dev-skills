@@ -2,10 +2,12 @@
   "contract": "codex-core-document-lock/v1",
   "source": {
     "repository": "jeffery777/engineering-workflow-core",
-    "revision": "64b19bb5658432c42cd6a26aa357fd6b1d0fd857",
-    "reviewed_head": "8b546d8c27a3db416ef7021a01fdae3ffa572ec6",
-    "pull_request": 16,
-    "version": null
+    "revision": "174df2af8dedf813b9bd4e3c184a627ee87d3cd8",
+    "reviewed_head": "bc20699a5c46458647a01c5edb2830d8381219ef",
+    "pull_request": 18,
+    "version": "0.1.0",
+    "tag": "v0.1.0",
+    "tag_object": "e984c880a05065c8bcd0d78e83d78220b05bfc32"
   },
   "consumer": {
     "repository": "jeffery777/codex-dev-skills",
@@ -14,12 +16,18 @@
   },
   "upstream_markdown_set": {
     "algorithm": "utf8-path-tab-sha256-lf/v1",
-    "sha256": "37ef5cbdfc9461b43dc76dcd1448943405daf8b6d2a77ee0c1857e7ba9088e15"
+    "sha256": "484923e7dc1407dde1702cf88e93afb5a279b25f79a2c6ff9631d58d7589ab13"
   },
   "document_set": {
     "algorithm": "codex-core-document-set/v1",
-    "sha256": "d0031ab685d6586ce89ed4ac0e53c45f0dca9720874d43019e5d54a0859fb98b",
+    "sha256": "91e3153d31f4096e21927e653b74010fbaa504c7f1550ecf56af687db288d482",
     "files": [
+      {
+        "path": "CHANGELOG.md",
+        "sha256": "bc13f952509c18529030fcbb6ed33c25c6cf1ed978d526d142e26bb2fd96c511",
+        "size_bytes": 7366,
+        "mode": "100644"
+      },
       {
         "path": "LICENSE",
         "sha256": "49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f",
@@ -28,8 +36,8 @@
       },
       {
         "path": "README.md",
-        "sha256": "fcc2980d7d2bb4938020f009b6fc4544b2bb0a557261369a5dc79ce79869df46",
-        "size_bytes": 18881,
+        "sha256": "93085438d3ab960797a3521629edf4a480e9e1941d659e2f82357f1c79f0d729",
+        "size_bytes": 21866,
         "mode": "100644"
       },
       {
@@ -76,14 +84,20 @@
       },
       {
         "path": "docs/provenance/source-map.md",
-        "sha256": "0f3599242a9d1dc7bfdae3042ed9738b93765bc12b9c7000a9a3a5cf5ed514e1",
-        "size_bytes": 52655,
+        "sha256": "19d529a51f41d2ded4bad2cf809ad3c161c59a89bda72bf07d33c2b8ece26ea0",
+        "size_bytes": 57118,
         "mode": "100644"
       },
       {
         "path": "docs/provenance/upstream-notices.md",
         "sha256": "a33e7445a6eea9df9f12dd5b32cb6f08353d00b7d873496d48389dbe36ceb888",
         "size_bytes": 2332,
+        "mode": "100644"
+      },
+      {
+        "path": "docs/releases/v0.1.0.md",
+        "sha256": "f8e6c3e1e6b4ac8b433656ae3991274f657097f40eae7de2431348e13bb2b058",
+        "size_bytes": 15448,
         "mode": "100644"
       }
     ]

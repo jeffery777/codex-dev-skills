@@ -14,6 +14,98 @@ from tests.test_installer_source_integrity import InstallerFixture, ROOT, invent
 
 
 class InstallerFaultBoundaryTests(InstallerFixture):
+    def seed_development_core(self, profiles=False):
+        revision = "43c650e1196a3a702e2240bd79dd24539fa893a7"
+        groups = ["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"] if profiles else None
+        receipt = self.seed("0.34.0", groups=groups, snapshot_revision=revision)
+        self.core_root = self.home / ".codex/templates/orchestration/core"
+        return receipt
+
+    def core_directories(self):
+        return sorted(p.relative_to(self.core_root).as_posix()
+                      for p in self.core_root.rglob("*") if p.is_dir())
+
+    def test_core_backup_promotion_and_receipt_faults_restore_exact_old_tree(self):
+        receipt = self.seed_development_core(profiles=True)
+        directories = self.core_directories()
+        for mode in ("backup", "promote", "history", "inventory", "profile"):
+            with self.subTest(mode=mode):
+                overrides = self.command("mv", '''
+case "$CORE_FAULT:$1:$2" in
+  backup:*/orchestration/core:*/core.bak|promote:*.core.tmp.*/value:*/orchestration/core)
+    echo injected-core-tree-fault >&2; exit 78 ;;
+  history:*.receipt.*/value:*/installed.jsonl|inventory:*.receipt.*/value:*/managed-*.json|profile:*.receipt.*/value:*/agent-profile-*.tsv)
+    [[ -f "$CORE_ROOT/docs/releases/v0.1.0.md" ]] || exit 79
+    echo injected-core-tree-fault >&2; exit 78 ;;
+esac''', {"CORE_FAULT": mode, "CORE_ROOT": str(self.core_root)})
+                before = self.snapshot()
+                result = self.run_installer("update", "--all", overrides=overrides)
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn("injected-core-tree-fault", result.stderr)
+                self.assertEqual(before, self.snapshot(), result.stderr)
+                self.assertEqual(directories, self.core_directories())
+                self.assertFalse((self.core_root / "docs/releases").exists())
+                self.payload_unchanged(receipt)
+
+    def test_core_postverification_failure_restores_old_tree_and_receipts(self):
+        receipt = self.seed_development_core()
+        directories = self.core_directories()
+        overrides = self.command("python3", '''
+if [[ "$1" == */installer-inventory.py && "$2" == verify ]]; then
+  [[ -f "$CORE_ROOT/docs/releases/v0.1.0.md" ]] || exit 79
+  echo injected-core-postverify >&2; exit 78
+fi''', {"CORE_ROOT": str(self.core_root)})
+        before = self.snapshot()
+        result = self.run_installer("update", "--all", overrides=overrides)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("injected-core-postverify", result.stderr)
+        self.assertEqual(before, self.snapshot(), result.stderr)
+        self.assertEqual(directories, self.core_directories())
+        self.payload_unchanged(receipt)
+
+    def test_core_root_identity_drift_preserves_replacement_and_original(self):
+        receipt = self.seed_development_core()
+        preserved = self.case / "preserved-core"
+        before = self.core_root.stat().st_ino
+        overrides = self.command("python3", '''
+if [[ "$1" == */installer-inventory.py && "$2" == verify-staged ]]; then
+  "$REAL_COMMAND" "$@"
+  mv "$CORE_ROOT" "$PRESERVED_CORE"
+  cp -Rp "$PRESERVED_CORE" "$CORE_ROOT"
+  echo injected-core-identity >&2; exit 0
+fi''', {"CORE_ROOT": str(self.core_root), "PRESERVED_CORE": str(preserved)})
+        result = self.run_installer("update", "--all", overrides=overrides)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("injected-core-identity", result.stderr)
+        self.assertEqual(before, preserved.stat().st_ino)
+        self.assertNotEqual(before, self.core_root.stat().st_ino)
+        self.assertEqual((preserved / "README.md").read_bytes(), (self.core_root / "README.md").read_bytes())
+        self.assertFalse((self.core_root / "docs/releases").exists())
+        self.assertEqual(receipt, json.loads(self.receipt.read_text()))
+        self.payload_unchanged(receipt)
+
+    def test_core_reverse_restore_failure_retains_the_old_root_outside_discovery(self):
+        receipt = self.seed_development_core()
+        old_readme = (self.core_root / "README.md").read_bytes()
+        overrides = self.command("mv", '''
+case "$1:$2" in
+  *.core.lock.json.tmp.*/value:*/orchestration/core.lock.json)
+    [[ -f "$CORE_ROOT/docs/releases/v0.1.0.md" ]] || exit 79
+    echo injected-core-lock >&2; exit 78 ;;
+  */core.bak:*/orchestration/core)
+    echo injected-core-restore >&2; exit 77 ;;
+esac''', {"CORE_ROOT": str(self.core_root)})
+        result = self.run_installer("update", "--all", overrides=overrides)
+        self.assertNotEqual(0, result.returncode)
+        for marker in ("injected-core-lock", "injected-core-restore", "CRITICAL"):
+            self.assertIn(marker, result.stderr)
+        originals = list((self.state / "backups/v1").rglob("core.bak"))
+        self.assertEqual(1, len(originals))
+        self.assertEqual(old_readme, (originals[0] / "README.md").read_bytes())
+        self.assertFalse((originals[0] / "docs/releases").exists())
+        self.assertFalse(originals[0].is_relative_to(self.home / ".codex/templates"))
+        self.assertEqual(receipt, json.loads(self.receipt.read_text()))
+
     def command(self, name, body, variables=None):
         directory = self.case / "interceptors"
         directory.mkdir(exist_ok=True)

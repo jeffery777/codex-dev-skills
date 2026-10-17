@@ -7,9 +7,11 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 OLD = "6b5b0d0bf4e61119a5a87761fc4a6c4d35002e1c"
@@ -55,13 +57,27 @@ class InstallerFixture(unittest.TestCase):
                                 env={**self.env, **(overrides or {})}, text=True, capture_output=True)
         return result
 
-    def seed(self, version="0.33.1", groups=None, legacy=False):
+    def seed(self, version="0.33.1", groups=None, legacy=False, snapshot_revision=None):
         digest = hashlib.sha256("\0".join(self.roots.values()).encode()).hexdigest()
         self.receipt = self.state / f"managed-{digest}.json"
-        catalog = next(c for c in REGISTRY["catalogs"] if c["version"] == version)
+        candidates = [c for c in REGISTRY["catalogs"] if c["version"] == version]
+        if snapshot_revision is not None:
+            candidates = [c for c in candidates if c["reviewed_revision"] == snapshot_revision]
+        elif version == "0.34.0":
+            current_digest = hashlib.sha256((ROOT / "catalog.yaml").read_bytes()).hexdigest()
+            candidates = [c for c in candidates if c["catalog_sha256"] == current_digest]
+        if len(candidates) != 1:
+            raise AssertionError("fixture requires one exact reviewed payload snapshot")
+        catalog = candidates[0]
         groups = groups or [g for g in catalog["groups"] if g != "codex-agent-profiles"]
         items = inventory.artifacts(catalog, inventory.expand(catalog, groups))
         source = self.old if version == "0.33.1" else ROOT
+        if snapshot_revision == "43c650e1196a3a702e2240bd79dd24539fa893a7":
+            source = self.case / "development-source"
+            for command in (["git", "clone", "--quiet", "--no-hardlinks", "--no-checkout", str(ROOT), str(source)],
+                            ["git", "-C", str(source), "remote", "set-url", "origin", "https://github.com/jeffery777/codex-dev-skills.git"],
+                            ["git", "-C", str(source), "checkout", "--quiet", "--detach", snapshot_revision]):
+                subprocess.run(command, check=True, capture_output=True)
         for item in items:
             target = Path(self.roots[item["kind"]]) / item["relative"]
             target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -133,6 +149,111 @@ exec "REAL_MV" "$@"
 
 
 class SourceIntegrityInstallerTests(InstallerFixture):
+    def test_catalog_generation_rejects_duplicate_and_empty_sets_before_writing(self):
+        spec = importlib.util.spec_from_file_location("catalog_generator", ROOT / "scripts/sync-installer-catalogs.py")
+        generator = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(generator)
+        target = self.case / "generated.json"
+        target.write_text("preserved sentinel\n")
+        for revisions in ((), ("first", "second")):
+            with self.subTest(revisions=revisions), mock.patch.object(generator, "REVISIONS", revisions), \
+                    mock.patch.object(generator, "OUTPUT", target), \
+                    mock.patch.object(generator, "snapshot", return_value={"catalog_sha256": "a" * 64}), \
+                    mock.patch.object(sys, "argv", ["sync-installer-catalogs.py"]):
+                with self.assertRaisesRegex(ValueError, "ambiguous or empty"):
+                    generator.main()
+                self.assertEqual("preserved sentinel\n", target.read_text())
+
+    def test_duplicate_catalog_digests_cannot_select_a_source_by_order(self):
+        registry = self.case / "duplicate-catalogs.json"
+        value = json.loads((ROOT / "installer/source-catalogs.json").read_text())
+        value["catalogs"].append(value["catalogs"][0])
+        registry.write_text(json.dumps(value))
+        with mock.patch.object(inventory, "REGISTRY", registry):
+            with self.assertRaisesRegex(ValueError, "ambiguous"):
+                inventory.reviewed_catalogs()
+
+    def test_same_version_core_snapshot_transition_preserves_profiles_and_directory_inventory(self):
+        development = "43c650e1196a3a702e2240bd79dd24539fa893a7"
+        old_catalog = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == development)
+        prior = self.seed("0.34.0", groups=list(old_catalog["groups"]), snapshot_revision=development)
+        old_source = self.case / "development-source"
+        before = self.snapshot()
+        result = self.run_installer("update", "codex-review-workflow")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("requires all managed groups", result.stderr)
+        self.assertEqual(before, self.snapshot())
+        result = self.run_installer("update", "--all")
+        self.assertEqual(0, result.returncode, result.stderr)
+        receipt = json.loads(self.receipt.read_text())
+        self.assertEqual("0.34.0", receipt["source"]["version"])
+        self.assertEqual("0.1.0", receipt["source"]["core"]["version"])
+        self.assertNotEqual(prior["source"]["catalog_sha256"], receipt["source"]["catalog_sha256"])
+        self.assertIn("codex-agent-profiles", receipt["groups"])
+        core_root = self.home / ".codex/templates/orchestration/core"
+        self.assertTrue((core_root / "docs/releases/v0.1.0.md").is_file())
+        result = self.run_installer("update", "--all", "--source", old_source)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(prior["source"]["catalog_sha256"], json.loads(self.receipt.read_text())["source"]["catalog_sha256"])
+        self.assertFalse((core_root / "docs/releases").exists())
+        self.assert_version("0.34.0")
+        result = self.run_installer("uninstall", "codex-review-workflow", "--yes")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertFalse((core_root / "docs/releases").exists())
+        self.assertTrue((core_root / "contracts/workflow.md").is_file())
+        before = self.snapshot()
+        result = self.run_installer("uninstall", "--all", "--yes")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("still depend", result.stderr)
+        self.assertEqual(before, self.snapshot())
+        result = self.run_installer("uninstall", "codex-agent-profiles", "--yes")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotIn("codex-agent-profiles", json.loads(self.receipt.read_text())["groups"])
+        self.assertTrue((core_root / "contracts/workflow.md").is_file())
+        result = self.run_installer("uninstall", "--all", "--yes")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertFalse(core_root.exists())
+
+    def test_core_root_rollback_restores_old_directory_set_after_lock_failure(self):
+        development = "43c650e1196a3a702e2240bd79dd24539fa893a7"
+        self.seed("0.34.0", snapshot_revision=development)
+        folder = self.case / "core-fault-bin"
+        folder.mkdir()
+        wrapper = folder / "mv"
+        real = shutil.which("mv")
+        wrapper.write_text('''#!/bin/bash
+if [[ "$1" == *.core.lock.json.tmp.*/value && "$2" == */orchestration/core.lock.json ]]; then
+  if [[ ! -f "$HOME/.codex/templates/orchestration/core/docs/releases/v0.1.0.md" ]]; then
+    echo core-root-seam-not-reached >&2; exit 79
+  fi
+  echo injected-after-core-root >&2; exit 78
+fi
+exec "''' + real + '''" "$@"
+''')
+        wrapper.chmod(0o700)
+        before = self.snapshot()
+        core_root = self.home / ".codex/templates/orchestration/core"
+        directories = sorted(p.relative_to(core_root).as_posix() for p in core_root.rglob("*") if p.is_dir())
+        result = self.run_installer("update", "--all", overrides={"PATH": str(folder) + os.pathsep + self.env["PATH"]})
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("injected-after-core-root", result.stderr)
+        self.assertEqual(before, self.snapshot(), result.stderr)
+        self.assertEqual(directories, sorted(p.relative_to(core_root).as_posix() for p in core_root.rglob("*") if p.is_dir()))
+        self.assertFalse((core_root / "docs/releases").exists())
+        self.assert_version("0.34.0")
+
+    def test_preexisting_unowned_empty_core_root_is_preserved(self):
+        self.seed()
+        core_root = self.home / ".codex/templates/orchestration/core"
+        core_root.mkdir(mode=0o700)
+        before = self.snapshot()
+        result = self.run_installer("update", "--all", "--force")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("unmanaged existing content", result.stderr)
+        self.assertEqual(before, self.snapshot())
+        self.assertTrue(core_root.is_dir())
+        self.assertEqual([], list(core_root.iterdir()))
+
     def test_selected_source_guards_reject_payload_catalog_and_repository_drift(self):
         self.seed()
         cases = (("skills/code-review/SKILL.md", "bytes", "source payload differs"),
@@ -204,7 +325,7 @@ class SourceIntegrityInstallerTests(InstallerFixture):
             self.assert_version(version)
             self.assertEqual("preserve", sibling.read_text())
         self.assertFalse((self.home / ".codex/templates/orchestration/core.lock.json").exists())
-        self.assertEqual([], [p for p in (self.home / ".codex/templates/orchestration/core").rglob("*") if p.is_file()])
+        self.assertFalse((self.home / ".codex/templates/orchestration/core").exists())
 
     def test_custom_extra_and_exec_drift_are_preserved_even_force_and_uninstall(self):
         self.seed()
