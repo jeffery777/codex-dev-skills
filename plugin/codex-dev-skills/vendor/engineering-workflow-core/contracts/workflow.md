@@ -11,7 +11,7 @@
 | 階段 | 必要輸入與動作 | 產物與離開條件 |
 | --- | --- | --- |
 | Discover | 讀有效指引、需求、來源與 repo 身分，依目標、設計與預期影響初判任務風險；有 Git 時核對 branch、HEAD、upstream、remotes、完整修改與 ownership；由接口核對當前公開能力／schema／權限 | 目標、scope、DoD、限制、風險及事實／推論／未知；unknown 不默認低風險，來源衝突先解決 |
-| Plan | 選最小一致切片，指定唯一 writer 或不重疊 ownership、依賴、驗收、review 與安全檢查強度／時機；scope 或設計變動重評風險 | 有界計畫；高風險及早深查，不等最終候選；計畫不授權修改、派工或外寫 |
+| Plan | 選最小一致切片，指定唯一 writer 或不重疊 ownership、依賴、驗收、review 與安全檢查強度／時機；適用時先做 [前提與方案取捨](#wf-assumptions-and-options)，scope 或設計變動重評風險 | 有界計畫；高風險及早深查，不等最終候選；計畫不授權修改、派工或外寫 |
 | Implement | 用已授權能力按既有模式完成切片，保留無關修改 | 可讀回的實際 diff 與新增檔案 |
 | Verify | 開發期間持續做快速測試及廉價、適用的安全檢查；主代理獨立讀回成果、受保護 tests 與需求，完成必要驗收 | 命令、exit、結果、來源身分、略過／失敗分類；tests 或快速檢查不代替 review／必要 scan |
 | Review And Fix | 足夠能力、與作者獨立的 reviewer 唯讀審查當前內容；高風險在設計與實作初期即深入審查及安全分析，有實質 diff 即按必要性做比例 scan | finding IDs、dispositions、修正及重審／重測證據；詳見 [審查契約](review-and-security.md) |
@@ -72,6 +72,29 @@
 改善驗收在既有報告有界記錄缺口、原因依據與下一步，先核對既有 evidence/proposal/evaluation 契約的涵蓋，再提最小補強。Operational Evidence、proposal、評分、evaluation、重播或 promotion packet 都不是授權或完成證據；不因此新增反思 executor、memory、hooks 或 scheduler。P1 的具體涵蓋評估見 [既有改善契約](../docs/provenance/source-map.md#improvement-coverage)。
 
 中途需求修正保留仍適用成果並重查受影響證據；狀態或旁支問題先簡答再續行，除非明確取消／替換目標。使用者摘要依 [簡明寫作要求](#wf-writing) 清楚精簡；review/gate 產物保留 commands、必填欄位、findings、dispositions、skipped checks 與限制。續行與停止均依 [授權與停止契約](authorization-and-stops.md)。
+
+<a id="wf-assumptions-and-options"></a>
+
+### 檢驗前提、比較方案與停止改善
+
+重要／高風險工作、反覆無效修正、來源／目標矛盾、已知顯著維護負擔，或準備新增具有實質複雜度的 validator、fallback、持久 state、wrapper 等機制時，依本節評估。簡單低風險任務可在既有計畫或報告短述相關判斷，省略無關項目，不強制完整長表或轉入 Loop。
+
+先確認真正目標與根因的已知事實、假設及 unknown，核對共同前提、支持來源、可推翻它的反證與信任邊界。兩位 reviewer 同意同一前提不會製造獨立事實；應檢查來源是否獨立及是否真正支持結論。Timestamp 新鮮、標籤、manifest 或 digest 本身不證明資源歸屬；後來盤點也不能倒證外部工具改寫／轉格式前的狀態。人類同意可授權特定行動，不能自行證明這些事實。
+
+比較足以處理問題的相關選項，例如根因修正、集中邊界檢查、合併／移除重複機制、管理措施、縮限自動化、人工處理或維持現狀；不必無差別列全套。在既有報告記採用／拒絕理由、獨特保障、現有機制不足、維護／審查成本與殘餘風險。新增防護須說明其獨特作用；不以層數、負 LOC 或未量測的成本節省作目標。
+
+管理措施須有實際責任人、可驗證前提、可行的維持方式及失效時的停止／交接安排。沒有可信前提時，不用更多相同來源的 validator 製造確定性；停止或縮限相依的高風險／破壞性自動化，或交由人工處理，無相依且已授權的安全工作可續。人工處理仍須查證、授權及符合 [破壞性操作前置](authorization-and-stops.md#auth-destructive)；主管同意不能取代歸屬證據。簡化不得移除必要安全、獨立 review、操作授權、exact-head、完整性及保存保障。
+
+在既有報告區分下列處置；這是驗收與改善判讀，不替換 [finding disposition](review-and-security.md#review-findings)，也不新增 gate 或自動授權後續工作。
+
+| 判讀 | 處理與停止點 |
+| --- | --- |
+| 必要修正 | 正式需求／DoD 未達、必要安全或相容性失效、有不可接受退化時，不宣稱完成；在授權與相依條件內修正 |
+| 值得改善 | 已達正式要求且有證據支持改善機會，記理由及有界後續；不以非阻擋最佳化無限延後正常交付 |
+| 維持現狀 | 替代方案證據不足、收益有限、風險或導入成本過高時，記理由及何種新證據才重評 |
+| 需要人類決策 | 涉及重大架構、擴權、產品取捨、明顯支出或超出授權時，先完成無相依安全準備，再提供比較與建議待決 |
+
+研究在既有報告界定問題、目標、範圍、可用證據、合理成本／預算、停止條件與下一步；沒有足以改變判斷的新證據，不重複相同研究。DoD 已滿足、必要風險及 findings 已依規處理後，停止追求理論 bug-free 或無限重構，按原交付流程續行。停止改善不表示免除必跑檢查、必要 review／scan、exact-head 或操作授權；另有 mandatory gap 仍阻擋相依 readiness。
 
 <a id="wf-evidence-lifecycle"></a>
 
