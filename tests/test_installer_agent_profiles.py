@@ -144,7 +144,7 @@ class AgentProfileInstallerTests(InstallerFixture):
         self.assertNotEqual(0, result.returncode)
         self.assertIn("discovery root", result.stderr)
 
-    def test_switching_only_profile_root_does_not_adopt_shared_dependencies(self):
+    def test_switching_only_profile_root_does_not_adopt_common_dependencies(self):
         self.seed("0.34.0")
         before = self.snapshot()
         project = self.case / "project/.codex/agents"

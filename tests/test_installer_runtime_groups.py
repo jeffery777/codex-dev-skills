@@ -229,7 +229,7 @@ class InstallerBoundaryUnitTests(unittest.TestCase):
         self.assertIn('struct.unpack_from("=I", raw_flags)[0]', source)
 
 class RuntimeGroupInstallerTests(InstallerFixture):
-    def test_fresh_cli_group_installs_shared_delivery_and_cli_only(self):
+    def test_fresh_cli_group_installs_common_delivery_and_cli_only(self):
         result = self.run_installer("install", "codex-cli-session-handoff")
         self.assertEqual(0, result.returncode, result.stderr)
         skills = self.home / ".agents/skills"
@@ -238,7 +238,7 @@ class RuntimeGroupInstallerTests(InstallerFixture):
         self.assertFalse((skills / "desktop-project-delivery").exists())
         self.assertFalse((self.home / ".codex/agents").exists())
 
-    def test_desktop_group_and_cli_uninstall_preserve_shared_dependencies(self):
+    def test_desktop_group_and_cli_uninstall_preserve_common_dependencies(self):
         self.seed("0.34.0")
         result = self.run_installer("uninstall", "codex-cli-session-handoff", "--yes")
         self.assertEqual(0, result.returncode, result.stderr)
