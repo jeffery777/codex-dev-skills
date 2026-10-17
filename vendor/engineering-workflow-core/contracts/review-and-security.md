@@ -40,13 +40,17 @@ Pre-commit verdict 只證明所檢內容；已有 change request 後不能直接
 
 ## Security Diff Scan 適用性
 
-依當次任務風險、當前 diff／scope、實際影響與仍存在的具體疑慮評估，不能只按檔案類別決定。Security/trust boundaries、permissions、authentication、敏感資料、具有安全影響的 executable、dependencies、installation paths 或未解具體 security concern，須完成比例適當的 Security Diff Scan。Markdown／agent policy 也按實際影響判斷。一般 code review 含基線安全檢查，但 clean review 不替代必要 scan。
+共用技能與方法提供預設要求。先辨識較高優先指令、有效章程、平台強制及公司不可豁免要求，再核對具有可查證來源、核定權責與適用範圍的有效專案政策。該政策可依 PoC、用途及風險決定特定檢查的方法、觸發條件、深度、時機與適用 gate；未有效調整者沿用共用預設。不得弱化不可豁免要求、必要安全、作者／reviewer 獨立性、exact-head 或操作授權。PoC 標籤、主管身分自述、Agent 評分或工具缺失不自行構成豁免。
+
+依上述權責與政策判定適用性，以下為共用預設：依當次任務風險、當前 diff／scope、實際影響與仍存在的具體疑慮評估，不能只按檔案類別決定。Security/trust boundaries、permissions、authentication、敏感資料、具有安全影響的 executable、dependencies、installation paths 或未解具體 security concern，須完成比例適當的 Security Diff Scan。Markdown／agent policy 也按實際影響判斷。一般 code review 含基線安全檢查，但 clean review 不替代必要 scan。
 
 不確定時先查受影響邊界；未解實質安全風險阻擋 readiness。沒有上述影響時，記錄 examined scope 與 rationale，結論為不適用；未執行或略過不得記為 Passed。Model/effort-only、documentation、generated files 既非自動必掃，也非 blanket exemption；scope／假設變動後重評。
 
+有效政策判定某特定檢查不要求時，記錄政策來源、核定權責、理由與 scope；這是適用性決定，不是欠掃描，也不是掃描 Passed。已確定必要的檢查，若因工具／plugin、權限或環境缺失而未執行，則分別記執行狀態 `NOT_RUN` 與已確認的能力狀態 `UNAVAILABLE`、原因、已覆蓋／未覆蓋範圍及外部補查需求。缺工具本身不是已發現漏洞、不適用或 Passed；尚未查清的能力保留 unknown 與限制。
+
 必要 scan 的未執行、未完成、失敗或 coverage 不足均不可視為通過。結果記工具／方式、當前 diff 身分、完成與 coverage、findings/dispositions、限制；需要獨立安全 reviewer／深入審查時不得用作者自評替代。Credentials、permission/identity/tenant、敏感資料、付款、upload/parsing、external APIs、persistent data/migrations、deploy/infrastructure、supply chain、crypto/randomness 等實質變更須按風險升級審查，檢查 source-to-sink、failure modes、rollback、logging 與驗證充分性。
 
-正式安全檢查依風險選 diff、受影響範圍或必要的更廣分析，不機械要求每次 merge 做全 repository deep scan。有效專案政策可明定觸發條件、深度、時機及其允許的有理由適用性例外，記錄範圍與理由；不得弱化較高優先指令、章程、必要安全、獨立 review、exact-head 或操作授權。此為共用通則，不新增 review skill、gate framework、掃描迴圈或通用成本改善承諾。
+各接口核對當次公開能力、所需工具／第三方 plugin、實際可用性，以及資料與操作權限邊界；初始清單未列出不等於已確認不可用。正式安全檢查依有效適用性判定及風險選 diff、受影響範圍或必要的更廣分析，不要求每項任務都跑 SAST／SCA，也不機械要求每次 merge 做全 repository deep scan。方法不固定供應商或模型；缺能力不授權自動安裝、啟用、新增付費路線或外傳資料，普通 review 或模型對話不得冒充所欠必要 scan。此為共用通則，不新增 review skill、gate framework、掃描迴圈或通用成本改善承諾。
 
 掃描後內容變動就形成新候選，依受影響行為、依賴與信任邊界補做測試、重審及必要重掃。只重用可證未受影響且仍符合內容、scope、假設、政策、階段、環境與新鮮度的證據，記明理由與 coverage；不盲沿舊 PASS。信任邊界改變或影響不明時擴大分析；新候選不抹除舊失敗、未解 findings 或 [保存義務](workflow.md#wf-evidence-lifecycle)。每個 changed head 仍須完整 [base-to-head Merge Review](exact-head-and-evidence.md)。
 
@@ -55,5 +59,9 @@ Pre-commit verdict 只證明所檢內容；已有 change request 後不能直接
 ## 證據與續行
 
 審查與 gate 明列當前 revision/diff、scope、來源假設、DoD、已執行／略過命令與結果、findings/dispositions、剩餘風險及驗證限制，即使零 findings 亦保留綁定資訊。可機械查核的事實使用 deterministic checks；人或模型審查不可替代，tests 也不可替代語意一致性審查。
+
+必要檢查待外部補查時，在既有報告記 exact revision／diff／scope、所欠檢查、原因與 coverage、補查責任人（或明示待指派）、證據位置／待補狀態及受影響的交付動作。「待指派」不滿足正式 Deferred finding 的必填後續資訊，也不解除 gate。讀回外證後逐項核對候選與 scope；revision／scope 不符或只覆蓋部分時，不關閉全部缺口，僅重用可證匹配的部分，依影響補查並保留新 head 完整 Merge Review。
+
+工具缺失應產出可讀狀態，不使整體開發一律出錯或停擺；可繼續無相依、已授權且安全的開發。政策確定必要的 merge／release／delivery gate，仍待匹配當前候選的外部證據，或適用政策明確允許、由有權責者依核可流程作成且綁定該候選／檢查／交付動作的正式例外。報告保留例外依據、核定權責、決定、範圍、理由及剩餘風險；例外不把未執行 scan 改記 Passed，Agent 不自行接受風險，也不得越過不可豁免要求、獨立 review、exact-head 或操作授權。能力缺口只阻擋相依操作，仍依 [停止條件](authorization-and-stops.md#auth-stops) 處理。
 
 Clean 內部 review/scan 可續行下一個唯讀或已授權階段；實際授權／環境／風險決策仍依 [授權與停止條件](authorization-and-stops.md)。共享 Markdown、synthetic eval、profile 安裝、service availability 或平台綠燈都不能單獨證明獨立審查、runtime 資格或工程完成。

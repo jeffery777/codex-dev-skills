@@ -2,7 +2,7 @@
 
 P1 的固定抽取來源是 `jeffery777/codex-dev-skills@993597561881d6ed8c552f9a18c59315015ad245`；本機來源只讀，未混用 draft #317/#324/#326。目的基線是 P0 merge `0815b74abe52d57efd032bd075e39c83c2ebf0d6`，工作包為 [Issue #3](https://github.com/jeffery777/engineering-workflow-core/issues/3)。核心的正式契約以繁體中文為權威；英文 identifiers 及 notices 原文不翻譯。全面雙語改造另包評估，不在 P1 宣稱 ASD-STE100 符合性。
 
-上述抽取身分與下列逐條對照記錄 P1 當時的來源及處置。P1 之後的使用者新增要求分開記於 [簡明寫作更新](#plain-writing-update)、[證據生命週期更新](#evidence-lifecycle-update) 與 [風險與審查時機更新](#risk-review-update)，不倒寫成原上游義務或 P1 當時已完成的符合性驗證。
+上述抽取身分與下列逐條對照記錄 P1 當時的來源及處置。P1 之後的使用者新增要求分開記於 [簡明寫作更新](#plain-writing-update)、[證據生命週期更新](#evidence-lifecycle-update)、[風險與審查時機更新](#risk-review-update) 與 [安全檢查政策更新](#security-policy-update)，不倒寫成原上游義務或 P1 當時已完成的符合性驗證。
 
 以下按來源正文段落、每個編號／bullet 與表格義務列出穩定 ID、exact file/lines、disposition、目的章節及理由。標題／空行隨相鄰單位歸類；不是把整份來源都稱中立。`抽取` 保留義務並整理文字；`改寫` 保留共用義務，移除 runtime 具體映射或明示本次澄清；`接口保留` 不複製具體入口／路徑／程式；`不適用` 須有明確理由（本次主要來源沒有需要丟棄的共用義務）。合併文字不等於刪除義務。核心只保留 Markdown，所有可執行依賴留原接口或保留延後。
 
@@ -226,3 +226,15 @@ README 兩語僅導讀共用預設、有效專案專化與不可弱化的界線�
 [審查契約](../../contracts/review-and-security.md#review-risk-timing) 承載風險、時機及候選證據規則；[工作流](../../contracts/workflow.md#wf-stages) 接入階段；[exact-head](../../contracts/exact-head-and-evidence.md#exact-transition) 保留最終完整範圍與有效證據驗收。掃描後變動形成新候選，依影響補測／重審／必要重掃，只重用可證未受影響的證據並記理由與 coverage；信任邊界改變或影響不明則擴查。Merge Review 不機械重跑全庫深掃，但新 head 完整審查與必要 scan 不豁免；不適用須有理由，未執行不是 Passed。
 
 此為 P1 之後新增共用通則，不倒寫原 107 單位、revision／hash／notices、既有寫作或證據生命週期紀錄。有效專案政策可專化觸發、深度、時機及允許的有理由例外，不能弱化必要安全、獨立性、exact-head、授權或保存要求。README 兩語只作導讀；不新增 skill、gate framework、掃描 loop 或通用省成本承諾。本包不改 consumer／pin／安裝／全域設定，不執行歷史清理或 runtime，不打斷 consumer CI；接口採用由協調者另包安排。
+
+<a id="security-policy-update"></a>
+
+## P1 之後新增：安全檢查政策、能力缺口與外部補查
+
+[Issue #13](https://github.com/jeffery777/engineering-workflow-core/issues/13) 依使用者於 2026-10-16 接受並澄清的要求，補明共用技能／方法為預設，有權責來源的有效專案政策可依 PoC、用途與風險決定特定檢查及適用 gate。先辨較高優先指令、有效章程、平台強制與公司不可豁免要求；PoC 標籤、主管自述、Agent 評分或缺工具不自行構成豁免。必要安全、作者／reviewer 獨立性、exact-head、操作授權及保存義務保留。
+
+[安全適用性](../../contracts/review-and-security.md#review-security) 分開記政策不要求（來源、核定權責、理由、scope）與必要但未執行（`NOT_RUN`、已確認不可用時的 `UNAVAILABLE`、原因、coverage 與外部補查）；後者不是漏洞、不適用或 Passed，未查清能力保留 unknown。接口核對實際工具／plugin 與資料／權限邊界，不固定每次 SAST／SCA、品牌或模型，也不因缺工具自動安裝、啟用、付費或外傳；普通 review 不冒充必要 scan。
+
+[證據與續行](../../contracts/review-and-security.md#review-evidence) 在既有報告綁定外查 revision／diff／scope、所欠檢查、補查責任人或待指派、證據狀態與受影響交付；待指派不滿足 formal Deferred 或解除 gate。無相依安全開發可續，必要交付 gate 待匹配外證或有效政策明確允許、有權責者依核可流程對該候選／檢查／交付作成的正式例外；未執行仍不記 Passed。外證部分或不符不清全部缺口，變動依影響補查，新 head 完整 Merge Review 保留。
+
+本包只修改上述審查契約與本來源記錄；原 107 單位、固定來源／hash／notices、前包紀錄及 README 兩語維持。四個小量人類情境（有效 PoC 政策、公司強制衝突、必要工具缺失與外查、外證不符）沿既有 review 報告記結果，不新增框架、skill、schema、validator 或 receipt 制度。文件不證明公司政策實例、外查結果或接口已採用；本包不實際聯絡外部或傳資料、不改 consumer／pin／安裝／全域設定，不執行 runtime、歷史清理或部署，並停在未提交候選。
