@@ -1,6 +1,6 @@
 ---
 name: loop-engineering
-description: Run an explicitly requested durable loop, or continue an existing repo-owned loop contract, through routing, verification, review, and authorized continuation.
+description: Run a durable loop when the user selects this workflow, the request continues an identified active loop, or applicable repo policy requires it for the current objective. Unrelated loop files are not a trigger.
 ---
 
 # loop-engineering
@@ -29,11 +29,14 @@ after filesystem installation.
 
 ## Purpose
 
-Use this skill for an explicitly requested durable loop workflow or an existing
-repo-owned loop spec, ledger, or production decision contract. Ordinary bounded
-delivery uses `project-delivery`; one clear task uses `implementation-slice`.
-Autonomous progress or candidate delegation alone does not activate a durable
-loop. If the user explicitly names this skill, use its production decision path.
+Use this skill when the user explicitly selects a durable loop workflow, the
+current request continues an identified active loop, or applicable repo policy
+requires it for this objective. Confirm that any existing loop spec, ledger, or
+production decision contract belongs to that active objective; historical or
+unrelated artifacts do not activate this skill. Ordinary bounded delivery uses
+`project-delivery`; one clear task uses `implementation-slice`. Autonomous
+progress or candidate delegation alone does not activate a durable loop. If the
+user explicitly names this skill, use its production decision path.
 
 This entrypoint selects existing workflows, integrates evidence, and preserves
 loop authority. It does not replace planning, implementation, review, delivery,

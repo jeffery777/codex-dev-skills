@@ -8,6 +8,39 @@ Codex 操作接點、既有必要技能及條件入口。不預載未觸發的�
 
 ## Contract-Preserving Capability Selection
 
+### Default Skill Selection
+
+Every task-performing agent, including the main coordinating agent, selects the
+smallest applicable workflow from the user's intent and current project rules.
+The user need not name a skill. Honor an explicit skill or method selection,
+subject to higher-priority instructions and the same operation authority.
+
+Use the current runtime's surfaced names, descriptions and source locators to
+identify relevant skills; use supported bounded discovery if needed. Read the
+selected source's complete `SKILL.md` and its triggered dependencies before
+dependent work. A catalog description is a selection hint, not a loaded body.
+Do not preload all skills or require `project-orchestrator` for a clear task.
+
+Keep ordinary review read-only, a clear change within its focused skill, and
+ambiguous work in planning until the necessary scope is known. Use existing
+delivery and continuation skills for their respective objectives. Select Loop
+only by explicit choice, continuation of the identified active loop, or applicable
+repo policy for this objective; unrelated historical loop files are insufficient.
+Deprecated compatibility aliases remain explicit-only and retain their existing
+routes when manually selected.
+
+For duplicate names, resolve the actual source using the user's selection,
+applicable project instructions and available provenance. Bind reading and
+execution to that one source and its dependency layout. Do not merge bodies or
+silently switch installation roots because another copy has the same basename.
+If material source ambiguity remains, clarify before dependent work. A missing
+required skill, body or dependency blocks that dependent step; report the exact
+gap and continue only independent authorized work. Do not install a replacement
+or claim that an unavailable skill was read. Optional unused skills are not a
+prerequisite. Skill selection never grants edit, delegation or external-write
+authority; evidence of selection must distinguish the chosen source, actual
+reading and subsequent actions.
+
 完整共用規則見 Core [wf-capability](../vendor/engineering-workflow-core/contracts/workflow.md#wf-capability)。
 保留使用者方法、較高優先指令、完整必要義務與驗證新鮮度；不能略過必讀、
 驗證器、獨立審查或資格。必要技能或能力仍缺失時回報未完成要求，僅續行

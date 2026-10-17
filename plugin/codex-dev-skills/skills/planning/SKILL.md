@@ -1,6 +1,6 @@
 ---
 name: planning
-description: Create a scoped software development plan with assumptions, risks, DoD, and verification strategy.
+description: Clarify an ambiguous development request or plan a change when scope, assumptions, DoD, or verification need definition before implementation.
 ---
 
 # planning

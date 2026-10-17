@@ -24,7 +24,9 @@
 ## 適合誰、何時使用
 
 適合維護開源或團隊 repository、需要明確驗收與人工決策邊界的使用者。
-先選最小入口；一般有界交付不需要先建立 loop ledger。
+用日常語言描述目標即可，不必先知道技能名稱。執行任務的 Agent（包含主／協調
+Agent）依使用者意圖、專案規範與當次可用技能，選最小適用工作流；明確手動指定
+技能或方法仍有效。下表供理解選擇與手動使用，一般有界交付不需要先建立 loop ledger。
 
 <a id="usage-examples"></a>
 <a id="choosing-an-entry-point"></a>
@@ -36,16 +38,19 @@
 <a id="task-continuation"></a>
 <a id="merge-readiness"></a>
 
-| 你的目標 | 入口 |
+| 你的目標 | 最小適用入口 |
 | --- | --- |
 | 改一個已界定的小問題 | `implementation-slice`；不清楚下一步時先用 `planning` |
 | 只讀審查程式或文件 | `code-review`／`docs-review`；高風險程式差異用 `code-review-deep` |
 | 推進一個較大的有界目標 | `project-delivery`／`project-orchestrator` |
 | 從已保存狀態接續 | `task-continuation`／`milestone-continuation` |
-| 已明確選用 durable loop | `loop-engineering`；依 repo 的 loop spec／ledger 執行 |
+| 明確選用 durable loop、接續已識別的當前 loop，或專案要求本目標使用 loop | `loop-engineering`；無關歷史檔案不觸發 |
 | 評估 change request 的完整差異 | `merge-review`／`merge-review-deep`；正式決策另用適用 gate |
 
-[完整技能選擇指南](docs/skill-selection-guide.md) 說明 primitive 與 formal gate 的差別。
+Agent 須先完整讀取所選來源的技能本體與已觸發依賴，再做相依工作；名稱、描述與
+檔案存在都不等於已讀取。這是技能契約，實際載入與行為須按當次入口查核。
+[完整技能選擇指南](docs/skill-selection-guide.md) 說明來源辨識、缺件處理，以及
+primitive 與 formal gate 的差別。
 [進階 reference](docs/guides/workflow-reference.md#prompt-examples) 保留原 prompt 範例；
 單純要求 review 時保持唯讀，除非使用者另外要求修正。
 
@@ -59,12 +64,17 @@
 ```
 
 再於[安裝選擇](#installation)選 **plugin 或 filesystem 其中一條路徑**。
-安裝後開新 chat/session，按名稱使用技能，例如：
+安裝後開新 chat/session，直接描述工作，例如：
 
 ```text
-Use code-review on the current working tree.
-Prioritize correctness bugs, regressions, missing tests, and contract risks. Stay read-only.
+修正這個可重現的小 bug，驗證後回報差異。
+Review the current diff for bugs and missing tests. Stay read-only.
+先釐清這項改進缺少的需求，再提出有界計畫。
+Continue the saved task in docs/current-task.md and stop at its delivery boundary.
 ```
+
+需要手動選取時仍可指定，例如 `Use code-review on the current working tree.`。
+明確選取不增加修改、委派或外部寫入的授權。
 
 開始工作前讀目標專案的 `AGENTS.md`、規格、計畫及 Git 狀態，明定 scope、DoD、
 writer 與驗證方法。已給定的明確授權持續有效；遇到新範圍、破壞性操作、風險決策
@@ -283,16 +293,27 @@ the next stage and grants no new action authority.
 
 ### Audience and entry points
 
-Use the smallest entry that fits the work. Choose `implementation-slice` for a
-clear change, `planning` for unclear scope, `code-review` or `docs-review` for
-read-only feedback, and `code-review-deep` for high-risk code. Use
-`project-delivery` / `project-orchestrator` for bounded delivery,
-`task-continuation` / `milestone-continuation` for saved work, and
-`merge-review` / `merge-review-deep` for the complete change-request range.
-Formal gates make separate evidence decisions. `loop-engineering` is for an
-explicitly chosen durable loop or a repo-required loop; ordinary delivery does
-not require a ledger. See the [selection guide](docs/skill-selection-guide.md)
-and the unchanged [prompt examples](docs/guides/workflow-reference.md#prompt-examples).
+Describe the objective in ordinary language; you need not know a skill name.
+Each task-performing agent, including the main coordinating agent, selects the
+smallest applicable workflow from your intent, project rules and currently
+available skills. Explicit skill or method selections remain valid.
+
+The reference table above maps a clear change to `implementation-slice`, unclear
+scope to `planning`, read-only feedback to `code-review` or `docs-review`, and
+high-risk code to `code-review-deep`. Use `project-delivery` /
+`project-orchestrator` for bounded delivery, `task-continuation` /
+`milestone-continuation` for saved work, and `merge-review` / `merge-review-deep`
+for the complete change-request range. Formal gates make separate evidence
+decisions. Select `loop-engineering` for an explicit durable loop, continuation
+of an identified active loop, or project policy requiring it for this objective.
+Unrelated historical files do not trigger it; ordinary delivery needs no ledger.
+
+Before dependent work, the agent must read the complete selected skill body and
+triggered dependencies from that source. Names, descriptions and file presence
+do not prove reading. These are skill requirements; verify actual loading and
+behavior for the active entry. See the [selection guide](docs/skill-selection-guide.md)
+for source resolution, missing components and primitive/gate distinctions, and
+the unchanged [prompt examples](docs/guides/workflow-reference.md#prompt-examples).
 Review stays read-only unless the user asks for fixes.
 
 ### Quick start and installation
@@ -304,7 +325,12 @@ shared by both languages. For the plugin, use `codex plugin marketplace add .`,
 `codex plugin list --json`. The marketplace selects the narrow generated
 `plugin/codex-dev-skills/` package; it excludes untracked checkout state.
 Desktop uses the repository marketplace source. `/plugins` is the interactive
-CLI browser. Start a new chat/session after installation.
+CLI browser. Start a new chat/session after installation. Describe the work as
+in the natural-language examples above: fix a small bug, review without edits,
+clarify missing requirements, or continue the named saved task to its delivery
+boundary. Manual selection remains available, for example
+`Use code-review on the current working tree.` Selection grants no additional
+edit, delegation or external-write authority.
 
 For filesystem installation, choose `./install.sh install codex-review-workflow`
 or `./install.sh install codex-delivery-workflow`; dependencies are automatic.
