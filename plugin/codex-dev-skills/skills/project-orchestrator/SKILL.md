@@ -1,6 +1,6 @@
 ---
 name: project-orchestrator
-description: Shared project orchestration layer that routes bounded work across planning, implementation, review, continuation, handoff, or human gates.
+description: Coordinate a bounded project or review/fix closure when the next phase must be selected. Clear single-task requests use the matching focused skill directly.
 ---
 
 # project-orchestrator
@@ -71,9 +71,11 @@ prompts, task briefs, continuation prompts, or a sequential execution path.
 
 - If the task is already a single clear implementation slice, use `implementation-slice` semantics and do not over-plan.
 - If the user delegates a larger bounded delivery objective, select `project-delivery` as the outer workflow.
-- Select `loop-engineering` only for an explicitly requested durable loop or an
-  existing repo-owned loop spec, ledger, or production decision contract.
-  Ordinary delivery and candidate delegation do not require that entrypoint.
+- Select `loop-engineering` only when the user explicitly selects that workflow,
+  the current request continues an identified active loop, or applicable repo
+  policy requires it for this objective. A historical or unrelated loop spec,
+  ledger, or decision contract is not a trigger. Ordinary delivery and candidate
+  delegation do not require that entrypoint.
 - If already operating inside `project-delivery`, select the next phase or slice instead of routing back to `project-delivery`.
 - If source-of-truth or task order is unclear, use `planning`, `closure-triage`, or `task-continuation`.
 - Route routine code/mixed review to `code-review` and prose quality to

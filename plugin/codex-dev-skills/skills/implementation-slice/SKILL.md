@@ -1,6 +1,6 @@
 ---
 name: implementation-slice
-description: Implement a bounded software change after read-only inspection, then verify and inspect the diff.
+description: Fix a small bug or implement one clear bounded code change, then verify and inspect the diff. Use for implementation requests; review-only requests use code-review.
 ---
 
 # implementation-slice

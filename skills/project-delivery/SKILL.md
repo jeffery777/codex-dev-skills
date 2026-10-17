@@ -1,6 +1,6 @@
 ---
 name: project-delivery
-description: Carry a bounded software delivery objective through discovery, planning, implementation, verification, review, docs sync, and PR readiness or the next human gate.
+description: Complete a bounded multi-step development objective through implementation, verification, review, and handoff. Use for end-to-end delivery; one clear code change uses implementation-slice.
 ---
 
 # project-delivery

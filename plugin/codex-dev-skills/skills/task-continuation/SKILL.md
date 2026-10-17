@@ -1,6 +1,6 @@
 ---
 name: task-continuation
-description: Select the next safe task from durable project context, prepare a bounded continuation prompt or task brief, and stop at human gates when continuation is unsafe.
+description: Continue saved development work by reading current project state and selecting the next safe task or handoff. Use for continuation requests; preserve scope, ownership, and human gates.
 ---
 
 # task-continuation

@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Routine read-only review for code or mixed diffs, focused on bugs, regressions, risk, and missing tests.
+description: Review code or mixed changes read-only for bugs, regressions, risk, and missing tests. Use for ordinary review requests without editing or publishing.
 ---
 
 # code-review

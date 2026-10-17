@@ -1,6 +1,59 @@
 # Skill Selection Guide
 
-This compact guide helps new users choose the smallest skill or gate that matches the work in front of them.
+Describe the work in ordinary language. The task-performing agent, including
+the main coordinating agent, must select the smallest applicable existing
+workflow; you can still name a skill or method explicitly. This guide explains
+that contract and provides a reference for manual selection. It does not prove
+that a runtime exposed, loaded or executed a skill successfully.
+
+## Natural-Language Entry
+
+用日常語言描述工程目標，不必先背技能名稱。主／協調 Agent 與執行 worker 都依
+當前需求、專案規範及可用來源選最小工作流；明確指定技能或方法仍受尊重。
+以下四段須分開查核，不能把「有列出技能」當成「已按技能完成」。
+
+| Stage | Required evidence or action |
+| --- | --- |
+| Discovery | Identify current names, descriptions and source locators from the runtime or supported bounded discovery. Metadata is a selection hint, not a loaded body. |
+| Trigger | Match the actual objective and project rules to existing skill triggers. A clear task does not require an orchestration or Loop entry first. |
+| Selection | Choose the smallest applicable workflow and one accepted source. Honor explicit selections and resolve material source ambiguity before dependent work. |
+| Execution | Read that source's complete `SKILL.md` and triggered dependencies before dependent actions; retain verification, review, evidence and operation-authority requirements. |
+
+例如「修正這個小 bug」通常對應 `implementation-slice`；「只審查這份差異」對應
+唯讀 review primitive；缺實質需求先用 `planning` 釐清；有界交付與保存任務的
+接續則使用既有 delivery／continuation 工作流。只追問真正缺少的決策，不為
+已清楚的工作新增規劃關卡。Loop 只由明選、已識別的當前 loop 接續，或適用於
+本目標的專案規範觸發；無關歷史 loop 檔案不觸發。Deprecated aliases 保持
+explicit-only，手動指定時保留既有 routing。
+
+重名技能須依使用者選擇、有效專案指引及來源證據辨識，將本體與依賴綁在同一
+來源配置；不得拼接本體或因 basename 相同就改讀另一安裝。無法解決的實質來源
+歧義先澄清；缺必要技能、本體或依賴就回報精確缺口，停止相依步驟，只續行獨立
+且已授權工作。不自動安裝替代品，也不假稱讀過。未使用的選用技能不構成前置。
+選取技能不授予修改、委派或外寫權。
+
+For example, a small bug uses the focused implementation route; an ordinary
+review uses a read-only primitive. Clarify only material missing requirements
+through planning. Use existing delivery or continuation workflows for those
+objectives. Loop requires explicit selection, continuation of an identified
+active loop, or project policy for this objective; unrelated historical files
+are insufficient. Deprecated aliases remain explicit-only with their existing
+manual routes.
+
+For duplicate names, use the user's choice, applicable project instructions and
+source evidence to bind the body and dependencies to one source layout. Do not
+merge bodies or switch installations by basename. Clarify unresolved material
+ambiguity before dependent work. Report a missing required skill, body or
+dependency and stop that step; continue only independent authorized work. Do
+not install replacements or claim unread content was loaded. Unused optional
+skills are not prerequisites. Selection grants no edit, delegation or external
+write authority.
+
+The [shared selection contract](../policies/reusable-workflow-contract.md#default-skill-selection)
+defines these requirements. The [Issue #345 acceptance plan](plans/issue-345-natural-skill-selection.md)
+records proposed cases and partial historical observations, not complete runtime
+qualification. Keep discovery, selection, actual reads and subsequent effects
+separate in evidence; offline checks do not establish live behavior.
 
 ## 選擇契約與執行方式
 
@@ -30,7 +83,7 @@ This compact guide helps new users choose the smallest skill or gate that matche
 | A workflow needs a formal blocking decision before commit readiness, PR readiness, merge readiness, or an explicit repo-policy gate. | `code-review-gate` or `docs-review-gate` | Formal gate adapters route to the right review primitive, record evidence, and block on unresolved MUST-FIX findings. |
 | A branch needs base-to-head merge quality review. | `merge-review` | Reviews scope, DoD, verification and coherence for the exact content range. Provider enforcement follows the explicitly selected repo profile; pre-commit verdicts remain input only. |
 | A branch needs a formal readiness decision before PR handoff, merge readiness, or final approval. | `merge-readiness-gate` | Records exact-head content readiness separately from optional provider CI/receipt/readback requirements. |
-| The user explicitly selects a durable loop, or repo policy requires a loop spec, ledger and production decision contract. | `loop-engineering` | Routes from durable loop state through existing phase skills, verifies current evidence and stops at real human gates. |
+| The user explicitly selects a durable loop, the request continues an identified active loop, or repo policy requires it for the current objective. | `loop-engineering` | Routes from durable loop state through existing phase skills, verifies current evidence and stops at real human gates. |
 | Codex should classify the next safe action or run a bounded review/fix closure loop. | `project-orchestrator` | Routes between planning, implementation, docs update, review primitives, formal gates, continuation, or human decision. |
 | Codex should carry a bounded objective through discovery, implementation, verification, review, docs sync, and PR readiness. | `project-delivery` | Delivery workflow for multi-step but bounded objectives that still stop at the next human gate. |
 | A bounded milestone should be checked and advanced across repeated invocations until complete or blocked. | `milestone-continuation` | Upper-layer loop that checks task completion, selects the next ready task, and routes through existing workflows without owning runtime scheduling. |
