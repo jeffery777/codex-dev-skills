@@ -24,23 +24,31 @@ Issue #347 接入 Core PR #14 的安全政策、能力缺口與外部補查規�
 尚未執行／能力不可用分開記錄；外證及正式例外依固定 Core 綁定候選、
 檢查與交付動作。這是文件與接口接點採用，不證明 runtime 行為或公司政策實例。
 
+Issue #349 接入 Core PR #16 的前提檢驗、方案取捨與有界改善規則。
+既有 loading 入口導向完整 Core；planning、執行與 review 沿既有必讀鏈取得義務，
+不逐技能複製。既有 [integration review 報告](../templates/orchestration/integration-review-report.template.md)
+以適用的選填提示記前提／反證、採拒理由、保障／成本／殘餘風險、改善判讀及
+停止條件。簡單低風險工作可短述，不強制長表或 Loop。改善判讀不替代 findings
+disposition，不以共識、digest 或同意證明歸屬，也不豁免必要安全、review、
+scan、exact-head、保存或操作授權；本包不聲稱模型或 runtime 已遵循。
+
 <a id="固定來源與兩種-digest"></a>
 
 ## 固定來源與集合 digest
 
-來源為 jeffery777/engineering-workflow-core，本次固定 Core PR #14 merge
-3a3fd41e5fb994b4429a67d76d1b0655d972d150。Reviewed head
-139ef2ff29af70c7592910c2ec598a9943cc934f 與 merge 的 Git tree 相同。
-snapshot 明選全部十份 Markdown 與 LICENSE，11 檔共 225,894 bytes；原 UTF-8
+來源為 jeffery777/engineering-workflow-core，本次固定 Core PR #16 merge
+64b19bb5658432c42cd6a26aa357fd6b1d0fd857。Reviewed head
+8b546d8c27a3db416ef7021a01fdae3ffa572ec6 與 merge 的 Git tree 相同。
+snapshot 明選全部十份 Markdown 與 LICENSE，11 檔共 233,826 bytes；原 UTF-8
 bytes、Core 相對路徑與非 executable Git mode 100644 不變。正式契約繁體中文
 為權威，無翻譯替換，也不宣稱完整 ASD-STE100 符合性。
 
 | 身分 | 精確算法與值 |
 | --- | --- |
-| Consumer 十份 Markdown 集合 | 按 UTF-8 path bytes 排序；每列 path、TAB、原 bytes 的小寫 SHA256、LF，含最後 LF，不含 LICENSE；SHA256 cf5a027c818967a5c1bc46fabb36aba88b8264bde0c3ee81e2c4aff813d2a428 |
-| Core PR #14 十一檔 handoff 集合 | 同一 path/TAB/hash/LF 算法，但包含 LICENSE；SHA256 3ba2c2115bb582009c925148e0fda8708b4aed3d99f4eed6ed0e3b35b5246e2c；不放入十份 Markdown 欄位 |
+| Consumer 十份 Markdown 集合 | 按 UTF-8 path bytes 排序；每列 path、TAB、原 bytes 的小寫 SHA256、LF，含最後 LF，不含 LICENSE；SHA256 37ef5cbdfc9461b43dc76dcd1448943405daf8b6d2a77ee0c1857e7ba9088e15 |
+| Core PR #16 十一檔 handoff 集合 | 同一 path/TAB/hash/LF 算法，但包含 LICENSE；SHA256 66f8aa3ef0ca4c02a5143bddf6f3e25b3c68493601c59ebd05950864f0f48986；不放入十份 Markdown 欄位 |
 | Core LICENSE | 原 bytes SHA256 49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f |
-| Codex 11 檔集合 | 按 UTF-8 path 排序的 records，每筆只有 path/sha256/size_bytes/mode；UTF-8 JSON，keys 排序、compact separators、非 ASCII 不 escape、無 BOM/尾 LF；SHA256 輸入為 codex-core-document-set/v1、單一 NUL、JSON array；結果 348a1307aad1887476f9a483231299931e38f61e7488048a0211f39a67f6504a |
+| Codex 11 檔集合 | 按 UTF-8 path 排序的 records，每筆只有 path/sha256/size_bytes/mode；UTF-8 JSON，keys 排序、compact separators、非 ASCII 不 escape、無 BOM/尾 LF；SHA256 輸入為 codex-core-document-set/v1、單一 NUL、JSON array；結果 d0031ab685d6586ce89ed4ac0e53c45f0dca9720874d43019e5d54a0859fb98b |
 
 這些集合的算法或檔案範圍不同，不能互換。Lock 同時綁 repository、immutable
 merge revision、reviewed head/PR、版本 absent、Codex import baseline 與組裝契約。
@@ -66,6 +74,7 @@ aliases 沿原入口，不增加自動 lifecycle 或改既有模型／權限預�
 | --- | --- |
 | workflow 八階段 E02–E10、R19、D28 | engineering-workflow-contract／reusable 的 Shared Phases；原 delivery/planning/implementation/docs/review 技能 |
 | P1 之後新增的 wf-writing／plain-writing-update | engineering-workflow-contract 的 Documentation Writing And Review；docs-update／docs-review 檢查讀者、句意、術語、步驟、雙語語意及符合性宣稱；仍使用既有 review 報告 |
+| P1 之後新增的 wf-assumptions-and-options／assumptions-options-update | core-contract-loading 導讀完整 Core；既有 planning／執行／review 載入義務，integration-review-report 按需記前提、反證、方案與停止條件；不新增 gate 或逐技能規則副本 |
 | P1 之後新增的 security-policy-update／review-security／review-evidence | security-review-escalation-policy 引導既有報告記政策權責、檢查狀態、實際工具覆蓋與外查交接；必要 gate、不可豁免、獨立 review、exact-head 與操作授權保留，不新增機器化例外 enforcement |
 | P1 之後新增的 review-risk-timing／review-security | engineering/security/exact-head adapters；planning／implementation／delivery／orchestrator 在開始與變動重評，high-risk Markdown 不繞過早期深入與必要比例 scan；Merge Review 核對當前覆蓋與重用理由 |
 | P1 之後新增的 wf-evidence-lifecycle／auth-data／auth-destructive | artifact policy／cleanup／closure／continuation；既有報告保存原因、修正、版本、替代引用與原失敗覆蓋；保護未解／間歇／共享／仍引用證據，缺 retention 保留，實際不可逆刪除另須當下確認 |
@@ -169,22 +178,33 @@ exceptions to the candidate, check and delivery action under fixed Core. This
 document and adapter update does not prove runtime behavior or a company-policy
 instance.
 
+Issue #349 adopts Core PR #16's assumptions, options and bounded-improvement
+rules. The existing loader points to full Core; planning, execution and review
+receive the duties through their existing required-reading chain, without copies
+in each skill. Optional prompts in the existing [integration review report](../templates/orchestration/integration-review-report.template.md)
+record premises/counterevidence, option decisions, safeguards/cost/residual risk,
+improvement assessment and stop conditions. Simple low-risk work can be brief;
+no long table or Loop is required. Improvement assessment does not replace finding
+dispositions. Consensus, a digest or consent does not prove ownership. Required
+safety, review, scans, exact-head, retention and action authority remain. This
+adoption does not prove model or runtime conformance.
+
 <a id="fixed-source-and-separate-digests"></a>
 
 ### Fixed source and distinct set digests
 
-The source is `jeffery777/engineering-workflow-core`, Core PR #14 merge revision
-`3a3fd41e5fb994b4429a67d76d1b0655d972d150`. Reviewed head
-`139ef2ff29af70c7592910c2ec598a9943cc934f` has the same Git tree. All ten Markdown
-files and LICENSE are selected: 11 files, 225,894 bytes. Preserve original UTF-8
+The source is `jeffery777/engineering-workflow-core`, Core PR #16 merge revision
+`64b19bb5658432c42cd6a26aa357fd6b1d0fd857`. Reviewed head
+`8b546d8c27a3db416ef7021a01fdae3ffa572ec6` has the same Git tree. All ten Markdown
+files and LICENSE are selected: 11 files, 233,826 bytes. Preserve original UTF-8
 bytes, paths and Git mode `100644`. No translation replaces the Core snapshot.
 
 | Identity | Algorithm and SHA-256 |
 | --- | --- |
-| Consumer ten-Markdown set | Sort paths by UTF-8 bytes. Join each path, TAB, lowercase file SHA-256 and LF, including the final LF. Exclude LICENSE. `cf5a027c818967a5c1bc46fabb36aba88b8264bde0c3ee81e2c4aff813d2a428` |
-| Core PR #14 eleven-file handoff set | Use the same path/TAB/hash/LF algorithm, including LICENSE. `3ba2c2115bb582009c925148e0fda8708b4aed3d99f4eed6ed0e3b35b5246e2c`. Do not put this value in the ten-Markdown field. |
+| Consumer ten-Markdown set | Sort paths by UTF-8 bytes. Join each path, TAB, lowercase file SHA-256 and LF, including the final LF. Exclude LICENSE. `37ef5cbdfc9461b43dc76dcd1448943405daf8b6d2a77ee0c1857e7ba9088e15` |
+| Core PR #16 eleven-file handoff set | Use the same path/TAB/hash/LF algorithm, including LICENSE. `66f8aa3ef0ca4c02a5143bddf6f3e25b3c68493601c59ebd05950864f0f48986`. Do not put this value in the ten-Markdown field. |
 | Core LICENSE | Hash its original bytes. `49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f` |
-| Codex 11-file set | Sort records by UTF-8 path. Each record has only `path`, `sha256`, `size_bytes` and `mode`. Encode JSON with sorted keys, compact separators, unescaped Unicode, no BOM and no final LF. Hash UTF-8 `codex-core-document-set/v1`, one NUL byte and that JSON array. `348a1307aad1887476f9a483231299931e38f61e7488048a0211f39a67f6504a` |
+| Codex 11-file set | Sort records by UTF-8 path. Each record has only `path`, `sha256`, `size_bytes` and `mode`. Encode JSON with sorted keys, compact separators, unescaped Unicode, no BOM and no final LF. Hash UTF-8 `codex-core-document-set/v1`, one NUL byte and that JSON array. `d0031ab685d6586ce89ed4ac0e53c45f0dca9720874d43019e5d54a0859fb98b` |
 
 These sets have different algorithms or inventories. Do not substitute one digest for
 the other. The lock binds repository, immutable merge revision, reviewed head/PR,
@@ -213,6 +233,7 @@ their entries. No automatic lifecycle, model default or permission change follow
 | --- | --- |
 | Eight stages: E02–E10, R19, D28 | Engineering/reusable Shared Phases; existing delivery, planning, implementation, docs and review skills |
 | Post-P1 wf-writing/plain-writing-update | Engineering Documentation Writing And Review; docs-update/docs-review check readers, sentence meaning, terminology, steps, bilingual equivalence and conformance claims in the existing review report |
+| Post-P1 wf-assumptions-and-options/assumptions-options-update | Core loading points to full Core for existing planning/execution/review; integration-review-report records applicable premises, counterevidence, options and stop conditions. No new gate or per-skill rule copies |
 | Post-P1 security-policy-update/review-security/review-evidence | Security adapter connects existing reports to policy authority, check status, actual tool coverage and external handoff. Preserve required gates, non-waivable obligations, independent review, exact-head and action authority; add no machine-enforced exception mechanism |
 | Post-P1 review-risk-timing/review-security | Engineering/security/exact-head adapters; planning/implementation/delivery/orchestrator reassess at start/change. High-risk Markdown retains early deep review and necessary proportional scan; Merge Review checks current coverage and reuse rationale |
 | Post-P1 wf-evidence-lifecycle/auth-data/auth-destructive | Artifact policy/cleanup/closure/continuation; existing reports retain cause/fix/version/replacement and original-failure coverage. Protect unresolved/intermittent/shared/referenced records; absent retention means retain; actual irreversible deletion needs action-time confirmation |

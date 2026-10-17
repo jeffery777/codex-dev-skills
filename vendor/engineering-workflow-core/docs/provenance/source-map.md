@@ -2,7 +2,7 @@
 
 P1 的固定抽取來源是 `jeffery777/codex-dev-skills@993597561881d6ed8c552f9a18c59315015ad245`；本機來源只讀，未混用 draft #317/#324/#326。目的基線是 P0 merge `0815b74abe52d57efd032bd075e39c83c2ebf0d6`，工作包為 [Issue #3](https://github.com/jeffery777/engineering-workflow-core/issues/3)。核心的正式契約以繁體中文為權威；英文 identifiers 及 notices 原文不翻譯。全面雙語改造另包評估，不在 P1 宣稱 ASD-STE100 符合性。
 
-上述抽取身分與下列逐條對照記錄 P1 當時的來源及處置。P1 之後的使用者新增要求分開記於 [簡明寫作更新](#plain-writing-update)、[證據生命週期更新](#evidence-lifecycle-update)、[風險與審查時機更新](#risk-review-update) 與 [安全檢查政策更新](#security-policy-update)，不倒寫成原上游義務或 P1 當時已完成的符合性驗證。
+上述抽取身分與下列逐條對照記錄 P1 當時的來源及處置。P1 之後的使用者新增要求分開記於 [簡明寫作更新](#plain-writing-update)、[證據生命週期更新](#evidence-lifecycle-update)、[風險與審查時機更新](#risk-review-update)、[安全檢查政策更新](#security-policy-update) 與 [前提與改善取捨更新](#assumptions-options-update)，不倒寫成原上游義務或 P1 當時已完成的符合性驗證。
 
 以下按來源正文段落、每個編號／bullet 與表格義務列出穩定 ID、exact file/lines、disposition、目的章節及理由。標題／空行隨相鄰單位歸類；不是把整份來源都稱中立。`抽取` 保留義務並整理文字；`改寫` 保留共用義務，移除 runtime 具體映射或明示本次澄清；`接口保留` 不複製具體入口／路徑／程式；`不適用` 須有明確理由（本次主要來源沒有需要丟棄的共用義務）。合併文字不等於刪除義務。核心只保留 Markdown，所有可執行依賴留原接口或保留延後。
 
@@ -238,3 +238,13 @@ README 兩語僅導讀共用預設、有效專案專化與不可弱化的界線�
 [證據與續行](../../contracts/review-and-security.md#review-evidence) 在既有報告綁定外查 revision／diff／scope、所欠檢查、補查責任人或待指派、證據狀態與受影響交付；待指派不滿足 formal Deferred 或解除 gate。無相依安全開發可續，必要交付 gate 待匹配外證或有效政策明確允許、有權責者依核可流程對該候選／檢查／交付作成的正式例外；未執行仍不記 Passed。外證部分或不符不清全部缺口，變動依影響補查，新 head 完整 Merge Review 保留。
 
 本包只修改上述審查契約與本來源記錄；原 107 單位、固定來源／hash／notices、前包紀錄及 README 兩語維持。四個小量人類情境（有效 PoC 政策、公司強制衝突、必要工具缺失與外查、外證不符）沿既有 review 報告記結果，不新增框架、skill、schema、validator 或 receipt 制度。文件不證明公司政策實例、外查結果或接口已採用；本包不實際聯絡外部或傳資料、不改 consumer／pin／安裝／全域設定，不執行 runtime、歷史清理或部署，並停在未提交候選。
+
+<a id="assumptions-options-update"></a>
+
+## P1 之後新增：檢驗前提、比較複雜度與停止改善
+
+[Issue #15](https://github.com/jeffery777/engineering-workflow-core/issues/15) 依 2026-10-17 新工作包需求，將有效章程 §9A.7–10、§10.6 的必要修正／值得改善／維持現狀／人類決策、有界評估與停止條件接入既有契約。前提反證、歸屬與同意的區別、複雜度及管理／人工選項是本包進一步澄清，不倒寫為原 107 單位或舊章程逐字原文；不複製外部整套方法。原 evidence／proposal／evaluation 的 [涵蓋評估](#improvement-coverage) 保留，不改其 schema、評分或 promotion。
+
+[工作流](../../contracts/workflow.md#wf-assumptions-and-options) 承載適用觸發、前提／反證／信任邊界、相關方案採拒理由、獨特保障與成本，以及管理措施的實際責任、可驗證前提／維持方式及失效停止／交接。無可信前提時縮限相依自動化，不以同源校驗、timestamp、manifest、digest 或人工同意製造歸屬事實；保留無相依安全工作及不可弱化保障。[獨立審查](../../contracts/review-and-security.md#review-independent) 沿既有報告檢查上述判斷；不以停止改善關閉必要 gate，簡單低風險任務不強制長表或 Loop。README 兩語僅導讀，不聲稱模型／接口已遵循或完整 ASD-STE100 符合性。
+
+本包僅修改上述四檔；其餘七檔 bytes／mode、原 107 單位、固定來源／hash／notices 及先前包歷史保留。六個有限情境（普通 bug、共同錯誤前提、未知歸屬、盤點前改寫、重複防護、DoD 已滿後的非阻擋最佳化）只做文件／靜態走查，非模型行為、runtime、VM 工具或公司案例驗收。不新增 tracked 檔、schema、executor、validator、gate、router 或 callback，不修改接口／consumer／pin／安裝／全域設定，不啟用 memory/hooks/schedulers，不進行外部 render、live 測試、歷史清理、release 或部署。本階段停在未提交候選與審查證據，後續交付須另核授權。

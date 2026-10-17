@@ -66,6 +66,13 @@ additional reading and project overlays.
 | Existing change request, changed head or merge content readiness | Full [exact-head/evidence](../vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md) and applicable review/security |
 | Source attribution or obligation mapping | [source-map](../vendor/engineering-workflow-core/docs/provenance/source-map.md), [upstream notices](../vendor/engineering-workflow-core/docs/provenance/upstream-notices.md), and [Core LICENSE](../vendor/engineering-workflow-core/LICENSE) |
 
+For assumptions, option comparison and bounded improvement, follow
+Core [wf-assumptions-and-options](../vendor/engineering-workflow-core/contracts/workflow.md#wf-assumptions-and-options)
+within the full workflow and applicable review/security reading above. Record
+applicable reasoning in existing plans/reports; simple low-risk work can be brief.
+Report prompts do not replace finding dispositions, establish resource ownership,
+waive required gates or grant action authority.
+
 Core remains Markdown only. Codex keeps tools, validators, skills, model/effort,
 qualification/profile/session, packaging and installation. Each surface proves
 its own effective capability; loading these files grants no runtime qualification.

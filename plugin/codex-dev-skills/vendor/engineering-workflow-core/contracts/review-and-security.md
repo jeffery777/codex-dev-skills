@@ -12,6 +12,8 @@
 
 Reviewer 依 DoD、spec、plan、當前內容與適用 gate 審查，先報風險、缺陷、regressions、漏驗證與 blocker，附檔案／位置、來源證據、影響及阻擋理由；測試通過不代表無 blocker。主代理讀回並驗證整合成果，子代理摘要只是協調資料。
 
+符合 [前提與方案取捨的觸發](workflow.md#wf-assumptions-and-options) 時，reviewer 獨立檢查共同前提的支持來源、可推翻的反證、信任邊界，以及方案的獨特保障、維護／審查成本與殘餘風險。共識不取代事實；管理或人工措施須有實際責任、可驗證前提、維持與失效停止／交接方式，不能以同意代替資源歸屬或破壞性前置。確認簡化未弱化必要安全、獨立性、授權、exact-head、完整性與保存；對立證據及 unknown 沿既有 findings／報告保留，簡單低風險任務不要求無關長清單。
+
 <a id="review-findings"></a>
 
 ## Findings、修正與 formal gate
@@ -59,6 +61,8 @@ Pre-commit verdict 只證明所檢內容；已有 change request 後不能直接
 ## 證據與續行
 
 審查與 gate 明列當前 revision/diff、scope、來源假設、DoD、已執行／略過命令與結果、findings/dispositions、剩餘風險及驗證限制，即使零 findings 亦保留綁定資訊。可機械查核的事實使用 deterministic checks；人或模型審查不可替代，tests 也不可替代語意一致性審查。
+
+適用的 [有界改善判讀](workflow.md#wf-assumptions-and-options) 沿同一報告記前提／反證、採拒方案、必要修正或後續／維持現狀／待決理由與停止條件。區分正式需求未達與非阻擋最佳化；研究預算或停止改善不能關閉必要 gate，也不新增報告制度。
 
 必要檢查待外部補查時，在既有報告記 exact revision／diff／scope、所欠檢查、原因與 coverage、補查責任人（或明示待指派）、證據位置／待補狀態及受影響的交付動作。「待指派」不滿足正式 Deferred finding 的必填後續資訊，也不解除 gate。讀回外證後逐項核對候選與 scope；revision／scope 不符或只覆蓋部分時，不關閉全部缺口，僅重用可證匹配的部分，依影響補查並保留新 head 完整 Merge Review。
 
