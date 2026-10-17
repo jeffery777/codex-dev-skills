@@ -9,6 +9,7 @@ STATE_DIR="$STATE_BASE/codex-dev-skills"
 STATE_FILE="$STATE_DIR/installed.jsonl"
 MANAGED_BACKUP_ROOT="$STATE_DIR/backups/v1"
 TRANSACTION_LOCK_DIR=""
+TRANSACTION_DATA_DIR=""
 TRANSACTION_LOCK_HELD=0
 TRANSACTION_APPLY_ACTIVE=0
 PROFILE_STATE_FILE=""
@@ -20,6 +21,12 @@ CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
 VERSION="0.34.0"
+SOURCE_DIR="$ROOT_DIR"
+PREVIOUS_SOURCE_DIR=""
+MANAGED_PLAN=""
+MANAGED_GROUPS=""
+MANAGED_RECEIPT=""
+MANAGED_ACTION="update"
 
 case "$CODEX_DEV_SKILLS_TARGET" in
   legacy) DEFAULT_CODEX_SKILLS_DIR="$DEFAULT_CODEX_LEGACY_SKILLS_DIR" ;;
@@ -41,6 +48,8 @@ Usage:
   ./install.sh update <group>
   ./install.sh update --all
   ./install.sh update <group> --force
+  ./install.sh update --all --source /trusted/fixed-checkout
+  ./install.sh update --all --previous-source /trusted/previous-checkout
   ./install.sh status
   ./install.sh diff <group>
   ./install.sh diff --all
@@ -72,6 +81,12 @@ If the codex-dev-skills plugin is installed, remove either the plugin or the
 filesystem installation before using install/update. The installer checks the
 documented `codex plugin list --json` surface when the active CLI supports it.
 The codex-agent-profiles group is never installed by --all or codex-dev-skills.
+Install/update accept --source. Legacy metadata-only receipts cannot prove
+target ownership; --previous-source stops with a migration limitation.
+Only reviewed source catalogs and exact Git payloads are supported. No download
+or old source code execution occurs. Updates include every already-managed group.
+Custom, unknown, and unmanaged content is preserved even with --force.
+See docs/installer-source-integrity.md for receipt, downgrade and recovery limits.
 USAGE
 }
 
@@ -335,7 +350,8 @@ safe_backup_path() {
   local target_root="$1" kind="$2" rel="$3" backup_root digest backup
   reject_suspicious_relpath "$rel"
   digest="$(sha256_text "$target_root")" || return 1
-  backup_root="$(absolute_path "$MANAGED_BACKUP_ROOT")/$digest/$kind"
+  [[ -n "$TRANSACTION_DATA_DIR" ]] || die "Missing transaction recovery directory"
+  backup_root="$TRANSACTION_DATA_DIR/originals/$digest/$kind"
   backup="$backup_root/$rel.bak"
   reject_symlink_components "$backup"
   reject_unsafe_parent_components "$backup"
@@ -672,6 +688,38 @@ validate_managed_backup_root() {
   standard_agents="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$DEFAULT_CODEX_AGENTS_SKILLS_DIR")" || return 1
   standard_legacy="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$DEFAULT_CODEX_LEGACY_SKILLS_DIR")" || return 1
   canonical_root="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$raw_root")" || return 1
+  python3 - "$canonical_root" "$STATE_DIR" "$HOME" "$CODEX_SKILLS_DIR" "$CODEX_TEMPLATES_DIR" "$CODEX_CUSTOM_AGENTS_DIR" "$ROOT_DIR" "$SOURCE_DIR" "$PWD" <<'PY' || return 1
+import os
+import sys
+from pathlib import Path
+
+staging, state, home, skills, templates, profiles, *contexts = sys.argv[1:]
+suffixes = (".agents/skills", ".agents/commands", ".codex/skills", ".codex/agents", ".codex/plugins",
+            ".grok/skills", ".grok/commands", ".grok/plugins", ".grok/bundled/skills",
+            ".claude/skills", ".claude/commands", ".claude/plugins", ".cursor/skills")
+anchors = {Path(home)}
+for context in contexts:
+    path = Path(os.path.realpath(context))
+    anchors.update((path, *path.parents))
+protected = [os.path.realpath(anchor / suffix) for anchor in anchors for suffix in suffixes]
+protected.extend(os.path.realpath(path) for path in (skills, templates, profiles))
+protected.append(os.path.realpath("/etc/codex/skills"))
+# Inspect only direct discovery entries, including aliases into state. This is
+# bounded known-root coverage, not a scan of arbitrary configured search paths.
+aliases = []
+for root in set(protected):
+    directory = Path(root)
+    if directory.is_dir():
+        entries = list(directory.iterdir())
+        if len(entries) > 10000:
+            raise SystemExit(f"[ERROR] Too many discovery entries to check safely: {root}")
+        aliases.extend(os.path.realpath(entry) for entry in entries if entry.is_symlink())
+protected.extend(aliases)
+for candidate in (os.path.realpath(staging), os.path.realpath(state)):
+    for root in protected:
+        if os.path.commonpath((candidate, root)) in (candidate, root):
+            raise SystemExit(f"[ERROR] Installer state/staging overlaps a known discovery root: {candidate} and {root}")
+PY
   for candidate in "$repo" "$skills" "$templates" "$profiles" "$standard_agents" "$standard_legacy"; do
     if path_is_within "$canonical_root" "$candidate" || path_is_within "$candidate" "$canonical_root"; then
       die "Managed backup root overlaps a protected repository or target boundary: $raw_root and $candidate"
@@ -740,6 +788,10 @@ acquire_transaction_lock() {
     release_transaction_lock || true
     return 1
   fi
+  TRANSACTION_DATA_DIR="$(mktemp -d "$MANAGED_BACKUP_ROOT/transaction.XXXXXX")" || {
+    release_transaction_lock || true
+    return 1
+  }
 }
 
 preflight_core_destination() {
@@ -755,6 +807,10 @@ preflight_core_destination() {
 
 verify_installed_core() {
   local requested="$1" group
+  if [[ -n "$MANAGED_PLAN" && " $MANAGED_GROUPS " != *" shared-review-gates "* ]]; then return 0; fi
+  if [[ -n "$MANAGED_PLAN" ]] && ! printf '%s' "$MANAGED_PLAN" | python3 -c 'import json,sys; raise SystemExit(0 if json.load(sys.stdin)["receipt"]["source"]["core"] else 1)'; then
+    return 0
+  fi
   for group in $(expand_groups "$requested"); do
     if [[ "$group" == "shared-review-gates" ]]; then
       PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/scripts/validate-core-contract-snapshot.py" \
@@ -1100,8 +1156,8 @@ preflight_uninstall_cross_root() {
 
 preflight_uninstall_same_root() {
   local requested="$1" selected group dependent protected=0
-  selected="$(selected_uninstall_groups "$requested")"
-  init_agent_target
+  selected="$(selected_uninstall_groups "$requested" | tr '\n' ' ')"
+  preflight_agent_target
   for group in $selected; do
     for dependent in $(all_groups); do
       case " $selected " in
@@ -1422,38 +1478,7 @@ transaction_reset() {
 }
 
 artifact_identity() {
-  local path="$1" expected="$2"
-  python3 - "$path" "$expected" <<'PY'
-import hashlib
-import os
-import stat
-import sys
-
-path, expected = sys.argv[1:]
-if not os.path.lexists(path):
-    print("missing")
-    raise SystemExit(0)
-
-digest = hashlib.sha256()
-entries = [(".", path)]
-if expected == "directory":
-    for root, dirs, files in os.walk(path, followlinks=False):
-        dirs.sort()
-        files.sort()
-        for name in dirs + files:
-            child = os.path.join(root, name)
-            entries.append((os.path.relpath(child, path), child))
-for relative, candidate in entries:
-    st = os.lstat(candidate)
-    digest.update(relative.encode("utf-8", "surrogateescape") + b"\0")
-    digest.update(f"{st.st_dev}:{st.st_ino}:{st.st_mode}:{st.st_uid}:{st.st_size}:{st.st_mtime_ns}".encode())
-    digest.update(b"\0")
-    if stat.S_ISREG(st.st_mode):
-        with open(candidate, "rb") as stream:
-            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-                digest.update(chunk)
-print(digest.hexdigest())
-PY
+  python3 "$ROOT_DIR/scripts/installer-inventory.py" identity "$1" "$2"
 }
 
 path_identity() {
@@ -1531,17 +1556,14 @@ transaction_has_destination() {
 
 transaction_add_artifact() {
   local src="$1" dst="$2" label="$3" expected="$4" target_root="$5" kind="$6" rel="$7"
-  local backup="" identity index
-  checked_validator validate_source_artifact "$src" "$expected" "$label" || return 1
+  local backup="" identity index verified_identity="$8"
+  if [[ -n "$src" ]]; then
+    checked_validator validate_source_artifact "$src" "$expected" "$label" || return 1
+  fi
   checked_validator validate_existing_artifact "$dst" "$expected" "$label" || return 1
   identity="$(artifact_identity "$dst" "$expected")" || return 1
+  [[ "$identity" == "$verified_identity" ]] || { warn "Verified installed identity changed before transaction build: $dst"; return 1; }
   if [[ -e "$dst" ]]; then
-    case "$expected" in
-      directory)
-        diff -rq -x '__pycache__' -x '*.pyc' -x '.DS_Store' "$src" "$dst" >/dev/null 2>&1 && return 0
-        ;;
-      file) diff -q "$src" "$dst" >/dev/null 2>&1 && return 0 ;;
-    esac
     backup="$(safe_backup_path "$target_root" "$kind" "$rel")" || return 1
   fi
   transaction_has_destination "$dst" && return 0
@@ -1564,47 +1586,54 @@ transaction_add_artifact() {
 }
 
 build_force_update_transaction() {
-  local requested="$1" group skill rel target_rel item src dst
+  local requested="$1" operation kind rel expected source src dst target_root records verified_identity
   transaction_reset || return 1
-  for group in $(expand_groups "$requested"); do
-    for skill in $(group_skills "$group"); do
-      src="$ROOT_DIR/skills/$skill"
-      dst="$(safe_path_under_root "$CODEX_SKILLS_DIR" "$skill")" || return 1
-      transaction_add_artifact "$src" "$dst" "skill $skill" directory \
-        "$CODEX_SKILLS_DIR" skills "$skill" || return 1
-    done
-    for rel in $(group_templates "$group"); do
-      target_rel="$(template_target "$rel")"
-      src="$ROOT_DIR/$rel"
-      dst="$(safe_path_under_root "$CODEX_TEMPLATES_DIR" "$target_rel")" || return 1
-      transaction_add_artifact "$src" "$dst" "template $target_rel" file \
-        "$CODEX_TEMPLATES_DIR" templates "$target_rel" || return 1
-    done
-    for item in $(group_agent_profiles "$group"); do
-      target_rel="$(profile_target "$item")"
-      src="$ROOT_DIR/$item"
-      dst="$(safe_path_under_root "$CODEX_CUSTOM_AGENTS_DIR" "$target_rel")" || return 1
-      transaction_add_artifact "$src" "$dst" "agent profile $target_rel" file \
-        "$CODEX_CUSTOM_AGENTS_DIR" agent-profiles "$target_rel" || return 1
-    done
-  done
+  records="$(printf '%s' "$MANAGED_PLAN" | python3 "$ROOT_DIR/scripts/installer-inventory.py" emit)" || return 1
+  [[ -n "$records" ]] || return 0
+  while IFS=$'\t' read -r operation kind rel expected source verified_identity; do
+    case "$kind" in
+      skills) target_root="$CODEX_SKILLS_DIR" ;;
+      templates) target_root="$CODEX_TEMPLATES_DIR" ;;
+      agent_profiles) target_root="$CODEX_CUSTOM_AGENTS_DIR" ;;
+      *) die "Unsupported managed artifact kind: $kind" ;;
+    esac
+    dst="$(safe_path_under_root "$target_root" "$rel")" || return 1
+    src="$SOURCE_DIR/$source"
+    if [[ "$operation" == "retire" ]]; then src=""; fi
+    transaction_add_artifact "$src" "$dst" "$kind $rel" "$expected" \
+      "$target_root" "$kind" "$rel" "$verified_identity" || return 1
+  done <<< "$records"
 }
 
 cleanup_transaction_staging() {
-  local index staging cleanup_failed=0
+  local index staging candidate identity cleanup_failed=0
+  for ((index=0; index<${#TX_BACKUPS[@]}; index++)); do
+    if [[ -n "${TX_BACKUPS[$index]}" && -e "${TX_BACKUPS[$index]}" ]]; then
+      # A failed rollback must retain both originals and staged evidence.
+      return 0
+    fi
+  done
   for ((index=0; index<${#TX_STAGING[@]}; index++)); do
     staging="${TX_STAGING[$index]}"
     [[ -n "$staging" && -d "$staging" ]] || continue
-    if ! rm -rf "$staging"; then
-      warn "Failed to clean transaction staging directory: $staging"
-      cleanup_failed=1
-    fi
+    [[ "${TX_STATUS[$index]}" != "recovery-failed" ]] || continue
+    for candidate in "$staging/value" "$staging/value.rollback"; do
+      [[ -e "$candidate" || -L "$candidate" ]] || continue
+      identity="$(artifact_identity "$candidate" "${TX_EXPECTED[$index]}")" || identity="unreadable"
+      if [[ "$identity" != "${TX_REPLACEMENT_IDENTITIES[$index]}" ]]; then
+        warn "Preserving unknown or changed transaction staging: $candidate"
+        cleanup_failed=1
+      else
+        rm -rf "$candidate" || cleanup_failed=1
+      fi
+    done
+    rmdir "$staging" 2>/dev/null || { warn "Staging cleanup pending: $staging"; cleanup_failed=1; }
   done
   return "$cleanup_failed"
 }
 
 cleanup_receipt_staging() {
-  local index staging cleanup_failed=0
+  local index staging candidate identity expected cleanup_failed=0
   for ((index=0; index<${#RX_STAGING[@]}; index++)); do
     staging="${RX_STAGING[$index]}"
     [[ -n "$staging" && -d "$staging" ]] || continue
@@ -1612,10 +1641,19 @@ cleanup_receipt_staging() {
       warn "Preserving receipt recovery directory for manual recovery: $staging"
       continue
     fi
-    if ! rm -rf "$staging"; then
-      warn "Failed to clean receipt staging directory: $staging"
-      cleanup_failed=1
-    fi
+    for candidate in "$staging/value" "$staging/value.failed" "$staging/original"; do
+      [[ -e "$candidate" || -L "$candidate" ]] || continue
+      expected="${RX_REPLACEMENT_IDENTITIES[$index]}"
+      [[ "$candidate" != "$staging/original" ]] || expected="${RX_IDENTITIES[$index]}"
+      identity="$(artifact_identity "$candidate" file)" || identity="unreadable"
+      if [[ "$identity" != "$expected" ]]; then
+        warn "Preserving unknown or changed receipt staging: $candidate"
+        cleanup_failed=1
+      else
+        rm -f "$candidate" || cleanup_failed=1
+      fi
+    done
+    rmdir "$staging" 2>/dev/null || { warn "Receipt cleanup pending: $staging"; cleanup_failed=1; }
   done
   return "$cleanup_failed"
 }
@@ -1635,7 +1673,7 @@ intended_profile_path() {
 
 stage_receipt_file() {
   local path="$1" label="$2" mode="$3" expanded="$4"
-  local index parent staging staged old group item target_rel intended digest ts
+  local index parent staging staged old group item target_rel intended digest ts verified_identity
   parent="$(dirname "$path")"
   ensure_owned_safe_directory "$parent" "$label parent" || return 1
   if [[ -e "$path" || -L "$path" ]]; then
@@ -1652,10 +1690,18 @@ stage_receipt_file() {
   RX_STAGED[$index]="$staged"
   RX_OLD[$index]="$old"
   RX_STATUS[$index]="pending"
-  RX_IDENTITIES[$index]="$(artifact_identity "$path" file)" || return 1
+  verified_identity="$(printf '%s' "$MANAGED_PLAN" | python3 -c 'import json,sys; print(json.load(sys.stdin)["receipt_identities"][sys.argv[1]])' "$path")" || return 1
+  RX_IDENTITIES[$index]="$verified_identity"
+  if [[ "$(artifact_identity "$path" file)" != "$verified_identity" ]]; then
+    warn "Verified receipt identity changed before staging: $path"
+    return 1
+  fi
   RX_REPLACEMENT_IDENTITIES[$index]=""
   RX_PARENT_IDENTITIES[$index]="$(path_identity "$parent")" || return 1
   case "$mode" in
+    inventory)
+      printf '%s' "$MANAGED_PLAN" | python3 "$ROOT_DIR/scripts/installer-inventory.py" receipt > "$staged" || return 1
+      ;;
     installed-state)
       if [[ -e "$path" ]]; then
         cp "$path" "$staged" || return 1
@@ -1664,13 +1710,13 @@ stage_receipt_file() {
       fi
       ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)" || return 1
       for group in $expanded; do
-        printf '{"repo":"codex-dev-skills","version":"%s","action":"update","group":"%s","target_mode":"%s","installed_at":"%s"}\n' \
-          "$VERSION" "$group" "$CODEX_DEV_SKILLS_TARGET" "$ts" >> "$staged" || return 1
+        printf '{"repo":"codex-dev-skills","version":"%s","action":"%s","group":"%s","target_mode":"%s","installed_at":"%s"}\n' \
+          "$VERSION" "$MANAGED_ACTION" "$group" "$CODEX_DEV_SKILLS_TARGET" "$ts" >> "$staged" || return 1
       done
       ;;
     profile-state)
       (umask 077; : > "$staged") || return 1
-      for item in $(group_agent_profiles codex-agent-profiles); do
+      for item in $(if [[ " $MANAGED_GROUPS " == *" codex-agent-profiles "* ]]; then group_agent_profiles codex-agent-profiles; fi); do
         target_rel="$(profile_target "$item")"
         intended="$(intended_profile_path "$target_rel")" || return 1
         digest="$(file_sha256 "$intended")" || return 1
@@ -1685,14 +1731,16 @@ stage_receipt_file() {
 }
 
 stage_force_update_receipts() {
-  local expanded="$1" group has_profiles=0
+  local expanded="$1" has_profiles
   stage_receipt_file "$STATE_FILE" "installer state receipt" installed-state "$expanded" || {
     cleanup_receipt_staging || true
     return 1
   }
-  for group in $expanded; do
-    [[ "$group" != "codex-agent-profiles" ]] || has_profiles=1
-  done
+  stage_receipt_file "$MANAGED_RECEIPT" "managed inventory receipt" inventory "$expanded" || {
+    cleanup_receipt_staging || true
+    return 1
+  }
+  has_profiles="$(printf '%s' "$MANAGED_PLAN" | python3 -c 'import json,sys; plan=json.load(sys.stdin); print(int(sys.argv[1] in plan["receipt_identities"]))' "$PROFILE_STATE_FILE")" || return 1
   if [[ "$has_profiles" -eq 1 ]]; then
     stage_receipt_file "$PROFILE_STATE_FILE" "agent profile state receipt" profile-state "$expanded" || {
       cleanup_receipt_staging || true
@@ -1777,6 +1825,11 @@ apply_force_update_receipts() {
     if [[ "$parent_identity" != "${RX_PARENT_IDENTITIES[$index]}" ||
           "$current_identity" != "${RX_IDENTITIES[$index]}" ]]; then
       warn "$label identity changed before apply: $path"
+      recover_receipt_failure "$((index - 1))"
+      return 1
+    fi
+    if [[ "$(artifact_identity "$staged" file)" != "${RX_REPLACEMENT_IDENTITIES[$index]}" ]]; then
+      warn "Staged receipt identity changed before apply: $staged"
       recover_receipt_failure "$((index - 1))"
       return 1
     fi
@@ -1865,18 +1918,7 @@ stage_force_update_transaction() {
       cleanup_transaction_staging || true
       return 1
     }
-    staging_parent="$destination_parent"
-    if [[ "${TX_KINDS[$index]}" == "templates" && "${TX_RELS[$index]}" == orchestration/core/* ]]; then
-      # The fixed Core inventory cannot contain transaction-owned staging.
-      # Keep it in a verified sibling on the same filesystem for rename/rollback.
-      staging_parent="$(safe_path_under_root "$target_root" orchestration)" || {
-        cleanup_transaction_staging || true
-        return 1
-      }
-      ensure_owned_safe_directory "$staging_parent" "$label staging parent" || {
-        cleanup_transaction_staging || true
-        return 1
-      }
+    staging_parent="$TRANSACTION_DATA_DIR"
       destination_device="$(path_device "$destination_parent")" || {
         cleanup_transaction_staging || true
         return 1
@@ -1886,11 +1928,10 @@ stage_force_update_transaction() {
         return 1
       }
       if [[ "$destination_device" != "$staging_device" ]]; then
-        warn "Refusing cross-filesystem Core staging for $label: $dst"
+        warn "Refusing cross-filesystem transaction staging for $label: $dst"
         cleanup_transaction_staging || true
         return 1
       fi
-    fi
     staging="$(mktemp -d "$staging_parent/.codex-dev-skills.$(basename "$dst").tmp.XXXXXX")" || {
       cleanup_transaction_staging || true
       return 1
@@ -1898,7 +1939,10 @@ stage_force_update_transaction() {
     staged="$staging/value"
     TX_STAGING[$index]="$staging"
     TX_STAGED[$index]="$staged"
-    if [[ "$expected" == "directory" ]]; then
+    if [[ -z "$src" ]]; then
+      # Retirement uses the same verified rename and rollback as replacement.
+      continue
+    elif [[ "$expected" == "directory" ]]; then
       mkdir "$staged" || {
         cleanup_transaction_staging || true
         return 1
@@ -2018,7 +2062,12 @@ apply_force_update_transaction() {
       recover_artifact_failure "$((index - 1))"
       return 1
     fi
-    if ! checked_validator validate_source_artifact "$staged" "$expected" "staged $label"; then
+    if [[ -n "${TX_SRCS[$index]}" ]] && [[ "$(artifact_identity "$staged" "$expected")" != "${TX_REPLACEMENT_IDENTITIES[$index]}" ]]; then
+      warn "Staged artifact identity changed before apply: $staged"
+      recover_artifact_failure "$((index - 1))"
+      return 1
+    fi
+    if [[ -n "${TX_SRCS[$index]}" ]] && ! checked_validator validate_source_artifact "$staged" "$expected" "staged $label"; then
       warn "Staged artifact became unsafe before applying $label: $staged"
       recover_artifact_failure "$((index - 1))"
       return 1
@@ -2046,6 +2095,11 @@ apply_force_update_transaction() {
         recover_artifact_failure "$((index - 1))"
         return 1
       fi
+    fi
+    if [[ -z "${TX_SRCS[$index]}" ]]; then
+      # The verified original remains outside discovery until the receipt commits.
+      TX_STATUS[$index]="backed-up"
+      continue
     fi
     if [[ -e "$dst" || -L "$dst" ]]; then
       if [[ -n "$backup" ]]; then
@@ -2078,8 +2132,10 @@ report_force_update_transaction() {
   for ((index=0; index<${#TX_SRCS[@]}; index++)); do
     backup="${TX_BACKUPS[$index]}"
     label="${TX_LABELS[$index]}"
-    if [[ -n "$backup" ]]; then
-      ok "updated $label (managed backup: $backup)"
+    if [[ -z "${TX_SRCS[$index]}" ]]; then
+      ok "retired $label"
+    elif [[ -n "$backup" ]]; then
+      ok "updated $label"
     else
       ok "new $label"
     fi
@@ -2087,12 +2143,25 @@ report_force_update_transaction() {
 }
 
 force_update_transaction() {
-  local requested="$1" expanded group
-  expanded="$(expand_groups "$requested")"
+  local requested="$1" expanded group index
+  expanded="$MANAGED_GROUPS"
+  preflight_nonforce_state "$requested" || return 1
+  preflight_nonforce_receipt "$MANAGED_RECEIPT" "managed inventory receipt" || return 1
   build_force_update_transaction "$requested" || return 1
   if [[ "${#TX_SRCS[@]}" -gt 0 ]]; then
     stage_force_update_transaction || return 1
   fi
+  if ! {
+    printf '%s\n' "$MANAGED_PLAN"
+    for ((index=0; index<${#TX_SRCS[@]}; index++)); do
+      [[ -n "${TX_SRCS[$index]}" ]] || continue
+      printf '%s\t%s\t%s\n' "${TX_KINDS[$index]}" "${TX_RELS[$index]}" "${TX_STAGED[$index]}"
+    done
+  } | python3 "$ROOT_DIR/scripts/installer-inventory.py" verify-staged; then
+    cleanup_transaction_staging || true
+    return 1
+  fi
+  if [[ "$MANAGED_ACTION" == "uninstall" ]]; then expanded="$(selected_uninstall_groups "$requested")"; fi
   stage_force_update_receipts "$expanded" || {
     cleanup_transaction_staging || true
     return 1
@@ -2103,7 +2172,7 @@ force_update_transaction() {
     cleanup_receipt_staging || true
     return 1
   fi
-  if ! verify_installed_core "$requested"; then
+  if ! verify_managed_payload || ! verify_installed_core "$requested"; then
     begin_recovery_critical_section
     if [[ "${#TX_SRCS[@]}" -gt 0 ]]; then
       rollback_force_update_transaction "$(( ${#TX_SRCS[@]} - 1 ))" || true
@@ -2125,14 +2194,118 @@ force_update_transaction() {
     end_recovery_critical_section
     return 1
   fi
+  if ! verify_managed_payload || ! verify_managed_receipts; then
+    begin_recovery_critical_section
+    rollback_force_update_receipts "$(( ${#RX_STATUS[@]} - 1 ))" || true
+    if [[ "${#TX_SRCS[@]}" -gt 0 ]]; then
+      rollback_force_update_transaction "$(( ${#TX_SRCS[@]} - 1 ))" || true
+    fi
+    TRANSACTION_APPLY_ACTIVE=0
+    end_recovery_critical_section
+    return 1
+  fi
   TRANSACTION_APPLY_ACTIVE=0
-  cleanup_transaction_staging || warn "Update committed, but transaction staging cleanup is incomplete."
-  cleanup_receipt_staging || warn "Update committed, but receipt staging cleanup is incomplete."
+  discard_verified_transaction_originals || { warn "Payload and receipts committed; original cleanup pending."; return 1; }
+  cleanup_transaction_staging || { warn "Payload/receipts committed; staging cleanup pending."; return 1; }
+  cleanup_receipt_staging || { warn "Payload/receipts committed; receipt cleanup pending."; return 1; }
   report_force_update_transaction
   for group in $expanded; do
-    info "Updating $group"
+    info "$MANAGED_ACTION $group"
     [[ "$group" != "codex-delivery-workflow" ]] || report_loop_cli_dependency
   done
+}
+
+verify_managed_payload() {
+  printf '%s' "$MANAGED_PLAN" | python3 "$ROOT_DIR/scripts/installer-inventory.py" verify
+}
+
+verify_managed_receipts() {
+  local index identity
+  for ((index=0; index<${#RX_PATHS[@]}; index++)); do
+    identity="$(artifact_identity "${RX_PATHS[$index]}" file)" || return 1
+    [[ "$identity" == "${RX_REPLACEMENT_IDENTITIES[$index]}" ]] || return 1
+  done
+  printf '%s' "$MANAGED_PLAN" | python3 "$ROOT_DIR/scripts/installer-inventory.py" receipt | cmp -s - "$MANAGED_RECEIPT"
+}
+
+discard_verified_transaction_originals() {
+  local index backup identity
+  for ((index=0; index<${#TX_BACKUPS[@]}; index++)); do
+    backup="${TX_BACKUPS[$index]}"
+    [[ -n "$backup" && -e "$backup" ]] || continue
+    identity="$(artifact_identity "$backup" "${TX_EXPECTED[$index]}")" || return 1
+    if [[ "$identity" != "${TX_IDENTITIES[$index]}" ]]; then
+      warn "CRITICAL: original changed after promotion; preserving transaction recovery data: $TRANSACTION_DATA_DIR"
+      return 1
+    fi
+  done
+  for ((index=0; index<${#TX_BACKUPS[@]}; index++)); do
+    backup="${TX_BACKUPS[$index]}"
+    [[ -n "$backup" && -e "$backup" ]] || continue
+    rm -rf "$backup" || return 1
+  done
+}
+
+prepare_managed_plan() {
+  local action="$1" requested="$2" groups
+  MANAGED_ACTION="$action"
+  if [[ "$action" == "uninstall" ]]; then
+    groups="$(selected_uninstall_groups "$requested")" || return 1
+  else
+    groups="$(expand_groups "$requested")" || return 1
+  fi
+  MANAGED_RECEIPT="$STATE_DIR/managed-$(python3 -c 'import hashlib,os,sys; print(hashlib.sha256("\0".join(os.path.realpath(p) for p in sys.argv[1:]).encode()).hexdigest())' "$CODEX_SKILLS_DIR" "$CODEX_TEMPLATES_DIR" "$CODEX_CUSTOM_AGENTS_DIR").json"
+  MANAGED_PLAN="$(python3 "$ROOT_DIR/scripts/installer-inventory.py" plan \
+    --source "$SOURCE_DIR" --previous-source "$PREVIOUS_SOURCE_DIR" \
+    --receipt "$MANAGED_RECEIPT" --history "$STATE_FILE" --target-mode "$CODEX_DEV_SKILLS_TARGET" \
+    --action "$action" --groups "$groups" --selection="$requested" \
+    --roots "$CODEX_SKILLS_DIR" "$CODEX_TEMPLATES_DIR" "$CODEX_CUSTOM_AGENTS_DIR")" || return 1
+  MANAGED_GROUPS="$(printf '%s' "$MANAGED_PLAN" | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)["receipt"]["groups"]))')" || return 1
+  VERSION="$(printf '%s' "$MANAGED_PLAN" | python3 -c 'import json,sys; print(json.load(sys.stdin)["receipt"]["source"]["version"])')" || return 1
+}
+
+run_managed_transaction() {
+  local action="$1" requested="$2" status=0 core group
+  prepare_managed_plan "$action" "$requested" || return 1
+  info "Selected fixed source and included Core: $(printf '%s' "$MANAGED_PLAN" | python3 -c 'import json,sys; s=json.load(sys.stdin)["receipt"]["source"]; print(json.dumps(s,sort_keys=True))')"
+  info "Managed groups after $action: $MANAGED_GROUPS"
+  core="$(printf '%s' "$MANAGED_PLAN" | python3 -c 'import json,sys; print("yes" if json.load(sys.stdin)["receipt"]["source"]["core"] else "no")')"
+  if [[ "$core" == "yes" && "$action" != "uninstall" ]]; then
+    PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/scripts/validate-core-contract-snapshot.py" --root "$SOURCE_DIR" --layout source >/dev/null || return 1
+    preflight_core_destination shared-review-gates || return 1
+  fi
+  if printf '%s' "$MANAGED_PLAN" | python3 -c 'import json,sys; p=json.load(sys.stdin); raise SystemExit(0 if any(i["kind"]=="agent_profiles" for i in p["puts"]+p["retired"]+p["receipt"]["artifacts"]) else 1)'; then
+    preflight_agent_target || return 1
+    PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/skills/loop-engineering/scripts/local_model_mapping.py" \
+      installer-check "$CODEX_CUSTOM_AGENTS_DIR" || { warn "Refusing a local model mapping destination"; return 1; }
+    validate_agent_profile_sources || return 1
+    init_agent_target || return 1
+  fi
+  acquire_transaction_lock || return 1
+  if ! prepare_managed_plan "$action" "$requested" || ! force_update_transaction "$requested"; then status=1; fi
+  # Never remove a failed transaction that still holds an original.
+  cleanup_managed_workspace || status=1
+  if ! release_transaction_lock; then status=1; fi
+  trap - EXIT INT HUP TERM
+  return "$status"
+}
+
+cleanup_managed_workspace() {
+  local index parent
+  [[ -n "$TRANSACTION_DATA_DIR" && -d "$TRANSACTION_DATA_DIR" ]] || return 0
+  for ((index=0; index<${#TX_BACKUPS[@]}; index++)); do
+    [[ -n "${TX_BACKUPS[$index]}" ]] || continue
+    parent="$(dirname "${TX_BACKUPS[$index]}")"
+    while [[ "$parent" == "$TRANSACTION_DATA_DIR/"* ]]; do
+      [[ -d "$parent" ]] || { parent="$(dirname "$parent")"; continue; }
+      rmdir "$parent" 2>/dev/null || break
+      parent="$(dirname "$parent")"
+    done
+  done
+  if ! rmdir "$TRANSACTION_DATA_DIR" 2>/dev/null; then
+    warn "Recovery or cleanup data preserved; inspect before retry: $TRANSACTION_DATA_DIR"
+    return 1
+  fi
 }
 
 install_group() {
@@ -2351,6 +2524,8 @@ cmd_uninstall() {
     case "$1" in
       --all) requested="--all"; shift ;;
       --yes) yes=1; shift ;;
+      --source) [[ $# -ge 2 ]] || die "Missing --source path"; SOURCE_DIR="$2"; shift 2 ;;
+      --previous-source) [[ $# -ge 2 ]] || die "Missing --previous-source path"; PREVIOUS_SOURCE_DIR="$2"; shift 2 ;;
       *) requested="$1"; shift ;;
     esac
   done
@@ -2361,14 +2536,13 @@ cmd_uninstall() {
     return 2
   fi
   if [[ "$requested" == "codex-agent-profiles" ]]; then
-    uninstall_group "$requested"
+    preflight_agent_target
+    run_managed_transaction uninstall "$requested"
   else
     preflight_uninstall_cross_root "$requested"
-    init_targets
     preflight_uninstall_same_root "$requested"
-    for group in $(selected_uninstall_groups "$requested"); do
-      uninstall_group "$group"
-    done
+    preflight_targets
+    run_managed_transaction uninstall "$requested"
   fi
 }
 
@@ -2385,18 +2559,17 @@ main() {
   esac
 
   case "$cmd" in
-    install)
-      [[ -n "${1:-}" ]] || die "Usage: ./install.sh install <group>"
-      requested="$1" ;;
-    update)
+    install|update)
       while [[ $# -gt 0 ]]; do
         case "$1" in
           --all) requested="--all"; shift ;;
           --force) force=1; shift ;;
+          --source) [[ $# -ge 2 ]] || die "Missing --source path"; SOURCE_DIR="$2"; shift 2 ;;
+          --previous-source) [[ $# -ge 2 ]] || die "Missing --previous-source path"; PREVIOUS_SOURCE_DIR="$2"; shift 2 ;;
           *) requested="$1"; shift ;;
         esac
       done
-      [[ -n "$requested" ]] || die "Usage: ./install.sh update <group> [--force]" ;;
+      [[ -n "$requested" ]] || die "Usage: ./install.sh $cmd <group> [--source path] [--previous-source path]" ;;
     diff)
       [[ -n "${1:-}" ]] || die "Usage: ./install.sh diff <group>"
       requested="$1" ;;
@@ -2404,69 +2577,12 @@ main() {
     *) usage; die "Unknown command: $cmd" ;;
   esac
 
-  if [[ "$cmd" == "install" || "$cmd" == "update" ]]; then
-    # Read-only source preflight, before any target/state/promotion mutation.
-    PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/scripts/validate-core-contract-snapshot.py" \
-      --root "$ROOT_DIR" --layout source >/dev/null
-    for group in $(expand_groups "$requested"); do
-      if [[ "$group" == "codex-agent-profiles" ]]; then
-        validate_agent_profile_sources
-        break
-      fi
-    done
-  fi
-
   case "$cmd" in
-    install)
+    install|update)
       preflight_plugin_distribution_collision
       preflight_targets
       preflight_cross_root_skill_collisions "$requested"
-      preflight_core_destination "$requested"
-      preflight_filesystem_sync install "$requested" 0
-      for group in $(expand_groups "$requested"); do
-        if [[ "$group" == "codex-agent-profiles" ]]; then
-          preflight_agent_target
-          preflight_agent_profile_sync install 0
-          break
-        fi
-      done
-      preflight_nonforce_state "$requested"
-      init_targets
-      run_for_groups install "$requested"
-      ;;
-    update)
-      preflight_plugin_distribution_collision
-      preflight_targets
-      preflight_cross_root_skill_collisions "$requested"
-      preflight_core_destination "$requested"
-      for group in $(expand_groups "$requested"); do
-        if [[ "$group" == "codex-agent-profiles" ]]; then
-          preflight_agent_target
-          break
-        fi
-      done
-      preflight_filesystem_sync update "$requested" "$force"
-      for group in $(expand_groups "$requested"); do
-        if [[ "$group" == "codex-agent-profiles" ]]; then
-          preflight_agent_profile_sync update "$force"
-          break
-        fi
-      done
-      if [[ "$force" -eq 1 ]]; then
-        acquire_transaction_lock || return 1
-        if ! force_update_transaction "$requested"; then
-          transaction_status=1
-        fi
-        if ! release_transaction_lock; then
-          transaction_status=1
-        fi
-        trap - EXIT INT HUP TERM
-        return "$transaction_status"
-      else
-        preflight_nonforce_state "$requested"
-        init_targets
-        run_for_groups update "$requested" 0
-      fi
+      run_managed_transaction "$cmd" "$requested"
       ;;
     diff)
       preflight_targets

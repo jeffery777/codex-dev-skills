@@ -25,7 +25,9 @@ shards:
     modules:
       - tests.test_engineering_workflow
       - tests.test_hermes_package
+      - tests.test_installer_fault_boundaries
       - tests.test_installer_runtime_groups
+      - tests.test_installer_source_integrity
   - id: loop-context
     modules:
       - tests.test_context_continuity

@@ -72,9 +72,12 @@ require_rg() {
 }
 
 check_no_provider_terms() {
-  local pattern
+  local pattern compatibility
   pattern="$(printf '%s|%s|%s|%s|%s' cl'aude' anthrop'ic' sonn'et' op'us' hai'ku')"
-  if rg -i "$pattern" . >"$TMP_DIR/provider-hits.txt"; then
+  # Only the literal compatibility-root guard is allowed. It protects staging
+  # from discovery and does not add a provider integration or workflow.
+  compatibility="$(printf '%s' cl'aude')"
+  if rg -i "$pattern" . | rg -v "^\./install\.sh:[[:space:]]*\"\\.$compatibility/skills\", \"\\.$compatibility/commands\", \"\\.$compatibility/plugins\", \"\\.cursor/skills\"\)$" >"$TMP_DIR/provider-hits.txt"; then
     cat "$TMP_DIR/provider-hits.txt"
     fail "excluded provider terms found"
   fi
