@@ -1,8 +1,48 @@
 # Changelog / 變更紀錄
 
-本檔記錄明確版本的範圍，不是目前已發布版本指標。來源版本以
+本檔記錄版本範圍及尚未選版的變更，不是目前已發布版本指標。來源版本以
 [catalog.yaml](catalog.yaml) 為準；發布事實另核對 annotated tag 與非 draft、
 非 prerelease 的 GitHub Release。English entries follow the Chinese entries.
+
+## 0.35.0 — 有限索引寫入候選 / Limited index-write candidate
+
+[Issue #355](https://github.com/jeffery777/codex-dev-skills/issues/355)
+分別記錄 CLI `0.163.0`、Desktop `26.1013.40934`／build `20770` 及 bundled CLI
+`0.163.0-alpha.10.2`。兩個 CLI 的 public-help／production argv 檢查分開通過；
+不證明 live session 或全部入口資格。
+
+新增 GitNexus `1.6.12` 明確本機 library profile：綁定接受的 entry／Node／
+package、獨立相依解析與明定 coverage，重用 version/help 證據；接既有 controller
+作不使用舊 parse cache 的完整重建，驗證 registry 與分版 sidecar；執行前拒絕
+repo `.gitnexusrc`，避免未資格化設定改變執行範圍。
+保留 `1.6.9` operator CLI；不啟用 automatic refresh、hooks、query 或 MCP。
+A02 已驗收此接受的 GitNexus `1.6.12`／Node `25.9.0`、macOS arm64 本機整合：
+單檔 commit 後舊索引變 stale，實際 controller 更新並驗證 registry、metadata、
+sidecar 與內部 freshness。原 worker 的早期 Git index stat-cache baseline
+exception 及停止狀態保留；離線讀回確認 staged 內容未變，未重跑 live。
+當次編排方指定單一索引 writer、協調穩定來源與交接；Codex／Grok 功能對等仍待
+各自驗證。詳見[審計](docs/codex-runtime-compatibility-evidence-2026-10-17.md)與
+[交付評估](docs/releases/runtime-audit-2026-10-17.md)。2026-10-18 使用者選定
+`0.35.0` 候選；Core pin 及實裝不改，原 docs-only 與 parser 準備候選保留為歷史。
+
+Issue #355 separates CLI, Desktop and bundled CLI evidence; public help does not
+qualify live sessions. Add an explicit local GitNexus 1.6.12 library profile with
+accepted binary/package identity, independent dependency resolution and declared
+coverage. Reuse accepted probes; the existing controller performs a full rebuild
+without old parser output, rejects repository `.gitnexusrc` execution defaults,
+checks the private registry and reads back its sidecar.
+The 1.6.9 operator CLI stays unchanged. No automatic refresh, hook, query or MCP
+is enabled. A02 accepts the limited integration for this approved GitNexus
+1.6.12/Node 25.9.0 installation on macOS arm64: a fixture commit invalidates the
+old index, then the actual controller updates it and verifies metadata, registry,
+sidecar and internal freshness. Retain the worker's earlier Git index stat-cache
+baseline exception and stopped status; file-only readback confirms unchanged
+staged content. No live retry occurred.
+
+The current orchestrator assigns one writer and coordinates stable source and
+handoff. Codex/Grok parity remains unverified. The user selected candidate
+`0.35.0` on 2026-10-18; Core pin and installation stay unchanged. Earlier documentation
+and parser-only snapshots remain historical; delivery needs matching evidence.
 
 ## 0.34.0 — 拆分發行準備 / Split release preparation
 

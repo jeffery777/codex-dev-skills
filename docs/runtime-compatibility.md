@@ -7,6 +7,16 @@ desktop app. This repository keeps `Codex Desktop` and `desktop` as stable
 compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only.
+
+[2026-10-17 compatibility evidence](codex-runtime-compatibility-evidence-2026-10-17.md)
+分開查核新版 CLI、Desktop app 與 bundled CLI。兩個 CLI 的 parser／production
+argv 檢查通過，沒有新增 live lifecycle 資格。GitNexus operator CLI 仍選 1.6.9；
+新增獨立的 1.6.12 本機 library profile 與 controller 採用流程；A02 已驗收
+接受的本機安裝之有限索引寫入整合，保留 worker baseline exception 紀錄。
+A01 僅證明原有界初次建立；缺匹配證據時沿用原始碼／Git fallback。
+The update audit preserves separate entrypoints and the shared layer. Its
+help/schema evidence does not qualify sessions or activate optional integration.
+
 [2026-10-14 compatibility evidence](codex-runtime-compatibility-evidence-2026-10-14.md)
 修正 Desktop 排序別名／允許值及共享 sandbox 證據：custom agent 繼承 parent
 權限，profile 的唯讀 expectation 不代表獨立技術隔離。CLI 入口與 Desktop
@@ -209,6 +219,85 @@ tracked/Git-control postconditions. Linux has portability fixtures for POSIX
 paths, regular-file/symlink policy, subprocess argv/environment, timeout/lock,
 and metadata handling, but no live GitNexus qualification. Do not present those
 fixtures as Linux runtime evidence.
+
+The existing operator CLI still selects 1.6.9. For explicit local 1.6.12 writes,
+`qualify_local_1612` is a separate library entry. It reuses caller-accepted
+version/help receipts without launching probes, and binds entry, actual Node,
+complete package tree, accepted runner identity, an independently read dependency
+closure and an explicit caller-owned coverage set. Runtime packages must stay
+inside the package tree; directory links, external dependency fallbacks and
+changes to nearest-lockfile resolution are refused. No npm download or publisher
+signature is required or claimed. Private accepted values must stay outside Git.
+
+The existing controller can then perform an initial or revision-changing
+`analyze --index-only --no-parse-cache --name <alias> <root>`. The fixed upstream
+flag forces a full rebuild without trusting old parser output. A new private
+HOME contains registry/tmp/identity cache. Exact coverage paths and source
+hashes, metadata mirrors, local identity, registry, complete content/Git-control
+postconditions and sidecar readback must pass before adoption. Same-HEAD refresh
+and invalid existing metadata are refused. Any repository `.gitnexusrc` entry,
+including ignored files and links, is refused before execution and rechecked
+immediately before launch; its embeddings and other execution settings are
+outside this profile. Keep the source stable throughout execution. The versioned metadata digest and
+qualification fingerprint keep old sidecars separate; automatic eligibility is
+false. Without this local profile, new metadata remains unsupported.
+
+The local profile supports limited local index writes for the
+accepted GitNexus 1.6.12/Node 25.9.0 installation on macOS arm64. A02 exercised
+the actual controller once: a fixture commit made the old index stale; refresh
+and metadata/registry/sidecar validation, including the controller's final
+freshness check, succeeded. The outer worker stopped on an earlier Git index
+stat-cache baseline mismatch; file-only reconciliation found only cached ctime
+changes, with staged content unchanged. Its exception remains recorded and its
+optional second freshness API was not run. This acceptance covers our adapter
+usage, not upstream algorithm correctness. A01 covered the initial build with
+no embeddings and unavailable offline FTS. The fixed-source DDL
+fingerprint is `60fc01e4e4ed`, not an actual DB inspection. A03/same-HEAD and
+A04/real forced timeout are deferred. Query, impact, read_query, MCP, Linux,
+Grok and general concurrency remain unqualified. No RSS observation or RAM
+hard cap is claimed. The single A02 authorization is spent: cumulative calls are
+6/13, with no further live calls authorized. New tool/Node/package/dependency
+bytes require renewed local acceptance and affected integration qualification.
+
+既有 operator CLI 仍選 1.6.9；新版明確本機操作使用獨立的
+`qualify_local_1612` library 入口，重用接受的 version/help 證據，不啟動 probes。
+它綁 entry、實際 Node、完整 package tree、接受的 runner、獨立相依解析與
+caller 明定 coverage；拒絕外部相依、目錄 links、外部 fallback 與較近 lockfile 漂移。
+不下載 npm、不宣稱發行者簽章，私人接受值不進 Git。
+
+既有 controller 使用 `--index-only --no-parse-cache` 完整重建，隔離新 HOME、
+registry、tmp 與 identity cache；逐檔、metadata、registry、完整 Git/content
+postconditions 及分版 sidecar 通過才採用。同 HEAD／損壞既有 metadata 會停止；
+執行前及啟動前重驗並拒絕任何 `.gitnexusrc` entry（含 ignored 檔與 links），
+其 embeddings 等執行設定不在本 profile 內；操作全程仍須維持來源穩定。
+automatic eligibility 固定 false，無本機 profile 時新版仍 unsupported。
+本候選已支援接受的 GitNexus 1.6.12／Node 25.9.0、macOS arm64 有限本機索引
+寫入整合。A02 以單檔 commit 驗證舊索引失效，實際 controller 更新、檢核
+metadata／registry／sidecar 與內部 final freshness。外層 worker 因較早的 Git
+index stat-cache baseline 差異停止；離線讀回僅 cached ctime 變動，staged 內容
+不變，原 exception 保留，外層第二次 freshness API 未執行。驗收對象是我方
+adapter 的正確使用流程。A01 涵蓋初次建立；
+A03／A04 延後，query／MCP／Linux／Grok／一般並行未資格化，沒有 RSS／RAM
+硬上限保證。累計呼叫為 6/13，單次 A02 授權已用完，沒有追加 live 授權；
+更新 tool／Node／package／相依 bytes 後須重新接受本機身分及驗證受影響整合。
+
+The current orchestrator decides when to query/update and assigns one index
+writer for the actual checkout and shared storage/cache boundary. Coordinate
+stable source and reader ownership before refresh, then verify and hand off
+identity, content freshness and coverage before queries resume. Codex/Grok
+feature parity is the target; implementation may differ and Codex is not the
+permanent index manager. Current evidence does not qualify read_query/MCP or
+Grok entrypoints. The smallest follow-up is Grok's own bounded adapter/entry
+qualification for the same index-write usage workflow; this is necessary for
+cross-overlay parity and does not require upstream feature QA. A shared pure contract
+is needed only if both overlays reveal a real common gap; keep platform-specific
+GitNexus details outside Core. See [repository coordination](../CONTRIBUTING.md#索引協作與編排責任--index-coordination).
+
+當次編排方決定查詢／更新時機與操作者，每個共享索引邊界只有一位 writer；
+先協調穩定來源及 reader，再驗證並交接。Codex／Grok 功能對等是後續目標，
+不是已完成資格，也不固定 Codex 為永久管理者。最小後續為 Grok 自身有界入口／
+adapter 驗證；只有兩端 overlay 顯示實際共通缺口時才考慮 shared 純契約，
+不把 GitNexus 平台細節寫入 Core。本次 Core 不改、不另啟跨平台 query 或新框架。
 
 Refresh is supported only where the controller can prove the direct worktree
 and Git administrative boundary, including a pre-existing `.git/info/exclude`

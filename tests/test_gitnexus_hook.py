@@ -394,7 +394,7 @@ class EvaluationTests(unittest.TestCase):
         self.root.mkdir()
         (self.root / ".git").mkdir()
         self.repo = repository_state(self.root)
-        self.qualification = mock.Mock(fingerprint="6" * 64)
+        self.qualification = mock.Mock(fingerprint="6" * 64, local_1612=None)
         self.checkout_root = mock.patch.object(
             adapter,
             "resolve_checkout_root",
@@ -429,6 +429,12 @@ class EvaluationTests(unittest.TestCase):
     def test_fresh_state_is_silent(self) -> None:
         result = self.evaluate(adapter.MetadataResult("fresh", "exact-clean-revision", HEAD, "f" * 64, {}))
         self.assertIsNone(result)
+
+    def test_local_1612_profile_cannot_enable_automatic_refresh(self) -> None:
+        self.qualification.local_1612 = object()
+        with mock.patch.object(adapter, "RefreshController") as controller:
+            self.evaluate(adapter.MetadataResult("stale", "indexed-revision-stale", INDEXED, "f" * 64, {}), mode="auto-on-demand")
+        controller.assert_not_called()
 
     def test_notify_only_qualification_uses_standalone_deadline_contract(self) -> None:
         config = hook_config(self.root)

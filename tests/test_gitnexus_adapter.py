@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import datetime as dt
 import errno
+import hashlib
 import importlib.util
 import json
 import os
@@ -171,6 +172,49 @@ def write_metadata(root: pathlib.Path, value: dict) -> None:
     directory.mkdir(exist_ok=True)
     for filename in ("gitnexus.json", "meta.json"):
         (directory / filename).write_text(json.dumps(value), encoding="utf-8")
+
+
+def diagnostic_metadata_1612(state: adapter.RepositoryState) -> dict:
+    """Synthetic equivalent of the A01 shape; contains no captured local state."""
+    value = valid_metadata(state)
+    value.pop("schemaVersion")
+    value.update({
+        "storagePath": str(state.root / ".gitnexus"),
+        "schemaFingerprint": "60fc01e4e4ed",
+        "contentRetention": "full", "contentRetentionSchemaVersion": 1,
+        "ftsProfile": "full", "scopeExtractionReceipt": 1,
+        "analysisFeatures": {"graph.class-framework-annotations": 1},
+        "springVendorPrefixes": '["Win"]', "embeddingDims": 384,
+        "indexCoverage": {"maxFileSizeBytes": 524288, "dirtyPaths": []},
+        "runnerIdentity": {
+            "schemaVersion": 4, "cliVersion": "1.6.12",
+            "runtime": {
+                "executablePath": "/untrusted/runtime/node", "version": "v25.9.0",
+                "platform": "darwin", "architecture": "arm64",
+                "modulesAbi": "141", "libc": "not-applicable",
+            },
+            "invokedArtifact": {"path": "/untrusted/package/dist/cli/index.js", "digest": "sha256:" + "1" * 64},
+            "build": {
+                "kind": "distribution", "rootPath": "/untrusted/package/dist",
+                "canonicalization": "gitnexus-analyzer-build-v2", "digest": "sha256:" + "2" * 64,
+            },
+            "dependencyRuntime": {
+                "manifestPath": "/untrusted/package/package.json",
+                "lockfilePath": "/untrusted/ancestor/package-lock.json",
+                "canonicalization": "gitnexus-analyzer-dependency-runtime-v4",
+                "packageCount": 2, "artifactCount": 3, "digest": "sha256:" + "3" * 64,
+            },
+        },
+        "fileHashes": {
+            p: hashlib.sha256((state.root / p).read_bytes()).hexdigest()
+            for p in ("AGENTS.md", "code.py")
+        },
+    })
+    value["capabilities"]["fts"] = {
+        "provider": adapter.FTS_PROVIDER, "status": "unavailable",
+        "skipReason": "extension-unavailable",
+    }
+    return value
 
 
 def write_exact_identity(
@@ -3033,6 +3077,498 @@ class ProcessAndOperatorTests(unittest.TestCase):
                 self.repository, expected_head=self.repository.head, explicit_opt_in=True
             )
         self.assertEqual([], calls)
+
+
+class Metadata1612DiagnosticTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.directory = pathlib.Path(self.temp.name).resolve()
+        self.root = make_repo(self.directory)
+        self.repository = repository_state(self.root)
+        self.executable = make_executable(self.directory)
+        self.qualification = fake_qualification(self.executable)
+        self.value = diagnostic_metadata_1612(self.repository)
+
+    def assess(self):
+        return adapter.assess_metadata(
+            self.repository, adapter.collect_tracked_snapshot(self.root), self.qualification
+        )
+
+    def test_a01_equivalent_shape_never_becomes_fresh_or_sidecar_eligible(self):
+        write_metadata(self.root, self.value)
+        selected, state, reason = adapter._select_metadata(self.root / ".gitnexus")
+        self.assertEqual(self.value, selected)
+        self.assertEqual((None, None), (state, reason))
+        for result in (
+            self.assess(),
+            adapter._assess_metadata_before_identity_write(
+                self.repository, adapter.collect_tracked_snapshot(self.root), self.qualification
+            ),
+        ):
+            self.assertEqual("unsupported", result.state)
+            self.assertEqual("metadata-1.6.12-runner-unqualified", result.reason)
+            self.assertIsNone(result.index_identity)
+            handshake = adapter.build_handshake(self.qualification, result, enabled=True)
+            self.assertEqual("incompatible", handshake["status"])
+            self.assertTrue(all(c["state"] == "unsupported" for c in handshake["capabilities"].values()))
+        self.assertFalse((self.root / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME).exists())
+
+    def test_unicode_metadata_stays_unqualified_without_a_memory_digest(self):
+        for name in ("文件.md", "café.py", "line\nname.py"):
+            with self.subTest(name=name):
+                value = copy.deepcopy(self.value)
+                value["fileHashes"][name] = value["fileHashes"].pop("code.py")
+                for layout in ("paired", "primary-only", "legacy-only"):
+                    write_metadata(self.root, value)
+                    if layout == "primary-only":
+                        (self.root / ".gitnexus" / "meta.json").unlink()
+                    if layout == "legacy-only":
+                        (self.root / ".gitnexus" / "gitnexus.json").unlink()
+                    result = self.assess()
+                    self.assertEqual("unsupported", result.state, layout)
+                    self.assertIsNone(result.metadata_digest)
+                    self.assertIsNone(result.index_identity)
+                write_metadata(self.root, value)
+                self.assertTrue(adapter._metadata_mirrors_converged(self.root / ".gitnexus"))
+                conflict = copy.deepcopy(value)
+                conflict["fileHashes"][name] = "f" * 64
+                (self.root / ".gitnexus" / "meta.json").write_text(json.dumps(conflict))
+                self.assertEqual("metadata-primary-legacy-conflict", self.assess().reason)
+                self.assertFalse(adapter._metadata_mirrors_converged(self.root / ".gitnexus"))
+        invalid = copy.deepcopy(self.value)
+        invalid["fileHashes"]["invalid\ud800.py"] = invalid["fileHashes"].pop("code.py")
+        write_metadata(self.root, invalid)
+        self.assertEqual("corrupt", self.assess().state)
+
+    def test_new_partial_and_mixed_mirrors_never_use_memory_canonicalization(self):
+        value = copy.deepcopy(self.value)
+        value["fileHashes"]["文件.md"] = value["fileHashes"].pop("code.py")
+        write_metadata(self.root, value)
+        mirror = copy.deepcopy(value)
+        mirror["scopeExtractionFailures"] = {"unvalidated": [["not a typed receipt"]]}
+        legacy = self.root / ".gitnexus" / "meta.json"
+        legacy.write_text(json.dumps(mirror))
+        with mock.patch.object(adapter, "_canonical_digest", side_effect=AssertionError("unexpected memory canonicalization")):
+            self.assertEqual("partial", adapter._select_metadata(self.root / ".gitnexus")[1])
+            self.assertFalse(adapter._metadata_mirrors_converged(self.root / ".gitnexus"))
+        legacy.write_text(json.dumps(valid_metadata(self.repository)))
+        with mock.patch.object(adapter, "_canonical_digest", side_effect=AssertionError("unexpected memory canonicalization")):
+            self.assertEqual("metadata-primary-legacy-conflict", adapter._select_metadata(self.root / ".gitnexus")[2])
+            self.assertFalse(adapter._metadata_mirrors_converged(self.root / ".gitnexus"))
+
+    def test_1612_executable_still_rejected_after_one_fake_probe(self):
+        calls = []
+        def runner(argv, **kwargs):
+            calls.append(argv)
+            return subprocess.CompletedProcess(argv, 0, "GitNexus 1.6.12", "")
+        with self.assertRaises(adapter.GitNexusAdapterError):
+            adapter.qualify_executable(self.executable, runner=runner, **provenance_kwargs(self.executable))
+        self.assertEqual(1, len(calls))
+        self.assertEqual("--version", calls[0][-1])
+
+    def test_32_independent_malformed_or_unqualified_metadata_cases(self):
+        cases = [
+            ("mixed-profiles", ("schemaVersion",), 5),
+            ("missing-receipt", ("scopeExtractionReceipt",), None),
+            ("bool-receipt", ("scopeExtractionReceipt",), True),
+            ("float-retention-schema", ("contentRetentionSchemaVersion",), 1.0),
+            ("symbol-retention", ("contentRetention",), "symbol"),
+            ("name-fts-profile", ("ftsProfile",), "name-only"),
+            ("fingerprint-drift", ("schemaFingerprint",), "0" * 12),
+            ("fingerprint-type", ("schemaFingerprint",), []),
+            ("runner-version-spoof", ("runnerIdentity", "cliVersion"), "1.6.13"),
+            ("runner-bool-schema", ("runnerIdentity", "schemaVersion"), True),
+            ("runtime-null", ("runnerIdentity", "runtime"), None),
+            ("entry-relative", ("runnerIdentity", "invokedArtifact", "path"), "relative.js"),
+            ("entry-bad-digest", ("runnerIdentity", "invokedArtifact", "digest"), "sha256:bad"),
+            ("unknown-build-canonicalization", ("runnerIdentity", "build", "canonicalization"), "v-next"),
+            ("lockfile-wrong-type", ("runnerIdentity", "dependencyRuntime", "lockfilePath"), []),
+            ("dependency-bool-count", ("runnerIdentity", "dependencyRuntime", "artifactCount"), True),
+            ("scope-failure-null", ("scopeExtractionFailures",), None),
+            ("collapsed-false", ("graphWriteCollapsed",), False),
+            ("progress-empty", ("incrementalInProgress",), {}),
+            ("embedding-partial", ("embeddingCheckpoint",), {"kind": "partial"}),
+            ("coverage-cap-drift", ("indexCoverage", "maxFileSizeBytes"), 1048576),
+            ("coverage-bool-cap", ("indexCoverage", "maxFileSizeBytes"), True),
+            ("dirty-covered-file", ("indexCoverage", "dirtyPaths"), ["code.py"]),
+            ("unsafe-covered-path", ("indexCoverage", "dirtyPaths"), ["../secret"]),
+            ("dimension-drift", ("embeddingDims",), 768),
+            ("nonfinite-stat", ("stats", "nodes"), float("nan")),
+            ("unknown-fts-reason", ("capabilities", "fts", "skipReason"), "unknown"),
+            ("fts-build-failed", ("capabilities", "fts", "skipReason"), "build-failed"),
+            ("unhashable-cache-key", ("cacheKeys",), [[]]),
+            ("unsafe-filehash", ("fileHashes",), {"../secret": "a" * 64}),
+            ("unknown-feature", ("analysisFeatures",), {"new-feature": 1}),
+            ("unknown-nested-runner-field", ("runnerIdentity", "newField"), "ignored?"),
+        ]
+        self.assertEqual(32, len(cases))
+        for label, path, replacement in cases:
+            with self.subTest(case=label):
+                value = copy.deepcopy(self.value)
+                parent = value
+                for key in path[:-1]:
+                    parent = parent[key]
+                if label == "missing-receipt":
+                    parent.pop(path[-1])
+                else:
+                    parent[path[-1]] = replacement
+                write_metadata(self.root, value)
+                result = self.assess()
+                self.assertIn(result.state, {"corrupt", "partial", "unsupported"})
+                self.assertIsNone(result.index_identity)
+
+    def test_parser_does_not_open_runner_declared_paths(self):
+        with mock.patch.object(adapter.os, "open", side_effect=AssertionError("untrusted path opened")):
+            self.assertEqual((None, None), adapter._metadata_1612_diagnostic_shape(self.value))
+
+    def test_primary_corruption_conflict_and_duplicate_keys_do_not_fall_back(self):
+        write_metadata(self.root, self.value)
+        primary = self.root / ".gitnexus" / "gitnexus.json"
+        primary.write_text('{"schemaFingerprint":', encoding="utf-8")
+        self.assertEqual("corrupt", self.assess().state)
+        primary.write_text(json.dumps(self.value)[:-1] + ',"schemaFingerprint":"60fc01e4e4ed"}', encoding="utf-8")
+        self.assertEqual("metadata-invalid-json", self.assess().reason)
+        write_metadata(self.root, self.value)
+        (self.root / ".gitnexus" / "meta.json").write_text(json.dumps(valid_metadata(self.repository)), encoding="utf-8")
+        self.assertEqual("metadata-primary-legacy-conflict", self.assess().reason)
+        write_metadata(self.root, self.value)
+        primary.unlink()  # Only a disposable fixture; exercise legacy-only read.
+        self.assertEqual("unsupported", self.assess().state)
+
+    def test_existing_old_sidecar_cannot_certify_new_metadata_or_same_head_content(self):
+        write_metadata(self.root, valid_metadata(self.repository))
+        write_exact_identity(self.root, self.repository, self.qualification)
+        sidecar = self.root / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME
+        before = sidecar.read_bytes()
+        write_metadata(self.root, self.value)
+        self.assertEqual("unsupported", self.assess().state)
+        (self.root / "code.py").write_text("changed at same HEAD\n", encoding="utf-8")
+        self.assertEqual("unsupported", self.assess().state)
+        self.assertEqual(before, sidecar.read_bytes())
+
+    def test_fake_exit_zero_refresh_cannot_write_1612_sidecar(self):
+        home = self.directory / "operation-home"
+        home.mkdir()
+        calls = []
+        def runner(argv, **kwargs):
+            calls.append(argv)
+            write_metadata(self.root, self.value)
+            return subprocess.CompletedProcess(argv, 0, b"", b"")
+        result = adapter.RefreshController(
+            self.qualification, enabled=True, timeout_seconds=10,
+            gitnexus_home=home, lock_directory=self.directory / "locks", runner=runner,
+        ).refresh(self.repository, expected_head=self.repository.head, explicit_opt_in=True)
+        self.assertEqual(1, len(calls))
+        self.assertEqual("failed", result.status)
+        self.assertEqual("post-refresh-metadata-unsupported", result.reason)
+        self.assertFalse((self.root / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME).exists())
+
+
+class Local1612IndexWriteTests(unittest.TestCase):
+    """Real local files/Git, accepted synthetic receipts, no GitNexus process."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.directory = pathlib.Path(self.temp.name).resolve()
+        self.root = make_repo(self.directory)
+        self.repository = repository_state(self.root)
+        self.package = self.directory / "tree" / "gitnexus"
+        (self.package / "dist" / "cli").mkdir(parents=True)
+        self.entry = self.package / "dist" / "cli" / "index.js"
+        self.entry.write_text("#!/usr/bin/env node\n// synthetic accepted distribution\n")
+        self.entry.chmod(0o700)
+        self.node = self.directory / "node"
+        self.node.write_bytes(b"\x7fELF synthetic native interpreter; never executed")
+        self.node.chmod(0o700)
+        (self.directory / "package-lock.json").write_text('{"fixture":1}')
+        (self.package / "package.json").write_text(json.dumps({
+            "version": "1.6.12", "dependencies": {"fixture-dependency": "1"},
+            "optionalDependencies": {"fixture-absent-dependency": "1"},
+        }))
+        dependency = self.package / "node_modules" / "fixture-dependency"
+        dependency.mkdir(parents=True)
+        (dependency / "package.json").write_text('{"version":"1"}')
+        (dependency / "index.js").write_text("export const fixture = 1;\n")
+        value = diagnostic_metadata_1612(self.repository)
+        runner = value["runnerIdentity"]
+        runner["runtime"]["executablePath"] = str(self.node)
+        runner["invokedArtifact"] = {"path": str(self.entry), "digest": "sha256:" + adapter._executable_identity(self.entry)[0]}
+        runner["build"]["rootPath"] = str(self.package / "dist")
+        runner["dependencyRuntime"].update(manifestPath=str(self.package / "package.json"), lockfilePath=str(self.directory / "package-lock.json"))
+        probes = ("1.6.12\n", " ".join(sorted(adapter.REQUIRED_ANALYZE_FLAGS | {"--no-parse-cache"})))
+        self.arguments = {
+            "runtime_path": self.node, "package_root": self.package,
+            "accepted_executable_sha256": adapter._executable_identity(self.entry)[0],
+            "accepted_runtime_sha256": adapter._executable_identity(self.node)[0],
+            "accepted_package_sha256": adapter._package_tree_identity(self.package)[0],
+            "accepted_runner_identity": runner,
+            "accepted_dependency_sha256": adapter.local_1612_dependency_identity(self.package)[0],
+            "expected_coverage_paths": ("AGENTS.md", "code.py"),
+            "version_output": probes[0], "analyze_help_output": probes[1],
+            "accepted_probe_sha256": hashlib.sha256(adapter._local_json(probes).encode("ascii")).hexdigest(),
+        }
+        self.qualification = adapter.qualify_local_1612(self.entry, **self.arguments)
+
+    def metadata(self):
+        value = diagnostic_metadata_1612(repository_state(self.root))
+        value["runnerIdentity"] = json.loads(self.qualification.local_1612.runner_json)
+        return value
+
+    def assess(self, *, before_write=False):
+        assessor = adapter._assess_metadata_before_identity_write if before_write else adapter.assess_metadata
+        return assessor(repository_state(self.root), adapter.collect_tracked_snapshot(self.root), self.qualification)
+
+    def test_receipt_qualification_performs_no_subprocess_and_binds_profile(self):
+        with mock.patch.object(adapter, "_run_adapter_subprocess", side_effect=AssertionError("unexpected probe")):
+            qualification = adapter.qualify_local_1612(self.entry, **self.arguments)
+            adapter.verify_qualification(qualification)
+        self.assertEqual("1.6.12", qualification.version)
+        write_metadata(self.root, self.metadata())
+        self.assertEqual("stale", self.assess().state)  # Raw metadata cannot certify itself.
+        self.assertEqual("fresh", self.assess(before_write=True).state)
+
+    def test_one_controller_update_invalidates_old_revision_and_writes_exact_sidecar(self):
+        write_metadata(self.root, self.metadata())
+        (self.root / "code.py").write_text("print('updated')\n")
+        run_git(self.root, "add", "code.py")
+        run_git(self.root, "commit", "-m", "fixture update")
+        self.assertEqual("indexed-revision-stale", self.assess().reason)
+        home = self.directory / "operation-home"
+        home.mkdir(mode=0o700)
+        calls = []
+        def runner(argv, **kwargs):
+            calls.append(argv)
+            self.assertEqual([str(self.node), str(self.entry), "analyze", "--index-only", "--no-parse-cache", "--name"], argv[:6])
+            cache = pathlib.Path(kwargs["env"]["GITNEXUS_ANALYZER_IDENTITY_CACHE_DIR"])
+            self.assertEqual(home / "identity-cache", cache)
+            self.assertEqual(0o700, stat.S_IMODE(cache.stat().st_mode))
+            self.assertNotIn("NODE_OPTIONS", kwargs["env"])
+            value = self.metadata()
+            write_metadata(self.root, value)
+            (home / "registry.json").write_text(json.dumps([{"name": argv[6], "path": str(self.root), **{key: value[key] for key in ("storagePath", "indexedAt", "lastCommit", "remoteUrl", "stats", "branch")}}]))
+            return subprocess.CompletedProcess(argv, 0, b"", b"")
+        state = repository_state(self.root)
+        result = adapter.RefreshController(self.qualification, enabled=True, timeout_seconds=20,
+            gitnexus_home=home, lock_directory=self.directory / "locks", runner=runner
+        ).refresh(state, expected_head=state.head, explicit_opt_in=True)
+        self.assertEqual(("refreshed", 1), (result.status, len(calls)), result.reason)
+        metadata = self.assess()
+        self.assertEqual("fresh", metadata.state)
+        self.assertEqual(adapter.LOCAL_1612_SCHEMA, metadata.index_identity["tool"]["metadata_schema"])
+        self.assertFalse(metadata.index_identity["lifecycle"]["automatic_refresh_eligible"])
+        handshake = adapter.build_handshake(self.qualification, metadata, enabled=True)
+        self.assertEqual("unsupported", handshake["capabilities"]["read_query"]["state"])
+        self.assertFalse(result.receipt["authority_invariants"]["automatic_refresh_enabled"])
+
+    def test_each_accepted_digest_is_enforced_without_probes(self):
+        for key in ("accepted_executable_sha256", "accepted_runtime_sha256", "accepted_package_sha256", "accepted_dependency_sha256", "accepted_probe_sha256"):
+            with self.subTest(key=key), mock.patch.object(adapter, "_run_adapter_subprocess", side_effect=AssertionError("unexpected probe")):
+                with self.assertRaises(adapter.GitNexusAdapterError):
+                    adapter.qualify_local_1612(self.entry, **{**self.arguments, key: "0" * 64})
+
+    def test_repository_config_entries_are_refused_before_runner(self):
+        config = self.root / ".gitnexusrc"
+        home = self.directory / "config-home"
+        home.mkdir(mode=0o700)
+        runner = mock.Mock(side_effect=AssertionError("unexpected analysis"))
+        for kind in ("file", "directory", "dangling-link", "fifo"):
+            with self.subTest(kind=kind):
+                if kind == "file":
+                    config.write_text('{"embeddings":true,"embeddingBaseUrl":"https://fixture.invalid","embeddingModel":"fixture"}')
+                elif kind == "directory":
+                    config.mkdir()
+                elif kind == "dangling-link":
+                    config.symlink_to(self.directory / "absent-config")
+                else:
+                    os.mkfifo(config)
+                try:
+                    with self.assertRaisesRegex(adapter.GitNexusAdapterError, "refuses repository .gitnexusrc"):
+                        adapter.RefreshController(self.qualification, enabled=True,
+                            gitnexus_home=home, runner=runner).refresh(
+                            self.repository, expected_head=self.repository.head, explicit_opt_in=True)
+                    runner.assert_not_called()
+                    self.assertEqual([], list(home.iterdir()))
+                finally:
+                    config.rmdir() if kind == "directory" else config.unlink()
+
+    def test_committed_and_ignored_repository_config_are_refused(self):
+        config = self.root / ".gitnexusrc"
+        config.write_text('{"analyze":{"embeddings":true}}')
+        run_git(self.root, "add", ".gitnexusrc")
+        run_git(self.root, "commit", "-m", "configured fixture")
+        home = self.directory / "committed-config-home"
+        home.mkdir(mode=0o700)
+        runner = mock.Mock(side_effect=AssertionError("unexpected analysis"))
+        state = repository_state(self.root)
+        with self.assertRaisesRegex(adapter.GitNexusAdapterError, "refuses repository .gitnexusrc"):
+            adapter.RefreshController(self.qualification, enabled=True,
+                gitnexus_home=home, runner=runner).refresh(state, expected_head=state.head, explicit_opt_in=True)
+        runner.assert_not_called()
+        run_git(self.root, "rm", ".gitnexusrc")
+        run_git(self.root, "commit", "-m", "remove fixture config")
+        with (self.root / ".git" / "info" / "exclude").open("a") as stream:
+            stream.write(".gitnexusrc\n")
+        state = repository_state(self.root)
+        config.write_text('{}')
+        self.assertFalse(adapter.collect_tracked_snapshot(self.root).outside_derived_dirty)
+        with self.assertRaisesRegex(adapter.GitNexusAdapterError, "refuses repository .gitnexusrc"):
+            adapter.RefreshController(self.qualification, enabled=True,
+                gitnexus_home=home, runner=runner).refresh(state, expected_head=state.head, explicit_opt_in=True)
+        runner.assert_not_called()
+
+    def test_ignored_config_appearing_during_preflight_is_refused(self):
+        with (self.root / ".git" / "info" / "exclude").open("a") as stream:
+            stream.write(".gitnexusrc\n")
+        home = self.directory / "late-config-home"
+        home.mkdir(mode=0o700)
+        runner = mock.Mock(side_effect=AssertionError("unexpected analysis"))
+        original = adapter._index_analyze_arguments
+        calls = 0
+        def verify(*args, **kwargs):
+            nonlocal calls
+            arguments = original(*args, **kwargs)
+            calls += 1
+            (self.root / ".gitnexusrc").write_text('{"embeddings":true}')
+            return arguments
+        state = repository_state(self.root)
+        with mock.patch.object(adapter, "_index_analyze_arguments", side_effect=verify):
+            with self.assertRaisesRegex(adapter.GitNexusAdapterError, "refuses repository .gitnexusrc"):
+                adapter.RefreshController(self.qualification, enabled=True,
+                    gitnexus_home=home, lock_directory=self.directory / "locks", runner=runner).refresh(
+                    state, expected_head=state.head, explicit_opt_in=True)
+        self.assertEqual(1, calls)
+        runner.assert_not_called()
+        self.assertEqual([], list(home.iterdir()))
+
+    def test_receipt_without_full_rebuild_flag_cannot_qualify(self):
+        help_text = " ".join(sorted(adapter.REQUIRED_ANALYZE_FLAGS))
+        digest = hashlib.sha256(adapter._local_json((self.arguments["version_output"], help_text)).encode("ascii")).hexdigest()
+        with self.assertRaisesRegex(adapter.GitNexusAdapterError, "no-parse-cache"):
+            adapter.qualify_local_1612(self.entry, **{**self.arguments, "analyze_help_output": help_text, "accepted_probe_sha256": digest})
+
+    def test_wrong_isolated_registry_prevents_sidecar_write(self):
+        home = self.directory / "wrong-registry-home"
+        home.mkdir(mode=0o700)
+        def runner(argv, **kwargs):
+            write_metadata(self.root, self.metadata())
+            (home / "registry.json").write_text('[{"path":"/wrong/repository"}]')
+            return subprocess.CompletedProcess(argv, 0, b"", b"")
+        result = adapter.RefreshController(self.qualification, enabled=True, timeout_seconds=20,
+            gitnexus_home=home, lock_directory=self.directory / "locks", runner=runner
+        ).refresh(self.repository, expected_head=self.repository.head, explicit_opt_in=True)
+        self.assertEqual(("failed", "post-refresh-registry-invalid"), (result.status, result.reason))
+        self.assertFalse((self.root / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME).exists())
+
+    def test_oversize_covered_file_cannot_be_promoted(self):
+        (self.root / "code.py").write_bytes(b"x" * 524289)
+        run_git(self.root, "add", "code.py")
+        run_git(self.root, "commit", "-m", "oversize fixture")
+        write_metadata(self.root, self.metadata())
+        self.assertNotEqual("fresh", self.assess(before_write=True).state)
+
+    def test_ancestor_shadow_dependency_is_refused_outside_pinned_package(self):
+        shadow = self.package.parent / "node_modules" / "fixture-absent-dependency"
+        shadow.mkdir(parents=True)
+        (shadow / "package.json").write_text('{"version":"1"}')
+        with self.assertRaisesRegex(adapter.GitNexusAdapterError, "external dependency"):
+            adapter.verify_qualification(self.qualification)
+
+    def test_nearer_lockfile_cannot_reuse_old_local_identity(self):
+        (self.package.parent / "package-lock.json").write_text('{"closer":1}')
+        with self.assertRaisesRegex(adapter.GitNexusAdapterError, "dependency closure drifted"):
+            adapter.verify_qualification(self.qualification)
+
+    def test_external_bare_module_fallback_is_refused(self):
+        modules = self.package.parent / "node_modules"
+        modules.mkdir()
+        (modules / "fixture-absent-dependency.js").write_text("module.exports = {};\n")
+        with self.assertRaisesRegex(adapter.GitNexusAdapterError, "external dependency fallback"):
+            adapter.verify_qualification(self.qualification)
+
+    def test_root_registry_dev_directory_link_is_refused(self):
+        manifest = self.package / "package.json"
+        value = json.loads(manifest.read_text())
+        value["devDependencies"] = {"fixture-linked-dev": "1"}
+        manifest.write_text(json.dumps(value))
+        external = self.directory / "external-dev"
+        external.mkdir()
+        (external / "package.json").write_text('{"version":"1"}')
+        (self.package / "node_modules" / "fixture-linked-dev").symlink_to(external, target_is_directory=True)
+        with self.assertRaises(adapter.GitNexusAdapterError):
+            adapter.local_1612_dependency_identity(self.package)
+
+    def test_external_lockfile_content_and_internal_runtime_bytes_are_bound(self):
+        (self.directory / "package-lock.json").write_text('{"fixture":2}')
+        with self.assertRaises(adapter.GitNexusAdapterError):
+            adapter.verify_qualification(self.qualification)
+        (self.package / "node_modules/fixture-dependency/index.js").write_text("changed\n")
+        with self.assertRaisesRegex(adapter.GitNexusAdapterError, "package tree drifted"):
+            adapter.verify_qualification(self.qualification)
+
+    def test_directory_symlink_is_refused(self):
+        external = self.directory / "external-dependency"
+        external.mkdir()
+        (external / "package.json").write_text('{"version":"1"}')
+        (self.package / "node_modules" / "fixture-absent-dependency").symlink_to(external, target_is_directory=True)
+        with self.assertRaises(adapter.GitNexusAdapterError):
+            adapter.local_1612_dependency_identity(self.package)
+
+    def test_same_head_metadata_cannot_be_minted_into_a_new_sidecar(self):
+        write_metadata(self.root, self.metadata())
+        home = self.directory / "same-head-home"
+        home.mkdir(mode=0o700)
+        with self.assertRaisesRegex(adapter.GitNexusAdapterError, "same-HEAD"), mock.patch.object(adapter, "_run_refresh_subprocess", side_effect=AssertionError("unexpected analysis")):
+            adapter.RefreshController(self.qualification, enabled=True, gitnexus_home=home).refresh(
+                self.repository, expected_head=self.repository.head, explicit_opt_in=True)
+        self.assertFalse((self.root / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME).exists())
+
+    def test_coverage_runner_storage_and_partial_fail_before_sidecar_promotion(self):
+        for case in ("omitted", "forged", "extra", "runner", "storage", "partial"):
+            with self.subTest(case=case):
+                value = self.metadata()
+                if case == "omitted":
+                    value["fileHashes"].pop("code.py"); value["stats"]["files"] -= 1
+                elif case == "forged":
+                    value["fileHashes"]["code.py"] = "0" * 64
+                elif case == "extra":
+                    value["fileHashes"]["not-in-caller-scope.py"] = "0" * 64; value["stats"]["files"] += 1
+                elif case == "runner":
+                    value["runnerIdentity"]["dependencyRuntime"]["digest"] = "sha256:" + "0" * 64
+                elif case == "storage":
+                    value["storagePath"] = str(self.directory / "outside")
+                else:
+                    value["graphWriteCollapsed"] = False
+                write_metadata(self.root, value)
+                self.assertNotEqual("fresh", self.assess(before_write=True).state)
+                self.assertFalse((self.root / ".gitnexus" / adapter.INDEX_IDENTITY_FILENAME).exists())
+
+    def test_old_schema_and_old_sidecar_cannot_certify_new_profile(self):
+        old = fake_qualification(make_executable(self.directory))
+        write_metadata(self.root, valid_metadata(self.repository))
+        write_exact_identity(self.root, self.repository, old)
+        self.assertEqual("metadata-profile-mismatch", self.assess().reason)
+        write_metadata(self.root, self.metadata())
+        self.assertEqual("index-identity-tool-mismatch", self.assess().reason)
+
+    def test_unicode_scope_has_its_own_digest_and_actual_content_check(self):
+        filename = "文件.py"
+        (self.root / filename).write_text("print('unicode')\n")
+        run_git(self.root, "add", filename)
+        run_git(self.root, "commit", "-m", "unicode fixture")
+        paths = [*self.arguments["expected_coverage_paths"], filename]
+        self.qualification = adapter.qualify_local_1612(self.entry, **{**self.arguments, "expected_coverage_paths": paths})
+        value = self.metadata()
+        value["fileHashes"][filename] = hashlib.sha256((self.root / filename).read_bytes()).hexdigest()
+        value["stats"]["files"] += 1
+        write_metadata(self.root, value)
+        result = self.assess(before_write=True)
+        self.assertEqual("fresh", result.state)
+        self.assertRegex(result.metadata_digest, r"^[0-9a-f]{64}$")
+        value["fileHashes"][filename] = "0" * 64
+        write_metadata(self.root, value)
+        self.assertEqual("metadata-1612-covered-content-mismatch", self.assess(before_write=True).reason)
 
 
 if __name__ == "__main__":

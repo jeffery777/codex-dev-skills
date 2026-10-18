@@ -614,6 +614,7 @@ def evaluate_hook(config: HookConfig, document: Mapping[str, Any]) -> dict[str, 
 
     refresh_eligible = (
         config.mode == "auto-on-demand"
+        and qualification.local_1612 is None
         and clean
         and metadata.state in {"stale", "missing"}
         and (revision_changed or metadata.state == "missing")

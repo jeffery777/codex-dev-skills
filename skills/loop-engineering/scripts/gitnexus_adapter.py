@@ -54,6 +54,18 @@ META_REQUIRED_FIELDS = frozenset(
 META_OPTIONAL_FIELDS = frozenset({"incrementalInProgress", "pdg"})
 META_FIELDS = META_REQUIRED_FIELDS | META_OPTIONAL_FIELDS
 META_SCHEMA_VERSION = 5
+# A closed 1.6.12 producer subset; adoption also needs a caller-owned local profile.
+LOCAL_1612_SCHEMA = "gitnexus-metadata-1.6.12/v1"
+META_1612_REQUIRED_FIELDS = (META_REQUIRED_FIELDS - {"schemaVersion"}) | {
+    "storagePath", "contentRetention", "contentRetentionSchemaVersion",
+    "ftsProfile", "runnerIdentity", "schemaFingerprint",
+    "scopeExtractionReceipt", "analysisFeatures", "springVendorPrefixes",
+    "embeddingDims", "indexCoverage",
+}
+META_1612_REFUSED_FIELDS = frozenset({
+    "incrementalInProgress", "graphWriteCollapsed", "scopeExtractionFailures",
+    "embeddingCheckpoint", "pdg",
+})
 MAX_METADATA_BYTES = 4 * 1024 * 1024
 MAX_INDEX_IDENTITY_BYTES = 256 * 1024
 MAX_SNAPSHOT_ENTRIES = 250_000
@@ -102,6 +114,16 @@ class ProbeDeadlineError(GitNexusAdapterError):
 
 
 @dataclass(frozen=True)
+class Local1612Profile:
+    """Machine-local accepted evidence, never inferred from index metadata."""
+
+    runner_json: str
+    dependency_sha256: str
+    coverage_paths: tuple[str, ...]
+    probe_sha256: str
+
+
+@dataclass(frozen=True)
 class ExecutableQualification:
     executable: pathlib.Path
     executable_sha256: str
@@ -119,6 +141,7 @@ class ExecutableQualification:
     package_tree_sha256: str | None = None
     package_stat_identity: tuple[int, int, int, int] | None = None
     trusted_provenance_digest: str | None = None
+    local_1612: Local1612Profile | None = None
 
 
 @dataclass(frozen=True)
@@ -382,6 +405,7 @@ def _package_regular_file_at(
     expected: os.stat_result,
     *,
     deadline: float | None = None,
+    maximum_bytes: int = MAX_PACKAGE_BYTES,
 ) -> tuple[str, os.stat_result]:
     """Hash one descriptor-bound package file without following a late link."""
     if not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_NONBLOCK"):
@@ -415,11 +439,11 @@ def _package_regular_file_at(
         total = 0
         while True:
             _check_deadline(deadline)
-            chunk = os.read(descriptor, 1024 * 1024)
+            chunk = os.read(descriptor, min(1024 * 1024, maximum_bytes + 1 - total))
             if not chunk:
                 break
             total += len(chunk)
-            if total > MAX_PACKAGE_BYTES:
+            if total > maximum_bytes:
                 raise GitNexusAdapterError(
                     "GitNexus package tree exceeds qualification bounds"
                 )
@@ -467,6 +491,7 @@ def _package_target_identity_at(
     components: Sequence[str],
     *,
     deadline: float | None = None,
+    maximum_bytes: int = MAX_PACKAGE_BYTES,
 ) -> tuple[str, os.stat_result]:
     """Open a lexically confined direct file target from the package root."""
     directory_fd = os.dup(root_fd)
@@ -510,11 +535,14 @@ def _package_target_identity_at(
             raise GitNexusAdapterError(
                 "GitNexus package symlink must target a regular file"
             )
+        if expected_target.st_size > maximum_bytes:
+            raise GitNexusAdapterError("qualified input exceeds its byte bound")
         return _package_regular_file_at(
             directory_fd,
             components[-1],
             expected_target,
             deadline=deadline,
+            maximum_bytes=maximum_bytes,
         )
     finally:
         os.close(directory_fd)
@@ -767,6 +795,148 @@ def _script_runtime(
     return runtime, digest, identity, symlink_policy, launcher
 
 
+def _local_json(value: Any) -> str:
+    # A separate domain permits Unicode path keys without changing Memory rules.
+    return json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"), allow_nan=False)
+
+
+def _local_input(path: pathlib.Path, *, deadline: float | None = None) -> tuple[dict[str, Any], bytes | None]:
+    """Read a small local input through no-follow descriptors at every hop."""
+    if not path.is_absolute() or ".." in path.parts:
+        raise GitNexusAdapterError("local identity path must be absolute")
+    descriptor = _open_directory_nofollow(pathlib.Path("/"))
+    try:
+        for component in path.parts[1:-1]:
+            _check_deadline(deadline)
+            child = os.open(component, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+        info = os.stat(path.name, dir_fd=descriptor, follow_symlinks=False)
+        record = {"path": str(path), "kind": "directory", "identity": [info.st_dev, info.st_ino, info.st_mode, info.st_mtime_ns, info.st_ctime_ns]}
+        if stat.S_ISDIR(info.st_mode):
+            return record, None
+        if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_METADATA_BYTES:
+            raise GitNexusAdapterError("local identity input must be a small regular file or directory")
+        digest, _ = _package_regular_file_at(descriptor, path.name, info, deadline=deadline)
+        raw = _read_regular_at(descriptor, path.name, maximum_bytes=MAX_METADATA_BYTES, deadline=deadline)
+        if hashlib.sha256(raw).hexdigest() != digest:
+            raise GitNexusAdapterError("local identity input changed while read")
+        return {**record, "kind": "file", "sha256": digest}, raw
+    except FileNotFoundError:
+        return {"path": str(path), "kind": "missing"}, None
+    except OSError as exc:
+        raise GitNexusAdapterError("local identity path is linked or unavailable") from exc
+    finally:
+        os.close(descriptor)
+
+
+def local_1612_dependency_identity(package_root: pathlib.Path, *, deadline: float | None = None) -> tuple[str, int, str | None]:
+    """Bind the self-contained distribution's closure and ancestor resolution.
+
+    This deliberately rejects external packages and directory links. It follows
+    the fixed 1.6.12 runtime/optional/peer/local-dev manifest subset, not npm
+    installation or arbitrary package-manager layouts. No code is executed.
+    """
+    records: dict[str, tuple[dict[str, Any], bytes | None]] = {}
+    edges = 0
+    total_bytes = 0
+
+    def inspect(path: pathlib.Path) -> tuple[dict[str, Any], bytes | None]:
+        nonlocal total_bytes
+        _check_deadline(deadline)
+        key = str(path)
+        if key not in records:
+            if len(records) >= 100_000:
+                raise GitNexusAdapterError("dependency resolution exceeds path bounds")
+            records[key] = _local_input(path, deadline=deadline)
+            total_bytes += len(records[key][1] or b"")
+            if total_bytes > MAX_METADATA_BYTES:
+                raise GitNexusAdapterError("dependency manifests exceed byte bounds")
+        return records[key]
+
+    def resolve(parent: pathlib.Path, name: str, *, runtime_input: bool = True) -> pathlib.Path | None:
+        nonlocal edges
+        edges += 1
+        if edges > 100_000 or not re.fullmatch(r"(?:@[A-Za-z0-9._-]+/)?[A-Za-z0-9._-]+", name) or any(p in {".", ".."} for p in name.split("/")):
+            raise GitNexusAdapterError("dependency name or edge bound is invalid")
+        for cursor in (parent, *parent.parents):
+            candidate = cursor / "node_modules"
+            inspect(candidate)
+            for part in name.split("/"):
+                candidate /= part
+                inspect(candidate)
+            outside = not candidate.is_relative_to(package_root)
+            if outside and runtime_input:
+                for suffix in (".js", ".json", ".node"):
+                    fallback, _ = inspect(candidate.with_name(candidate.name + suffix))
+                    if fallback["kind"] != "missing":
+                        raise GitNexusAdapterError("external dependency fallback is outside the local profile")
+            record, _ = inspect(candidate / "package.json")
+            if record["kind"] == "file":
+                return candidate
+            if outside and runtime_input and inspect(candidate)[0]["kind"] != "missing":
+                raise GitNexusAdapterError("external dependency without a manifest is outside the local profile")
+            if record["kind"] != "missing":
+                raise GitNexusAdapterError("dependency manifest is not regular")
+        return None
+
+    queue = [package_root]
+    visited = {package_root}
+    for parent in queue:
+        if len(queue) > 10_000:
+            raise GitNexusAdapterError("dependency closure exceeds package bounds")
+        record, raw = inspect(parent / "package.json")
+        try:
+            manifest = json.loads(raw) if raw is not None else None
+        except (ValueError, UnicodeError, RecursionError) as exc:
+            raise GitNexusAdapterError("dependency manifest is invalid") from exc
+        if not isinstance(manifest, dict):
+            raise GitNexusAdapterError("dependency manifest is missing or invalid")
+        if parent == package_root and manifest.get("version") != "1.6.12":
+            raise GitNexusAdapterError("local distribution must be exactly 1.6.12")
+        names: set[str] = set()
+        for section in ("dependencies", "optionalDependencies", "peerDependencies", "devDependencies"):
+            entries = manifest.get(section, {})
+            if not isinstance(entries, dict) or any(not isinstance(n, str) or not isinstance(s, str) for n, s in entries.items()):
+                raise GitNexusAdapterError("dependency section is invalid")
+            for name, specifier in entries.items():
+                local = bool(re.match(r"^(?:(?:file|link|workspace|portal):|\.{1,2}[/\\]|~[/\\]|[/\\]|[A-Za-z]:)", specifier.strip()))
+                if section != "devDependencies" or local:
+                    names.add(name)
+                elif parent == package_root:
+                    # Root registry dev tools are not runtime inputs. A resolved
+                    # checkout link would matter; all directory links are refused.
+                    resolved = resolve(parent, name, runtime_input=False)
+                    if resolved is not None and "node_modules" not in resolved.parts:
+                        names.add(name)
+        for name in sorted(names):
+            child = resolve(parent, name)
+            if child is None:
+                continue
+            if not child.is_relative_to(package_root):
+                raise GitNexusAdapterError("external dependency is outside the local profile")
+            if len(child.relative_to(package_root).parts) > MAX_SNAPSHOT_DEPTH:
+                raise GitNexusAdapterError("dependency closure exceeds depth bounds")
+            if child not in visited:
+                visited.add(child)
+                queue.append(child)
+    lockfile = None
+    for parent in (package_root, *package_root.parents):
+        candidate = parent / "package-lock.json"
+        record, _ = inspect(candidate)
+        if record["kind"] == "file":
+            lockfile = str(candidate)
+            break
+        if record["kind"] != "missing":
+            raise GitNexusAdapterError("nearest dependency lockfile is not regular")
+    # Revalidate every resolution/absence input at the return boundary.
+    for path, (record, _) in records.items():
+        if _local_input(pathlib.Path(path), deadline=deadline)[0] != record:
+            raise GitNexusAdapterError("dependency resolution changed during inspection")
+    body = {"schema": "gitnexus-local-dependency-closure/v1", "package_count": len(queue), "lockfile": lockfile, "inputs": [records[k][0] for k in sorted(records)]}
+    return hashlib.sha256(_local_json(body).encode("ascii")).hexdigest(), len(queue), lockfile
+
+
 def _qualification_body(
     *,
     executable_sha256: str,
@@ -777,11 +947,12 @@ def _qualification_body(
     runtime_launcher: str | None = None,
     package_tree_sha256: str | None = None,
     trusted_provenance_digest: str | None = None,
+    local_1612: Local1612Profile | None = None,
 ) -> dict[str, Any]:
     launcher = runtime_launcher or (
         "bound-node" if runtime_executable_sha256 else "direct"
     )
-    return {
+    body = {
         "driver_version": DRIVER_VERSION,
         "executable_sha256": executable_sha256,
         "runtime_executable_sha256": runtime_executable_sha256,
@@ -802,6 +973,20 @@ def _qualification_body(
         },
         "symlink_policy": symlink_policy,
     }
+    if local_1612 is not None:
+        body.update({
+            "gitnexus_version": "1.6.12", "metadata_schema": LOCAL_1612_SCHEMA,
+            "metadata_fields": sorted(META_1612_REQUIRED_FIELDS),
+            "local_identity": {
+                "runner": hashlib.sha256(local_1612.runner_json.encode("ascii")).hexdigest(),
+                "dependency_closure": local_1612.dependency_sha256,
+                "coverage_paths": list(local_1612.coverage_paths),
+                "accepted_probes": local_1612.probe_sha256,
+                "schema_fingerprint": "60fc01e4e4ed", "automatic_refresh": False,
+                "parse_cache": False, "write_mode": "full-rebuild",
+            },
+        })
+    return body
 
 
 def _qualified_argv(
@@ -826,6 +1011,8 @@ def _qualify_executable_until(
     accepted_executable_sha256: str | None = None,
     accepted_package_sha256: str | None = None,
     accepted_runtime_sha256: str | None = None,
+    local_1612: Local1612Profile | None = None,
+    accepted_probe_outputs: tuple[str, str] | None = None,
 ) -> ExecutableQualification:
     """Bind qualification under a caller-owned, already bounded deadline."""
     _check_deadline(deadline)
@@ -867,6 +1054,10 @@ def _qualify_executable_until(
     )
     if before_package_digest != expected_package:
         raise GitNexusAdapterError("GitNexus package tree does not match caller-owned provenance")
+    if local_1612 is not None:
+        _verify_local_1612(local_1612, executable, before_digest, runtime_executable, qualified_package_root, deadline=deadline)
+    elif accepted_probe_outputs is not None:
+        raise GitNexusAdapterError("accepted probe receipts require the local 1.6.12 profile")
     trusted_provenance_digest = _canonical_digest(
         {
             "schema": "gitnexus-trusted-provenance/v1",
@@ -880,20 +1071,23 @@ def _qualify_executable_until(
         "env": _safe_environment(environment),
     }
     common["timeout"] = _remaining_timeout(deadline)
-    version_output = _completed_output(
+    version_output = accepted_probe_outputs[0] if accepted_probe_outputs is not None else _completed_output(
         run_process(_qualified_argv(executable, runtime_executable, "--version"), **common),
         "gitnexus --version",
     )
-    matches = VERSION_RE.findall(version_output)
-    if matches != [QUALIFIED_GITNEXUS_VERSION]:
-        raise GitNexusAdapterError("GitNexus exact version 1.6.9 is required")
+    version = "1.6.12" if local_1612 is not None else QUALIFIED_GITNEXUS_VERSION
+    matches = re.findall(r"(?<![0-9])v?(1\.6\.12)(?![0-9.])", version_output) if local_1612 is not None else VERSION_RE.findall(version_output)
+    if matches != [version]:
+        raise GitNexusAdapterError(f"GitNexus exact version {version} is required")
     common["timeout"] = _remaining_timeout(deadline)
-    help_output = _completed_output(
+    help_output = accepted_probe_outputs[1] if accepted_probe_outputs is not None else _completed_output(
         run_process(_qualified_argv(executable, runtime_executable, "analyze", "--help"), **common),
         "gitnexus analyze --help",
     )
     flags = tuple(sorted(set(FLAG_RE.findall(help_output))))
     missing = sorted(REQUIRED_ANALYZE_FLAGS - set(flags))
+    if local_1612 is not None and "--no-parse-cache" not in flags:
+        missing.append("--no-parse-cache")
     if missing:
         raise GitNexusAdapterError(f"GitNexus required analyze flags are missing: {','.join(missing)}")
     after_digest, after_identity = _executable_identity(executable, deadline=deadline)
@@ -911,6 +1105,8 @@ def _qualify_executable_until(
         after_package_identity,
     ):
         raise GitNexusAdapterError("GitNexus package tree changed during qualification")
+    if local_1612 is not None:
+        _verify_local_1612(local_1612, executable, after_digest, runtime_executable, qualified_package_root, deadline=deadline)
     body = _qualification_body(
         executable_sha256=after_digest,
         analyze_flags=flags,
@@ -920,11 +1116,12 @@ def _qualify_executable_until(
         runtime_launcher=runtime_launcher,
         package_tree_sha256=after_package_digest,
         trusted_provenance_digest=trusted_provenance_digest,
+        local_1612=local_1612,
     )
     return ExecutableQualification(
         executable=executable,
         executable_sha256=after_digest,
-        version=QUALIFIED_GITNEXUS_VERSION,
+        version=version,
         analyze_flags=flags,
         symlink_policy=symlink_policy,
         fingerprint=_canonical_digest(body),
@@ -938,6 +1135,7 @@ def _qualify_executable_until(
         package_tree_sha256=after_package_digest,
         package_stat_identity=after_package_identity,
         trusted_provenance_digest=trusted_provenance_digest,
+        local_1612=local_1612,
     )
 
 
@@ -974,6 +1172,116 @@ def qualify_executable(
     )
 
 
+def _runner_1612_valid(value: Any) -> bool:
+    def record(item: Any, keys: set[str]) -> bool:
+        return isinstance(item, dict) and set(item) == keys
+
+    def text(item: Any) -> bool:
+        if not isinstance(item, str) or not 0 < len(item) <= 4096 or "\0" in item:
+            return False
+        try:
+            item.encode("utf-8")
+        except UnicodeEncodeError:
+            return False
+        return True
+
+    def absolute(item: Any) -> bool:
+        return text(item) and item.startswith("/") and ".." not in pathlib.PurePosixPath(item).parts
+
+    def digest(item: Any) -> bool:
+        return isinstance(item, str) and item.startswith("sha256:") and bool(SHA256_RE.fullmatch(item[7:]))
+
+    if not record(value, {"schemaVersion", "runtime", "cliVersion", "invokedArtifact", "build", "dependencyRuntime"}) or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 4 or value["cliVersion"] != "1.6.12":
+        return False
+    runtime, entry, build, dependency = (value[k] for k in ("runtime", "invokedArtifact", "build", "dependencyRuntime"))
+    return (
+        record(runtime, {"executablePath", "version", "platform", "architecture", "modulesAbi", "libc"})
+        and absolute(runtime["executablePath"]) and all(text(v) for v in runtime.values())
+        and record(entry, {"path", "digest"}) and absolute(entry["path"]) and digest(entry["digest"])
+        and record(build, {"kind", "rootPath", "canonicalization", "digest"}) and build["kind"] == "distribution"
+        and absolute(build["rootPath"]) and build["canonicalization"] == "gitnexus-analyzer-build-v2" and digest(build["digest"])
+        and record(dependency, {"manifestPath", "lockfilePath", "canonicalization", "packageCount", "artifactCount", "digest"})
+        and absolute(dependency["manifestPath"]) and (dependency["lockfilePath"] is None or absolute(dependency["lockfilePath"]))
+        and dependency["canonicalization"] == "gitnexus-analyzer-dependency-runtime-v4" and digest(dependency["digest"])
+        and all(type(dependency[k]) is int and 1 <= dependency[k] <= 2**53 - 1 for k in ("packageCount", "artifactCount"))
+    )
+
+
+def _coverage_path_valid(path: Any) -> bool:
+    if not isinstance(path, str):
+        return False
+    try:
+        path.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return (
+        0 < len(path) <= 4096
+        and all(p not in {"", ".", ".."} for p in path.split("/"))
+        and "\\" not in path and "\0" not in path
+        and path.split("/", 1)[0] not in {".git", ".gitnexus"}
+    )
+
+
+def _verify_local_1612(profile: Local1612Profile, executable: pathlib.Path, entry_digest: str,
+                       runtime: pathlib.Path | None, package: pathlib.Path, *, deadline: float | None = None) -> None:
+    if not isinstance(profile, Local1612Profile) or not all(isinstance(v, str) for v in (profile.runner_json, profile.dependency_sha256, profile.probe_sha256)):
+        raise GitNexusAdapterError("accepted local 1.6.12 profile is invalid")
+    try:
+        runner = json.loads(profile.runner_json)
+        valid = (
+            _runner_1612_valid(runner) and _local_json(runner) == profile.runner_json
+            and runner["invokedArtifact"] == {"path": str(executable), "digest": "sha256:" + entry_digest}
+            and runtime is not None and runner["runtime"]["executablePath"] == str(runtime)
+            and runner["build"]["rootPath"] == str(package / "dist")
+            and runner["dependencyRuntime"]["manifestPath"] == str(package / "package.json")
+            and isinstance(profile.coverage_paths, tuple) and 0 < len(profile.coverage_paths) <= MAX_SNAPSHOT_ENTRIES
+            and all(_coverage_path_valid(p) for p in profile.coverage_paths)
+            and tuple(sorted(set(profile.coverage_paths))) == profile.coverage_paths
+            and bool(SHA256_RE.fullmatch(profile.probe_sha256))
+        )
+    except (ValueError, TypeError, KeyError, UnicodeError):
+        valid = False
+    if not valid:
+        raise GitNexusAdapterError("accepted local 1.6.12 identity is invalid or unbound")
+    digest, count, lockfile = local_1612_dependency_identity(package, deadline=deadline)
+    if digest != profile.dependency_sha256 or count != runner["dependencyRuntime"]["packageCount"] or lockfile != runner["dependencyRuntime"]["lockfilePath"]:
+        raise GitNexusAdapterError("accepted local 1.6.12 dependency closure drifted")
+
+
+def qualify_local_1612(
+    configured_path: str | os.PathLike[str], *, runtime_path: str | os.PathLike[str],
+    package_root: str | os.PathLike[str], accepted_executable_sha256: str,
+    accepted_runtime_sha256: str, accepted_package_sha256: str,
+    accepted_runner_identity: Mapping[str, Any], accepted_dependency_sha256: str,
+    expected_coverage_paths: Sequence[str], version_output: str, analyze_help_output: str,
+    accepted_probe_sha256: str, timeout_seconds: int = 180,
+) -> ExecutableQualification:
+    """Reuse caller-accepted version/help receipts; execute no tool or probe.
+
+    The caller independently accepts the local installation, runner receipt and
+    explicit coverage scope. Receipt text alone never establishes that trust.
+    External runtime dependencies and automatic refresh remain unsupported.
+    """
+    deadline = _timeout_deadline(timeout_seconds, label="qualification", maximum=300)
+    if not _runner_1612_valid(accepted_runner_identity) or not all(isinstance(v, str) for v in (version_output, analyze_help_output)):
+        raise GitNexusAdapterError("accepted local 1.6.12 receipts are invalid")
+    if not isinstance(expected_coverage_paths, (tuple, list)) or not expected_coverage_paths or not all(_coverage_path_valid(p) for p in expected_coverage_paths):
+        raise GitNexusAdapterError("accepted coverage paths are invalid")
+    probes = (version_output, analyze_help_output)
+    if sum(len(v) for v in probes) > 1024 * 1024 or hashlib.sha256(_local_json(probes).encode("ascii")).hexdigest() != _require_expected_digest(accepted_probe_sha256, "probe receipt"):
+        raise GitNexusAdapterError("accepted probe receipt digest mismatch")
+    profile = Local1612Profile(
+        _local_json(dict(accepted_runner_identity)),
+        _require_expected_digest(accepted_dependency_sha256, "dependency closure"),
+        tuple(sorted(expected_coverage_paths)), accepted_probe_sha256,
+    )
+    return _qualify_executable_until(
+        configured_path, deadline=deadline, runtime_path=runtime_path, package_root=package_root,
+        accepted_executable_sha256=accepted_executable_sha256, accepted_runtime_sha256=accepted_runtime_sha256,
+        accepted_package_sha256=accepted_package_sha256, local_1612=profile, accepted_probe_outputs=probes,
+    )
+
+
 def verify_qualification(
     qualification: ExecutableQualification,
     *,
@@ -983,8 +1291,11 @@ def verify_qualification(
     digest, identity = _executable_identity(qualification.executable, deadline=deadline)
     if digest != qualification.executable_sha256 or identity != qualification.stat_identity:
         raise GitNexusAdapterError("qualified GitNexus executable drifted")
-    if qualification.version != QUALIFIED_GITNEXUS_VERSION or not REQUIRED_ANALYZE_FLAGS.issubset(qualification.analyze_flags):
+    expected_version = "1.6.12" if qualification.local_1612 is not None else QUALIFIED_GITNEXUS_VERSION
+    if qualification.version != expected_version or not REQUIRED_ANALYZE_FLAGS.issubset(qualification.analyze_flags):
         raise GitNexusAdapterError("GitNexus qualification capability drift requires requalification")
+    if qualification.local_1612 is not None and "--no-parse-cache" not in qualification.analyze_flags:
+        raise GitNexusAdapterError("local 1.6.12 requires full rebuild without parser cache")
     with qualification.executable.open("rb") as stream:
         shebang = stream.readline(256).rstrip(b"\r\n")
     if shebang.startswith(b"#!/usr/bin/env"):
@@ -1023,6 +1334,8 @@ def verify_qualification(
         or package_identity != qualification.package_stat_identity
     ):
         raise GitNexusAdapterError("qualified GitNexus package tree drifted")
+    if qualification.local_1612 is not None:
+        _verify_local_1612(qualification.local_1612, qualification.executable, digest, qualification.runtime_executable, qualification.package_root, deadline=deadline)
     _check_deadline(deadline)
     expected_fingerprint = _canonical_digest(_qualification_body(
         executable_sha256=qualification.executable_sha256,
@@ -1033,6 +1346,7 @@ def verify_qualification(
         runtime_launcher=qualification.runtime_launcher,
         package_tree_sha256=qualification.package_tree_sha256,
         trusted_provenance_digest=qualification.trusted_provenance_digest,
+        local_1612=qualification.local_1612,
     ))
     if qualification.fingerprint != expected_fingerprint:
         raise GitNexusAdapterError("GitNexus qualification fingerprint is inconsistent")
@@ -2051,6 +2365,10 @@ def _index_alias(
     )
 
 
+def _index_analyze_arguments(qualification: ExecutableQualification, alias: str, root: pathlib.Path) -> list[str]:
+    return ["analyze", "--index-only", *(["--no-parse-cache"] if qualification.local_1612 else []), "--name", alias, str(root)]
+
+
 def build_index_identity(
     repository: RepositoryState,
     snapshot: TrackedSnapshot,
@@ -2097,9 +2415,9 @@ def build_index_identity(
     alias = _index_alias(repository, snapshot, lifecycle)
     config_digest = _canonical_digest(
         {
-            "argv": ["analyze", "--index-only", "--name", alias, str(repository.root)],
+            "argv": _index_analyze_arguments(qualification, alias, repository.root),
             "required_flags": sorted(REQUIRED_ANALYZE_FLAGS),
-            "metadata_schema": META_SCHEMA_VERSION,
+            "metadata_schema": LOCAL_1612_SCHEMA if qualification.local_1612 else META_SCHEMA_VERSION,
         }
     )
     body = {
@@ -2134,13 +2452,13 @@ def build_index_identity(
             "alias": alias,
             "exact_eligible": exact_eligible,
             "automatic_refresh_eligible": exact_eligible
-            and checkout_kind == "primary",
+            and checkout_kind == "primary" and qualification.local_1612 is None,
         },
         "tool": {
             "driver_version": DRIVER_VERSION,
             "gitnexus_version": qualification.version,
             "qualification_fingerprint": qualification.fingerprint,
-            "metadata_schema": META_SCHEMA_VERSION,
+            "metadata_schema": LOCAL_1612_SCHEMA if qualification.local_1612 else META_SCHEMA_VERSION,
         },
         "configuration": {"analyze_config_digest": config_digest},
         "freshness": {
@@ -2432,6 +2750,138 @@ def _write_index_identity(
         os.close(directory_fd)
 
 
+def _metadata_1612_diagnostic_shape(value: dict[str, Any]) -> tuple[str | None, str | None]:
+    """Recognize typed 1.6.12 metadata without trusting its receipts or freshness.
+
+    This intentionally covers a narrow producer subset. Unknown fields, omitted
+    completeness receipts and unfinished/degraded operations remain rejected.
+    Paths and digests here are untrusted declarations; no referenced file is
+    opened, executed, authenticated or adopted by this diagnostic parser.
+    """
+    if "schemaVersion" in value:
+        return "corrupt", "metadata-mixed-schema-profiles"
+    if META_1612_REQUIRED_FIELDS - set(value):
+        return "partial", "metadata-1612-required-fields-missing"
+    if set(value) - META_1612_REQUIRED_FIELDS - META_1612_REFUSED_FIELDS:
+        return "corrupt", "metadata-1612-unknown-fields"
+    # Presence is sufficient to refuse these records, even null/empty markers.
+    # Their internal formats are outside this diagnostic subset.
+    if set(value) & META_1612_REFUSED_FIELDS:
+        return "partial", "metadata-1612-operation-or-coverage-unqualified"
+
+    def text(item: Any, limit: int = 4096) -> bool:
+        if not isinstance(item, str) or not 0 < len(item) <= limit or "\x00" in item:
+            return False
+        try:
+            item.encode("utf-8")
+        except UnicodeEncodeError:
+            return False
+        return True
+
+    def integer(item: Any, minimum: int = 0) -> bool:
+        return type(item) is int and minimum <= item <= 2**53 - 1
+
+    def absolute(item: Any) -> bool:
+        return text(item) and pathlib.PurePosixPath(item).is_absolute() and ".." not in pathlib.PurePosixPath(item).parts
+
+    def relative(item: Any) -> bool:
+        return (
+            text(item) and "\\" not in item and "//" not in item
+            and not item.startswith("/") and not item.endswith("/")
+            and all(part not in {"", ".", ".."} for part in item.split("/"))
+            and not item.startswith((".git/", ".gitnexus/"))
+            and item not in {".git", ".gitnexus"}
+        )
+
+    def record(item: Any, keys: set[str]) -> bool:
+        return isinstance(item, dict) and set(item) == keys
+
+    def digest(item: Any) -> bool:
+        return isinstance(item, str) and item.startswith("sha256:") and bool(SHA256_RE.fullmatch(item[7:]))
+
+    invalid = ("corrupt", "metadata-1612-typed-field-invalid")
+    if not (
+        absolute(value["repoPath"]) and absolute(value["storagePath"])
+        and value["storagePath"] == value["repoPath"].rstrip("/") + "/.gitnexus"
+        and isinstance(value["lastCommit"], str) and COMMIT_RE.fullmatch(value["lastCommit"])
+        and text(value["remoteUrl"]) and text(value["branch"], 256)
+        and text(value["indexedAt"], 128)
+    ):
+        return invalid
+    try:
+        timestamp = dt.datetime.fromisoformat(value["indexedAt"].replace("Z", "+00:00"))
+        if timestamp.tzinfo is None:
+            return invalid
+        normalize_remote(value["remoteUrl"])
+    except (ValueError, TypeError, GitNexusAdapterError):
+        return invalid
+    stats = value["stats"]
+    if not record(stats, {"files", "nodes", "edges", "communities", "processes", "embeddings"}) or not all(integer(n) for n in stats.values()):
+        return invalid
+    if (
+        value["contentRetention"] != "full" or value["ftsProfile"] != "full"
+        or type(value["contentRetentionSchemaVersion"]) is not int
+        or value["contentRetentionSchemaVersion"] != 1
+        or type(value["scopeExtractionReceipt"]) is not int
+        or value["scopeExtractionReceipt"] != 1
+        or value["cjkSegmentation"] != "none"
+        or type(value["embeddingDims"]) is not int or value["embeddingDims"] != 384
+    ):
+        return "unsupported", "metadata-1612-profile-unqualified"
+    fingerprint = value["schemaFingerprint"]
+    if not isinstance(fingerprint, str) or re.fullmatch(r"[0-9a-f]{12}", fingerprint) is None:
+        return invalid
+    # Independently derived from the fixed local 1.6.12 DDL source. This is
+    # recognition only: neither release provenance nor a DB schema check.
+    if fingerprint != "60fc01e4e4ed":
+        return "unsupported", "metadata-1612-schema-fingerprint-unqualified"
+    features = value["analysisFeatures"]
+    if not record(features, {"graph.class-framework-annotations"}) or type(features["graph.class-framework-annotations"]) is not int or features["graph.class-framework-annotations"] != 1:
+        return "unsupported", "metadata-1612-analysis-features-unqualified"
+    try:
+        prefixes = json.loads(value["springVendorPrefixes"])
+        if not isinstance(prefixes, list) or len(prefixes) > 1024 or not all(text(p, 256) for p in prefixes) or len(set(prefixes)) != len(prefixes):
+            return invalid
+    except (TypeError, ValueError, RecursionError):
+        return invalid
+    capabilities = value["capabilities"]
+    if not record(capabilities, {"graph", "fts", "vectorSearch"}):
+        return invalid
+    graph, fts, vector = (capabilities[k] for k in ("graph", "fts", "vectorSearch"))
+    if not record(graph, {"provider", "status"}) or graph != {"provider": GRAPH_PROVIDER, "status": "available"}:
+        return invalid
+    if not isinstance(fts, dict) or set(fts) not in ({"provider", "status"}, {"provider", "status", "skipReason"}) or fts.get("provider") != FTS_PROVIDER:
+        return invalid
+    if fts.get("status") == "available":
+        if "skipReason" in fts:
+            return invalid
+    elif fts.get("status") == "unavailable":
+        if fts.get("skipReason") not in ("extension-unavailable", "build-failed", "disabled-by-flag", "disabled-by-env"):
+            return invalid
+        if fts["skipReason"] != "extension-unavailable":
+            return "unsupported", "metadata-1612-fts-degradation-unqualified"
+    else:
+        return invalid
+    if not isinstance(vector, dict) or set(vector) not in ({"provider", "status", "exactScanLimit"}, {"provider", "status", "exactScanLimit", "reason"}):
+        return invalid
+    if vector["provider"] not in (VECTOR_PROVIDER, "exact-scan") or vector["status"] != "unavailable" or not integer(vector["exactScanLimit"], 1) or ("reason" in vector and not text(vector["reason"], 256)):
+        return invalid
+    if not _runner_1612_valid(value["runnerIdentity"]):
+        return invalid
+    hashes, keys, coverage = (value[k] for k in ("fileHashes", "cacheKeys", "indexCoverage"))
+    if not isinstance(hashes, dict) or len(hashes) > MAX_SNAPSHOT_ENTRIES or not all(relative(p) and isinstance(h, str) and SHA256_RE.fullmatch(h) for p, h in hashes.items()):
+        return invalid
+    if not isinstance(keys, list) or len(keys) > 100_000 or not all(isinstance(k, str) and SHA256_RE.fullmatch(k) for k in keys) or len(set(keys)) != len(keys):
+        return invalid
+    if not record(coverage, {"maxFileSizeBytes", "dirtyPaths"}) or not integer(coverage["maxFileSizeBytes"], 1) or not isinstance(coverage["dirtyPaths"], list) or len(coverage["dirtyPaths"]) > MAX_SNAPSHOT_ENTRIES or not all(relative(p) for p in coverage["dirtyPaths"]):
+        return invalid
+    if coverage["maxFileSizeBytes"] != 524288:
+        return "unsupported", "metadata-1612-coverage-policy-unqualified"
+    if coverage["dirtyPaths"] or stats["files"] != len(hashes) or not hashes or stats["embeddings"] != 0:
+        return "partial", "metadata-1612-coverage-unqualified"
+    return None, None
+
+
 def _load_metadata_at(
     directory_fd: int,
     filename: str,
@@ -2472,6 +2922,9 @@ def _load_metadata_at(
         return None, "corrupt", "metadata-invalid-json"
     if not isinstance(value, dict):
         return None, "corrupt", "metadata-not-object"
+    if "schemaFingerprint" in value:
+        state, reason = _metadata_1612_diagnostic_shape(value)
+        return value, state, reason
     missing = META_REQUIRED_FIELDS - set(value)
     if missing:
         return value, "partial", "metadata-required-fields-missing"
@@ -2530,7 +2983,19 @@ def _select_metadata(
             return primary, "corrupt", "legacy-mirror-invalid-while-primary-present"
         try:
             _check_deadline(deadline)
-            if _canonical_digest(primary) != _canonical_digest(legacy):
+            primary_1612 = isinstance(primary, dict) and "schemaFingerprint" in primary
+            legacy_1612 = isinstance(legacy, dict) and "schemaFingerprint" in legacy
+            if primary_1612 != legacy_1612:
+                return primary, "incompatible", "metadata-primary-legacy-conflict"
+            if primary_1612:
+                # Structural comparison is confined to two fully typed records.
+                # Never canonicalize untrusted Unicode path keys as memory keys.
+                if primary_state is not None or legacy_state is not None:
+                    return primary, primary_state or legacy_state, primary_reason or legacy_reason
+                matching = primary == legacy
+            else:
+                matching = _canonical_digest(primary) == _canonical_digest(legacy)
+            if not matching:
                 return primary, "incompatible", "metadata-primary-legacy-conflict"
             _check_deadline(deadline)
         except (TypeError, ValueError, memory_contract.MemoryContractError):
@@ -2552,11 +3017,104 @@ def _metadata_mirrors_converged(
         return False
     try:
         _check_deadline(deadline)
-        converged = _canonical_digest(primary) == _canonical_digest(legacy)
+        primary_1612 = isinstance(primary, dict) and "schemaFingerprint" in primary
+        legacy_1612 = isinstance(legacy, dict) and "schemaFingerprint" in legacy
+        if primary_1612 or legacy_1612:
+            converged = primary_1612 and legacy_1612 and primary == legacy
+        else:
+            converged = _canonical_digest(primary) == _canonical_digest(legacy)
         _check_deadline(deadline)
         return converged
     except (TypeError, ValueError, memory_contract.MemoryContractError):
         return False
+
+
+def _assess_metadata_1612(repository: RepositoryState, snapshot: TrackedSnapshot,
+                          qualification: ExecutableQualification, metadata: dict[str, Any], *,
+                          deadline: float | None = None) -> MetadataResult:
+    profile = qualification.local_1612
+    assert profile is not None
+    indexed = metadata["lastCommit"]
+    digest = hashlib.sha256((LOCAL_1612_SCHEMA + "\0" + _local_json(metadata)).encode("ascii")).hexdigest()
+
+    def result(state: str, reason: str) -> MetadataResult:
+        return MetadataResult(state, reason, indexed, digest, metadata)
+
+    if metadata["runnerIdentity"] != json.loads(profile.runner_json):
+        return result("incompatible", "metadata-1612-runner-identity-mismatch")
+    if metadata["repoPath"] != str(repository.root) or metadata["storagePath"] != str(repository.root / ".gitnexus"):
+        return result("incompatible", "metadata-repository-path-mismatch")
+    try:
+        if normalize_remote(metadata["remoteUrl"]) != repository.canonical_remote:
+            return result("incompatible", "metadata-remote-mismatch")
+    except GitNexusAdapterError:
+        return result("incompatible", "metadata-repository-identity-invalid")
+    if repository.branch is None or metadata["branch"] != repository.branch:
+        return result("incompatible", "metadata-branch-mismatch")
+    if snapshot.head != repository.head or snapshot.branch != repository.branch:
+        return result("unknown", "caller-snapshot-identity-conflict")
+    if snapshot.tracked_dirty or snapshot.outside_derived_dirty:
+        return result("stale", "working-tree-dirty")
+    if indexed != repository.head:
+        return result("stale", "indexed-revision-stale")
+    if set(metadata["fileHashes"]) != set(profile.coverage_paths):
+        return result("partial", "metadata-1612-coverage-set-mismatch")
+    root_fd = _open_directory_nofollow(repository.root)
+    try:
+        # Open only caller-owned paths, never paths supplied by metadata.
+        for path in profile.coverage_paths:
+            actual, info = _package_target_identity_at(root_fd, path.split("/"), deadline=deadline, maximum_bytes=524288)
+            if info.st_size > 524288:
+                return result("partial", "metadata-1612-covered-file-too-large")
+            if actual != metadata["fileHashes"][path]:
+                return result("stale", "metadata-1612-covered-content-mismatch")
+    except ProbeDeadlineError:
+        raise
+    except (GitNexusAdapterError, OSError):
+        return result("incompatible", "metadata-1612-covered-input-unsafe")
+    finally:
+        os.close(root_fd)
+    return _metadata_identity_result(repository, snapshot, qualification, metadata, digest, deadline=deadline)
+
+
+def _metadata_identity_result(repository: RepositoryState, snapshot: TrackedSnapshot,
+                              qualification: ExecutableQualification, metadata: dict[str, Any],
+                              digest: str, *, deadline: float | None = None) -> MetadataResult:
+    indexed = metadata["lastCommit"]
+    index_directory = repository.root / ".gitnexus"
+    try:
+        directory_fd = _open_directory_nofollow(index_directory)
+    except OSError:
+        return MetadataResult(
+            "unknown", "index-identity-directory-unavailable", indexed, digest, metadata
+        )
+    try:
+        identity, identity_reason = _load_index_identity_at(
+            directory_fd, deadline=deadline
+        )
+    finally:
+        os.close(directory_fd)
+    if identity_reason is not None or identity is None:
+        return MetadataResult(
+            "stale", identity_reason or "index-identity-evidence-missing", indexed, digest, metadata
+        )
+    validated_identity, identity_reason = _validate_index_identity(
+        identity,
+        repository,
+        snapshot,
+        qualification,
+        metadata_digest=digest,
+        indexed_at=metadata["indexedAt"],
+        deadline=deadline,
+    )
+    if identity_reason is not None or validated_identity is None:
+        return MetadataResult(
+            "stale", identity_reason or "index-identity-evidence-invalid", indexed, digest, metadata
+        )
+    _check_deadline(deadline)
+    return MetadataResult(
+        "fresh", "exact-clean-content", indexed, digest, metadata, validated_identity
+    )
 
 
 def assess_metadata(
@@ -2567,7 +3125,7 @@ def assess_metadata(
     metadata_path: str | os.PathLike[str] | None = None,
     deadline: float | None = None,
 ) -> MetadataResult:
-    """Strictly validate the qualified 1.6.9 meta schema and classify freshness."""
+    """Validate one exact qualified profile and its content-bound sidecar."""
     _check_deadline(deadline)
     try:
         _validated_repository_state_identity(repository)
@@ -2600,6 +3158,12 @@ def assess_metadata(
     if state:
         return MetadataResult(state, reason or state, None, None, metadata)
     assert metadata is not None
+    if "schemaFingerprint" in metadata:
+        if qualification.local_1612 is not None:
+            return _assess_metadata_1612(repository, snapshot, qualification, metadata, deadline=deadline)
+        return MetadataResult("unsupported", "metadata-1.6.12-runner-unqualified", None, None, metadata)
+    if qualification.local_1612 is not None:
+        return MetadataResult("unsupported", "metadata-profile-mismatch", None, None, metadata)
     try:
         _check_deadline(deadline)
         digest = _canonical_digest(metadata)
@@ -2709,39 +3273,7 @@ def assess_metadata(
         return MetadataResult("stale", "working-tree-dirty", indexed, digest, metadata)
     if indexed != repository.head:
         return MetadataResult("stale", "indexed-revision-stale", indexed, digest, metadata)
-    try:
-        directory_fd = _open_directory_nofollow(index_directory)
-    except OSError:
-        return MetadataResult(
-            "unknown", "index-identity-directory-unavailable", indexed, digest, metadata
-        )
-    try:
-        identity, identity_reason = _load_index_identity_at(
-            directory_fd, deadline=deadline
-        )
-    finally:
-        os.close(directory_fd)
-    if identity_reason is not None or identity is None:
-        return MetadataResult(
-            "stale", identity_reason or "index-identity-evidence-missing", indexed, digest, metadata
-        )
-    validated_identity, identity_reason = _validate_index_identity(
-        identity,
-        repository,
-        snapshot,
-        qualification,
-        metadata_digest=digest,
-        indexed_at=metadata["indexedAt"],
-        deadline=deadline,
-    )
-    if identity_reason is not None or validated_identity is None:
-        return MetadataResult(
-            "stale", identity_reason or "index-identity-evidence-invalid", indexed, digest, metadata
-        )
-    _check_deadline(deadline)
-    return MetadataResult(
-        "fresh", "exact-clean-content", indexed, digest, metadata, validated_identity
-    )
+    return _metadata_identity_result(repository, snapshot, qualification, metadata, digest, deadline=deadline)
 
 
 def _assess_metadata_before_identity_write(
@@ -2791,7 +3323,7 @@ def build_handshake(
                 "structured_query_interface": False,
                 "driver_version": DRIVER_VERSION,
                 "qualification_fingerprint": qualification.fingerprint,
-                "metadata_schema": META_SCHEMA_VERSION,
+                "metadata_schema": LOCAL_1612_SCHEMA if qualification.local_1612 else META_SCHEMA_VERSION,
             },
         }
     handshake = {
@@ -2799,7 +3331,7 @@ def build_handshake(
         "kind": "capability-handshake",
         "adapter": {
             "adapter_id": "gitnexus-local-advisory",
-            "adapter_version": f"1.6.9.{qualification.fingerprint}",
+            "adapter_version": f"{qualification.version}.{qualification.fingerprint}",
             "schema_versions": [memory_contract.CONTRACT_VERSION],
             "consistency": "none",
             "isolation": "repository",
@@ -3445,6 +3977,24 @@ def _root_lock(root: pathlib.Path, lock_directory: pathlib.Path | None) -> Itera
         lock.release()
 
 
+def _require_local_1612_default_config(root: pathlib.Path, *, deadline: float | None) -> None:
+    """Repository config is outside the caller-approved local execution profile."""
+    _check_deadline(deadline)
+    try:
+        descriptor = _open_directory_nofollow(root)
+        try:
+            os.stat(".gitnexusrc", dir_fd=descriptor, follow_symlinks=False)
+        except FileNotFoundError:
+            return
+        finally:
+            os.close(descriptor)
+    except OSError as exc:
+        raise GitNexusAdapterError("local 1.6.12 repository config inspection failed") from exc
+    finally:
+        _check_deadline(deadline)
+    raise GitNexusAdapterError("local 1.6.12 refresh refuses repository .gitnexusrc")
+
+
 class RefreshController:
     """Explicit opt-in, index-only derived refresh with fail-closed adoption."""
 
@@ -3501,6 +4051,8 @@ class RefreshController:
         )
         if root != repository.root:
             raise GitNexusAdapterError("refresh repository root identity mismatch")
+        if self.qualification.local_1612 is not None:
+            _require_local_1612_default_config(root, deadline=deadline)
         verify_qualification(self.qualification, deadline=deadline)
         isolated_home = _resolve_isolated_home(self.gitnexus_home, root)
         with (
@@ -3544,6 +4096,12 @@ class RefreshController:
                 raise GitNexusAdapterError("refresh refuses a dirty working tree outside the derived index")
             if before.outside_derived_dirty:
                 raise GitNexusAdapterError("refresh refuses pre-existing changes outside the derived index")
+            if self.qualification.local_1612 is not None:
+                previous_metadata, previous_state, _ = _select_metadata(root / ".gitnexus", deadline=deadline)
+                if previous_state not in (None, "missing"):
+                    raise GitNexusAdapterError("local 1.6.12 refresh refuses invalid existing metadata")
+                if previous_metadata is not None and previous_metadata["lastCommit"] == expected_head:
+                    raise GitNexusAdapterError("local 1.6.12 same-HEAD refresh is not qualified")
             verify_qualification(self.qualification, deadline=deadline)
             preflight_repository = collect_repository_state(
                 root,
@@ -3577,7 +4135,7 @@ class RefreshController:
                 *_qualified_argv(
                     self.qualification.executable,
                     self.qualification.runtime_executable,
-                    "analyze", "--index-only", "--name", alias, str(root),
+                    *_index_analyze_arguments(self.qualification, alias, root),
                 ),
             ]
             process_environment = {
@@ -3607,6 +4165,10 @@ class RefreshController:
                 isolated_home_identity, isolated_home_descriptor
             )
             _require_empty_isolated_home_descriptor(isolated_home_descriptor)
+            if self.qualification.local_1612 is not None:
+                _require_local_1612_default_config(root, deadline=deadline)
+                os.mkdir("identity-cache", mode=0o700, dir_fd=isolated_home_descriptor)
+                process_environment["GITNEXUS_ANALYZER_IDENTITY_CACHE_DIR"] = str(isolated_home / "identity-cache")
             try:
                 process = self.runner(
                     argv,
@@ -3715,6 +4277,16 @@ class RefreshController:
                     metadata, before_git_control_digest, after_git_control_digest,
                 )
             assert metadata.metadata_digest is not None and metadata.metadata is not None
+            if self.qualification.local_1612 is not None:
+                try:
+                    registry = json.loads(_read_regular_at(isolated_home_descriptor, "registry.json", maximum_bytes=MAX_METADATA_BYTES, deadline=deadline))
+                    expected_registry = {"name": alias, "path": str(root), **{key: metadata.metadata[key] for key in ("storagePath", "indexedAt", "lastCommit", "remoteUrl", "stats", "branch")}}
+                    if registry != [expected_registry]:
+                        raise GitNexusAdapterError("isolated registry does not bind this analysis")
+                except ProbeDeadlineError:
+                    raise
+                except (ValueError, RecursionError, OSError, GitNexusAdapterError):
+                    return self._receipt("failed", "post-refresh-registry-invalid", repository, before, after, argv, metadata, before_git_control_digest, after_git_control_digest)
             try:
                 observed_at = dt.datetime.now(dt.timezone.utc).isoformat().replace(
                     "+00:00", "Z"
