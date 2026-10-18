@@ -10,7 +10,7 @@ import subprocess
 import sys
 import unittest
 
-from tests.test_installer_source_integrity import InstallerFixture, ROOT, inventory
+from tests.test_installer_source_integrity import CURRENT_VERSION, InstallerFixture, ROOT, inventory
 
 
 class InstallerFaultBoundaryTests(InstallerFixture):
@@ -343,7 +343,7 @@ fi''')
                     self.assertEqual(expected, stat.S_IMODE(path.stat().st_mode), path)
 
     def test_late_whole_skill_retirement_failure_restores_previous_install(self):
-        receipt = self.seed("0.34.0")
+        receipt = self.seed(CURRENT_VERSION)
         overrides = self.command("mv", '''
 if [[ "$2" == */code-review.bak ]]; then echo injected-skill-retirement >&2; exit 76; fi''')
         result = self.run_installer("uninstall", "--all", "--yes", overrides=overrides)
@@ -381,7 +381,7 @@ if [[ "$1" == */transaction.* ]]; then : > "$FAULT_MARKER"; exit 75; fi''')
         self.assertTrue((self.case / "injected").exists())
         self.assertIn("cleanup data preserved", result.stderr)
         receipt = json.loads(self.receipt.read_text())
-        self.assertEqual("0.34.0", receipt["source"]["version"])
+        self.assertEqual(CURRENT_VERSION, receipt["source"]["version"])
         self.payload_unchanged(receipt)
 
     def test_cleanup_unknown_note_only_preserves_note_after_original_cleanup(self):
@@ -416,7 +416,7 @@ fi''')
         self.assertIn("injected-forward-receipt-signal", result.stderr)
         if result.returncode == 0:
             current = json.loads(self.receipt.read_text())
-            self.assertEqual("0.34.0", current["source"]["version"])
+            self.assertEqual(CURRENT_VERSION, current["source"]["version"])
             self.payload_unchanged(current)
             expected = "".join(item["relative"] + "\t" + item["files"][""]["sha256"] + "\n"
                                for item in current["artifacts"] if item["kind"] == "agent_profiles")
