@@ -31,8 +31,8 @@ Core links below apply to source/plugin. For filesystem loading, replace
 `../vendor/engineering-workflow-core/` with `../core/` relative to these policies.
 
 The validator is offline and read-only. Ordinary loading accepts only Core
-v0.1.0 at commit `174df2af8dedf813b9bd4e3c184a627ee87d3cd8`, annotated tag
-object `e984c880a05065c8bcd0d78e83d78220b05bfc32`. It pins all 13 file
+v0.1.1 at commit `7b66978a76597d09be1b55ad199a969b4ee59c0f`, annotated tag
+object `7ce698fa853106c8ef44c4240c9334762da5ffb0`. It pins all 14 file
 paths/bytes and recorded source Git modes, both independently defined set digests,
 LICENSE, local links/anchors and required inventory. The closure includes Core's
 CHANGELOG and release record; this does not require loading all files for every
@@ -45,10 +45,10 @@ actual selected root remain part of operator evidence; a matching lock does not
 authenticate an installation or prove trust, authority, review or runtime quality.
 
 Only the current installer explicitly uses `--allow-reviewed-history` to reconstruct
-the separately fixed eleven-file development snapshot. That path still checks its
+the separately fixed Core v0.1.0 thirteen-file snapshot or eleven-file development snapshot. That path still checks its
 exact source, lock, inventory, bytes, modes, digests and link closure; it never runs
 an old source's validator. Its output identifies historical acceptance. It cannot
-qualify that snapshot as the ordinary Core v0.1.0 loading root. Unknown snapshots
+qualify either historical snapshot as the ordinary Core v0.1.1 loading root. Unknown snapshots
 are rejected even with this flag.
 
 Missing/unknown lock or loader, mismatched identity/digest, missing document,
@@ -83,6 +83,10 @@ within the full workflow and applicable review/security reading above. Record
 applicable reasoning in existing plans/reports; simple low-risk work can be brief.
 Report prompts do not replace finding dispositions, establish resource ownership,
 waive required gates or grant action authority.
+
+For continuation, full workflow `wf-stages` prefers the original session. Before
+continuing, confirm the state of an operation or delegated work with an unknown
+outcome. This does not authorize a retry, a new delegation or forced restoration.
 
 Core remains Markdown only. Codex keeps tools, validators, skills, model/effort,
 qualification/profile/session, packaging and installation. Each surface proves

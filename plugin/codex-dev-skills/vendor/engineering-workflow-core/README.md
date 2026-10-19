@@ -32,7 +32,7 @@ GitHub disclosure sections are independent. Traditional Chinese is open by defau
 
 ## 版本、採用與升級
 
-Core 的文件版本與版本命名見 [CHANGELOG](CHANGELOG.md)；各版的範圍、驗收與限制見 [發行準備紀錄](docs/releases/v0.1.0.md)。這些是來源版本／點時歷史，不證明已發布。正式 publication 須核對相應 annotated tag object、解析後完整 commit 與 GitHub 正式 Release metadata；本頁不維護 mutable latest 或當前已發行版本指標。
+Core 的文件版本與版本命名見 [CHANGELOG](CHANGELOG.md)；各版的範圍、驗收與限制見 [v0.1.0 發行準備紀錄](docs/releases/v0.1.0.md) 與 [v0.1.1 發行準備紀錄](docs/releases/v0.1.1.md)。這些是來源版本／點時歷史，不證明已發布。正式 publication 須核對相應 annotated tag object、解析後完整 commit 與 GitHub 正式 Release metadata；本頁不維護 mutable latest 或當前已發行版本指標。
 
 使用者不需獨立安裝 Core。各 consumer 在自己的建置／組裝工作包核對 tag、固定完整 immutable commit，鎖定所選文件的逐檔／集合 digest、來源、allowlist、完整 dependency closure 及 notices，再各自驗證載入與遵循。Runtime 使用已組裝文件，不追蹤 Core `main` 或動態 tag；installer／validator／套件組裝均留接口。
 
@@ -110,7 +110,7 @@ A missing required document or capability is not an exemption. Follow the interf
 
 ## Versions, adoption, and upgrades
 
-See [CHANGELOG](CHANGELOG.md) for the Core document version and version names. See the [release preparation record](docs/releases/v0.1.0.md) for scope, acceptance, and limits. These record source versions and point-in-time history. They do not prove publication. Verify the corresponding annotated tag object, full resolved commit, and formal GitHub Release metadata. This page does not maintain a mutable latest or current-published-version pointer.
+See [CHANGELOG](CHANGELOG.md) for the Core document version and version names. See the [v0.1.0 preparation record](docs/releases/v0.1.0.md) and [v0.1.1 preparation record](docs/releases/v0.1.1.md) for scope, acceptance, and limits. These record source versions and point-in-time history. They do not prove publication. Verify the corresponding annotated tag object, full resolved commit, and formal GitHub Release metadata. This page does not maintain a mutable latest or current-published-version pointer.
 
 Users do not install Core separately. During their own build or assembly packet, consumers verify the tag, lock its full immutable commit, and fix the selected files, per-file and set digests, source, allowlist, complete dependency closure, and notices. Each consumer verifies loading and conformance. Runtime uses assembled documents. It must not follow Core `main` or a dynamic tag. Interfaces retain installers, validators, and package assembly.
 

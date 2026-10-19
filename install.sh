@@ -20,7 +20,7 @@ DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
-VERSION="0.35.0"
+VERSION="0.35.1"
 SOURCE_DIR="$ROOT_DIR"
 PREVIOUS_SOURCE_DIR=""
 MANAGED_PLAN=""
@@ -976,6 +976,7 @@ group_templates() {
         vendor/engineering-workflow-core/docs/provenance/source-map.md \
         vendor/engineering-workflow-core/docs/provenance/upstream-notices.md \
         vendor/engineering-workflow-core/docs/releases/v0.1.0.md \
+        vendor/engineering-workflow-core/docs/releases/v0.1.1.md \
         policies/agent-delegation-policy.md \
         policies/code-mode-tool-orchestration-policy.md \
         policies/context-continuity-policy.md \

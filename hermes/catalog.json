@@ -53,6 +53,7 @@
     "vendor/engineering-workflow-core/docs/architecture/project-split.md",
     "vendor/engineering-workflow-core/docs/provenance/source-map.md",
     "vendor/engineering-workflow-core/docs/provenance/upstream-notices.md",
-    "vendor/engineering-workflow-core/docs/releases/v0.1.0.md"
+    "vendor/engineering-workflow-core/docs/releases/v0.1.0.md",
+    "vendor/engineering-workflow-core/docs/releases/v0.1.1.md"
   ]
 }

@@ -17,7 +17,9 @@
 | Review And Fix | 足夠能力、與作者獨立的 reviewer 唯讀審查當前內容；高風險在設計與實作初期即深入審查及安全分析，有實質 diff 即按必要性做比例 scan | finding IDs、dispositions、修正及重審／重測證據；詳見 [審查契約](review-and-security.md) |
 | Docs Sync | 核對行為、需求與限制，依 [簡明寫作要求](#wf-writing) 同步適用文件／狀態 | code/docs/configuration/package/version 一致；保留歷史與未驗證事項；在既有 review 記錄適用寫作要求的抽查 |
 | Delivery Gate | 核對驗證、review、授權與所選專案 overlay；已有 change request 另做完整 exact-head review | 內容 readiness、平台 enforcement、操作授權分列，詳見 [exact-head 契約](exact-head-and-evidence.md) |
-| Continue | 中斷前保存有界 checkpoint，依 [證據生命週期](#wf-evidence-lifecycle) 維護索引；接續先查當前來源、修改與 ownership | 同一目標、唯一 writer、剩餘 DoD、findings、證據與下一步；session 記憶僅為 advisory |
+| Continue | 中斷前保存有界 checkpoint，依 [證據生命週期](#wf-evidence-lifecycle) 維護索引；接續先查當前來源、修改與 ownership。優先沿用原 Session；若中斷點有結果不明的操作或委派工作，先確認其現況，再接續未完成部分。 | 同一目標、唯一 writer、剩餘 DoD、findings、證據與下一步；session 記憶僅為 advisory |
+
+**Continue — English guide (Traditional Chinese remains authoritative):** Prefer the original session. If the outcome of an operation or delegated task is unknown at the interruption point, check its current state before continuing the unfinished work.
 
 階段是安排指引，不把深入 review 或安全工作鎖在最後。普通流程可先快速檢查，再獨立 review、修正及重驗，形成較穩定候選；必要安全工作可提早或在無相依衝突時並行。高風險先深查，最終固定版本用於證據綁定與 merge 驗收，詳見 [風險、時機與候選規則](review-and-security.md#review-risk-timing)。
 

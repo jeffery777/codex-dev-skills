@@ -2,12 +2,12 @@
   "contract": "codex-core-document-lock/v1",
   "source": {
     "repository": "jeffery777/engineering-workflow-core",
-    "revision": "174df2af8dedf813b9bd4e3c184a627ee87d3cd8",
-    "reviewed_head": "bc20699a5c46458647a01c5edb2830d8381219ef",
-    "pull_request": 18,
-    "version": "0.1.0",
-    "tag": "v0.1.0",
-    "tag_object": "e984c880a05065c8bcd0d78e83d78220b05bfc32"
+    "revision": "7b66978a76597d09be1b55ad199a969b4ee59c0f",
+    "reviewed_head": "f23191bdc1cd3e8ef9a5cd7c3e809b5789859892",
+    "pull_request": 20,
+    "version": "0.1.1",
+    "tag": "v0.1.1",
+    "tag_object": "7ce698fa853106c8ef44c4240c9334762da5ffb0"
   },
   "consumer": {
     "repository": "jeffery777/codex-dev-skills",
@@ -16,16 +16,16 @@
   },
   "upstream_markdown_set": {
     "algorithm": "utf8-path-tab-sha256-lf/v1",
-    "sha256": "484923e7dc1407dde1702cf88e93afb5a279b25f79a2c6ff9631d58d7589ab13"
+    "sha256": "ef0ed075dfbddd7504f65126deabe135632e4737f3148efaf19551224a577ea5"
   },
   "document_set": {
     "algorithm": "codex-core-document-set/v1",
-    "sha256": "91e3153d31f4096e21927e653b74010fbaa504c7f1550ecf56af687db288d482",
+    "sha256": "94846bba3a108fb686a779cab8bcf58b0e4eaac68e6f20ab9b13c0236f6ef5a3",
     "files": [
       {
         "path": "CHANGELOG.md",
-        "sha256": "bc13f952509c18529030fcbb6ed33c25c6cf1ed978d526d142e26bb2fd96c511",
-        "size_bytes": 7366,
+        "sha256": "fa7f679f2c2f0f09dfae137f1631e55ed0a03d92ca4006b90f013e86b5b5d158",
+        "size_bytes": 10337,
         "mode": "100644"
       },
       {
@@ -36,8 +36,8 @@
       },
       {
         "path": "README.md",
-        "sha256": "93085438d3ab960797a3521629edf4a480e9e1941d659e2f82357f1c79f0d729",
-        "size_bytes": 21866,
+        "sha256": "a9ecc868915ccad6bbee388c09d2c234eecefbc41d07c580a269a13956f5ea7b",
+        "size_bytes": 21986,
         "mode": "100644"
       },
       {
@@ -60,8 +60,8 @@
       },
       {
         "path": "contracts/workflow.md",
-        "sha256": "fd2af36d395a634a89f0de0a486efba19a4ec0d9e88cdda760bc87aa4e15b4d6",
-        "size_bytes": 18302,
+        "sha256": "abd418b0679675029eabf70a2e1bc77db1e3f898fbf2e2e4e66907df1fb52b51",
+        "size_bytes": 18689,
         "mode": "100644"
       },
       {
@@ -84,8 +84,8 @@
       },
       {
         "path": "docs/provenance/source-map.md",
-        "sha256": "19d529a51f41d2ded4bad2cf809ad3c161c59a89bda72bf07d33c2b8ece26ea0",
-        "size_bytes": 57118,
+        "sha256": "902c491a5412efb85d8d942ada48f8a8ad33a576b597d6748877d29507accfa9",
+        "size_bytes": 59639,
         "mode": "100644"
       },
       {
@@ -98,6 +98,12 @@
         "path": "docs/releases/v0.1.0.md",
         "sha256": "f8e6c3e1e6b4ac8b433656ae3991274f657097f40eae7de2431348e13bb2b058",
         "size_bytes": 15448,
+        "mode": "100644"
+      },
+      {
+        "path": "docs/releases/v0.1.1.md",
+        "sha256": "c58714a705d46e6e244b9e5008df26e501a0343cfbbd7955e55f262c01e989be",
+        "size_bytes": 10819,
         "mode": "100644"
       }
     ]

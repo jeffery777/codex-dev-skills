@@ -4,6 +4,26 @@
 [catalog.yaml](catalog.yaml) 為準；發布事實另核對 annotated tag 與非 draft、
 非 prerelease 的 GitHub Release。English entries follow the Chinese entries.
 
+## 0.35.1 — Core v0.1.1 配套準備 / Core v0.1.1 preparation
+
+[Issue #357](https://github.com/jeffery777/codex-dev-skills/issues/357) 固定攜帶
+Core v0.1.1 commit `7b66978a76597d09be1b55ad199a969b4ee59c0f` 的 14 檔文件集合、
+lock、digest 與 notices；同步既有 validator、installer、plugin 及 Hermes 文件 closure。
+普通 loader 只認新 pin；installer 保留分別固定的舊 13／11 檔集合供明選升降版。
+Continue 優先沿用原 Session；先核對結果不明操作／委派現況，再續行未完成工作。
+不新增 Reason、技能、執行程式或原生故障 QA，也不擴大 GitNexus 既有資格。
+本紀錄只描述配套候選；不證明 Codex 已發布、實裝或 Session 已載入 Core。
+[範圍、身分與 gates](docs/releases/v0.35.1-split.md)。
+
+Pin the fourteen-file Core v0.1.1 document set at the commit above, with lock,
+digests and notices. Synchronize existing validator, installer, plugin and Hermes
+resource closure. Ordinary loading accepts only the new pin; explicit installer
+history retains separate fixed thirteen/eleven-file sets for managed transitions.
+Continue prefers the original session and confirms unknown operation/delegation
+state before unfinished work. No Reason integration, skill, executable, native
+fault QA or broader GitNexus qualification is added. This candidate record does
+not prove Codex publication, installation or effective session loading.
+
 ## 0.35.0 — 有限索引寫入候選 / Limited index-write candidate
 
 [Issue #355](https://github.com/jeffery777/codex-dev-skills/issues/355)
