@@ -7,7 +7,7 @@ from pathlib import Path
 import shutil
 import stat
 
-from tests.test_installer_source_integrity import InstallerFixture, ROOT
+from tests.test_installer_source_integrity import CURRENT_VERSION, InstallerFixture, ROOT
 
 
 class AgentProfileInstallerTests(InstallerFixture):
@@ -40,7 +40,7 @@ class AgentProfileInstallerTests(InstallerFixture):
         self.seed(groups=self.profile_groups())
         result = self.run_installer("update", "--all")
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assert_version("0.34.0")
+        self.assert_version(CURRENT_VERSION)
         self.assertIn("codex-agent-profiles", json.loads(self.receipt.read_text())["groups"])
 
     def test_project_profiles_require_explicit_narrow_target_opt_in(self):
@@ -145,7 +145,7 @@ class AgentProfileInstallerTests(InstallerFixture):
         self.assertIn("discovery root", result.stderr)
 
     def test_switching_only_profile_root_does_not_adopt_common_dependencies(self):
-        self.seed("0.34.0")
+        self.seed(CURRENT_VERSION)
         before = self.snapshot()
         project = self.case / "project/.codex/agents"
         result = self.run_installer("install", "codex-agent-profiles", overrides={

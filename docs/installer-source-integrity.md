@@ -16,14 +16,15 @@
 | --- | --- | --- |
 | 0.33.1 | `6b5b0d0bf4e61119a5a87761fc4a6c4d35002e1c` | 無 |
 | 0.34.0 開發基線 | `43c650e1196a3a702e2240bd79dd24539fa893a7` | `64b19bb5658432c42cd6a26aa357fd6b1d0fd857` |
-| 0.34.0 split | registry 中 Core version `0.1.0` 紀錄的固定 `reviewed_revision` | `174df2af8dedf813b9bd4e3c184a627ee87d3cd8` |
+| 0.34.0 split | `f18b202595aea27c9d872c480d2e1b067340b163` | `174df2af8dedf813b9bd4e3c184a627ee87d3cd8` |
+| 0.35.0 | `e23e18ed0512ece04ca6b6dceba3a6a1cf59b9fd` | `174df2af8dedf813b9bd4e3c184a627ee87d3cd8` |
 
 `installer/source-catalogs.json` 是受審資料清單，並非通用歷史版本解析器。
 未知 catalog 或不同 payload 會停止。後續固定 commit 若只有 installer／非 payload
 文件改動，而 catalog、完整 payload 與清單一致，可以使用；receipt 記錄實際 HEAD。
 可安裝 payload 或 catalog 有未提交修改、未追蹤額外檔、缺檔或 mode 差異時會停止。
 Partial/promisor clones 不支援。Repository origin 字串與 digest 是來源／完整性檢查，
-不是發行者簽章或 GitHub Tag／Release 已發布的證明。`0.34.0` 在此只表示來源版本。
+不是發行者簽章或 GitHub Tag／Release 已發布的證明。表列版本只表示來源／套件版本。
 
 新安裝選一個群組，相依群組自動加入。以下是需操作人員另行授權的安裝範例，
 不是閱讀本文件就執行的命令：
@@ -102,14 +103,16 @@ sources or execute the selected source's old installer, validator, hooks or filt
 It requires Bash, Git and Python 3 stdlib. Integrity checks add no PyYAML dependency;
 existing skill runtime dependencies still apply.
 
-The table above identifies three fixed catalogs/payloads, including distinct
-development and formal-Core split snapshots with the same 0.34.0 version. The data allowlist
-binds the full file set, bytes and executable bits. Unknown catalogs or payloads stop.
+The table above identifies four fixed catalogs/payloads: 0.33.1, distinct
+development and formal-Core split snapshots with the same 0.34.0 version, and 0.35.0.
+The data allowlist binds the full file set, bytes and executable bits.
+Unknown catalogs or payloads stop.
 A later fixed HEAD with only installer or other non-payload changes is supported when
 its catalog and complete payload still match. The receipt records that actual HEAD.
 Dirty payloads, extra untracked skill files, missing files and mode drift stop.
 Partial/promisor clones are unsupported. Origin text and digests do not authenticate
-a publisher or prove GitHub Tag/Release publication. Here, `0.34.0` is a source version.
+a publisher or prove GitHub Tag/Release publication. The listed versions describe
+source/package versions only.
 
 Use the current installer with `--source /trusted/fixed-checkout` to select a supported
 version. The examples above require a separate operator decision before execution.

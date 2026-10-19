@@ -33,7 +33,7 @@ INSTALLER_ENV_OVERRIDES = (
 
 
 
-from tests.test_installer_source_integrity import InstallerFixture
+from tests.test_installer_source_integrity import CURRENT_VERSION, InstallerFixture
 
 
 def tree_snapshot(*roots: pathlib.Path) -> tuple[tuple[str, str, int, bytes], ...]:
@@ -239,7 +239,7 @@ class RuntimeGroupInstallerTests(InstallerFixture):
         self.assertFalse((self.home / ".codex/agents").exists())
 
     def test_desktop_group_and_cli_uninstall_preserve_common_dependencies(self):
-        self.seed("0.34.0")
+        self.seed(CURRENT_VERSION)
         result = self.run_installer("uninstall", "codex-cli-session-handoff", "--yes")
         self.assertEqual(0, result.returncode, result.stderr)
         skills = self.home / ".agents/skills"
@@ -248,7 +248,7 @@ class RuntimeGroupInstallerTests(InstallerFixture):
         self.assertTrue((skills / "planning/SKILL.md").is_file())
 
     def test_dependency_and_wrong_root_uninstall_refuse_without_mutation(self):
-        self.seed("0.34.0")
+        self.seed(CURRENT_VERSION)
         before = self.snapshot()
         for overrides in ({}, {"CODEX_DEV_SKILLS_TARGET": "legacy"}):
             result = self.run_installer("uninstall", "shared-review-gates", "--yes", overrides=overrides)
@@ -266,7 +266,7 @@ class RuntimeGroupInstallerTests(InstallerFixture):
         self.assertEqual(before, self.snapshot())
 
     def test_same_bytes_without_receipt_are_not_adopted(self):
-        self.seed("0.34.0")
+        self.seed(CURRENT_VERSION)
         self.receipt.unlink()
         before = self.snapshot()
         result = self.run_installer("install", "--all")
@@ -340,7 +340,7 @@ class RuntimeGroupInstallerTests(InstallerFixture):
         result = self.run_installer("update", "--all")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertEqual("historical recovery data", marker.read_text())
-        self.assert_version("0.34.0")
+        self.assert_version(CURRENT_VERSION)
 
     def test_lock_collision_preserves_every_target_and_receipt(self):
         self.seed()
@@ -359,7 +359,7 @@ class RuntimeGroupInstallerTests(InstallerFixture):
         self.seed()
         result = self.run_installer("update", "--all")
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assert_version("0.34.0")
+        self.assert_version(CURRENT_VERSION)
         self.assertFalse((self.home / ".agents/skills").exists())
         self.assertEqual(self.roots, json.loads(self.receipt.read_text())["roots"])
 

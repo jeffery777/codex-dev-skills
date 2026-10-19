@@ -16,6 +16,11 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 OLD = "6b5b0d0bf4e61119a5a87761fc4a6c4d35002e1c"
 REGISTRY = json.loads((ROOT / "installer/source-catalogs.json").read_text())
+CURRENT_CATALOG_DIGEST = hashlib.sha256((ROOT / "catalog.yaml").read_bytes()).hexdigest()
+CURRENT_CATALOGS = [c for c in REGISTRY["catalogs"] if c["catalog_sha256"] == CURRENT_CATALOG_DIGEST]
+if len(CURRENT_CATALOGS) != 1:
+    raise AssertionError("fixture requires one reviewed current catalog")
+CURRENT_VERSION = CURRENT_CATALOGS[0]["version"]
 spec = importlib.util.spec_from_file_location("installer_inventory", ROOT / "scripts/installer-inventory.py")
 inventory = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(inventory)
@@ -57,27 +62,34 @@ class InstallerFixture(unittest.TestCase):
                                 env={**self.env, **(overrides or {})}, text=True, capture_output=True)
         return result
 
+    def fixed_source(self, revision):
+        self.assertIn(revision, [c["reviewed_revision"] for c in REGISTRY["catalogs"]])
+        source = self.case / f"source-{revision}"
+        for command in (["git", "clone", "--quiet", "--no-hardlinks", "--no-checkout", str(ROOT), str(source)],
+                        ["git", "-C", str(source), "remote", "set-url", "origin", "https://github.com/jeffery777/codex-dev-skills.git"],
+                        ["git", "-C", str(source), "checkout", "--quiet", "--detach", revision]):
+            subprocess.run(command, check=True, capture_output=True)
+        return source
+
     def seed(self, version="0.33.1", groups=None, legacy=False, snapshot_revision=None):
         digest = hashlib.sha256("\0".join(self.roots.values()).encode()).hexdigest()
         self.receipt = self.state / f"managed-{digest}.json"
         candidates = [c for c in REGISTRY["catalogs"] if c["version"] == version]
         if snapshot_revision is not None:
             candidates = [c for c in candidates if c["reviewed_revision"] == snapshot_revision]
-        elif version == "0.34.0":
-            current_digest = hashlib.sha256((ROOT / "catalog.yaml").read_bytes()).hexdigest()
-            candidates = [c for c in candidates if c["catalog_sha256"] == current_digest]
+        elif version == CURRENT_VERSION:
+            candidates = [c for c in candidates if c["catalog_sha256"] == CURRENT_CATALOG_DIGEST]
         if len(candidates) != 1:
             raise AssertionError("fixture requires one exact reviewed payload snapshot")
         catalog = candidates[0]
         groups = groups or [g for g in catalog["groups"] if g != "codex-agent-profiles"]
         items = inventory.artifacts(catalog, inventory.expand(catalog, groups))
-        source = self.old if version == "0.33.1" else ROOT
-        if snapshot_revision == "43c650e1196a3a702e2240bd79dd24539fa893a7":
-            source = self.case / "development-source"
-            for command in (["git", "clone", "--quiet", "--no-hardlinks", "--no-checkout", str(ROOT), str(source)],
-                            ["git", "-C", str(source), "remote", "set-url", "origin", "https://github.com/jeffery777/codex-dev-skills.git"],
-                            ["git", "-C", str(source), "checkout", "--quiet", "--detach", snapshot_revision]):
-                subprocess.run(command, check=True, capture_output=True)
+        if catalog["catalog_sha256"] == CURRENT_CATALOG_DIGEST:
+            source = ROOT
+        elif catalog["reviewed_revision"] == OLD:
+            source = self.old
+        else:
+            source = self.fixed_source(catalog["reviewed_revision"])
         for item in items:
             target = Path(self.roots[item["kind"]]) / item["relative"]
             target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -177,13 +189,14 @@ class SourceIntegrityInstallerTests(InstallerFixture):
         development = "43c650e1196a3a702e2240bd79dd24539fa893a7"
         old_catalog = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == development)
         prior = self.seed("0.34.0", groups=list(old_catalog["groups"]), snapshot_revision=development)
-        old_source = self.case / "development-source"
+        old_source = self.case / f"source-{development}"
+        split_source = self.fixed_source("f18b202595aea27c9d872c480d2e1b067340b163")
         before = self.snapshot()
-        result = self.run_installer("update", "codex-review-workflow")
+        result = self.run_installer("update", "codex-review-workflow", "--source", split_source)
         self.assertNotEqual(0, result.returncode)
         self.assertIn("requires all managed groups", result.stderr)
         self.assertEqual(before, self.snapshot())
-        result = self.run_installer("update", "--all")
+        result = self.run_installer("update", "--all", "--source", split_source)
         self.assertEqual(0, result.returncode, result.stderr)
         receipt = json.loads(self.receipt.read_text())
         self.assertEqual("0.34.0", receipt["source"]["version"])
@@ -319,7 +332,7 @@ exec "''' + real + '''" "$@"
         sibling = self.home / ".agents/skills/unmanaged/notes.txt"
         sibling.parent.mkdir()
         sibling.write_text("preserve")
-        for source, version in ((ROOT, "0.34.0"), (ROOT, "0.34.0"), (self.old, "0.33.1")):
+        for source, version in ((ROOT, CURRENT_VERSION), (ROOT, CURRENT_VERSION), (self.old, "0.33.1")):
             result = self.run_installer("update", "--all", "--source", source)
             self.assertEqual(0, result.returncode, result.stderr)
             self.assert_version(version)
@@ -372,14 +385,14 @@ exec "''' + real + '''" "$@"
                 if mode == "signal" and result.returncode == 0:
                     # Signals inside rename critical sections are intentionally
                     # ignored; a complete verified commit is also consistent.
-                    self.assert_version("0.34.0")
+                    self.assert_version(CURRENT_VERSION)
                 else:
                     self.assertNotEqual(0, result.returncode, result.stdout)
                     self.assertEqual(before, self.snapshot(), result.stderr)
                 shutil.rmtree(self.case / "fake-bin")
 
     def test_downgrade_retirement_failure_restores_all_files(self):
-        self.seed("0.34.0")
+        self.seed(CURRENT_VERSION)
         overrides = self.fake_mv("retire")
         before = self.snapshot()
         result = self.run_installer("update", "--all", "--source", self.old, overrides=overrides)
@@ -439,11 +452,11 @@ exec "''' + real + '''" "$@"
         self.assertEqual(before, self.snapshot())
 
     def test_same_version_install_and_update_are_safe_noops(self):
-        self.seed("0.34.0")
+        self.seed(CURRENT_VERSION)
         for command in ("install", "update"):
             result = self.run_installer(command, "--all")
             self.assertEqual(0, result.returncode, result.stderr)
-            self.assert_version("0.34.0")
+            self.assert_version(CURRENT_VERSION)
 
     def test_verified_identity_drift_during_state_probe_is_preserved(self):
         self.seed()
@@ -471,7 +484,7 @@ exec "''' + real + '''" "$@"
             self.assertEqual(before, self.snapshot())
 
     def test_unknown_core_file_blocks_downgrade(self):
-        self.seed("0.34.0")
+        self.seed(CURRENT_VERSION)
         extra = self.home / ".codex/templates/orchestration/core/notes.txt"
         extra.write_text("preserve unknown Core note")
         before = self.snapshot()
@@ -550,7 +563,7 @@ exec "''' + real + '''" "$@"
             self.assertIn("lock already exists", result.stderr)
             stdout, stderr = process.communicate(timeout=90)
             self.assertEqual(0, process.returncode, stderr)
-            self.assert_version("0.34.0")
+            self.assert_version(CURRENT_VERSION)
         finally:
             if process.poll() is None:
                 process.terminate()

@@ -45,10 +45,13 @@ notify-only；可選的 Codex hook 使用 `SessionStart` 與部分 `PostToolUse`
 1. 核對實際 checkout 路徑、branch、HEAD 與 dirty state。以精確 repository
    路徑選索引，避免同名 clone／worktree 指向另一份索引。讀取公開 status／
    metadata 與 freshness；HEAD 相同但內容已修改，也不能當作索引仍然精確。
-2. 發現索引相對於該 checkout 過期或缺失時，確認沒有其他 writer 正在修改
-   這份 checkout，再就地安全刷新，之後才執行依賴索引的查詢。刷新不要求先
-   pull、merge、rebase 或切換分支。先確認已安裝版本的 `analyze --help`
-   支援 `--index-only`。
+2. 發現索引相對於該 checkout 過期或缺失時，由編排 Agent 依下節指定唯一
+   索引 writer，確認當次工具適用範圍、副作用與刷新授權。先與原始碼 owner
+   確認 snapshot／刷新期間沒有其他 writer 修改目標原始碼，並核對既有 DB
+   reader／server 的持有狀態。條件成立才在獨立更新階段就地安全刷新，驗證並
+   交接後才進入依賴索引的查詢。無法確認原始碼穩定或 reader 狀態時，回報編排
+   Agent 並回到原始碼／Git，不自行補跑。刷新不要求先 pull、merge、rebase
+   或切換分支。先確認已安裝版本的 `analyze --help` 支援 `--index-only`。
 3. 刷新前保存受追蹤檔案、既有未提交修改、`AGENTS.md`、其他 AI context
    檔案與 Git 設定／排除檔的存在狀態及內容 digest，並保存 Git status／diff
    與檔案清單作為基線。保護集合與基線未備妥前，不執行刷新命令。
@@ -88,6 +91,90 @@ owner／其他 writer、既有修改、使用者授權及適當的整合時機�
 worktree 邊界、鎖、資格與 circuit breaker 仍依
 [GitNexus runtime reference](skills/loop-engineering/references/gitnexus-runtime.md)。
 本規範不啟用它。索引可縮小查讀範圍，但 token／耗時是否降低須量測，不作保證。
+
+### 索引協作與編排責任 / Index coordination
+
+本專案由 repository 規範定義索引更新時機與範圍，編排 Agent 負責安排；沒有
+編排 Agent 時，由當次任務 owner 承擔此責任。GitNexus 的工具／版本／操作
+規則留在專案 overlay，不寫入平台無關的 Core 義務。
+
+1. 第一次依賴索引查詢、相關內容變更、切換 worktree／branch／HEAD，以及
+   向另一個 Agent 交接前，重新評估索引是否仍適用。Commit、merge 或交接事件
+   本身不授權刷新，也不保證已自動更新；內容與身分未變時重用已有證據。
+2. 編排 Agent 在實際 checkout 與共享 storage／cache 邊界內指定一位索引
+   writer，記明目標、操作範圍與交接條件。原始碼 writer 可以是另一位 Agent；
+   編排 Agent 須先與其協調，暫停對目標原始碼的其他寫入，確保 snapshot／更新
+   期間輸入穩定，並核對既有 DB reader／server 的持有狀態。無法確認原始碼穩定
+   或 reader 狀態時，回報編排 Agent 並回到原始碼／Git。穩定但有 dirty 修改的
+   人工探索仍依前述界限執行，不要求清除既有修改，也不放寬 qualified controller
+   的 clean／exact 條件。不因工具各有鎖，就安排多位 Agent 同時刷新同一共享邊界。
+3. 每個階段核對 canonical checkout／worktree、branch、HEAD、dirty state、
+   索引身分與 freshness，以及當次工具／資格／coverage 的適用範圍。不同 clone、
+   worktree 或 branch slot 的證據不互相代用；HEAD 相同也不足以證明 fresh。
+4. 查詢階段不自動轉成更新階段。需要更新時，交給指定 writer 另行核對操作
+   授權與保護集合，執行有界更新及 postflight；編排 Agent 讀回結果並交接後，
+   才恢復符合範圍的查詢。查詢接口可能有 DB recovery 寫入，仍須核對實際副作用
+   與授權；不能只因名稱是 query／reader 就推定零寫入。
+5. 過期或 unknown 索引的既有輸出只能作查找線索。關鍵結論回到當次原始碼／Git
+   驗證，不把它當完整覆蓋、exact qualification、review 或 merge gate 的證據。
+   取用線索的操作本身也須符合當次工具及授權邊界；不為此自動開啟 DB 或刷新。
+6. 交接包含已核對的目標／版本、branch／HEAD、dirty／freshness、操作與驗證
+   範圍、證據位置及剩餘缺口。內容／身分變動或 busy／unknown／失敗時，返回編排
+   Agent 重新評估；不讓其他 Agent 自動 retry、清 lock、修 DB 或覆寫使用者內容。
+
+Codex 與 Grok 的後續目標是相同的 GitNexus 功能，接入實作可不同。何時查詢、
+何時更新及由誰操作，由當次負責編排的一方決定；不固定 Codex 為永久索引
+管理者。功能對等是目標，不能當作兩端入口已完成資格的證據。當前驗證界線
+另見 [runtime compatibility](docs/runtime-compatibility.md#gitnexus-adapter-boundary)。
+
+這些是協作規範，不是已完成的並行安全驗收。Watch／hook／自動化仍需各自
+授權與資格；本節不啟用它們，也不建立通用 callback 或自動 watch 框架。
+
+The repository defines when and what to refresh. The orchestrating Agent assigns
+and coordinates the work; the task owner takes that role when no orchestrator
+is present. GitNexus rules stay in this project overlay, outside platform-neutral
+Core obligations.
+
+1. Reassess before the first index-dependent query, after relevant content or
+   worktree/branch/HEAD changes, and before Agent handoff. Commit, merge and
+   handoff do not authorize refresh or prove an automatic update. Reuse evidence
+   while content and identity remain unchanged.
+2. Assign one index writer for the actual checkout and shared storage/cache
+   boundary, with a stated target, operation scope and handoff conditions.
+   Coordinate with source owners to pause other writes to target source during
+   snapshot and refresh. Confirm stable input and existing DB reader/server
+   ownership before proceeding. If source stability or reader state is unknown,
+   report to the orchestrator and use source/Git fallback. Stable dirty source
+   remains eligible for manual exploration within the limits above; do not clear
+   existing changes or relax the qualified controller's clean/exact conditions.
+   Separate locks do not justify concurrent refreshes of shared state.
+3. At each phase, verify canonical checkout/worktree, branch, HEAD, dirty state,
+   index identity/freshness, and the applicable tool, qualification and coverage.
+   Do not substitute another clone, worktree or branch slot. Matching HEAD alone
+   does not establish freshness.
+4. Keep query and update phases separate. A query must not start an automatic
+   refresh. The designated writer verifies authority and protected baselines,
+   performs a bounded update and postflight, then hands back evidence. The
+   orchestrator reads it before queries resume. Query interfaces may write during
+   DB recovery; verify their effects and authority too.
+5. Existing stale or unknown index output is a discovery hint. Verify important
+   conclusions against current source/Git. It is not proof of coverage, exact
+   qualification, review or merge gates. Access to the hint still needs the
+   applicable tool and authority; it does not authorize a DB open or refresh.
+6. Hand off verified target/version, branch/HEAD, dirty/freshness, operation and
+   validation scope, evidence location and gaps. Changed identity/content, busy,
+   unknown or failure returns to the orchestrator. Other Agents must not retry,
+   clear locks, repair the DB or overwrite user content automatically.
+
+The target is equivalent GitNexus functionality in Codex and Grok; their
+integrations may differ. The current orchestrator decides when to query or
+update and who operates the index. Codex is not its permanent manager. This
+target does not establish either integration's qualification. See the
+[runtime boundary](docs/runtime-compatibility.md#gitnexus-adapter-boundary).
+
+These are coordination rules, not completed concurrency qualification. Watch,
+hooks and automation retain separate authority and qualification requirements.
+This section activates none and creates no generic callback/watch framework.
 
 ## 驗證與交付
 
