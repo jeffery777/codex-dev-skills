@@ -228,15 +228,20 @@ class SourceIntegrityInstallerTests(InstallerFixture):
         self.assertFalse(core_root.exists())
 
     def test_core_root_rollback_restores_old_directory_set_after_lock_failure(self):
-        development = "43c650e1196a3a702e2240bd79dd24539fa893a7"
-        self.seed("0.34.0", snapshot_revision=development)
+        self.assert_core_root_rollback("0.34.0", "43c650e1196a3a702e2240bd79dd24539fa893a7")
+
+    def test_formal_core_root_rollback_restores_thirteen_file_set_after_lock_failure(self):
+        self.assert_core_root_rollback("0.35.0", "e23e18ed0512ece04ca6b6dceba3a6a1cf59b9fd")
+
+    def assert_core_root_rollback(self, version, revision):
+        self.seed(version, snapshot_revision=revision)
         folder = self.case / "core-fault-bin"
         folder.mkdir()
         wrapper = folder / "mv"
         real = shutil.which("mv")
         wrapper.write_text('''#!/bin/bash
 if [[ "$1" == *.core.lock.json.tmp.*/value && "$2" == */orchestration/core.lock.json ]]; then
-  if [[ ! -f "$HOME/.codex/templates/orchestration/core/docs/releases/v0.1.0.md" ]]; then
+  if [[ ! -f "$HOME/.codex/templates/orchestration/core/docs/releases/v0.1.1.md" ]]; then
     echo core-root-seam-not-reached >&2; exit 79
   fi
   echo injected-after-core-root >&2; exit 78
@@ -252,8 +257,48 @@ exec "''' + real + '''" "$@"
         self.assertIn("injected-after-core-root", result.stderr)
         self.assertEqual(before, self.snapshot(), result.stderr)
         self.assertEqual(directories, sorted(p.relative_to(core_root).as_posix() for p in core_root.rglob("*") if p.is_dir()))
-        self.assertFalse((core_root / "docs/releases").exists())
-        self.assert_version("0.34.0")
+        self.assertFalse((core_root / "docs/releases/v0.1.1.md").exists())
+        self.assertEqual(version == "0.35.0", (core_root / "docs/releases/v0.1.0.md").is_file())
+        self.assert_version(version)
+
+    def test_formal_thirteen_to_fourteen_and_back_preserves_profiles_and_retires_note(self):
+        self.assert_core_transition("0.35.0", "e23e18ed0512ece04ca6b6dceba3a6a1cf59b9fd", 13)
+
+    def test_development_eleven_to_fourteen_and_back_preserves_profiles_and_retires_notes(self):
+        self.assert_core_transition("0.34.0", "43c650e1196a3a702e2240bd79dd24539fa893a7", 11)
+
+    def assert_core_transition(self, version, revision, count):
+        catalog = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == revision)
+        prior = self.seed(version, groups=list(catalog["groups"]), snapshot_revision=revision)
+        old_source = self.case / f"source-{revision}"
+        core_root = self.home / ".codex/templates/orchestration/core"
+        prior_files = {p.relative_to(core_root).as_posix(): p.read_bytes()
+                       for p in core_root.rglob("*") if p.is_file()}
+        self.assertEqual(count, len(prior_files))
+        result = self.run_installer("update", "--all")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assert_version(CURRENT_VERSION)
+        receipt = json.loads(self.receipt.read_text())
+        self.assertEqual("0.1.1", receipt["source"]["core"]["version"])
+        self.assertIn("codex-agent-profiles", receipt["groups"])
+        self.assertEqual(14, len([p for p in core_root.rglob("*") if p.is_file()]))
+        self.assertTrue((core_root / "docs/releases/v0.1.1.md").is_file())
+        extra = core_root / "unknown.md"
+        extra.write_bytes(b"unmanaged fixture; preserve on refused downgrade\n")
+        extra.chmod(0o600)
+        before = self.snapshot()
+        result = self.run_installer("update", "--all", "--source", old_source, "--force")
+        self.assertNotEqual(0, result.returncode)
+        self.assertEqual(before, self.snapshot())
+        extra.unlink()  # Remove only this test-owned input to exercise the accepted path.
+        result = self.run_installer("update", "--all", "--source", old_source)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assert_version(version)
+        receipt = json.loads(self.receipt.read_text())
+        self.assertEqual(prior["source"]["catalog_sha256"], receipt["source"]["catalog_sha256"])
+        self.assertIn("codex-agent-profiles", receipt["groups"])
+        self.assertEqual(prior_files, {p.relative_to(core_root).as_posix(): p.read_bytes()
+                                      for p in core_root.rglob("*") if p.is_file()})
 
     def test_preexisting_unowned_empty_core_root_is_preserved(self):
         self.seed()

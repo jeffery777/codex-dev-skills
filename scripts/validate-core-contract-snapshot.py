@@ -16,11 +16,11 @@ import sys
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-REVISION = "174df2af8dedf813b9bd4e3c184a627ee87d3cd8"
-REVIEWED_HEAD = "bc20699a5c46458647a01c5edb2830d8381219ef"
-MARKDOWN_DIGEST = "484923e7dc1407dde1702cf88e93afb5a279b25f79a2c6ff9631d58d7589ab13"
+REVISION = "7b66978a76597d09be1b55ad199a969b4ee59c0f"
+REVIEWED_HEAD = "f23191bdc1cd3e8ef9a5cd7c3e809b5789859892"
+MARKDOWN_DIGEST = "ef0ed075dfbddd7504f65126deabe135632e4737f3148efaf19551224a577ea5"
 LICENSE_DIGEST = "49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f"
-SET_DIGEST = "91e3153d31f4096e21927e653b74010fbaa504c7f1550ecf56af687db288d482"
+SET_DIGEST = "94846bba3a108fb686a779cab8bcf58b0e4eaac68e6f20ab9b13c0236f6ef5a3"
 DOMAIN = "codex-core-document-set/v1"
 FILES = (
     "CHANGELOG.md", "LICENSE", "README.md",
@@ -30,17 +30,17 @@ FILES = (
     "docs/architecture/dependency-inventory.md",
     "docs/architecture/migration-plan.md", "docs/architecture/project-split.md",
     "docs/provenance/source-map.md", "docs/provenance/upstream-notices.md",
-    "docs/releases/v0.1.0.md",
+    "docs/releases/v0.1.0.md", "docs/releases/v0.1.1.md",
 )
 MAX_FILE_BYTES = 128 * 1024
-MAX_TOTAL_BYTES = 264088  # Exact reviewed 13-file total; per-file bound is unchanged.
+MAX_TOTAL_BYTES = 280906  # Exact reviewed 14-file total; per-file bound is unchanged.
 MAX_LOCK_BYTES = 16 * 1024
 DIRECTORIES = {str(p) for name in FILES for p in PurePosixPath(name).parents if str(p) != "."}
 
 # Ordinary consumers accept only the formal pin. Installer history is an explicit
-# opt-in to one independently reviewed immutable set, never arbitrary lock hashes.
+# opt-in to independently reviewed immutable sets, never arbitrary lock hashes.
 CURRENT_SNAPSHOT = {
-    "source": {'repository': 'jeffery777/engineering-workflow-core', 'revision': '174df2af8dedf813b9bd4e3c184a627ee87d3cd8', 'reviewed_head': 'bc20699a5c46458647a01c5edb2830d8381219ef', 'pull_request': 18, 'version': '0.1.0', 'tag': 'v0.1.0', 'tag_object': 'e984c880a05065c8bcd0d78e83d78220b05bfc32'},
+    "source": {'repository': 'jeffery777/engineering-workflow-core', 'revision': '7b66978a76597d09be1b55ad199a969b4ee59c0f', 'reviewed_head': 'f23191bdc1cd3e8ef9a5cd7c3e809b5789859892', 'pull_request': 20, 'version': '0.1.1', 'tag': 'v0.1.1', 'tag_object': '7ce698fa853106c8ef44c4240c9334762da5ffb0'},
     "files": FILES, "set_digest": SET_DIGEST, "markdown_digest": MARKDOWN_DIGEST,
     "max_total": MAX_TOTAL_BYTES,
 }
@@ -50,6 +50,12 @@ HISTORICAL_SNAPSHOTS = ({
     "set_digest": "d0031ab685d6586ce89ed4ac0e53c45f0dca9720874d43019e5d54a0859fb98b",
     "markdown_digest": "37ef5cbdfc9461b43dc76dcd1448943405daf8b6d2a77ee0c1857e7ba9088e15",
     "max_total": 256 * 1024,
+}, {
+    "source": {'repository': 'jeffery777/engineering-workflow-core', 'revision': '174df2af8dedf813b9bd4e3c184a627ee87d3cd8', 'reviewed_head': 'bc20699a5c46458647a01c5edb2830d8381219ef', 'pull_request': 18, 'version': '0.1.0', 'tag': 'v0.1.0', 'tag_object': 'e984c880a05065c8bcd0d78e83d78220b05bfc32'},
+    "files": ('CHANGELOG.md', 'LICENSE', 'README.md', 'contracts/authorization-and-stops.md', 'contracts/exact-head-and-evidence.md', 'contracts/review-and-security.md', 'contracts/workflow.md', 'docs/architecture/dependency-inventory.md', 'docs/architecture/migration-plan.md', 'docs/architecture/project-split.md', 'docs/provenance/source-map.md', 'docs/provenance/upstream-notices.md', 'docs/releases/v0.1.0.md'),
+    "set_digest": '91e3153d31f4096e21927e653b74010fbaa504c7f1550ecf56af687db288d482',
+    "markdown_digest": '484923e7dc1407dde1702cf88e93afb5a279b25f79a2c6ff9631d58d7589ab13',
+    "max_total": 264088,
 },)
 
 

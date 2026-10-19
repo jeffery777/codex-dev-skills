@@ -36,33 +36,35 @@ scan、exact-head、保存或操作授權；本包不聲稱模型或 runtime 已
 
 ## 固定來源與集合 digest
 
-Issue #353 固定正式 Core v0.1.0。Annotated tag object
-`e984c880a05065c8bcd0d78e83d78220b05bfc32` 解析到 PR #18 merge commit
-`174df2af8dedf813b9bd4e3c184a627ee87d3cd8`；reviewed head
-`bc20699a5c46458647a01c5edb2830d8381219ef` 與 merge 的 tree 相同。
-完整引用 closure 明選 12 份 Markdown 與 LICENSE，共 13 檔、264,088 bytes。
+Issue #353 的 Core v0.1.0／13 檔採用保留為歷史。Issue #357 固定 Core v0.1.1。
+Annotated tag object `7ce698fa853106c8ef44c4240c9334762da5ffb0` 解析到
+PR #20 merge commit `7b66978a76597d09be1b55ad199a969b4ee59c0f`；reviewed head
+`f23191bdc1cd3e8ef9a5cd7c3e809b5789859892` 與 merge 的 tree 相同。
+完整引用 closure 明選 13 份 Markdown 與 LICENSE，共 14 檔、280,906 bytes。
 原 UTF-8 bytes、相對路徑、100644 Git mode、LICENSE 及完整 notices 保留。
-含四份正式 contracts 在內的九個保護檔案維持 PR #16 基線 bytes；新增 CHANGELOG、
-release record 及 README/source-map 發行導讀，不增加 Reason 或 runtime 功能。
+相對 v0.1.0，九檔 bytes 不變；只更新 workflow、README、source-map、CHANGELOG，
+並加入 v0.1.1 release record。Continue 規則優先沿用原 Session；中斷點若有結果
+不明的操作或委派工作，先核對其現況再續行。既有入口讀完整 workflow 即取得此義務，
+不新增 Reason、技能、執行程式、原生故障 QA、強制 Session 回復或重試／委派授權。
 
 | 身分 | 精確算法與值 |
 | --- | --- |
-| Core 12 份 Markdown 集合 | UTF-8 path 排序，path/TAB/raw SHA256/LF，含最後 LF、不含 LICENSE；`484923e7dc1407dde1702cf88e93afb5a279b25f79a2c6ff9631d58d7589ab13` |
-| Core 完整 13 檔集合 | 同一 path/TAB/hash/LF 算法，含 LICENSE；`3c985420e8017bde6b59f2625d451686202e2f6a03d807a361df166634a88de9` |
+| Core 13 份 Markdown 集合 | UTF-8 path 排序，path/TAB/raw SHA256/LF，含最後 LF、不含 LICENSE；`ef0ed075dfbddd7504f65126deabe135632e4737f3148efaf19551224a577ea5` |
+| Core 完整 14 檔集合 | 同一 path/TAB/hash/LF 算法，含 LICENSE；`beb93e8a0886390f65d33bc6e9c71200353ecbe8d05f8d82d17b903f94c15755` |
 | Core LICENSE | 原 bytes SHA256 `49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f` |
-| Codex 13 檔集合 | UTF-8 path 排序的 path/sha256/size_bytes/mode records；keys 排序、compact JSON、非 ASCII 不 escape、無 BOM/尾 LF；domain `codex-core-document-set/v1`、NUL、JSON array；`91e3153d31f4096e21927e653b74010fbaa504c7f1550ecf56af687db288d482` |
+| Codex 14 檔集合 | UTF-8 path 排序的 path/sha256/size_bytes/mode records；keys 排序、compact JSON、非 ASCII 不 escape、無 BOM/尾 LF；domain `codex-core-document-set/v1`、NUL、JSON array；`94846bba3a108fb686a779cab8bcf58b0e4eaac68e6f20ab9b13c0236f6ef5a3` |
 
 算法或範圍不同，不可互換。Lock 固定 repository、commit、reviewed head/PR、
-version `0.1.0`、tag 及 tag object；runtime 不動態解析 tag。
+version `0.1.1`、tag 及 tag object；runtime 不動態解析 tag。
 `import_baseline_revision` 保留初次匯入的 Codex 歷史基線，不冒充本次或將來
 consumer HEAD。當次 source/package、revision、assembler bytes、layout 與驗證
 範圍由 build/review 證據另外綁定，避免自引用。
 
-既有 Issue #349 的 Core PR #16／11 檔採用是歷史。只有目前受審 installer 明選
-`--allow-reviewed-history` 才接受那份固定歷史集合，用於受管舊來源重裝／降版及
+Core v0.1.0／13 檔及 Issue #349 的 Core PR #16／11 檔採用都是歷史。只有目前受審 installer 明選
+`--allow-reviewed-history` 才接受各自固定的歷史集合，用於受管舊來源重裝／降版及
 部分 uninstall；仍驗 exact source、lock、每檔 bytes/mode、集合 digest 與 closure，
 回傳明示歷史 revision／digest／count。一般 loader 不使用此選項，拒絕把舊快照
-當正式 v0.1.0。未知鎖或任意宣告的 hashes 皆不能新增 allowlist。
+當正式 v0.1.1。未知鎖或任意宣告的 hashes 皆不能新增 allowlist。
 
 Digest 驗完整性，不證明信任、授權、runtime 資格或出版狀態。來源審查、單向
 責任與 notices 仍必需。原 copyright/完整 MIT permission/warranty 在
@@ -79,6 +81,7 @@ aliases 沿原入口，不增加自動 lifecycle 或改既有模型／權限預�
 
 | Core 義務／source-map 單位 | Codex 接點 |
 | --- | --- |
+| task-continuation-update／wf-stages | core-contract-loading 導讀完整 workflow；原 Session 為優先，先讀回結果不明操作／委派現況，不新增回復 framework、重試或委派授權 |
 | workflow 八階段 E02–E10、R19、D28 | engineering-workflow-contract／reusable 的 Shared Phases；原 delivery/planning/implementation/docs/review 技能 |
 | P1 之後新增的 wf-writing／plain-writing-update | engineering-workflow-contract 的 Documentation Writing And Review；docs-update／docs-review 檢查讀者、句意、術語、步驟、雙語語意及符合性宣稱；仍使用既有 review 報告 |
 | P1 之後新增的 wf-assumptions-and-options／assumptions-options-update | core-contract-loading 導讀完整 Core；既有 planning／執行／review 載入義務，integration-review-report 按需記前提、反證、方案與停止條件；不新增 gate 或逐技能規則副本 |
@@ -114,7 +117,7 @@ aliases 沿原入口，不增加自動 lifecycle 或改既有模型／權限預�
 未知、自訂、symlink／hardlink、額外空目錄、缺檔或 unsafe mode 都拒絕，`--force`
 不能認領或強蓋。舊 installed.jsonl 沒有 root binding，實際舊安裝由 Agent 另盤點。
 Core receipt 仍逐檔記錄；交易把已驗完整 Core 目錄作為單一 directory artifact，
-lock 仍是獨立 artifact。這讓 13／11 檔升降版及 rollback 保留精確子目錄集合，
+lock 仍是獨立 artifact。這讓 14／13／11 檔升降版及 rollback 保留精確子目錄集合，
 不額外刪未知空目錄，也不改成跨所有 roots 的原子交易。
 
 完整 staging、暫時 originals 與 receipts 位於已驗 owner-safe state，排除已知
@@ -129,7 +132,7 @@ Filesystem 收據不等於 native plugin manager 的生命週期資格。
 Repo 開發驗證只用 tracked project-python；snapshot validator 僅 stdlib，無
 網路、subprocess、外部設定讀取或寫入。它以目錄 descriptors／O_NOFOLLOW
 檢查固定 inventory，拒 symlink/special/executable/unexpected entries；限制
-每檔 128 KiB、正式集合總量上限 264,088 bytes、lock 16 KiB，驗逐檔 hash／size、固定來源、兩種
+每檔 128 KiB、正式集合總量上限 280,906 bytes、lock 16 KiB，驗逐檔 hash／size、固定來源、兩種
 digest、完整 LICENSE 及相對 links/anchors。既有 source/plugin mode parity
 另由 generator 檢查；filesystem 明驗 0600。Root 由操作人員明選，不從 cwd、
 環境或其他安裝 fallback。
@@ -149,7 +152,7 @@ missing/tampered notices、symlinks/FIFO、broken links、錯 root、目的地�
 已完成的有界驗收只在內容、環境與假設仍有效時重用。這次固定來源與政策更新
 不重開既有四入口驗收，也不要求全平台 qualification；不借 fixture 或別的入口
 資格。不啟動模型 runtime、不更新既有 consumer 安裝。此前採用包不部署或發 Tag/Release；
-Issue #353 的獨立發行另依明確授權與 gates，實裝仍由主話題接續。各包均
+Issue #357 停在配套候選與 draft PR；正式發行另依明確授權與 gates，實裝仍由主話題接續。Core 已發布不代表本機已安裝或 Session 已載入。各包均
 不操作 Memory、Hooks、Schedulers、Orca、EdgeInstaller、其他專案或模型路由。
 
 <a id="english"></a>
@@ -199,33 +202,37 @@ adoption does not prove model or runtime conformance.
 
 ### Fixed source and distinct set digests
 
-Issue #353 pins formal Core v0.1.0. Annotated tag object
-`e984c880a05065c8bcd0d78e83d78220b05bfc32` resolves to PR #18 merge commit
-`174df2af8dedf813b9bd4e3c184a627ee87d3cd8`. Reviewed head
-`bc20699a5c46458647a01c5edb2830d8381219ef` has the same tree.
-The complete reference closure contains twelve Markdown files and LICENSE:
-thirteen files, 264,088 bytes. Preserve original bytes, paths, modes and notices.
-Nine protected files, including the four contracts, retain the PR #16 baseline bytes.
-New release/navigation documents add no Reason or runtime feature.
+Issue #353's Core v0.1.0/thirteen-file adoption remains historical. Issue #357
+pins Core v0.1.1. Annotated tag object `7ce698fa853106c8ef44c4240c9334762da5ffb0`
+resolves to PR #20 merge commit `7b66978a76597d09be1b55ad199a969b4ee59c0f`.
+Reviewed head `f23191bdc1cd3e8ef9a5cd7c3e809b5789859892` has the same tree.
+The complete reference closure contains thirteen Markdown files and LICENSE:
+fourteen files, 280,906 bytes. Preserve original UTF-8 bytes, paths, Git 100644
+modes, LICENSE and full notices. Nine files retain their v0.1.0 bytes. Changes
+update workflow, README, source-map and CHANGELOG, and add the v0.1.1 release record.
+Continue prefers the original session. If an interrupted operation or delegated
+work has an unknown outcome, confirm its state before continuing. Existing entries
+receive this duty by reading full workflow. No Reason integration, new skill,
+executable, native fault QA, forced restoration, retry or delegation authority follows.
 
 | Identity | Algorithm and SHA-256 |
 | --- | --- |
-| Twelve-Markdown set | UTF-8 path order; path/TAB/raw SHA256/LF, final LF, excluding LICENSE; `484923e7dc1407dde1702cf88e93afb5a279b25f79a2c6ff9631d58d7589ab13` |
-| Full thirteen-file set | Same path/TAB/hash/LF algorithm including LICENSE; `3c985420e8017bde6b59f2625d451686202e2f6a03d807a361df166634a88de9` |
+| Thirteen-Markdown set | UTF-8 path order; path/TAB/raw SHA256/LF, final LF, excluding LICENSE; `ef0ed075dfbddd7504f65126deabe135632e4737f3148efaf19551224a577ea5` |
+| Full fourteen-file set | Same path/TAB/hash/LF algorithm including LICENSE; `beb93e8a0886390f65d33bc6e9c71200353ecbe8d05f8d82d17b903f94c15755` |
 | LICENSE | Raw SHA256 `49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f` |
-| Codex thirteen-file set | UTF-8-path-sorted path/sha256/size_bytes/mode records; sorted-key compact UTF-8 JSON, unescaped Unicode, no BOM/final LF; domain `codex-core-document-set/v1`, NUL and JSON array; `91e3153d31f4096e21927e653b74010fbaa504c7f1550ecf56af687db288d482` |
+| Codex fourteen-file set | UTF-8-path-sorted path/sha256/size_bytes/mode records; sorted-key compact UTF-8 JSON, unescaped Unicode, no BOM/final LF; domain `codex-core-document-set/v1`, NUL and JSON array; `94846bba3a108fb686a779cab8bcf58b0e4eaac68e6f20ab9b13c0236f6ef5a3` |
 
 Do not substitute different algorithms or sets. The lock binds repository, commit,
-reviewed head/PR, version0.1.0, tag and tag object. Runtime never resolves a tag.
+reviewed head/PR, version 0.1.1, tag and tag object. Runtime never resolves a tag.
 The import baseline remains the historical first Codex import, not a current or
 future consumer HEAD. Build/review evidence separately binds revision, package
 version, assembler, layout and scope without self-reference.
 
-Issue #349's eleven-file PR #16 adoption is historical. Only the current reviewed
+Core v0.1.0/thirteen files and Issue #349's eleven-file PR #16 adoption are historical. Only the current reviewed
 installer explicitly selects `--allow-reviewed-history` for managed historical
 reinstall/downgrade and partial uninstall. It verifies exact source, lock, every
 file/mode, set digests and closure, and reports the selected historical identity.
-Ordinary loading never selects history as formal v0.1.0. Unknown locks or arbitrary
+Ordinary loading never selects history as formal v0.1.1. Unknown locks or arbitrary
 declared hashes cannot extend the allowlist.
 
 A digest proves integrity, not trust, authority, runtime qualification or
@@ -245,6 +252,7 @@ their entries. No automatic lifecycle, model default or permission change follow
 
 | Core obligation and source-map units | Codex connection |
 | --- | --- |
+| task-continuation-update/wf-stages | Full workflow through core-contract-loading; prefer the original session and read back unknown operation/delegation state. No recovery framework, retry or delegation authority |
 | Eight stages: E02–E10, R19, D28 | Engineering/reusable Shared Phases; existing delivery, planning, implementation, docs and review skills |
 | Post-P1 wf-writing/plain-writing-update | Engineering Documentation Writing And Review; docs-update/docs-review check readers, sentence meaning, terminology, steps, bilingual equivalence and conformance claims in the existing review report |
 | Post-P1 wf-assumptions-and-options/assumptions-options-update | Core loading points to full Core for existing planning/execution/review; integration-review-report records applicable premises, counterevidence, options and stop conditions. No new gate or per-skill rule copies |
@@ -287,7 +295,7 @@ links, extra empty directories, missing files and unsafe modes fail closed even
 with force. Legacy installed.jsonl needs a separate Agent-assisted assessment.
 Receipts retain per-file Core inventory. The transaction moves the verified
 complete Core root as one directory artifact; its lock remains separate. Existing
-directory rename/rollback preserves the thirteen/eleven-file subdirectory set
+directory rename/rollback preserves the fourteen/thirteen/eleven-file subdirectory set
 without broad empty-directory removal or an all-roots atomicity claim.
 
 Stage payload, temporary originals and receipts in verified owner-safe state
@@ -303,7 +311,7 @@ are not guaranteed. Filesystem receipts do not qualify native plugin lifecycle.
 Repository verification uses tracked `project-python`. The stdlib-only snapshot
 validator has no network, subprocess, external-config read or write. Directory
 descriptors and `O_NOFOLLOW` guard the fixed inventory. Reject symlinks, special,
-executable and unknown entries. Limits are 128 KiB/file, 264,088 bytes for the
+executable and unknown entries. Limits are 128 KiB/file, 280,906 bytes for the
 formal set total, and 16 KiB
 for the lock. Verify file hashes/sizes, fixed identity, both set digests, LICENSE
 and local links/anchors. The generator checks source/plugin effective-mode parity;
@@ -331,7 +339,8 @@ acceptance only while content, environment and assumptions still match. This
 fixed-source and policy update does not reopen that acceptance or require
 all-platform qualification. It borrows no fixture or other surface's qualification
 and starts no model runtime. It performs no existing consumer installation
-rollout. Earlier adoption packets did not deploy or publish. Issue #353 has
-separate release authority and gates; installation remains coordinator-owned.
+rollout. Earlier adoption packets did not deploy or publish. Issue #357 stops at preparation and draft PR. Formal release needs separate
+authority and gates; installation remains coordinator-owned. Core publication
+does not establish local installation or effective session loading.
 No packet activates Memory/Hooks/Schedulers or operates Orca, EdgeInstaller,
 other projects or model routing.

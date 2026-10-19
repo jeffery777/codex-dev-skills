@@ -18,6 +18,7 @@
 | 0.34.0 開發基線 | `43c650e1196a3a702e2240bd79dd24539fa893a7` | `64b19bb5658432c42cd6a26aa357fd6b1d0fd857` |
 | 0.34.0 split | `f18b202595aea27c9d872c480d2e1b067340b163` | `174df2af8dedf813b9bd4e3c184a627ee87d3cd8` |
 | 0.35.0 | `e23e18ed0512ece04ca6b6dceba3a6a1cf59b9fd` | `174df2af8dedf813b9bd4e3c184a627ee87d3cd8` |
+| 0.35.1 | `6cd58e3a776ef705a9cee17ba7e24c6b21181395` | `7b66978a76597d09be1b55ad199a969b4ee59c0f` |
 
 `installer/source-catalogs.json` 是受審資料清單，並非通用歷史版本解析器。
 未知 catalog 或不同 payload 會停止。後續固定 commit 若只有 installer／非 payload
@@ -43,7 +44,7 @@ Partial/promisor clones 不支援。Repository origin 字串與 digest 是來源
 Core 隨套件固定攜帶，無獨立 installer。選無 Core 的舊版時，交易會退休新版 Core 檔。
 Core 交易將完整受管目錄作為單一 rename／rollback 單位，receipt 仍逐檔驗證；
 Core 退休時其完整 root 不殘留。其他非管理空父目錄可以保留。
-普通 loader 僅接受正式 Core；只有目前 installer 明選受審歷史 descriptor，
+普通 loader 僅接受正式 Core v0.1.1／14 檔；只有目前 installer 明選受審歷史 13／11 檔 descriptor，
 仍逐項驗 metadata／bytes／mode／digest，不以任意 lock 或舊 validator 取代。
 
 ### 管理權與失敗邊界
@@ -103,8 +104,9 @@ sources or execute the selected source's old installer, validator, hooks or filt
 It requires Bash, Git and Python 3 stdlib. Integrity checks add no PyYAML dependency;
 existing skill runtime dependencies still apply.
 
-The table above identifies four fixed catalogs/payloads: 0.33.1, distinct
-development and formal-Core split snapshots with the same 0.34.0 version, and 0.35.0.
+The table above identifies five fixed catalogs/payloads: 0.33.1, distinct
+development and formal-Core split snapshots with the same 0.34.0 version, 0.35.0,
+and 0.35.1.
 The data allowlist binds the full file set, bytes and executable bits.
 Unknown catalogs or payloads stop.
 A later fixed HEAD with only installer or other non-payload changes is supported when
@@ -127,8 +129,8 @@ their remaining dependencies. Core travels inside the
 package; it has no separate installer. Downgrade to 0.33.1 retires the new Core files;
 The transaction moves the complete managed Core root as one directory unit,
 while receipts remain per-file; retired Core leaves no Core root. Other unmanaged
-empty parents can remain. Ordinary loading accepts only the formal Core pin. Only
-the current installer explicitly selects the fixed reviewed historical descriptor,
+empty parents can remain. Ordinary loading accepts only the formal Core v0.1.1 fourteen-file pin. Only
+the current installer explicitly selects fixed reviewed thirteen/eleven-file historical descriptors,
 with full metadata/byte/mode/digest checks and no old validator execution.
 
 The small `managed-<canonical-roots-digest>.json` receipt binds canonical target roots,

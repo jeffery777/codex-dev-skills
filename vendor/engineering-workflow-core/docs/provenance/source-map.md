@@ -2,7 +2,7 @@
 
 P1 的固定抽取來源是 `jeffery777/codex-dev-skills@993597561881d6ed8c552f9a18c59315015ad245`；本機來源只讀，未混用 draft #317/#324/#326。目的基線是 P0 merge `0815b74abe52d57efd032bd075e39c83c2ebf0d6`，工作包為 [Issue #3](https://github.com/jeffery777/engineering-workflow-core/issues/3)。核心的正式契約以繁體中文為權威；英文 identifiers 及 notices 原文不翻譯。全面雙語改造另包評估，不在 P1 宣稱 ASD-STE100 符合性。
 
-上述抽取身分與下列逐條對照記錄 P1 當時的來源及處置。P1 之後的使用者新增要求分開記於 [簡明寫作更新](#plain-writing-update)、[證據生命週期更新](#evidence-lifecycle-update)、[風險與審查時機更新](#risk-review-update)、[安全檢查政策更新](#security-policy-update) 、[前提與改善取捨更新](#assumptions-options-update) 與 [首版發行文件更新](#release-version-docs-update)，不倒寫成原上游義務或 P1 當時已完成的符合性驗證。
+上述抽取身分與下列逐條對照記錄 P1 當時的來源及處置。P1 之後的使用者新增要求分開記於 [簡明寫作更新](#plain-writing-update)、[證據生命週期更新](#evidence-lifecycle-update)、[風險與審查時機更新](#risk-review-update)、[安全檢查政策更新](#security-policy-update) 、[前提與改善取捨更新](#assumptions-options-update)、[首版發行文件更新](#release-version-docs-update) 與 [最小接續規則澄清](#task-continuation-update)，不倒寫成原上游義務或 P1 當時已完成的符合性驗證。
 
 以下按來源正文段落、每個編號／bullet 與表格義務列出穩定 ID、exact file/lines、disposition、目的章節及理由。標題／空行隨相鄰單位歸類；不是把整份來源都稱中立。`抽取` 保留義務並整理文字；`改寫` 保留共用義務，移除 runtime 具體映射或明示本次澄清；`接口保留` 不複製具體入口／路徑／程式；`不適用` 須有明確理由（本次主要來源沒有需要丟棄的共用義務）。合併文字不等於刪除義務。核心只保留 Markdown，所有可執行依賴留原接口或保留延後。
 
@@ -268,3 +268,19 @@ The new release packet on 2026-10-17 prepares an independent `v0.1.0` document v
 The bilingual [README](../../README.md) explains Markdown-only Core, separate Core/consumer versions, and no separate Core installation. [CHANGELOG](../../CHANGELOG.md) records version names, initial content, and upgrade impact. The [v0.1.0 preparation record](../releases/v0.1.0.md) retains point-in-time scope, versions and dependencies, acceptance and unverified limits, inventory algorithms, licensing, and publication verification entrypoints. These provide source versions, preparation/history, and stable guidance. Publication truth requires the new annotated tag, full final commit, and GitHub Release metadata. README does not mirror mutable latest. Do not update historical notes merely to show publication. After merge, annotations, Release metadata, and handoff evidence provide the final pin and digests without self-reference.
 
 This document packet covers those four files. The expected inventory is 12 Markdown files plus the original LICENSE. Protect the other nine existing files' bytes and modes. Add no behavior to the four formal contracts. Each consumer verifies the tag-resolved immutable commit, selected documents, per-file and set digests, allowlist, complete dependency closure, sources, and notices. New release documents require inventory, assembly, and verification review. The old 10-file Markdown digest cannot identify the new version. Core has no installer, validator, catalog, VERSION, JSON/schema, runtime API, executable package, or Reason feature. This packet does not change consumers or installations, or deploy. Publication does not prove model/interface conformance or equivalent behavior. The designated coordinator handles Space synchronization outside this Core writer's scope.
+
+<a id="task-continuation-update"></a>
+
+## P1 之後新增：最小接續規則澄清
+
+### 繁體中文
+
+2026-10-19 的 [Issue #19](https://github.com/jeffery777/engineering-workflow-core/issues/19) 依使用者批准，在既有 [Continue](../../contracts/workflow.md#wf-stages) 補上：「優先沿用原 Session；若中斷點有結果不明的操作或委派工作，先確認其現況，再接續未完成部分。」這是新加入的明確措辭，澄清既有接續、當前 ownership、[未知效果查證與不得盲重做](../../contracts/authorization-and-stops.md#auth-destructive) 的順序；不倒寫為原 107 單位或 P1 逐字原文。
+
+「優先」為偏好，保留手動 checkpoint fallback、有效授權、停止及必要 review／gate。它不保證 Session 還原、跨工具去重或 runtime 自動復原，也不授權新增委派。新增英文導讀與繁中意思一致，正式繁中權威及未完成完整 ASD-STE100 符合性驗證的限制保留。[v0.1.1 準備紀錄](../releases/v0.1.1.md) 記載五檔 scope、清冊與後續 consumer 採用條件；原來源 revision／hash／notices、先前工作包及 v0.1.0 發行文件保持歷史。
+
+### English
+
+Under user approval, [Issue #19](https://github.com/jeffery777/engineering-workflow-core/issues/19) on 2026-10-19 adds explicit wording to [Continue](../../contracts/workflow.md#wf-stages): prefer the original session. If an operation or delegated task has an unknown outcome at the interruption point, check its current state before continuing unfinished work. This new wording clarifies the order of existing continuation, current ownership, and [unknown-effect checks without blind replay](../../contracts/authorization-and-stops.md#auth-destructive). It is not original wording from the 107 extraction units or P1.
+
+“Prefer” is a preference. Manual checkpoint fallback, valid authority, stops, and required review and gates remain. The wording does not guarantee session restoration, cross-tool deduplication, or automatic runtime recovery. It grants no new delegation right. The English guide preserves the Chinese meaning. Traditional Chinese remains authoritative; full ASD-STE100 conformance remains unverified. The [v0.1.1 preparation record](../releases/v0.1.1.md) records the five-file scope, inventory, and later consumer adoption conditions. Retain original source revisions, hashes and notices, earlier packet history, and v0.1.0 release documents.

@@ -215,7 +215,7 @@ subagent delegation 限定為 Desktop。完整界線見
 | [grok-build-dev-skills](https://github.com/jeffery777/grok-build-dev-skills) | 獨立 Grok 接口及其設定、工具／權限／session、驗證與組裝；不由本套代為操作模型 |
 
 兩端各自消費 immutable Core revision／digest，runtime 不追蹤 mutable Core `main`。
-Codex 的固定來源、13 檔 snapshot／lock、兩種 digest 與 notices 見
+Codex 的固定來源、14 檔 snapshot／lock、兩種 digest 與 notices 見
 [Core 接法](docs/core-contract-snapshot.md)；檔案缺失、身分／digest／root 不明或不符時，
 停止相依工作。Digest 驗證是完整性證據，不自行證明來源信任、runtime 資格或操作授權。
 
@@ -262,7 +262,8 @@ Release notes 是 point-in-time 準備／歷史紀錄；出版事實須另外查
 
 明確版本的變更見 [Changelog](CHANGELOG.md)。
 [v0.34.0 拆分準備紀錄](docs/releases/v0.34.0-split.md) 是獨立於舊候選的範圍與安裝前提，
-保留歷史取消決策；固定 Core v0.1.0 的完整身分見 Core 接法；發行 gates 不由來源版本字串推定完成。
+保留歷史取消決策；Core v0.1.1 的固定身分見 Core 接法。
+[v0.35.1 配套準備](docs/releases/v0.35.1-split.md)不代表已發布、安裝或載入；發行 gates 不由來源版本字串推定完成。
 
 <a id="skills"></a>
 <a id="workflows"></a>
@@ -448,7 +449,7 @@ model/effort/profiles/session, validators, packaging and installation.
 [Grok](https://github.com/jeffery777/grok-build-dev-skills) owns its independent
 interface and qualification; this pack does not operate its models. Interfaces
 consume immutable Core revisions/digests, not runtime Core `main`. See the
-[13-file snapshot, lock and notices](docs/core-contract-snapshot.md). Missing or
+[14-file snapshot, lock and notices](docs/core-contract-snapshot.md). Missing or
 unknown required files/root/trust metadata or mismatched identity/digests stop
 dependent work. Integrity does not establish trust, authority or qualification.
 
@@ -492,7 +493,9 @@ live readback; readiness cannot count itself as upstream CI.
 The [changelog](CHANGELOG.md) records explicit version scopes.
 The independent [v0.34.0 split preparation](docs/releases/v0.34.0-split.md)
 preserves the earlier cancellation decisions and states scope/install prerequisites.
-The source version alone does not complete its formal Core pin or release gates.
+See the fixed Core v0.1.1 identity in the Core guide and the
+[v0.35.1 preparation record](docs/releases/v0.35.1-split.md). Preparation does
+not establish publication, installation or effective loading. A source version does not complete release gates.
 
 See [usage model](docs/usage-model.md), [advanced reference/crosswalk](docs/guides/workflow-reference.md),
 [Loop Engineering](docs/loop-engineering.md), [ledger](docs/loop-state-ledger.md),
