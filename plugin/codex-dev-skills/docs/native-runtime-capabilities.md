@@ -394,16 +394,18 @@ retains `Desktop` as the compatibility label for its Codex control plane.
 
 Current callable semantics include:
 
-- `create_worktree` 在目前 task 的 repository 建立並附加隔離 checkout，
-  不建立新 task 或複製 conversation history。先用 `list_artifacts` 核對並優先
-  重用合適的 active worktree。省略 `ref` 從 remote default branch 建立；無法
-  判定預設來源或需延續特定 branch／PR 時提供精確 `ref`。未提交修改不複製；
-  `name` 只是選填命名提示。必填 `allowAsync: true`；快速建立可直接回傳路徑，
-  pending `operationId` 要以 `get_worktree_creation_status` 讀回 `completed`
-  和路徑後才使用。處理中、失敗或未知結果不授權重複建立。它不選 environment、不跑 setup，
-  不改目前 task cwd 或 sandbox permissions。後續工具須明確使用已驗證的
-  回傳目錄，並依 repo 的環境規則驗證。建立成功但 registration 失敗時沿用
-  已回傳工作樹，不重複建立。按需讀取
+- `create_worktree` 是目前 task 的 checkout 操作，不建立新 task 或複製歷史。
+  先用 `list_artifacts` 優先重用合適的 active worktree。必填 `allowAsync: true`
+  與明確 local Git `ref`，從該 ref 以 detached HEAD 開始；未提交修改不複製。
+  選填 `sourceRoot` 只用於使用者選定的 repository；project chat 限 cwd／workspace
+  folders，projectless 可指定已選來源。`name` 是選填提示，不是最終路徑。
+  Pending `operationId` 以 `get_worktree_creation_status` 讀回 `completed` 和路徑；
+  未知結果先查核，不重建。當輪明確使用回傳目錄；成功 attachment 會更新後續
+  回合 cwd，除非回應另有指示，不自動授予 sandbox permissions。它不跑 setup。
+  已建立但 registration／cwd update 失敗時，用 `attach_worktree(path)` 指定
+  已驗證回傳目錄，不重複 create。Attach 不 reset／setup；ownerless checkout
+  須已附加本 task 或在本 app session 為本 task 新建，拒絕 unrelated chat owner。
+  Archived 使用 restore；attach 的 pending 也走同一 status 流程。按需讀取
   `desktop-project-delivery/references/current-worktree.md`；不把新任務的
   `target`／`startingState` 契約套到此操作，也不新增共享任務模式。
 - `list_projects` returns local and remote project information, project
@@ -424,8 +426,11 @@ Current callable semantics include:
   and security controls. Project selection must therefore preserve the
   runtime-returned `hostId`; locality must not be inferred from the current UI
   device or from a path string.
-- `create_thread` requires a prompt and a `project`, `projectless`, or
-  `chatgptWorkCloud` target. A project target uses a returned `projectId` and
+- `create_thread` requires a prompt and a `project`, `projectless`, `codexCloud`,
+  or `chatgptWorkCloud` target. For explicitly requested Codex Cloud work, first
+  use `list_cloud_environments` and select a runnable `environmentConfigId` for
+  `target: {type: "codexCloud", environmentConfigId: "..."}`. This does not
+  authorize cloud execution or establish live cloud qualification. A project target uses a returned `projectId` and
   selects local or worktree execution. The runtime accepts an optional
   normalized `title`; the Desktop adapter supplies a concise non-empty safe
   title on every creation for stable UI display. Derive it from the user-approved
@@ -478,7 +483,12 @@ Current callable semantics include:
   registration directive with `threadId` for a ready task or `clientThreadId`
   for queued worktree setup. The directive is neither navigation nor proof
   that the sidebar rendered the task.
-- `fork_thread` may return a child thread identifier immediately for a
+- `fork_thread` forks Codex tasks, including local Work tasks. Omit `threadId`
+  only for the calling Codex or local Work task. A ChatGPT-backed cloud Work
+  caller must provide an explicit Codex `threadId`; ChatGPT conversations cannot
+  be forked even when they use a local executor. Do not silently replace requested
+  lineage with fresh creation: it needs explicit new-task and history-loss intent.
+  `fork_thread` may return a child thread identifier immediately for a
   same-directory fork or a client thread identifier while a worktree fork is
   queued. A same-directory fork reuses the source checkout or existing
   worktree without creating another Git worktree and is a sequential ownership

@@ -53,14 +53,18 @@ CLI adapter 的 native TUI reference；相同 basename 不代表 payload 或啟�
 ## Contract Family Boundary
 
 Desktop callable 的最新比對見
+[2026-10-30 點時證據](codex-runtime-compatibility-evidence-2026-10-30.md)：
+目前任務 worktree 必填 ref、核對 sourceRoot／ownership、attachment 與後續 cwd；
+fork 依 backing kind 區分 Codex 與 ChatGPT，Cloud target 分別核對公開契約。
+CLI executor 與固定共享 Core 保留原樣。前次
 [2026-10-14 點時證據](codex-runtime-compatibility-evidence-2026-10-14.md)：
 `sorting.projects` 是 `sorting.chats` 別名，排序只接受 `manual`／`updated_at`；
 共享 custom-agent sandbox 證據明確區分 workflow expectation 與繼承 parent
 權限，未知 parent 不推定唯讀資格。兩入口與共享層保持分開。前次
 [2026-09-29 點時證據](codex-runtime-compatibility-evidence-2026-09-29.md)：
 共享層依偏好與隔離需求選路，`create_thread` 採 local 預設並保留其專屬
-worktree 意圖限制；目前任務 worktree 需處理非同步完成與 remote default
-branch 起點；fork 可含中斷中的回合，複製歷史不證明操作完成。前次
+worktree 意圖限制；當時目前任務 worktree 的 remote-default 起點描述
+已由 2026-10-30 的必填 ref 契約取代；fork 可含中斷中的回合，複製歷史不證明操作完成。前次
 [2026-09-25 點時證據](codex-runtime-compatibility-evidence-2026-09-25.md)：
 排序偏好共用於 Codex／Work，分組依可觀察的 surface 處理；由 sidebar
 adapter 的按需 reference 負責，不加入 thread adapter 或 CLI executor。前次
@@ -113,7 +117,10 @@ for its Codex task and thread control plane:
   `pinnedIndex` and non-pinned tasks in `threads`; those response versions
   were independently read back in the local Desktop caller.
 - Desktop `create_thread` requires `prompt` and `target`; `target` is a
-  `project`, `projectless`, or `chatgptWorkCloud` union. Project targets carry a
+  `project`, `projectless`, `codexCloud`, or `chatgptWorkCloud` union.
+  An explicitly requested `codexCloud` target requires a runnable
+  `environmentConfigId` returned by `list_cloud_environments`; a local project ID
+  cannot substitute for it. Schema support does not establish live qualification. Project targets carry a
   `projectId` plus a local or worktree `environment`. Worktree targets may
   omit `startingState` to start from the project's default branch. Use
   `working-tree` only for an explicitly requested current checkout including
@@ -181,14 +188,23 @@ for its Codex task and thread control plane:
   paginated reads are insufficient by themselves. The current callable exposes
   no revoke operation; review or revoke
   the link separately through ChatGPT data controls.
-- Desktop `create_worktree` requires `allowAsync: true`; inspect `list_artifacts`
-  first and reuse a suitable active worktree. An omitted `ref` means the remote
-  default branch, not the current HEAD; supply an exact ref when the default is
-  unknown or continuing a specific branch/PR. A pending `operationId` is observed
-  through `get_worktree_creation_status`; use the returned checkout only after
-  `completed` and path verification. Unknown/failed results do not authorize
-  duplicate creation. This is a current-task operation with its own contract.
+- Desktop `create_worktree` requires `allowAsync: true` and an explicit local
+  Git `ref`, starting detached. Inspect `list_artifacts` and prefer a suitable
+  active worktree. Optional `sourceRoot` must identify a user-selected repository;
+  project chats use cwd/workspace folders. No uncommitted changes are copied.
+  Confirm pending `operationId` through `get_worktree_creation_status` before use.
+  Use the returned directory explicitly in the active turn; successful attachment
+  updates later-turn cwd unless the response says otherwise, without granting
+  sandbox permissions or running setup. If registration/cwd update fails after
+  creation, use `attach_worktree(path)` on the verified returned directory rather
+  than recreating. Attach does not reset files or run setup; ownerless checkouts
+  need this task's attachment or recent creation for it in this app session.
+  Unrelated-chat owners are refused. Archived worktrees require restore.
+  Unknown results require readback, not replay. See the current-worktree reference.
 - Desktop `fork_thread` accepts optional `threadId` and optional `environment`.
+  It forks Codex/local Work tasks. A ChatGPT-backed cloud Work caller must supply
+  an explicit Codex `threadId`; it cannot fork ChatGPT conversations even with a
+  local executor. Fresh creation needs authorized new-task/history-loss intent.
   `same-directory` reuses the source checkout or existing worktree and copies
   conversation history; it does not create another Git worktree. The source task
   must stop writing before the child continues in that shared directory.
