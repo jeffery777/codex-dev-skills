@@ -475,6 +475,28 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
             self.assertIn(evidence, read(path))
         self.assertIn("Issue #301", read(f"docs/{evidence}"))
 
+    def test_updated_desktop_contracts_preserve_source_and_backing_kind_boundaries(self) -> None:
+        worktree = read("skills/desktop-project-delivery/references/current-worktree.md")
+        self.assertNotIn("省略 `ref` 從 repository 的 remote default branch", worktree)
+        self.assertNotIn("不改變目前\ntask 的 cwd", worktree)
+        for path in (
+            "skills/desktop-thread-delegation/references/create-fork.md",
+            "docs/native-runtime-capabilities.md",
+            "docs/runtime-adapter-v2.md",
+        ):
+            body = read(path)
+            with self.subTest(path=path):
+                for marker in ("ChatGPT", "local executor", "Codex", "threadId",
+                               "codexCloud", "environmentConfigId", "list_cloud_environments"):
+                    self.assertIn(marker, body)
+        for path in ("docs/native-runtime-capabilities.md", "docs/runtime-adapter-v2.md"):
+            body = read(path)
+            with self.subTest(path=path):
+                self.assertIn("attach_worktree", body)
+                self.assertIn("sourceRoot", body)
+                self.assertNotIn("An omitted `ref` means the remote", body)
+                self.assertNotIn("省略 `ref` 從 remote default branch", body)
+
     def test_current_task_worktree_has_an_independent_desktop_reference(self) -> None:
         entry = read("skills/desktop-project-delivery/SKILL.md")
         reference_path = "skills/desktop-project-delivery/references/current-worktree.md"
@@ -483,17 +505,22 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn(reference_path, read("README.md"))
         for marker in (
             "`create_worktree`",
-            "選填 `name` 與 `ref`",
+            "必填 `allowAsync: true` 與明確 `ref`",
+            "`sourceRoot`",
+            "detached HEAD",
             "`allowAsync: true`",
             "`list_artifacts`",
-            "省略 `ref` 從 repository 的 remote default branch",
+            "`attach_worktree`",
+            "unrelated chat",
+            "後續回合的 cwd",
+            "`restore_worktree`",
             "`operationId`",
             "`get_worktree_creation_status`",
             "`completed`",
             "未提交修改不會複製",
             "不執行 environment setup scripts",
-            "不改變目前",
-            "cwd 或 sandbox permissions",
+            "不能假設當輪所有工具已自動切換 cwd",
+            "不會自動授予 sandbox permissions",
             "後續工具明確使用回傳目錄",
             "不要為登錄失敗再次呼叫 `create_worktree`",
             "不猜測未公開的 response 欄位名稱",

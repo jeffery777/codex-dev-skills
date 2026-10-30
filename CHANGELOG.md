@@ -4,6 +4,23 @@
 [catalog.yaml](catalog.yaml) 為準；發布事實另核對 annotated tag 與非 draft、
 非 prerelease 的 GitHub Release。English entries follow the Chinese entries.
 
+## 0.35.2 — Desktop 接口修正 / Desktop interface corrections
+
+[Issue #359](https://github.com/jeffery777/codex-dev-skills/issues/359) 核對 CLI
+0.166.0、Desktop 26.1027.30824/build 22943 與 bundled CLI 0.166.0-alpha.5.1。
+修正既有 Desktop worktree 的必填 ref、sourceRoot、attachment／cwd 及 ownership
+指引，補 fork backing-kind 與 codexCloud schema 邊界。CLI public-help 各 3 項
+通過；live lifecycle／native mutation／cloud 未執行。CLI executor、共享 Core
+v0.1.1、模型與 installer 邏輯不改。Patch 候選同步版本／套件／不可變來源；
+不表示發行或實裝。[配套與 gates](docs/releases/v0.35.2-split.md)。
+
+Correct existing Desktop worktree ref/source/attachment/cwd and ownership guidance,
+fork backing-kind and cloud target schemas. Check standalone, bundled CLI and
+Desktop separately. Each CLI passed three public-help checks; live lifecycle,
+native mutation and cloud remain untested. Keep CLI executor, fixed Core v0.1.1,
+model routing and installer logic unchanged. Prepare aligned patch metadata,
+package and immutable source mapping; this records no publication or installation.
+
 ## 0.35.1 — Core v0.1.1 配套準備 / Core v0.1.1 preparation
 
 [Issue #357](https://github.com/jeffery777/codex-dev-skills/issues/357) 固定攜帶

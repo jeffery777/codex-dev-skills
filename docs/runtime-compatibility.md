@@ -8,6 +8,12 @@ compatibility labels for Codex task, thread, worktree, UI, and scheduling
 controls. The labels do not imply that shared reasoning or subagent delegation
 is Desktop-only.
 
+[2026-10-30 compatibility evidence](codex-runtime-compatibility-evidence-2026-10-30.md)
+分開核對 CLI `0.166.0`、Desktop `26.1027.30824`／build `22943` 與 bundled CLI
+`0.166.0-alpha.5.1`。修正 Desktop worktree 的明確 ref、sourceRoot、attachment／cwd
+與 backing-kind fork 指引；Cloud target 只補公開 schema 邊界。CLI parser 檢查分開
+通過；未新增 live lifecycle 資格。共享 Core、CLI executor 與設定不變。
+
 [2026-10-17 compatibility evidence](codex-runtime-compatibility-evidence-2026-10-17.md)
 分開查核新版 CLI、Desktop app 與 bundled CLI。兩個 CLI 的 parser／production
 argv 檢查通過，沒有新增 live lifecycle 資格。GitNexus operator CLI 仍選 1.6.9；

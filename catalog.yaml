@@ -4,8 +4,8 @@
 # skill. routes_to is always a list and is required only for deprecated aliases.
 
 name: codex-dev-skills
-version: "0.35.1"
-release_notes: docs/releases/v0.35.1-split.md
+version: "0.35.2"
+release_notes: docs/releases/v0.35.2-split.md
 platforms:
   - codex
   - codex-desktop

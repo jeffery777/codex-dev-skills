@@ -9,6 +9,13 @@ prompt before mutation, and honor the exact already-authorized execution mode.
 
 ## Choose The Target
 
+`fork_thread` 只能 fork Codex task（含 local Work task）。省略 `threadId`
+只適用 calling Codex／local Work task；ChatGPT-backed cloud Work 必須提供
+明確 Codex `threadId`，不能 fork ChatGPT conversation，即使它使用 local executor。
+先從公開 registry 核對 backing kind 與確切來源；不能用 cwd／OS 推定。
+若要求的 lineage 不受支援，回報限制或準備 prompt；只有使用者另已授權新任務
+且接受 fresh history 時才選 `create_thread`，不默默代換 fork。
+
 - `desktop-thread-fork`: use `fork_thread` with
   `environment: {"type": "same-directory"}` for conversation history in the same
   checkout or existing worktree. The source task must stop writing before the
@@ -37,8 +44,11 @@ prompt before mutation, and honor the exact already-authorized execution mode.
   branch explicitly requested by the user.
 - Preserve runtime-observed project `hostId`, local/remote classification,
   and `isGitRepository`. A cloud target, including `chatgptWorkCloud`, requires
-  explicit authorization. Omit model/reasoning overrides unless the user
-  explicitly requests supported values.
+  explicit authorization. For explicitly requested Codex Cloud, first call
+  `list_cloud_environments`; use a returned runnable `environmentConfigId` in
+  `target: {"type":"codexCloud","environmentConfigId":"..."}`. Do not infer
+  that identity from a local project or treat schema support as live qualification.
+  Omit model/reasoning overrides unless the user explicitly requests supported values.
 
 ## Prompt, Title, And Environment
 
