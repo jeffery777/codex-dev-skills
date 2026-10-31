@@ -4,6 +4,12 @@
 [catalog.yaml](catalog.yaml) 為準；發布事實另核對 annotated tag 與非 draft、
 非 prerelease 的 GitHub Release。English entries follow the Chinese entries.
 
+## 尚未選版 — Core 回饋候選 eval / Unversioned Core feedback evaluation
+
+[Issue #361](https://github.com/jeffery777/codex-dev-skills/issues/361) 在開發測試路徑固定 Core #24／#26 的隔離文件候選，新增完整性、原字保留與實際情境回應的離線評分入口。正式 Core v0.1.1 loader／vendor、catalog、installer、plugin 與既有安裝維持；候選不是正式採用、發行或 runtime 資格。Grok 依使用者決定延後，原雙 consumer gate 未滿足前 Core 修改不得合併。範圍、實跑證據與限制見 [候選 eval 記錄](docs/evals/issue-361-core-feedback-candidate.md)。 開發用 provider 詞彙檢查新增先驗固定候選的三文件 provenance 例外；其他路徑與原檢查保留，沒有新增 provider 整合。
+
+Pin the isolated Core #24/#26 document candidate under development-test paths, with integrity, original-byte preservation, and offline scoring of actual scenario responses. Keep the formal v0.1.1 loader/vendor, catalog, installer, plugin, and installations unchanged. The candidate is not formal adoption, publication, or runtime qualification. Grok is deferred by the user; modifying Core rules cannot merge before the original dual-consumer gate passes. See the [evaluation record](docs/evals/issue-361-core-feedback-candidate.md) for scope, executed evidence, and limits. The development provider-term check adds a three-document provenance exception after fixed-candidate verification; all other paths and the original check remain, with no provider integration.
+
 ## 0.35.2 — Desktop 接口修正 / Desktop interface corrections
 
 [Issue #359](https://github.com/jeffery777/codex-dev-skills/issues/359) 核對 CLI
