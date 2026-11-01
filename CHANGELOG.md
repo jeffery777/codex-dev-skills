@@ -1,5 +1,7 @@
 # Changelog / 變更紀錄
 
+Issue #363 依使用者確認另立 v3，只在一案原題幹後新增兩句澄清既有義務遺漏，保留全部 expected 與門檻；舊版結果保留。目標收斂於 Agent／workflow 誤操作及流程失效，不新增敵對主機管理者防護門檻。Issue #363 adds v3 by appending the approved clarification to one situation; keep all expected values, thresholds and historical results. Scope protects agent/workflow operation, without a privileged-adversary completion gate.
+
 Issue #363 的文字評估另立 v2 protocol，明訂既有缺陷根因與新功能缺口的區別，拒絕重用未綁定的舊答案；十二案及門檻不改，v1 結果保留。Issue #363 adds a bound v2 text-evaluation protocol to distinguish existing defect causes from new feature gaps. Retain v1 results and unchanged twelve-case criteria; fresh observations are required.
 
 ## 尚未選版 — Core #21 窄版文字提案測試

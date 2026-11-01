@@ -15,9 +15,9 @@ import sys
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
 REVISION = "9cec34449cc9557d78842c01d88f3ab561c5823b"
-EVALUATION_PROTOCOL = "core-premise-failure-cause/v2"
-PIN_SHA256 = "22c15f924e45336d9aacea3ca7ffd80f0b3f3e4a823ca6f6928076838ea93502"
-CASES_SHA256 = "6d636a7e90171ab61e3942533b3fb102910682010831c5e554e8efbc5e112c5c"
+EVALUATION_PROTOCOL = "core-premise-failure-cause/v3"
+PIN_SHA256 = "3e1ac439d0db494a26bb81c34d5601b27f89314d7dccace1efdbac1cf6406e50"
+CASES_SHA256 = "09f7892abeecf17af9a6acbb9393b7c56217ce80768f02016143dc1c2abf7e39"
 
 
 def module(filename):
@@ -120,7 +120,9 @@ def prompt(pin, criteria, proposal, cases):
             "executes. Mere absence of an unapproved feature proves no existing defect. Without "
             "evidence for an existing failure/problem's cause or an existing premise defect, "
             "use unproven. Classify REQ-GAP separately "
-            "from cause; a gap label alone does not establish premise failure."
+            "from cause; a gap label alone does not establish premise failure. "
+            "Protocol v3 retains the v2 envelope and cause rules; copy the root "
+            "evaluation_protocol value exactly as provided."
         ),
         "cases": [{"id": case["id"], "situation": case["situation"],
                    "requested_fields": list(case["expected"])} for case in cases],

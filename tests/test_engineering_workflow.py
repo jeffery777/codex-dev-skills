@@ -386,7 +386,8 @@ class CorePremiseProposalTests(unittest.TestCase):
                     'observation_provenance_authenticated'):
             self.assertFalse(result[key])
         for failure in ('revision', 'missing', 'repeat', 'reorder', 'extra-root',
-                        'missing-protocol', 'legacy-protocol', 'unknown-protocol'):
+                        'missing-protocol', 'legacy-protocol', 'previous-protocol',
+                        'unknown-protocol'):
             bad = json.loads(json.dumps(valid))
             if failure == 'revision':
                 bad['candidate_revision'] = '0' * 40
@@ -401,6 +402,8 @@ class CorePremiseProposalTests(unittest.TestCase):
             elif failure in ('legacy-protocol', 'unknown-protocol'):
                 bad['evaluation_protocol'] = ('core-premise-failure-cause/v1'
                                               if failure == 'legacy-protocol' else 'unknown')
+            elif failure == 'previous-protocol':
+                bad['evaluation_protocol'] = 'core-premise-failure-cause/v2'
             else:
                 bad['extra'] = True
             with self.subTest(failure=failure):

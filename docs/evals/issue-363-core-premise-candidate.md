@@ -1,5 +1,19 @@
 # Core #21 premise-failure text candidate
 
+### 2026-11-01 v3 測項澄清／Clarified evaluation item
+
+v3 十二案理由已經獨立逐案核對通過；這只確認保存的單次文字回應符合準則。Independent case-by-case reasoning review passed all twelve retained v3 answers; it confirms this single text response against the criteria only.
+
+Codex 已取得一次全新 v3 原生 worker 回應，機械評分十二案 12/12；n=1，來源與完整答案另存受控證據，繼承模型／effort 身分未另行讀回。這是澄清後的獨立測量，不回填 v1／v2 分數或宣稱品質提升；後續仍須 Grok 自己的 v3 觀測及必要審查。下方 NOT_RUN 保留準備時狀態。A fresh native Codex v3 worker response scored12/12, n=1, with controlled source/answer evidence and no separate effective model/effort readback. It is a new clarified measurement, not a rewrite of old scores or proof of improved model quality. Grok still needs its own v3 observation and review. The NOT_RUN text below retains preparation history.
+
+使用者已確認 `unauthorized-criterion-change` 指既有已批准需求的驗收遺漏。v3 保留原題幹每字，只附加兩句明訂：已對照既有需求證實漏掉既有義務；尚未批准的是補上該義務的驗收條款，且使用者要求另行批准，不是新產品功能。其餘十一案、十二案全部 expected、候選引文、根因定義及全數通過門檻均不改。協定另標 `core-premise-failure-cause/v3`，拒絕 v1／v2 舊答案，須先 Codex 再 Grok 各自取得全新回應。v1／v2 的答案、失敗、逾時及歧義紀錄保留原版，沒有改分。本段是 v3 準備，真實觀測尚未執行。
+
+The user confirmed that the item describes an acceptance omission for an existing approved obligation. V3 preserves every original situation word and appends two clarifying sentences. The unapproved change is the acceptance clause that covers that existing obligation, not a new product feature; separate approval is required. Keep the other eleven cases, all twelve expected objects, quotation, cause definition and full-pass threshold. Bind `core-premise-failure-cause/v3`, reject old v1/v2 observations, and obtain fresh Codex then Grok responses. Retain earlier observations/failures/timeout/ambiguity without rescoring. This paragraph records preparation; actual v3 observation is NOT_RUN.
+
+本包的目標是 Agent 與 workflow 正常遵循、誤操作與流程失效的防護。固定 pin、型別、邊界及失敗保留檢查可防止漂移、錯讀、誤用與錯誤 readiness；不是抵抗有主機／repo 管理權者蓄意改可信程式或偽造所有證據的保證。Observation 來源需由本次實際流程證據連結，scorer 不認證來源是能力限制，不額外要求無界的人為惡意防護或加密證明 gate。既有必要授權、安全、獨立 review 與驗證要求保留。此範圍校正不會增加 runtime 能力或將 prompt 變成技術禁止。
+
+Protect normal agent/workflow behavior from mistakes, stale inputs and process failures. Pins, types, bounded reads and retained failures support that scope. Do not require resistance to a privileged person intentionally rewriting trusted code or fabricating every record. Link actual observations through this run's workflow evidence; the scorer's lack of provenance authentication is a limit, not an added universal adversarial-human or cryptographic gate. Retain necessary authority, safety, independent review and verification. Scope calibration creates no runtime capability and does not turn a prompt into technical prevention.
+
 ### 2026-11-01 評估協定 v2 準備／Evaluation protocol v2 preparation
 
 v2 十二案理由亦經獨立逐案核對通過；這個判定只涵蓋保存的單次文字回應，不提升其來源認證或 runtime 資格。Independent case-by-case reasoning review also passed all twelve v2 answers. This verdict covers only the retained single text response; provenance authentication and runtime qualification are not established.
