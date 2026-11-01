@@ -1,5 +1,9 @@
 # codex-dev-skills
 
+本來源準備 v0.37.0，普通 Core 接入已固定正式 v0.3.0 的二十三檔；身分、歷史來源及驗證範圍見 [loading contract](policies/core-contract-loading.md) 與 [v0.37.0 準備紀錄](docs/releases/v0.37.0-split.md)。下方 v0.2.0／二十檔頂段保留為 v0.36.0 來源階段歷史；source/package 不證明 consumer 已發行、已安裝或具完整 runtime 資格。
+
+This v0.37.0 source prepares the fixed published Core v0.3.0 23-file adoption. The following v0.2.0/twenty-file introductory paragraphs retain their v0.36.0 historical scope. The linked loading contract and preparation record define source identity and limits; consumer publication, installation and runtime qualification remain separate.
+
 本來源的 Core 接入固定 v0.2.0；二十檔清冊及歷史 installer 來源見 [loading contract](policies/core-contract-loading.md) 與 [0.36.0 準備紀錄](docs/releases/v0.36.0-split.md)。下方舊 pin 的版本描述保留為其歷史範圍。Publication 仍核對對應 annotated tag／Release，不由來源版本或測試結果推定。
 
 This source pins Core v0.2.0 with twenty files and explicit prior installer history. The linked loading contract defines its fixed identity; older pin descriptions retain historical scope. Source/package preparation does not prove consumer publication, installation or full runtime qualification.
