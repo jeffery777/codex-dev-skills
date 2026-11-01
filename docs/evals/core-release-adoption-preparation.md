@@ -1,5 +1,9 @@
 # Core v0.2.0 正式採用準備 / Formal adoption preparation
 
+本頁以下保留 `e83553f2`／Core reviewed head `cbe3efa1` 準備階段的歷史紀錄，其中「當前」與未完成項均指該階段。後續本 source 已採用正式 Core v0.2.0 `6887bfe6183465e9a9e6ccb4ccd7305a58b37302`，catalog／plugin／installer 版本為 v0.36.0；現行歷史重現測試使用真正的正式 validator 接受完整二十檔，不再 stub 接受邊界。準備 fixture 的出版欄位仍為 `null`，只描述原固定準備資料，不能判定後續版本是否已發布；目前來源與驗證範圍見 [v0.36.0 發行說明](../releases/v0.36.0-split.md)。
+
+The remainder preserves the historical preparation record at `e83553f2` / Core reviewed head `cbe3efa1`; its current-state and pending statements refer to that stage. This source subsequently adopted published Core v0.2.0 `6887bfe6183465e9a9e6ccb4ccd7305a58b37302`, with catalog/plugin/installer version v0.36.0; the current historical-reproduction test uses the real formal validator to accept all twenty files without stubbing acceptance. Null publication fields remain part of the fixed historical preparation fixture and cannot determine later publication status; see the [v0.36.0 release notes](../releases/v0.36.0-split.md) for current source and validation scope.
+
 ## 繁體中文
 
 本開發工作包接續 Issue #361 與 [Core PR29](https://github.com/jeffery777/engineering-workflow-core/pull/29)，固定 reviewed head `cbe3efa1ecc1d2ec04d2edc7078eb22c9dbec038`、tree `3acff4c9241800f47c9df0d642aa21258bab6f92` 的二十檔。完整 raw 集合為 `ff3b48febea205d5f6de33adbe387b420d96f8105b67eeb689bfc55c3e07cae4`；十九份 Markdown 集合為 `731b7bc86dade62fba5e59d75829fcf7f9dd746c66077f733e2e8e90016ee287`，共363639 bytes。這是固定發行準備來源，不是已發行版本。準備資料的 publication revision、tag object 與 Release ID 保持 `null`，不可用 reviewed head 或 tree 代填。
