@@ -1,5 +1,15 @@
 # Changelog / 變更紀錄
 
+Issue #363 依使用者確認另立 v3，只在一案原題幹後新增兩句澄清既有義務遺漏，保留全部 expected 與門檻；舊版結果保留。目標收斂於 Agent／workflow 誤操作及流程失效，不新增敵對主機管理者防護門檻。Issue #363 adds v3 by appending the approved clarification to one situation; keep all expected values, thresholds and historical results. Scope protects agent/workflow operation, without a privileged-adversary completion gate.
+
+Issue #363 的文字評估另立 v2 protocol，明訂既有缺陷根因與新功能缺口的區別，拒絕重用未綁定的舊答案；十二案及門檻不改，v1 結果保留。Issue #363 adds a bound v2 text-evaluation protocol to distinguish existing defect causes from new feature gaps. Retain v1 results and unchanged twelve-case criteria; fresh observations are required.
+
+## 尚未選版 — Core #21 窄版文字提案測試
+
+Issue #363 固定非權威 Core 提案及四契約，新增十二案與離線完整性／嚴格評分反例。五份語意輸入不冒稱完整 Core snapshot；歷史基準重用原固定 fixture，不改普通 loader、vendor、provider hygiene、產品版本或已安裝技能。模型觀測、雙端門檻及限制見 [評估紀錄](docs/evals/issue-363-core-premise-candidate.md)。
+
+Issue #363 pins inactive proposal text and four complete contracts for twelve fresh cases and offline integrity/scoring negatives. The five selected inputs are not a full Core snapshot. Reuse the fixed historical fixture; ordinary loaders/vendors, hygiene, version and installation stay unchanged. The evaluation record separates model observations, dual-consumer gates and limits.
+
 ## 0.36.0 — Core v0.2.0 adoption candidate
 
 採用正式 Core v0.2.0 二十檔及真實出版身分，完整保留權威原文；同步分發閉包、明列舊十四檔 installer history及新版本 metadata。歷史候選/準備資料保留原 bytes，正式切換與驗證範圍見 [準備紀錄](docs/releases/v0.36.0-split.md)。不更新使用者實裝，不宣稱完整 runtime 資格。

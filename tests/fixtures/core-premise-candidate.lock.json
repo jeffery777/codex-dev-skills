@@ -1,0 +1,36 @@
+{
+  "schema": "codex-core-premise-text-eval/v1",
+  "evaluation_protocol": "core-premise-failure-cause/v3",
+  "candidate_revision": "9cec34449cc9557d78842c01d88f3ab561c5823b",
+  "baseline_revision": "6887bfe6183465e9a9e6ccb4ccd7305a58b37302",
+  "source_document": "docs/maintenance/2026-11-01-remaining-feedback.md",
+  "source_document_sha256": "07c42c26917fda5cafb608e7bb53d00b6a2b01bdaff16b0941d7d23a67a89a1c",
+  "selection": "exact two-sentence quotation plus four complete unchanged contracts; not a full Core snapshot or loader adoption",
+  "proposal_path": "tests/fixtures/core-premise-proposal.txt",
+  "proposal_sha256": "e6d6e236a352b1487bbb4301cd0c8a9ff53ed255464823e67ff0bc9ffabdcfb3",
+  "proposal_size_bytes": 382,
+  "criteria": [
+    {
+      "path": "contracts/authorization-and-stops.md",
+      "sha256": "27f02076fdd034c090e341610d7e04f8e79143ec17c1d37a4b57629a04c5e699",
+      "size_bytes": 5724
+    },
+    {
+      "path": "contracts/exact-head-and-evidence.md",
+      "sha256": "ba3419d7090fecce3e84f4ea35cd7695135fb7bbf8c1451502941163d8e873a4",
+      "size_bytes": 6549
+    },
+    {
+      "path": "contracts/review-and-security.md",
+      "sha256": "6dce06b8a0feb34b7851086edc9c4cd774171a5444b05eb7013a0d3af1c044e5",
+      "size_bytes": 12784
+    },
+    {
+      "path": "contracts/workflow.md",
+      "sha256": "50f6d7129f562b2e86bddfe3fc095c0873070bf349bbfd5be1797a483dc8e8e2",
+      "size_bytes": 19169
+    }
+  ],
+  "proposal_accepted": false,
+  "runtime_qualified": false
+}
