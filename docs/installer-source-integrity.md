@@ -1,5 +1,21 @@
 # 固定來源安裝與回復 / Fixed-source installation and recovery
 
+
+## 0.36.0 mapping / 固定來源映射
+
+本候選以不可變 payload commit 建立下列完整七筆映射；下方原表保留為原階段歷史。Registry 不自引用其提交，catalog/payload必須與固定來源逐項相符；映射不證明已發布或已更新安裝。The seven reviewed payload identities below are immutable input data, not mutable publication pointers. Existing historical tables retain their original words.
+
+| Source version | Reviewed payload commit |
+| --- | --- |
+| 0.33.1 | `6b5b0d0bf4e61119a5a87761fc4a6c4d35002e1c` |
+| 0.34.0 | `43c650e1196a3a702e2240bd79dd24539fa893a7` |
+| 0.34.0 | `f18b202595aea27c9d872c480d2e1b067340b163` |
+| 0.35.0 | `e23e18ed0512ece04ca6b6dceba3a6a1cf59b9fd` |
+| 0.35.1 | `6cd58e3a776ef705a9cee17ba7e24c6b21181395` |
+| 0.35.2 | `73cee30f5aee09c9218505624f1caa433ef72946` |
+| 0.36.0 | `ec54012c74a4ab3eb42d5f2152e36138ce9e7c35` |
+
+
 2026-11-01 source adoption: Core v0.2.0 is fixed at commit `6887bfe6183465e9a9e6ccb4ccd7305a58b37302`, tag object `0ba0fd98e2343f72e555d9bf0e8b1bc5650cd93d`, with twenty files. 本版 source/package0.36.0保留v0.1.1十四檔及先前十一/十三檔的明確 installer history；下方舊 pin/清冊說明保留為相應版本歷史。正式來源、版本與遷移驗證見 [0.36.0 準備紀錄](releases/v0.36.0-split.md)。Source preparation does not update installed skills or prove runtime qualification.
 
 ## 繁體中文
