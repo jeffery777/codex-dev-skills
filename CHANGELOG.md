@@ -4,6 +4,12 @@
 [catalog.yaml](catalog.yaml) 為準；發布事實另核對 annotated tag 與非 draft、
 非 prerelease 的 GitHub Release。English entries follow the Chinese entries.
 
+## 尚未選版 — Core minor 採用準備 / Unversioned Core minor adoption preparation
+
+Issue #361 接續固定 Core v0.2.0 reviewed head 的二十檔準備快照、完整遷移數值與離線 verifier，出版 revision／tag object 保持 null。歷史候選改用獨立固定 v0.1.1 baseline，避免正式 vendor 前進後不能重現。新增完整性／安全檔案／假出版／普通loader拒絕與provenance反例；正式vendor、loader、catalog／plugin／installer與既有安裝維持原版。範圍與發行後具體步驟見 [採用準備](docs/evals/core-release-adoption-preparation.md)。
+
+Issue #361 adds a fixed twenty-file Core minor preparation snapshot, concrete migration values and an offline verifier. Publication revision/tag object remain null. Historical evals use a separately fixed v0.1.1 baseline so later vendor changes do not break reproduction. Test integrity, unsafe files, false publication, ordinary-loader rejection and narrow provenance exclusions. Formal vendor/loader/package/installation remain unchanged. See the linked adoption preparation for scope and post-publication steps.
+
 ## 尚未選版 — Core 回饋候選 eval / Unversioned Core feedback evaluation
 
 [Issue #361](https://github.com/jeffery777/codex-dev-skills/issues/361) 在開發測試路徑固定 Core #24／#26 的隔離文件候選，新增完整性、原字保留與實際情境回應的離線評分入口。正式 Core v0.1.1 loader／vendor、catalog、installer、plugin 與既有安裝維持；候選不是正式採用、發行或 runtime 資格。Grok 依使用者決定延後，原雙 consumer gate 未滿足前 Core 修改不得合併。範圍、實跑證據與限制見 [候選 eval 記錄](docs/evals/issue-361-core-feedback-candidate.md)。 開發用 provider 詞彙檢查新增先驗固定候選的三文件 provenance 例外；其他路徑與原檢查保留，沒有新增 provider 整合。

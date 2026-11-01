@@ -238,6 +238,14 @@ class CoreFeedbackCandidateTests(unittest.TestCase):
                              'vendor/engineering-workflow-core'):
                 shutil.copytree(ROOT / relative, root / relative)
             output = pathlib.Path(temp) / 'output'
+            for relative in ('scripts/verify-core-release-preparation.py',
+                             'tests/fixtures/core-feedback-baseline.lock.json',
+                             'vendor/engineering-workflow-core.lock.json'):
+                target = root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(ROOT / relative, target)
+            shutil.copytree(ROOT / 'tests/fixtures/core-feedback-baseline',
+                            root / 'tests/fixtures/core-feedback-baseline')
             output.mkdir()
             source = (ROOT / 'scripts/validate-repo.sh').read_text()
             function = 'check_no_provider_terms() {' + source.split(

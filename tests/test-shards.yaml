@@ -23,6 +23,7 @@ shards:
       - tests.test_model_failover
   - id: installer-runtime
     modules:
+      - tests.test_core_release_preparation
       - tests.test_engineering_workflow
       - tests.test_hermes_package
       - tests.test_installer_fault_boundaries

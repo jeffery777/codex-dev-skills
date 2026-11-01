@@ -106,6 +106,16 @@ def inserted_only(before, after):
     return pos == len(old)
 
 
+def historical_baseline():
+    # Historical evals compare their original fixed baseline, not a newer vendor.
+    sys.dont_write_bytecode = True
+    spec = importlib.util.spec_from_file_location(
+        "core_feedback_preparation", ROOT / "scripts/verify-core-release-preparation.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.baseline(ROOT)
+
+
 def inspect(root=FIXTURE):
     pin_bytes = read_file(ROOT / "tests/fixtures/core-feedback-candidate.lock.json", 16384)
     if digest(pin_bytes) != PIN_SHA256:
@@ -114,6 +124,7 @@ def inspect(root=FIXTURE):
     if pin["revision"] != REVISION:
         raise EvaluationError("wrong candidate revision")
     inventory(root)
+    baseline = historical_baseline()
     documents = {}
     rows = pin["files"]
     if [row["path"] for row in rows] != list(FILES):
@@ -128,11 +139,13 @@ def inspect(root=FIXTURE):
         original = ROOT / "vendor/engineering-workflow-core" / name
         if name != "docs/maintenance/issue-24-26-candidate.md":
             before = read_file(original, 131072)
+            before = baseline[name]
             if not inserted_only(before, data) or (name in PROTECTED and before != data):
                 raise EvaluationError("original Core bytes were removed or changed")
     spec = importlib.util.spec_from_file_location("formal_core_links", ROOT / "scripts/validate-core-contract-snapshot.py")
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)
+    helper.validate(ROOT)
     helper.check_links(documents)
     cases_bytes = read_file(ROOT / "tests/fixtures/core-feedback-cases.json", 16384)
     if digest(cases_bytes) != CASES_SHA256:

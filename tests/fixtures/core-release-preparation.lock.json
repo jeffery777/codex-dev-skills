@@ -1,0 +1,261 @@
+{
+  "contract": "codex-core-release-preparation/v1",
+  "repository": "jeffery777/engineering-workflow-core",
+  "reviewed_head": "cbe3efa1ecc1d2ec04d2edc7078eb22c9dbec038",
+  "reviewed_tree": "3acff4c9241800f47c9df0d642aa21258bab6f92",
+  "planned_core_version": "0.2.0",
+  "publication_revision": null,
+  "tag_object": null,
+  "release_id": null,
+  "candidate_semantic_revision": "87db5867fbed58c81e64f0c316168d537452425e",
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "078664237eb3e3c6346d085d0372f102ffdd3a6c0bcb4decb70392abdbbdc11f",
+      "size_bytes": 13716,
+      "mode": "100644"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f",
+      "size_bytes": 1067,
+      "mode": "100644"
+    },
+    {
+      "path": "README.md",
+      "sha256": "b47eee584ea785bd7964432143778529227b991293a1fa7e3ab89879c0f268eb",
+      "size_bytes": 23352,
+      "mode": "100644"
+    },
+    {
+      "path": "contracts/authorization-and-stops.md",
+      "sha256": "27f02076fdd034c090e341610d7e04f8e79143ec17c1d37a4b57629a04c5e699",
+      "size_bytes": 5724,
+      "mode": "100644"
+    },
+    {
+      "path": "contracts/exact-head-and-evidence.md",
+      "sha256": "ba3419d7090fecce3e84f4ea35cd7695135fb7bbf8c1451502941163d8e873a4",
+      "size_bytes": 6549,
+      "mode": "100644"
+    },
+    {
+      "path": "contracts/review-and-security.md",
+      "sha256": "6dce06b8a0feb34b7851086edc9c4cd774171a5444b05eb7013a0d3af1c044e5",
+      "size_bytes": 12784,
+      "mode": "100644"
+    },
+    {
+      "path": "contracts/workflow.md",
+      "sha256": "50f6d7129f562b2e86bddfe3fc095c0873070bf349bbfd5be1797a483dc8e8e2",
+      "size_bytes": 19169,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/architecture/dependency-inventory.md",
+      "sha256": "c588ebfb8c1c4cc159d56e742832974820a88e326de4ee5eac5204c66c14ef9a",
+      "size_bytes": 58967,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/architecture/migration-plan.md",
+      "sha256": "6fbba9ed9a15d32d63dbe138b673c25aec34a81b262d7ada82108077ca67e8cf",
+      "size_bytes": 23166,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/architecture/project-split.md",
+      "sha256": "18e3e3b620d917aeff7881f4bfe5d4736725d6cac0eb8c758b810564df5f8d84",
+      "size_bytes": 34720,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/companion/core-reading-guide.md",
+      "sha256": "493ca529e89ab7e785815687ca93b8aed805557be01de795e611da6c4e14a3c1",
+      "size_bytes": 14960,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/companion/decision-cards.md",
+      "sha256": "34f2d40509795448c7d7d947427f911667cc5dee4351a8a9ce49ab10b6f38c1c",
+      "size_bytes": 5328,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/companion/review-decisions.md",
+      "sha256": "2c8a7768f76af27ad3972948bf2b1567eb72624f2230e260c00575f1d11805c2",
+      "size_bytes": 6604,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/maintenance/2026-10-31-consumer-feedback.md",
+      "sha256": "3bd34f290e72632991380dffb99f218b1a6e061ee403773cef1c61a2bcae20b1",
+      "size_bytes": 19143,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/maintenance/issue-24-26-candidate.md",
+      "sha256": "89b9e312865fa49fd417cd6d3a5fd65f5e82db475950b7d0532ca08e4347e071",
+      "size_bytes": 9608,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/provenance/source-map.md",
+      "sha256": "bf712e8da9b51a8a2d8b65ea929ec4c17cb84f8876e6b547f486ae994028e41a",
+      "size_bytes": 65367,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/provenance/upstream-notices.md",
+      "sha256": "e4adc2d6e2b7e9169db5273aa83306f93546ef0219e73f412d524fb38f3b2d82",
+      "size_bytes": 4450,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/releases/v0.1.0.md",
+      "sha256": "f8e6c3e1e6b4ac8b433656ae3991274f657097f40eae7de2431348e13bb2b058",
+      "size_bytes": 15448,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/releases/v0.1.1.md",
+      "sha256": "c58714a705d46e6e244b9e5008df26e501a0343cfbbd7955e55f262c01e989be",
+      "size_bytes": 10819,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/releases/v0.2.0.md",
+      "sha256": "8993bcf05434a53f8afa815b199f99a349014b7cd0fe3e23a1a9dc74b153392d",
+      "size_bytes": 12698,
+      "mode": "100644"
+    }
+  ],
+  "collection_sha256": "ff3b48febea205d5f6de33adbe387b420d96f8105b67eeb689bfc55c3e07cae4",
+  "markdown_collection_sha256": "731b7bc86dade62fba5e59d75829fcf7f9dd746c66077f733e2e8e90016ee287",
+  "codex_document_set_sha256": "96cf575b061cfb1c0fb162ee58f487eb811794c2a6c602bf1355a61ea4d40709",
+  "total_bytes": 363639,
+  "ordinary_core_revision": "7b66978a76597d09be1b55ad199a969b4ee59c0f",
+  "proposed_consumer_version": "0.36.0",
+  "formal_core_adopted": false,
+  "runtime_qualified": false,
+  "merge_authorized": false,
+  "migration": {
+    "vendor": "vendor/engineering-workflow-core",
+    "lock": "vendor/engineering-workflow-core.lock.json",
+    "validator": "scripts/validate-core-contract-snapshot.py",
+    "new_current_snapshot_fields": [
+      "REVISION from verified publication commit",
+      "REVIEWED_HEAD from reviewed_head",
+      "CURRENT_SNAPSHOT.source.version/tag/tag_object from verified release",
+      "FILES and MAX_TOTAL_BYTES from fixed inventory",
+      "SET_DIGEST from codex_document_set_sha256",
+      "MARKDOWN_DIGEST from markdown_collection_sha256"
+    ],
+    "reviewed_history_to_add": {
+      "source": {
+        "repository": "jeffery777/engineering-workflow-core",
+        "revision": "7b66978a76597d09be1b55ad199a969b4ee59c0f",
+        "reviewed_head": "f23191bdc1cd3e8ef9a5cd7c3e809b5789859892",
+        "pull_request": 20,
+        "version": "0.1.1",
+        "tag": "v0.1.1",
+        "tag_object": "7ce698fa853106c8ef44c4240c9334762da5ffb0"
+      },
+      "files": [
+        {
+          "path": "CHANGELOG.md",
+          "sha256": "fa7f679f2c2f0f09dfae137f1631e55ed0a03d92ca4006b90f013e86b5b5d158",
+          "size_bytes": 10337,
+          "mode": "100644"
+        },
+        {
+          "path": "LICENSE",
+          "sha256": "49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f",
+          "size_bytes": 1067,
+          "mode": "100644"
+        },
+        {
+          "path": "README.md",
+          "sha256": "a9ecc868915ccad6bbee388c09d2c234eecefbc41d07c580a269a13956f5ea7b",
+          "size_bytes": 21986,
+          "mode": "100644"
+        },
+        {
+          "path": "contracts/authorization-and-stops.md",
+          "sha256": "27f02076fdd034c090e341610d7e04f8e79143ec17c1d37a4b57629a04c5e699",
+          "size_bytes": 5724,
+          "mode": "100644"
+        },
+        {
+          "path": "contracts/exact-head-and-evidence.md",
+          "sha256": "ba3419d7090fecce3e84f4ea35cd7695135fb7bbf8c1451502941163d8e873a4",
+          "size_bytes": 6549,
+          "mode": "100644"
+        },
+        {
+          "path": "contracts/review-and-security.md",
+          "sha256": "a29ae05f7df55f8469235baff7c59c00a99a0fb9e697e47eb46a9be7c4b90b03",
+          "size_bytes": 11463,
+          "mode": "100644"
+        },
+        {
+          "path": "contracts/workflow.md",
+          "sha256": "abd418b0679675029eabf70a2e1bc77db1e3f898fbf2e2e4e66907df1fb52b51",
+          "size_bytes": 18689,
+          "mode": "100644"
+        },
+        {
+          "path": "docs/architecture/dependency-inventory.md",
+          "sha256": "c588ebfb8c1c4cc159d56e742832974820a88e326de4ee5eac5204c66c14ef9a",
+          "size_bytes": 58967,
+          "mode": "100644"
+        },
+        {
+          "path": "docs/architecture/migration-plan.md",
+          "sha256": "6fbba9ed9a15d32d63dbe138b673c25aec34a81b262d7ada82108077ca67e8cf",
+          "size_bytes": 23166,
+          "mode": "100644"
+        },
+        {
+          "path": "docs/architecture/project-split.md",
+          "sha256": "18e3e3b620d917aeff7881f4bfe5d4736725d6cac0eb8c758b810564df5f8d84",
+          "size_bytes": 34720,
+          "mode": "100644"
+        },
+        {
+          "path": "docs/provenance/source-map.md",
+          "sha256": "902c491a5412efb85d8d942ada48f8a8ad33a576b597d6748877d29507accfa9",
+          "size_bytes": 59639,
+          "mode": "100644"
+        },
+        {
+          "path": "docs/provenance/upstream-notices.md",
+          "sha256": "a33e7445a6eea9df9f12dd5b32cb6f08353d00b7d873496d48389dbe36ceb888",
+          "size_bytes": 2332,
+          "mode": "100644"
+        },
+        {
+          "path": "docs/releases/v0.1.0.md",
+          "sha256": "f8e6c3e1e6b4ac8b433656ae3991274f657097f40eae7de2431348e13bb2b058",
+          "size_bytes": 15448,
+          "mode": "100644"
+        },
+        {
+          "path": "docs/releases/v0.1.1.md",
+          "sha256": "c58714a705d46e6e244b9e5008df26e501a0343cfbbd7955e55f262c01e989be",
+          "size_bytes": 10819,
+          "mode": "100644"
+        }
+      ]
+    },
+    "affected_boundaries": [
+      "source",
+      "generated plugin",
+      "filesystem templates",
+      "Hermes allowlist/closure",
+      "installer upgrade/downgrade/rollback",
+      "loading docs",
+      "source-package version parity"
+    ]
+  }
+}

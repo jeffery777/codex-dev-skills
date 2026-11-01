@@ -102,3 +102,10 @@ The first full repository validation failed on provider terms in required proven
 修正後 `validate-repo.sh --skip-unit-tests` exit 0；輸出明列的 embedded unit groups 是 SKIP，不改稱完整 suite 通過。新增窄例外反例測試後，`tests.test_engineering_workflow` 共 15 項通過：active skills、active policies、其他 eval 文件仍拒絕 provider 詞彙；來源毀損與 pin 缺失也拒絕，移除自有測試字串後可恢復通過。新的測試輸出放在 mini-source 外，避免輸出自行成為下一案例的命中來源。三個既有 Codex 檔只增行，原始 bytes／行序保留；九案輸入與模型觀測未變，原 eval 證據只重用於相同 pin／cases／prompt。
 
 After the fix, `validate-repo.sh --skip-unit-tests` exited 0. Its explicitly skipped embedded unit groups are not reported as a full suite pass. With the narrow-exception negative test added, all fifteen engineering-workflow tests passed: active skills, active policies, and other eval documents still reject provider terms; corrupt source and missing pins also fail, and removing owned test markers restores success. Test output lives outside the mini-source, so it cannot contaminate later matches. Three existing Codex files retain their original raw bytes/line order with insertions only. The nine-case inputs and actual observations are unchanged; their evidence is reused only for the same pin/cases/prompt.
+
+
+## 正式採用接續準備／Formal adoption continuation
+
+本頁先前的未pin／未eval／Grok延後是當時的點時記錄。後續兩端已對相同原候選各完成一次九案文字 eval，各9/9。新 [Core minor 採用準備](core-release-adoption-preparation.md) 固定 Core20檔 reviewed head，保留未知出版欄位，補獨立歷史baseline與可執行遷移驗證。原十五檔候選、prompt／cases／scorer及n=1限制保留，普通Core及產品payload仍原版；這份準備不等同正式adoption。
+
+Earlier unpinned/unevaluated/Grok-deferred statements are point-in-time history. Both consumers later passed one actual nine-case text evaluation of the same original candidate. The linked minor-adoption preparation pins twenty reviewed Core files, retains unknown publication fields, and adds a fixed historical baseline and executable migration checks. Preserve the original candidate/prompt/cases/scorer and n=1 limits; ordinary Core and product payloads remain unchanged. Preparation is not formal adoption.
