@@ -28,7 +28,7 @@ formal = script("validate-core-contract-snapshot.py")
 
 class ReleasePreparationTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(dir="/private/tmp", prefix="core-preparation-test-")
+        self.temp = tempfile.TemporaryDirectory(dir=Path(tempfile.gettempdir()).resolve(), prefix="core-preparation-test-")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         for name in ("vendor/engineering-workflow-core", "tests/fixtures/core-feedback-baseline",
