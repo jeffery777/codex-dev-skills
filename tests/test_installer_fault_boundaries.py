@@ -29,7 +29,7 @@ class InstallerFaultBoundaryTests(InstallerFixture):
 if [[ "$1" == */installer-inventory.py && "$2" == verify ]]; then
   [[ -f "$CORE_ROOT/docs/releases/v0.2.0.md" ]] || exit 79
   echo injected-v02-fault >&2; exit 78
-fi''', {"CORE_ROOT": str(core_root)})
+fi''', {"CORE_ROOT": str(core_root), "CORE_FAULT": "postverify"})
                 else:
                     overrides = self.command("mv", '''
 case "$CORE_FAULT:$1:$2" in
