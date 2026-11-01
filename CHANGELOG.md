@@ -1,5 +1,11 @@
 # Changelog / 變更紀錄
 
+## 0.36.0 — Core v0.2.0 adoption candidate
+
+採用正式 Core v0.2.0 二十檔及真實出版身分，完整保留權威原文；同步分發閉包、明列舊十四檔 installer history及新版本 metadata。歷史候選/準備資料保留原 bytes，正式切換與驗證範圍見 [準備紀錄](docs/releases/v0.36.0-split.md)。不更新使用者實裝，不宣稱完整 runtime 資格。
+
+Adopt the formal twenty-file Core snapshot, retaining all original rule text, distribution closure and explicit prior installer history. Keep historical fixtures and release records unchanged. Source/package preparation is separate from publication and installation; the linked record defines verification and limits.
+
 本檔記錄版本範圍及尚未選版的變更，不是目前已發布版本指標。來源版本以
 [catalog.yaml](catalog.yaml) 為準；發布事實另核對 annotated tag 與非 draft、
 非 prerelease 的 GitHub Release。English entries follow the Chinese entries.

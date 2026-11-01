@@ -4,8 +4,8 @@
 # skill. routes_to is always a list and is required only for deprecated aliases.
 
 name: codex-dev-skills
-version: "0.35.2"
-release_notes: docs/releases/v0.35.2-split.md
+version: "0.36.0"
+release_notes: docs/releases/v0.36.0-split.md
 platforms:
   - codex
   - codex-desktop
@@ -41,6 +41,12 @@ groups:
       - source: vendor/engineering-workflow-core/docs/provenance/upstream-notices.md
       - source: vendor/engineering-workflow-core/docs/releases/v0.1.0.md
       - source: vendor/engineering-workflow-core/docs/releases/v0.1.1.md
+      - source: vendor/engineering-workflow-core/docs/companion/core-reading-guide.md
+      - source: vendor/engineering-workflow-core/docs/companion/decision-cards.md
+      - source: vendor/engineering-workflow-core/docs/companion/review-decisions.md
+      - source: vendor/engineering-workflow-core/docs/maintenance/2026-10-31-consumer-feedback.md
+      - source: vendor/engineering-workflow-core/docs/maintenance/issue-24-26-candidate.md
+      - source: vendor/engineering-workflow-core/docs/releases/v0.2.0.md
       - source: policies/agent-delegation-policy.md
       - source: policies/code-mode-tool-orchestration-policy.md
       - source: policies/context-continuity-policy.md

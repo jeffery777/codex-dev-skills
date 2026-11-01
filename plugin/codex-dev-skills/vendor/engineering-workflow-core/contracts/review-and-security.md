@@ -20,7 +20,15 @@ Reviewer 依 DoD、spec、plan、當前內容與適用 gate 審查，先報風�
 
 每項 MUST-FIX、SHOULD-FIX、NIT 或其他適用 finding 給穩定 ID 與一個 disposition：`Fixed`、`Deferred`、`Rejected`、`Needs Human Decision`。Fixed 附修正／驗證與重審證據；Rejected 附來源與理由；Deferred 必須有持久後續目標、owner、原因、剩餘風險、驗證計畫與 promotion trigger；Needs Human Decision 保留具體待決事項。NIT 只有明確 disposition 後才可非阻擋，不能從 gate 記錄消失。
 
+每個 finding 另記 `requirement_relation`，以當前已確認的需求與範圍判定為 `in-scope`、`gap`、`no-requirement` 或 `unrelated`，並附需求來源或來源不足的說明。`in-scope` 表示既有需求已涵蓋；`gap` 表示需求尚未涵蓋但有理由提請納入；`no-requirement` 表示沒有需求依據支持所提變更；`unrelated` 表示不屬當前目標。需求來源可以是有效使用者要求、適用 Core 義務或其他有效專案要求，不強制另建需求編號系統。
+
+`requirement_relation` 不取代嚴重度或既有 disposition。`gap` 另標為 `REQ-GAP`，本輪不因該 finding 自行加入需求或實作，記為 `Needs Human Decision`，由使用者決定加入需求、延後或拒絕。`no-requirement` 的新增工作視為範圍擴張，本輪不加入；`unrelated` 依既有 disposition 要求記為剩餘風險或後續事項。使用者決定新增需求後，先重新確認範圍、驗收及受影響證據，再於後續 review/fix 輪次處理；後續輪次可沿用同一 Session。
+
+前述需求關係分類不解除安全、資料遺失、授權或完整性的 Core 阻擋項；阻擋 readiness 本身也不授權越界修正、增加需求或執行外部寫入。
+
 實作流程先修正 blocker，再按受影響邊界重審；可安全修正的其他 finding 一併處理，其餘留下上述完整 disposition。修正後可選足以證明 fix 的最小普通／深入 code/docs review 範圍，記 unchanged 證據仍適用的理由；shared contract、data/trust、generated artifacts、packaging、文件宣稱或假設變動時擴大範圍。
+
+前述可安全修正的其他 finding，限於既有已授權範圍。
 
 Primitive review 提供品質證據；formal gate 在 commit、PR/MR、merge readiness 或明定專案政策時提供 blocking 判定。內容／範圍／來源假設／環境與驗證仍符合時可重用 primitive 結果，不為進 gate 重複同一次審查。Gate 必須阻擋未解 MUST-FIX、缺 disposition、Deferred 缺必填後續資訊或未解 Needs Human Decision；結果明列 PASS／BLOCKED／NEEDS HUMAN DECISION、findings、dispositions、evidence 與 required follow-up。
 

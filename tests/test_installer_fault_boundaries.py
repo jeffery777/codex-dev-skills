@@ -14,6 +14,57 @@ from tests.test_installer_source_integrity import CURRENT_VERSION, InstallerFixt
 
 
 class InstallerFaultBoundaryTests(InstallerFixture):
+    def test_formal_fourteen_upgrade_faults_restore_exact_old_tree(self):
+        receipt = self.seed("0.35.2", groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"],
+                            snapshot_revision="73cee30f5aee09c9218505624f1caa433ef72946")
+        core_root = self.home / ".codex/templates/orchestration/core"
+        directories = sorted(p.relative_to(core_root).as_posix() for p in core_root.rglob("*") if p.is_dir())
+        original = {p.relative_to(core_root).as_posix(): (p.stat().st_mode, p.read_bytes())
+                    for p in core_root.rglob("*") if p.is_file()}
+        self.assertEqual(len(original), 14)
+        for mode in ("backup", "promote", "core-lock", "history", "inventory", "profile", "postverify"):
+            with self.subTest(mode=mode):
+                if mode == "postverify":
+                    overrides = self.command("python3", '''
+if [[ "$1" == */installer-inventory.py && "$2" == verify ]]; then
+  [[ -f "$CORE_ROOT/docs/releases/v0.2.0.md" ]] || exit 79
+  echo injected-v02-fault >&2; exit 78
+fi''', {"CORE_ROOT": str(core_root)})
+                else:
+                    overrides = self.command("mv", '''
+case "$CORE_FAULT:$1:$2" in
+  backup:*/orchestration/core:*/core.bak|promote:*.core.tmp.*/value:*/orchestration/core)
+    echo injected-v02-fault >&2; exit 78 ;;
+  core-lock:*.core.lock.json.tmp.*/value:*/orchestration/core.lock.json|history:*.receipt.*/value:*/installed.jsonl|inventory:*.receipt.*/value:*/managed-*.json|profile:*.receipt.*/value:*/agent-profile-*.tsv)
+    [[ -f "$CORE_ROOT/docs/releases/v0.2.0.md" ]] || exit 79
+    echo injected-v02-fault >&2; exit 78 ;;
+esac''', {"CORE_FAULT": mode, "CORE_ROOT": str(core_root)})
+                before = self.snapshot()
+                result = self.run_installer("update", "--all", overrides=overrides)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("injected-v02-fault", result.stderr)
+                self.assertEqual(before, self.snapshot(), result.stderr)
+                self.assertEqual(receipt, json.loads(self.receipt.read_text()))
+                self.assertEqual(directories, sorted(p.relative_to(core_root).as_posix()
+                                                     for p in core_root.rglob("*") if p.is_dir()))
+                self.assertEqual(original, {p.relative_to(core_root).as_posix(): (p.stat().st_mode, p.read_bytes())
+                                            for p in core_root.rglob("*") if p.is_file()})
+
+    def test_twenty_file_downgrade_fault_restores_current_tree(self):
+        receipt = self.seed(CURRENT_VERSION, groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"])
+        old = self.fixed_source("73cee30f5aee09c9218505624f1caa433ef72946")
+        overrides = self.command("mv", '''
+case "$1:$2" in
+  *.receipt.*/value:*/installed.jsonl)
+    echo injected-v02-downgrade >&2; exit 78 ;;
+esac''')
+        before = self.snapshot()
+        result = self.run_installer("update", "--all", "--source", old, overrides=overrides)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("injected-v02-downgrade", result.stderr)
+        self.assertEqual(before, self.snapshot(), result.stderr)
+        self.assertEqual(receipt, json.loads(self.receipt.read_text()))
+
     def seed_development_core(self, profiles=False):
         revision = "43c650e1196a3a702e2240bd79dd24539fa893a7"
         groups = ["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"] if profiles else None

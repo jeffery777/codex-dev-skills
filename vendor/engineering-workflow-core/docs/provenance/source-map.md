@@ -284,3 +284,30 @@ This document packet covers those four files. The expected inventory is 12 Markd
 Under user approval, [Issue #19](https://github.com/jeffery777/engineering-workflow-core/issues/19) on 2026-10-19 adds explicit wording to [Continue](../../contracts/workflow.md#wf-stages): prefer the original session. If an operation or delegated task has an unknown outcome at the interruption point, check its current state before continuing unfinished work. This new wording clarifies the order of existing continuation, current ownership, and [unknown-effect checks without blind replay](../../contracts/authorization-and-stops.md#auth-destructive). It is not original wording from the 107 extraction units or P1.
 
 “Prefer” is a preference. Manual checkpoint fallback, valid authority, stops, and required review and gates remain. The wording does not guarantee session restoration, cross-tool deduplication, or automatic runtime recovery. It grants no new delegation right. The English guide preserves the Chinese meaning. Traditional Chinese remains authoritative; full ASD-STE100 conformance remains unverified. The [v0.1.1 preparation record](../releases/v0.1.1.md) records the five-file scope, inventory, and later consumer adoption conditions. Retain original source revisions, hashes and notices, earlier packet history, and v0.1.0 release documents.
+
+## 2026-10-31 #24／#26 隔離修改候選／Isolated modifying candidate
+
+本候選依使用者的候選準備授權，評估 Claude 在 [固定 core-feedback.md@071c1a7](https://github.com/jeffery777/claude-dev-skills/blob/071c1a7ff1f2ce67a605d54ce5c3e85480852b69/docs/core-feedback.md) CF-004／006 提出的 finding 需求關係及機制擴張問題。新增句子是本包的接口無關設計，不是原 107 單位、不是 P1 原文，也不移植 Claude 的整套規則。只在 review-findings 與 wf-assumptions-and-options 增句，全部舊字、原 notices 及 LICENSE 保留。英文對照、來源及 pending 門檻見 [候選記錄](../maintenance/issue-24-26-candidate.md)。Codex #361 評估本候選；Grok #36 延後，原雙 consumer gate 未滿足前不接受正式義務或合併。
+
+Under the user's candidate-preparation authority, this packet evaluates the interface-neutral requirement-relation and mechanism-scope problems in fixed Claude CF-004/006. Its added sentences are a new design, not original extraction units, P1 wording, or a copy of the full Claude rule set. Add sentences only to review-findings and wf-assumptions-and-options; retain all old text, original notices, and LICENSE. The candidate record supplies English meaning, sources, and pending gates. Codex #361 evaluates the candidate; Grok #36 is deferred. No formal acceptance or merge before the original dual-consumer gate passes.
+
+<a id="consumer-feedback-companions"></a>
+
+## 2026-10-31 使用端回饋伴讀／Consumer feedback companions
+
+使用者指定依序評估 #25、#27、#24、#26、#21、#23、#22，完整來源為 [claude-dev-skills 的 core-feedback.md@071c1a7ff1f2ce67a605d54ce5c3e85480852b69](https://github.com/jeffery777/claude-dev-skills/blob/071c1a7ff1f2ce67a605d54ce5c3e85480852b69/docs/core-feedback.md)、各 Issue 與實際存在的補充留言，以及 [Claude #91](https://github.com/jeffery777/claude-dev-skills/issues/91) 的只新增句子／確定性逐字保留教訓。原 107 單位及歷史來源不變。
+
+[決策卡](../companion/decision-cards.md) 改編該 revision 的 `skills/dev-review/references/decision-card.md`（SHA-256 `d10c301c8c53f2d2f3fdf41fdbb17c64763aac3bf05ab880e5b114077485f9d4`），保留欄位目的，改寫為選用、接口無關的雙語範本，不沿用 Claude 專屬 ID、強制卡片或需求分類。[讀取伴讀](../companion/core-reading-guide.md) 綜合 CF-007／008／009，區分既有義務、建議與未決問題；[審查決策／公開格式](../companion/review-decisions.md) 綜合 CF-001 第 4 點及 CF-002 遮蔽建議。完整新增來源 notice 見 [upstream-notices](upstream-notices.md#claude-feedback-notice)。
+
+本包四份正式契約及 LICENSE 原 bytes 保留；README、CHANGELOG、source-map、notices 僅插入新增段落，其餘既有文字保留。逐項評估、原始基準與確定性驗證命令見 [維護工作包](../maintenance/2026-10-31-consumer-feedback.md)。本包沒有接受修改型規則、變更 consumer pin、執行安裝或發布。新增伴讀會改變完整文件清冊及相依閉包，不能沿用舊集合 digest 冒稱已包含伴讀；consumer 採用仍需固定 revision、清冊、digest、notices 與自己的驗證。
+
+The user requested assessment in the stated order, using the fixed Claude feedback, actual Issue supplements, and the additive-only lesson of Claude #91. The decision card adapts the fixed source with the digest above into an optional, interface-neutral bilingual template. The reading companion draws on CF-007/008/009; review decisions and public formats draw on CF-001 point 4 and CF-002. The original 107 units and historical sources remain unchanged. The added source has a complete MIT notice.
+
+This packet preserves the bytes of all four formal contracts and LICENSE. Existing README, CHANGELOG, source-map, and notice text is retained, with new paragraphs inserted. The maintenance packet records assessments, baseline, and reproducible checks. This packet accepts no modifying rules and changes no consumer pin, installation, or publication. New companions change inventory and dependency closure; the old set digest does not cover them. Consumer adoption still needs a fixed revision, inventory, digests, notices, and its own checks. Full ASD-STE100 conformance has not been verified.
+
+
+## v0.2.0 需求追溯接受準備／Requirement traceability acceptance preparation
+
+本工作包依既有七案維護範圍整合 PR28 的選用伴讀及 PR29 的 #24／#26 修改候選，新增 [v0.2.0 準備紀錄](../releases/v0.2.0.md)。候選四契約原始 bytes、v0.1.1／PR28／PR29 的原字行序及 modes，以及 LICENSE／完整 notices 均保留；新增記錄不是原107單位，也不改先前來源與授權。兩端各一次九案9/9的公開結果綁定原候選，重用僅限逐 byte 相同的四契約；新發行文件／清冊及接口遷移另驗。準備資料分開記 reviewed head、文件集合身分與未知 publication revision/tag object，不能把前者標為後者。
+
+This packet integrates PR28's optional companions and PR29's #24/#26 candidate within the seven-Issue maintenance scope, adding the v0.2.0 preparation record. Preserve candidate-contract bytes, original text/line order/modes from v0.1.1, PR28 and PR29, LICENSE and complete notices. Added records are not the original107 units and do not rewrite earlier source or authority. Each consumer's one nine-case success binds the original candidate; reuse covers only the byte-identical four contracts. Verify new release documents, inventory and migration separately. Preparation distinguishes the reviewed head/set identity from unknown publication revision/tag object.

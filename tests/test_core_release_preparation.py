@@ -55,7 +55,7 @@ class ReleasePreparationTests(unittest.TestCase):
         self.assertIsNone(value["tag_object"])
         for key in ("formal_core_adopted", "runtime_qualified", "merge_authorized"):
             self.assertIs(value[key], False)
-        self.assertEqual(formal.validate(self.root)["core_revision"], prep.BASELINE_REVISION)
+        self.assertEqual(formal.validate(self.root)["core_revision"], "6887bfe6183465e9a9e6ccb4ccd7305a58b37302")
 
     def test_historical_baseline_tamper_is_not_hidden_by_insert_only(self):
         path = self.root / "tests/fixtures/core-feedback-baseline/README.md"
@@ -121,29 +121,12 @@ class ReleasePreparationTests(unittest.TestCase):
         vendor = self.root / "vendor/engineering-workflow-core"
         shutil.rmtree(vendor)
         shutil.copytree(self.root / "tests/fixtures/core-release-preparation", vendor)
-        # Only this unit boundary stubs a future formal-loader acceptance.
-        # The real current loader is separately required to reject this tree.
-        with self.assertRaises(formal.SnapshotError):
-            formal.validate(self.root)
-        original_spec = importlib.util.spec_from_file_location
-        validations = []
-
-        def selected_spec(name, path):
-            spec = original_spec(name, path)
-            if name == "formal_core_links":
-                execute = spec.loader.exec_module
-
-                def checked_module(module):
-                    execute(module)
-                    module.validate = lambda root: validations.append(root)
-                spec.loader.exec_module = checked_module
-            return spec
-
-        with patch.object(candidate, "ROOT", self.root), patch.object(
-                candidate.importlib.util, "spec_from_file_location", side_effect=selected_spec):
+        # The real published current lock now accepts the same reviewed tree.
+        # Historical comparison must reproduce the old candidate without a stub.
+        self.assertEqual(formal.validate(self.root)["files"], 20)
+        with patch.object(candidate, "ROOT", self.root):
             _, _, cases = candidate.inspect(self.root / "tests/fixtures/core-feedback-candidate")
         self.assertEqual(len(cases), 9)
-        self.assertEqual(validations, [self.root])
         self.assertNotEqual((vendor / "README.md").read_bytes(), prep.baseline(self.root)["README.md"])
 
     def test_preparation_cannot_be_an_ordinary_or_history_lock(self):
@@ -152,6 +135,63 @@ class ReleasePreparationTests(unittest.TestCase):
         for history in (False, True):
             with self.assertRaises(formal.SnapshotError):
                 formal.parse_lock(json.dumps(value).encode(), allow_reviewed_history=history)
+
+    def test_published_current_keeps_exact_v011_as_opt_in_history(self):
+        value = json.loads((ROOT / "vendor/engineering-workflow-core.lock.json").read_bytes())
+        self.assertEqual(value["source"]["revision"], "6887bfe6183465e9a9e6ccb4ccd7305a58b37302")
+        self.assertEqual(value["source"]["tag_object"], "0ba0fd98e2343f72e555d9bf0e8b1bc5650cd93d")
+        self.assertEqual(value["source"]["reviewed_head"], "7feb6d3c044b1bcc2f675dbc93a469e66d608511")
+        vendor = self.root / "vendor/engineering-workflow-core"
+        shutil.rmtree(vendor)
+        shutil.copytree(self.root / "tests/fixtures/core-feedback-baseline", vendor)
+        (self.root / "vendor/engineering-workflow-core.lock.json").write_bytes(
+            (ROOT / "tests/fixtures/core-v0.1.1-formal.lock.json").read_bytes())
+        with self.assertRaises(formal.SnapshotError):
+            formal.validate(self.root)
+        old = formal.validate(self.root, allow_reviewed_history=True)
+        self.assertEqual(old["core_version"], "0.1.1")
+        self.assertEqual(old["files"], 14)
+        self.assertIs(old["historical_snapshot"], True)
+        with self.assertRaises(formal.SnapshotError):
+            formal.parse_lock((ROOT / "tests/fixtures/core-release-preparation.lock.json").read_bytes(),
+                              allow_reviewed_history=True)
+
+    def test_distributed_provenance_exclusions_require_verified_bytes(self):
+        plugin = self.root / "plugin/codex-dev-skills"
+        for name in ("vendor/engineering-workflow-core",):
+            shutil.copytree(self.root / name, plugin / name)
+        for name in ("vendor/engineering-workflow-core.lock.json", "scripts/validate-core-contract-snapshot.py"):
+            target = plugin / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(self.root / name, target)
+        source = (ROOT / "scripts/validate-repo.sh").read_text()
+        function = "check_no_provider_terms() {" + source.split(
+            "check_no_provider_terms() {", 1)[1].split("\ncheck_sensitive_private_terms()", 1)[0]
+        command = "set -euo pipefail\nfail() { exit 34; }\nok() { :; }\n" + function + "\ncheck_no_provider_terms\n"
+        output = self.root / "output"
+        output.mkdir()
+        env = dict(os.environ, PROJECT_PYTHON=sys.executable, TMP_DIR=str(output))
+
+        def run():
+            return subprocess.run(["bash", "-c", command], cwd=self.root, env=env,
+                                  capture_output=True, timeout=20).returncode
+
+        self.assertEqual(run(), 0)
+        paths = ("docs/companion/core-reading-guide.md", "docs/companion/decision-cards.md",
+                 "docs/companion/review-decisions.md", "docs/maintenance/2026-10-31-consumer-feedback.md",
+                 "docs/maintenance/issue-24-26-candidate.md", "docs/provenance/source-map.md",
+                 "docs/provenance/upstream-notices.md")
+        for root in (self.root, plugin):
+            for name in paths:
+                path = root / "vendor/engineering-workflow-core" / name
+                original = path.read_bytes()
+                path.write_bytes(original + b"\nTampered provenance.\n")
+                self.assertNotEqual(run(), 0)
+                path.write_bytes(original)
+        active = self.root / "policies/active.md"
+        active.parent.mkdir()
+        active.write_text("cl" + "aude active surface\n")
+        self.assertNotEqual(run(), 0)
 
     def test_cli_publication_requirement_fails_closed(self):
         command = [sys.executable, "-B", str(ROOT / "scripts/verify-core-release-preparation.py")]

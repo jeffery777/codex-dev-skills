@@ -155,7 +155,7 @@ class CoreFeedbackCandidateTests(unittest.TestCase):
         ordinary = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(ordinary)
         lock = json.loads((ROOT / 'vendor/engineering-workflow-core.lock.json').read_text())
-        self.assertEqual('7b66978a76597d09be1b55ad199a969b4ee59c0f',
+        self.assertEqual('6887bfe6183465e9a9e6ccb4ccd7305a58b37302',
                          ordinary.validate(ROOT)['core_revision'])
         lock['source']['revision'] = self.candidate.REVISION
         with self.assertRaises(ordinary.SnapshotError):
@@ -246,6 +246,10 @@ class CoreFeedbackCandidateTests(unittest.TestCase):
                 shutil.copy2(ROOT / relative, target)
             shutil.copytree(ROOT / 'tests/fixtures/core-feedback-baseline',
                             root / 'tests/fixtures/core-feedback-baseline')
+            shutil.copy2(ROOT / 'tests/fixtures/core-release-preparation.lock.json',
+                         root / 'tests/fixtures/core-release-preparation.lock.json')
+            shutil.copytree(ROOT / 'tests/fixtures/core-release-preparation',
+                            root / 'tests/fixtures/core-release-preparation')
             output.mkdir()
             source = (ROOT / 'scripts/validate-repo.sh').read_text()
             function = 'check_no_provider_terms() {' + source.split(

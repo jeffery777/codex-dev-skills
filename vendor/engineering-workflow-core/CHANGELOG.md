@@ -7,6 +7,18 @@
 <details open>
 <summary>繁體中文（預設展開）</summary>
 
+## v0.2.0 — 需求追溯與伴讀準備紀錄
+
+本 minor 準備正式採納 #24 的 requirement_relation／REQ-GAP 與 #26 的機制需求追溯，並整合 PR28 的非權威伴讀。四契約保持已通過兩端九案文字 eval 的固定候選 bytes；每端 n=1 的有限文字門檻已滿足，正式接受、publication 與 consumer adoption 分別核對。清冊、原文保留、版本／相依與未完成事項見 [v0.2.0 準備紀錄](docs/releases/v0.2.0.md)。下列隔離候選及先前工作包條目保留為點時歷史，不由後續結果改寫。
+
+## 未發行候選 — #24／#26 需求可追溯性
+
+在 review-findings 與 wf-assumptions-and-options 只新增完整句子，試行 finding 的 requirement_relation／REQ-GAP 與新增機制對應現有需求；嚴重度、disposition、必要安全 blocker、操作授權及其他原文保留。這是隔離修改型候選，不是已接受義務或新版本。Codex 候選 pin／eval 由 #361 處理；Grok 延後於 #36，雙 consumer gate 未滿足前不合併。範圍、英文對照、驗收及逐字保留方式見 [候選記錄](docs/maintenance/issue-24-26-candidate.md)。
+
+## 未發行 — 使用端回饋伴讀
+
+新增 #25 決策卡、#27 十點讀取伴讀與階段索引、#21 決策選項及 #22 公開記錄遮蔽格式。這些是選用非權威說明；四份正式契約保留原始 bytes。七項順序評估與修改型候選門檻見 [維護工作包](docs/maintenance/2026-10-31-consumer-feedback.md)。本條不建立新版本、tag 或 Release，也不表示 consumer 已 pin／eval、已安裝或兩端行為等價。
+
 ## 版本與記錄方式
 
 Core 的文件版本由本檔已提交的版本條目記錄，採 `vMAJOR.MINOR.PATCH` 命名。Core 與各 consumer 各自管理版本，不要求同步升版。`0.x` 階段的 minor 更新可能調整契約；每次採用仍須審查實際差異。Patch 用於不改變義務的文件修正，也不能取代 consumer 的完整性與遵循驗證。版本號不保證模型、工具、接口或 runtime 相容。
@@ -50,6 +62,18 @@ Core 的文件版本由本檔已提交的版本條目記錄，採 `vMAJOR.MINOR.
 
 <details>
 <summary>English (expand to read)</summary>
+
+## v0.2.0 — Requirement traceability and companion preparation
+
+This minor prepares Issue #24 requirement relations/REQ-GAP and Issue #26 mechanism traceability, integrating PR28's optional companions. All four contracts retain the evaluated candidate bytes. Both consumers passed one actual nine-case text evaluation; formal acceptance, publication and consumer adoption remain separate. See the [v0.2.0 record](docs/releases/v0.2.0.md) for inventory, preservation, versions, dependencies and pending work. Retain the isolated-candidate and earlier entries below as point-in-time history.
+
+## Unreleased candidate — #24/#26 requirement traceability
+
+Add complete sentences to review-findings and wf-assumptions-and-options for requirement_relation/REQ-GAP and tracing new mechanisms to existing requirements. Preserve original severity, dispositions, safety blockers, authority, and all original text. This isolated modifying candidate is neither accepted policy nor a new version. Codex #361 handles candidate pin/evals; Grok #36 is deferred. Do not merge before the dual-consumer gate passes. See the [candidate record](docs/maintenance/issue-24-26-candidate.md) for scope, English wording, acceptance, and byte-preservation checks.
+
+## Unreleased — Consumer feedback companions
+
+Add optional, non-authoritative decision cards (#25), ten reading notes and a stage map (#27), decision options (#21), and public-record masking formats (#22). The four formal contracts retain their original bytes. See the [maintenance packet](docs/maintenance/2026-10-31-consumer-feedback.md) for the ordered assessment and modifying-candidate gates. This entry creates no version, tag, or Release and proves no consumer pin, eval, installation, or runtime equivalence.
 
 ## Versions and records
 

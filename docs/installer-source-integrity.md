@@ -1,5 +1,7 @@
 # 固定來源安裝與回復 / Fixed-source installation and recovery
 
+2026-11-01 source adoption: Core v0.2.0 is fixed at commit `6887bfe6183465e9a9e6ccb4ccd7305a58b37302`, tag object `0ba0fd98e2343f72e555d9bf0e8b1bc5650cd93d`, with twenty files. 本版 source/package0.36.0保留v0.1.1十四檔及先前十一/十三檔的明確 installer history；下方舊 pin/清冊說明保留為相應版本歷史。正式來源、版本與遷移驗證見 [0.36.0 準備紀錄](releases/v0.36.0-split.md)。Source preparation does not update installed skills or prove runtime qualification.
+
 ## 繁體中文
 
 此 installer 使用目前程式碼，從明確選定的本機 Git checkout 讀取套件資料。
