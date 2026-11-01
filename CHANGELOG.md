@@ -1,5 +1,12 @@
 # Changelog / 變更紀錄
 
+## 0.37.0 — Core v0.3.0 source preparation
+
+Issue #365 採正式 Core v0.3.0 的二十三檔，更新普通 vendor／lock、獨立 anchors、source／plugin／filesystem／Hermes 清冊及版本配套。已測兩句只新增於原 workflow，其餘權威原文字節保留；#22 維持選用伴讀，#23 技術唯讀及新強制發布 gate 未採納。固定歷史 eval／來源與既有資格限制保留；安裝未更新，consumer 合併／發行另核。詳見 [準備紀錄](docs/releases/v0.37.0-split.md)。
+
+Adopt published Core v0.3.0 with its complete 23-file closure and independent pins across source, plugin, filesystem and Hermes resources. Preserve original rules, historical evaluations and runtime limits. Optional publication guidance creates no mandatory adapter gate. This source/package preparation grants no consumer publication or installation authority.
+
+
 Issue #363 依使用者確認另立 v3，只在一案原題幹後新增兩句澄清既有義務遺漏，保留全部 expected 與門檻；舊版結果保留。目標收斂於 Agent／workflow 誤操作及流程失效，不新增敵對主機管理者防護門檻。Issue #363 adds v3 by appending the approved clarification to one situation; keep all expected values, thresholds and historical results. Scope protects agent/workflow operation, without a privileged-adversary completion gate.
 
 Issue #363 的文字評估另立 v2 protocol，明訂既有缺陷根因與新功能缺口的區別，拒絕重用未綁定的舊答案；十二案及門檻不改，v1 結果保留。Issue #363 adds a bound v2 text-evaluation protocol to distinguish existing defect causes from new feature gaps. Retain v1 results and unchanged twelve-case criteria; fresh observations are required.

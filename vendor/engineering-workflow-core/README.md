@@ -23,6 +23,10 @@ GitHub disclosure sections are independent. Traditional Chinese is open by defau
 
 ## 開始閱讀
 
+緊接的首段保留較早伴讀／未生效測試階段；其中「四份契約未修改」不是後續候選的 bytes 聲明。目前 [v0.3.0 draft](docs/releases/v0.3.0.md) 在雙端有限文字門檻後只向 workflow 新增兩句，尚未正式採納或更新 consumer；選用伴讀本身仍非權威。
+
+剩餘 #27 → #21 → #23 → #22 的具體反例見 [回饋判讀案例](docs/companion/remaining-feedback-cases.md)；[接續工作包](docs/maintenance/2026-11-01-remaining-feedback.md) 區分既有義務、未採納提案與兩句待測文字。它們均非權威文件，四份契約未修改，不代表新候選已通過 consumer eval 或已接受。
+
 選用的 [決策卡片](docs/companion/decision-cards.md)、[Core 讀取伴讀](docs/companion/core-reading-guide.md) 與 [審查決策／公開記錄格式](docs/companion/review-decisions.md) 提供非權威導讀；它們不改四份契約或 consumer 義務。七項回饋的順序評估、候選門檻與逐字保留重跑命令見 [維護工作包](docs/maintenance/2026-10-31-consumer-feedback.md)。
 
 1. 讀完整 [工作流](contracts/workflow.md)，確認工程階段與必要產物。完成標準也稱 Definition of Done（DoD）。
@@ -33,6 +37,8 @@ GitHub disclosure sections are independent. Traditional Chinese is open by defau
 缺必要文件或能力不能視為豁免。使用接口前，依其自己的載入與固定版本說明操作；Core 沒有安裝器。各 consumer 在建置時鎖定 immutable revision、文件 digest、來源與 notices；runtime 不追蹤 Core `main`。
 
 ## 版本、採用與升級
+
+[#21 的 v0.3.0 draft 準備紀錄](docs/releases/v0.3.0.md) 記載兩端 v3 有限文字驗證及僅新增兩句的修改候選；不是正式採納、publication 或 consumer loader 升級。原 #27／#23／#22 伴讀與範圍校正見 [剩餘工作包](docs/maintenance/2026-11-01-remaining-feedback.md)。
 
 Core 的文件版本與版本命名見 [CHANGELOG](CHANGELOG.md)；各版的範圍、驗收與限制見 [v0.1.0 發行準備紀錄](docs/releases/v0.1.0.md) 與 [v0.1.1 發行準備紀錄](docs/releases/v0.1.1.md)。這些是來源版本／點時歷史，不證明已發布。正式 publication 須核對相應 annotated tag object、解析後完整 commit 與 GitHub 正式 Release metadata；本頁不維護 mutable latest 或當前已發行版本指標。
 
@@ -103,6 +109,10 @@ Suppose you must assign implementation and review for a change. Read the shared 
 
 ## Start here
 
+The next paragraph retains the earlier companion/inactive-test stage; its four-unchanged-contract statement does not describe the later candidate bytes. The v0.3.0 draft adds only two workflow sentences after both limited text checks, without formal adoption or consumer updates. Optional guides remain non-authoritative.
+
+The optional [feedback cases](docs/companion/remaining-feedback-cases.md) and [continuation packet](docs/maintenance/2026-11-01-remaining-feedback.md) distinguish existing duties, unadopted proposals and two sentences of evaluation data for #27, #21, #23 and #22. They are non-authoritative. The four contracts are unchanged; no new consumer evaluation or acceptance is implied.
+
 Optional [decision cards](docs/companion/decision-cards.md), the [Core reading companion](docs/companion/core-reading-guide.md), and [review decisions/public-record formats](docs/companion/review-decisions.md) provide non-authoritative guidance. They change neither the four contracts nor consumer obligations. See the [maintenance packet](docs/maintenance/2026-10-31-consumer-feedback.md) for the ordered seven-item assessment, candidate gates, and reproducible preservation check.
 
 1. Read the complete [workflow](contracts/workflow.md). Confirm the stages and required outputs. Definition of Done (DoD) means the completion criteria.
@@ -113,6 +123,8 @@ Optional [decision cards](docs/companion/decision-cards.md), the [Core reading c
 A missing required document or capability is not an exemption. Follow the interface's own loading and version-lock instructions. Core has no installer. Each consumer locks the immutable revision, document digests, source, and notices at build time. It does not follow Core `main` at runtime.
 
 ## Versions, adoption, and upgrades
+
+The [Issue #21 v0.3.0 draft preparation record](docs/releases/v0.3.0.md) covers both consumers' limited v3 text checks and a two-sentence modifying candidate, not formal adoption, publication or ordinary loading. The remaining packet records #27/#23/#22 companions and bounded scope calibration.
 
 See [CHANGELOG](CHANGELOG.md) for the Core document version and version names. See the [v0.1.0 preparation record](docs/releases/v0.1.0.md) and [v0.1.1 preparation record](docs/releases/v0.1.1.md) for scope, acceptance, and limits. These record source versions and point-in-time history. They do not prove publication. Verify the corresponding annotated tag object, full resolved commit, and formal GitHub Release metadata. This page does not maintain a mutable latest or current-published-version pointer.
 

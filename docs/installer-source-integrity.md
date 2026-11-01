@@ -1,5 +1,8 @@
 # 固定來源安裝與回復 / Fixed-source installation and recovery
 
+本來源準備 v0.37.0，採正式 Core v0.3.0 `7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e` 與 tag object `0e91dfaa7f3969c9ec3d9647a765ec2f116057bb` 的二十三檔；詳見 [v0.37.0 準備紀錄](releases/v0.37.0-split.md)。既有二十檔與較舊來源段落保留為各階段歷史，固定候選／分數不改。This v0.37.0 source prepares the published 23-file Core v0.3.0 adoption; preserve earlier records and historical evaluations. Consumer publication and installation remain separate.
+
+
 
 ## 0.36.0 mapping / 固定來源映射
 

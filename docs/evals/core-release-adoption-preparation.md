@@ -1,5 +1,8 @@
 # Core v0.2.0 正式採用準備 / Formal adoption preparation
 
+本來源準備 v0.37.0，採正式 Core v0.3.0 `7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e` 與 tag object `0e91dfaa7f3969c9ec3d9647a765ec2f116057bb` 的二十三檔；詳見 [v0.37.0 準備紀錄](../releases/v0.37.0-split.md)。既有二十檔與較舊來源段落保留為各階段歷史，固定候選／分數不改。This v0.37.0 source prepares the published 23-file Core v0.3.0 adoption; preserve earlier records and historical evaluations. Consumer publication and installation remain separate.
+
+
 本頁以下保留 `e83553f2`／Core reviewed head `cbe3efa1` 準備階段的歷史紀錄，其中「當前」與未完成項均指該階段。後續本 source 已採用正式 Core v0.2.0 `6887bfe6183465e9a9e6ccb4ccd7305a58b37302`，catalog／plugin／installer 版本為 v0.36.0；現行歷史重現測試使用真正的正式 validator 接受完整二十檔，不再 stub 接受邊界。準備 fixture 的出版欄位仍為 `null`，只描述原固定準備資料，不能判定後續版本是否已發布；目前來源與驗證範圍見 [v0.36.0 發行說明](../releases/v0.36.0-split.md)。
 
 The remainder preserves the historical preparation record at `e83553f2` / Core reviewed head `cbe3efa1`; its current-state and pending statements refer to that stage. This source subsequently adopted published Core v0.2.0 `6887bfe6183465e9a9e6ccb4ccd7305a58b37302`, with catalog/plugin/installer version v0.36.0; the current historical-reproduction test uses the real formal validator to accept all twenty files without stubbing acceptance. Null publication fields remain part of the fixed historical preparation fixture and cannot determine later publication status; see the [v0.36.0 release notes](../releases/v0.36.0-split.md) for current source and validation scope.

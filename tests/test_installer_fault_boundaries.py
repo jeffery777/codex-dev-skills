@@ -27,7 +27,7 @@ class InstallerFaultBoundaryTests(InstallerFixture):
                 if mode == "postverify":
                     overrides = self.command("python3", '''
 if [[ "$1" == */installer-inventory.py && "$2" == verify ]]; then
-  [[ -f "$CORE_ROOT/docs/releases/v0.2.0.md" ]] || exit 79
+  [[ -f "$CORE_ROOT/docs/releases/v0.3.0.md" ]] || exit 79
   echo injected-v02-fault >&2; exit 78
 fi''', {"CORE_ROOT": str(core_root), "CORE_FAULT": "postverify"})
                 else:
@@ -36,7 +36,7 @@ case "$CORE_FAULT:$1:$2" in
   backup:*/orchestration/core:*/core.bak|promote:*.core.tmp.*/value:*/orchestration/core)
     echo injected-v02-fault >&2; exit 78 ;;
   core-lock:*.core.lock.json.tmp.*/value:*/orchestration/core.lock.json|history:*.receipt.*/value:*/installed.jsonl|inventory:*.receipt.*/value:*/managed-*.json|profile:*.receipt.*/value:*/agent-profile-*.tsv)
-    [[ -f "$CORE_ROOT/docs/releases/v0.2.0.md" ]] || exit 79
+    [[ -f "$CORE_ROOT/docs/releases/v0.3.0.md" ]] || exit 79
     echo injected-v02-fault >&2; exit 78 ;;
 esac''', {"CORE_FAULT": mode, "CORE_ROOT": str(core_root)})
                 before = self.snapshot()
@@ -49,6 +49,27 @@ esac''', {"CORE_FAULT": mode, "CORE_ROOT": str(core_root)})
                                                      for p in core_root.rglob("*") if p.is_dir()))
                 self.assertEqual(original, {p.relative_to(core_root).as_posix(): (p.stat().st_mode, p.read_bytes())
                                             for p in core_root.rglob("*") if p.is_file()})
+
+    def test_twenty_file_upgrade_postverify_failure_restores_old_tree(self):
+        receipt = self.seed("0.36.0", groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"],
+                            snapshot_revision="ec54012c74a4ab3eb42d5f2152e36138ce9e7c35")
+        core_root = self.home / ".codex/templates/orchestration/core"
+        original = {p.relative_to(core_root).as_posix(): (p.stat().st_mode, p.read_bytes())
+                    for p in core_root.rglob("*") if p.is_file()}
+        self.assertEqual(20, len(original))
+        overrides = self.command("python3", '''
+if [[ "$1" == */installer-inventory.py && "$2" == verify ]]; then
+  [[ -f "$CORE_ROOT/docs/releases/v0.3.0.md" ]] || exit 79
+  echo injected-v03-postverify >&2; exit 78
+fi''', {"CORE_ROOT": str(core_root)})
+        before = self.snapshot()
+        result = self.run_installer("update", "--all", overrides=overrides)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("injected-v03-postverify", result.stderr)
+        self.assertEqual(before, self.snapshot(), result.stderr)
+        self.assertEqual(receipt, json.loads(self.receipt.read_text()))
+        self.assertEqual(original, {p.relative_to(core_root).as_posix(): (p.stat().st_mode, p.read_bytes())
+                                    for p in core_root.rglob("*") if p.is_file()})
 
     def test_twenty_file_downgrade_fault_restores_current_tree(self):
         receipt = self.seed(CURRENT_VERSION, groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"])

@@ -1,5 +1,12 @@
 # Fixed Core Loading Contract
 
+## v0.3.0 source adoption / 來源採用
+
+本來源包採正式 Core v0.3.0 commit `7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e`、annotated tag object `0e91dfaa7f3969c9ec3d9647a765ec2f116057bb` 的二十三檔，包含二十二份 Markdown 與原 LICENSE；Release 430452222 已讀回非 draft／非 prerelease。普通 loader 僅選此身分；v0.2.0 二十檔新增為第四個明確 installer history，既有歷史身分、原文、驗證及停止規則保持。下方 v0.2.0／v0.1.1 現行描述保留為當時來源階段歷史。
+
+This source adopts the exact published Core v0.3.0 identity above with 23 files. Preserve v0.2.0 as the fourth explicit installer history and retain all earlier histories and safety rules. Earlier current-pin paragraphs describe their historical stages. Source/package preparation does not establish consumer publication, installation or runtime qualification.
+
+
 ## v0.2.0 source adoption / 來源採用
 
 本來源包固定 Core v0.2.0 commit `6887bfe6183465e9a9e6ccb4ccd7305a58b37302`、annotated tag object `0ba0fd98e2343f72e555d9bf0e8b1bc5650cd93d` 的二十檔，包含十九份 Markdown 與原 LICENSE。普通 loader 只選此正式身分；選 root、驗證、停止與 runtime 限制不變。下方 v0.1.1-only 及原兩種 history 的描述保留為舊 pin 的歷史適用範圍；本版 installer 明列 v0.1.1 十四檔為第三個 history，仍須明確 opt-in，不得當普通 current。

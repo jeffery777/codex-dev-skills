@@ -55,7 +55,7 @@ class ReleasePreparationTests(unittest.TestCase):
         self.assertIsNone(value["tag_object"])
         for key in ("formal_core_adopted", "runtime_qualified", "merge_authorized"):
             self.assertIs(value[key], False)
-        self.assertEqual(formal.validate(self.root)["core_revision"], "6887bfe6183465e9a9e6ccb4ccd7305a58b37302")
+        self.assertEqual(formal.validate(self.root)["core_revision"], "7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e")
 
     def test_historical_baseline_tamper_is_not_hidden_by_insert_only(self):
         path = self.root / "tests/fixtures/core-feedback-baseline/README.md"
@@ -120,10 +120,10 @@ class ReleasePreparationTests(unittest.TestCase):
     def test_historical_eval_survives_a_future_formal_vendor_advance(self):
         vendor = self.root / "vendor/engineering-workflow-core"
         shutil.rmtree(vendor)
-        shutil.copytree(self.root / "tests/fixtures/core-release-preparation", vendor)
+        shutil.copytree(ROOT / "vendor/engineering-workflow-core", vendor)
         # The real published current lock now accepts the same reviewed tree.
         # Historical comparison must reproduce the old candidate without a stub.
-        self.assertEqual(formal.validate(self.root)["files"], 20)
+        self.assertEqual(formal.validate(self.root)["files"], 23)
         with patch.object(candidate, "ROOT", self.root):
             _, _, cases = candidate.inspect(self.root / "tests/fixtures/core-feedback-candidate")
         self.assertEqual(len(cases), 9)
@@ -138,9 +138,9 @@ class ReleasePreparationTests(unittest.TestCase):
 
     def test_published_current_keeps_exact_v011_as_opt_in_history(self):
         value = json.loads((ROOT / "vendor/engineering-workflow-core.lock.json").read_bytes())
-        self.assertEqual(value["source"]["revision"], "6887bfe6183465e9a9e6ccb4ccd7305a58b37302")
-        self.assertEqual(value["source"]["tag_object"], "0ba0fd98e2343f72e555d9bf0e8b1bc5650cd93d")
-        self.assertEqual(value["source"]["reviewed_head"], "7feb6d3c044b1bcc2f675dbc93a469e66d608511")
+        self.assertEqual(value["source"]["revision"], "7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e")
+        self.assertEqual(value["source"]["tag_object"], "0e91dfaa7f3969c9ec3d9647a765ec2f116057bb")
+        self.assertEqual(value["source"]["reviewed_head"], "b1bc76ee8cf8869731bf1a115be54aaeef7341ce")
         vendor = self.root / "vendor/engineering-workflow-core"
         shutil.rmtree(vendor)
         shutil.copytree(self.root / "tests/fixtures/core-feedback-baseline", vendor)
@@ -155,6 +155,38 @@ class ReleasePreparationTests(unittest.TestCase):
         with self.assertRaises(formal.SnapshotError):
             formal.parse_lock((ROOT / "tests/fixtures/core-release-preparation.lock.json").read_bytes(),
                               allow_reviewed_history=True)
+
+    def test_published_v020_is_exact_opt_in_history_not_current(self):
+        vendor = self.root / "vendor/engineering-workflow-core"
+        shutil.rmtree(vendor)
+        shutil.copytree(self.root / "tests/fixtures/core-release-preparation", vendor)
+        (self.root / "vendor/engineering-workflow-core.lock.json").write_bytes(
+            (ROOT / "tests/fixtures/core-v0.2.0-formal.lock.json").read_bytes())
+        with self.assertRaises(formal.SnapshotError):
+            formal.validate(self.root)
+        value = formal.validate(self.root, allow_reviewed_history=True)
+        self.assertEqual(("0.2.0", 20, True),
+                         (value["core_version"], value["files"], value["historical_snapshot"]))
+
+    def test_current_rules_preserve_every_original_raw_line_and_exact_insert(self):
+        before = self.root / "tests/fixtures/core-release-preparation"
+        after = self.root / "vendor/engineering-workflow-core"
+        for path in before.rglob("*"):
+            if path.is_file():
+                relative = path.relative_to(before)
+                self.assertTrue(candidate.inserted_only(path.read_bytes(), (after / relative).read_bytes()), str(relative))
+        for name in ("contracts/authorization-and-stops.md", "contracts/exact-head-and-evidence.md",
+                     "contracts/review-and-security.md", "LICENSE", "docs/provenance/upstream-notices.md"):
+            self.assertEqual((before / name).read_bytes(), (after / name).read_bytes())
+        proposal = (ROOT / "tests/fixtures/core-premise-proposal.txt").read_bytes() + b"\n"
+        final = (after / "contracts/workflow.md").read_bytes()
+        self.assertEqual(1, final.count(proposal))
+        self.assertEqual((before / "contracts/workflow.md").read_bytes(), final.replace(proposal, b"", 1))
+        original = "甲 must stay.\nKeep  two spaces.\ncafé\n".encode()
+        for mutation in (original[1:], original.replace(b"must", b"may"), original.replace(b"  ", b" "),
+                         original.replace(b"\n", b"\r\n"), original.replace("é".encode(), "e\u0301".encode()),
+                         b"".join(reversed(original.splitlines(keepends=True)))):
+            self.assertFalse(candidate.inserted_only(original, mutation))
 
     def test_distributed_provenance_exclusions_require_verified_bytes(self):
         plugin = self.root / "plugin/codex-dev-skills"

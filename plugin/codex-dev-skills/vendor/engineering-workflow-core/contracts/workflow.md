@@ -71,6 +71,8 @@
 
 必要 checks 通過後，只因新變更、失敗或未解疑慮擴大／重跑；不能以預算省略必跑檢查、獨立 review 或 changed-head 完整審查。服務、認證、環境、資料、權限及 context 失敗與品質返工分開分類，不能靠提高 effort 解決環境或權限缺失。兩輪未完成 review/fix（或適用明定門檻）觸發假設、方法、能力及 context 重評，並非自動停工、新建話題或無限重構。換模型／session 不清除 findings、修正歷史或預算。
 
+若失敗證據指向規格、驗收條件或設計前提本身的矛盾或缺口，先查核並區分實作缺陷、前提問題及混合情況；在必要的前提與範圍重新評估完成前，不以更換模型、增加 effort 或重複修補取代該評估。這項分類不免除既有 blocker、必要安全檢查或交付 gate，也不授權變更需求或驗收條件。
+
 改善驗收在既有報告有界記錄缺口、原因依據與下一步，先核對既有 evidence/proposal/evaluation 契約的涵蓋，再提最小補強。Operational Evidence、proposal、評分、evaluation、重播或 promotion packet 都不是授權或完成證據；不因此新增反思 executor、memory、hooks 或 scheduler。P1 的具體涵蓋評估見 [既有改善契約](../docs/provenance/source-map.md#improvement-coverage)。
 
 中途需求修正保留仍適用成果並重查受影響證據；狀態或旁支問題先簡答再續行，除非明確取消／替換目標。使用者摘要依 [簡明寫作要求](#wf-writing) 清楚精簡；review/gate 產物保留 commands、必填欄位、findings、dispositions、skipped checks 與限制。續行與停止均依 [授權與停止契約](authorization-and-stops.md)。

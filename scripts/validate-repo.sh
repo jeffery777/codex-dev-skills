@@ -80,6 +80,7 @@ check_no_provider_terms() {
   # Release preparation remains development-only and independently digest-pinned.
   if [[ -f tests/fixtures/core-release-preparation.lock.json ]]; then
     "$PROJECT_PYTHON" -B scripts/verify-core-release-preparation.py >"$TMP_DIR/core-release-preparation.json" || fail "fixed Core release preparation failed verification"
+    "$PROJECT_PYTHON" -B scripts/validate-core-contract-snapshot.py --root . >"$TMP_DIR/source-core-integrity.json" || fail "source Core provenance failed verification"
     if [[ -d plugin/codex-dev-skills ]]; then
       "$PROJECT_PYTHON" -B scripts/validate-core-contract-snapshot.py --root plugin/codex-dev-skills >"$TMP_DIR/plugin-core-integrity.json" || fail "plugin Core provenance failed verification"
     fi
@@ -89,6 +90,8 @@ check_no_provider_terms() {
       --glob '!vendor/engineering-workflow-core/docs/companion/review-decisions.md' \
       --glob '!vendor/engineering-workflow-core/docs/maintenance/2026-10-31-consumer-feedback.md' \
       --glob '!vendor/engineering-workflow-core/docs/maintenance/issue-24-26-candidate.md' \
+      --glob '!vendor/engineering-workflow-core/docs/companion/remaining-feedback-cases.md' \
+      --glob '!vendor/engineering-workflow-core/docs/maintenance/2026-11-01-remaining-feedback.md' \
       --glob '!vendor/engineering-workflow-core/docs/provenance/source-map.md' \
       --glob '!vendor/engineering-workflow-core/docs/provenance/upstream-notices.md' \
       --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/companion/core-reading-guide.md' \
@@ -96,6 +99,8 @@ check_no_provider_terms() {
       --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/companion/review-decisions.md' \
       --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/maintenance/2026-10-31-consumer-feedback.md' \
       --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/maintenance/issue-24-26-candidate.md' \
+      --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/companion/remaining-feedback-cases.md' \
+      --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/maintenance/2026-11-01-remaining-feedback.md' \
       --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/provenance/source-map.md' \
       --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/provenance/upstream-notices.md' \
       --glob '!docs/evals/issue-361-core-feedback-candidate.md' \

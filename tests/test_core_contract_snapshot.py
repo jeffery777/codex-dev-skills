@@ -48,8 +48,8 @@ class CoreSnapshotTests(unittest.TestCase):
             value = core.validate(root)
             self.assertEqual(core.REVISION, value["core_revision"])
             self.assertEqual(core.SET_DIGEST, value["document_set_sha256"])
-            self.assertEqual(20, value["files"])
-            self.assertEqual("0.2.0", value["core_version"])
+            self.assertEqual(23, value["files"])
+            self.assertEqual("0.3.0", value["core_version"])
             self.assertFalse(value["historical_snapshot"])
             self.assertIs(False, value["runtime_qualified"])
             self.assertIs(False, value["authorization_granted"])
@@ -179,7 +179,7 @@ class CoreSnapshotTests(unittest.TestCase):
 
     def test_missing_or_ambiguous_json_does_not_load_another_lock(self):
         original = self.lock.read_text()
-        for data in ('{"contract":"a","contract":"b"}', original.replace('"version": "0.2.0"', '"version": NaN'), "\ufeff" + original):
+        for data in ('{"contract":"a","contract":"b"}', original.replace('"version": "0.3.0"', '"version": NaN'), "\ufeff" + original):
             with self.subTest(data=data[:30]):
                 self.lock.write_text(data)
                 self.rejected()
@@ -442,7 +442,8 @@ class CoreSnapshotTests(unittest.TestCase):
         templates = self.base / "bounded-templates"
         snapshot = templates / "orchestration/core"
         snapshot.mkdir(parents=True)
-        for name in ("LICENSE", "README.md", "contracts/workflow.md", "contracts/review-and-security.md"):
+        for name in ("LICENSE", "README.md", "contracts/workflow.md", "contracts/review-and-security.md",
+                     "contracts/exact-head-and-evidence.md"):
             path = snapshot / name
             path.parent.mkdir(exist_ok=True)
             path.write_bytes(b"x" * (100 * 1024))

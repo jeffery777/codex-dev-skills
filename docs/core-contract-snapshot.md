@@ -1,5 +1,8 @@
 # 固定 Core 文件的 Codex 接法
 
+本來源準備 v0.37.0，採正式 Core v0.3.0 `7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e` 與 tag object `0e91dfaa7f3969c9ec3d9647a765ec2f116057bb` 的二十三檔；詳見 [v0.37.0 準備紀錄](releases/v0.37.0-split.md)。既有二十檔與較舊來源段落保留為各階段歷史，固定候選／分數不改。This v0.37.0 source prepares the published 23-file Core v0.3.0 adoption; preserve earlier records and historical evaluations. Consumer publication and installation remain separate.
+
+
 2026-11-01 source adoption: Core v0.2.0 is fixed at commit `6887bfe6183465e9a9e6ccb4ccd7305a58b37302`, tag object `0ba0fd98e2343f72e555d9bf0e8b1bc5650cd93d`, with twenty files. 本版 source/package0.36.0保留v0.1.1十四檔及先前十一/十三檔的明確 installer history；下方舊 pin/清冊說明保留為相應版本歷史。正式來源、版本與遷移驗證見 [0.36.0 準備紀錄](releases/v0.36.0-split.md)。Source preparation does not update installed skills or prove runtime qualification.
 
 [繁體中文](#zh-tw) · [English](#english)
