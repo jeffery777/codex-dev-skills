@@ -1,5 +1,14 @@
 # 固定來源安裝與回復 / Fixed-source installation and recovery
 
+## 0.37.0 mapping / 固定來源映射
+
+本候選新增第八筆固定來源映射：source/package `0.37.0` 對應已審 payload commit `6e3301b9ab488924168b24ec35a4beeb9b170c49`。既有七筆及下方原文完整保留；registry／mapping 文件／README 的後續非 payload 提交不改該 catalog 或受管檔案，實際 HEAD 仍由 receipt 記錄。映射不代表 consumer 已發布或已更新安裝。
+
+Add the eighth immutable source mapping for 0.37.0 at the reviewed payload commit above. Preserve the prior seven records. Subsequent registry and non-payload documentation changes retain exact catalog/payload parity; receipts record the actual selected HEAD. Mapping is not publication or installed adoption.
+
+本來源準備 v0.37.0，採正式 Core v0.3.0 `7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e` 與 tag object `0e91dfaa7f3969c9ec3d9647a765ec2f116057bb` 的二十三檔；詳見 [v0.37.0 準備紀錄](releases/v0.37.0-split.md)。既有二十檔與較舊來源段落保留為各階段歷史，固定候選／分數不改。This v0.37.0 source prepares the published 23-file Core v0.3.0 adoption; preserve earlier records and historical evaluations. Consumer publication and installation remain separate.
+
+
 
 ## 0.36.0 mapping / 固定來源映射
 

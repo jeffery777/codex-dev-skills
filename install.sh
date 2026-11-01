@@ -20,7 +20,7 @@ DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
-VERSION="0.36.0"
+VERSION="0.37.0"
 SOURCE_DIR="$ROOT_DIR"
 PREVIOUS_SOURCE_DIR=""
 MANAGED_PLAN=""
@@ -983,6 +983,9 @@ group_templates() {
         vendor/engineering-workflow-core/docs/maintenance/2026-10-31-consumer-feedback.md \
         vendor/engineering-workflow-core/docs/maintenance/issue-24-26-candidate.md \
         vendor/engineering-workflow-core/docs/releases/v0.2.0.md \
+        vendor/engineering-workflow-core/docs/companion/remaining-feedback-cases.md \
+        vendor/engineering-workflow-core/docs/maintenance/2026-11-01-remaining-feedback.md \
+        vendor/engineering-workflow-core/docs/releases/v0.3.0.md \
         policies/agent-delegation-policy.md \
         policies/code-mode-tool-orchestration-policy.md \
         policies/context-continuity-policy.md \

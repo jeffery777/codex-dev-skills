@@ -76,6 +76,22 @@ CURRENT_SNAPSHOT = {
 }
 
 
+# Formal v0.3.0 adoption retains the exact v0.2.0 descriptor as opt-in history.
+HISTORICAL_SNAPSHOTS += (CURRENT_SNAPSHOT,)
+REVISION = '7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e'
+REVIEWED_HEAD = 'b1bc76ee8cf8869731bf1a115be54aaeef7341ce'
+FILES = ('CHANGELOG.md', 'LICENSE', 'README.md', 'contracts/authorization-and-stops.md', 'contracts/exact-head-and-evidence.md', 'contracts/review-and-security.md', 'contracts/workflow.md', 'docs/architecture/dependency-inventory.md', 'docs/architecture/migration-plan.md', 'docs/architecture/project-split.md', 'docs/companion/core-reading-guide.md', 'docs/companion/decision-cards.md', 'docs/companion/remaining-feedback-cases.md', 'docs/companion/review-decisions.md', 'docs/maintenance/2026-10-31-consumer-feedback.md', 'docs/maintenance/2026-11-01-remaining-feedback.md', 'docs/maintenance/issue-24-26-candidate.md', 'docs/provenance/source-map.md', 'docs/provenance/upstream-notices.md', 'docs/releases/v0.1.0.md', 'docs/releases/v0.1.1.md', 'docs/releases/v0.2.0.md', 'docs/releases/v0.3.0.md')
+MAX_TOTAL_BYTES = 411816
+MARKDOWN_DIGEST = '2dc09ea75da438877a191dd9144e130b9e333716adf0003708214e9e11872518'
+SET_DIGEST = '614cb78702eb911aaaf6515c238e6694328db35c9d1aeecf008345c969fef4cb'
+DIRECTORIES = {str(p) for name in FILES for p in PurePosixPath(name).parents if str(p) != "."}
+CURRENT_SNAPSHOT = {
+    "source": {'repository': 'jeffery777/engineering-workflow-core', 'revision': '7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e', 'reviewed_head': 'b1bc76ee8cf8869731bf1a115be54aaeef7341ce', 'pull_request': 30, 'version': '0.3.0', 'tag': 'v0.3.0', 'tag_object': '0e91dfaa7f3969c9ec3d9647a765ec2f116057bb'},
+    "files": FILES, "set_digest": SET_DIGEST, "markdown_digest": MARKDOWN_DIGEST,
+    "max_total": MAX_TOTAL_BYTES,
+}
+
+
 def select_snapshot(source, allow_reviewed_history=False):
     allowed = (CURRENT_SNAPSHOT,) + (HISTORICAL_SNAPSHOTS if allow_reviewed_history else ())
     selected = next((item for item in allowed if source == item["source"]), None)

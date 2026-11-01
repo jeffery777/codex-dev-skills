@@ -2,12 +2,12 @@
   "contract": "codex-core-document-lock/v1",
   "source": {
     "repository": "jeffery777/engineering-workflow-core",
-    "revision": "6887bfe6183465e9a9e6ccb4ccd7305a58b37302",
-    "reviewed_head": "7feb6d3c044b1bcc2f675dbc93a469e66d608511",
-    "pull_request": 29,
-    "version": "0.2.0",
-    "tag": "v0.2.0",
-    "tag_object": "0ba0fd98e2343f72e555d9bf0e8b1bc5650cd93d"
+    "revision": "7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e",
+    "reviewed_head": "b1bc76ee8cf8869731bf1a115be54aaeef7341ce",
+    "pull_request": 30,
+    "version": "0.3.0",
+    "tag": "v0.3.0",
+    "tag_object": "0e91dfaa7f3969c9ec3d9647a765ec2f116057bb"
   },
   "consumer": {
     "repository": "jeffery777/codex-dev-skills",
@@ -16,16 +16,16 @@
   },
   "upstream_markdown_set": {
     "algorithm": "utf8-path-tab-sha256-lf/v1",
-    "sha256": "731b7bc86dade62fba5e59d75829fcf7f9dd746c66077f733e2e8e90016ee287"
+    "sha256": "2dc09ea75da438877a191dd9144e130b9e333716adf0003708214e9e11872518"
   },
   "document_set": {
     "algorithm": "codex-core-document-set/v1",
-    "sha256": "96cf575b061cfb1c0fb162ee58f487eb811794c2a6c602bf1355a61ea4d40709",
+    "sha256": "614cb78702eb911aaaf6515c238e6694328db35c9d1aeecf008345c969fef4cb",
     "files": [
       {
         "path": "CHANGELOG.md",
-        "sha256": "078664237eb3e3c6346d085d0372f102ffdd3a6c0bcb4decb70392abdbbdc11f",
-        "size_bytes": 13716,
+        "sha256": "f52d4fa8f66edb9731baae4633f93b1c17d3807d9dba7c3468cb8c155eead4d4",
+        "size_bytes": 16887,
         "mode": "100644"
       },
       {
@@ -36,8 +36,8 @@
       },
       {
         "path": "README.md",
-        "sha256": "b47eee584ea785bd7964432143778529227b991293a1fa7e3ab89879c0f268eb",
-        "size_bytes": 23352,
+        "sha256": "ef2c9aa1fb54b324349ce2062d8607af0fc643068699646d2a6b975f127fcd3a",
+        "size_bytes": 25335,
         "mode": "100644"
       },
       {
@@ -60,8 +60,8 @@
       },
       {
         "path": "contracts/workflow.md",
-        "sha256": "50f6d7129f562b2e86bddfe3fc095c0873070bf349bbfd5be1797a483dc8e8e2",
-        "size_bytes": 19169,
+        "sha256": "5ddb9220413e2d778e06286e98c8e314b600736ac8d67622ef7395dac1c69179",
+        "size_bytes": 19552,
         "mode": "100644"
       },
       {
@@ -95,6 +95,12 @@
         "mode": "100644"
       },
       {
+        "path": "docs/companion/remaining-feedback-cases.md",
+        "sha256": "2ec50584388c9912ba9449a5d36a003e54d58a15c7e5bea7bdb5bf1c4aba3b0a",
+        "size_bytes": 14575,
+        "mode": "100644"
+      },
+      {
         "path": "docs/companion/review-decisions.md",
         "sha256": "2c8a7768f76af27ad3972948bf2b1567eb72624f2230e260c00575f1d11805c2",
         "size_bytes": 6604,
@@ -107,6 +113,12 @@
         "mode": "100644"
       },
       {
+        "path": "docs/maintenance/2026-11-01-remaining-feedback.md",
+        "sha256": "3ef2e689830fcadb3112c963a50f358a7117c0b503795398033a71fd88188b82",
+        "size_bytes": 15853,
+        "mode": "100644"
+      },
+      {
         "path": "docs/maintenance/issue-24-26-candidate.md",
         "sha256": "89b9e312865fa49fd417cd6d3a5fd65f5e82db475950b7d0532ca08e4347e071",
         "size_bytes": 9608,
@@ -114,8 +126,8 @@
       },
       {
         "path": "docs/provenance/source-map.md",
-        "sha256": "bf712e8da9b51a8a2d8b65ea929ec4c17cb84f8876e6b547f486ae994028e41a",
-        "size_bytes": 65367,
+        "sha256": "9c51159d41dbd9014b76cd6e687e4915d4dc7f60488fde730ca5d52097b5e5a5",
+        "size_bytes": 68310,
         "mode": "100644"
       },
       {
@@ -140,6 +152,12 @@
         "path": "docs/releases/v0.2.0.md",
         "sha256": "8993bcf05434a53f8afa815b199f99a349014b7cd0fe3e23a1a9dc74b153392d",
         "size_bytes": 12698,
+        "mode": "100644"
+      },
+      {
+        "path": "docs/releases/v0.3.0.md",
+        "sha256": "21fddabd3c56548e85a2aa1d7b2770133f1d0ac55a069c4c54efc7095b8566dc",
+        "size_bytes": 9269,
         "mode": "100644"
       }
     ]

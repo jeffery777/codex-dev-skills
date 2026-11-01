@@ -7,6 +7,18 @@
 <details open>
 <summary>繁體中文（預設展開）</summary>
 
+## 尚未選版 — 剩餘回饋評估資料
+
+本節標題保留原未選版評估入口；下方 v0.3.0 記錄後續 draft 候選階段，再下方的原評估段落保留準備歷史，不能單獨判定目前候選的契約 bytes。
+
+## v0.3.0 — 前提失敗重評 draft 候選
+
+在兩端相同 v3 各一次 12/12 及獨立理由查核後，於 wf-verification 僅插入已測的兩句原字提案，原 workflow 其他 bytes／完整行序與三契約、LICENSE、完整 notices 保留。依新增義務準備下一 minor；範圍、逐字組合身分、二十三檔清冊、歷史失敗及正式採用前置見 [v0.3.0 準備紀錄](docs/releases/v0.3.0.md)。以下未選版／未接受及四契約未改的說明保留早期評估歷史；本段只記 draft 修改候選，不代表已合併、發布或更新 consumer／安裝。
+
+依使用者確認，伴讀與工作包補明正常 Agent／workflow 的有界驗收，不以防止有管理權者蓄意篡改可信程式或所有證據為完成條件。原文、強制保障及舊反例保留；#21 v3 僅澄清一案，雙端新觀測與正式候選處理另記。
+
+新增 #27／#21／#23／#22 的具體案例及順序工作包，保留四份正式契約與全部舊字。#21 兩句窄版提案只作非權威待測資料，須先 Codex 再 Grok 各自 pin／eval，尚未接受。其他擴張的最低閱讀、severity、停工、紀錄位置、技術隔離或強制公開掃描未採納；不建立新發行或更新安裝。
+
 ## v0.2.0 — 需求追溯與伴讀準備紀錄
 
 本 minor 準備正式採納 #24 的 requirement_relation／REQ-GAP 與 #26 的機制需求追溯，並整合 PR28 的非權威伴讀。四契約保持已通過兩端九案文字 eval 的固定候選 bytes；每端 n=1 的有限文字門檻已滿足，正式接受、publication 與 consumer adoption 分別核對。清冊、原文保留、版本／相依與未完成事項見 [v0.2.0 準備紀錄](docs/releases/v0.2.0.md)。下列隔離候選及先前工作包條目保留為點時歷史，不由後續結果改寫。
@@ -62,6 +74,18 @@ Core 的文件版本由本檔已提交的版本條目記錄，採 `vMAJOR.MINOR.
 
 <details>
 <summary>English (expand to read)</summary>
+
+## Unversioned — Remaining feedback evaluation data
+
+Retain this original assessment heading in place. The v0.3.0 entry records the later draft stage; original assessment paragraphs below retain preparation history and do not independently describe current candidate-contract bytes.
+
+## v0.3.0 — Premise-failure reassessment draft candidate
+
+After one matching v3 12/12 response and independent reasoning review per consumer, insert only the exact tested two-sentence quotation in wf-verification. Preserve all other workflow bytes/line order, the other three contracts, LICENSE and complete notices. Prepare the next minor for added duties; the v0.3.0 record covers scope, exact composition,23-file inventory, historical failures and adoption prerequisites. Earlier unversioned/unaccepted/four-unchanged-contract statements retain assessment history. This draft is not merge, publication or a consumer/installation update.
+
+Clarify bounded normal agent/workflow acceptance under the user's confirmed scope. Privileged intentional rewriting of trusted code/all evidence is not a completion prerequisite. Preserve all old text, mandatory safeguards and examples. The #21 v3 packet clarifies one case only; record fresh consumer observations and later candidate handling separately.
+
+Add concrete cases and an ordered packet for #27/#21/#23/#22, preserving all four contracts and old text. The two-sentence #21 proposal is non-authoritative test data only. It needs fresh Codex then Grok pins/evaluations before acceptance. No broader reading, severity, stopping, record-location, isolation or mandatory-publication-scan duties, new publication or installed update are adopted.
 
 ## v0.2.0 — Requirement traceability and companion preparation
 
