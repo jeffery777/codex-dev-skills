@@ -267,6 +267,14 @@ exec "''' + real + '''" "$@"
     def test_development_eleven_to_fourteen_and_back_preserves_profiles_and_retires_notes(self):
         self.assert_core_transition("0.34.0", "43c650e1196a3a702e2240bd79dd24539fa893a7", 11)
 
+    def test_formal_fourteen_to_twenty_and_back_preserves_exact_tree_and_profiles(self):
+        for version, revision in (("0.35.1", "6cd58e3a776ef705a9cee17ba7e24c6b21181395"),
+                                  ("0.35.2", "73cee30f5aee09c9218505624f1caa433ef72946")):
+            with self.subTest(version=version):
+                # Each transition owns a fresh home and state directory.
+                self.setUp()
+                self.assert_core_transition(version, revision, 14)
+
     def assert_core_transition(self, version, revision, count):
         catalog = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == revision)
         prior = self.seed(version, groups=list(catalog["groups"]), snapshot_revision=revision)
@@ -274,14 +282,17 @@ exec "''' + real + '''" "$@"
         core_root = self.home / ".codex/templates/orchestration/core"
         prior_files = {p.relative_to(core_root).as_posix(): p.read_bytes()
                        for p in core_root.rglob("*") if p.is_file()}
+        prior_directories = sorted(p.relative_to(core_root).as_posix()
+                                   for p in core_root.rglob("*") if p.is_dir())
         self.assertEqual(count, len(prior_files))
         result = self.run_installer("update", "--all")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assert_version(CURRENT_VERSION)
         receipt = json.loads(self.receipt.read_text())
-        self.assertEqual("0.1.1", receipt["source"]["core"]["version"])
+        self.assertEqual("0.2.0", receipt["source"]["core"]["version"])
         self.assertIn("codex-agent-profiles", receipt["groups"])
-        self.assertEqual(14, len([p for p in core_root.rglob("*") if p.is_file()]))
+        self.assertEqual(20, len([p for p in core_root.rglob("*") if p.is_file()]))
+        self.assertTrue((core_root / "docs/releases/v0.2.0.md").is_file())
         self.assertTrue((core_root / "docs/releases/v0.1.1.md").is_file())
         extra = core_root / "unknown.md"
         extra.write_bytes(b"unmanaged fixture; preserve on refused downgrade\n")
@@ -299,6 +310,9 @@ exec "''' + real + '''" "$@"
         self.assertIn("codex-agent-profiles", receipt["groups"])
         self.assertEqual(prior_files, {p.relative_to(core_root).as_posix(): p.read_bytes()
                                       for p in core_root.rglob("*") if p.is_file()})
+        self.assertEqual(prior_directories, sorted(p.relative_to(core_root).as_posix()
+                                                  for p in core_root.rglob("*") if p.is_dir()))
+
 
     def test_preexisting_unowned_empty_core_root_is_preserved(self):
         self.seed()

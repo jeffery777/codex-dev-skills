@@ -1,5 +1,9 @@
 # codex-dev-skills
 
+本來源的 Core 接入固定 v0.2.0；二十檔清冊及歷史 installer 來源見 [loading contract](policies/core-contract-loading.md) 與 [0.36.0 準備紀錄](docs/releases/v0.36.0-split.md)。下方舊 pin 的版本描述保留為其歷史範圍。Publication 仍核對對應 annotated tag／Release，不由來源版本或測試結果推定。
+
+This source pins Core v0.2.0 with twenty files and explicit prior installer history. The linked loading contract defines its fixed identity; older pin descriptions retain historical scope. Source/package preparation does not prove consumer publication, installation or full runtime qualification.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Runtime: Codex CLI + Desktop](https://img.shields.io/badge/runtime-Codex%20CLI%20%2B%20Desktop-blue)](#runtime-compatibility)
 [![Repo hygiene](https://img.shields.io/badge/hygiene-validate--repo.sh-informational)](#verification)

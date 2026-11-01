@@ -59,6 +59,23 @@ HISTORICAL_SNAPSHOTS = ({
 },)
 
 
+# Formal v0.2.0 adoption metadata. Keep the original descriptor intact as
+# explicitly reviewed installer history before selecting the new ordinary set.
+HISTORICAL_SNAPSHOTS += (CURRENT_SNAPSHOT,)
+REVISION = '6887bfe6183465e9a9e6ccb4ccd7305a58b37302'
+REVIEWED_HEAD = '7feb6d3c044b1bcc2f675dbc93a469e66d608511'
+FILES = ('CHANGELOG.md', 'LICENSE', 'README.md', 'contracts/authorization-and-stops.md', 'contracts/exact-head-and-evidence.md', 'contracts/review-and-security.md', 'contracts/workflow.md', 'docs/architecture/dependency-inventory.md', 'docs/architecture/migration-plan.md', 'docs/architecture/project-split.md', 'docs/companion/core-reading-guide.md', 'docs/companion/decision-cards.md', 'docs/companion/review-decisions.md', 'docs/maintenance/2026-10-31-consumer-feedback.md', 'docs/maintenance/issue-24-26-candidate.md', 'docs/provenance/source-map.md', 'docs/provenance/upstream-notices.md', 'docs/releases/v0.1.0.md', 'docs/releases/v0.1.1.md', 'docs/releases/v0.2.0.md')
+MAX_TOTAL_BYTES = 363639
+MARKDOWN_DIGEST = '731b7bc86dade62fba5e59d75829fcf7f9dd746c66077f733e2e8e90016ee287'
+SET_DIGEST = '96cf575b061cfb1c0fb162ee58f487eb811794c2a6c602bf1355a61ea4d40709'
+DIRECTORIES = {str(p) for name in FILES for p in PurePosixPath(name).parents if str(p) != "."}
+CURRENT_SNAPSHOT = {
+    "source": {'repository': 'jeffery777/engineering-workflow-core', 'revision': '6887bfe6183465e9a9e6ccb4ccd7305a58b37302', 'reviewed_head': '7feb6d3c044b1bcc2f675dbc93a469e66d608511', 'pull_request': 29, 'version': '0.2.0', 'tag': 'v0.2.0', 'tag_object': '0ba0fd98e2343f72e555d9bf0e8b1bc5650cd93d'},
+    "files": FILES, "set_digest": SET_DIGEST, "markdown_digest": MARKDOWN_DIGEST,
+    "max_total": MAX_TOTAL_BYTES,
+}
+
+
 def select_snapshot(source, allow_reviewed_history=False):
     allowed = (CURRENT_SNAPSHOT,) + (HISTORICAL_SNAPSHOTS if allow_reviewed_history else ())
     selected = next((item for item in allowed if source == item["source"]), None)

@@ -23,6 +23,8 @@ GitHub disclosure sections are independent. Traditional Chinese is open by defau
 
 ## 開始閱讀
 
+選用的 [決策卡片](docs/companion/decision-cards.md)、[Core 讀取伴讀](docs/companion/core-reading-guide.md) 與 [審查決策／公開記錄格式](docs/companion/review-decisions.md) 提供非權威導讀；它們不改四份契約或 consumer 義務。七項回饋的順序評估、候選門檻與逐字保留重跑命令見 [維護工作包](docs/maintenance/2026-10-31-consumer-feedback.md)。
+
 1. 讀完整 [工作流](contracts/workflow.md)，確認工程階段與必要產物。完成標準也稱 Definition of Done（DoD）。
 2. 每次操作都保留 [授權與停止條件](contracts/authorization-and-stops.md)。讀過文件或通過測試，不會自動取得寫入權。
 3. 需要審查或正式交付時，讀 [獨立審查與安全掃描](contracts/review-and-security.md)。
@@ -101,6 +103,8 @@ Suppose you must assign implementation and review for a change. Read the shared 
 
 ## Start here
 
+Optional [decision cards](docs/companion/decision-cards.md), the [Core reading companion](docs/companion/core-reading-guide.md), and [review decisions/public-record formats](docs/companion/review-decisions.md) provide non-authoritative guidance. They change neither the four contracts nor consumer obligations. See the [maintenance packet](docs/maintenance/2026-10-31-consumer-feedback.md) for the ordered seven-item assessment, candidate gates, and reproducible preservation check.
+
 1. Read the complete [workflow](contracts/workflow.md). Confirm the stages and required outputs. Definition of Done (DoD) means the completion criteria.
 2. Keep the [authorization and stop conditions](contracts/authorization-and-stops.md) for every action. Reading a document or passing a test does not grant write authority.
 3. For review or formal delivery, read [independent review and security scans](contracts/review-and-security.md).
@@ -161,3 +165,6 @@ This repository uses the [MIT LICENSE](LICENSE). Extracted content also retains 
 Traditional Chinese remains the authoritative language of the formal contracts. This English guide adds no policy and does not change contract authority. The English text is written using [ASD-STE100 Issue 9](https://asd-ste100.org/STE_downloads.html) principles. Full conformance has not been verified. This page has not checked every rule and dictionary entry. The Chinese text does not claim conformance to an English controlled-language standard.
 
 </details>
+
+
+伴讀維護頁的原逐字重跑命令只適用固定 PR28 伴讀 tree；v0.2.0 的修改候選改用 [三基準逐字保留重跑命令](docs/releases/v0.2.0.md#preservation-reproduction)，分開檢查插入保留與已評估契約 equality。The companion packet's original reproduction command applies only to its fixed PR28 tree. Use the v0.2.0 three-baseline command for the modifying packet, separating insert-only preservation from evaluated-contract equality.

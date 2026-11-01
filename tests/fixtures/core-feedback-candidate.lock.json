@@ -1,0 +1,100 @@
+{
+  "contract": "codex-core-feedback-test-pin/v1",
+  "repository": "jeffery777/engineering-workflow-core",
+  "revision": "87db5867fbed58c81e64f0c316168d537452425e",
+  "baseline_revision": "7b66978a76597d09be1b55ad199a969b4ee59c0f",
+  "pull_request": 29,
+  "accepted": false,
+  "files": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "6449b8edd473c26de78b5539ba88b95f728e9c7b1679a7f042b7837bb235b494",
+      "size_bytes": 11572,
+      "mode": "100644"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f",
+      "size_bytes": 1067,
+      "mode": "100644"
+    },
+    {
+      "path": "README.md",
+      "sha256": "a9ecc868915ccad6bbee388c09d2c234eecefbc41d07c580a269a13956f5ea7b",
+      "size_bytes": 21986,
+      "mode": "100644"
+    },
+    {
+      "path": "contracts/authorization-and-stops.md",
+      "sha256": "27f02076fdd034c090e341610d7e04f8e79143ec17c1d37a4b57629a04c5e699",
+      "size_bytes": 5724,
+      "mode": "100644"
+    },
+    {
+      "path": "contracts/exact-head-and-evidence.md",
+      "sha256": "ba3419d7090fecce3e84f4ea35cd7695135fb7bbf8c1451502941163d8e873a4",
+      "size_bytes": 6549,
+      "mode": "100644"
+    },
+    {
+      "path": "contracts/review-and-security.md",
+      "sha256": "6dce06b8a0feb34b7851086edc9c4cd774171a5444b05eb7013a0d3af1c044e5",
+      "size_bytes": 12784,
+      "mode": "100644"
+    },
+    {
+      "path": "contracts/workflow.md",
+      "sha256": "50f6d7129f562b2e86bddfe3fc095c0873070bf349bbfd5be1797a483dc8e8e2",
+      "size_bytes": 19169,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/architecture/dependency-inventory.md",
+      "sha256": "c588ebfb8c1c4cc159d56e742832974820a88e326de4ee5eac5204c66c14ef9a",
+      "size_bytes": 58967,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/architecture/migration-plan.md",
+      "sha256": "6fbba9ed9a15d32d63dbe138b673c25aec34a81b262d7ada82108077ca67e8cf",
+      "size_bytes": 23166,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/architecture/project-split.md",
+      "sha256": "18e3e3b620d917aeff7881f4bfe5d4736725d6cac0eb8c758b810564df5f8d84",
+      "size_bytes": 34720,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/maintenance/issue-24-26-candidate.md",
+      "sha256": "f914351b35ec7b8e4396df12fe02934ab64e7c2205044013b1922f78a5005343",
+      "size_bytes": 8230,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/provenance/source-map.md",
+      "sha256": "9808c2ca815f7548de1cea3fd1288da3ee9b529c2b9f6f3ee1e1617a924b8d00",
+      "size_bytes": 61072,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/provenance/upstream-notices.md",
+      "sha256": "a33e7445a6eea9df9f12dd5b32cb6f08353d00b7d873496d48389dbe36ceb888",
+      "size_bytes": 2332,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/releases/v0.1.0.md",
+      "sha256": "f8e6c3e1e6b4ac8b433656ae3991274f657097f40eae7de2431348e13bb2b058",
+      "size_bytes": 15448,
+      "mode": "100644"
+    },
+    {
+      "path": "docs/releases/v0.1.1.md",
+      "sha256": "c58714a705d46e6e244b9e5008df26e501a0343cfbbd7955e55f262c01e989be",
+      "size_bytes": 10819,
+      "mode": "100644"
+    }
+  ]
+}

@@ -54,6 +54,12 @@
     "vendor/engineering-workflow-core/docs/provenance/source-map.md",
     "vendor/engineering-workflow-core/docs/provenance/upstream-notices.md",
     "vendor/engineering-workflow-core/docs/releases/v0.1.0.md",
+    "vendor/engineering-workflow-core/docs/companion/core-reading-guide.md",
+    "vendor/engineering-workflow-core/docs/companion/decision-cards.md",
+    "vendor/engineering-workflow-core/docs/companion/review-decisions.md",
+    "vendor/engineering-workflow-core/docs/maintenance/2026-10-31-consumer-feedback.md",
+    "vendor/engineering-workflow-core/docs/maintenance/issue-24-26-candidate.md",
+    "vendor/engineering-workflow-core/docs/releases/v0.2.0.md",
     "vendor/engineering-workflow-core/docs/releases/v0.1.1.md"
   ]
 }

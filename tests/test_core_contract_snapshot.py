@@ -48,8 +48,8 @@ class CoreSnapshotTests(unittest.TestCase):
             value = core.validate(root)
             self.assertEqual(core.REVISION, value["core_revision"])
             self.assertEqual(core.SET_DIGEST, value["document_set_sha256"])
-            self.assertEqual(14, value["files"])
-            self.assertEqual("0.1.1", value["core_version"])
+            self.assertEqual(20, value["files"])
+            self.assertEqual("0.2.0", value["core_version"])
             self.assertFalse(value["historical_snapshot"])
             self.assertIs(False, value["runtime_qualified"])
             self.assertIs(False, value["authorization_granted"])
@@ -93,7 +93,7 @@ class CoreSnapshotTests(unittest.TestCase):
     def test_tag_object_is_not_the_commit_and_history_cannot_mix_sets(self):
         original = self.lock.read_bytes()
         for field, value in (("revision", core.CURRENT_SNAPSHOT["source"]["tag_object"]),
-                             ("tag_object", core.REVISION), ("tag", "v0.2.0"),
+                             ("tag_object", core.REVISION), ("tag", "v9.9.9"),
                              ("version", None)):
             self.lock.write_bytes(original)
             self.mutate_lock(lambda lock: lock["source"].update({field: value}))
@@ -179,7 +179,7 @@ class CoreSnapshotTests(unittest.TestCase):
 
     def test_missing_or_ambiguous_json_does_not_load_another_lock(self):
         original = self.lock.read_text()
-        for data in ('{"contract":"a","contract":"b"}', original.replace('"version": "0.1.1"', '"version": NaN'), "\ufeff" + original):
+        for data in ('{"contract":"a","contract":"b"}', original.replace('"version": "0.2.0"', '"version": NaN'), "\ufeff" + original):
             with self.subTest(data=data[:30]):
                 self.lock.write_text(data)
                 self.rejected()
@@ -442,7 +442,7 @@ class CoreSnapshotTests(unittest.TestCase):
         templates = self.base / "bounded-templates"
         snapshot = templates / "orchestration/core"
         snapshot.mkdir(parents=True)
-        for name in ("LICENSE", "README.md", "contracts/workflow.md"):
+        for name in ("LICENSE", "README.md", "contracts/workflow.md", "contracts/review-and-security.md"):
             path = snapshot / name
             path.parent.mkdir(exist_ok=True)
             path.write_bytes(b"x" * (100 * 1024))

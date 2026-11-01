@@ -77,6 +77,54 @@ check_no_provider_terms() {
   # Only the literal compatibility-root guard is allowed. It protects staging
   # from discovery and does not add a provider integration or workflow.
   compatibility="$(printf '%s' cl'aude')"
+  # Release preparation remains development-only and independently digest-pinned.
+  if [[ -f tests/fixtures/core-release-preparation.lock.json ]]; then
+    "$PROJECT_PYTHON" -B scripts/verify-core-release-preparation.py >"$TMP_DIR/core-release-preparation.json" || fail "fixed Core release preparation failed verification"
+    if [[ -d plugin/codex-dev-skills ]]; then
+      "$PROJECT_PYTHON" -B scripts/validate-core-contract-snapshot.py --root plugin/codex-dev-skills >"$TMP_DIR/plugin-core-integrity.json" || fail "plugin Core provenance failed verification"
+    fi
+    if ! rg -i "$pattern" . \
+      --glob '!vendor/engineering-workflow-core/docs/companion/core-reading-guide.md' \
+      --glob '!vendor/engineering-workflow-core/docs/companion/decision-cards.md' \
+      --glob '!vendor/engineering-workflow-core/docs/companion/review-decisions.md' \
+      --glob '!vendor/engineering-workflow-core/docs/maintenance/2026-10-31-consumer-feedback.md' \
+      --glob '!vendor/engineering-workflow-core/docs/maintenance/issue-24-26-candidate.md' \
+      --glob '!vendor/engineering-workflow-core/docs/provenance/source-map.md' \
+      --glob '!vendor/engineering-workflow-core/docs/provenance/upstream-notices.md' \
+      --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/companion/core-reading-guide.md' \
+      --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/companion/decision-cards.md' \
+      --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/companion/review-decisions.md' \
+      --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/maintenance/2026-10-31-consumer-feedback.md' \
+      --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/maintenance/issue-24-26-candidate.md' \
+      --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/provenance/source-map.md' \
+      --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/provenance/upstream-notices.md' \
+      --glob '!docs/evals/issue-361-core-feedback-candidate.md' \
+      --glob '!tests/fixtures/core-feedback-candidate/docs/maintenance/issue-24-26-candidate.md' \
+      --glob '!tests/fixtures/core-feedback-candidate/docs/provenance/source-map.md' \
+      --glob '!tests/fixtures/core-release-preparation/docs/companion/decision-cards.md' \
+      --glob '!tests/fixtures/core-release-preparation/docs/companion/core-reading-guide.md' \
+      --glob '!tests/fixtures/core-release-preparation/docs/companion/review-decisions.md' \
+      --glob '!tests/fixtures/core-release-preparation/docs/maintenance/2026-10-31-consumer-feedback.md' \
+      --glob '!tests/fixtures/core-release-preparation/docs/maintenance/issue-24-26-candidate.md' \
+      --glob '!tests/fixtures/core-release-preparation/docs/provenance/source-map.md' \
+      --glob '!tests/fixtures/core-release-preparation/docs/provenance/upstream-notices.md' | rg -v "^\./install\.sh:[[:space:]]*\"\\.$compatibility/skills\", \"\\.$compatibility/commands\", \"\\.$compatibility/plugins\", \"\\.cursor/skills\"\)$" >"$TMP_DIR/preparation-active-hits.txt"; then
+      ok "active sources clean; fixed development preparation verified"
+      return
+    fi
+  fi
+  # The original guard-only statement applies to active provider surfaces.
+  # Fixed feedback provenance is not a distributed provider integration.
+  # Verify its immutable bytes even when embedded unit tests are skipped.
+  if [[ -f tests/fixtures/core-feedback-candidate.lock.json ]]; then
+    "$PROJECT_PYTHON" -B scripts/eval-core-feedback-candidate.py >"$TMP_DIR/core-feedback-integrity.json" || fail "fixed Core feedback provenance failed verification"
+    if ! rg -i "$pattern" . \
+      --glob '!docs/evals/issue-361-core-feedback-candidate.md' \
+      --glob '!tests/fixtures/core-feedback-candidate/docs/maintenance/issue-24-26-candidate.md' \
+      --glob '!tests/fixtures/core-feedback-candidate/docs/provenance/source-map.md' | rg -v "^\./install\.sh:[[:space:]]*\"\\.$compatibility/skills\", \"\\.$compatibility/commands\", \"\\.$compatibility/plugins\", \"\\.cursor/skills\"\)$" >"$TMP_DIR/provider-active-hits.txt"; then
+      ok "excluded provider terms absent from active sources; fixed feedback provenance verified"
+      return
+    fi
+  fi
   if rg -i "$pattern" . | rg -v "^\./install\.sh:[[:space:]]*\"\\.$compatibility/skills\", \"\\.$compatibility/commands\", \"\\.$compatibility/plugins\", \"\\.cursor/skills\"\)$" >"$TMP_DIR/provider-hits.txt"; then
     cat "$TMP_DIR/provider-hits.txt"
     fail "excluded provider terms found"

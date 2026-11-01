@@ -1,8 +1,26 @@
 # Changelog / 變更紀錄
 
+## 0.36.0 — Core v0.2.0 adoption candidate
+
+採用正式 Core v0.2.0 二十檔及真實出版身分，完整保留權威原文；同步分發閉包、明列舊十四檔 installer history及新版本 metadata。歷史候選/準備資料保留原 bytes，正式切換與驗證範圍見 [準備紀錄](docs/releases/v0.36.0-split.md)。不更新使用者實裝，不宣稱完整 runtime 資格。
+
+Adopt the formal twenty-file Core snapshot, retaining all original rule text, distribution closure and explicit prior installer history. Keep historical fixtures and release records unchanged. Source/package preparation is separate from publication and installation; the linked record defines verification and limits.
+
 本檔記錄版本範圍及尚未選版的變更，不是目前已發布版本指標。來源版本以
 [catalog.yaml](catalog.yaml) 為準；發布事實另核對 annotated tag 與非 draft、
 非 prerelease 的 GitHub Release。English entries follow the Chinese entries.
+
+## 尚未選版 — Core minor 採用準備 / Unversioned Core minor adoption preparation
+
+Issue #361 接續固定 Core v0.2.0 reviewed head 的二十檔準備快照、完整遷移數值與離線 verifier，出版 revision／tag object 保持 null。歷史候選改用獨立固定 v0.1.1 baseline，避免正式 vendor 前進後不能重現。新增完整性／安全檔案／假出版／普通loader拒絕與provenance反例；正式vendor、loader、catalog／plugin／installer與既有安裝維持原版。範圍與發行後具體步驟見 [採用準備](docs/evals/core-release-adoption-preparation.md)。
+
+Issue #361 adds a fixed twenty-file Core minor preparation snapshot, concrete migration values and an offline verifier. Publication revision/tag object remain null. Historical evals use a separately fixed v0.1.1 baseline so later vendor changes do not break reproduction. Test integrity, unsafe files, false publication, ordinary-loader rejection and narrow provenance exclusions. Formal vendor/loader/package/installation remain unchanged. See the linked adoption preparation for scope and post-publication steps.
+
+## 尚未選版 — Core 回饋候選 eval / Unversioned Core feedback evaluation
+
+[Issue #361](https://github.com/jeffery777/codex-dev-skills/issues/361) 在開發測試路徑固定 Core #24／#26 的隔離文件候選，新增完整性、原字保留與實際情境回應的離線評分入口。正式 Core v0.1.1 loader／vendor、catalog、installer、plugin 與既有安裝維持；候選不是正式採用、發行或 runtime 資格。Grok 依使用者決定延後，原雙 consumer gate 未滿足前 Core 修改不得合併。範圍、實跑證據與限制見 [候選 eval 記錄](docs/evals/issue-361-core-feedback-candidate.md)。 開發用 provider 詞彙檢查新增先驗固定候選的三文件 provenance 例外；其他路徑與原檢查保留，沒有新增 provider 整合。
+
+Pin the isolated Core #24/#26 document candidate under development-test paths, with integrity, original-byte preservation, and offline scoring of actual scenario responses. Keep the formal v0.1.1 loader/vendor, catalog, installer, plugin, and installations unchanged. The candidate is not formal adoption, publication, or runtime qualification. Grok is deferred by the user; modifying Core rules cannot merge before the original dual-consumer gate passes. See the [evaluation record](docs/evals/issue-361-core-feedback-candidate.md) for scope, executed evidence, and limits. The development provider-term check adds a three-document provenance exception after fixed-candidate verification; all other paths and the original check remain, with no provider integration.
 
 ## 0.35.2 — Desktop 接口修正 / Desktop interface corrections
 

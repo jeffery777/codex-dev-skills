@@ -1,5 +1,11 @@
 # Fixed Core Loading Contract
 
+## v0.2.0 source adoption / 來源採用
+
+本來源包固定 Core v0.2.0 commit `6887bfe6183465e9a9e6ccb4ccd7305a58b37302`、annotated tag object `0ba0fd98e2343f72e555d9bf0e8b1bc5650cd93d` 的二十檔，包含十九份 Markdown 與原 LICENSE。普通 loader 只選此正式身分；選 root、驗證、停止與 runtime 限制不變。下方 v0.1.1-only 及原兩種 history 的描述保留為舊 pin 的歷史適用範圍；本版 installer 明列 v0.1.1 十四檔為第三個 history，仍須明確 opt-in，不得當普通 current。
+
+This source adopts the exact formal v0.2.0 identity above. The v0.1.1-only identity paragraph and original two-history description below apply to their historical pin. They retain their words; the current validator selects twenty files and explicitly keeps the fourteen-file v0.1.1 descriptor as additional installer history. Layout, stop, integrity, authority and qualification rules remain applicable.
+
 Runtime compatibility: shared document loading; runtime qualification is separate.
 
 Core shared obligations come from the reviewed snapshot in this package. They are
