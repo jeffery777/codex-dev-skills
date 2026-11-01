@@ -1,5 +1,7 @@
 # Changelog / 變更紀錄
 
+Issue #363 的文字評估另立 v2 protocol，明訂既有缺陷根因與新功能缺口的區別，拒絕重用未綁定的舊答案；十二案及門檻不改，v1 結果保留。Issue #363 adds a bound v2 text-evaluation protocol to distinguish existing defect causes from new feature gaps. Retain v1 results and unchanged twelve-case criteria; fresh observations are required.
+
 ## 尚未選版 — Core #21 窄版文字提案測試
 
 Issue #363 固定非權威 Core 提案及四契約，新增十二案與離線完整性／嚴格評分反例。五份語意輸入不冒稱完整 Core snapshot；歷史基準重用原固定 fixture，不改普通 loader、vendor、provider hygiene、產品版本或已安裝技能。模型觀測、雙端門檻及限制見 [評估紀錄](docs/evals/issue-363-core-premise-candidate.md)。

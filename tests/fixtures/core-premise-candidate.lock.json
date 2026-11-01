@@ -1,5 +1,6 @@
 {
   "schema": "codex-core-premise-text-eval/v1",
+  "evaluation_protocol": "core-premise-failure-cause/v2",
   "candidate_revision": "9cec34449cc9557d78842c01d88f3ab561c5823b",
   "baseline_revision": "6887bfe6183465e9a9e6ccb4ccd7305a58b37302",
   "source_document": "docs/maintenance/2026-11-01-remaining-feedback.md",

@@ -308,6 +308,7 @@ class CorePremiseProposalTests(unittest.TestCase):
 
     def observations(self, cases):
         return {'candidate_revision': self.proposal.REVISION,
+                'evaluation_protocol': self.proposal.EVALUATION_PROTOCOL,
                 'answers': [{'id': case['id'], **case['expected'],
                              'reason': 'Synthetic scorer fixture, not a model observation.'}
                             for case in cases]}
@@ -320,6 +321,7 @@ class CorePremiseProposalTests(unittest.TestCase):
         self.assertFalse(pin['runtime_qualified'])
         self.assertEqual(382, len(proposal.encode()))
         prompt = self.proposal.prompt(pin, criteria, proposal, cases)
+        self.assertEqual(self.proposal.EVALUATION_PROTOCOL, prompt['evaluation_protocol'])
         self.assertEqual(criteria, prompt['baseline_contracts'])
         self.assertTrue(all(set(case) == {'id', 'situation', 'requested_fields'}
                             for case in prompt['cases']))
@@ -383,7 +385,8 @@ class CorePremiseProposalTests(unittest.TestCase):
         for key in ('proposal_accepted', 'runtime_qualified', 'merge_authorized',
                     'observation_provenance_authenticated'):
             self.assertFalse(result[key])
-        for failure in ('revision', 'missing', 'repeat', 'reorder', 'extra-root'):
+        for failure in ('revision', 'missing', 'repeat', 'reorder', 'extra-root',
+                        'missing-protocol', 'legacy-protocol', 'unknown-protocol'):
             bad = json.loads(json.dumps(valid))
             if failure == 'revision':
                 bad['candidate_revision'] = '0' * 40
@@ -393,6 +396,11 @@ class CorePremiseProposalTests(unittest.TestCase):
                 bad['answers'][1] = bad['answers'][0]
             elif failure == 'reorder':
                 bad['answers'].reverse()
+            elif failure == 'missing-protocol':
+                del bad['evaluation_protocol']
+            elif failure in ('legacy-protocol', 'unknown-protocol'):
+                bad['evaluation_protocol'] = ('core-premise-failure-cause/v1'
+                                              if failure == 'legacy-protocol' else 'unknown')
             else:
                 bad['extra'] = True
             with self.subTest(failure=failure):

@@ -1,5 +1,15 @@
 # Core #21 premise-failure text candidate
 
+### 2026-11-01 評估協定 v2 準備／Evaluation protocol v2 preparation
+
+v2 十二案理由亦經獨立逐案核對通過；這個判定只涵蓋保存的單次文字回應，不提升其來源認證或 runtime 資格。Independent case-by-case reasoning review also passed all twelve v2 answers. This verdict covers only the retained single text response; provenance authentication and runtime qualification are not established.
+
+新的 Codex v2 原生 worker 已回覆全部十二案，機械評分 12/12；來源、完整 prompt 及答案另存受控證據。這是獨立新回應，n=1，未另行讀回有效模型／effort 身分；不代表完整 runtime 或技術唯讀資格。Grok v2 尚未執行，雙端 v2 gate 未完成。A fresh native Codex v2 worker answered all twelve cases and mechanically scored12/12. Retain controlled source/prompt/answer evidence. This independent n=1 response has no separate effective model/effort readback and proves no full runtime or technical read-only qualification. Grok v2 has not run; the v2 dual-consumer gate is incomplete.
+
+v1 的 Codex 實際觀測為 12/12，Grok 完整觀測為 11/12，另保留一次 Grok 逾時。唯一差異是 `real-requirement-gap` 的 cause；其需求決策及不得實作判讀正確。獨立核對指出原 cause 欄位缺少明確指涉，因此另立 `core-premise-failure-cause/v2`，不是追改舊分數。v2 在 pin、prompt、答案及 scorer 綁定協定，拒絕缺漏、舊版或未知標籤。既有十二案、expected bytes、候選引文及全數通過門檻不改。它明訂根因指有證據的既有行為／已批准規格、驗收或設計前提缺陷；靜態矛盾不須先有執行失敗，新功能未批准或缺席也不自行證明缺陷。REQ-GAP 另行分類。新增字句只澄清評估資料，沒有先改 Core 規則。Codex 須先取得全新 v2 觀測，之後才輪到 Grok；舊答案不補標籤重用。下方 v1 觀測段落保留歷史，不能當 v2 結果。
+
+Actual v1 observations remain Codex12/12 and Grok11/12, with a separate Grok timeout retained. The sole difference was the real-requirement-gap cause; authority and no-implementation answers were correct. Independent review found an ambiguous cause referent. Protocol `core-premise-failure-cause/v2` binds pin, prompt, answers and scorer; missing, legacy and unknown tags fail. Keep all twelve cases, expected bytes, quotation and full-pass threshold unchanged. Define cause as evidence-supported existing behavior or approved specification/acceptance/design defects. Static contradictions do not need an executed failure; an unapproved feature's absence alone proves no defect. Classify REQ-GAP separately. These sentences clarify evaluation data, not Core authority. Obtain fresh Codex v2 observations before Grok. Never relabel old answers. The v1 history below is not a v2 result.
+
 ## 繁體中文
 
 [Issue #363](https://github.com/jeffery777/codex-dev-skills/issues/363) 先於遠端 Issue 分支及來源修改建立。本包在 [Core draft #30](https://github.com/jeffery777/engineering-workflow-core/pull/30) 的固定 `9cec34449cc9557d78842c01d88f3ab561c5823b` 測試兩句非權威提案；不向 Core 權威契約或本產品規則先行增句。
