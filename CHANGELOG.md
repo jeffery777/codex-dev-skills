@@ -1,5 +1,11 @@
 # Changelog / 變更紀錄
 
+## 尚未選版 — Core #22 有界 PR 文字驗證
+
+Issue #367 新增選用 developer-only 的 PR 標題／本文驗證核心、原生 connector stdio 接線、callback／pipe／PTY 反例與[伴讀](docs/pr-text-publication.md)。錯目的地、過時內容與未知欄位在送出前阻擋，未知效果只讀對帳；不新增 Core 共用 gate、安裝入口、產品版本或 pin。真實原生驗收以當次維護 draft 的受控讀回證據判定，不由本段或合成測試推定。
+
+Add optional bounded developer checks and native-connector bridge for one approved draft PR's title/body, with callback/pipe/PTY tests and the linked companion. Retain uncertainty, conditional restoration and the native pre-read/write race limitation. No shared mandatory gate, package version, pin or installed state changes. Actual native acceptance requires matching current readback evidence.
+
 ## 0.37.0 — Core v0.3.0 source preparation
 
 Issue #365 採正式 Core v0.3.0 的二十三檔，更新普通 vendor／lock、獨立 anchors、source／plugin／filesystem／Hermes 清冊及版本配套。已測兩句只新增於原 workflow，其餘權威原文字節保留；#22 維持選用伴讀，#23 技術唯讀及新強制發布 gate 未採納。固定歷史 eval／來源與既有資格限制保留；安裝未更新，consumer 合併／發行另核。詳見 [準備紀錄](docs/releases/v0.37.0-split.md)。
