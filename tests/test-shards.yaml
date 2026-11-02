@@ -119,6 +119,8 @@ shards:
       - tests.test_issue_292_heredoc_rca
       - tests.test_policy_loading
       - tests.test_pr_issue_link
+      - tests.test_pr_text_native_bridge
+      - tests.test_pr_text_update
       - tests.test_project_python
       - tests.test_release_state_contract
       - tests.test_review_disposition_contract
