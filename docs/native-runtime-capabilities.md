@@ -757,3 +757,25 @@ historical safety cases.
 - [Computer History](https://learn.chatgpt.com/docs/customization/computer-history)
 - [ChatGPT desktop app for Linux](https://learn.chatgpt.com/docs/linux/linux-app)
 - [Hooks](https://learn.chatgpt.com/docs/hooks)
+
+### Required independent reviewer selection
+
+Use the single Codex binding in
+[Agent Delegation Policy](../policies/agent-delegation-policy.md#codex-required-independent-reviewer-selection)
+for required reviewer selection and an unavailable or unknown route.
+Custom role names and briefs do not narrow inherited permissions; the current
+[official subagent controls](https://learn.chatgpt.com/docs/agent-configuration/subagents#approvals-and-sandbox-controls)
+describe that inheritance, not qualification of this session.
+A separate native read-only parent/session is a candidate route, not a claim
+that an ordinary writable parent's child has an isolated sandbox.
+
+Historical manual CLI 0.166 evidence supports a read and a direct patch rejection
+at the tool-router/approval-policy boundary for the tested fixture.
+A subprocess rejection was reported in model prose without its raw tool event;
+that claim remains unverified.
+Those observations do not qualify MCP, other directories, subagents, or a full
+runtime, and unchanged files do not supply the missing control evidence.
+No repeat of that probe, a new app-server investigation, or whole-host isolation
+is required by this documentation.
+Contract-coverage tests check wording and references only; they do not verify
+model behavior, runtime enforcement, or a qualified live reviewer route.
