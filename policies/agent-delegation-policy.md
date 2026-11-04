@@ -71,3 +71,35 @@ Each delegated task should include:
 ## Stop Conditions
 
 Stop delegation when ownership overlaps, source-of-truth files conflict, the task requires a product decision, or the worker would need external write permission.
+
+## Codex Required Independent Reviewer Selection
+
+For a required independent review, select a reviewer independent of the author
+in role and responsibility, bound to the current reviewed revision or diff,
+and meeting the task's stated read-only conditions and applicable qualification.
+A writable general-purpose agent does not qualify merely because its brief
+requests read-only behavior or its role name says reviewer.
+A custom role under a writable parent does not establish separate read-only
+permissions; use current supported control-plane evidence for the selected
+route and the conditions that this task actually requires.
+
+When the reviewer is unavailable, unsupported, or its required conditions remain
+unknown, keep the required review incomplete and block only its dependent gate.
+Do not count the author's self-review or the writable substitute as that required
+review; independent, authorized safe work may continue.
+Qualification alone does not complete a review: the current target still needs
+the actual review, evidence, findings and dispositions under the existing gate.
+A stale target or changed required condition returns to the affected checks.
+
+Read-only workflow instructions do not establish technical isolation.
+Verify technical isolation only where the task expressly requires it; do not add
+a whole-host no-write rule or an inventory of unrelated tools.
+Assess only the selected route's exposed paths relevant to its required boundary.
+If a relevant shell, broker, or other write path is exposed, a denial on another
+tool does not establish that this path is constrained.
+The parent persists the returned review under existing authority and retention
+rules; this binding grants no reviewer write or publication authority.
+This Codex binding does not qualify another runtime or change Core authority.
+
+Contract-coverage tests check wording and references only; they do not run a
+review, qualify a runtime, or enforce this binding at dispatch.

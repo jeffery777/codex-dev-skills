@@ -185,3 +185,6 @@ groups:
       - source: agent-profiles/loop_v2a_astra_advanced_worker.toml
       - source: agent-profiles/loop_v2a_astra_deep_reviewer.toml
       - source: agent-profiles/loop_v2a_astra_security_reviewer.toml
+
+# Payload snapshot: Issue #369 reviewer-selection clarification at c208e0e3c51e1340b1a1d56577d3ba55ffbe4b3e.
+# Source preparation only; this marker does not establish publication or runtime qualification.

@@ -72,5 +72,46 @@ class ReviewDispositionContractTests(unittest.TestCase):
             self.assertNotIn("| Needs Human Decision |", row)
 
 
+
+class ReviewerSelectionContractCoverageTests(unittest.TestCase):
+    """Seven wording checks, not a reviewer classifier or runtime evaluation."""
+
+    SCENARIOS = (
+        ("author-self-review", ("independent of the author",
+                               "Do not count the author's self-review")),
+        ("writable-brief-or-name", ("A writable general-purpose agent does not qualify",
+                                    "its role name says reviewer")),
+        ("reviewer-unavailable-or-unknown", ("unknown, keep the required review incomplete",
+                                            "block only its dependent gate",
+                                            "independent, authorized safe work may continue")),
+        ("eligible-but-not-reviewed", ("Qualification alone does not complete a review",
+                                       "actual review, evidence, findings and dispositions")),
+        ("current-complete-review", ("current reviewed revision or diff",
+                                     "under the existing gate")),
+        ("express-isolation-requirement", ("Verify technical isolation only where the task expressly requires it",
+                                           "a whole-host no-write rule or an inventory of unrelated tools")),
+        ("stale-target-or-conditions", ("A stale target or changed required condition returns to the affected checks",)),
+    )
+
+    def test_seven_scenarios_have_contract_wording(self) -> None:
+        policy = read("policies/agent-delegation-policy.md")
+        self.assertEqual(7, len(self.SCENARIOS))
+        for scenario, fragments in self.SCENARIOS:
+            with self.subTest(scenario=scenario):
+                for fragment in fragments:
+                    self.assertIn(fragment, policy, scenario)
+
+    def test_runtime_reference_keeps_evidence_limits(self) -> None:
+        runtime = read("docs/native-runtime-capabilities.md")
+        policy = ROOT / "policies/agent-delegation-policy.md"
+        self.assertTrue(policy.is_file())
+        self.assertIn("../policies/agent-delegation-policy.md#codex-required-independent-reviewer-selection",
+                      runtime)
+        self.assertIn("## Codex Required Independent Reviewer Selection", policy.read_text())
+        self.assertIn("that claim remains unverified", runtime)
+        self.assertIn("Contract-coverage tests check wording and references only", runtime)
+        self.assertIn("model behavior, runtime enforcement, or a qualified live reviewer route", runtime)
+
+
 if __name__ == "__main__":
     unittest.main()
