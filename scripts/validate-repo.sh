@@ -138,26 +138,65 @@ check_no_provider_terms() {
 }
 
 check_sensitive_private_terms() {
-  local private_pattern
-  private_pattern="$(printf '%s|%s' '/''Users/' yang'chunchih')"
-  if rg -i "$private_pattern" . >"$TMP_DIR/private-hits.txt"; then
-    cat "$TMP_DIR/private-hits.txt"
-    fail "private path or user identifier found"
-  fi
+  local private_account private_status
+  local -a private_patterns=(-e '/''Users/')
+  private_account="$(id -un 2>/dev/null 2>"$TMP_DIR/private-account-error.txt")" || fail "local account lookup failed"
+  [[ -n "$private_account" ]] || fail "local account lookup returned no account"
+  # Generic service-account words do not identify a private workstation account.
+  case "$private_account" in
+    root|runner) ;;
+    *) private_patterns+=(-e "$private_account") ;;
+  esac
+  private_status=0
+  # Encode rg's no-match result inside the subshell. Destination-open errors
+  # occur before rg runs and must not be mistaken for its exit code 1.
+  (
+    rg --no-config -i -F "${private_patterns[@]}" . || case "$?" in
+      1) exit 10 ;; *) exit 20 ;;
+    esac
+  ) 2>/dev/null >"$TMP_DIR/private-hits.txt" 2>"$TMP_DIR/private-search-error.txt" || private_status=$?
+  case "$private_status" in
+    0) fail "private path or user identifier found" ;;
+    10) ;;
+    *) fail "private path/user identifier scan failed" ;;
+  esac
   ok "private paths and local user identifiers absent"
 
-  local review_pattern review_count
+  local review_pattern review_status
   review_pattern="$(printf '%s|%s|%s|%s|%s|%s' tok'en' sec'ret' au'th' SQL'ite' sess'ion' ca'che')"
-  if rg -i "$review_pattern" . >"$TMP_DIR/sensitive-review.txt"; then
-    review_count="$(wc -l <"$TMP_DIR/sensitive-review.txt" | tr -d ' ')"
-    printf '[INFO] sensitive-term review produced %s policy/source hit(s); showing first 20:\n' "$review_count"
-    sed -n '1,20p' "$TMP_DIR/sensitive-review.txt"
-    if [[ "$review_count" -gt 20 ]]; then
-      printf '[INFO] sensitive-term review output truncated; run a targeted rg search when full inspection is needed.\n'
-    fi
-  else
-    ok "sensitive-term review produced no hits"
-  fi
+  review_status=0
+  (
+    rg --no-config --json -i -e "$review_pattern" . || case "$?" in
+      1) exit 10 ;; *) exit 20 ;;
+    esac
+  ) 2>/dev/null >"$TMP_DIR/sensitive-review.jsonl" 2>"$TMP_DIR/sensitive-search-error.txt" || review_status=$?
+  case "$review_status" in
+    0)
+      # Parse structured locations; user display settings and filename delimiters
+      # must never turn matching content into public output. Capture errors too.
+      "$PROJECT_PYTHON" -B -c '
+import json, sys
+from pathlib import Path
+with Path(sys.argv[1]).open(encoding="utf-8") as stream:
+    matches = [event["data"] for line in stream
+               if (event := json.loads(line))["type"] == "match"]
+if not matches:
+    raise ValueError("missing match records")
+locations = [(match["path"]["text"], match["line_number"]) for match in matches]
+if any(not isinstance(path, str) or type(line) is not int or line < 1
+       for path, line in locations):
+    raise ValueError("invalid match location")
+print(f"[INFO] sensitive-term review produced {len(locations)} policy/source hit(s); showing first 20:")
+for path, line in locations[:20]:
+    print(f"{json.dumps(path, ensure_ascii=True)}:{line}")
+if len(locations) > 20:
+    print("[INFO] sensitive-term review output truncated; run a targeted rg search when full inspection is needed.")
+' "$TMP_DIR/sensitive-review.jsonl" 2>/dev/null >"$TMP_DIR/sensitive-locations.txt" 2>"$TMP_DIR/sensitive-parser-error.txt" || fail "sensitive-term review location parsing failed"
+      cat "$TMP_DIR/sensitive-locations.txt" 2>/dev/null || fail "sensitive-term review output failed"
+      ;;
+    10) ok "sensitive-term review produced no hits" ;;
+    *) fail "sensitive-term review scan failed" ;;
+  esac
 }
 
 check_legacy_private_names() {
