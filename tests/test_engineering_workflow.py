@@ -155,7 +155,7 @@ class CoreFeedbackCandidateTests(unittest.TestCase):
         ordinary = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(ordinary)
         lock = json.loads((ROOT / 'vendor/engineering-workflow-core.lock.json').read_text())
-        self.assertEqual('4c8d35ad7c8e9d6a7c47331e5bd93eea2b45c535',
+        self.assertEqual('1cc9203b7240a440b7a6172db5da10eda922f67f',
                          ordinary.validate(ROOT)['core_revision'])
         lock['source']['revision'] = self.candidate.REVISION
         with self.assertRaises(ordinary.SnapshotError):
@@ -446,6 +446,25 @@ class CorePremiseProposalTests(unittest.TestCase):
         unrelated.write_text('A hypothetical later ordinary vendor.\n')
         self.assertEqual(before, self.proposal.inspect(root))
 
+
+
+class PlainWritingAdapterTests(unittest.TestCase):
+    """Instruction/assembly regressions; not model behavior or STE certification."""
+    def test_existing_doc_skills_apply_reader_appropriate_jargon_checks(self):
+        for root in (ROOT, ROOT / "plugin/codex-dev-skills"):
+            for name in ("docs-update", "docs-review"):
+                text = (root / "skills" / name / "SKILL.md").read_text()
+                with self.subTest(root=root, skill=name):
+                    for term in ("unnecessary jargon", "abbreviations", "mixed-language wording",
+                                 "noun sequences", "necessary technical terms", "machine literals"):
+                        self.assertIn(term, text)
+                    self.assertIn("full conformance is unverified", text)
+                    self.assertIn("Traditional Chinese", text)
+            workflow = (root / "vendor/engineering-workflow-core/contracts/workflow.md").read_text()
+            examples = root / "vendor/engineering-workflow-core/docs/companion/plain-writing-examples.md"
+            self.assertIn("../docs/companion/plain-writing-examples.md", workflow)
+            self.assertIn("All examples are hypothetical", examples.read_text())
+            self.assertIn("adds no duty", examples.read_text())
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,11 @@
 # Fixed Core Loading Contract
 
+## v0.4.1 source adoption / 來源採用
+
+本來源固定採用正式 Core v0.4.1 commit 1cc9203b7240a440b7a6172db5da10eda922f67f、reviewed head 5901fbc72f265df555ae010484b7d1aee47b9aa8、annotated tag object a1f10f9c4259d7fc0ba029377383db99b67d0193 的完整 28 檔（27 份 Markdown 與 LICENSE），共 510483 bytes。Release 434893027 已讀回非 draft／非 prerelease。普通 loader 僅選此身分；原 v0.4.0 的 26 檔保留為第六份明確 opt-in installer history。下方較舊來源段落保留為各階段歷史。
+
+This source adopts the exact published Core v0.4.1 identity above. Preserve all earlier descriptors, notices and fixed evaluations. Core wf-writing clarifies existing reader, terminology and precision requirements; its examples remain optional. No new gate, prohibited-word list, runtime mechanism or STE certification is added. The complete #23 environment-specific exception remains unchanged; adoption supplies no acceptance record. Source preparation does not prove Codex publication, installation or session loading.
+
 ## v0.4.0 source adoption / 來源採用
 
 本來源包固定正式 Core v0.4.0 commit `4c8d35ad7c8e9d6a7c47331e5bd93eea2b45c535`、reviewed head `21c1fe39a87f5207fd962d61e69910cf48b4d88c`、annotated tag object `b0d04f75fd491adb200799ba89115e762b4011d1` 的 26 檔（25 份 Markdown 與 LICENSE），共 494192 bytes；Release 434673080 已讀回非 draft／非 prerelease。普通 loader 僅選此身分；v0.3.0 的 23 檔新增為第五個明確 installer history，仍須 opt-in。以下較舊 pin 的現行描述只記錄其歷史適用階段，不改普通選取結果。

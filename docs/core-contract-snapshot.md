@@ -1,6 +1,6 @@
 # 固定 Core 文件的 Codex 接法
 
-本來源準備 v0.38.0，採正式 Core v0.4.0 的 26 檔；固定身分、26 檔／23 檔遷移及驗證邊界見 [準備紀錄](releases/v0.38.0-split.md)。下方較舊 pin 與數值保留為各階段歷史；固定候選／分數不改。This source prepares Core v0.4.0. Earlier records and evaluations retain their original scope. Source/package, publication, installation and runtime qualification remain separate.
+本來源準備 v0.38.1，採正式 Core v0.4.1 的完整 28 檔；固定身分、26／28 檔遷移與驗證邊界見 [準備紀錄](releases/v0.38.1-split.md)。下方較舊 pin、數值及固定 eval 保留為各階段歷史。This source prepares Core v0.4.1. Earlier records and evaluations retain their original scope. Source/package, publication, installation, session loading and runtime qualification remain separate.
 
 
 2026-11-01 source adoption: Core v0.2.0 is fixed at commit `6887bfe6183465e9a9e6ccb4ccd7305a58b37302`, tag object `0ba0fd98e2343f72e555d9bf0e8b1bc5650cd93d`, with twenty files. 本版 source/package0.36.0保留v0.1.1十四檔及先前十一/十三檔的明確 installer history；下方舊 pin/清冊說明保留為相應版本歷史。正式來源、版本與遷移驗證見 [0.36.0 準備紀錄](releases/v0.36.0-split.md)。Source preparation does not update installed skills or prove runtime qualification.
@@ -261,6 +261,19 @@ the distinct Codex canonical-record set is
 `793a7ec7e5cda3bf4c7f3b3236fd1511b2aa6ed910153b887fe185248ffa6593`.
 These supersede earlier ordinary-pin counts and limits below only for v0.4.0.
 All earlier immutable descriptors remain explicit installer history.
+
+### v0.4.1 writing clarification
+
+The ordinary set now has 28 files / 510483 bytes. The Markdown-only digest is
+8f0874579c0c1b18182ea2a5d8b3ed0779d316b5a0f198b4187a3a4d956f4ae5;
+the full upstream path/hash digest is
+8d826b94a5921dcd489985faf5359383705d6c0623cbf9d1f7df92283c264255;
+the distinct Codex canonical-record digest is
+d034de70bb64137885db70954660321e920333ce73d9b67bf96532e142cf605e.
+Keep the two lock fields tied to their own algorithms. The old 26-file descriptor
+is explicit installer history. Existing docs-update/docs-review apply wf-writing
+without a separate standard or gate; examples are optional and necessary terms,
+technical precision, machine literals and #23 remain protected.
 
 ### Loading and compatible entries
 

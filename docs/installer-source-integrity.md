@@ -1,5 +1,11 @@
 # 固定來源安裝與回復 / Fixed-source installation and recovery
 
+## 0.38.1 candidate / 候選
+
+Issue #373 準備 Core v0.4.1 的完整 28 檔。既有十筆正式映射保持不變；新來源需先有實際已審 payload commit，再加入第十一筆固定映射。隔離測試的 synthetic snapshot／mapping 只供測試，不能成為正式 pin 或實裝證據。正式 mapping 完成前，不宣稱此候選可安裝。下方既有映射及歷史原文保留。
+
+Prepare the complete 28-file Core v0.4.1 set. Preserve all ten formal registry entries. The real reviewed payload commit must precede a new immutable mapping. Synthetic fixture mappings remain test data; they establish neither formal source authority nor install readiness.
+
 ## 0.38.0 mapping / 固定來源映射
 
 Issue #371 新增第十筆固定來源映射：source/package `0.38.0` 對應已審 payload commit `ac3703efa42ad75ecdc52e7e0476dfcde93ac00b`，包含 Core v0.4.0 的 26 檔。既有九筆映射完整保留。後續 registry 與非 payload 文件提交不改 catalog 或受管 payload；receipt 仍記錄實際選取的 HEAD。映射不證明已發布或已更新安裝。下方 0.37.0 與較舊說明記錄其相應來源階段。

@@ -90,11 +90,13 @@ check_no_provider_terms() {
       --glob '!vendor/engineering-workflow-core/docs/maintenance/2026-11-04-issue-22-23-followup.md' \
       --glob '!vendor/engineering-workflow-core/docs/maintenance/issue-22-23-upstream-candidate.md' \
       --glob '!vendor/engineering-workflow-core/docs/releases/v0.4.0.md' \
+      --glob '!vendor/engineering-workflow-core/docs/releases/v0.4.1.md' \
       --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/README.md' \
       --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/CHANGELOG.md' \
       --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/maintenance/2026-11-04-issue-22-23-followup.md' \
       --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/maintenance/issue-22-23-upstream-candidate.md' \
       --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/releases/v0.4.0.md' \
+      --glob '!plugin/codex-dev-skills/vendor/engineering-workflow-core/docs/releases/v0.4.1.md' \
       --glob '!vendor/engineering-workflow-core/docs/companion/core-reading-guide.md' \
       --glob '!vendor/engineering-workflow-core/docs/companion/decision-cards.md' \
       --glob '!vendor/engineering-workflow-core/docs/companion/review-decisions.md' \

@@ -39,6 +39,7 @@ For filesystem installs, use that section of the installed policy path above.
 - unsupported claims
 - reader, purpose, document type and operating depth under Core `wf-writing`
 - consistent terminology, sentence meaning, explicit actors/actions, step order and necessary term explanations
+- unnecessary jargon, abbreviations, mixed-language wording and noun sequences for the intended readers; keep necessary technical terms and established abbreviations, explain them when needed, and preserve precise meaning and machine literals
 - preservation of technical detail, safety, authority, evidence, prerequisites, risks and limitations; writing-style changes must preserve exact machine literals, required quotations and license text
 - bilingual equivalence against the authoritative text, including obligations and important information
 - evidence for any full STE claim: formal rules, controlled dictionary, applicable technical terms and reviewed scope; short sentences, a checker or self-assessment alone are insufficient

@@ -14,7 +14,7 @@ from tests.test_installer_source_integrity import CURRENT_VERSION, InstallerFixt
 
 
 class InstallerFaultBoundaryTests(InstallerFixture):
-    def test_twenty_three_to_twenty_six_and_back_keeps_exact_closure(self):
+    def test_twenty_three_to_twenty_eight_and_back_keeps_exact_closure(self):
         revision = "58cbe9171ec6bba17f367919812a67582a5526a5"
         self.seed("0.37.0", groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"],
                   snapshot_revision=revision)
@@ -25,7 +25,7 @@ class InstallerFaultBoundaryTests(InstallerFixture):
         result = self.run_installer("update", "--all")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assert_version(CURRENT_VERSION)
-        self.assertEqual(26, sum(p.is_file() for p in core_root.rglob("*")))
+        self.assertEqual(28, sum(p.is_file() for p in core_root.rglob("*")))
         self.assertTrue((core_root / "docs/releases/v0.4.0.md").is_file())
         old = self.case / f"source-{revision}"
         result = self.run_installer("update", "--all", "--source", old)
@@ -40,7 +40,7 @@ class InstallerFaultBoundaryTests(InstallerFixture):
         core_root = self.home / ".codex/templates/orchestration/core"
         overrides = self.command("python3", '''
 if [[ "$1" == */installer-inventory.py && "$2" == verify ]]; then
-  [[ -f "$CORE_ROOT/docs/releases/v0.4.0.md" ]] || exit 79
+  [[ -f "$CORE_ROOT/docs/releases/v0.4.1.md" ]] || exit 79
   echo injected-v04-postverify >&2; exit 78
 fi''', {"CORE_ROOT": str(core_root)})
         before = self.snapshot()
@@ -50,7 +50,7 @@ fi''', {"CORE_ROOT": str(core_root)})
         self.assertEqual(before, self.snapshot(), result.stderr)
         self.assertEqual(receipt, json.loads(self.receipt.read_text()))
 
-    def test_twenty_six_file_downgrade_fault_restores_current_tree(self):
+    def test_twenty_eight_file_downgrade_fault_restores_current_tree(self):
         receipt = self.seed(CURRENT_VERSION, groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"])
         old = self.fixed_source("58cbe9171ec6bba17f367919812a67582a5526a5")
         overrides = self.command("mv", '''
