@@ -206,8 +206,10 @@ sandbox values are workflow expectations. Reject expectations that exceed the
 observed parent boundary; this conservative comparison does not establish
 separate read-only isolation or grant workflow write authorization. A read-only
 reviewer under a workspace-write parent is constrained by workflow instructions,
-not a separate technical sandbox. If technical read-only isolation is required,
-verify a read-only parent/control surface or stop the dependent operation.
+not a separate technical sandbox. For required independent review, follow
+[reviewer selection](agent-delegation-policy.md#codex-required-independent-reviewer-selection)
+and fixed Core's effective read-only conditions or its explicit, applicable
+environment-specific exception. A model/profile fallback cannot waive them.
 Unknown parent permissions require fallback without a custom-profile readiness
 claim. Degrade in this order:
 

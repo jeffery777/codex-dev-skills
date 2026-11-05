@@ -7,6 +7,16 @@
 <details open>
 <summary>繁體中文（預設展開）</summary>
 
+## v0.4.0 — 必要 reviewer 與公開資料檢查準備
+
+後續使用者要求加入特定環境的一次性殘餘風險接受例外：必要用途使寫入通道無法移除時，明確記錄通道、理由、替代偵測及未涵蓋範圍；環境及規則未變可重用接受，改變須重新接受，偵測到受審內容改動則該次審查作廢。下方有效唯讀要求保留為預設；例外不宣稱技術禁寫、完整偵測或 Claude 的接受紀錄已完成。
+
+在 review-and-security 只新增完整句子，定義所有必要 reviewer 路徑對任務受保護資源的有效唯讀資格，以及每次相關 commit／push／merge／tag／PR／Issue 公開操作的有界資料檢查。保留 parent sandbox 繼承、相依停止、實際 review、按風險決定正式掃描、原始 metadata、公開授權與受控證據；不加入執行器、整台主機不可寫或完整秘密偵測保證。
+
+本次 #22／#23 按使用者的新時點，由 Core 先完成自身必要評估、測試與審查，再核對採納／發布授權；Codex 後續採用自行驗證，Grok 工作暫緩、相容性未知。先前雙端先驗 gate 文字保留為舊工作包歷史，不能當成這次 Core 仍必須等待下游的要求，也不能改記下游已通過。詳見 [上游候選](docs/maintenance/issue-22-23-upstream-candidate.md)及 [v0.4.0 準備紀錄](docs/releases/v0.4.0.md)。
+
+新增義務依版本方式準備下一 minor；此條目不證明已合併、tag／Release 已發布或下游已採用。其餘三契約、全部舊字／行序、LICENSE、完整 notices 與既有發行歷史保留，新清冊與引用閉包另驗。
+
 ## 尚未選版 — 剩餘回饋評估資料
 
 本節標題保留原未選版評估入口；下方 v0.3.0 記錄後續 draft 候選階段，再下方的原評估段落保留準備歷史，不能單獨判定目前候選的契約 bytes。
@@ -74,6 +84,16 @@ Core 的文件版本由本檔已提交的版本條目記錄，採 `vMAJOR.MINOR.
 
 <details>
 <summary>English (expand to read)</summary>
+
+## v0.4.0 — Required reviewers and publication-data preparation
+
+The user's later exception permits one-time acceptance of residual risk for a specific environment when a necessary purpose prevents removal of a write channel. Record channels, reasons, alternative detection and uncovered scope. Reuse acceptance while the environment and rules remain unchanged; renew it on change. Detected reviewed-content modification invalidates that review. The read-only requirement below remains the default. Acceptance proves neither technical denial, complete detection nor a completed Claude acceptance record.
+
+Add complete sentences only to review-and-security for every required reviewer route's effective read-only qualification over protected task resources and bounded inspection before relevant commit/push/merge/tag/PR/Issue operations. Retain inherited parent sandboxes, dependent stops, actual review, risk-based formal scans, raw metadata, publication authority and controlled evidence. Add no executor, whole-host no-write rule or complete-secret-detector guarantee.
+
+Under the user's revised timing for this #22/#23 work, Core completes its own required evaluation, tests and review before separately authorized adoption/publication. Codex validates later adoption; Grok work is deferred and compatibility unknown. Earlier dual-consumer-first wording remains historical, neither a current Core dependency nor proof that consumers passed. The upstream candidate and v0.4.0 record explain the scope and checks.
+
+New duties prepare the next minor. This entry proves neither merge/tag/Release nor consumer adoption. Preserve the other three contracts, every earlier word/line, LICENSE, complete notices and release history; verify the new inventory/reference closure separately.
 
 ## Unversioned — Remaining feedback evaluation data
 

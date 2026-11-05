@@ -68,8 +68,11 @@ expectations, not runtime isolation evidence. Preflight requires observed
 scope with that boundary. `sandbox_non_widening` records that comparison only.
 With a workspace-write parent, a read-only reviewer remains forbidden to edit
 by its workflow instructions, but has no separate technical read-only sandbox.
-When acceptance requires technical read-only isolation, use an independently
-verified read-only parent/control surface or stop that dependent operation.
+For required independent review, follow the full effective read-only conditions
+or explicit environment-specific exception in fixed Core through
+`../../../policies/agent-delegation-policy.md#codex-required-independent-reviewer-selection`
+(source/plugin), or the same policy under the installed templates root.
+An inherited writable sandbox or model fallback cannot waive these conditions.
 Historical `unknown-at-least-read-only` receipts remain readable, but cannot
 qualify a fresh route or establish current permissions. Never dispatch from old
 evidence without current preflight. A profile never authorizes writes merely

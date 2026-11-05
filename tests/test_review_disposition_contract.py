@@ -88,7 +88,7 @@ class ReviewerSelectionContractCoverageTests(unittest.TestCase):
                                        "actual review, evidence, findings and dispositions")),
         ("current-complete-review", ("current reviewed revision or diff",
                                      "under the existing gate")),
-        ("express-isolation-requirement", ("Verify technical isolation only where the task expressly requires it",
+        ("effective-readonly-requirement", ("For every required reviewer, apply fixed Core",
                                            "a whole-host no-write rule or an inventory of unrelated tools")),
         ("stale-target-or-conditions", ("A stale target or changed required condition returns to the affected checks",)),
     )
@@ -100,6 +100,17 @@ class ReviewerSelectionContractCoverageTests(unittest.TestCase):
             with self.subTest(scenario=scenario):
                 for fragment in fragments:
                     self.assertIn(fragment, policy, scenario)
+
+    def test_v040_adapters_keep_exception_and_publication_scope(self) -> None:
+        policy = read("policies/agent-delegation-policy.md")
+        self.assertIn("review-required-read-only", policy)
+        self.assertIn("Do not infer user acceptance", policy)
+        self.assertIn("detection, invalidation and", policy)
+        publication = read("policies/security-review-escalation-policy.md")
+        self.assertIn("review-publication-data", publication)
+        for fragment in ("raw Git objects", "complete intended range", "prospective merge/squash",
+                         "all actual destinations", "cannot satisfy checks of commits"):
+            self.assertIn(fragment, publication)
 
     def test_runtime_reference_keeps_evidence_limits(self) -> None:
         runtime = read("docs/native-runtime-capabilities.md")

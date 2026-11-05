@@ -30,6 +30,21 @@ dependency/installation impact and concrete concerns, not file extensions or a
 clean ordinary review. Record examined scope and rationale for not applicable;
 NOT_RUN and not applicable are not Passed.
 
+## Publication Data And Destinations
+
+Before public operations, read and apply fixed Core's full
+[publication-data inspection](../vendor/engineering-workflow-core/contracts/review-and-security.md#review-publication-data)
+through the loading contract. Bind inspection to actual content, raw Git objects,
+the complete intended range, prospective merge/squash results, supported public
+metadata and all actual destinations. Stop dependent publication when required
+data is unknown. Preserve the distinct formal Security Diff Scan and action gates.
+
+Codex keeps its existing Git and provider control planes. The optional
+developer-only PR-text helper covers only its declared title/body/metadata subset;
+it cannot satisfy checks of commits, signatures, tags, other payloads or destinations.
+Record actual coverage and gaps in the existing review report. This adapter adds
+no automatic enforcement, signing-secret access or permission to publish.
+
 ## Project Policy, Capability Gaps And External Evidence
 
 Before choosing checks, apply fixed Core's full review/security contract. Resolve

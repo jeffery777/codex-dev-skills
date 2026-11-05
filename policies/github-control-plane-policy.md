@@ -109,6 +109,18 @@ GitHub Actions check identity as the authoritative receipt or dedicated-App
 identity. Upstream hosted CI uses an exact trusted workflow ID/name/path/event
 and associated live PR head, and excludes `Exact-Head Merge Readiness` itself.
 
+## Public Operation Inspection
+
+Before a public GitHub operation, follow fixed Core's complete publication-data
+inspection through [the security adapter](security-review-escalation-policy.md#publication-data-and-destinations).
+Inspect the exact non-Git request and supported necessary metadata separately
+from Git payloads. Local Git inspection must use raw fixed objects, not mailmap,
+replace refs or display-filtered output; include the full intended commit range
+and prospective merge/squash results. Resolve actual push URLs/refspecs and
+rewrites, not just the fetch remote. An unknown required object, metadata field
+or destination blocks its dependent operation. No helper success or later
+readback fills a missing pre-operation check.
+
 ## Mutation And Authority Boundary
 
 Connector-first does not authorize a GitHub write. Creating or editing Issues,

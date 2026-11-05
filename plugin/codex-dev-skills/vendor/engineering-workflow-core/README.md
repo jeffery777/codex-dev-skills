@@ -23,6 +23,12 @@ GitHub disclosure sections are independent. Traditional Chinese is open by defau
 
 ## 開始閱讀
 
+[v0.4.0 規則準備紀錄](docs/releases/v0.4.0.md)及 [#22／#23 上游候選](docs/maintenance/issue-22-23-upstream-candidate.md)描述新增 reviewer 資格與公開資料檢查，並按使用者後續決策分開 Core 自身驗收與下游採用。下方 PR31 伴讀及雙端先驗門檻保留準備歷史；本次 Core 不再以 Grok pin／eval 為前置，Grok 相容性未知，版本／候選文字也不證明正式合併或發布。
+
+必要 reviewer 的有效唯讀是預設；後續新增的[特定環境例外](contracts/review-and-security.md#review-required-read-only)允許使用者一次性接受必要保留寫入通道的殘餘風險，記錄替代偵測與缺口，同環境及規則未變不逐次確認，改變則重新接受，偵測到受審內容改動使該次審查作廢。例外不等於技術唯讀，也不是本頁或 Claude 案例已完成特定環境接受的證明。
+
+本輪 #23／#22 的[接續評估](docs/maintenance/2026-11-04-issue-22-23-followup.md)與[新增伴讀](docs/companion/remaining-feedback-cases.md#followup-22-23)區分既有 Core 義務、Codex #370／#368 的有限交付及尚未採納的共用門檻，並列後續驗收與 Grok pending 相依；四份權威契約保持原 bytes。
+
 緊接的首段保留較早伴讀／未生效測試階段；其中「四份契約未修改」不是後續候選的 bytes 聲明。目前 [v0.3.0 draft](docs/releases/v0.3.0.md) 在雙端有限文字門檻後只向 workflow 新增兩句，尚未正式採納或更新 consumer；選用伴讀本身仍非權威。
 
 剩餘 #27 → #21 → #23 → #22 的具體反例見 [回饋判讀案例](docs/companion/remaining-feedback-cases.md)；[接續工作包](docs/maintenance/2026-11-01-remaining-feedback.md) 區分既有義務、未採納提案與兩句待測文字。它們均非權威文件，四份契約未修改，不代表新候選已通過 consumer eval 或已接受。
@@ -108,6 +114,12 @@ Engineering teams need shared delivery requirements. These include who can chang
 Suppose you must assign implementation and review for a change. Read the shared workflow first. Confirm the scope and completion criteria. The interface then selects available tools, assigns an independent reviewer, and keeps verification and review evidence. The documents define the required outcomes. The interface performs actions and checks qualification.
 
 ## Start here
+
+The [v0.4.0 rule-preparation record](docs/releases/v0.4.0.md) and [#22/#23 upstream candidate](docs/maintenance/issue-22-23-upstream-candidate.md) describe added reviewer/publication duties and separate Core acceptance from later consumer adoption under the revised user decision. Earlier PR31 guidance and dual-consumer-first statements retain preparation history. Grok pins/evals no longer gate this Core work; compatibility is unknown. Version/candidate wording does not prove merge or publication.
+
+Effective read-only review remains the default. The later environment-specific exception permits one-time user acceptance of necessarily retained write channels, recording alternative detection and gaps. Unchanged environments and rules need no repeated confirmation; changes require renewed acceptance, and detected reviewed-content modification invalidates that review. This proves neither technical read-only operation nor a completed acceptance record for this page's or Claude's environment.
+
+The [#23/#22 follow-up](docs/maintenance/2026-11-04-issue-22-23-followup.md) and [added optional guide](docs/companion/remaining-feedback-cases.md#followup-22-23) distinguish existing Core duties, bounded Codex #370/#368 delivery and unadopted shared thresholds, with acceptance cases and pending Grok dependencies. All four authoritative contracts retain their bytes.
 
 The next paragraph retains the earlier companion/inactive-test stage; its four-unchanged-contract statement does not describe the later candidate bytes. The v0.3.0 draft adds only two workflow sentences after both limited text checks, without formal adoption or consumer updates. Optional guides remain non-authoritative.
 

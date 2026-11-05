@@ -168,8 +168,10 @@ workflow expectations. Preflight requires observed parent permissions for every
 role and refuses expectations exceeding that boundary. `sandbox_non_widening`
 proves only this conservative comparison. A read-only role under a workspace-write
 parent has read-only workflow instructions, not separate technical isolation.
-When acceptance requires technical read-only isolation, independently verify a
-read-only parent/control surface or stop the dependent operation. Historical
+For required independent review, apply fixed Core's effective read-only conditions
+or its explicit environment-specific exception through the
+[reviewer-selection policy](../policies/agent-delegation-policy.md#codex-required-independent-reviewer-selection).
+Profile preflight alone does not satisfy these conditions. Historical
 `unknown-at-least-read-only` receipts are readable but cannot qualify fresh
 dispatch. Separately,
 neither role nor model choice grants workflow mutation authority, external

@@ -1,5 +1,14 @@
 # 固定來源安裝與回復 / Fixed-source installation and recovery
 
+## 0.38.0 preparation / 來源準備
+
+Issue #371 準備 Core v0.4.0 的 26 檔與新來源 catalog。正式不可變映射須等實際已審 payload commit 及該操作授權；在此之前，不把合成測試 commit 寫入 registry，也不宣稱安裝就緒。既有九筆映射完整保留。下方 0.37.0 與較舊說明記錄其相應來源階段。
+
+The 0.38.0 candidate prepares the 26-file Core v0.4.0 closure. Its formal
+mapping awaits an actual reviewed payload commit and exact authority. Temporary
+synthetic mappings support isolated tests only. Preserve all nine existing
+records; earlier mapping paragraphs retain their historical scope.
+
 ## 0.37.0 mapping / 固定來源映射
 
 本候選新增第八筆固定來源映射：source/package `0.37.0` 對應已審 payload commit `6e3301b9ab488924168b24ec35a4beeb9b170c49`。既有七筆及下方原文完整保留；registry／mapping 文件／README 的後續非 payload 提交不改該 catalog 或受管檔案，實際 HEAD 仍由 receipt 記錄。映射不代表 consumer 已發布或已更新安裝。

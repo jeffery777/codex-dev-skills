@@ -1,5 +1,11 @@
 # Changelog / 變更紀錄
 
+## 0.38.0 — Core v0.4.0 adoption preparation
+
+Issue #371 固定正式 Core v0.4.0 的 26 檔與發布身分，保留完整原文、LICENSE、notices 及 v0.3.0 的明確 installer history；同步來源、plugin、filesystem 與既有 Hermes 資源。Codex 既有 reviewer／公開操作接點導讀新增義務，保留環境接受例外的全部條件，並維持 PR 文字工具的有界用途。這是 pre-1.0 minor 的來源準備；正式不可變 installer 映射待實際已審 payload commit，發行與既有安裝未更新。詳見 [準備紀錄](docs/releases/v0.38.0-split.md)。
+
+Pin the complete published Core v0.4.0 snapshot and preserve original text, notices and explicit v0.3.0 installer history. Align package resources and existing reviewer/publication adapters without inventing risk acceptance or expanding the optional PR-text helper. Prepare a minor source/package candidate. The actual reviewed payload commit must precede its formal installer mapping; this record establishes no publication or installation.
+
 ## 尚未選版 — Core #22 有界 PR 文字驗證
 
 Issue #367 新增選用 developer-only 的 PR 標題／本文驗證核心、原生 connector stdio 接線、callback／pipe／PTY 反例與[伴讀](docs/pr-text-publication.md)。錯目的地、過時內容與未知欄位在送出前阻擋，未知效果只讀對帳；不新增 Core 共用 gate、安裝入口、產品版本或 pin。真實原生驗收以當次維護 draft 的受控讀回證據判定，不由本段或合成測試推定。

@@ -1,6 +1,6 @@
 # 固定 Core 文件的 Codex 接法
 
-本來源準備 v0.37.0，採正式 Core v0.3.0 `7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e` 與 tag object `0e91dfaa7f3969c9ec3d9647a765ec2f116057bb` 的二十三檔；詳見 [v0.37.0 準備紀錄](releases/v0.37.0-split.md)。既有二十檔與較舊來源段落保留為各階段歷史，固定候選／分數不改。This v0.37.0 source prepares the published 23-file Core v0.3.0 adoption; preserve earlier records and historical evaluations. Consumer publication and installation remain separate.
+本來源準備 v0.38.0，採正式 Core v0.4.0 的 26 檔；固定身分、26 檔／23 檔遷移及驗證邊界見 [準備紀錄](releases/v0.38.0-split.md)。下方較舊 pin 與數值保留為各階段歷史；固定候選／分數不改。This source prepares Core v0.4.0. Earlier records and evaluations retain their original scope. Source/package, publication, installation and runtime qualification remain separate.
 
 
 2026-11-01 source adoption: Core v0.2.0 is fixed at commit `6887bfe6183465e9a9e6ccb4ccd7305a58b37302`, tag object `0ba0fd98e2343f72e555d9bf0e8b1bc5650cd93d`, with twenty files. 本版 source/package0.36.0保留v0.1.1十四檔及先前十一/十三檔的明確 installer history；下方舊 pin/清冊說明保留為相應版本歷史。正式來源、版本與遷移驗證見 [0.36.0 準備紀錄](releases/v0.36.0-split.md)。Source preparation does not update installed skills or prove runtime qualification.
@@ -245,6 +245,22 @@ publication. Preserve source review, one-way responsibilities and notices. The
 original copyright and complete MIT permission/warranty remain in LICENSE and
 upstream-notices. The latter's original Codex LICENSE block matches Codex LICENSE
 SHA-256 `a58ebea45ac922c21500dad64c6e5f54423f831d2dfdfd2b4c882aab29822d4e`.
+
+### v0.4.0 obligation mapping
+
+| Added Core clause | Existing Codex connection |
+| --- | --- |
+| review-required-read-only | agent-delegation-policy required-reviewer selection; model-selection, native runtime and loop routing refer to it. Verify relevant effective controls or a valid explicit exception; no record is supplied by adoption. |
+| review-publication-data | security-review-escalation-policy and GitHub control-plane adapters; exact raw objects, full ranges, prospective results and actual destinations remain operation-specific. PR-text helper coverage stays bounded. |
+
+The 26-file set totals 494192 bytes. Markdown-set SHA-256 is
+`5c833ca3a00a963f29902500c67dc44716381a8835f0721258f539f2f034de06`;
+full path/TAB/hash/LF set is
+`ee3c68428a3ff41a8acdf018c692c270b3b8a02957547c5f4c8829157f75d990`;
+the distinct Codex canonical-record set is
+`793a7ec7e5cda3bf4c7f3b3236fd1511b2aa6ed910153b887fe185248ffa6593`.
+These supersede earlier ordinary-pin counts and limits below only for v0.4.0.
+All earlier immutable descriptors remain explicit installer history.
 
 ### Loading and compatible entries
 

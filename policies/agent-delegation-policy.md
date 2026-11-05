@@ -92,7 +92,10 @@ the actual review, evidence, findings and dispositions under the existing gate.
 A stale target or changed required condition returns to the affected checks.
 
 Read-only workflow instructions do not establish technical isolation.
-Verify technical isolation only where the task expressly requires it; do not add
+For every required reviewer, apply fixed Core's full
+[effective read-only conditions](../vendor/engineering-workflow-core/contracts/review-and-security.md#review-required-read-only)
+through the loading contract. Verify current supported controls on all relevant
+direct, shell and broker channels before counting the review; do not add
 a whole-host no-write rule or an inventory of unrelated tools.
 Assess only the selected route's exposed paths relevant to its required boundary.
 If a relevant shell, broker, or other write path is exposed, a denial on another
@@ -100,6 +103,11 @@ tool does not establish that this path is constrained.
 The parent persists the returned review under existing authority and retention
 rules; this binding grants no reviewer write or publication authority.
 This Codex binding does not qualify another runtime or change Core authority.
+
+Only Core's explicit environment-specific exception permits a necessary retained
+write channel. Apply its complete acceptance, detection, invalidation and
+revalidation rules. Do not infer user acceptance, transfer another environment's
+record, or label accepted residual risk as technical read-only qualification.
 
 Contract-coverage tests check wording and references only; they do not run a
 review, qualify a runtime, or enforce this binding at dispatch.

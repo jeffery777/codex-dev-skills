@@ -55,7 +55,7 @@ class ReleasePreparationTests(unittest.TestCase):
         self.assertIsNone(value["tag_object"])
         for key in ("formal_core_adopted", "runtime_qualified", "merge_authorized"):
             self.assertIs(value[key], False)
-        self.assertEqual(formal.validate(self.root)["core_revision"], "7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e")
+        self.assertEqual(formal.validate(self.root)["core_revision"], "4c8d35ad7c8e9d6a7c47331e5bd93eea2b45c535")
 
     def test_historical_baseline_tamper_is_not_hidden_by_insert_only(self):
         path = self.root / "tests/fixtures/core-feedback-baseline/README.md"
@@ -123,7 +123,7 @@ class ReleasePreparationTests(unittest.TestCase):
         shutil.copytree(ROOT / "vendor/engineering-workflow-core", vendor)
         # The real published current lock now accepts the same reviewed tree.
         # Historical comparison must reproduce the old candidate without a stub.
-        self.assertEqual(formal.validate(self.root)["files"], 23)
+        self.assertEqual(formal.validate(self.root)["files"], 26)
         with patch.object(candidate, "ROOT", self.root):
             _, _, cases = candidate.inspect(self.root / "tests/fixtures/core-feedback-candidate")
         self.assertEqual(len(cases), 9)
@@ -138,9 +138,9 @@ class ReleasePreparationTests(unittest.TestCase):
 
     def test_published_current_keeps_exact_v011_as_opt_in_history(self):
         value = json.loads((ROOT / "vendor/engineering-workflow-core.lock.json").read_bytes())
-        self.assertEqual(value["source"]["revision"], "7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e")
-        self.assertEqual(value["source"]["tag_object"], "0e91dfaa7f3969c9ec3d9647a765ec2f116057bb")
-        self.assertEqual(value["source"]["reviewed_head"], "b1bc76ee8cf8869731bf1a115be54aaeef7341ce")
+        self.assertEqual(value["source"]["revision"], "4c8d35ad7c8e9d6a7c47331e5bd93eea2b45c535")
+        self.assertEqual(value["source"]["tag_object"], "b0d04f75fd491adb200799ba89115e762b4011d1")
+        self.assertEqual(value["source"]["reviewed_head"], "21c1fe39a87f5207fd962d61e69910cf48b4d88c")
         vendor = self.root / "vendor/engineering-workflow-core"
         shutil.rmtree(vendor)
         shutil.copytree(self.root / "tests/fixtures/core-feedback-baseline", vendor)
@@ -177,7 +177,13 @@ class ReleasePreparationTests(unittest.TestCase):
                 self.assertTrue(candidate.inserted_only(path.read_bytes(), (after / relative).read_bytes()), str(relative))
         for name in ("contracts/authorization-and-stops.md", "contracts/exact-head-and-evidence.md",
                      "contracts/review-and-security.md", "LICENSE", "docs/provenance/upstream-notices.md"):
-            self.assertEqual((before / name).read_bytes(), (after / name).read_bytes())
+            # Keep the original v0.3.0 equality assertion bound to its immutable
+            # source. Current additions retain every original line above.
+            actual = (subprocess.check_output([
+                "git", "-C", str(ROOT), "show",
+                "cc337f328704c12f1083333d90f964dbb6e1b51e:vendor/engineering-workflow-core/" + name,
+            ]) if name == "contracts/review-and-security.md" else (after / name).read_bytes())
+            self.assertEqual((before / name).read_bytes(), actual)
         proposal = (ROOT / "tests/fixtures/core-premise-proposal.txt").read_bytes() + b"\n"
         final = (after / "contracts/workflow.md").read_bytes()
         self.assertEqual(1, final.count(proposal))
