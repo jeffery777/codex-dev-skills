@@ -14,6 +14,57 @@ from tests.test_installer_source_integrity import CURRENT_VERSION, InstallerFixt
 
 
 class InstallerFaultBoundaryTests(InstallerFixture):
+    def test_twenty_three_to_twenty_six_and_back_keeps_exact_closure(self):
+        revision = "58cbe9171ec6bba17f367919812a67582a5526a5"
+        self.seed("0.37.0", groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"],
+                  snapshot_revision=revision)
+        core_root = self.home / ".codex/templates/orchestration/core"
+        original = {p.relative_to(core_root).as_posix(): (p.stat().st_mode, p.read_bytes())
+                    for p in core_root.rglob("*") if p.is_file()}
+        self.assertEqual(23, len(original))
+        result = self.run_installer("update", "--all")
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assert_version(CURRENT_VERSION)
+        self.assertEqual(26, sum(p.is_file() for p in core_root.rglob("*")))
+        self.assertTrue((core_root / "docs/releases/v0.4.0.md").is_file())
+        old = self.case / f"source-{revision}"
+        result = self.run_installer("update", "--all", "--source", old)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assert_version("0.37.0")
+        self.assertEqual(original, {p.relative_to(core_root).as_posix(): (p.stat().st_mode, p.read_bytes())
+                                    for p in core_root.rglob("*") if p.is_file()})
+
+    def test_twenty_three_file_upgrade_postverify_fault_restores_old_tree(self):
+        receipt = self.seed("0.37.0", groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"],
+                            snapshot_revision="58cbe9171ec6bba17f367919812a67582a5526a5")
+        core_root = self.home / ".codex/templates/orchestration/core"
+        overrides = self.command("python3", '''
+if [[ "$1" == */installer-inventory.py && "$2" == verify ]]; then
+  [[ -f "$CORE_ROOT/docs/releases/v0.4.0.md" ]] || exit 79
+  echo injected-v04-postverify >&2; exit 78
+fi''', {"CORE_ROOT": str(core_root)})
+        before = self.snapshot()
+        result = self.run_installer("update", "--all", overrides=overrides)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("injected-v04-postverify", result.stderr)
+        self.assertEqual(before, self.snapshot(), result.stderr)
+        self.assertEqual(receipt, json.loads(self.receipt.read_text()))
+
+    def test_twenty_six_file_downgrade_fault_restores_current_tree(self):
+        receipt = self.seed(CURRENT_VERSION, groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"])
+        old = self.fixed_source("58cbe9171ec6bba17f367919812a67582a5526a5")
+        overrides = self.command("mv", '''
+case "$1:$2" in
+  *.receipt.*/value:*/installed.jsonl)
+    echo injected-v03-downgrade >&2; exit 78 ;;
+esac''')
+        before = self.snapshot()
+        result = self.run_installer("update", "--all", "--source", old, overrides=overrides)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("injected-v03-downgrade", result.stderr)
+        self.assertEqual(before, self.snapshot(), result.stderr)
+        self.assertEqual(receipt, json.loads(self.receipt.read_text()))
+
     def test_formal_fourteen_upgrade_faults_restore_exact_old_tree(self):
         receipt = self.seed("0.35.2", groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"],
                             snapshot_revision="73cee30f5aee09c9218505624f1caa433ef72946")

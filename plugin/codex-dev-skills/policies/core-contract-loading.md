@@ -1,5 +1,13 @@
 # Fixed Core Loading Contract
 
+## v0.4.0 source adoption / 來源採用
+
+本來源包固定正式 Core v0.4.0 commit `4c8d35ad7c8e9d6a7c47331e5bd93eea2b45c535`、reviewed head `21c1fe39a87f5207fd962d61e69910cf48b4d88c`、annotated tag object `b0d04f75fd491adb200799ba89115e762b4011d1` 的 26 檔（25 份 Markdown 與 LICENSE），共 494192 bytes；Release 434673080 已讀回非 draft／非 prerelease。普通 loader 僅選此身分；v0.3.0 的 23 檔新增為第五個明確 installer history，仍須 opt-in。以下較舊 pin 的現行描述只記錄其歷史適用階段，不改普通選取結果。
+
+This source adopts the exact published Core v0.4.0 identity above. Preserve all earlier installer histories, notices and fixed evaluations. Verify the full snapshot before loading required contracts. Source/package preparation does not establish publication, installed adoption or runtime qualification.
+
+For required review, read full review/security, including `review-required-read-only` and its complete environment-specific exception. No acceptance record is inferred or supplied by this package. For public operations, also read `review-publication-data`; actual Codex controls, raw data and destinations need current evidence. Existing optional PR-text tooling covers only its documented subset.
+
 ## v0.3.0 source adoption / 來源採用
 
 本來源包採正式 Core v0.3.0 commit `7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e`、annotated tag object `0e91dfaa7f3969c9ec3d9647a765ec2f116057bb` 的二十三檔，包含二十二份 Markdown 與原 LICENSE；Release 430452222 已讀回非 draft／非 prerelease。普通 loader 僅選此身分；v0.2.0 二十檔新增為第四個明確 installer history，既有歷史身分、原文、驗證及停止規則保持。下方 v0.2.0／v0.1.1 現行描述保留為當時來源階段歷史。

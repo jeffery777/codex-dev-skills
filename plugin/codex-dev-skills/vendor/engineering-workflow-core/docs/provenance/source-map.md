@@ -321,3 +321,37 @@ This packet integrates PR28's optional companions and PR29's #24/#26 candidate w
 接續七案剩餘維護及使用者確認的 Agent／workflow 目標，保留全部舊字，新增正常流程範圍說明及 [v0.3.0 draft 準備紀錄](../releases/v0.3.0.md)。先由 Codex 再 Grok 各自固定 Core9cec 的四契約／382-byte 引文，v3 僅對一案附加批准澄清、十二案 expected 不變；各一次實際12/12及獨立理由通過後，才將相同原字兩句加至 wf-verification。workflow 舊字完整保留，其他三契約／LICENSE／完整 notices equality 不變。這不改原107單位的來源，不以舊九案證明新語義，不接受其他擴張義務或更新 consumer／安裝。
 
 Continue the remaining seven-Issue maintenance under the user-confirmed agent/workflow scope, preserving all old text. Add bounded normal-process guidance and the v0.3.0 draft record. Codex then Grok independently pin Core9cec's four contracts/382-byte quotation; v3 appends the approved clarification to one case with all expected values unchanged. Only after each actual12/12 and independent reasoning PASS insert the exact two sentences in wf-verification. Preserve all original workflow text and exact other contracts/LICENSE/full notices. Do not rewrite the original107-unit provenance, use old nine-case results for new semantics, adopt broader proposals or update consumers/installations.
+
+## 2026-11-04 #23／#22 接續來源／Follow-up sources
+
+依使用者的 Core 接續要求，新增[剩餘需求評估](../maintenance/2026-11-04-issue-22-23-followup.md)及[選用伴讀](../companion/remaining-feedback-cases.md#followup-22-23)，以兩案本文、全部實際留言、Codex #370／#368 的固定來源交付與既有正式契約逐項核對。#22 的 10/30 補充確實存在，#23 沒有該日留言；不倒寫缺少的來源。新增內容為本包的接口無關分析，不移植 Claude／Codex 特定工具或將其能力升格為 Core 義務，既有原107單位、來源 notices 與全部舊字保留。
+
+本包不改四份權威契約、LICENSE 或完整 notices，不建立修改型候選 commit、consumer pin／eval 或新發行。Codex 局部交付不表示 Core #22／#23 完成；Grok 依最新使用者指示暫緩，雙端新門檻仍 pending。新增文件與引用會改完整清冊及 dependency closure，未來採用另驗固定 revision／digest，不沿用舊集合宣稱已包含本包。
+
+Under the user's Core continuation request, add the linked assessment and optional guidance using both Issue bodies, every actual comment, fixed Codex #370/#368 delivery and existing authoritative contracts. #22 has the October 30 supplement; #23 does not. This packet supplies interface-neutral analysis rather than transplanting provider tools or promoting their capabilities into Core duties. Retain the original107 units, source notices and every earlier word.
+
+Preserve all four authoritative contracts, LICENSE and complete notices. Create no modifying-candidate commit, consumer pin/eval or release. Bounded Codex delivery does not complete Core #22/#23; Grok and the new dual-consumer threshold remain pending. Later adoption must verify the changed inventory/reference closure and fixed revision/digests. Old set identities do not cover this addition.
+
+## 2026-11-04 上游規則與時點新決策／Upstream rule and timing decision
+
+使用者在 PR31 伴讀交付後，釐清 Core 上游完成自身必要評估、測試及審查後可先採納與發布，不須等待 Codex／Grok pin 候選或完成 eval；Codex 在後續採用自行驗證，Grok 工作暫緩、相容性未知。本段記錄本次 #22／#23 新決策的來源及適用範圍，取代該工作先前的雙端先驗時點，不倒寫已完成工作包或當時未執行的驗證。
+
+本包在 [review-and-security](../../contracts/review-and-security.md) 新增接口無關完整句子，覆蓋兩案本文及 #22 10/30 補充的必要 reviewer 有效唯讀資格與公開操作資料檢查，沒有移植 Claude／Codex 專用工具、控制參數或驗證資格。它是原107單位之後的新義務，不是 P1 原字抽取；舊來源、所有原字行序、完整 notices／LICENSE、其他三契約及歷史發行文件保留。需求、早期設計 findings、有限規則案例與驗收邊界見 [上游候選](../maintenance/issue-22-23-upstream-candidate.md)。
+
+依新增義務準備 [v0.4.0](../releases/v0.4.0.md) 與雙語 CHANGELOG，不以伴讀版本或舊 scan／eval 代替權威新差異的審查。Core 是純 Markdown，實際工具控制及下游相容性須由各接口另驗；新清冊、相對引用閉包與 digest 另核。候選、合併、正式 tag／Release 與下游採用各有獨立證據及操作權，不由本段自授權。
+
+After PR31's companion delivery, the user clarified that Core may adopt/publish after its own required evaluation/tests/review without waiting for consumer candidate pins/evals. Codex validates later adoption; Grok is deferred with unknown compatibility. This records the new source and scope for current #22/#23 timing, preserving earlier packets and unrun-check history.
+
+Add interface-neutral complete sentences to review-and-security for required reviewers' effective read-only qualification and publication-data inspection from both Issue bodies and #22's October 30 supplement. Transplant no provider-specific tool, setting or qualification. These are post-P1 duties, not original107-unit extraction. Retain every earlier word/line, source notice/LICENSE, other three contracts and historical releases. The upstream packet records requirements, early design findings, finite cases and acceptance limits.
+
+Prepare v0.4.0 and bilingual CHANGELOG for added duties; companion versions and old scans/evals do not review the new authority diff. Core remains Markdown-only; interfaces verify actual controls and compatibility separately. Recheck the new inventory/reference closure/digests. Candidate, merge, official tag/Release and downstream adoption retain separate evidence and authority.
+
+## #23 特定環境殘餘風險接受／Environment-specific residual-risk acceptance
+
+使用者後續明確要求一次性環境接受例外，並授權擴充候選 commit、非破壞性 push、更新現有 draft PR31 及新版本完整 Merge Review，不包含 merge 或正式發布。依直接要求，在 review-required-read-only 僅新增完整句子，明定必要保留寫入通道的接受紀錄、替代偵測及缺口、同環境／規則重用與變更重新接受、偵測改動作廢及不冒稱技術唯讀。舊預設與全部原字保留，其他必要義務不豁免，這也不是任何環境已取得接受的紀錄。
+
+Claude 固定來源、Bash／比對限制與接受紀錄尚未驗證完成的規劃見[候選補充](../maintenance/issue-22-23-upstream-candidate.md)。不把平台特定 Bash 或 Git 比對命令升格為 Core 必用工具；舊授權／掃描敘述保留歷史，新候選的原字、案例、完整安全評估及新 HEAD 審查另驗。Grok 未啟動、相容性未知，不改寫公開 Git 歷史。
+
+The user's later direct request adds one-time environment-specific acceptance and authorizes the expanded candidate's commit, non-destructive push, existing draft PR31 update and full new-version Merge Review, excluding merge and official release. Add complete sentences only for necessary retained channels, acceptance records, alternative detection/gaps, unchanged-environment/rule reuse, renewed acceptance on change, detected-modification invalidation and no technical-read-only claim. Preserve every earlier word/default and other required duties. This is not an environment's completed acceptance record.
+
+The candidate addendum identifies fixed Claude evidence and its limits; the planned acceptance remains unverified. No provider tool or fingerprint command becomes mandatory Core machinery. Historical authority/scan statements remain; new candidate preservation, cases, full security scope and changed-head review are separately verified. Grok remains untouched with unknown compatibility; rewrite no public Git history.

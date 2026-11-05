@@ -1,8 +1,8 @@
 # codex-dev-skills
 
-本來源準備 v0.37.0，普通 Core 接入已固定正式 v0.3.0 的二十三檔；身分、歷史來源及驗證範圍見 [loading contract](policies/core-contract-loading.md) 與 [v0.37.0 準備紀錄](docs/releases/v0.37.0-split.md)。下方 v0.2.0／二十檔頂段保留為 v0.36.0 來源階段歷史；source/package 不證明 consumer 已發行、已安裝或具完整 runtime 資格。
+本來源準備 v0.38.0，採正式 Core v0.4.0 `4c8d35ad7c8e9d6a7c47331e5bd93eea2b45c535` 與 annotated tag object `b0d04f75fd491adb200799ba89115e762b4011d1` 的 26 檔；身分、歷史來源及驗證邊界見 [loading contract](policies/core-contract-loading.md) 與 [準備紀錄](docs/releases/v0.38.0-split.md)。這是來源／封裝準備，不證明 Codex 已發行、已安裝或已取得各 runtime 資格。
 
-This v0.37.0 source prepares the fixed published Core v0.3.0 23-file adoption. The following v0.2.0/twenty-file introductory paragraphs retain their v0.36.0 historical scope. The linked loading contract and preparation record define source identity and limits; consumer publication, installation and runtime qualification remain separate.
+This v0.38.0 source prepares the fixed 26-file Core v0.4.0 adoption. The loading contract and preparation record define source identity, explicit installer history and evidence limits. Earlier adoption records retain their historical scope; publication, installation and runtime qualification remain separate.
 
 本來源的 Core 接入固定 v0.2.0；二十檔清冊及歷史 installer 來源見 [loading contract](policies/core-contract-loading.md) 與 [0.36.0 準備紀錄](docs/releases/v0.36.0-split.md)。下方舊 pin 的版本描述保留為其歷史範圍。Publication 仍核對對應 annotated tag／Release，不由來源版本或測試結果推定。
 

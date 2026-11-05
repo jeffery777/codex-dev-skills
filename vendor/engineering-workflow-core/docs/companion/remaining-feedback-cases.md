@@ -73,3 +73,53 @@ For #21, contradictory criteria need evidence and reassessment, not model substi
 For #23, prompts and absence of reported writes do not remove capability. A remaining shell/broker can write despite missing Edit/Write. A denied child-process probe qualifies neither models, other processes, MCP, network nor every file. Evidence supports only its observed scope/version/premises. Core permits inherited sandboxes. Task-required technical read-only operation needs effective evidence or dependent work stops. The Issue rejects write-tool substitutes for required independent review, not shared parent sandboxes or the absence of a separate per-agent OS sandbox. The minimum tool restriction and effective write-capability scope remain unadopted. The current native child schema has no tool allowlist; shared sandboxes alone do not prove other restrictions impossible. Owned fixtures may record allowed/denied and unavailable/NOT_RUN outcomes; never widen permissions merely to pass. No settings or runtime qualification change follows.
 
 For #22, the table suggests manual scope, not a universal full Security Diff Scan or complete secret detector. Inspect newly public reachable commits and raw identity/message/trailer/signature metadata, not just HEAD's diff. Inspect available prospective merge/squash results; unknown results remain unverified. Inspect raw annotated tags and signature/certificate data. Disabled display does not remove data; synthetic visibility tests do not validate real signatures or require network key retrieval. Mailmaps, replace refs and formatting can alter views; read explicit raw objects with replacement disabled. Check all actual push URLs/refspecs and rewrites, which can differ from fetch. Inspect proposed non-Git text/attachments separately. A successful check grants no write authority. Mask suspect values and keep originals in policy-permitted controlled storage. Unknowns/failures are not clean results. A comment need not trigger an unrelated repository scan; required scans still follow impact/policy. Sources are the four Issues and fixed Claude CF-001/002/003/009, not verified upstream results. Full ASD-STE100 conformance is unverified.
+
+<a id="followup-22-23"></a>
+
+## #23／#22：來源交付與共用義務的區別／Interface delivery and shared duties
+
+### 繁體中文
+
+本節是供接口維護者及 reviewer 選用的增量伴讀，保留上方全部原文，不新增強制 gate。具體來源、點時狀態、候選方向與預期正反案例見 [2026-11-04 接續評估](../maintenance/2026-11-04-issue-22-23-followup.md)。正式契約與有效任務要求仍優先。
+
+對 #23，可依序問：誰是作者與 reviewer、要審查哪個 revision／diff、當次任務要求哪些唯讀條件，以及選定路徑有什麼當前證據。只有角色名稱、唯讀 brief、安裝成功或文字測試，不能回答必要技術控制是否生效。若要求限制對受保護資源的有效寫入，建議將資源限定為受審內容及任務已明定範圍，再核對實際暴露的相關直接、shell／broker 操作；不把整台主機所有目錄納入，不為探測擴權。
+
+Core 已要求唯讀工作行為、作者獨立、適用資格與缺必要 review 的相依停止，且允許繼承 parent sandbox；任務明定技術隔離時仍須驗證。接口把這些要求寫成更明確的選取 binding，不代表 Core 新增了所有 reviewer 一律撤除寫入工具的規則。符合資格還需要完成當前內容的實際 review。一次合格 review、有限 probe、CI 及文件測試，都不能資格化別的路徑、整套 runtime 或另一個 consumer。
+
+例如，一個直接 patch 被拒，但同一介面仍暴露可寫受審 fixture 的 shell，不能用前者證明必要限制成立。另一例是路徑缺必要控制或條件未知：維持必要 review 未完成並停止相依 gate，依既有契約繼續無相依、已授權安全工作。這些例子不宣稱當次控制已測，也不把共用 sandbox 本身視為所有受限路徑都不可能。
+
+對 #22，建議先列當次真正要送出的內容、metadata 與目的地，再對照已檢查、未知及不在覆蓋內的項目。單一 PR 標題／本文的流程，不涵蓋完整 Git range、merge／squash、tag 簽章、Issue 文字或附件；反過來，Git metadata 檢查也不能代替 PR payload 檢查。送出前讀取與寫入間若缺原子條件限制，仍保留競態；獨立讀回有其用途，但不能消除該限制或證明未知寫入由誰執行。
+
+檢查金鑰、憑證、機密文件、本機帳號、私人目錄與不必要執行紀錄時，建議沿用[遮蔽格式](review-decisions.md)，只公開安全位置及必要類別，不貼原始私人值或其可猜測 hash。這種有界資料檢查與 [review-security](../../contracts/review-and-security.md#review-security) 的風險適用性分開；不把每次文字檢查叫做完整 Security Diff Scan，也不以其通過取得發布權。
+
+共用新義務若要正式採納，仍需固定同一修改候選與適用案例，由兩端各自 pin／eval，並取得所需實際接口證據。Grok 暫緩時，雙端門檻維持 pending；增量伴讀可先交付，但不能標成原修改型要求已完成。
+
+### English
+
+This optional addition preserves the earlier text and creates no mandatory gate. The linked follow-up records sources, observed status, candidate directions and expected positive/negative cases. Formal contracts and effective task requirements still govern.
+
+For #23, identify the author, independent reviewer, reviewed revision/diff, task-required read-only conditions and current evidence for the selected route. Names, briefs, installation and wording tests do not prove technical controls. Where effective writes must be restricted, bound protected resources to reviewed content and the task's stated scope, then examine relevant direct and exposed shell/broker paths. Do not extend this to every host directory or widen permissions for a probe.
+
+Core already requires read-only work, independence, qualification and dependent stops, while permitting inherited parent sandboxes and requiring evidence for task-specified isolation. An explicit interface selection binding does not adopt a new shared rule removing write tools from every reviewer. Qualification still needs actual current review. A successful review, limited probe, CI or text test qualifies neither other routes nor a full runtime or another consumer.
+
+A denied patch does not constrain a remaining shell that can write the protected fixture. Missing or unknown required controls keep necessary review incomplete and block its dependent gate; independent authorized safe work can continue. These examples are not live control tests, and shared sandbox inheritance does not prove every restricted alternative impossible.
+
+For #22, enumerate the actual payload, metadata and destination, separating inspected, unknown and uncovered items. A bounded PR title/body workflow covers neither full Git ranges, merge/squash results, tag signatures, Issue text nor attachments. Git metadata checks do not inspect PR payloads. Retain any non-atomic pre-read/write race; independent readback does not remove it or attribute an earlier uncertain write.
+
+Use the existing masking format for keys, credentials, confidential material, local accounts, private directories and unnecessary execution records. Publish safe locations/categories only, without raw private values or their guessable hashes. Bounded data inspection is distinct from risk-based formal Security Diff Scan applicability and grants no publication authority.
+
+New shared duties still need matching fixed candidates, each consumer's own pin/eval and applicable real interface evidence. Grok deferral keeps the dual-consumer gate pending. Delivering optional guidance does not complete the original modifying request. Written per ASD-STE100 principles; full conformance is unverified.
+
+<a id="upstream-timing-correction"></a>
+
+## 本次 #22／#23 的上游時點校正／Upstream timing correction
+
+使用者於 2026-11-04 將本次工作改為 Core 先完成自身必要評估、測試與審查，再核對正式採納及發布授權；Codex 後續採用自行驗證，Grok 工作等另行通知。上方雙端先驗門檻及未採納說明保留為當時伴讀／準備階段，不再要求本次 Core 等待下游候選驗證，也不因此宣稱下游相容性已通過；Grok 相容性未知。新增權威文字、Core 自身驗收與版本準備見 [上游候選](../maintenance/issue-22-23-upstream-candidate.md)及 [v0.4.0](../releases/v0.4.0.md)，原資料保護、必要獨立審查、相依停止與操作授權均保留。
+
+On 2026-11-04 the user changed this work to Core's own required evaluation/tests/review before separately authorized adoption/publication, with Codex validating later adoption and Grok work deferred. The earlier dual-consumer-first and unadopted statements retain their companion/preparation stage. They no longer require Core to wait for consumer candidate verification and do not establish consumer compatibility; Grok compatibility remains unknown. The linked upstream candidate and v0.4.0 record cover new authority, Core acceptance and version preparation, preserving data protection, required independent review, dependent stops and operation authority.
+
+## 特定環境接受的後續例外／Later environment-specific exception
+
+本節仍為非權威伴讀；[正式候選](../../contracts/review-and-security.md#review-required-read-only)後續加入使用者要求的具體例外，使上方排除可寫 reviewer 的描述保留為預設／先前階段，不能省略例外的完整條件。必要用途使有效寫入通道無法移除時，使用者可就特定環境一次性接受並記錄通道、理由、替代偵測及未涵蓋範圍；同環境及規則未變可重用，改變須重新接受，偵測到受審內容改動則該次審查作廢。接受或 HEAD／status／diff hash 比對不等於技術禁寫、完整偵測或改動歸因；缺有效接受及必要紀錄仍停止相依 gate。
+
+This remains optional guidance. The authority candidate's later user-requested exception qualifies the earlier writable-reviewer exclusions as default or historical statements. A necessary retained write channel may receive one-time user acceptance for a specific environment, recording channels, reasons, alternative detection and gaps. Reuse requires unchanged environment/rules; changes require renewed acceptance, and detected reviewed-content modification invalidates the review. Acceptance and fingerprints establish neither technical denial, complete detection nor attribution. Missing valid acceptance or required records still blocks dependent gates.

@@ -35,7 +35,9 @@ Use [model selection](model-selection-policy.md), [delegation](agent-delegation-
 orchestration skill for class/tier/profile, actual model/effort, parent sandbox,
 qualification, ownership and main-agent verification. The parent selects a
 sufficient evidenced role; shared sandbox/approval is allowed and is not separate
-read-only technical isolation. A required technical isolation claim needs evidence.
+read-only technical isolation. Required independent review also follows
+[reviewer selection](agent-delegation-policy.md#codex-required-independent-reviewer-selection)
+and fixed Core's complete effective read-only conditions or its explicit exception.
 Keep a traceable authorized brief; workers do not inherit external-write rights.
 
 ## Decision And Stop Conditions

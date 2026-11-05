@@ -155,7 +155,7 @@ class CoreFeedbackCandidateTests(unittest.TestCase):
         ordinary = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(ordinary)
         lock = json.loads((ROOT / 'vendor/engineering-workflow-core.lock.json').read_text())
-        self.assertEqual('7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e',
+        self.assertEqual('4c8d35ad7c8e9d6a7c47331e5bd93eea2b45c535',
                          ordinary.validate(ROOT)['core_revision'])
         lock['source']['revision'] = self.candidate.REVISION
         with self.assertRaises(ordinary.SnapshotError):

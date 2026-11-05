@@ -2,12 +2,12 @@
   "contract": "codex-core-document-lock/v1",
   "source": {
     "repository": "jeffery777/engineering-workflow-core",
-    "revision": "7efe4eea59031ed5f9ff9c4a8aef5b8f7d2be02e",
-    "reviewed_head": "b1bc76ee8cf8869731bf1a115be54aaeef7341ce",
-    "pull_request": 30,
-    "version": "0.3.0",
-    "tag": "v0.3.0",
-    "tag_object": "0e91dfaa7f3969c9ec3d9647a765ec2f116057bb"
+    "revision": "4c8d35ad7c8e9d6a7c47331e5bd93eea2b45c535",
+    "reviewed_head": "21c1fe39a87f5207fd962d61e69910cf48b4d88c",
+    "pull_request": 31,
+    "version": "0.4.0",
+    "tag": "v0.4.0",
+    "tag_object": "b0d04f75fd491adb200799ba89115e762b4011d1"
   },
   "consumer": {
     "repository": "jeffery777/codex-dev-skills",
@@ -16,16 +16,16 @@
   },
   "upstream_markdown_set": {
     "algorithm": "utf8-path-tab-sha256-lf/v1",
-    "sha256": "2dc09ea75da438877a191dd9144e130b9e333716adf0003708214e9e11872518"
+    "sha256": "5c833ca3a00a963f29902500c67dc44716381a8835f0721258f539f2f034de06"
   },
   "document_set": {
     "algorithm": "codex-core-document-set/v1",
-    "sha256": "614cb78702eb911aaaf6515c238e6694328db35c9d1aeecf008345c969fef4cb",
+    "sha256": "793a7ec7e5cda3bf4c7f3b3236fd1511b2aa6ed910153b887fe185248ffa6593",
     "files": [
       {
         "path": "CHANGELOG.md",
-        "sha256": "f52d4fa8f66edb9731baae4633f93b1c17d3807d9dba7c3468cb8c155eead4d4",
-        "size_bytes": 16887,
+        "sha256": "4f109fee48faf8dfb4f8fc45f1816d85fe8e538ab83249ca255031f48d94870b",
+        "size_bytes": 20331,
         "mode": "100644"
       },
       {
@@ -36,8 +36,8 @@
       },
       {
         "path": "README.md",
-        "sha256": "ef2c9aa1fb54b324349ce2062d8607af0fc643068699646d2a6b975f127fcd3a",
-        "size_bytes": 25335,
+        "sha256": "d7ecc15dda306983adf7af5f46e7340f6a05e1f199a2db3c0ce400fc62efde64",
+        "size_bytes": 27949,
         "mode": "100644"
       },
       {
@@ -54,8 +54,8 @@
       },
       {
         "path": "contracts/review-and-security.md",
-        "sha256": "6dce06b8a0feb34b7851086edc9c4cd774171a5444b05eb7013a0d3af1c044e5",
-        "size_bytes": 12784,
+        "sha256": "8531deb4a0309f31d8f8abbd778460e0deff1fdc42ef789935c7dc98c6f8f819",
+        "size_bytes": 18771,
         "mode": "100644"
       },
       {
@@ -96,8 +96,8 @@
       },
       {
         "path": "docs/companion/remaining-feedback-cases.md",
-        "sha256": "2ec50584388c9912ba9449a5d36a003e54d58a15c7e5bea7bdb5bf1c4aba3b0a",
-        "size_bytes": 14575,
+        "sha256": "fed5625aa09d152ef30d685a10550a02af3d5e7d387980b5d8b85d0ee5bcb372",
+        "size_bytes": 23201,
         "mode": "100644"
       },
       {
@@ -119,6 +119,18 @@
         "mode": "100644"
       },
       {
+        "path": "docs/maintenance/2026-11-04-issue-22-23-followup.md",
+        "sha256": "42d50af91e6a7b1cec0814ddfac6aea97c0b57b1aa199c96231cb12ef0bccdf7",
+        "size_bytes": 26286,
+        "mode": "100644"
+      },
+      {
+        "path": "docs/maintenance/issue-22-23-upstream-candidate.md",
+        "sha256": "1659ed30e4b93c42e3f4e39153db1e7645cf1d7c8456e9adfe6623ce13977e35",
+        "size_bytes": 18922,
+        "mode": "100644"
+      },
+      {
         "path": "docs/maintenance/issue-24-26-candidate.md",
         "sha256": "89b9e312865fa49fd417cd6d3a5fd65f5e82db475950b7d0532ca08e4347e071",
         "size_bytes": 9608,
@@ -126,8 +138,8 @@
       },
       {
         "path": "docs/provenance/source-map.md",
-        "sha256": "9c51159d41dbd9014b76cd6e687e4915d4dc7f60488fde730ca5d52097b5e5a5",
-        "size_bytes": 68310,
+        "sha256": "a72554039b58da432ab42f1d1e575c630a2b4cb7c7cb25f786cddd194adc5700",
+        "size_bytes": 75064,
         "mode": "100644"
       },
       {
@@ -158,6 +170,12 @@
         "path": "docs/releases/v0.3.0.md",
         "sha256": "21fddabd3c56548e85a2aa1d7b2770133f1d0ac55a069c4c54efc7095b8566dc",
         "size_bytes": 9269,
+        "mode": "100644"
+      },
+      {
+        "path": "docs/releases/v0.4.0.md",
+        "sha256": "cd9fed14dde6a2e043d57e51f63fcec7b03dea1e7d4ae7ba6781311ad3e3e6ab",
+        "size_bytes": 9743,
         "mode": "100644"
       }
     ]

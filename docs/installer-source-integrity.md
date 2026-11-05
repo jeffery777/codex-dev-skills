@@ -1,5 +1,16 @@
 # 固定來源安裝與回復 / Fixed-source installation and recovery
 
+## 0.38.0 mapping / 固定來源映射
+
+Issue #371 新增第十筆固定來源映射：source/package `0.38.0` 對應已審 payload commit `ac3703efa42ad75ecdc52e7e0476dfcde93ac00b`，包含 Core v0.4.0 的 26 檔。既有九筆映射完整保留。後續 registry 與非 payload 文件提交不改 catalog 或受管 payload；receipt 仍記錄實際選取的 HEAD。映射不證明已發布或已更新安裝。下方 0.37.0 與較舊說明記錄其相應來源階段。
+
+Add the tenth immutable source mapping for 0.38.0 at the reviewed payload
+commit above, with the 26-file Core v0.4.0 closure. Preserve all nine existing
+records. Later registry and non-payload documentation commits retain exact
+catalog/payload parity; receipts record the actual selected HEAD. Mapping does
+not prove publication or installed adoption. Earlier paragraphs retain their
+historical scope. Synthetic verification commits are not formal pins.
+
 ## 0.37.0 mapping / 固定來源映射
 
 本候選新增第八筆固定來源映射：source/package `0.37.0` 對應已審 payload commit `6e3301b9ab488924168b24ec35a4beeb9b170c49`。既有七筆及下方原文完整保留；registry／mapping 文件／README 的後續非 payload 提交不改該 catalog 或受管檔案，實際 HEAD 仍由 receipt 記錄。映射不代表 consumer 已發布或已更新安裝。

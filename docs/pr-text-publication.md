@@ -1,5 +1,16 @@
 # 單一 PR 文字發布／Bounded PR text publication
 
+Issue #371 採用 Core v0.4.0 後，完整公開操作義務依固定 Core 的
+`review-publication-data` 及安全／GitHub adapters 執行。本工具仍只涵蓋本文件
+明列的 PR title/body 與 metadata；不代替 raw Git、完整 commit 範圍、簽章、
+預期 merge 結果及其他目的地／payload 的檢查。下方「不改 pin／版本」等敘述
+保留原 #367 交付範圍，不否定後續 #371 的獨立來源採用。
+
+After Core v0.4.0 adoption, apply its full publication-data duties through the
+existing security and GitHub adapters. This optional helper keeps its declared
+subset. The original no-pin/version-change statements below describe #367's
+historical delivery scope; they do not cover #371's separate source adoption.
+
 ## 範圍與驗收
 
 此選用、developer-only 流程回應 [Core #22](https://github.com/jeffery777/engineering-workflow-core/issues/22) 與 [Issue #367](https://github.com/jeffery777/codex-dev-skills/issues/367)。只處理自己明確獲准的同一個 open draft PR 標題／本文，不是新 Core 義務、一般秘密偵測器或全平台發布 gate。既有十個合成案例與 PR 留言讀回保留其原覆蓋；它們不代替原生標題／本文更新驗收。正式 Core／consumer pins、安裝 catalog／plugin、產品版本與已安裝技能均不改。
