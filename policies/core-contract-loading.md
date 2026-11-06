@@ -1,5 +1,11 @@
 # Fixed Core Loading Contract
 
+## v0.5.0 source adoption / 來源採用
+
+本來源固定採用正式 Core v0.5.0 commit `0edcbad3d126cb8a7c0b64e9ad95283e2cca635e`、reviewed head `338a2534b0d8025f3068086e6e7a7c21298ae3f1`、annotated tag object `374124ac6bc88efe73b27a4f7875fffd0dc669e2` 的完整 31 檔（30 份 Markdown 與 LICENSE），共 552952 bytes。Release 436168599 已讀回非 draft／非 prerelease。普通 loader 僅選此固定身分；原 v0.4.1 的 28 檔保留為第七份明確 opt-in installer history，前六份保持不變。下方較舊來源段落是各階段歷史，不能用來選普通 current。
+
+This source adopts the exact published Core v0.5.0 identity above. The full writing contract and its reference closure are packaged and verified with the other fixed files. Loading the complete package does not require reading every document for every task. Keep all earlier descriptors, fixed evaluations, notices and the complete #23 exception; this adoption supplies no environment acceptance record or runtime qualification.
+
 ## v0.4.1 source adoption / 來源採用
 
 本來源固定採用正式 Core v0.4.1 commit 1cc9203b7240a440b7a6172db5da10eda922f67f、reviewed head 5901fbc72f265df555ae010484b7d1aee47b9aa8、annotated tag object a1f10f9c4259d7fc0ba029377383db99b67d0193 的完整 28 檔（27 份 Markdown 與 LICENSE），共 510483 bytes。Release 434893027 已讀回非 draft／非 prerelease。普通 loader 僅選此身分；原 v0.4.0 的 26 檔保留為第六份明確 opt-in installer history。下方較舊來源段落保留為各階段歷史。
@@ -100,9 +106,19 @@ additional reading and project overlays.
 | Trigger | Fixed shared obligation |
 | --- | --- |
 | Every engineering operation | Full [workflow](../vendor/engineering-workflow-core/contracts/workflow.md) and [authorization/stops](../vendor/engineering-workflow-core/contracts/authorization-and-stops.md) |
+| A document is the substantive drafting, editing, translation or review target, under `wf-writing` | Full [writing](../vendor/engineering-workflow-core/contracts/writing.md); use the selected layout above, with `orchestration/core/contracts/writing.md` for filesystem templates |
 | Applicable review, fix or formal delivery gate | Full [review/security](../vendor/engineering-workflow-core/contracts/review-and-security.md) |
 | Existing change request, changed head or merge content readiness | Full [exact-head/evidence](../vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md) and applicable review/security |
 | Source attribution or obligation mapping | [source-map](../vendor/engineering-workflow-core/docs/provenance/source-map.md), [upstream notices](../vendor/engineering-workflow-core/docs/provenance/upstream-notices.md), and [Core LICENSE](../vendor/engineering-workflow-core/LICENSE) |
+
+Use the full workflow's `wf-writing` condition to decide whether to read writing.md.
+Routine engineering delivery summaries and incidental records use its minimum
+requirements; a requested summary document is still a document task. Pure spelling
+or formatting changes that do not change meaning can use the minimum, unless a
+stricter applicable requirement applies. Even a short change to steps, risks or
+important conclusions is substantive. Check the needed context before deciding;
+do not exempt work by its name, length or extension. These reading conditions
+waive no other safety, authorization, review, exact-head or stricter project duty.
 
 For assumptions, option comparison and bounded improvement, follow
 Core [wf-assumptions-and-options](../vendor/engineering-workflow-core/contracts/workflow.md#wf-assumptions-and-options)

@@ -32,6 +32,15 @@ class HermesPackageTests(unittest.TestCase):
             package.install(target, files)
         self.assertEqual([], package.compare(target, files))
 
+    def test_complete_fixed_core_closure_is_present_in_assembled_resources(self):
+        files = package.package()
+        expected = {"vendor/engineering-workflow-core/" + name
+                    for name in package.core_snapshot.FILES}
+        actual = {name for name in files if name.startswith("vendor/engineering-workflow-core/")}
+        self.assertEqual(expected, actual)
+        for name in expected:
+            self.assertEqual((ROOT / name).read_bytes(), files[name])
+
     def test_diff_detects_modified_missing_extra_and_incomplete(self):
         files = package.package()
         target = self.skills / package.NAMESPACE

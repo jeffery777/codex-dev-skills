@@ -2,12 +2,12 @@
   "contract": "codex-core-document-lock/v1",
   "source": {
     "repository": "jeffery777/engineering-workflow-core",
-    "revision": "1cc9203b7240a440b7a6172db5da10eda922f67f",
-    "reviewed_head": "5901fbc72f265df555ae010484b7d1aee47b9aa8",
-    "pull_request": 33,
-    "version": "0.4.1",
-    "tag": "v0.4.1",
-    "tag_object": "a1f10f9c4259d7fc0ba029377383db99b67d0193"
+    "revision": "0edcbad3d126cb8a7c0b64e9ad95283e2cca635e",
+    "reviewed_head": "338a2534b0d8025f3068086e6e7a7c21298ae3f1",
+    "pull_request": 37,
+    "version": "0.5.0",
+    "tag": "v0.5.0",
+    "tag_object": "374124ac6bc88efe73b27a4f7875fffd0dc669e2"
   },
   "consumer": {
     "repository": "jeffery777/codex-dev-skills",
@@ -16,16 +16,16 @@
   },
   "upstream_markdown_set": {
     "algorithm": "utf8-path-tab-sha256-lf/v1",
-    "sha256": "8f0874579c0c1b18182ea2a5d8b3ed0779d316b5a0f198b4187a3a4d956f4ae5"
+    "sha256": "08e23c280b989ead80e0c0f1a3c7efac08b6d8bebe1415452f1be251a768545e"
   },
   "document_set": {
     "algorithm": "codex-core-document-set/v1",
-    "sha256": "d034de70bb64137885db70954660321e920333ce73d9b67bf96532e142cf605e",
+    "sha256": "98602e188ed312ff204550b52c0cef44f6221382d70c6e4abe9f17d464b2909a",
     "files": [
       {
         "path": "CHANGELOG.md",
-        "sha256": "e68780eff1a27afccdc48557f37ec1341118d512025bd4389f9848bb732773ad",
-        "size_bytes": 22292,
+        "sha256": "f9f989acadc1625420e086fcf31d9547450d359fe842bd4e0dfc4ed4f272d8ae",
+        "size_bytes": 28222,
         "mode": "100644"
       },
       {
@@ -36,8 +36,8 @@
       },
       {
         "path": "README.md",
-        "sha256": "d7ecc15dda306983adf7af5f46e7340f6a05e1f199a2db3c0ce400fc62efde64",
-        "size_bytes": 27949,
+        "sha256": "6270d7e9ec7332853e02374e7ea6d82641dde88131b6c0280675435a53cdc2f1",
+        "size_bytes": 30074,
         "mode": "100644"
       },
       {
@@ -60,8 +60,14 @@
       },
       {
         "path": "contracts/workflow.md",
-        "sha256": "6ea98d94c75451d906b87c8b0f775fac8206302b84a2246bd8ed58d98b852a33",
-        "size_bytes": 20169,
+        "sha256": "a8ff41fdd31041d3065f782b3a01bc0f0fd9239cf1d623656bcd681b7a99663f",
+        "size_bytes": 19226,
+        "mode": "100644"
+      },
+      {
+        "path": "contracts/writing.md",
+        "sha256": "847a2e302adb831b736e86155caa0d8e2e61bd48c0e704350e137237e915434a",
+        "size_bytes": 7850,
         "mode": "100644"
       },
       {
@@ -74,6 +80,12 @@
         "path": "docs/architecture/migration-plan.md",
         "sha256": "6fbba9ed9a15d32d63dbe138b673c25aec34a81b262d7ada82108077ca67e8cf",
         "size_bytes": 23166,
+        "mode": "100644"
+      },
+      {
+        "path": "docs/architecture/original-writing-design.md",
+        "sha256": "74192657105c7d481c3860281b2ad5b4df286971ffc64efe266ef74a55dd17f9",
+        "size_bytes": 10996,
         "mode": "100644"
       },
       {
@@ -144,8 +156,8 @@
       },
       {
         "path": "docs/provenance/source-map.md",
-        "sha256": "669b7413490884167e66005c67c97cbde35b5e27f27e09d5ad07fbe959196b0d",
-        "size_bytes": 77662,
+        "sha256": "e1297b40229208de9d4170d30603af5eb0d69cf64392f0d85c41e348df2f0908",
+        "size_bytes": 82772,
         "mode": "100644"
       },
       {
@@ -188,6 +200,12 @@
         "path": "docs/releases/v0.4.1.md",
         "sha256": "49ea4c99e504d83551b0d0c0819766d71517d8e0abbb968bd273655128da1a37",
         "size_bytes": 6121,
+        "mode": "100644"
+      },
+      {
+        "path": "docs/releases/v0.5.0.md",
+        "sha256": "74a785c40e1105d92c96555c0fa71e8d42a348f2df24e5058e363e00519d231a",
+        "size_bytes": 11401,
         "mode": "100644"
       }
     ]

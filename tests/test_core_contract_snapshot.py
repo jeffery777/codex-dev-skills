@@ -48,8 +48,8 @@ class CoreSnapshotTests(unittest.TestCase):
             value = core.validate(root)
             self.assertEqual(core.REVISION, value["core_revision"])
             self.assertEqual(core.SET_DIGEST, value["document_set_sha256"])
-            self.assertEqual(28, value["files"])
-            self.assertEqual("0.4.1", value["core_version"])
+            self.assertEqual(31, value["files"])
+            self.assertEqual("0.5.0", value["core_version"])
             self.assertFalse(value["historical_snapshot"])
             self.assertIs(False, value["runtime_qualified"])
             self.assertIs(False, value["authorization_granted"])
@@ -116,7 +116,7 @@ class CoreSnapshotTests(unittest.TestCase):
 
 
     def test_v040_history_is_exact_opt_in_and_rejects_new_files(self):
-        history = core.HISTORICAL_SNAPSHOTS[-1]
+        history = next(s for s in core.HISTORICAL_SNAPSHOTS if s["source"]["version"] == "0.4.0")
         self.assertEqual(("0.4.0", 26, 494192),
                          (history["source"]["version"], len(history["files"]), history["max_total"]))
         root = self.base / "v040-history"
@@ -152,6 +152,46 @@ class CoreSnapshotTests(unittest.TestCase):
             self.mutate_lock(lambda lock: lock.update(source=historical["source"]))
             with self.assertRaises(core.SnapshotError):
                 core.validate(self.source, allow_reviewed_history=True)
+
+    def test_v041_history_is_complete_opt_in_and_rejects_the_three_added_files(self):
+        self.assertEqual(7, len(core.HISTORICAL_SNAPSHOTS))
+        history = core.HISTORICAL_SNAPSHOTS[-1]
+        self.assertEqual(("0.4.1", 28, 510483),
+                         (history["source"]["version"], len(history["files"]), history["max_total"]))
+        root = self.base / "v041-history"
+        for name in (*("vendor/engineering-workflow-core/" + p for p in history["files"]),
+                     "vendor/engineering-workflow-core.lock.json"):
+            path = root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(subprocess.check_output(["git", "-C", str(ROOT), "show",
+                "28086d9c6a0c35e6b49efb9c4f9378e05d38b824:" + name]))
+        with self.assertRaises(core.SnapshotError):
+            core.validate(root)
+        value = core.validate(root, allow_reviewed_history=True)
+        self.assertEqual(("0.4.1", 28, True),
+                         (value["core_version"], value["files"], value["historical_snapshot"]))
+        for name in ("contracts/writing.md", "docs/architecture/original-writing-design.md",
+                     "docs/releases/v0.5.0.md"):
+            path = root / "vendor/engineering-workflow-core" / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes((self.snapshot / name).read_bytes())
+            with self.assertRaises(core.SnapshotError):
+                core.validate(root, allow_reviewed_history=True)
+            path.unlink()
+
+    def test_current_requires_every_new_writing_dependency_with_its_exact_bytes(self):
+        for name in ("contracts/writing.md", "docs/architecture/original-writing-design.md",
+                     "docs/releases/v0.5.0.md"):
+            path = self.snapshot / name
+            original = path.read_bytes()
+            with self.subTest(path=name, failure="missing"):
+                path.unlink()
+                self.rejected()
+            with self.subTest(path=name, failure="tampered"):
+                path.write_bytes(original + b"\nChanged writing dependency.\n")
+                self.rejected()
+            path.write_bytes(original)
+        self.assertEqual(31, core.validate(self.source)["files"])
 
     def test_formal_thirteen_file_history_is_fixed_and_never_ordinary_current(self):
         old = "e23e18ed0512ece04ca6b6dceba3a6a1cf59b9fd"
@@ -228,7 +268,7 @@ class CoreSnapshotTests(unittest.TestCase):
 
     def test_missing_or_ambiguous_json_does_not_load_another_lock(self):
         original = self.lock.read_text()
-        for data in ('{"contract":"a","contract":"b"}', original.replace('"version": "0.4.1"', '"version": NaN'), "\ufeff" + original):
+        for data in ('{"contract":"a","contract":"b"}', original.replace('"version": "0.5.0"', '"version": NaN'), "\ufeff" + original):
             with self.subTest(data=data[:30]):
                 self.lock.write_text(data)
                 self.rejected()
@@ -495,7 +535,9 @@ class CoreSnapshotTests(unittest.TestCase):
                      "contracts/exact-head-and-evidence.md"):
             path = snapshot / name
             path.parent.mkdir(exist_ok=True)
-            path.write_bytes(b"x" * (100 * 1024))
+            size = core.MAX_TOTAL_BYTES // 5 + 1
+            self.assertLessEqual(size, core.MAX_FILE_BYTES)
+            path.write_bytes(b"x" * size)
             path.chmod(0o600)
         with self.assertRaisesRegex(core.SnapshotError, "total size"):
             core.preflight_destination(templates)

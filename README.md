@@ -1,12 +1,12 @@
 # codex-dev-skills
 
-本來源準備 v0.38.1，採正式 Core v0.4.1 的完整 28 檔，並在文件撰寫與審查入口明列依讀者需要減少不必要行話、保留必要術語與技術精度。固定身分、歷史來源及驗證邊界見 [loading contract](policies/core-contract-loading.md) 與[準備紀錄](docs/releases/v0.38.1-split.md)。這是來源／封裝準備，不證明 Codex 已發行、已安裝或 Session 已載入。
+本來源採正式 Core v0.5.0 的完整 31 檔，並接入共用寫作契約：一般工程摘要保留簡短最低要求，實質文件撰寫、修改、翻譯與審查才按需讀完整規範。文件技能保留文類、作者聲音、技術精度及必要術語，區分忠實引用與自行研究證據。來源／封裝版本以 `catalog.yaml` 為準；固定身分與候選範圍見 [loading contract](policies/core-contract-loading.md) 及[準備紀錄](docs/releases/v0.39.0-split.md)。這些資料不證明已發行、已安裝或 Session 已載入。
 
-This v0.38.1 source prepares the full 28-file Core v0.4.1 adoption and clarifies reader-appropriate writing checks in the existing documentation skills. Preserve necessary terms, technical precision and machine literals. Examples remain optional. Publication, installation, session loading and runtime qualification remain separate.
+This source adopts the full 31-file Core v0.5.0 snapshot and its on-demand writing contract. Routine engineering summaries keep minimum requirements; substantive document tasks read the full text. Preserve genre, author voice, precision, necessary terms and machine literals, with supported citations distinct from own research evidence. The catalog defines the source/package version. Publication, installation, session loading and runtime qualification remain separate.
 
-本來源的 Core 接入固定 v0.2.0；二十檔清冊及歷史 installer 來源見 [loading contract](policies/core-contract-loading.md) 與 [0.36.0 準備紀錄](docs/releases/v0.36.0-split.md)。下方舊 pin 的版本描述保留為其歷史範圍。Publication 仍核對對應 annotated tag／Release，不由來源版本或測試結果推定。
+歷史 v0.36.0 來源固定 Core v0.2.0；當時二十檔清冊及 installer 來源見 [loading contract](policies/core-contract-loading.md) 與 [0.36.0 準備紀錄](docs/releases/v0.36.0-split.md)。下方舊 pin 的版本描述保留為其歷史範圍。Publication 仍核對對應 annotated tag／Release，不由來源版本或測試結果推定。
 
-This source pins Core v0.2.0 with twenty files and explicit prior installer history. The linked loading contract defines its fixed identity; older pin descriptions retain historical scope. Source/package preparation does not prove consumer publication, installation or full runtime qualification.
+The historical v0.36.0 source pins Core v0.2.0 with twenty files and explicit prior installer history. The linked loading contract defines that fixed identity; older pin descriptions retain historical scope. Source/package preparation does not prove consumer publication, installation or full runtime qualification.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Runtime: Codex CLI + Desktop](https://img.shields.io/badge/runtime-Codex%20CLI%20%2B%20Desktop-blue)](#runtime-compatibility)

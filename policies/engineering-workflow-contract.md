@@ -36,14 +36,28 @@ or period means retain and mark pending, not invent a universal deadline.
 
 ## Documentation Writing And Review
 
-For natural-language documents and delivery summaries, apply Core
+For natural-language output, apply the minimum requirements and reading condition in Core
 [wf-writing](../vendor/engineering-workflow-core/contracts/workflow.md#wf-writing).
 Read the full fixed workflow through the loading contract above. For filesystem
 templates, that clause is in
 `${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/core/contracts/workflow.md#wf-writing`.
-The existing docs-update and docs-review skills apply this shared obligation;
-docs-review-gate retains its existing evidence and blocking duties. This adds no
-separate writing standard, gate or conformance checker.
+
+When the document itself is the substantive drafting, editing, translation or
+review target, read the full fixed [writing contract](../vendor/engineering-workflow-core/contracts/writing.md).
+For filesystem templates, read
+`${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/core/contracts/writing.md`.
+Routine engineering summaries and incidental records do not automatically require
+the full text; a requested summary document does. Pure spelling/formatting without
+changed meaning can use the minimum, while even short changes to steps, risks or
+important conclusions are substantive. Check context and retain stricter applicable
+requirements. Use only the verified selected root; no other installation or network fallback.
+
+The existing docs-update and docs-review skills apply this shared source to the
+document's genre, readers, sources and evidence. Selecting Core's standalone
+writing contract does not itself adopt engineering workflows or Git/review gates;
+an existing engineering task keeps all its applicable duties. docs-review-gate
+retains its evidence and blocking duties. Packaging the complete closure is
+separate from reading it on demand. This adds no writing gate or conformance checker.
 
 ## Runtime Capability Selection
 

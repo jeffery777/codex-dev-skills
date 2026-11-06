@@ -155,7 +155,7 @@ class CoreFeedbackCandidateTests(unittest.TestCase):
         ordinary = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(ordinary)
         lock = json.loads((ROOT / 'vendor/engineering-workflow-core.lock.json').read_text())
-        self.assertEqual('1cc9203b7240a440b7a6172db5da10eda922f67f',
+        self.assertEqual('0edcbad3d126cb8a7c0b64e9ad95283e2cca635e',
                          ordinary.validate(ROOT)['core_revision'])
         lock['source']['revision'] = self.candidate.REVISION
         with self.assertRaises(ordinary.SnapshotError):
@@ -462,7 +462,9 @@ class PlainWritingAdapterTests(unittest.TestCase):
                     self.assertIn("Traditional Chinese", text)
             workflow = (root / "vendor/engineering-workflow-core/contracts/workflow.md").read_text()
             examples = root / "vendor/engineering-workflow-core/docs/companion/plain-writing-examples.md"
-            self.assertIn("../docs/companion/plain-writing-examples.md", workflow)
+            self.assertIn("[共用寫作契約](writing.md)", workflow)
+            writing = (root / "vendor/engineering-workflow-core/contracts/writing.md").read_text()
+            self.assertIn("../docs/companion/plain-writing-examples.md", writing)
             self.assertIn("All examples are hypothetical", examples.read_text())
             self.assertIn("adds no duty", examples.read_text())
 

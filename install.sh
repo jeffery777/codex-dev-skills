@@ -20,7 +20,7 @@ DEFAULT_CODEX_CUSTOM_AGENTS_DIR="$HOME/.codex/agents"
 CODEX_DEV_SKILLS_TARGET="${CODEX_DEV_SKILLS_TARGET:-agents}"
 CODEX_TEMPLATES_DIR="${CODEX_TEMPLATES_DIR:-$DEFAULT_CODEX_TEMPLATES_DIR}"
 CODEX_CUSTOM_AGENTS_DIR="${CODEX_CUSTOM_AGENTS_DIR:-$DEFAULT_CODEX_CUSTOM_AGENTS_DIR}"
-VERSION="0.38.1"
+VERSION="0.39.0"
 SOURCE_DIR="$ROOT_DIR"
 PREVIOUS_SOURCE_DIR=""
 MANAGED_PLAN=""
@@ -991,6 +991,9 @@ group_templates() {
         vendor/engineering-workflow-core/docs/releases/v0.4.0.md \
         vendor/engineering-workflow-core/docs/companion/plain-writing-examples.md \
         vendor/engineering-workflow-core/docs/releases/v0.4.1.md \
+        vendor/engineering-workflow-core/contracts/writing.md \
+        vendor/engineering-workflow-core/docs/architecture/original-writing-design.md \
+        vendor/engineering-workflow-core/docs/releases/v0.5.0.md \
         policies/agent-delegation-policy.md \
         policies/code-mode-tool-orchestration-policy.md \
         policies/context-continuity-policy.md \

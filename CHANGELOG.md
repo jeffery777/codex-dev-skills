@@ -1,5 +1,11 @@
 # Changelog / 變更紀錄
 
+## 0.39.0 — 共用寫作與按需讀取 / Shared writing and on-demand reading
+
+Issue #375 固定正式 Core v0.5.0 的完整 31 檔，新增完整寫作契約與兩層讀取接點，同步既有文件技能與封裝。保留一般摘要最低要求、實質文件任務全文讀取、自然台灣繁中、技術精度、引用與自行研究證據的區分，以及保留未驗證意思的 STE 等義聲明。完整 #23 例外、其他必要契約、歷史與 notices 保持。這是 minor 來源／封裝準備，不代表發布或安裝；正式 installer mapping 待實際已審 payload commit。詳見[準備紀錄](docs/releases/v0.39.0-split.md)。
+
+Pin the complete published Core v0.5.0 set and adapt existing documentation skills and packages to its full writing contract and reading condition. Keep minimum requirements for routine summaries and full reading for substantive document work, including requested summary documents. Preserve genre, precision, truthful evidence, Taiwan Traditional Chinese, equivalent unverified-STE notices, stricter downstream rules and the full #23 exception. No new loader, gate or certification is added. This minor source/package preparation does not establish publication or installation; formal mapping requires the actual reviewed payload commit.
+
 ## 0.38.1 — 釐清文件寫作 / Clarify document writing
 
 Issue #373 固定正式 Core v0.4.1 的完整 28 檔，並同步 Codex 文件撰寫／審查入口與既有封裝。依讀者需要減少不必要行話、縮寫、中英混用及名詞堆疊，保留必要術語、技術精度與機器字面。例子維持選用；不新增 gate、禁用詞表或 STE 認證。保留 #23 例外、歷史來源與既有權限界線。這是 patch 來源準備；正式 installer mapping 待實際已審 payload commit，並不代表發布、安裝或 Session 已載入。詳見[準備紀錄](docs/releases/v0.38.1-split.md)。
