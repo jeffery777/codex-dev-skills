@@ -1,5 +1,11 @@
 # Changelog / 變更紀錄
 
+## 0.38.1 — 釐清文件寫作 / Clarify document writing
+
+Issue #373 固定正式 Core v0.4.1 的完整 28 檔，並同步 Codex 文件撰寫／審查入口與既有封裝。依讀者需要減少不必要行話、縮寫、中英混用及名詞堆疊，保留必要術語、技術精度與機器字面。例子維持選用；不新增 gate、禁用詞表或 STE 認證。保留 #23 例外、歷史來源與既有權限界線。這是 patch 來源準備；正式 installer mapping 待實際已審 payload commit，並不代表發布、安裝或 Session 已載入。詳見[準備紀錄](docs/releases/v0.38.1-split.md)。
+
+Pin the full published Core v0.4.1 set and align existing documentation skills and packages. Reduce unnecessary jargon for the intended readers while preserving necessary terms, technical precision and machine literals. Examples stay optional. No new gate, prohibited-word list or STE certification is introduced. Preserve #23, installer histories and operation authority. This patch candidate requires its actual reviewed payload commit before formal mapping; preparation does not establish publication, installation or session loading.
+
 ## 0.38.0 — Core v0.4.0 adoption preparation
 
 Issue #371 固定正式 Core v0.4.0 的 26 檔與發布身分，保留完整原文、LICENSE、notices 及 v0.3.0 的明確 installer history；同步來源、plugin、filesystem 與既有 Hermes 資源。Codex 既有 reviewer／公開操作接點導讀新增義務，保留環境接受例外的全部條件，並維持 PR 文字工具的有界用途。這是 pre-1.0 minor 的來源準備；正式不可變 installer 映射待實際已審 payload commit，發行與既有安裝未更新。詳見 [準備紀錄](docs/releases/v0.38.0-split.md)。

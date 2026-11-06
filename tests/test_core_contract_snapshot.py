@@ -48,8 +48,8 @@ class CoreSnapshotTests(unittest.TestCase):
             value = core.validate(root)
             self.assertEqual(core.REVISION, value["core_revision"])
             self.assertEqual(core.SET_DIGEST, value["document_set_sha256"])
-            self.assertEqual(26, value["files"])
-            self.assertEqual("0.4.0", value["core_version"])
+            self.assertEqual(28, value["files"])
+            self.assertEqual("0.4.1", value["core_version"])
             self.assertFalse(value["historical_snapshot"])
             self.assertIs(False, value["runtime_qualified"])
             self.assertIs(False, value["authorization_granted"])
@@ -92,7 +92,7 @@ class CoreSnapshotTests(unittest.TestCase):
 
     def test_v030_history_is_complete_explicit_and_not_ordinary(self):
         revision = "cc337f328704c12f1083333d90f964dbb6e1b51e"
-        history = core.HISTORICAL_SNAPSHOTS[-1]
+        history = next(s for s in core.HISTORICAL_SNAPSHOTS if s["source"]["version"] == "0.3.0")
         self.assertEqual("0.3.0", history["source"]["version"])
         self.assertEqual(23, len(history["files"]))
         root = self.base / "v030-history"
@@ -113,6 +113,31 @@ class CoreSnapshotTests(unittest.TestCase):
             with self.assertRaises(core.SnapshotError):
                 core.validate(root, allow_reviewed_history=True)
             path.unlink()
+
+
+    def test_v040_history_is_exact_opt_in_and_rejects_new_files(self):
+        history = core.HISTORICAL_SNAPSHOTS[-1]
+        self.assertEqual(("0.4.0", 26, 494192),
+                         (history["source"]["version"], len(history["files"]), history["max_total"]))
+        root = self.base / "v040-history"
+        revision = "c31810cdb8558c3bff37d5aa11dfc2dd602d6f6a"
+        for name in (*("vendor/engineering-workflow-core/" + p for p in history["files"]),
+                     "vendor/engineering-workflow-core.lock.json"):
+            path = root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(subprocess.check_output(["git", "-C", str(ROOT), "show", f"{revision}:{name}"]))
+        with self.assertRaises(core.SnapshotError):
+            core.validate(root)
+        result = core.validate(root, allow_reviewed_history=True)
+        self.assertEqual(("0.4.0", 26, True),
+                         (result["core_version"], result["files"], result["historical_snapshot"]))
+        for name in ("docs/companion/plain-writing-examples.md", "docs/releases/v0.4.1.md"):
+            extra = root / "vendor/engineering-workflow-core" / name
+            extra.parent.mkdir(parents=True, exist_ok=True)
+            extra.write_bytes((self.snapshot / name).read_bytes())
+            with self.assertRaises(core.SnapshotError):
+                core.validate(root, allow_reviewed_history=True)
+            extra.unlink()
 
     def test_tag_object_is_not_the_commit_and_history_cannot_mix_sets(self):
         original = self.lock.read_bytes()
@@ -203,7 +228,7 @@ class CoreSnapshotTests(unittest.TestCase):
 
     def test_missing_or_ambiguous_json_does_not_load_another_lock(self):
         original = self.lock.read_text()
-        for data in ('{"contract":"a","contract":"b"}', original.replace('"version": "0.4.0"', '"version": NaN'), "\ufeff" + original):
+        for data in ('{"contract":"a","contract":"b"}', original.replace('"version": "0.4.1"', '"version": NaN'), "\ufeff" + original):
             with self.subTest(data=data[:30]):
                 self.lock.write_text(data)
                 self.rejected()

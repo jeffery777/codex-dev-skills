@@ -7,6 +7,12 @@
 <details open>
 <summary>繁體中文（預設展開）</summary>
 
+## v0.4.1 — 簡明用語澄清候選
+
+在 [wf-writing](contracts/workflow.md#wf-writing) 只新增完整句子，具體說明既有的讀者、術語及技術精度要求：減少不必要的行話、縮寫、中英混用及名詞連用；保留必要術語，依讀者需要解釋。新增[選用雙語例子](docs/companion/plain-writing-examples.md)，不設禁用詞表、不要求所有文件改為非工程用語，不新增 STE 認證或 gate，也不改安全、授權、審查或 #23 例外。
+
+依不改變義務的文件澄清準備 patch 候選；範圍、來源、驗收與採用影響見 [v0.4.1 準備紀錄](docs/releases/v0.4.1.md)。全部舊字、其他三契約、歷史證據、LICENSE 及完整 notices 保留。此條目不證明已提交、合併、發布或更新任何 consumer；新增文件及引用須另核完整清冊、固定 revision、digest 與引用閉包。
+
 ## v0.4.0 — 必要 reviewer 與公開資料檢查準備
 
 後續使用者要求加入特定環境的一次性殘餘風險接受例外：必要用途使寫入通道無法移除時，明確記錄通道、理由、替代偵測及未涵蓋範圍；環境及規則未變可重用接受，改變須重新接受，偵測到受審內容改動則該次審查作廢。下方有效唯讀要求保留為預設；例外不宣稱技術禁寫、完整偵測或 Claude 的接受紀錄已完成。
@@ -84,6 +90,12 @@ Core 的文件版本由本檔已提交的版本條目記錄，採 `vMAJOR.MINOR.
 
 <details>
 <summary>English (expand to read)</summary>
+
+## v0.4.1 — Plain-wording clarification candidate
+
+Add complete sentences only to [wf-writing](contracts/workflow.md#wf-writing) to explain its existing reader, terminology and precision requirements. Reduce unnecessary jargon, abbreviations, mixed-language wording and noun sequences. Keep necessary terms and explain them when the reader needs it. Add [optional bilingual examples](docs/companion/plain-writing-examples.md), without a prohibited-word list, universal nontechnical wording, new STE certification or gate. Change no safety, authority, review or #23 exception requirement.
+
+Prepare a patch candidate for clarification without changed duties. The [v0.4.1 preparation record](docs/releases/v0.4.1.md) describes scope, sources, acceptance and adoption effects. Retain all earlier text, the other three contracts, historical evidence, LICENSE and complete notices. This entry proves no commit, merge, publication or consumer update. New files and references require verification of the full inventory, fixed revision, digests and reference closure.
 
 ## v0.4.0 — Required reviewers and publication-data preparation
 

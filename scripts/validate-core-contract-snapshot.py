@@ -108,6 +108,22 @@ CURRENT_SNAPSHOT = {
 }
 
 
+# Formal v0.4.1 clarifies writing; preserve exact v0.4.0 as opt-in history.
+HISTORICAL_SNAPSHOTS += (CURRENT_SNAPSHOT,)
+REVISION = '1cc9203b7240a440b7a6172db5da10eda922f67f'
+REVIEWED_HEAD = '5901fbc72f265df555ae010484b7d1aee47b9aa8'
+FILES = ('CHANGELOG.md', 'LICENSE', 'README.md', 'contracts/authorization-and-stops.md', 'contracts/exact-head-and-evidence.md', 'contracts/review-and-security.md', 'contracts/workflow.md', 'docs/architecture/dependency-inventory.md', 'docs/architecture/migration-plan.md', 'docs/architecture/project-split.md', 'docs/companion/core-reading-guide.md', 'docs/companion/decision-cards.md', 'docs/companion/plain-writing-examples.md', 'docs/companion/remaining-feedback-cases.md', 'docs/companion/review-decisions.md', 'docs/maintenance/2026-10-31-consumer-feedback.md', 'docs/maintenance/2026-11-01-remaining-feedback.md', 'docs/maintenance/2026-11-04-issue-22-23-followup.md', 'docs/maintenance/issue-22-23-upstream-candidate.md', 'docs/maintenance/issue-24-26-candidate.md', 'docs/provenance/source-map.md', 'docs/provenance/upstream-notices.md', 'docs/releases/v0.1.0.md', 'docs/releases/v0.1.1.md', 'docs/releases/v0.2.0.md', 'docs/releases/v0.3.0.md', 'docs/releases/v0.4.0.md', 'docs/releases/v0.4.1.md')
+MAX_TOTAL_BYTES = 510483
+MARKDOWN_DIGEST = '8f0874579c0c1b18182ea2a5d8b3ed0779d316b5a0f198b4187a3a4d956f4ae5'
+SET_DIGEST = 'd034de70bb64137885db70954660321e920333ce73d9b67bf96532e142cf605e'
+DIRECTORIES = {str(p) for name in FILES for p in PurePosixPath(name).parents if str(p) != "."}
+CURRENT_SNAPSHOT = {
+    "source": {'repository': 'jeffery777/engineering-workflow-core', 'revision': '1cc9203b7240a440b7a6172db5da10eda922f67f', 'reviewed_head': '5901fbc72f265df555ae010484b7d1aee47b9aa8', 'pull_request': 33, 'version': '0.4.1', 'tag': 'v0.4.1', 'tag_object': 'a1f10f9c4259d7fc0ba029377383db99b67d0193'},
+    "files": FILES, "set_digest": SET_DIGEST, "markdown_digest": MARKDOWN_DIGEST,
+    "max_total": MAX_TOTAL_BYTES,
+}
+
+
 def select_snapshot(source, allow_reviewed_history=False):
     allowed = (CURRENT_SNAPSHOT,) + (HISTORICAL_SNAPSHOTS if allow_reviewed_history else ())
     selected = next((item for item in allowed if source == item["source"]), None)

@@ -1,6 +1,6 @@
 # Core v0.2.0 正式採用準備 / Formal adoption preparation
 
-本來源準備 v0.38.0，採正式 Core v0.4.0 的 26 檔；固定身分、26 檔／23 檔遷移及驗證邊界見 [準備紀錄](../releases/v0.38.0-split.md)。下方較舊 pin 與數值保留為各階段歷史；固定候選／分數不改。This source prepares Core v0.4.0. Earlier records and evaluations retain their original scope. Source/package, publication, installation and runtime qualification remain separate.
+本來源準備 v0.38.1，採正式 Core v0.4.1 的完整 28 檔；固定身分、26／28 檔遷移與驗證邊界見 [準備紀錄](../releases/v0.38.1-split.md)。下方較舊 pin、數值及固定 eval 保留為各階段歷史。This source prepares Core v0.4.1. Earlier records and evaluations retain their original scope. Source/package, publication, installation, session loading and runtime qualification remain separate.
 
 
 本頁以下保留 `e83553f2`／Core reviewed head `cbe3efa1` 準備階段的歷史紀錄，其中「當前」與未完成項均指該階段。後續本 source 已採用正式 Core v0.2.0 `6887bfe6183465e9a9e6ccb4ccd7305a58b37302`，catalog／plugin／installer 版本為 v0.36.0；現行歷史重現測試使用真正的正式 validator 接受完整二十檔，不再 stub 接受邊界。準備 fixture 的出版欄位仍為 `null`，只描述原固定準備資料，不能判定後續版本是否已發布；目前來源與驗證範圍見 [v0.36.0 發行說明](../releases/v0.36.0-split.md)。

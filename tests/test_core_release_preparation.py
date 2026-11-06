@@ -55,7 +55,7 @@ class ReleasePreparationTests(unittest.TestCase):
         self.assertIsNone(value["tag_object"])
         for key in ("formal_core_adopted", "runtime_qualified", "merge_authorized"):
             self.assertIs(value[key], False)
-        self.assertEqual(formal.validate(self.root)["core_revision"], "4c8d35ad7c8e9d6a7c47331e5bd93eea2b45c535")
+        self.assertEqual(formal.validate(self.root)["core_revision"], "1cc9203b7240a440b7a6172db5da10eda922f67f")
 
     def test_historical_baseline_tamper_is_not_hidden_by_insert_only(self):
         path = self.root / "tests/fixtures/core-feedback-baseline/README.md"
@@ -123,7 +123,7 @@ class ReleasePreparationTests(unittest.TestCase):
         shutil.copytree(ROOT / "vendor/engineering-workflow-core", vendor)
         # The real published current lock now accepts the same reviewed tree.
         # Historical comparison must reproduce the old candidate without a stub.
-        self.assertEqual(formal.validate(self.root)["files"], 26)
+        self.assertEqual(formal.validate(self.root)["files"], 28)
         with patch.object(candidate, "ROOT", self.root):
             _, _, cases = candidate.inspect(self.root / "tests/fixtures/core-feedback-candidate")
         self.assertEqual(len(cases), 9)
@@ -138,9 +138,9 @@ class ReleasePreparationTests(unittest.TestCase):
 
     def test_published_current_keeps_exact_v011_as_opt_in_history(self):
         value = json.loads((ROOT / "vendor/engineering-workflow-core.lock.json").read_bytes())
-        self.assertEqual(value["source"]["revision"], "4c8d35ad7c8e9d6a7c47331e5bd93eea2b45c535")
-        self.assertEqual(value["source"]["tag_object"], "b0d04f75fd491adb200799ba89115e762b4011d1")
-        self.assertEqual(value["source"]["reviewed_head"], "21c1fe39a87f5207fd962d61e69910cf48b4d88c")
+        self.assertEqual(value["source"]["revision"], "1cc9203b7240a440b7a6172db5da10eda922f67f")
+        self.assertEqual(value["source"]["tag_object"], "a1f10f9c4259d7fc0ba029377383db99b67d0193")
+        self.assertEqual(value["source"]["reviewed_head"], "5901fbc72f265df555ae010484b7d1aee47b9aa8")
         vendor = self.root / "vendor/engineering-workflow-core"
         shutil.rmtree(vendor)
         shutil.copytree(self.root / "tests/fixtures/core-feedback-baseline", vendor)
@@ -187,7 +187,14 @@ class ReleasePreparationTests(unittest.TestCase):
         proposal = (ROOT / "tests/fixtures/core-premise-proposal.txt").read_bytes() + b"\n"
         final = (after / "contracts/workflow.md").read_bytes()
         self.assertEqual(1, final.count(proposal))
-        self.assertEqual((before / "contracts/workflow.md").read_bytes(), final.replace(proposal, b"", 1))
+        historical = subprocess.check_output([
+            "git", "-C", str(ROOT), "show",
+            "cc337f328704c12f1083333d90f964dbb6e1b51e:vendor/engineering-workflow-core/contracts/workflow.md",
+        ])
+        self.assertEqual(1, historical.count(proposal))
+        self.assertEqual((before / "contracts/workflow.md").read_bytes(),
+                         historical.replace(proposal, b"", 1))
+        self.assertTrue(candidate.inserted_only(historical, final))
         original = "甲 must stay.\nKeep  two spaces.\ncafé\n".encode()
         for mutation in (original[1:], original.replace(b"must", b"may"), original.replace(b"  ", b" "),
                          original.replace(b"\n", b"\r\n"), original.replace("é".encode(), "e\u0301".encode()),

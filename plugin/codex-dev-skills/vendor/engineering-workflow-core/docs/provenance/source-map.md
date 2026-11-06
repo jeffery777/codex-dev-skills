@@ -355,3 +355,15 @@ Claude 固定來源、Bash／比對限制與接受紀錄尚未驗證完成的規
 The user's later direct request adds one-time environment-specific acceptance and authorizes the expanded candidate's commit, non-destructive push, existing draft PR31 update and full new-version Merge Review, excluding merge and official release. Add complete sentences only for necessary retained channels, acceptance records, alternative detection/gaps, unchanged-environment/rule reuse, renewed acceptance on change, detected-modification invalidation and no technical-read-only claim. Preserve every earlier word/default and other required duties. This is not an environment's completed acceptance record.
 
 The candidate addendum identifies fixed Claude evidence and its limits; the planned acceptance remains unverified. No provider tool or fingerprint command becomes mandatory Core machinery. Historical authority/scan statements remain; new candidate preservation, cases, full security scope and changed-head review are separately verified. Grok remains untouched with unknown compatibility; rewrite no public Git history.
+
+## 2026-11-05 簡明用語澄清／Plain-wording clarification
+
+依使用者同意的後續寫作補強，於 [wf-writing](../../contracts/workflow.md#wf-writing) 只新增完整句子，說明既有讀者、術語及精度要求如何適用於不必要的行話、縮寫、中英混用與名詞連用。必要術語依讀者需要解釋，技術細節與機器字面保留；不要求所有文件去工程化，不新增認證或 gate。[非權威雙語例子](../companion/plain-writing-examples.md)為本包原創的假設情境，不是引用其他平台的能力或實際執行證據。
+
+本包按既有義務的文件澄清準備 [v0.4.1 patch 候選](../releases/v0.4.1.md)，不是原 107 單位或 P1 抽取原字。舊字、三份其他契約（含 #23 例外）、歷史證據、來源 revision／hash、LICENSE 與完整 notices 保留。此決定授權本機候選及審查，不自行授權對外 Issue／PR、commit／push、合併、發布或 consumer 採用；Codex 後續另驗，Grok 維持暫緩。沒有新增 ASD 官方查核或完整符合性結果。
+
+Under the user's approval for follow-up writing improvements, add complete sentences only to wf-writing. Explain how its existing reader, terminology and precision duties apply to unnecessary jargon, abbreviations, mixed-language wording and noun sequences. Explain necessary terms when the reader needs it. Preserve technical detail and machine literals. Require no universal nontechnical wording, new certification or gate. The optional bilingual examples are original hypothetical situations, not provider capabilities or execution evidence.
+
+Prepare a v0.4.1 patch candidate for clarification of existing duties. These additions are not original107 extraction units or P1 wording. Retain all earlier text, the other three contracts including the #23 exception, historical evidence, source revisions/hashes, LICENSE and complete notices. This decision permits local preparation and review, not external Issues/PRs, commit/push, merge, publication or consumer adoption. Codex adoption needs later verification; Grok remains deferred. No new official ASD check or complete conformance result is claimed.
+
+使用者亦希望 Core 完成後由 Codex 後續採用，使文件流程依循規範而不必逐次提醒；這是下游交接目標，不是本包已更新文件技能或安裝的證據。The user also wants later Codex adoption so document workflows follow these requirements without repeated reminders. This is a downstream handoff goal, not evidence of updated document skills or installations in this packet.
