@@ -23,6 +23,10 @@ GitHub disclosure sections are independent. Traditional Chinese is open by defau
 
 ## 開始閱讀
 
+[Issue #34 的未發行實作](docs/architecture/original-writing-design.md)採兩層寫作設計：[wf-writing](contracts/workflow.md#wf-writing) 保留交付摘要、一般紀錄與適當零星修改的最低要求；文件內容本身是交付或審查對象，涉及實質撰寫、修改、翻譯或文件審查時，按需讀完整[共用寫作契約](contracts/writing.md)。一般交付摘要不觸發全文載入；短小但實質影響步驟、風險或重要結論的修改仍按影響處理。其他必讀工程契約與既有下游加嚴不減免。
+
+一般文章可明確選用共用寫作契約，不因此採納整套工程 gates。正式寫作規則集中於該契約，本頁與設計案例只是導讀；下方較早工作包的「四契約未改」保留其歷史範圍，不描述 #34 的新修改。新增文件與引用須由 consumer 另驗固定版本、清冊、digest、完整閉包及載入；本包不證明發布、採用或安裝。
+
 [v0.4.0 規則準備紀錄](docs/releases/v0.4.0.md)及 [#22／#23 上游候選](docs/maintenance/issue-22-23-upstream-candidate.md)描述新增 reviewer 資格與公開資料檢查，並按使用者後續決策分開 Core 自身驗收與下游採用。下方 PR31 伴讀及雙端先驗門檻保留準備歷史；本次 Core 不再以 Grok pin／eval 為前置，Grok 相容性未知，版本／候選文字也不證明正式合併或發布。
 
 必要 reviewer 的有效唯讀是預設；後續新增的[特定環境例外](contracts/review-and-security.md#review-required-read-only)允許使用者一次性接受必要保留寫入通道的殘餘風險，記錄替代偵測與缺口，同環境及規則未變不逐次確認，改變則重新接受，偵測到受審內容改動使該次審查作廢。例外不等於技術唯讀，也不是本頁或 Claude 案例已完成特定環境接受的證明。
@@ -114,6 +118,10 @@ Engineering teams need shared delivery requirements. These include who can chang
 Suppose you must assign implementation and review for a change. Read the shared workflow first. Confirm the scope and completion criteria. The interface then selects available tools, assigns an independent reviewer, and keeps verification and review evidence. The documents define the required outcomes. The interface performs actions and checks qualification.
 
 ## Start here
+
+The [unreleased Issue #34 implementation](docs/architecture/original-writing-design.md) uses two writing layers. [wf-writing](contracts/workflow.md#wf-writing) keeps minimum requirements for routine delivery summaries, records and suitable minor text edits. Read the full [shared writing contract](contracts/writing.md) when document content itself is the deliverable or review target, including substantive writing, revision, translation and document review. A routine delivery summary does not trigger full loading. Judge short changes to steps, risks or important conclusions by their effect. Preserve other required engineering contracts and existing stricter consumer rules.
+
+General articles can explicitly select the writing contract without adopting all engineering gates. That contract is the full writing-rule source; this page and the design cases are guides. Earlier four-unchanged-contract statements below retain their historical scope and do not describe the new #34 changes. Consumers must separately verify the new inventory, fixed revision, digests, reference closure and loading. This packet proves no publication, adoption or installation.
 
 The [v0.4.0 rule-preparation record](docs/releases/v0.4.0.md) and [#22/#23 upstream candidate](docs/maintenance/issue-22-23-upstream-candidate.md) describe added reviewer/publication duties and separate Core acceptance from later consumer adoption under the revised user decision. Earlier PR31 guidance and dual-consumer-first statements retain preparation history. Grok pins/evals no longer gate this Core work; compatibility is unknown. Version/candidate wording does not prove merge or publication.
 

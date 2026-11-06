@@ -25,7 +25,8 @@ after filesystem installation.
 
 Use this skill when the changed surface is documentation.
 
-Writing requirements come from fixed Core `wf-writing`, resolved through
+Writing requirements come from fixed Core `wf-writing` and its on-demand full
+`contracts/writing.md`, resolved through
 [Documentation Writing And Review](../../policies/engineering-workflow-contract.md#documentation-writing-and-review).
 For filesystem installs, use that section of the installed policy path above.
 
@@ -37,17 +38,20 @@ For filesystem installs, use that section of the installed policy path above.
 - stale links or names
 - private or machine-specific material
 - unsupported claims
-- reader, purpose, document type and operating depth under Core `wf-writing`
+- reader, purpose, genre, language and understanding or operating depth under the full fixed writing contract when the document itself is the review target
 - consistent terminology, sentence meaning, explicit actors/actions, step order and necessary term explanations
 - unnecessary jargon, abbreviations, mixed-language wording and noun sequences for the intended readers; keep necessary technical terms and established abbreviations, explain them when needed, and preserve precise meaning and machine literals
 - preservation of technical detail, safety, authority, evidence, prerequisites, risks and limitations; writing-style changes must preserve exact machine literals, required quotations and license text
 - bilingual equivalence against the authoritative text, including obligations and important information
 - evidence for any full STE claim: formal rules, controlled dictionary, applicable technical terms and reviewed scope; short sentences, a checker or self-assessment alone are insufficient
+- faithful attributed citations that support the specific claim and its conditions, distinct from the author's own research/effect claims requiring proportionate real evidence, methods and relevant baselines; no blanket requirement to repeat cited experiments
+- missing/unsupported sources in an existing draft flagged for checking or author confirmation without silently changing the original claim; no fabricated support or unsupported new factual/effect claims
+- author voice and genre preserved without invented experiences; natural Taiwan Traditional Chinese and meaningful translation, not only character conversion
 
 ## Workflow
 
-1. Inspect docs diff and relevant source evidence.
-2. Sample the applicable `wf-writing` requirements in the existing review; record scope, results and unverified limits. For English technical text, verify the evidence for any full STE claim and state when full conformance is unverified, as Core requires. Traditional Chinese uses Core's plain-writing adaptation and must not be reported as STE-conformant.
+1. Inspect docs diff and relevant source evidence. When the document itself is the review target, read the full fixed writing contract. Use `wf-writing` to distinguish routine engineering summaries from requested summary documents, and pure spelling/formatting from even short substantive changes to steps, risks or important conclusions. Check context and preserve stricter requirements; the reading condition waives no applicable safety, authorization, review or exact-head duties.
+2. Sample the applicable writing requirements in the existing review; record scope, results and unverified limits. For English technical text, verify the evidence for any full STE claim and state when full conformance is unverified. Equivalent notices must retain that meaning and any stricter downstream wording/placement requirements; do not impose English technical controlled language on every general article. Traditional Chinese must not be reported as STE-conformant or an official Chinese ASD standard.
 3. Separate correctness issues from style preferences.
 4. Report blockers first.
 5. Include verification commands when applicable.

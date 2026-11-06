@@ -124,6 +124,23 @@ CURRENT_SNAPSHOT = {
 }
 
 
+
+# Formal v0.5.0 adoption retains the complete v0.4.1 snapshot as opt-in history.
+HISTORICAL_SNAPSHOTS += (CURRENT_SNAPSHOT,)
+REVISION = '0edcbad3d126cb8a7c0b64e9ad95283e2cca635e'
+REVIEWED_HEAD = '338a2534b0d8025f3068086e6e7a7c21298ae3f1'
+FILES = ('CHANGELOG.md', 'LICENSE', 'README.md', 'contracts/authorization-and-stops.md', 'contracts/exact-head-and-evidence.md', 'contracts/review-and-security.md', 'contracts/workflow.md', 'contracts/writing.md', 'docs/architecture/dependency-inventory.md', 'docs/architecture/migration-plan.md', 'docs/architecture/original-writing-design.md', 'docs/architecture/project-split.md', 'docs/companion/core-reading-guide.md', 'docs/companion/decision-cards.md', 'docs/companion/plain-writing-examples.md', 'docs/companion/remaining-feedback-cases.md', 'docs/companion/review-decisions.md', 'docs/maintenance/2026-10-31-consumer-feedback.md', 'docs/maintenance/2026-11-01-remaining-feedback.md', 'docs/maintenance/2026-11-04-issue-22-23-followup.md', 'docs/maintenance/issue-22-23-upstream-candidate.md', 'docs/maintenance/issue-24-26-candidate.md', 'docs/provenance/source-map.md', 'docs/provenance/upstream-notices.md', 'docs/releases/v0.1.0.md', 'docs/releases/v0.1.1.md', 'docs/releases/v0.2.0.md', 'docs/releases/v0.3.0.md', 'docs/releases/v0.4.0.md', 'docs/releases/v0.4.1.md', 'docs/releases/v0.5.0.md')
+MAX_TOTAL_BYTES = 552952
+MARKDOWN_DIGEST = '08e23c280b989ead80e0c0f1a3c7efac08b6d8bebe1415452f1be251a768545e'
+SET_DIGEST = '98602e188ed312ff204550b52c0cef44f6221382d70c6e4abe9f17d464b2909a'
+DIRECTORIES = {str(p) for name in FILES for p in PurePosixPath(name).parents if str(p) != "."}
+CURRENT_SNAPSHOT = {
+    "source": {'repository': 'jeffery777/engineering-workflow-core', 'revision': '0edcbad3d126cb8a7c0b64e9ad95283e2cca635e', 'reviewed_head': '338a2534b0d8025f3068086e6e7a7c21298ae3f1', 'pull_request': 37, 'version': '0.5.0', 'tag': 'v0.5.0', 'tag_object': '374124ac6bc88efe73b27a4f7875fffd0dc669e2'},
+    "files": FILES, "set_digest": SET_DIGEST, "markdown_digest": MARKDOWN_DIGEST,
+    "max_total": MAX_TOTAL_BYTES,
+}
+
+
 def select_snapshot(source, allow_reviewed_history=False):
     allowed = (CURRENT_SNAPSHOT,) + (HISTORICAL_SNAPSHOTS if allow_reviewed_history else ())
     selected = next((item for item in allowed if source == item["source"]), None)

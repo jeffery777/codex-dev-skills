@@ -367,3 +367,31 @@ Under the user's approval for follow-up writing improvements, add complete sente
 Prepare a v0.4.1 patch candidate for clarification of existing duties. These additions are not original107 extraction units or P1 wording. Retain all earlier text, the other three contracts including the #23 exception, historical evidence, source revisions/hashes, LICENSE and complete notices. This decision permits local preparation and review, not external Issues/PRs, commit/push, merge, publication or consumer adoption. Codex adoption needs later verification; Grok remains deferred. No new official ASD check or complete conformance result is claimed.
 
 使用者亦希望 Core 完成後由 Codex 後續採用，使文件流程依循規範而不必逐次提醒；這是下游交接目標，不是本包已更新文件技能或安裝的證據。The user also wants later Codex adoption so document workflows follow these requirements without repeated reminders. This is a downstream handoff goal, not evidence of updated document skills or installations in this packet.
+
+<a id="original-writing-update"></a>
+
+## #34 原創共用寫作與兩層入口／Shared writing and two reading layers
+
+使用者已同意方案 B 與兩層調整，授權本地實作及必要驗證／合格獨立審查，不包含 commit、push、PR、合併或發布。完整規則集中在 [writing](../../contracts/writing.md)，[wf-writing](../../contracts/workflow.md#wf-writing) 保留最低要求及按需入口；[設計／案例](../architecture/original-writing-design.md)是非權威決策與判讀資料。一般文章可明確選用寫作範圍，不自動承接工程 gates；一般工程摘要不觸發全文，實質文件工作與有意義的短改動按影響判斷。其他必要契約及下游加嚴保留。
+
+本包從使用者需求及 Core v0.4.1 的既有寫作要求獨立設計，未讀取或移植 `larashero3-dotcom/lieflat-less-ai-tone` 的文字、清單、範例、提示詞或架構。新要求與例子不是 P1 原 107 單位，也不改其來源 revision、hash 或完整 notices。繁中台灣用語、引用與自行研究證據的區別、兩層入口及等義 STE 聲明均來自本次使用者決定；未取得 ASD 全文、受控詞典與適用技術詞的完整核對，不宣稱符合。
+
+| v0.4.1 wf-writing 內容 | 本包目的位置與處置 |
+| --- | --- |
+| 讀者、目的、操作深度、下一步與完成判準 | writing-principles／writing-genres 保留完整文類要求；wf-writing 保留適合短輸出的最低要求 |
+| 明確行動者、句意、順序與一致術語 | writing-principles／writing-genres 保留；不把敘事文章強制改為手冊 |
+| 技術精度、安全、授權、證據、前提、風險與限制 | wf-writing 最低要求及 writing-principles 保留；按需閱讀不豁免其他工程契約 |
+| ASD-STE100 Issue 9、核對範圍及未驗證聲明 | writing-language 為單一完整來源；本次明確允許等義聲明，保留未完整驗證意思、不可 Passed、工具／自評不足及下游較嚴規定 |
+| 繁中簡明調適、雙語資訊與機器字面 | writing-language／writing-principles 保留；採台灣用語，不宣稱中文 ASD 標準 |
+| v0.4.1 行話、縮寫、中英混用與名詞連用澄清 | writing-principles 保留必要術語與精度例外；既有雙語伴讀仍為選用 |
+| review 抽查、結果、未驗證限制及 findings／重審 | writing-process 保留，工程審查仍依原 review-and-security；不為一般文章新增工程報告或 gate |
+
+本次授權允許替換 wf-writing 範圍的文字；該 anchor、外側全部原始 bytes 及其他三契約（包含 #23 全部例外）保留。README／CHANGELOG 新增必要雙語導讀，source-map 新增本段；三檔舊文字及歷史行序保留。LICENSE、完整 notices 與其餘未列範圍的既有文件不變。這與先前各包「只增句／全四契約不變」的歷史保護範圍不同，不倒寫其結果。
+
+新增 writing 與設計文件使預期清冊為 29 份 Markdown 加 LICENSE，共 30 檔；consumer 日後另驗固定 revision、文件清冊／digest、完整相依閉包、來源／notices 與按需載入。完整組裝閉包不要求每次讀完所有被引用文件；Core 不增加 loader、程式或安裝。此包不改 Codex PR #374、Grok 或 Claude，不宣稱各 runtime 已遵循，不以文案縮短證明成本／品質改善。
+
+The user approved option B and the two reading layers for local implementation and qualified review, excluding commit, push, PR, merge and publication. The full writing-rule source is writing; wf-writing keeps minimum duties and its conditional entry. Design cases remain non-authoritative. Select writing alone for general articles without adding engineering gates. Routine summaries do not load the full contract; judge substantive document work and short meaningful changes by impact. Retain other required contracts and stricter consumer rules.
+
+This independent design uses user requirements and existing Core v0.4.1 writing duties, not protected expression from the named reference repository. The map above preserves the old reader/depth, actor/order/terms, safety/precision, STE, Traditional Chinese/bilingual/literal and review duties in their new locations. Equivalent STE notices retain the unverified-full-conformance meaning and stricter downstream requirements. No complete standards check is claimed. New material is not original P1 extraction; source revisions, hashes and complete notices remain.
+
+Only wf-writing may be replaced; retain its anchor, all bytes outside it and the other three contracts including the full #23 exception. Add bilingual README/CHANGELOG guidance and this source-map section while retaining earlier text and order. Keep LICENSE, full notices and all other existing files. The expected inventory becomes 29 Markdown files plus LICENSE. Later consumer adoption must verify fixed identity, inventory, digests, complete closure, sources, notices and conditional loading; assembly closure is not mandatory reading on every task. No runtime mechanism, consumer update or publication is established.

@@ -55,7 +55,7 @@ class ReleasePreparationTests(unittest.TestCase):
         self.assertIsNone(value["tag_object"])
         for key in ("formal_core_adopted", "runtime_qualified", "merge_authorized"):
             self.assertIs(value[key], False)
-        self.assertEqual(formal.validate(self.root)["core_revision"], "1cc9203b7240a440b7a6172db5da10eda922f67f")
+        self.assertEqual(formal.validate(self.root)["core_revision"], "0edcbad3d126cb8a7c0b64e9ad95283e2cca635e")
 
     def test_historical_baseline_tamper_is_not_hidden_by_insert_only(self):
         path = self.root / "tests/fixtures/core-feedback-baseline/README.md"
@@ -123,7 +123,7 @@ class ReleasePreparationTests(unittest.TestCase):
         shutil.copytree(ROOT / "vendor/engineering-workflow-core", vendor)
         # The real published current lock now accepts the same reviewed tree.
         # Historical comparison must reproduce the old candidate without a stub.
-        self.assertEqual(formal.validate(self.root)["files"], 28)
+        self.assertEqual(formal.validate(self.root)["files"], 31)
         with patch.object(candidate, "ROOT", self.root):
             _, _, cases = candidate.inspect(self.root / "tests/fixtures/core-feedback-candidate")
         self.assertEqual(len(cases), 9)
@@ -138,9 +138,9 @@ class ReleasePreparationTests(unittest.TestCase):
 
     def test_published_current_keeps_exact_v011_as_opt_in_history(self):
         value = json.loads((ROOT / "vendor/engineering-workflow-core.lock.json").read_bytes())
-        self.assertEqual(value["source"]["revision"], "1cc9203b7240a440b7a6172db5da10eda922f67f")
-        self.assertEqual(value["source"]["tag_object"], "a1f10f9c4259d7fc0ba029377383db99b67d0193")
-        self.assertEqual(value["source"]["reviewed_head"], "5901fbc72f265df555ae010484b7d1aee47b9aa8")
+        self.assertEqual(value["source"]["revision"], "0edcbad3d126cb8a7c0b64e9ad95283e2cca635e")
+        self.assertEqual(value["source"]["tag_object"], "374124ac6bc88efe73b27a4f7875fffd0dc669e2")
+        self.assertEqual(value["source"]["reviewed_head"], "338a2534b0d8025f3068086e6e7a7c21298ae3f1")
         vendor = self.root / "vendor/engineering-workflow-core"
         shutil.rmtree(vendor)
         shutil.copytree(self.root / "tests/fixtures/core-feedback-baseline", vendor)
@@ -168,13 +168,15 @@ class ReleasePreparationTests(unittest.TestCase):
         self.assertEqual(("0.2.0", 20, True),
                          (value["core_version"], value["files"], value["historical_snapshot"]))
 
-    def test_current_rules_preserve_every_original_raw_line_and_exact_insert(self):
+    def test_fixed_historical_rules_and_current_writing_migration_preserve_protected_bytes(self):
         before = self.root / "tests/fixtures/core-release-preparation"
         after = self.root / "vendor/engineering-workflow-core"
         for path in before.rglob("*"):
             if path.is_file():
                 relative = path.relative_to(before)
-                self.assertTrue(candidate.inserted_only(path.read_bytes(), (after / relative).read_bytes()), str(relative))
+                historical = subprocess.check_output(["git", "-C", str(ROOT), "show",
+                    "28086d9c6a0c35e6b49efb9c4f9378e05d38b824:vendor/engineering-workflow-core/" + str(relative)])
+                self.assertTrue(candidate.inserted_only(path.read_bytes(), historical), str(relative))
         for name in ("contracts/authorization-and-stops.md", "contracts/exact-head-and-evidence.md",
                      "contracts/review-and-security.md", "LICENSE", "docs/provenance/upstream-notices.md"):
             # Keep the original v0.3.0 equality assertion bound to its immutable
@@ -194,7 +196,16 @@ class ReleasePreparationTests(unittest.TestCase):
         self.assertEqual(1, historical.count(proposal))
         self.assertEqual((before / "contracts/workflow.md").read_bytes(),
                          historical.replace(proposal, b"", 1))
-        self.assertTrue(candidate.inserted_only(historical, final))
+        v041 = subprocess.check_output(["git", "-C", str(ROOT), "show",
+            "28086d9c6a0c35e6b49efb9c4f9378e05d38b824:vendor/engineering-workflow-core/contracts/workflow.md"])
+        self.assertTrue(candidate.inserted_only(historical, v041))
+        # v0.5.0 deliberately migrates only wf-writing; protect both outer byte ranges.
+        opening, closing = b'<a id="wf-writing"></a>', b'<a id="wf-capability"></a>'
+        for anchor in (opening, closing):
+            self.assertEqual(1, final.count(anchor))
+            self.assertEqual(1, v041.count(anchor))
+        self.assertEqual(v041.split(opening)[0], final.split(opening)[0])
+        self.assertEqual(v041.split(closing)[1], final.split(closing)[1])
         original = "甲 must stay.\nKeep  two spaces.\ncafé\n".encode()
         for mutation in (original[1:], original.replace(b"must", b"may"), original.replace(b"  ", b" "),
                          original.replace(b"\n", b"\r\n"), original.replace("é".encode(), "e\u0301".encode()),
@@ -224,7 +235,8 @@ class ReleasePreparationTests(unittest.TestCase):
         self.assertEqual(run(), 0)
         paths = ("docs/companion/core-reading-guide.md", "docs/companion/decision-cards.md",
                  "docs/companion/review-decisions.md", "docs/maintenance/2026-10-31-consumer-feedback.md",
-                 "docs/maintenance/issue-24-26-candidate.md", "docs/provenance/source-map.md",
+                 "docs/maintenance/issue-24-26-candidate.md", "docs/architecture/original-writing-design.md",
+                 "docs/releases/v0.5.0.md", "docs/provenance/source-map.md",
                  "docs/provenance/upstream-notices.md")
         for root in (self.root, plugin):
             for name in paths:

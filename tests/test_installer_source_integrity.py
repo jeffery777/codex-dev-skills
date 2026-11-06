@@ -278,8 +278,11 @@ exec "''' + real + '''" "$@"
     def test_formal_twenty_to_twenty_three_and_back_preserves_exact_tree(self):
         self.assert_core_transition("0.36.0", "ec54012c74a4ab3eb42d5f2152e36138ce9e7c35", 20)
 
-    def test_formal_twenty_six_to_twenty_eight_and_back_preserves_exact_tree(self):
+    def test_formal_twenty_six_to_current_and_back_preserves_exact_tree(self):
         self.assert_core_transition("0.38.0", "ac3703efa42ad75ecdc52e7e0476dfcde93ac00b", 26)
+
+    def test_formal_twenty_eight_to_thirty_one_and_back_preserves_exact_tree(self):
+        self.assert_core_transition("0.38.1", "c88514225129afc02ccdc3734402042b0e2a5194", 28)
 
     def assert_core_transition(self, version, revision, count):
         catalog = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == revision)
@@ -295,11 +298,13 @@ exec "''' + real + '''" "$@"
         self.assertEqual(0, result.returncode, result.stderr)
         self.assert_version(CURRENT_VERSION)
         receipt = json.loads(self.receipt.read_text())
-        self.assertEqual("0.4.1", receipt["source"]["core"]["version"])
+        self.assertEqual("0.5.0", receipt["source"]["core"]["version"])
         self.assertIn("codex-agent-profiles", receipt["groups"])
-        self.assertEqual(28, len([p for p in core_root.rglob("*") if p.is_file()]))
+        self.assertEqual(31, len([p for p in core_root.rglob("*") if p.is_file()]))
         self.assertTrue((core_root / "docs/releases/v0.4.0.md").is_file())
         self.assertTrue((core_root / "docs/releases/v0.4.1.md").is_file())
+        for path in ("contracts/writing.md", "docs/architecture/original-writing-design.md", "docs/releases/v0.5.0.md"):
+            self.assertTrue((core_root / path).is_file())
         self.assertTrue((core_root / "docs/companion/plain-writing-examples.md").is_file())
         self.assertTrue((core_root / "docs/releases/v0.3.0.md").is_file())
         self.assertTrue((core_root / "docs/releases/v0.2.0.md").is_file())
