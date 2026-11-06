@@ -64,22 +64,32 @@ jobs:
                 page_json="$(gh api \
                   -H 'Accept: application/vnd.github+json' \
                   "/repos/$GITHUB_REPOSITORY/commits/$head_sha/pulls?per_page=100&page=$page")"
-                pr_targets="$(jq -cn \
+                # Full API pages can exceed Linux's single-argument limit.
+                # Only bounded, projected targets belong in argv; pages use stdin.
+                # Normalize safe integer IDs: jq can retain oversized numeric literals.
+                pr_targets="$(jq -cse \
                   --argjson accumulated "$pr_targets" \
-                  --argjson current "$page_json" \
                   --arg head_sha "$head_sha" \
-                  '$accumulated + [$current[] | select(.state == "open" and .head.sha == $head_sha) | {pr_number: .number, head_sha: .head.sha}]')"
+                  'if length == 1 and (.[0] | type == "array" and all(.[];
+                     type == "object" and
+                     (.number | type == "number" and . > 0 and . <= 9007199254740991 and floor == .) and
+                     (.state == "open" or .state == "closed") and
+                     (.head | type == "object") and
+                     (.head.sha | type == "string" and length == 40 and test("^[0-9a-f]{40}$")))) then .[0]
+                   else error("Expected a single PR array") end |
+                   $accumulated + [.[] | select(.state == "open" and .head.sha == $head_sha) | {pr_number: (.number | floor), head_sha: .head.sha}]' \
+                  <<<"$page_json")"
                 if jq -e 'length < 100' <<<"$page_json" >/dev/null; then
                   collection_complete=true
                   break
                 fi
               done
               if test "$collection_complete" != true; then
-                extra_count="$(gh api \
+                page_json="$(gh api \
                   -H 'Accept: application/vnd.github+json' \
-                  "/repos/$GITHUB_REPOSITORY/commits/$head_sha/pulls?per_page=100&page=6" \
-                  --jq 'length')"
-                test "$extra_count" = 0
+                  "/repos/$GITHUB_REPOSITORY/commits/$head_sha/pulls?per_page=100&page=6")"
+                jq -se 'length == 1 and (.[0] | type == "array" and length == 0)' \
+                  <<<"$page_json" >/dev/null
               fi
               # One head-scoped job is enough to fail a shared-head check closed.
               pr_targets="$(jq 'if length > 1 then [.[0]] else . end' <<<"$pr_targets")" ;;
@@ -97,10 +107,18 @@ jobs:
                 page_json="$(gh api \
                   -H 'Accept: application/vnd.github+json' \
                   "/repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100&page=$page")"
-                pr_targets="$(jq -cn \
+                # Keep the full API page off argv, as in workflow_run above.
+                pr_targets="$(jq -cse \
                   --argjson accumulated "$pr_targets" \
-                  --argjson current "$page_json" \
-                  '$accumulated + [$current[] | {pr_number: .number, head_sha: .head.sha}]')"
+                  'if length == 1 and (.[0] | type == "array" and all(.[];
+                     type == "object" and
+                     (.number | type == "number" and . > 0 and . <= 9007199254740991 and floor == .) and
+                     (.state == "open" or .state == "closed") and
+                     (.head | type == "object") and
+                     (.head.sha | type == "string" and length == 40 and test("^[0-9a-f]{40}$")))) then .[0]
+                   else error("Expected a single PR array") end |
+                   $accumulated + [.[] | {pr_number: (.number | floor), head_sha: .head.sha}]' \
+                  <<<"$page_json")"
                 if test "$(jq 'length' <<<"$pr_targets")" -gt 250; then
                   echo "Scheduled reconciliation exceeds the explicit 250-open-PR matrix capacity." >&2
                   exit 1
@@ -119,7 +137,7 @@ jobs:
           jq -e 'type == "array" and all(.[];
             (keys | sort) == ["head_sha", "pr_number"] and
             (.pr_number | type == "number" and . > 0) and
-            (.head_sha | type == "string" and test("^[0-9a-f]{40}$")))' \
+            (.head_sha | type == "string" and length == 40 and test("^[0-9a-f]{40}$")))' \
             <<<"$pr_targets" >/dev/null
           echo "pr_targets=$(jq -c . <<<"$pr_targets")" >> "$GITHUB_OUTPUT"
 

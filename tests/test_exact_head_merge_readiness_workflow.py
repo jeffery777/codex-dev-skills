@@ -5,7 +5,9 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -18,6 +20,240 @@ UPSTREAM_WORKFLOW = ROOT / ".github/workflows/repository-validation.yml"
 UPSTREAM_POLICY = ROOT / ".github/exact-head-merge-readiness-policy.json"
 SHARD_MANIFEST = ROOT / "tests/test-shards.yaml"
 ROLLOUT_GUIDE = ROOT / "docs/exact-head-merge-gate-app.md"
+
+
+class ExactHeadRouteExecutionTests(unittest.TestCase):
+    """Run the actual route shell with fixture API pages and the real jq parser."""
+
+    HEAD = "a" * 40
+
+    @staticmethod
+    def pull(number: int, *, head: str = HEAD, state: str = "open", body: str = "") -> dict:
+        return {"number": number, "head": {"sha": head}, "state": state, "body": body}
+
+    def route(self, event_name: str, pages: list, *, event: dict | None = None,
+              script: str | None = None) -> tuple[subprocess.CompletedProcess, list, list]:
+        real_jq = shutil.which("jq")
+        self.assertIsNotNone(real_jq, "jq is required to verify the hosted route shell")
+        if script is None:
+            script = yaml.safe_load(WORKFLOW.read_text())["jobs"]["route"]["steps"][0]["run"]
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            (root / "event.json").write_text(json.dumps(event or {
+                "workflow_run": {"head_sha": self.HEAD, "workflow_id": 330877463}}))
+            (root / "pages.json").write_text(json.dumps(pages))
+            (root / "route.sh").write_text(script)
+            # Enforce Linux's 128 KiB single-argument ceiling on macOS too.
+            # JSON evaluation remains the real jq executable, never a parser mock.
+            (root / "jq").write_text(
+                f"#!{sys.executable}\nimport os, sys\n"
+                "if any(len(os.fsencode(arg)) >= 131072 for arg in sys.argv[1:]):\n"
+                "    sys.stderr.write('jq: Argument list too long (Linux argv ceiling)\\n')\n"
+                "    sys.exit(126)\n"
+                f"os.execv({real_jq!r}, ['jq', *sys.argv[1:]])\n")
+            (root / "gh").write_text(
+                f"#!{sys.executable}\nimport json, os, pathlib, re, subprocess, sys\n"
+                "root = pathlib.Path(os.environ['FIXTURE_ROOT'])\n"
+                "endpoint = next(arg for arg in sys.argv if arg.startswith('/repos/'))\n"
+                "expected = '/repos/fixture/repo/'\n"
+                "assert endpoint.startswith(expected), endpoint\n"
+                "with (root / 'calls').open('a') as stream: stream.write(endpoint + '\\n')\n"
+                "match = re.search(r'[?&]page=(\\d+)', endpoint)\n"
+                "page = int(match[1]) if match else 1\n"
+                "value = json.loads((root / 'pages.json').read_text())[page - 1]\n"
+                "if isinstance(value, dict) and 'api_error' in value:\n"
+                "    sys.stderr.write('fixture API failure\\n'); sys.exit(1)\n"
+                "payload = value if isinstance(value, str) else json.dumps(value)\n"
+                "if '--jq' in sys.argv:\n"
+                "    result = subprocess.run(['jq', sys.argv[sys.argv.index('--jq') + 1]],\n"
+                "                            input=payload, text=True)\n"
+                "    sys.exit(result.returncode)\n"
+                "print(payload)\n")
+            for name in ("jq", "gh"):
+                (root / name).chmod(0o700)
+            environment = dict(os.environ, PATH=str(root) + os.pathsep + os.environ["PATH"],
+                               FIXTURE_ROOT=str(root), EVENT_NAME=event_name,
+                               GITHUB_REPOSITORY="fixture/repo", GH_TOKEN="fixture",
+                               GITHUB_EVENT_PATH=str(root / "event.json"),
+                               GITHUB_OUTPUT=str(root / "output"))
+            result = subprocess.run(
+                ["bash", "--noprofile", "--norc", "-e", "-o", "pipefail", str(root / "route.sh")],
+                env=environment, capture_output=True, text=True, timeout=30, check=False)
+            output = (root / "output").read_text() if (root / "output").exists() else ""
+            targets = json.loads(output.removeprefix("pr_targets=")) if output else []
+            calls = (root / "calls").read_text().splitlines() if (root / "calls").exists() else []
+            return result, targets, calls
+
+    def test_large_page_routes_without_passing_payload_in_argv(self) -> None:
+        for entry in ("schedule", "workflow_run"):
+            with self.subTest(entry=entry):
+                result, targets, calls = self.route(entry, [[self.pull(377, body="x" * 300_000)]])
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertEqual([{"pr_number": 377, "head_sha": self.HEAD}], targets)
+                self.assertEqual(1, len(calls))
+
+    def test_schedule_pagination_capacity_and_empty_collection(self) -> None:
+        for count in (0, 1, 100, 200, 250, 251, 300):
+            pulls = [self.pull(i + 1) for i in range(count)]
+            pages = [pulls[i:i + 100] for i in range(0, count, 100)]
+            if count % 100 == 0:
+                pages.append([])
+            with self.subTest(count=count):
+                result, targets, calls = self.route("schedule", pages)
+                if count > 250:
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertIn("250-open-PR", result.stderr)
+                    self.assertEqual([], targets)
+                else:
+                    self.assertEqual(0, result.returncode, result.stderr)
+                    self.assertEqual([{"pr_number": i + 1, "head_sha": self.HEAD}
+                                      for i in range(count)], targets)
+                self.assertEqual(min(count // 100 + 1, 3), len(calls))
+
+    def test_large_pages_keep_pagination_before_projection(self) -> None:
+        for entry in ("schedule", "workflow_run"):
+            with self.subTest(entry=entry):
+                first = [self.pull(i + 1, state="closed" if entry == "workflow_run" else "open",
+                                   body="x" * 4_000) for i in range(100)]
+                result, targets, calls = self.route(entry, [first, [self.pull(101, body="y" * 300_000)]])
+                self.assertEqual(0, result.returncode, result.stderr)
+                numbers = list(range(1, 102)) if entry == "schedule" else [101]
+                self.assertEqual([{"pr_number": number, "head_sha": self.HEAD}
+                                  for number in numbers], targets)
+                self.assertEqual(2, len(calls))
+
+    def test_workflow_run_uses_raw_page_length_and_proves_completion(self) -> None:
+        # Matching PR occurs only on the final page; earlier pages filter to empty.
+        for count in (0, 100, 200, 499, 500, 501):
+            pulls = [self.pull(i + 1, state="closed") for i in range(count)]
+            if count:
+                pulls[-1] = self.pull(count)
+            pages = [pulls[i:i + 100] for i in range(0, count, 100)]
+            if count % 100 == 0:
+                pages.append([])
+            with self.subTest(count=count):
+                result, targets, calls = self.route("workflow_run", pages)
+                self.assertEqual(min(count // 100 + 1, 6), len(calls))
+                if count > 500:
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertEqual([], targets)
+                else:
+                    self.assertEqual(0, result.returncode, result.stderr)
+                    self.assertEqual([{"pr_number": count, "head_sha": self.HEAD}]
+                                     if count else [], targets)
+
+    def test_workflow_run_filters_and_keeps_one_job_per_head(self) -> None:
+        page = [self.pull(1, state="closed"), self.pull(2, head="b" * 40),
+                self.pull(3), self.pull(4)]
+        result, targets, _ = self.route("workflow_run", [page])
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual([{"pr_number": 3, "head_sha": self.HEAD}], targets)
+
+    def test_page_faults_fail_without_publishing_targets(self) -> None:
+        for entry in ("schedule", "workflow_run"):
+            for bad in ("{", "", "null", "{}", "[]\n[]", {"api_error": True},
+                        [self.pull(-1)]):
+                with self.subTest(entry=entry, bad=bad):
+                    result, targets, _ = self.route(entry, [bad])
+                    self.assertNotEqual(0, result.returncode, result.stderr)
+                    self.assertEqual([], targets)
+
+    def test_malformed_rows_fail_before_filtering_or_accumulating(self) -> None:
+        valid = self.pull(377)
+        for entry in ("schedule", "workflow_run"):
+            for bad in (None, {}, {key: value for key, value in valid.items() if key != "state"},
+                        {**valid, "state": "unknown"}, {**valid, "number": 1.5},
+                        {**valid, "number": "x" * 300_000},
+                        {**valid, "head": {"sha": "b" * 300_000}},
+                        {**valid, "head": {"sha": self.HEAD + "\n"}},
+                        {**valid, "head": {"sha": "invalid"}}, {**valid, "head": None}):
+                with self.subTest(entry=entry, bad_type=type(bad).__name__):
+                    result, targets, _ = self.route(entry, [[valid, bad]])
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertNotIn("Argument list too long", result.stderr)
+                    self.assertEqual([], targets)
+
+    def test_large_numeric_representation_is_canonical_before_next_page(self) -> None:
+        pulls = [self.pull(i + 1) for i in range(100)]
+        pulls[0]["number"] = "numeric-placeholder"
+        page = json.dumps(pulls).replace('"numeric-placeholder"', "377." + "0" * 300_000)
+        for entry in ("schedule", "workflow_run"):
+            with self.subTest(entry=entry):
+                result, targets, calls = self.route(entry, [page, []])
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertEqual(2, len(calls))
+                self.assertEqual(377, targets[0]["pr_number"])
+                self.assertIs(type(targets[0]["pr_number"]), int)
+                self.assertLess(len(json.dumps(targets)), 20_000)
+
+    def test_out_of_range_numeric_ids_fail_before_accumulation(self) -> None:
+        for entry in ("schedule", "workflow_run"):
+            for literal in ("9" * 300_000, "1E+10000", "9007199254740992"):
+                page = '[{"number":' + literal + ',"state":"open","head":{"sha":"' + self.HEAD + '"}}]'
+                with self.subTest(entry=entry, literal_bytes=len(literal)):
+                    result, targets, _ = self.route(entry, [page])
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertNotIn("Argument list too long", result.stderr)
+                    self.assertEqual([], targets)
+
+    def test_other_entries_reject_sha_with_trailing_newline(self) -> None:
+        pull = self.pull(377, head=self.HEAD + "\n")
+        for entry, event, pages in (
+            ("pull_request_target", {"pull_request": pull}, []),
+            ("issue_comment", {"issue": {"number": 377, "pull_request": {}}}, [pull]),
+            ("workflow_dispatch", {"inputs": {"pr_number": "377"}}, [pull]),
+        ):
+            with self.subTest(entry=entry):
+                result, targets, _ = self.route(entry, pages, event=event)
+                self.assertNotEqual(0, result.returncode)
+                self.assertEqual([], targets)
+
+    def test_later_page_api_and_parse_faults_fail_closed(self) -> None:
+        for entry in ("schedule", "workflow_run"):
+            for bad in ("{", {"api_error": True}):
+                with self.subTest(entry=entry, bad=bad):
+                    result, targets, calls = self.route(entry, [[self.pull(i + 1) for i in range(100)], bad])
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertEqual([], targets)
+                    self.assertEqual(2, len(calls))
+
+    def test_workflow_run_completion_probe_faults_fail_closed(self) -> None:
+        full = [self.pull(i + 1, state="closed") for i in range(100)]
+        for bad in ("{", "", "null", "{}", "[]\n[]", {"api_error": True}):
+            with self.subTest(bad=bad):
+                result, targets, calls = self.route("workflow_run", [full] * 5 + [bad])
+                self.assertNotEqual(0, result.returncode)
+                self.assertEqual([], targets)
+                self.assertEqual(6, len(calls))
+
+    def test_other_entry_points_preserve_canonical_identity(self) -> None:
+        pull = self.pull(377)
+        for entry, event, pages, expected in (
+            ("pull_request_target", {"pull_request": pull}, [], True),
+            ("issue_comment", {"issue": {"number": 377, "pull_request": {}}}, [pull], True),
+            ("issue_comment", {"issue": {"number": 377}}, [], False),
+            ("workflow_dispatch", {"inputs": {"pr_number": "377"}}, [pull], True),
+        ):
+            with self.subTest(entry=entry, event=event):
+                result, targets, calls = self.route(entry, pages, event=event)
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertEqual([{"pr_number": 377, "head_sha": self.HEAD}] if expected else [], targets)
+                self.assertEqual(len(pages), len(calls))
+
+    def test_untrusted_workflow_fails_before_api_call(self) -> None:
+        result, targets, calls = self.route("workflow_run", [], event={
+            "workflow_run": {"head_sha": self.HEAD, "workflow_id": 1}})
+        self.assertNotEqual(0, result.returncode)
+        self.assertEqual([], targets)
+        self.assertEqual([], calls)
+
+    @unittest.skipUnless(sys.platform == "linux", "hosted Bash errexit semantics; macOS Bash 3.2 differs")
+    def test_noncanonical_manual_number_fails_before_api_call(self) -> None:
+        result, targets, calls = self.route("workflow_dispatch", [], event={
+            "inputs": {"pr_number": "377; echo injected"}})
+        self.assertNotEqual(0, result.returncode)
+        self.assertEqual([], targets)
+        self.assertEqual([], calls)
 
 
 class ExactHeadReadinessWorkflowTests(unittest.TestCase):
