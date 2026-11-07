@@ -53,7 +53,13 @@ Agent）依使用者意圖、專案規範與當次可用技能，選最小適用
 | 推進一個較大的有界目標 | `project-delivery`／`project-orchestrator` |
 | 從已保存狀態接續 | `task-continuation`／`milestone-continuation` |
 | 明確選用 durable loop、接續已識別的當前 loop，或專案要求本目標使用 loop | `loop-engineering`；無關歷史檔案不觸發 |
+| 手動回顧已界定任務的經驗 | 明確指定 `dev-retro`；先查既有規則，只提出建議 |
 | 評估 change request 的完整差異 | `merge-review`／`merge-review-deep`；正式決策另用適用 gate |
+
+`dev-retro` 僅在當前使用者明確選取時啟動，不因任務成功、失敗或 review 自動執行。
+它依證據先查既有規則，再建議專案、Codex 技能包、共享 Core 或個人指示的歸屬；
+個人建議僅供使用者檢閱。成功經驗可直接整理，不偽造 V3-A failure／lineage。
+不自動改規則、開 Issue、發布，亦不啟用 loop、memory 或 hooks。
 
 Agent 須先完整讀取所選來源的技能本體與已觸發依賴，再做相依工作；名稱、描述與
 檔案存在都不等於已讀取。這是技能契約，實際載入與行為須按當次入口查核。
@@ -326,6 +332,12 @@ for the complete change-request range. Formal gates make separate evidence
 decisions. Select `loop-engineering` for an explicit durable loop, continuation
 of an identified active loop, or project policy requiring it for this objective.
 Unrelated historical files do not trigger it; ordinary delivery needs no ledger.
+Select `dev-retro` explicitly to review a bounded task. It checks existing rules
+first and proposes project, Codex skills, shared Core or personal-instruction
+improvements. Personal advice is only for your review. Success can remain ordinary
+advice without fabricated V3-A failures or lineage. Delivery, failure and review
+do not trigger it automatically. It changes no rules, creates no Issues, publishes
+nothing and activates neither loop, memory nor hooks.
 
 Before dependent work, the agent must read the complete selected skill body and
 triggered dependencies from that source. Names, descriptions and file presence

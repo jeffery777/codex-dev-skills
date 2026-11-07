@@ -28,6 +28,9 @@ only by explicit choice, continuation of the identified active loop, or applicab
 repo policy for this objective; unrelated historical loop files are insufficient.
 Deprecated compatibility aliases remain explicit-only and retain their existing
 routes when manually selected.
+`dev-retro` is also explicit-only: use it only when the current user selects it,
+never automatically after delivery, failure, review or historical evidence.
+Its advisory output does not activate Loop or memory and authorizes no write.
 
 For duplicate names, resolve the actual source using the user's selection,
 applicable project instructions and available provenance. Bind reading and

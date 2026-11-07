@@ -38,6 +38,7 @@ SHARED_FILES = {
     "scripts/verify-engineering-workflow.py",
     "policies/code-mode-tool-orchestration-policy.md",
     "policies/context-continuity-policy.md",
+    "policies/project-agent-knowledge-policy.md",
     "policies/exact-head-merge-review-contract.md",
     "policies/github-exact-head-enforcement-profile.md",
     "policies/github-control-plane-policy.md",
