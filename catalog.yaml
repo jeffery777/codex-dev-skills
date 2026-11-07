@@ -118,6 +118,7 @@ groups:
       - source: skills/loop-engineering
       - source: skills/memory-audit
       - source: skills/memory-maintenance
+      - source: skills/dev-retro
       - source: skills/planning
       - source: skills/milestone-continuation
       - source: skills/project-delivery

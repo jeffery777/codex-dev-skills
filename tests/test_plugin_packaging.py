@@ -63,6 +63,14 @@ class PluginPackagingTests(unittest.TestCase):
                     self.assertIs(False, metadata["policy"]["allow_implicit_invocation"])
                     self.assertTrue((path.parents[1] / "SKILL.md").is_file())
 
+    def test_dev_retro_is_explicit_only_with_knowledge_policy_in_both_layouts(self) -> None:
+        for root in (ROOT, PACKAGE_ROOT):
+            metadata = yaml.safe_load((root / "skills/dev-retro/agents/openai.yaml").read_text())
+            self.assertIs(False, metadata["policy"]["allow_implicit_invocation"])
+            policy = root / "policies/project-agent-knowledge-policy.md"
+            self.assertEqual((ROOT / "policies/project-agent-knowledge-policy.md").read_bytes(),
+                             policy.read_bytes())
+
     def test_installed_operation_references_and_commands_do_not_need_source_checkout(self) -> None:
         with tempfile.TemporaryDirectory(prefix="portable-skills-") as directory:
             root = pathlib.Path(directory).resolve()
