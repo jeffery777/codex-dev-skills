@@ -106,5 +106,45 @@ class PolicyLoadingTests(unittest.TestCase):
             self.assertIn('before batching/concurrent tool calls or substantial', entry)
 
 
+    def test_traceability_entries_use_one_packaged_convention(self) -> None:
+        for root in (ROOT, ROOT / 'plugin/codex-dev-skills'):
+            adapter = root / 'policies/engineering-workflow-contract.md'
+            convention = root / 'policies/projectspec-alignment-policy.md'
+            with self.subTest(root=root):
+                self.assertIn('Lightweight Requirements Traceability', adapter.read_text())
+                self.assertIn('](projectspec-alignment-policy.md)', adapter.read_text())
+                self.assertTrue(convention.is_file())
+                self.assertIn('](engineering-workflow-contract.md)', convention.read_text())
+                for skill in ('planning', 'implementation-slice', 'code-review', 'docs-review'):
+                    entry = (root / f'skills/{skill}/SKILL.md').read_text()
+                    self.assertIn('Lightweight Requirements Traceability', ' '.join(entry.split()))
+                    self.assertIn('../../policies/engineering-workflow-contract.md', entry)
+                    self.assertIn('${CODEX_TEMPLATES_DIR:-$HOME/.codex/templates}/orchestration/policies/engineering-workflow-contract.md', entry)
+        # Existing filesystem and Hermes resources retain this same neutral policy.
+        import yaml
+        catalog = yaml.safe_load((ROOT / 'catalog.yaml').read_text())
+        templates = catalog['groups']['shared-review-gates']['templates']
+        self.assertIn({'source': 'policies/projectspec-alignment-policy.md'}, templates)
+        self.assertIn('policies/projectspec-alignment-policy.md', (ROOT / 'install.sh').read_text())
+        hermes = json.loads((ROOT / 'hermes/catalog.json').read_text())
+        self.assertIn('policies/projectspec-alignment-policy.md', hermes['resources'])
+
+    def test_traceability_records_preserve_limits_without_new_machinery(self) -> None:
+        text = (ROOT / 'policies/projectspec-alignment-policy.md').read_text()
+        for section in ('Alignment Rules', 'Lightweight Record', 'Related References', 'Reporting'):
+            self.assertIn(section, sections(text))
+        for required in ('**Source:**', '**Conditions to preserve:**', '**Verification and result:**',
+                         'mark it planned', 'covered', 'uncovered', 'skipped, failed or unverified',
+                         'private record', 'unresolved source conflicts', 'before dependent behavior changes',
+                         '`requirement_relation`', '`REQ-GAP`', 'disposition rules',
+                         'data-loss, authorization or integrity', 'exact-head duties',
+                         'No new requirement IDs', 'mandatory wiki, separate file, schema, ledger or gate',
+                         'do not require a whole-repository reference scan', 'discovery hints',
+                         'path or command rename', 'spelling-only edit', 'still-applicable evidence'):
+            with self.subTest(required=required):
+                self.assertIn(required, text)
+        self.assertNotIn('unless the safe correction is obvious and low-risk', text)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -12,7 +12,7 @@ platforms:
 
 groups:
   shared-review-gates:
-    description: Shared review gates, closure triage, safety policies, and reusable orchestration templates.
+    description: Shared review gates, lightweight requirements traceability, closure triage, safety policies, and reusable orchestration templates.
     runtime: shared
     depends_on: []
     skills:

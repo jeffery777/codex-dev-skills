@@ -1,5 +1,20 @@
 # 固定來源安裝與回復 / Fixed-source installation and recovery
 
+## Issue #379: 0.39.0 traceability mapping / 需求追溯映射
+
+Issue #379 追加第十三筆固定來源映射：source/package `0.39.0` 對應已審 payload commit `b45f044d6bc5d66d8fe7ea422f26c2d2286b740f`，包含輕量需求追溯與未變更的 Core v0.5.0 完整 31 檔。Catalog 的功能描述反映新增需求追溯能力；其 digest 與既有 `0.39.0` payload `c2da9d0b1f029b5816df34a9a5a3e9cadbc3aa70` 不同，兩筆依精確 catalog／payload 身分選取，不只按版本字串。原十二筆映射完整保留。
+
+This point-in-time addition records the reviewed traceability payload at the
+commit above without changing source/package version 0.39.0 or Core v0.5.0.
+The changed capability description gives this catalog a distinct identity;
+preserve the prior twelve mappings, including the earlier 0.39.0 snapshot.
+The installer still verifies exact catalog and payload bytes. Crossing catalog
+identities retains the existing all-managed-groups boundary even when the version
+string matches. Later registry and non-payload documentation commits retain
+catalog/payload parity; receipts record the actual selected HEAD. This mapping
+proves neither publication nor an update to the user's installation. Historical
+sections below remain unchanged.
+
 ## 0.38.1 mapping / 固定來源映射
 
 Issue #373 新增第十一筆固定來源映射：source/package `0.38.1` 對應已審 payload commit `c88514225129afc02ccdc3734402042b0e2a5194`，包含 Core v0.4.1 的完整 28 檔。既有十筆映射完整保留。後續 registry 與非 payload 文件提交保持 catalog 及受管 payload 一致；receipt 記錄實際選取的 HEAD。映射不證明已發布或已更新安裝。下方候選段落保留為 mapping 建立前的準備紀錄。

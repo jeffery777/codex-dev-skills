@@ -13,6 +13,15 @@ Gate and Continue duties are in Core [wf-stages](../vendor/engineering-workflow-
 Keep the existing entry skills and task DoD. Small work may combine stages but
 must retain applicable duties. Plans and session states do not prove completion.
 
+## Lightweight Requirements Traceability
+
+For planning, implementation and review, use the existing
+[ProjectSpec alignment convention](projectspec-alignment-policy.md) to connect
+requirement sources, conditions to preserve and verification in the existing
+plan or report. Check related references proportionally to the affected scope.
+This recording convention adds no new Core obligation, wiki or gate and applies
+to the selected consumer without requiring Codex-specific tools or entrypoints.
+
 ## Risk, Review Timing And Evidence Lifecycle
 
 At task start and after scope/design changes, assess actual impact and unknowns

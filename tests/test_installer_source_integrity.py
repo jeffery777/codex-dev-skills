@@ -401,6 +401,44 @@ exec "''' + real + '''" "$@"
         self.assertIn("unsupported source catalog", result.stderr)
         self.assertEqual(before, self.snapshot())
 
+    def test_traceability_mapping_preserves_previous_catalogs_and_real_identity(self):
+        revision = "b45f044d6bc5d66d8fe7ea422f26c2d2286b740f"
+        prior = json.loads(subprocess.check_output(
+            ["git", "-C", str(ROOT), "show", f"{revision}:installer/source-catalogs.json"]))
+        self.assertEqual(prior["catalogs"], REGISTRY["catalogs"][:len(prior["catalogs"])])
+        added = REGISTRY["catalogs"][len(prior["catalogs"])]
+        self.assertEqual(revision, added["reviewed_revision"])
+        self.assertEqual("0.39.0", added["version"])
+        raw_catalog = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{revision}:catalog.yaml"])
+        self.assertEqual(hashlib.sha256(raw_catalog).hexdigest(), added["catalog_sha256"])
+        old = next(c for c in prior["catalogs"] if c["reviewed_revision"] ==
+                   "c2da9d0b1f029b5816df34a9a5a3e9cadbc3aa70")
+        self.assertNotEqual(old["catalog_sha256"], added["catalog_sha256"])
+        self.assertEqual(old["core"], added["core"])
+
+    def test_same_version_traceability_roundtrip_preserves_exact_core_and_profiles(self):
+        self.assert_core_transition("0.39.0", "c2da9d0b1f029b5816df34a9a5a3e9cadbc3aa70", 31)
+
+    def test_same_version_catalog_change_requires_all_in_both_directions(self):
+        revision = "c2da9d0b1f029b5816df34a9a5a3e9cadbc3aa70"
+        old = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == revision)
+        self.seed("0.39.0", groups=list(old["groups"]), snapshot_revision=revision)
+        old_source = self.case / f"source-{revision}"
+        for source, digest in ((ROOT, CURRENT_CATALOG_DIGEST), (old_source, old["catalog_sha256"])):
+            with self.subTest(source=source):
+                before = self.snapshot()
+                refused = self.run_installer("update", "codex-review-workflow", "--source", source)
+                self.assertNotEqual(0, refused.returncode)
+                self.assertIn("requires all managed groups", refused.stderr)
+                self.assertEqual(before, self.snapshot())
+                result = self.run_installer("update", "--all", "--source", source)
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assert_version("0.39.0")
+                receipt = json.loads(self.receipt.read_text())
+                self.assertEqual(digest, receipt["source"]["catalog_sha256"])
+                policy = self.home / ".codex/templates/orchestration/policies/projectspec-alignment-policy.md"
+                self.assertEqual((source / "policies/projectspec-alignment-policy.md").read_bytes(), policy.read_bytes())
+
     def test_upgrade_repeat_and_downgrade_reconcile_all_files_and_core(self):
         self.seed()
         sibling = self.home / ".agents/skills/unmanaged/notes.txt"
