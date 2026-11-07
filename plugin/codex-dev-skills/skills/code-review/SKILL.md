@@ -75,3 +75,5 @@ limits explicit even when no findings are found.
 - NITS
 - Questions
 - Re-runnable Verification Commands
+
+- Lesson candidates: apply the Codex knowledge policy through the shared adapter above; write none when no candidate applies.

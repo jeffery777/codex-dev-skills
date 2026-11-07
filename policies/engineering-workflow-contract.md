@@ -43,6 +43,14 @@ context slimming grants no source deletion authority. Unresolved, intermittent,
 shared or still-referenced evidence remains protected. Missing retention policy
 or period means retain and mark pending, not invent a universal deadline.
 
+## Codex Lesson Candidates
+
+For Codex delivery and review reports only, read and apply
+[the knowledge policy](project-agent-knowledge-policy.md#codex-lesson-candidates).
+Keep its Lesson candidates section, including none, in the existing report.
+This Codex overlay does not add obligations to Hermes; shared resource packaging
+and existing Hermes duties remain unchanged. It does not activate dev-retro.
+
 ## Documentation Writing And Review
 
 For natural-language output, apply the minimum requirements and reading condition in Core

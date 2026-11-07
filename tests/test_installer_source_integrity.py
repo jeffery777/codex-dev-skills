@@ -294,9 +294,20 @@ exec "''' + real + '''" "$@"
         prior_directories = sorted(p.relative_to(core_root).as_posix()
                                    for p in core_root.rglob("*") if p.is_dir())
         self.assertEqual(count, len(prior_files))
+        if version == "0.39.0":
+            before = self.snapshot()
+            refused = self.run_installer("update", "codex-review-workflow")
+            self.assertNotEqual(0, refused.returncode)
+            self.assertIn("requires all managed groups", refused.stderr)
+            self.assertEqual(before, self.snapshot())
         result = self.run_installer("update", "--all")
         self.assertEqual(0, result.returncode, result.stderr)
         self.assert_version(CURRENT_VERSION)
+        lesson_policy = self.home / ".codex/templates/orchestration/policies/project-agent-knowledge-policy.md"
+        self.assertEqual((ROOT / "policies/project-agent-knowledge-policy.md").read_bytes(), lesson_policy.read_bytes())
+        retro_metadata = self.home / ".agents/skills/dev-retro/agents/openai.yaml"
+        self.assertEqual((ROOT / "skills/dev-retro/agents/openai.yaml").read_bytes(), retro_metadata.read_bytes())
+        self.assertIn("allow_implicit_invocation: false", retro_metadata.read_text())
         receipt = json.loads(self.receipt.read_text())
         self.assertEqual("0.5.0", receipt["source"]["core"]["version"])
         self.assertIn("codex-agent-profiles", receipt["groups"])
@@ -317,6 +328,12 @@ exec "''' + real + '''" "$@"
         self.assertNotEqual(0, result.returncode)
         self.assertEqual(before, self.snapshot())
         extra.unlink()  # Remove only this test-owned input to exercise the accepted path.
+        if version == "0.39.0":
+            before = self.snapshot()
+            refused = self.run_installer("update", "codex-review-workflow", "--source", old_source)
+            self.assertNotEqual(0, refused.returncode)
+            self.assertIn("requires all managed groups", refused.stderr)
+            self.assertEqual(before, self.snapshot())
         result = self.run_installer("update", "--all", "--source", old_source)
         self.assertEqual(0, result.returncode, result.stderr)
         self.assert_version(version)
@@ -434,7 +451,7 @@ exec "''' + real + '''" "$@"
         self.assertIn("agents/openai.yaml", artifact["files"])
         self.assertIn("references/acceptance-cases.md", artifact["files"])
 
-    def test_manual_retro_roundtrip_preserves_traceability_core_and_profiles(self):
+    def test_v039_traceability_to_current_roundtrip_preserves_core_and_profiles(self):
         self.assert_core_transition("0.39.0", "b45f044d6bc5d66d8fe7ea422f26c2d2286b740f", 31)
 
     def test_manual_retro_install_is_explicit_only_and_same_version_requires_all(self):
@@ -442,19 +459,21 @@ exec "''' + real + '''" "$@"
         old = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == revision)
         self.seed("0.39.0", groups=list(old["groups"]), snapshot_revision=revision)
         old_source = self.case / f"source-{revision}"
+        newer_source = self.fixed_source("9d6c0bdce2f9b4d18f88a97a71110a57796324fa")
         before = self.snapshot()
-        result = self.run_installer("update", "codex-delivery-workflow")
+        result = self.run_installer("update", "codex-delivery-workflow", "--source", newer_source)
         self.assertNotEqual(0, result.returncode)
         self.assertIn("requires all managed groups", result.stderr)
         self.assertEqual(before, self.snapshot())
-        result = self.run_installer("update", "--all")
+        result = self.run_installer("update", "--all", "--source", newer_source)
         self.assertEqual(0, result.returncode, result.stderr)
+        self.assert_version("0.39.0")
         skill = self.home / ".agents/skills/dev-retro"
-        self.assertEqual((ROOT / "skills/dev-retro/agents/openai.yaml").read_bytes(),
+        self.assertEqual((newer_source / "skills/dev-retro/agents/openai.yaml").read_bytes(),
                          (skill / "agents/openai.yaml").read_bytes())
         self.assertIn("allow_implicit_invocation: false", (skill / "agents/openai.yaml").read_text())
         for name in ("projectspec-alignment-policy.md", "project-agent-knowledge-policy.md"):
-            self.assertEqual((ROOT / "policies" / name).read_bytes(),
+            self.assertEqual((newer_source / "policies" / name).read_bytes(),
                              (self.home / ".codex/templates/orchestration/policies" / name).read_bytes())
         before = self.snapshot()
         result = self.run_installer("update", "codex-delivery-workflow", "--source", old_source)
@@ -466,7 +485,7 @@ exec "''' + real + '''" "$@"
         self.assertFalse(skill.exists())
         self.assertTrue((self.home / ".codex/templates/orchestration/policies/projectspec-alignment-policy.md").is_file())
 
-    def test_same_version_traceability_roundtrip_preserves_exact_core_and_profiles(self):
+    def test_v039_core_adoption_to_current_roundtrip_preserves_exact_core_and_profiles(self):
         self.assert_core_transition("0.39.0", "c2da9d0b1f029b5816df34a9a5a3e9cadbc3aa70", 31)
 
     def test_same_version_catalog_change_requires_all_in_both_directions(self):
@@ -474,7 +493,11 @@ exec "''' + real + '''" "$@"
         old = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == revision)
         self.seed("0.39.0", groups=list(old["groups"]), snapshot_revision=revision)
         old_source = self.case / f"source-{revision}"
-        for source, digest in ((ROOT, CURRENT_CATALOG_DIGEST), (old_source, old["catalog_sha256"])):
+        newer_revision = "b45f044d6bc5d66d8fe7ea422f26c2d2286b740f"
+        newer = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == newer_revision)
+        newer_source = self.fixed_source(newer_revision)
+        for source, digest in ((newer_source, newer["catalog_sha256"]),
+                               (old_source, old["catalog_sha256"])):
             with self.subTest(source=source):
                 before = self.snapshot()
                 refused = self.run_installer("update", "codex-review-workflow", "--source", source)
@@ -488,6 +511,45 @@ exec "''' + real + '''" "$@"
                 self.assertEqual(digest, receipt["source"]["catalog_sha256"])
                 policy = self.home / ".codex/templates/orchestration/policies/projectspec-alignment-policy.md"
                 self.assertEqual((source / "policies/projectspec-alignment-policy.md").read_bytes(), policy.read_bytes())
+
+    def test_v039_manual_retro_to_v040_roundtrip_preserves_core_and_profiles(self):
+        self.assertEqual("0.40.0", CURRENT_VERSION)
+        self.assert_core_transition("0.39.0", "9d6c0bdce2f9b4d18f88a97a71110a57796324fa", 31)
+
+    def test_v039_manual_retro_upgrade_rollback_restores_exact_payload(self):
+        revision = "9d6c0bdce2f9b4d18f88a97a71110a57796324fa"
+        catalog = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == revision)
+        self.seed("0.39.0", groups=list(catalog["groups"]), snapshot_revision=revision)
+        policy = self.home / ".codex/templates/orchestration/policies/project-agent-knowledge-policy.md"
+        self.assertNotEqual((ROOT / "policies/project-agent-knowledge-policy.md").read_bytes(), policy.read_bytes())
+        # Core is unchanged, so its lock promotion is not a reliable fault seam.
+        # Managed receipt promotion follows payload application; prove it is reached.
+        overrides = self.fake_mv("receipt")
+        before = self.snapshot()  # Every seed file, receipt and profile, including modes.
+        core_root = self.home / ".codex/templates/orchestration/core"
+        directories = sorted(p.relative_to(core_root).as_posix()
+                             for p in core_root.rglob("*") if p.is_dir())
+        result = self.run_installer("update", "--all", overrides=overrides)
+        self.assertNotEqual(0, result.returncode, result.stdout)
+        self.assertIn("injected-receipt", result.stderr, "fault seam was not reached")
+        self.assertEqual(before, self.snapshot(), result.stderr)
+        self.assertEqual(directories, sorted(p.relative_to(core_root).as_posix()
+                                            for p in core_root.rglob("*") if p.is_dir()))
+        self.assert_version("0.39.0")
+
+    def test_v040_mapping_preserves_fourteen_real_catalogs(self):
+        self.assertEqual(15, len(REGISTRY["catalogs"]))
+        added = REGISTRY["catalogs"][14]
+        self.assertEqual("0.40.0", added["version"])
+        self.assertEqual(CURRENT_CATALOG_DIGEST, added["catalog_sha256"])
+        revision = added["reviewed_revision"]
+        prior = json.loads(subprocess.check_output(
+            ["git", "-C", str(ROOT), "show", f"{revision}:installer/source-catalogs.json"]))
+        self.assertEqual(14, len(prior["catalogs"]))
+        self.assertEqual(prior["catalogs"], REGISTRY["catalogs"][:14])
+        raw = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{revision}:catalog.yaml"])
+        self.assertEqual(CURRENT_CATALOG_DIGEST, hashlib.sha256(raw).hexdigest())
+        self.assertEqual(prior["catalogs"][-1]["core"], added["core"])
 
     def test_upgrade_repeat_and_downgrade_reconcile_all_files_and_core(self):
         self.seed()

@@ -72,3 +72,5 @@ limits explicit even when no findings are found.
 - Questions
 - Re-runnable Verification Commands
 - Writing sample scope, results and unverified limits
+
+- Lesson candidates: apply the Codex knowledge policy through the shared adapter above; write none when no candidate applies.
