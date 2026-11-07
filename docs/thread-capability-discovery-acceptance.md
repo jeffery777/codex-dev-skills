@@ -100,3 +100,6 @@ CLI version-probe timeout 個案首次整組執行曾出現非預期 status；�
   在取得已登錄且授權的隔離 project 後補測。本次不以正式專案代替測試目標。
 - Pre-commit review／Security Diff Scan 不取代 PR 後完整 exact-head Merge
   Review、CI、receipt 與 dedicated App。合併與 Release 仍是分開的交付階段。
+
+後續 [Issue #242 可觀察性調查](thread-runtime-observability-242.md) 另列三入口
+矩陣、當輪原始查詢與未取得的遠端證據；不取代以上點時紀錄。
