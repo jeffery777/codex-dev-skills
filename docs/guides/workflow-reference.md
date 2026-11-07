@@ -1736,6 +1736,15 @@ one shard deterministically through the selected project interpreter:
 ./scripts/project-python scripts/test-shards.py run <shard-id>
 ```
 
+The runner uses native unittest verbose output and reports the ten slowest
+cases after completion. The fourteen-shard matrix keeps source-integrity and
+fault-boundary installer modules in separate shards; runtime-group installation
+and the three lightweight release/workflow/package modules share
+`installer-runtime`. Every module still runs exactly once. This reduces serial
+concentration and the scope of a failed-shard rerun, without promising lower
+total compute or a fixed hosted duration. The per-job timeout and aggregate
+success requirements are unchanged.
+
 Use these verification tiers:
 
 1. Run exact focused test modules for the changed behavior.

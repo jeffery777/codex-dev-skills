@@ -164,7 +164,9 @@ def run_shard(manifest: ShardManifest, shard_id: str, repo_root: pathlib.Path) -
         raise ManifestError(f"unknown shard: {shard_id}")
     print(f"[INFO] Running shard {shard_id} ({len(modules)} modules)", flush=True)
     return subprocess.run(
-        [sys.executable, "-m", "unittest", *modules], cwd=repo_root, check=False
+        [sys.executable, "-m", "unittest", "-v", "--durations", "10", *modules],
+        cwd=repo_root,
+        check=False
     ).returncode
 
 
