@@ -1,6 +1,6 @@
 # codex-dev-skills
 
-本來源採正式 Core v0.5.0 的完整 31 檔，並接入共用寫作契約：一般工程摘要保留簡短最低要求，實質文件撰寫、修改、翻譯與審查才按需讀完整規範。文件技能保留文類、作者聲音、技術精度及必要術語，區分忠實引用與自行研究證據。來源／封裝版本以 `catalog.yaml` 為準；固定身分與候選範圍見 [loading contract](policies/core-contract-loading.md) 及[準備紀錄](docs/releases/v0.39.0-split.md)。這些資料不證明已發行、已安裝或 Session 已載入。
+本來源採正式 Core v0.5.0 的完整 31 檔，並接入共用寫作契約：一般工程摘要保留簡短最低要求，實質文件撰寫、修改、翻譯與審查才按需讀完整規範。文件技能保留文類、作者聲音、技術精度及必要術語，區分忠實引用與自行研究證據。來源／封裝版本以 `catalog.yaml` 為準；固定身分與候選範圍見 [loading contract](policies/core-contract-loading.md) 及[準備紀錄](docs/releases/v0.40.0-split.md)。這些資料不證明已發行、已安裝或 Session 已載入。
 
 This source adopts the full 31-file Core v0.5.0 snapshot and its on-demand writing contract. Routine engineering summaries keep minimum requirements; substantive document tasks read the full text. Preserve genre, author voice, precision, necessary terms and machine literals, with supported citations distinct from own research evidence. The catalog defines the source/package version. Publication, installation, session loading and runtime qualification remain separate.
 
@@ -29,6 +29,8 @@ The historical v0.36.0 source pins Core v0.2.0 with twenty files and explicit pr
 | formal gate（正式關卡） | 根據證據判斷能否進入下一階段；不增加操作授權 |
 
 <a id="who-it-is-for"></a>
+Codex 交付與審查以既有報告連結需求來源、保留條件與驗證，並列出條件式 Lesson candidates（無則 none）。候選先查既有規則，只作建議，不自動保存或改規則；完整 `dev-retro` 仍須當前使用者明確選取。
+
 ## 適合誰、何時使用
 
 適合維護開源或團隊 repository、需要明確驗收與人工決策邊界的使用者。
@@ -332,6 +334,10 @@ for the complete change-request range. Formal gates make separate evidence
 decisions. Select `loop-engineering` for an explicit durable loop, continuation
 of an identified active loop, or project policy requiring it for this objective.
 Unrelated historical files do not trigger it; ordinary delivery needs no ledger.
+Codex delivery and review reports connect requirement sources, preserved conditions
+and verification, and include conditional Lesson candidates (none when absent).
+Candidates check existing rules first and remain advice, with no automatic storage
+or rule change. See the [knowledge policy](policies/project-agent-knowledge-policy.md).
 Select `dev-retro` explicitly to review a bounded task. It checks existing rules
 first and proposes project, Codex skills, shared Core or personal-instruction
 improvements. Personal advice is only for your review. Success can remain ordinary

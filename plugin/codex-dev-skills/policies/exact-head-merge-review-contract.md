@@ -15,6 +15,13 @@ findings/dispositions/residual risk and code, documentation, configuration, pack
 Pre-commit evidence may be reused while matching; their verdict does not satisfy
 exact-head Merge Review. Keep existing report/template/validator field names.
 
+## Codex Lesson Candidates
+
+For Codex review reports only, apply
+[the knowledge policy](project-agent-knowledge-policy.md#codex-lesson-candidates).
+Retain Lesson candidates or none when reusing valid primitive evidence; this does
+not require a redundant review or add obligations to another runtime.
+
 ## Content-Coherence Review
 
 Read Core [exact-coherence](../vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md#exact-coherence).

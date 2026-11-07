@@ -43,4 +43,10 @@ verifiable premises, actual responsibility and a failure stop/handoff. -->
 improvement does not close required checks/reviews/scans or grant action authority.
 Omit irrelevant prompts; do not require a long table or Loop for simple work. -->
 
+## Lesson candidates
+
+<!-- Codex reports retain this section even when empty: write none. Apply the
+project-agent-knowledge-policy through the engineering adapter. Other runtimes
+retain their existing duties; this section adds no obligation to Hermes. -->
+
 ## Human Decisions Needed

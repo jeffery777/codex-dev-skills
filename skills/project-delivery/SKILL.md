@@ -159,3 +159,5 @@ change-request head.
 - Review closure rounds used
 - Remaining risk
 - Next human gate, if any
+
+- Lesson candidates: apply the Codex knowledge policy through the shared adapter above; write none when no candidate applies.

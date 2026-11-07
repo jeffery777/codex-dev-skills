@@ -73,3 +73,5 @@ authorizes merge.
 - Selected provider profile evidence, if any
 - Residual risk
 - Required human gate
+
+- Lesson candidates: apply the Codex knowledge policy through the shared adapter above; write none when no candidate applies.
