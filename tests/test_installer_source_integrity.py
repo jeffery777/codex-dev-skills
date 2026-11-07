@@ -416,6 +416,56 @@ exec "''' + real + '''" "$@"
         self.assertNotEqual(old["catalog_sha256"], added["catalog_sha256"])
         self.assertEqual(old["core"], added["core"])
 
+    def test_manual_retro_mapping_preserves_thirteen_catalogs_and_real_identity(self):
+        revision = "9d6c0bdce2f9b4d18f88a97a71110a57796324fa"
+        prior = json.loads(subprocess.check_output(
+            ["git", "-C", str(ROOT), "show", f"{revision}:installer/source-catalogs.json"]))
+        self.assertEqual(13, len(prior["catalogs"]))
+        self.assertEqual(prior["catalogs"], REGISTRY["catalogs"][:13])
+        added = REGISTRY["catalogs"][13]
+        self.assertEqual(revision, added["reviewed_revision"])
+        self.assertEqual("0.39.0", added["version"])
+        raw = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{revision}:catalog.yaml"])
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), added["catalog_sha256"])
+        self.assertNotIn(added["catalog_sha256"], [c["catalog_sha256"] for c in prior["catalogs"]])
+        self.assertEqual(prior["catalogs"][-1]["core"], added["core"])
+        artifact = next(a for a in added["groups"]["codex-delivery-workflow"]["artifacts"]
+                        if a["source"] == "skills/dev-retro")
+        self.assertIn("agents/openai.yaml", artifact["files"])
+        self.assertIn("references/acceptance-cases.md", artifact["files"])
+
+    def test_manual_retro_roundtrip_preserves_traceability_core_and_profiles(self):
+        self.assert_core_transition("0.39.0", "b45f044d6bc5d66d8fe7ea422f26c2d2286b740f", 31)
+
+    def test_manual_retro_install_is_explicit_only_and_same_version_requires_all(self):
+        revision = "b45f044d6bc5d66d8fe7ea422f26c2d2286b740f"
+        old = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == revision)
+        self.seed("0.39.0", groups=list(old["groups"]), snapshot_revision=revision)
+        old_source = self.case / f"source-{revision}"
+        before = self.snapshot()
+        result = self.run_installer("update", "codex-delivery-workflow")
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("requires all managed groups", result.stderr)
+        self.assertEqual(before, self.snapshot())
+        result = self.run_installer("update", "--all")
+        self.assertEqual(0, result.returncode, result.stderr)
+        skill = self.home / ".agents/skills/dev-retro"
+        self.assertEqual((ROOT / "skills/dev-retro/agents/openai.yaml").read_bytes(),
+                         (skill / "agents/openai.yaml").read_bytes())
+        self.assertIn("allow_implicit_invocation: false", (skill / "agents/openai.yaml").read_text())
+        for name in ("projectspec-alignment-policy.md", "project-agent-knowledge-policy.md"):
+            self.assertEqual((ROOT / "policies" / name).read_bytes(),
+                             (self.home / ".codex/templates/orchestration/policies" / name).read_bytes())
+        before = self.snapshot()
+        result = self.run_installer("update", "codex-delivery-workflow", "--source", old_source)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("requires all managed groups", result.stderr)
+        self.assertEqual(before, self.snapshot())
+        result = self.run_installer("update", "--all", "--source", old_source)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertFalse(skill.exists())
+        self.assertTrue((self.home / ".codex/templates/orchestration/policies/projectspec-alignment-policy.md").is_file())
+
     def test_same_version_traceability_roundtrip_preserves_exact_core_and_profiles(self):
         self.assert_core_transition("0.39.0", "c2da9d0b1f029b5816df34a9a5a3e9cadbc3aa70", 31)
 

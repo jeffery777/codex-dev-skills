@@ -1,5 +1,17 @@
 # 固定來源安裝與回復 / Fixed-source installation and recovery
 
+## Issue #380: 0.39.0 manual retro mapping / 手動回顧映射
+
+Issue #380 追加第十四筆固定來源映射：source/package `0.39.0` 對應已審 payload commit `9d6c0bdce2f9b4d18f88a97a71110a57796324fa`，加入手動且僅提案的 dev-retro 與 knowledge policy 封裝閉包，保留 #379 需求追溯及 Core v0.5.0 完整 31 檔。新的技能 catalog 與前十三筆依精確 catalog／payload 身分區分，不只按版本字串；前十三筆映射保持不變。
+
+This entry pins the reviewed manual-retro payload above as the fourteenth
+mapping. Preserve all thirteen earlier mappings, including the traceability
+payload, source/package version 0.39.0, Core v0.5.0 and installer safeguards.
+Same-version catalog changes still require all managed groups in either
+direction. The mapping does not establish publication, user installation,
+live skill activation or qualification for another runtime.
+
+
 ## Issue #379: 0.39.0 traceability mapping / 需求追溯映射
 
 Issue #379 追加第十三筆固定來源映射：source/package `0.39.0` 對應已審 payload commit `b45f044d6bc5d66d8fe7ea422f26c2d2286b740f`，包含輕量需求追溯與未變更的 Core v0.5.0 完整 31 檔。Catalog 的功能描述反映新增需求追溯能力；其 digest 與既有 `0.39.0` payload `c2da9d0b1f029b5816df34a9a5a3e9cadbc3aa70` 不同，兩筆依精確 catalog／payload 身分選取，不只按版本字串。原十二筆映射完整保留。
