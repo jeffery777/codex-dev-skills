@@ -47,7 +47,10 @@ Use this skill for routine review of working-tree, branch, or patch changes.
    applicable security scanning. Check actual revision/uncommitted scope,
    assumptions and affected-boundary coverage before reusing evidence; retain
    unresolved/intermittent failures and their original context.
-4. Check tests or evidence that cover the changed behavior.
+4. Apply Lightweight Requirements Traceability in the engineering policy above.
+   Compare the changed behavior and preserved conditions with their requirement
+   sources and actual verification evidence; check related references proportionally
+   and report uncovered conditions, not just whether tests pass.
 5. Report findings with file and line evidence.
 
 依變更風險檢查受影響的完整執行路徑與上下游契約；必要時包含有效配置、

@@ -34,6 +34,7 @@ SHARED_FILES = {
     "policies/core-contract-loading.md",
     "scripts/validate-core-contract-snapshot.py",
     "policies/engineering-workflow-contract.md",
+    "policies/projectspec-alignment-policy.md",
     "scripts/verify-engineering-workflow.py",
     "policies/code-mode-tool-orchestration-policy.md",
     "policies/context-continuity-policy.md",

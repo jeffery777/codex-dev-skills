@@ -52,7 +52,10 @@ For filesystem installs, use that section of the installed policy path above.
 
 1. Inspect docs diff and relevant source evidence. When the document itself is the review target, read the full fixed writing contract. Use `wf-writing` to distinguish routine engineering summaries from requested summary documents, and pure spelling/formatting from even short substantive changes to steps, risks or important conclusions. Check context and preserve stricter requirements; the reading condition waives no applicable safety, authorization, review or exact-head duties.
 2. Sample the applicable writing requirements in the existing review; record scope, results and unverified limits. For English technical text, verify the evidence for any full STE claim and state when full conformance is unverified. Equivalent notices must retain that meaning and any stricter downstream wording/placement requirements; do not impose English technical controlled language on every general article. Traditional Chinese must not be reported as STE-conformant or an official Chinese ASD standard.
-3. Separate correctness issues from style preferences.
+3. Apply Lightweight Requirements Traceability in the engineering policy above.
+   Check that the docs preserve the required conditions and that their sources
+   support the changed claims; inspect affected references proportionally and
+   record verification gaps. Separate correctness issues from style preferences.
 4. Report blockers first.
 5. Include verification commands when applicable.
 

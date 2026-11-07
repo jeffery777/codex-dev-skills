@@ -36,7 +36,9 @@ Use this skill for a focused implementation task where the target behavior is cl
    design needs early independent deep/security analysis, then deep code review
    and necessary proportional scan as substantial diff exists; do not wait until
    the final candidate. Keep cheap applicable checks during development.
-3. Make the smallest scoped change that satisfies the objective.
+3. Apply Lightweight Requirements Traceability in the engineering policy above
+   before editing. Make the smallest scoped change that satisfies the objective
+   and preserves the recorded conditions; reassess affected references on scope changes.
 4. Avoid unrelated refactors and do not overwrite unrelated user changes.
 5. Run the smallest relevant verification.
 6. Inspect the diff before reporting. Bind checks/reviews/scans to actual content;
@@ -52,6 +54,7 @@ Do not commit unless the user explicitly asks for a commit or repo policy clearl
 
 - Changed files
 - Behavior changed
-- Verification run
+- Requirements covered, preserved conditions and related-reference scope
+- Verification run and remaining requirement gaps
 - Skipped verification, if any
 - Residual risk

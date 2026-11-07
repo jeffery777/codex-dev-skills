@@ -33,14 +33,16 @@ Use this skill when the user asks for a plan, implementation outline, task break
    Review Timing And Evidence Lifecycle in the engineering policy above. Plan
    early independent deep design/security review for high risk, then deep code
    review and necessary proportional scanning as substantial diff becomes available.
-3. Define the smallest coherent task slices.
+3. Define the smallest coherent task slices. Apply Lightweight Requirements
+   Traceability in the engineering policy above: connect sources, conditions to
+   preserve and planned verification in the existing plan.
 4. List assumptions, risks, human gates, and verification commands.
 5. Stop before editing files unless the user explicitly asks to continue into implementation.
 
 ## Output
 
 - Objective
-- Relevant source-of-truth files
+- Requirement sources and conditions to preserve
 - Proposed task slices
 - Definition of Done
 - Risks and human gates
