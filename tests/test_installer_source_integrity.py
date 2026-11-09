@@ -538,18 +538,89 @@ exec "''' + real + '''" "$@"
         self.assert_version("0.39.0")
 
     def test_v040_mapping_preserves_fourteen_real_catalogs(self):
-        self.assertEqual(15, len(REGISTRY["catalogs"]))
+        revision = "3a9eef152c07ea4722591aaf3602d5356ce9917b"
         added = REGISTRY["catalogs"][14]
+        self.assertEqual(revision, added["reviewed_revision"])
         self.assertEqual("0.40.0", added["version"])
-        self.assertEqual(CURRENT_CATALOG_DIGEST, added["catalog_sha256"])
-        revision = added["reviewed_revision"]
         prior = json.loads(subprocess.check_output(
             ["git", "-C", str(ROOT), "show", f"{revision}:installer/source-catalogs.json"]))
         self.assertEqual(14, len(prior["catalogs"]))
         self.assertEqual(prior["catalogs"], REGISTRY["catalogs"][:14])
         raw = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{revision}:catalog.yaml"])
-        self.assertEqual(CURRENT_CATALOG_DIGEST, hashlib.sha256(raw).hexdigest())
+        self.assertEqual(added["catalog_sha256"], hashlib.sha256(raw).hexdigest())
         self.assertEqual(prior["catalogs"][-1]["core"], added["core"])
+
+    def test_bridge_mapping_preserves_fifteen_real_catalogs_and_payload_identity(self):
+        revision = "6dca8dba0524d81a546c7f6dbf4fbe63bd3a66aa"
+        prior = json.loads(subprocess.check_output(
+            ["git", "-C", str(ROOT), "show", f"{revision}:installer/source-catalogs.json"]))
+        self.assertEqual(15, len(prior["catalogs"]))
+        self.assertEqual(prior["catalogs"], REGISTRY["catalogs"][:15])
+        added = REGISTRY["catalogs"][15]
+        self.assertEqual(revision, added["reviewed_revision"])
+        self.assertEqual("0.40.0", added["version"])
+        raw = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{revision}:catalog.yaml"])
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), added["catalog_sha256"])
+        self.assertNotIn(added["catalog_sha256"], [item["catalog_sha256"] for item in prior["catalogs"]])
+        self.assertEqual(prior["catalogs"][-1]["core"], added["core"])
+        for path in ("scripts/collect-exact-head-merge-readiness.py",
+                     "policies/github-exact-head-enforcement-profile.md"):
+            with self.subTest(path=path):
+                artifact = next(item for item in added["groups"]["shared-review-gates"]["artifacts"]
+                                if item["source"] == path)
+                previous = next(item for item in prior["catalogs"][-1]["groups"]["shared-review-gates"]["artifacts"]
+                                if item["source"] == path)
+                data = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{revision}:{path}"])
+                self.assertEqual(hashlib.sha256(data).hexdigest(), artifact["files"][""]["sha256"])
+                self.assertNotEqual(previous["files"][""]["sha256"], artifact["files"][""]["sha256"])
+
+    def test_v040_bridge_roundtrip_requires_all_and_preserves_core_and_profiles(self):
+        old_revision = "3a9eef152c07ea4722591aaf3602d5356ce9917b"
+        new_revision = "6dca8dba0524d81a546c7f6dbf4fbe63bd3a66aa"
+        old = next(item for item in REGISTRY["catalogs"] if item["reviewed_revision"] == old_revision)
+        new = next(item for item in REGISTRY["catalogs"] if item["reviewed_revision"] == new_revision)
+        prior = self.seed("0.40.0", groups=list(old["groups"]), snapshot_revision=old_revision)
+        old_source = self.case / f"source-{old_revision}"
+        new_source = self.fixed_source(new_revision)
+        template_root = self.home / ".codex/templates"
+        protected_roots = [template_root / "orchestration/core", self.home / ".codex/agents"]
+        core_lock = template_root / "orchestration/core.lock.json"
+
+        def protected_snapshot():
+            paths = [core_lock]
+            for root in protected_roots:
+                paths.extend([root, *root.rglob("*")])
+            return {path.relative_to(self.home).as_posix():
+                    (path.lstat().st_mode, path.read_bytes() if path.is_file() else None)
+                    for path in paths}
+
+        protected = protected_snapshot()
+        payload_paths = {
+            "scripts/collect-exact-head-merge-readiness.py": template_root / "scripts/collect-exact-head-merge-readiness.py",
+            "policies/github-exact-head-enforcement-profile.md": template_root / "orchestration/policies/github-exact-head-enforcement-profile.md",
+        }
+        for path, target in payload_paths.items():
+            self.assertEqual((old_source / path).read_bytes(), target.read_bytes())
+            self.assertNotEqual((old_source / path).read_bytes(), (new_source / path).read_bytes())
+        for source, catalog in ((new_source, new), (old_source, old)):
+            with self.subTest(revision=catalog["reviewed_revision"]):
+                before = self.snapshot()
+                refused = self.run_installer("update", "shared-review-gates", "--source", source)
+                self.assertNotEqual(0, refused.returncode)
+                self.assertIn("requires all managed groups", refused.stderr)
+                self.assertEqual(before, self.snapshot())
+                result = self.run_installer("update", "--all", "--source", source)
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assert_version("0.40.0")
+                receipt = json.loads(self.receipt.read_text())
+                self.assertEqual(catalog["catalog_sha256"], receipt["source"]["catalog_sha256"])
+                self.assertEqual(catalog["reviewed_revision"], receipt["source"]["revision"])
+                self.assertEqual(prior["groups"], receipt["groups"])
+                self.assertIn("codex-agent-profiles", receipt["groups"])
+                self.assertEqual(prior["source"]["core"], receipt["source"]["core"])
+                self.assertEqual(protected, protected_snapshot())
+                for path, target in payload_paths.items():
+                    self.assertEqual((source / path).read_bytes(), target.read_bytes())
 
     def test_upgrade_repeat_and_downgrade_reconcile_all_files_and_core(self):
         self.seed()
