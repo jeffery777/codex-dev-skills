@@ -1,15 +1,5 @@
 {
-  "contract": "exact-head-merge-readiness-policy/v2",
-  "workflow_transition": {
-    "contract": "exact-head-workflow-transition/v1",
-    "repository": "jeffery777/codex-dev-skills",
-    "pr_number": 388,
-    "workflow_id": 330877463,
-    "workflow_path": ".github/workflows/repository-validation.yml",
-    "event": "pull_request",
-    "old_workflow_blob_sha": "0c84c54137596641b6096c0c10abe2c85f74ffaa",
-    "new_workflow_blob_sha": "7d5d362bf83444554f0a25d9974e09fc22c6d194"
-  },
+  "contract": "exact-head-merge-readiness-policy/v1",
   "check_context": "Exact-Head Merge Readiness",
   "receipt_contract": "exact-head-merge-readiness/v2",
   "required_upstream_workflows": [
@@ -20,7 +10,7 @@
       "workflow_path": ".github/workflows/repository-validation.yml",
       "event": "pull_request",
       "run_name_contract": "exact-pr-head/v1",
-      "workflow_blob_sha": "0c84c54137596641b6096c0c10abe2c85f74ffaa"
+      "workflow_blob_sha": "7d5d362bf83444554f0a25d9974e09fc22c6d194"
     }
   ],
   "required_ci_policy": {

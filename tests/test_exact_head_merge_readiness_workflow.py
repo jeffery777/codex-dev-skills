@@ -491,6 +491,18 @@ class ExactHeadReadinessWorkflowTests(unittest.TestCase):
             policy["required_upstream_workflows"][0]["workflow_blob_sha"],
         )
 
+    def test_ready_event_reevaluates_readiness_without_starting_full_ci(self) -> None:
+        # BaseLoader preserves YAML's "on" key instead of treating it as a bool.
+        upstream = yaml.load(UPSTREAM_WORKFLOW.read_text(), Loader=yaml.BaseLoader)
+        controller = yaml.load(self.text, Loader=yaml.BaseLoader)
+        self.assertEqual(
+            {"pull_request": {"types": ["opened", "reopened", "synchronize"]}},
+            upstream["on"],
+        )
+        self.assertIn(
+            "ready_for_review", controller["on"]["pull_request_target"]["types"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

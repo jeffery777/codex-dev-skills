@@ -1758,6 +1758,23 @@ Use these verification tiers:
    `Validate repository`; individual shard names are diagnostic and are not
    ruleset contracts.
 
+Repository Validation starts on `opened`, `reopened`, and `synchronize`.
+Marking a draft ready does not start another full matrix for the same head.
+The trusted readiness controller still handles `ready_for_review` and checks
+the latest full run for the live PR head, together with the current receipt
+and other required evidence. An absent run, a pending run, or a newer failed
+run remains blocking; an earlier success cannot replace it. A changed head
+still requires its own CI and complete base-to-head Merge Review. This does
+not introduce selective tests or a new guarantee about a run's original base.
+
+The ready-trigger change and its sole-new workflow policy pin must land
+together, after a separately reviewed trusted bridge admits the exact rollout
+PR and old/new workflow blobs. The PR-head policy is candidate content, not
+the authority for its own admission. After merge the ordinary policy contains
+only the new pin; no separate cleanup PR is required. Hosted execution-source
+and same-head ready behavior require actual platform validation, not just
+offline workflow tests.
+
 The local complete equivalent is:
 
 ```bash
