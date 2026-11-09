@@ -69,7 +69,7 @@ class TestShardManifestTests(unittest.TestCase):
         manifest = subject.load_manifest(MANIFEST, ROOT)
 
         self.assertEqual(tuple(sorted(manifest.shard_ids)), manifest.shard_ids)
-        self.assertEqual(12, len(manifest.shards))
+        self.assertEqual(14, len(manifest.shards))
         self.assertIn("tests.test_test_shards", manifest.shards["repository-policy"])
         assigned = [module for modules in manifest.shards.values() for module in modules]
         discovered = {f"tests.{path.stem}" for path in (ROOT / "tests").glob("test_*.py")}
@@ -169,12 +169,48 @@ class TestShardManifestTests(unittest.TestCase):
                 sys.executable,
                 "-m",
                 "unittest",
+                "-v",
+                "--durations",
+                "10",
                 "tests.test_alpha",
                 "tests.test_beta",
             ],
             cwd=ROOT,
             check=False,
         )
+
+    def test_installer_modules_have_complete_separate_owners(self) -> None:
+        manifest = subject.load_manifest(MANIFEST, ROOT)
+        expected = {
+            "installer-fault-boundaries": ("tests.test_installer_fault_boundaries",),
+            "installer-runtime": (
+                "tests.test_core_release_preparation",
+                "tests.test_engineering_workflow",
+                "tests.test_hermes_package",
+                "tests.test_installer_runtime_groups",
+            ),
+            "installer-source-integrity": ("tests.test_installer_source_integrity",),
+        }
+        for shard_id, modules in expected.items():
+            with self.subTest(shard=shard_id):
+                self.assertEqual(modules, manifest.shards[shard_id])
+
+    def test_runner_preserves_nonzero_subprocess_exit(self) -> None:
+        manifest = subject.ShardManifest(shards={"alpha": ("tests.test_alpha",)})
+        for code in (1, 2, -15):
+            with self.subTest(code=code), mock.patch.object(
+                subject.subprocess,
+                "run",
+                return_value=subprocess.CompletedProcess([], code),
+            ):
+                self.assertEqual(code, subject.run_shard(manifest, "alpha", ROOT))
+
+    def test_runner_rejects_unknown_shard_without_starting_subprocess(self) -> None:
+        manifest = subject.ShardManifest(shards={"alpha": ("tests.test_alpha",)})
+        with mock.patch.object(subject.subprocess, "run") as run:
+            with self.assertRaisesRegex(subject.ManifestError, "unknown shard"):
+                subject.run_shard(manifest, "missing", ROOT)
+        run.assert_not_called()
 
     def test_run_all_runs_every_shard_in_manifest_order_after_failure(self) -> None:
         manifest = subject.ShardManifest(

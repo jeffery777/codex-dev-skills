@@ -1,5 +1,11 @@
 # Changelog / 變更紀錄
 
+## 0.40.0 — 需求追溯、教訓候選與手動回顧 / Traceability, lesson candidates and manual retrospective
+
+Issue #383 整理 pre-1.0 minor 來源準備：納入 #377／#378 大型 PR 資料路由修正、#379 輕量需求追溯及 #380 手動 dev-retro，新增 Codex 交付／審查的條件式 Lesson candidates。候選先查既有規則，區分事實、推論與未驗證，保留單次事件與讀取／授權邊界；完整回顧仍須明確選取。Core v0.5.0 的完整 31 檔與 Hermes 既有義務不變。詳見[準備紀錄](docs/releases/v0.40.0-split.md)。
+
+Prepare a minor source/package version combining large-PR routing fixes, lightweight requirements traceability, explicit-only dev-retro and Codex-only conditional lesson candidates. Candidates are bounded report advice, not persistence or operation authority. Core bytes and existing Hermes obligations remain unchanged. Preparation is not publication or installation evidence; formal installer mapping follows the real reviewed payload commit.
+
 ## 0.39.0 — 共用寫作與按需讀取 / Shared writing and on-demand reading
 
 Issue #375 固定正式 Core v0.5.0 的完整 31 檔，新增完整寫作契約與兩層讀取接點，同步既有文件技能與封裝。保留一般摘要最低要求、實質文件任務全文讀取、自然台灣繁中、技術精度、引用與自行研究證據的區分，以及保留未驗證意思的 STE 等義聲明。完整 #23 例外、其他必要契約、歷史與 notices 保持。這是 minor 來源／封裝準備，不代表發布或安裝；正式 installer mapping 待實際已審 payload commit。詳見[準備紀錄](docs/releases/v0.39.0-split.md)。

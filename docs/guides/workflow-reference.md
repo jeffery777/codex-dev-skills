@@ -1495,6 +1495,7 @@ at
 | `project-orchestrator` | shared | Route bounded work across planning, implementation, review, continuation, handoff, or human gates. |
 | `implementation-slice` | shared | Implement a bounded change after read-only inspection, then verify and inspect the diff. |
 | `docs-update` | shared | Update user or project docs from code, specs, and verified behavior. |
+| `dev-retro` | shared | Current-user explicit-only retrospective; checks existing rules and proposes improvements without writes. Conditional lesson candidates do not activate it. |
 | `code-review` | shared | Normal user-facing entry point for routine read-only review of code or mixed diffs. |
 | `code-review-deep` | shared | Higher-scrutiny review for security, packaging, data, migration, or cross-module risk. |
 | `docs-review` | shared | Normal user-facing entry point for read-only review of docs-only or docs-dominant changes. |
@@ -1734,6 +1735,15 @@ one shard deterministically through the selected project interpreter:
 ./scripts/project-python scripts/test-shards.py list
 ./scripts/project-python scripts/test-shards.py run <shard-id>
 ```
+
+The runner uses native unittest verbose output and reports the ten slowest
+cases after completion. The fourteen-shard matrix keeps source-integrity and
+fault-boundary installer modules in separate shards; runtime-group installation
+and the three lightweight release/workflow/package modules share
+`installer-runtime`. Every module still runs exactly once. This reduces serial
+concentration and the scope of a failed-shard rerun, without promising lower
+total compute or a fixed hosted duration. The per-job timeout and aggregate
+success requirements are unchanged.
 
 Use these verification tiers:
 

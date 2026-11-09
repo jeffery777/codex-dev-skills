@@ -58,3 +58,5 @@ Do not commit unless the user explicitly asks for a commit or repo policy clearl
 - Verification run and remaining requirement gaps
 - Skipped verification, if any
 - Residual risk
+
+- Lesson candidates: apply the Codex knowledge policy through the shared adapter above; write none when no candidate applies.
