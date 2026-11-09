@@ -93,6 +93,50 @@ Merge click. A stronger receipt/finding guarantee would require a GitHub-native
 pre-merge predicate or App-controlled merge path, which remains outside this
 profile's authority.
 
+### Bounded Workflow Transition
+
+Ordinary `exact-head-merge-readiness-policy/v1` retains its strict field set and
+single approved blob per upstream workflow. Policy v2 adds exactly one strict
+`workflow_transition` object. It binds the repository, one actual rollout PR,
+workflow ID/path/event, and reviewed old/new blob identities. It does not pin a
+future head or accept an arbitrary blob list. The bridge admits ordinary
+old/old pairs and the bound PR's old/new pair only; new/new, reverse, and
+unknown pairs fail under bridge policy. Each changed head still requires its
+own full review and current CI/receipt evidence.
+
+The collector resolves workflow policy once per envelope observation. Both
+the collected CI and snapshot policy use the effective head blob. Cross-pair
+receipts use the repository policy reference suffixed with
+`#transition-sha256=<canonical transition digest>`; ordinary references remain
+unchanged. This digest identifies configuration, not review or authentication.
+The normalized envelope stays v2 with no additional authoritative fields.
+
+The trusted checkout's policy is read once. After starting the fresh App check,
+before success publication, and after completed-check/native-latest readback,
+the collector compares that exact byte-derived Git blob to the policy at the
+repository's current default branch. Repository metadata and contents use the
+separate read-only token. The policy reference is a repository-relative path,
+independent of the local `--policy` path. Missing metadata, API errors or a
+different policy blob fail closed through the existing failure publication
+path; the collector does not hot-reload policy or PR code. This adds three
+bounded metadata/contents checks, not a pin of all default-branch content.
+Identical policy bytes remain current across unrelated default-branch changes.
+
+Deployment uses two reviewed PRs: merge the bridge with the old workflow and
+ordinary old pin unchanged, then update the bound rollout PR to include that
+base and merge its new workflow together with final ordinary v1 sole-new
+policy. Head-side policy is reviewed candidate content, not self-authorization.
+The final policy retires the exception; no cleanup PR is required. A stale
+loaded bridge then fails the policy-source check. Rollback needs a separately
+authorized, reviewed transition, not reuse of the forward exception.
+
+These source checks are observations, not an atomic lock with GitHub merge,
+proof of the executing collector's bytes, or proof of an upstream run's actual
+workflow source. The ready-only rollout changes no job execution bytes between
+its two approved workflows and preserves the existing run-provenance model.
+Actual same-head ready behavior still needs hosted event observation. Offline
+fixtures cannot establish hosted deployment or platform enforcement.
+
 ## Controller Outcome Semantics
 
 The Actions controller job reports execution health, while the dedicated App
