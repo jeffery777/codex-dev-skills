@@ -21,6 +21,13 @@ SPEC.loader.exec_module(control)
 
 
 class ExactHeadControlPlaneTests(unittest.TestCase):
+    def setUp(self) -> None:
+        # Existing tests isolate receipt/check lifecycle faults. The transition
+        # tests below separately exercise real policy source checks and drift.
+        patch = mock.patch.object(control, "confirm_current_policy")
+        self.policy_freshness = patch.start()
+        self.addCleanup(patch.stop)
+
     def exercise_cli_block(self, directory: str, *, collection_error=None,
                            publication_error=None, readback_error=None,
                            latest_error=None, existing_output=False):
@@ -370,7 +377,7 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
             lambda suffix: f"/repos/{client.repository}{suffix}"
         )
         repository_read_client.json.return_value = {
-            "sha": "0c84c54137596641b6096c0c10abe2c85f74ffaa"
+            "sha": policy["required_upstream_workflows"][0]["workflow_blob_sha"]
         }
         result = control.collect_upstream_checks(
             client, repository_read_client, 185, "a" * 40, head, policy
@@ -382,6 +389,15 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
         self.assertEqual(f"Repository Validation PR #185 @ {head}", result[0]["run_display_title"])
         self.assertEqual("Repository Validation", result[0]["workflow_name"])
         self.assertEqual(2, repository_read_client.json.call_count)
+        expected_blob = repository_read_client.json.return_value
+        for blobs in ([{"sha": "0" * 40}, expected_blob],
+                      [expected_blob, {"sha": "0" * 40}]):
+            with self.subTest(blobs=blobs), mock.patch.object(
+                repository_read_client, "json", side_effect=blobs,
+            ), self.assertRaisesRegex(control.ControlPlaneError, "definition drifted"):
+                control.collect_upstream_checks(
+                    client, repository_read_client, 185, "a" * 40, head, policy,
+                )
         for raw in (None, {}, {"workflow_id": 123}, {"workflow_id": 330877463, "display_title": "bad", "head_sha": "bad"}):
             malformed = FakeClient()
             with mock.patch.object(malformed, "json_object_array_pages", return_value=[raw]):
@@ -502,7 +518,8 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                     "https://github.com/jeffery777/codex-dev-skills/pull/185#issuecomment-321",
                 ),
             ),
-            mock.patch.object(control, "collect_upstream_checks", return_value=[]),
+            mock.patch.object(control, "resolve_workflow_policy", return_value=policy),
+            mock.patch.object(control, "collect_resolved_upstream_checks", return_value=[]),
             mock.patch.object(
                 control,
                 "collect_threads",
@@ -1188,5 +1205,333 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                 control.confirm_latest_gate_check(client, gate, "a" * 40)
 
 
+class WorkflowTransitionTests(unittest.TestCase):
+    POLICY = ROOT / ".github/exact-head-merge-readiness-policy.json"
+
+    def setUp(self) -> None:
+        # A bridge fixture is independent of the deployed phase: after rollout
+        # the repository policy is ordinary v1 and has no transition object.
+        self.policy = control.parse_policy(json.dumps({
+            "contract": "exact-head-merge-readiness-policy/v2",
+            "check_context": "Exact-Head Merge Readiness",
+            "receipt_contract": "exact-head-merge-readiness/v2",
+            "required_upstream_workflows": [{
+                "check_context": "Validate repository", "workflow_name": "Repository Validation",
+                "workflow_id": 330877463, "workflow_path": ".github/workflows/repository-validation.yml",
+                "event": "pull_request", "run_name_contract": "exact-pr-head/v1",
+                "workflow_blob_sha": "0c84c54137596641b6096c0c10abe2c85f74ffaa",
+            }],
+            "required_ci_policy": {"source": "repository_policy", "reference": ".github/exact-head-merge-readiness-policy.json"},
+            "trusted_receipt_author_associations": ["OWNER"],
+            "max_api_response_bytes": 10485760, "max_receipt_bytes": 262144,
+            "workflow_transition": {
+                "contract": "exact-head-workflow-transition/v1", "repository": "jeffery777/codex-dev-skills",
+                "pr_number": 388, "workflow_id": 330877463,
+                "workflow_path": ".github/workflows/repository-validation.yml", "event": "pull_request",
+                "old_workflow_blob_sha": "0c84c54137596641b6096c0c10abe2c85f74ffaa",
+                "new_workflow_blob_sha": "7d5d362bf83444554f0a25d9974e09fc22c6d194",
+            },
+        }).encode())
+        self.transition = self.policy["workflow_transition"]
+        self.old = self.transition["old_workflow_blob_sha"]
+        self.new = self.transition["new_workflow_blob_sha"]
+        self.repository = self.transition["repository"]
+
+    def test_active_policy_matches_its_workflow_in_either_deployed_phase(self) -> None:
+        active = control.load_policy(self.POLICY)
+        blob = control.policy_blob_sha((ROOT / ".github/workflows/repository-validation.yml").read_bytes())
+        self.assertEqual(blob, active["required_upstream_workflows"][0]["workflow_blob_sha"])
+        if active["contract"] == "exact-head-merge-readiness-policy/v2":
+            self.assertEqual(self.transition, active["workflow_transition"])
+        else:
+            self.assertEqual("exact-head-merge-readiness-policy/v1", active["contract"])
+            self.assertNotIn("workflow_transition", active)
+
+    def test_policy_versions_remain_strict(self) -> None:
+        normal = dict(self.policy)
+        normal.pop("workflow_transition")
+        normal["contract"] = "exact-head-merge-readiness-policy/v1"
+        self.assertEqual(normal, control.parse_policy(json.dumps(normal).encode()))
+        cases = []
+        for key, value in (("pr_number", True), ("pr_number", 0), ("pr_number", "388"),
+                           ("workflow_id", True), ("workflow_id", 1), ("repository", "bad"),
+                           ("workflow_path", "other.yml"), ("event", "push"),
+                           ("old_workflow_blob_sha", self.new), ("new_workflow_blob_sha", self.old),
+                           ("new_workflow_blob_sha", "unknown"), ("extra", True)):
+            candidate = json.loads(json.dumps(self.policy))
+            candidate["workflow_transition"][key] = value
+            cases.append(candidate)
+        for value in (None, [], {}):
+            cases.append({**self.policy, "workflow_transition": value})
+        cases.extend(({**normal, "workflow_transition": self.transition},
+                      {**self.policy, "extra": True},
+                      {**normal, "contract": "exact-head-merge-readiness-policy/v2"}))
+        for candidate in cases:
+            with self.subTest(candidate=candidate), self.assertRaises((ValueError, control.ControlPlaneError)):
+                control.parse_policy(json.dumps(candidate).encode())
+        duplicate = json.dumps(self.policy).replace('"pr_number": 388', '"pr_number": 388, "pr_number": 389')
+        with self.assertRaisesRegex(control.ControlPlaneError, "strict JSON"):
+            control.parse_policy(duplicate.encode())
+
+    def resolve(self, pair, *, pr=388, repository=None, policy=None):
+        reader = mock.Mock()
+        reader.repo_path.side_effect = lambda suffix: suffix
+        reader.json.side_effect = [{"sha": value} for value in pair]
+        return control.resolve_workflow_policy(reader, repository or self.repository, pr,
+                                               "a" * 40, "b" * 40, policy or self.policy)
+
+    def test_pair_admission_and_digest_are_bounded_without_mutation(self) -> None:
+        original = json.dumps(self.policy, sort_keys=True)
+        normal = self.resolve([self.old, self.old], pr=999)
+        self.assertEqual(self.policy["required_ci_policy"], normal["required_ci_policy"])
+        effective = self.resolve([self.old, self.new])
+        self.assertEqual(self.new, effective["required_upstream_workflows"][0]["workflow_blob_sha"])
+        self.assertEqual(
+            self.policy["required_ci_policy"]["reference"] + "#transition-sha256=" + control.canonical_digest(self.transition),
+            effective["required_ci_policy"]["reference"],
+        )
+        self.assertEqual(original, json.dumps(self.policy, sort_keys=True))
+        for pair, pr, repository in (([self.old, self.new], 389, self.repository),
+                                     ([self.new, self.new], 388, self.repository),
+                                     ([self.new, self.old], 388, self.repository),
+                                     ([self.old, "0" * 40], 388, self.repository),
+                                     (["0" * 40, self.new], 388, self.repository),
+                                     ([self.old, self.old], 388, "other/repo")):
+            with self.subTest(pair=pair, pr=pr), self.assertRaises(control.ControlPlaneError):
+                self.resolve(pair, pr=pr, repository=repository)
+        final = json.loads(json.dumps(self.policy))
+        final.pop("workflow_transition")
+        final["contract"] = "exact-head-merge-readiness-policy/v1"
+        final["required_upstream_workflows"][0]["workflow_blob_sha"] = self.new
+        final = control.parse_policy(json.dumps(final).encode())
+        self.assertEqual(self.new, self.resolve([self.new, self.new], policy=final)["required_upstream_workflows"][0]["workflow_blob_sha"])
+        with self.assertRaises(control.ControlPlaneError):
+            self.resolve([self.old, self.new], policy=final)
+
+    def test_current_policy_uses_repository_read_source_and_exact_bytes(self) -> None:
+        data = self.POLICY.read_bytes()
+        blob = control.policy_blob_sha(data)
+        self.assertNotEqual(blob, control.policy_blob_sha(data + b"\n"))
+        path = "policies/custom-policy.json"
+        reader = mock.Mock()
+        reader.repo_path.side_effect = lambda suffix: "/repos/other/project" + suffix
+        metadata = {"full_name": "other/project", "default_branch": "release/main"}
+        content = {"type": "file", "path": path, "sha": blob}
+        reader.json.side_effect = [metadata, content]
+        control.confirm_current_policy(reader, "other/project", path, blob)
+        self.assertEqual("/repos/other/project/contents/policies/custom-policy.json?ref=refs%2Fheads%2Frelease%2Fmain", reader.json.call_args.args[1])
+        for responses in ([{}, content], [{**metadata, "full_name": "wrong/repo"}, content],
+                          [{**metadata, "default_branch": None}, content], [metadata, None],
+                          [metadata, {**content, "type": "symlink"}],
+                          [metadata, {**content, "path": "other.json"}],
+                          [metadata, {**content, "sha": "0" * 40}],
+                          [control.ControlPlaneError("metadata unavailable")],
+                          [metadata, control.ControlPlaneError("contents unavailable")]):
+            reader.json.side_effect = responses
+            with self.subTest(responses=responses), self.assertRaises((ValueError, control.ControlPlaneError)):
+                control.confirm_current_policy(reader, "other/project", path, blob)
+
+    def fixture(self):
+        payload = valid_v2_payload()
+        receipt = payload["receipt"]
+        base, head, merge_base = (receipt[name] for name in ("reviewed_base_sha", "reviewed_head_sha", "reviewed_merge_base_sha"))
+        receipt["pr_number"] = 388
+        receipt["reviewed_range_identity_digest"] = control.validator.canonical_range_identity_digest(self.repository, 388, base, head, merge_base)
+        expected = dict(self.policy["required_upstream_workflows"][0], workflow_blob_sha=self.new)
+        receipt["required_ci"][0].update(expected)
+        receipt["required_ci"][0]["run_display_title"] = f"Repository Validation PR #388 @ {head}"
+        receipt["required_ci_policy"] = {
+            **self.policy["required_ci_policy"], "required_workflows": [expected],
+            "reference": self.policy["required_ci_policy"]["reference"] + "#transition-sha256=" + control.canonical_digest(self.transition),
+        }
+        app, reader = mock.Mock(), mock.Mock()
+        app.repository = reader.repository = self.repository
+        app.repo_path.side_effect = reader.repo_path.side_effect = lambda suffix: "/repos/" + self.repository + suffix
+        def app_json(method, path, **kwargs):
+            if path.endswith("/pulls/388"):
+                return {"base": {"sha": base}, "head": {"sha": head}, "state": "open", "draft": False, "mergeable": True}
+            if "/actions/workflows/" in path:
+                return {"id": expected["workflow_id"], "name": expected["workflow_name"], "path": expected["workflow_path"], "state": "active"}
+            raise AssertionError("unexpected App endpoint " + path)
+        def reader_json(method, path, **kwargs):
+            if "/compare/" in path:
+                return {"merge_base_commit": {"sha": merge_base}}
+            if "/contents/" in path:
+                return {"sha": self.old if path.endswith(base) else self.new}
+            raise AssertionError("unexpected reader endpoint " + path)
+        app.json.side_effect, reader.json.side_effect = app_json, reader_json
+        app.json_object_array_pages.return_value = [{
+            "id": 456, "run_attempt": 1, "workflow_id": expected["workflow_id"],
+            "display_title": receipt["required_ci"][0]["run_display_title"], "head_sha": head,
+            "html_url": receipt["required_ci"][0]["details_url"], "path": expected["workflow_path"],
+            "event": "pull_request", "status": "completed", "conclusion": "success",
+        }]
+        return payload, app, reader
+
+    def build(self, payload, app, reader):
+        with (mock.patch.object(control, "select_current_receipt", return_value=(321, 1)),
+              mock.patch.object(control, "get_receipt", return_value=(payload["receipt"], 321,
+                  f"https://github.com/{self.repository}/pull/388#issuecomment-321")),
+              mock.patch.object(control, "collect_threads", return_value=(0, control.canonical_digest([])))):
+            return control.build_envelope(app, reader, 388, 321, 1, self.policy, payload["gate"])
+
+    def test_real_loader_builder_and_v2_validator_share_effective_policy(self) -> None:
+        payload, app, reader = self.fixture()
+        envelope = self.build(payload, app, reader)
+        control.validator.validate_payload(envelope)
+        self.assertEqual(payload["receipt"]["required_ci_policy"], envelope["platform_snapshot"]["required_ci_policy"])
+        self.assertEqual(2, sum("/contents/" in call.args[1] for call in reader.json.call_args_list))
+        payload["receipt"]["required_ci_policy"]["reference"] += "stale"
+        with self.assertRaises(ValueError):
+            control.validator.validate_payload(self.build(payload, app, reader))
+        payload, app, reader = self.fixture()
+        payload["receipt"]["required_ci"][0]["workflow_blob_sha"] = self.old
+        with self.assertRaises(ValueError):
+            control.validator.validate_payload(self.build(payload, app, reader))
+
+    def test_latest_failure_and_missing_run_never_reuse_success(self) -> None:
+        payload, app, reader = self.fixture()
+        success = app.json_object_array_pages.return_value[0]
+        app.json_object_array_pages.return_value = [success, {**success, "id": 457,
+            "html_url": f"https://github.com/{self.repository}/actions/runs/457", "conclusion": "failure"}]
+        with self.assertRaises(control.ReadinessBlocked):
+            self.build(payload, app, reader)
+
+        app.json_object_array_pages.return_value = []
+        with self.assertRaises(control.ReadinessBlocked):
+            self.build(payload, app, reader)
+
+    def exercise_run(self, *, fault_stage=None, fault="retired", normal=False,
+                     publication_fault=False, readback_fault=False):
+        payload, app, reader = self.fixture()
+        policy = json.loads(json.dumps(self.policy))
+        if normal:
+            policy.pop("workflow_transition")
+            policy["contract"] = "exact-head-merge-readiness-policy/v1"
+            policy["required_upstream_workflows"][0]["workflow_blob_sha"] = self.new
+            payload["receipt"]["required_ci_policy"]["reference"] = policy["required_ci_policy"]["reference"]
+        data = (json.dumps(policy, indent=2) + "\n").encode()
+        policy_blob = control.policy_blob_sha(data)
+        reference = policy["required_ci_policy"]["reference"]
+        trace = []
+        stage = 0
+        ordinary_reader = reader.json.side_effect
+
+        def read(method, path, **kwargs):
+            nonlocal stage
+            if path == f"/repos/{self.repository}":
+                stage += 1
+                trace.append(f"metadata:{stage}")
+                if stage == fault_stage and fault == "metadata":
+                    raise control.ControlPlaneError("metadata unavailable")
+                return {"full_name": self.repository, "default_branch": "main"}
+            if f"/contents/{reference}?ref=" in path:
+                trace.append(f"policy:{stage}")
+                self.assertTrue(path.endswith("?ref=refs%2Fheads%2Fmain"))
+                if stage == fault_stage and fault == "contents":
+                    raise control.ControlPlaneError("contents unavailable")
+                blob = policy_blob
+                if stage == fault_stage and fault == "retired":
+                    blob = "0" * 40
+                if stage == fault_stage and fault == "same_json_different_bytes":
+                    blob = control.policy_blob_sha(json.dumps(policy).encode())
+                return {"type": "file", "path": reference, "sha": blob}
+            if normal and "/contents/" in path:
+                return {"sha": self.new}
+            return ordinary_reader(method, path, **kwargs)
+
+        def start(*args):
+            trace.append("start")
+            return {"id": 901, "app": {"id": 100001, "slug": "exact-head-gate"}}
+
+        def update(*args):
+            trace.append("publish:" + args[2])
+            if args[2] == "failure" and publication_fault:
+                raise control.ControlPlaneError("failure publication unavailable")
+
+        def completed(*args):
+            trace.append("completed:" + args[4])
+            if args[4] == "failure" and readback_fault:
+                raise control.ControlPlaneError("failure readback unavailable")
+
+        reader.json.side_effect = read
+        with tempfile.TemporaryDirectory() as directory:
+            root = pathlib.Path(directory)
+            policy_path, event_path, output = root / "policy.json", root / "event.json", root / "output.json"
+            policy_path.write_bytes(data)
+            event_path.write_text('{"pull_request":{"number":388}}')
+            argv = [
+                "--repository", self.repository, "--pr-number", "388",
+                "--policy", str(policy_path), "--event-path", str(event_path), "--output", str(output),
+                "--workflow-name", "Exact-Head Merge Readiness Controller", "--workflow-run-id", "900",
+                "--run-url", f"https://github.com/{self.repository}/actions/runs/900",
+                "--expected-head", payload["receipt"]["reviewed_head_sha"],
+                "--expected-app-id", "100001", "--expected-app-slug", "exact-head-gate",
+            ]
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with (
+                mock.patch.dict("os.environ", {"EXACT_HEAD_GATE_TOKEN": "app", "REPOSITORY_READ_TOKEN": "reader"}),
+                mock.patch.object(control, "GitHubClient", side_effect=[app, reader]) as clients,
+                mock.patch.object(control, "read_bounded_regular_file", wraps=control.read_bounded_regular_file) as reads,
+                mock.patch.object(control, "find_gate_check", return_value=None),
+                mock.patch.object(control, "start_check", side_effect=start),
+                mock.patch.object(control, "confirm_gate_check"),
+                mock.patch.object(control, "confirm_latest_gate_check", side_effect=lambda *args: trace.append("latest")),
+                mock.patch.object(control, "require_unique_open_pr_for_head"),
+                mock.patch.object(control, "select_current_receipt", return_value=(321, 1)),
+                mock.patch.object(control, "get_receipt", return_value=(payload["receipt"], 321,
+                    f"https://github.com/{self.repository}/pull/388#issuecomment-321")),
+                mock.patch.object(control, "collect_threads", return_value=(0, control.canonical_digest([]))),
+                mock.patch.object(control, "set_check_pointer"),
+                mock.patch.object(control, "update_check", side_effect=update),
+                mock.patch.object(control, "confirm_completed_gate_check", side_effect=completed),
+                contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr),
+            ):
+                result = control.main(argv)
+            self.assertEqual(["app", "reader"], [call.args[1] for call in clients.call_args_list])
+            self.assertEqual(1, sum(call.args[0] == policy_path for call in reads.call_args_list))
+            self.assertFalse(any("/contents/" in call.args[1] or call.args[1] == f"/repos/{self.repository}"
+                                 for call in app.json.call_args_list))
+            self.assertLess(trace.index("start"), trace.index("metadata:1"))
+            emitted = json.loads(output.read_text()) if output.exists() else None
+            return result, stdout.getvalue(), stderr.getvalue(), emitted, trace
+
+    def test_run_checks_real_policy_source_three_times_in_both_modes(self) -> None:
+        for normal in (False, True):
+            with self.subTest(normal=normal):
+                result, _, error, emitted, trace = self.exercise_run(normal=normal)
+                self.assertEqual(0, result, error)
+                control.validator.validate_payload(emitted)
+                self.assertEqual(["metadata:1", "policy:1", "metadata:2", "policy:2", "metadata:3", "policy:3"],
+                                 [item for item in trace if item.startswith(("metadata:", "policy:"))])
+                self.assertLess(trace.index("policy:2"), trace.index("publish:success"))
+                self.assertLess(trace.index("publish:success"), trace.index("completed:success"))
+                self.assertEqual("latest", trace[trace.index("metadata:3") - 1])
+                self.assertLess(trace.index("completed:success"), trace.index("metadata:3"))
+                self.assertNotIn("publish:failure", trace)
+                reference = emitted["platform_snapshot"]["required_ci_policy"]["reference"]
+                self.assertEqual(not normal, "#transition-sha256=" in reference)
+
+    def test_run_policy_drift_or_api_fault_fails_at_every_freshness_boundary(self) -> None:
+        for stage in (1, 2, 3):
+            for fault in ("retired", "metadata", "contents", "same_json_different_bytes"):
+                with self.subTest(stage=stage, fault=fault):
+                    result, _, error, emitted, trace = self.exercise_run(fault_stage=stage, fault=fault)
+                    self.assertEqual(1, result)
+                    self.assertIsNone(emitted)
+                    self.assertTrue(error)
+                    self.assertIn("publish:failure", trace)
+                    self.assertEqual(["completed:failure", "latest"], trace[-2:])
+                    self.assertEqual(stage == 3, "publish:success" in trace)
+                    self.assertEqual(stage, sum(item.startswith("metadata:") for item in trace))
+
+    def test_run_freshness_failure_does_not_hide_publication_or_readback_fault(self) -> None:
+        for name in ("publication_fault", "readback_fault"):
+            with self.subTest(name=name):
+                result, _, error, emitted, trace = self.exercise_run(fault_stage=3, **{name: True})
+                self.assertEqual(1, result)
+                self.assertIsNone(emitted)
+                self.assertIn("failed to publish authoritative gate failure", error)
+                self.assertEqual(1, trace.count("publish:failure"))
 if __name__ == "__main__":
     unittest.main()

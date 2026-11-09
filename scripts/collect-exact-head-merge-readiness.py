@@ -44,6 +44,10 @@ UPSTREAM_POLICY_FIELDS = frozenset(
         "run_name_contract", "workflow_blob_sha",
     )
 )
+TRANSITION_FIELDS = frozenset((
+    "contract", "repository", "pr_number", "workflow_id", "workflow_path", "event",
+    "old_workflow_blob_sha", "new_workflow_blob_sha",
+))
 
 
 class ControlPlaneError(RuntimeError):
@@ -101,14 +105,20 @@ def read_bounded_regular_file(path: pathlib.Path, *, maximum: int, label: str) -
 
 
 def load_policy(path: pathlib.Path) -> dict[str, object]:
+    return parse_policy(read_bounded_regular_file(path, maximum=256 * 1024, label="policy"))
+
+
+def parse_policy(data: bytes) -> dict[str, object]:
     raw = strict_json(
-        read_bounded_regular_file(path, maximum=256 * 1024, label="policy"),
+        data,
         maximum=256 * 1024,
         label="policy",
     )
-    policy = validator.require_exact_fields(raw, "policy", POLICY_FIELDS)
-    if policy["contract"] != "exact-head-merge-readiness-policy/v1":
+    contract = raw.get("contract") if isinstance(raw, dict) else None
+    if contract not in {"exact-head-merge-readiness-policy/v1", "exact-head-merge-readiness-policy/v2"}:
         raise ControlPlaneError("unsupported policy contract")
+    fields = POLICY_FIELDS | {"workflow_transition"} if contract.endswith("/v2") else POLICY_FIELDS
+    policy = validator.require_exact_fields(raw, "policy", fields)
     if policy["check_context"] != validator.GATE_CONTEXT:
         raise ControlPlaneError("policy check_context is not the fixed gate context")
     if policy["receipt_contract"] != validator.V2_CONTRACT:
@@ -139,7 +149,84 @@ def load_policy(path: pathlib.Path) -> dict[str, object]:
         raise ControlPlaneError("policy receipt author associations are invalid")
     for name in ("max_api_response_bytes", "max_receipt_bytes"):
         validator.require_positive_integer(policy[name], f"policy.{name}")
+    if contract.endswith("/v2"):
+        transition = validator.require_exact_fields(policy["workflow_transition"], "policy.workflow_transition", TRANSITION_FIELDS)
+        if transition["contract"] != "exact-head-workflow-transition/v1":
+            raise ControlPlaneError("unsupported workflow transition contract")
+        repository = validator.require_string(transition["repository"], "transition.repository")
+        if re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository) is None:
+            raise ControlPlaneError("transition repository must be owner/name")
+        for name in ("pr_number", "workflow_id"):
+            validator.require_positive_integer(transition[name], f"transition.{name}")
+        for name in ("old_workflow_blob_sha", "new_workflow_blob_sha"):
+            validator.require_sha(transition[name], f"transition.{name}")
+        if transition["old_workflow_blob_sha"] == transition["new_workflow_blob_sha"]:
+            raise ControlPlaneError("transition requires distinct workflow blobs")
+        matches = [check for check in checks if all(check[name] == transition[name] for name in ("workflow_id", "workflow_path", "event"))]
+        if len(matches) != 1 or matches[0]["workflow_blob_sha"] != transition["old_workflow_blob_sha"]:
+            raise ControlPlaneError("transition must identify one ordinary old workflow pin")
+        policy_reference(policy)
     return policy
+
+
+def policy_blob_sha(data: bytes) -> str:
+    return hashlib.sha1(b"blob " + str(len(data)).encode("ascii") + b"\0" + data, usedforsecurity=False).hexdigest()
+
+
+def policy_reference(policy: dict[str, object]) -> str:
+    source = validator.require_exact_fields(policy["required_ci_policy"], "policy.required_ci_policy", {"source", "reference"})
+    reference = validator.require_string(source["reference"], "policy.required_ci_policy.reference")
+    if (source["source"] != "repository_policy"
+            or re.fullmatch(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*", reference) is None
+            or any(part in {".", ".."} for part in reference.split("/"))):
+        raise ControlPlaneError("loaded policy requires a repository-relative policy reference")
+    return reference
+
+
+def confirm_current_policy(client: GitHubClient, repository: str, path: str, loaded_blob: str) -> None:
+    """Reject a retired local policy; never hot-reload code or PR-head policy."""
+    metadata = client.json("GET", client.repo_path(""))
+    if not isinstance(metadata, dict) or metadata.get("full_name") != repository:
+        raise ControlPlaneError("trusted repository metadata identity is unavailable")
+    branch = validator.require_string(metadata.get("default_branch"), "repository.default_branch")
+    reference = urllib.parse.quote(f"refs/heads/{branch}", safe="")
+    content = client.json("GET", client.repo_path(f"/contents/{path}?ref={reference}"))
+    if (not isinstance(content, dict) or content.get("type") != "file"
+            or content.get("path") != path or content.get("sha") != loaded_blob):
+        raise ControlPlaneError("loaded policy no longer matches the trusted default branch")
+
+
+def resolve_workflow_policy(
+    client: GitHubClient, repository: str, pr_number: int, base: str, head: str,
+    policy: dict[str, object],
+) -> dict[str, object]:
+    """Resolve exactly one observation's blob pairs without mutating loaded policy."""
+    transition = policy.get("workflow_transition")
+    if transition is not None and transition["repository"] != repository:
+        raise ControlPlaneError("workflow transition repository does not match")
+    effective = {**policy, "required_upstream_workflows": []}
+    for expected in policy["required_upstream_workflows"]:
+        encoded_path = "/".join(urllib.parse.quote(part, safe="") for part in expected["workflow_path"].split("/"))
+        blobs = []
+        for revision in (base, head):
+            content = client.json("GET", client.repo_path(f"/contents/{encoded_path}?ref={revision}"))
+            if not isinstance(content, dict):
+                raise ControlPlaneError(f"required upstream workflow definition drifted at {revision}")
+            blobs.append(content.get("sha"))
+        resolved = dict(expected)
+        ordinary = expected["workflow_blob_sha"]
+        if blobs != [ordinary, ordinary]:
+            if (transition is None or pr_number != transition["pr_number"]
+                    or any(expected[name] != transition[name] for name in ("workflow_id", "workflow_path", "event"))
+                    or blobs != [transition["old_workflow_blob_sha"], transition["new_workflow_blob_sha"]]):
+                raise ControlPlaneError("required upstream workflow definition drifted outside the bounded transition")
+            resolved["workflow_blob_sha"] = transition["new_workflow_blob_sha"]
+            effective["required_ci_policy"] = {
+                **policy["required_ci_policy"],
+                "reference": f"{policy_reference(policy)}#transition-sha256={canonical_digest(transition)}",
+            }
+        effective["required_upstream_workflows"].append(resolved)
+    return effective
 
 
 class GitHubClient:
@@ -372,6 +459,13 @@ def collect_upstream_checks(
     head: str,
     policy: dict[str, object],
 ) -> list[dict[str, object]]:
+    effective = resolve_workflow_policy(repository_read_client, client.repository, pr_number, base, head, policy)
+    return collect_resolved_upstream_checks(client, pr_number, head, effective)
+
+
+def collect_resolved_upstream_checks(
+    client: GitHubClient, pr_number: int, head: str, policy: dict[str, object],
+) -> list[dict[str, object]]:
     result: list[dict[str, object]] = []
     for expected_raw in policy["required_upstream_workflows"]:  # type: ignore[union-attr]
         expected = validator.require_exact_fields(expected_raw, "policy.required_upstream_workflows[]", UPSTREAM_POLICY_FIELDS)
@@ -418,17 +512,6 @@ def collect_upstream_checks(
             raise ReadinessBlocked(f"required upstream workflow {context!r} has no run for the live PR head")
         workflow_run = max(candidates, key=lambda value: validator.require_positive_integer(value.get("id"), f"workflow {context}.id"))
         details_url = validator.require_github_url(workflow_run.get("html_url"), f"workflow {context}.html_url")
-        workflow_path = str(expected["workflow_path"])
-        encoded_path = "/".join(urllib.parse.quote(part, safe="") for part in workflow_path.split("/"))
-        for revision in (base, head):
-            content = repository_read_client.json(
-                "GET",
-                repository_read_client.repo_path(
-                    f"/contents/{encoded_path}?ref={revision}"
-                ),
-            )
-            if not isinstance(content, dict) or content.get("sha") != expected["workflow_blob_sha"]:
-                raise ControlPlaneError(f"required upstream workflow {context!r} definition drifted at {revision}")
         item = {
             "workflow_name": validator.require_string(workflow_definition.get("name"), f"check {context}.workflow_name"),
             "workflow_run_id": validator.require_positive_integer(workflow_run.get("id"), f"check {context}.workflow_run_id"),
@@ -702,13 +785,12 @@ def build_envelope(
         int(policy["max_receipt_bytes"]),
         set(policy["trusted_receipt_author_associations"]),  # type: ignore[arg-type]
     )
-    upstream = collect_upstream_checks(
-        client, repository_read_client, pr_number, base, head, policy
-    )
+    effective = resolve_workflow_policy(repository_read_client, client.repository, pr_number, base, head, policy)
+    upstream = collect_resolved_upstream_checks(client, pr_number, head, effective)
     owner, name = client.repository.split("/", 1)
     unresolved, threads_digest = collect_threads(client, owner, name, pr_number)
     findings_digest = canonical_digest({"findings": receipt.get("findings"), "dispositions": receipt.get("dispositions")})
-    ci_policy = {**policy["required_ci_policy"], "required_workflows": policy["required_upstream_workflows"]}  # type: ignore[arg-type]
+    ci_policy = {**effective["required_ci_policy"], "required_workflows": effective["required_upstream_workflows"]}  # type: ignore[arg-type]
     snapshot = {
         "repository": client.repository, "pr_number": pr_number,
         "base_sha": base, "head_sha": head, "merge_base_sha": merge_base,
@@ -748,7 +830,10 @@ def run(args: argparse.Namespace) -> dict[str, object] | None:
     # A blocked/no-op evaluation must never reuse a previous success envelope.
     if os.path.lexists(args.output):
         raise ControlPlaneError("output path already exists; use a fresh evaluation output path")
-    policy = load_policy(args.policy)
+    policy_bytes = read_bounded_regular_file(args.policy, maximum=256 * 1024, label="policy")
+    policy = parse_policy(policy_bytes)
+    loaded_policy_blob = policy_blob_sha(policy_bytes)
+    policy_path = policy_reference(policy)
     event_raw = strict_json(
         read_bounded_regular_file(args.event_path, maximum=1024 * 1024, label="event"),
         maximum=1024 * 1024,
@@ -816,6 +901,7 @@ def run(args: argparse.Namespace) -> dict[str, object] | None:
     try:
         confirm_gate_check(client, gate, head, external_id)
         confirm_latest_gate_check(client, gate, head)
+        confirm_current_policy(repository_read_client, args.repository, policy_path, loaded_policy_blob)
         if invalid_existing_pointer:
             raise ControlPlaneError(
                 "authoritative latest gate check has an invalid pointer"
@@ -927,11 +1013,13 @@ def run(args: argparse.Namespace) -> dict[str, object] | None:
         )
         success_title = "Exact-head merge evidence is current"
         success_summary = f"Evidence digest: `{digest}`\n\nHead: `{head}`"
+        confirm_current_policy(repository_read_client, args.repository, policy_path, loaded_policy_blob)
         update_check(client, check_id, "success", success_title, success_summary, completed_external_id)
         confirm_completed_gate_check(
             client, gate, head, completed_external_id, "success", success_title, success_summary,
         )
         confirm_latest_gate_check(client, gate, head)
+        confirm_current_policy(repository_read_client, args.repository, policy_path, loaded_policy_blob)
         args.output.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return envelope
     except Exception as exc:
