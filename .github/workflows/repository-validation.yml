@@ -3,7 +3,7 @@ run-name: "Repository Validation PR #${{ github.event.pull_request.number }} @ $
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: read

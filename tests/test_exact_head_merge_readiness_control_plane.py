@@ -370,7 +370,7 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
             lambda suffix: f"/repos/{client.repository}{suffix}"
         )
         repository_read_client.json.return_value = {
-            "sha": "0c84c54137596641b6096c0c10abe2c85f74ffaa"
+            "sha": policy["required_upstream_workflows"][0]["workflow_blob_sha"]
         }
         result = control.collect_upstream_checks(
             client, repository_read_client, 185, "a" * 40, head, policy
@@ -382,6 +382,15 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
         self.assertEqual(f"Repository Validation PR #185 @ {head}", result[0]["run_display_title"])
         self.assertEqual("Repository Validation", result[0]["workflow_name"])
         self.assertEqual(2, repository_read_client.json.call_count)
+        expected_blob = repository_read_client.json.return_value
+        for blobs in ([{"sha": "0" * 40}, expected_blob],
+                      [expected_blob, {"sha": "0" * 40}]):
+            with self.subTest(blobs=blobs), mock.patch.object(
+                repository_read_client, "json", side_effect=blobs,
+            ), self.assertRaisesRegex(control.ControlPlaneError, "definition drifted"):
+                control.collect_upstream_checks(
+                    client, repository_read_client, 185, "a" * 40, head, policy,
+                )
         for raw in (None, {}, {"workflow_id": 123}, {"workflow_id": 330877463, "display_title": "bad", "head_sha": "bad"}):
             malformed = FakeClient()
             with mock.patch.object(malformed, "json_object_array_pages", return_value=[raw]):
