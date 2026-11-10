@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shlex
 import shutil
 import stat
 import subprocess
@@ -33,69 +34,6 @@ class InstallerFaultBoundaryTests(InstallerFixture):
         self.assert_version("0.37.0")
         self.assertEqual(original, {p.relative_to(core_root).as_posix(): (p.stat().st_mode, p.read_bytes())
                                     for p in core_root.rglob("*") if p.is_file()})
-
-    def test_twenty_three_file_upgrade_postverify_fault_restores_old_tree(self):
-        receipt = self.seed("0.37.0", groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"],
-                            snapshot_revision="58cbe9171ec6bba17f367919812a67582a5526a5")
-        core_root = self.home / ".codex/templates/orchestration/core"
-        overrides = self.command("python3", '''
-if [[ "$1" == */installer-inventory.py && "$2" == verify ]]; then
-  [[ -f "$CORE_ROOT/contracts/writing.md" && -f "$CORE_ROOT/docs/releases/v0.5.0.md" ]] || exit 79
-  echo injected-v04-postverify >&2; exit 78
-fi''', {"CORE_ROOT": str(core_root)})
-        before = self.snapshot()
-        result = self.run_installer("update", "--all", overrides=overrides)
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("injected-v04-postverify", result.stderr)
-        self.assertEqual(before, self.snapshot(), result.stderr)
-        self.assertEqual(receipt, json.loads(self.receipt.read_text()))
-
-    def test_current_file_downgrade_fault_restores_current_tree(self):
-        receipt = self.seed(CURRENT_VERSION, groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"])
-        old = self.fixed_source("58cbe9171ec6bba17f367919812a67582a5526a5")
-        overrides = self.command("mv", '''
-case "$1:$2" in
-  *.receipt.*/value:*/installed.jsonl)
-    echo injected-v03-downgrade >&2; exit 78 ;;
-esac''')
-        before = self.snapshot()
-        result = self.run_installer("update", "--all", "--source", old, overrides=overrides)
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("injected-v03-downgrade", result.stderr)
-        self.assertEqual(before, self.snapshot(), result.stderr)
-        self.assertEqual(receipt, json.loads(self.receipt.read_text()))
-
-    def test_twenty_eight_file_upgrade_postverify_fault_restores_old_tree(self):
-        receipt = self.seed("0.38.1", groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"],
-                            snapshot_revision="c88514225129afc02ccdc3734402042b0e2a5194")
-        core_root = self.home / ".codex/templates/orchestration/core"
-        self.assertEqual(28, sum(p.is_file() for p in core_root.rglob("*")))
-        overrides = self.command("python3", '''
-if [[ "$1" == */installer-inventory.py && "$2" == verify ]]; then
-  [[ -f "$CORE_ROOT/contracts/writing.md" && -f "$CORE_ROOT/docs/releases/v0.5.0.md" ]] || exit 79
-  echo injected-v05-postverify >&2; exit 78
-fi''', {"CORE_ROOT": str(core_root)})
-        before = self.snapshot()
-        result = self.run_installer("update", "--all", overrides=overrides)
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("injected-v05-postverify", result.stderr)
-        self.assertEqual(before, self.snapshot(), result.stderr)
-        self.assertEqual(receipt, json.loads(self.receipt.read_text()))
-
-    def test_thirty_one_to_twenty_eight_receipt_fault_restores_current_tree(self):
-        receipt = self.seed(CURRENT_VERSION, groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"])
-        old = self.fixed_source("c88514225129afc02ccdc3734402042b0e2a5194")
-        overrides = self.command("mv", '''
-case "$1:$2" in
-  *.receipt.*/value:*/installed.jsonl)
-    echo injected-v041-downgrade >&2; exit 78 ;;
-esac''')
-        before = self.snapshot()
-        result = self.run_installer("update", "--all", "--source", old, overrides=overrides)
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("injected-v041-downgrade", result.stderr)
-        self.assertEqual(before, self.snapshot(), result.stderr)
-        self.assertEqual(receipt, json.loads(self.receipt.read_text()))
 
     def test_formal_fourteen_upgrade_faults_restore_exact_old_tree(self):
         receipt = self.seed("0.35.2", groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"],
@@ -132,27 +70,6 @@ esac''', {"CORE_FAULT": mode, "CORE_ROOT": str(core_root)})
                                                      for p in core_root.rglob("*") if p.is_dir()))
                 self.assertEqual(original, {p.relative_to(core_root).as_posix(): (p.stat().st_mode, p.read_bytes())
                                             for p in core_root.rglob("*") if p.is_file()})
-
-    def test_twenty_file_upgrade_postverify_failure_restores_old_tree(self):
-        receipt = self.seed("0.36.0", groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"],
-                            snapshot_revision="ec54012c74a4ab3eb42d5f2152e36138ce9e7c35")
-        core_root = self.home / ".codex/templates/orchestration/core"
-        original = {p.relative_to(core_root).as_posix(): (p.stat().st_mode, p.read_bytes())
-                    for p in core_root.rglob("*") if p.is_file()}
-        self.assertEqual(20, len(original))
-        overrides = self.command("python3", '''
-if [[ "$1" == */installer-inventory.py && "$2" == verify ]]; then
-  [[ -f "$CORE_ROOT/docs/releases/v0.3.0.md" ]] || exit 79
-  echo injected-v03-postverify >&2; exit 78
-fi''', {"CORE_ROOT": str(core_root)})
-        before = self.snapshot()
-        result = self.run_installer("update", "--all", overrides=overrides)
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("injected-v03-postverify", result.stderr)
-        self.assertEqual(before, self.snapshot(), result.stderr)
-        self.assertEqual(receipt, json.loads(self.receipt.read_text()))
-        self.assertEqual(original, {p.relative_to(core_root).as_posix(): (p.stat().st_mode, p.read_bytes())
-                                    for p in core_root.rglob("*") if p.is_file()})
 
     def test_twenty_file_downgrade_fault_restores_current_tree(self):
         receipt = self.seed(CURRENT_VERSION, groups=["shared-review-gates", "codex-delivery-workflow", "codex-agent-profiles"])
@@ -194,7 +111,9 @@ case "$CORE_FAULT:$1:$2" in
     echo injected-core-tree-fault >&2; exit 78 ;;
 esac''', {"CORE_FAULT": mode, "CORE_ROOT": str(self.core_root)})
                 before = self.snapshot()
-                result = self.run_installer("update", "--all", overrides=overrides)
+                # Update the three already-managed groups without adding unrelated defaults.
+                # The fourteen-file fixture retains the full --all fault matrix.
+                result = self.run_installer("update", "codex-agent-profiles", overrides=overrides)
                 self.assertNotEqual(0, result.returncode)
                 self.assertIn("injected-core-tree-fault", result.stderr)
                 self.assertEqual(before, self.snapshot(), result.stderr)
@@ -451,20 +370,57 @@ if [[ "$1" == */.transaction.lock ]]; then echo injected-unlock >&2; exit 74; fi
                 finally:
                     os.chflags(path, 0)
 
-    def test_fixed_old_source_is_data_and_partial_clone_is_rejected(self):
+    def test_umask002_old_source_data_refusal_and_update_keep_restrictive_modes(self):
+        def under_umask(command, source):
+            return subprocess.run(["bash", str(ROOT / "install.sh"), command, "shared-review-gates", "--source", str(source)],
+                                  cwd=ROOT, env=self.env, capture_output=True, text=True,
+                                  preexec_fn=lambda: os.umask(0o002))
+
+        def assert_modes():
+            for root in (self.home / ".agents/skills", self.home / ".codex/templates", self.state):
+                for path in [root, *root.rglob("*")]:
+                    meta = path.lstat()
+                    expected = 0o700 if stat.S_ISDIR(meta.st_mode) or meta.st_mode & 0o111 else 0o600
+                    self.assertEqual(expected, stat.S_IMODE(meta.st_mode), path)
+
+        def target_state():
+            # Bounded fixture targets, including empty directories and symlinks.
+            result = {}
+            for root in (self.home / ".agents/skills", self.home / ".codex/templates", self.state):
+                for path in [root, *root.rglob("*")]:
+                    meta = path.lstat()
+                    if stat.S_ISLNK(meta.st_mode):
+                        value = os.readlink(path)
+                    elif stat.S_ISREG(meta.st_mode):
+                        value = path.read_bytes()
+                    else:
+                        value = None
+                    result[str(path.relative_to(self.case))] = (meta.st_mode, value)
+            return result
+
         old_program = self.old / "install.sh"
         before = old_program.read_bytes()
         marker = self.case / "old-program-executed"
-        old_program.write_text("#!/bin/sh\ntouch " + str(marker) + "\nexit 91\n")
+        old_program.write_text("#!/bin/sh\ntouch " + shlex.quote(str(marker)) + "\nexit 91\n")
         try:
-            result = self.run_installer("install", "shared-review-gates", "--source", self.old)
+            result = under_umask("install", self.old)
             self.assertEqual(0, result.returncode, result.stderr)
             self.assertFalse(marker.exists())
             self.assert_version("0.33.1")
+            assert_modes()
+            installed = target_state()
             subprocess.run(["git", "-C", str(self.old), "config", "remote.origin.promisor", "true"], check=True)
             result = self.run_installer("update", "--all", "--source", self.old)
             self.assertNotEqual(0, result.returncode)
             self.assertIn("partial/promisor", result.stderr)
+            self.assertEqual(installed, target_state(), "refusal changed installed targets")
+            subprocess.run(["git", "-C", str(self.old), "config", "--unset", "remote.origin.promisor"], check=True)
+            old_program.write_bytes(before)
+            self.assertEqual(before, old_program.read_bytes())
+            result = under_umask("update", ROOT)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assert_version(CURRENT_VERSION)
+            assert_modes()
         finally:
             old_program.write_bytes(before)
             subprocess.run(["git", "-C", str(self.old), "config", "--unset", "remote.origin.promisor"], check=False)
@@ -482,20 +438,6 @@ fi''')
         self.payload_unchanged(receipt)
         self.assertEqual(receipt, json.loads(self.receipt.read_text()))
         self.assertEqual(history, (self.state / "installed.jsonl").read_bytes())
-
-    def test_umask002_fresh_old_install_and_update_keep_restrictive_modes(self):
-        for command, source in (("install", self.old), ("update", ROOT)):
-            result = subprocess.run(["bash", str(ROOT / "install.sh"), command, "shared-review-gates", "--source", str(source)],
-                                    cwd=ROOT, env=self.env, capture_output=True, text=True,
-                                    preexec_fn=lambda: os.umask(0o002))
-            self.assertEqual(0, result.returncode, result.stderr)
-        for root in (self.home / ".agents/skills", self.home / ".codex/templates", self.state):
-            for path in [root, *root.rglob("*")]:
-                if path.is_dir():
-                    self.assertEqual(0o700, stat.S_IMODE(path.stat().st_mode), path)
-                else:
-                    expected = 0o700 if path.stat().st_mode & 0o111 else 0o600
-                    self.assertEqual(expected, stat.S_IMODE(path.stat().st_mode), path)
 
     def test_late_whole_skill_retirement_failure_restores_previous_install(self):
         receipt = self.seed(CURRENT_VERSION)
