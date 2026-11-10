@@ -69,3 +69,21 @@ postverify。整體framework保持失敗，後續參考通過沒有被當作整�
 
 installer整合驗證須使用乾淨的來源checkout，避免本機ignored caches污染payload；
 每個checkout都使用自己的tracked Python resolver，不複製個人環境或安裝狀態。
+
+## Linux receipt旗標的輕量行為覆蓋
+
+另在 `tests.test_installer_runtime_groups.InstallerBoundaryUnitTests` 補一個測試，
+執行 `install.sh` 中真實的 `validate_receipt_writable` Python程式，只模擬Linux
+平台選擇及 `fcntl.ioctl` 回傳：無旗標可接受，append-only、immutable及ioctl讀取
+失敗須以明確診斷拒絕。四種情境均核對receipt bytes不變及開啟的descriptor已關閉。
+此案例不執行installer交易、不需sudo，也不設定真實inode旗標；不改動前述兩個
+長模組的66項計數，亦不取代Linux核心／檔案系統的真實旗標整合測試。
+
+既有 `os.chflags` 的append-only及immutable案例在Linux仍可能因API不存在而
+略過；這不代表Linux沒有對應旗標，也不代表本輪執行了正式Security Diff Scan。
+產品既有Linux分支以 `FS_IOC_GETFLAGS` 查讀旗標，無法查讀時拒絕繼續，行為未改。
+輕量案例可獨立執行：
+
+```sh
+./scripts/project-python -B -m unittest -v tests.test_installer_runtime_groups.InstallerBoundaryUnitTests
+```
