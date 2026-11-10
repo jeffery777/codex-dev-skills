@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import json
 import contextlib
+import errno
 import hashlib
 import io
 import os
@@ -227,6 +228,59 @@ class InstallerBoundaryUnitTests(unittest.TestCase):
                     self.assertEqual(flag, decoded)
         source = INSTALLER.read_text(encoding="utf-8")
         self.assertIn('struct.unpack_from("=I", raw_flags)[0]', source)
+
+    def test_linux_receipt_validator_accepts_clear_flags_and_rejects_protection_or_ioctl_error(self) -> None:
+        import ctypes
+        import fcntl
+        import struct
+
+        source = INSTALLER.read_text(encoding="utf-8")
+        function = source.split("validate_receipt_writable() {", 1)[1].split("\n}\n", 1)[0]
+        program = function.split("<<'PY'\n", 1)[1].rsplit("\nPY", 1)[0]
+        path = self.root / "receipt.json"
+        original = b'{"receipt": "preserved"}\n'
+        path.write_bytes(original)
+        path.chmod(0o600)
+        long_size = ctypes.sizeof(ctypes.c_long)
+        expected_request = (2 << 30) | (ord("f") << 8) | 1 | (long_size << 16)
+        cases = (("clear", 0), ("append-only", 0x20), ("immutable", 0x10), ("ioctl-error", None))
+        for name, inode_flags in cases:
+            with self.subTest(case=name):
+                output = io.StringIO()
+
+                def getflags(fd, request, buffer, mutate):
+                    self.assertEqual(expected_request, request)
+                    self.assertEqual(long_size, len(buffer))
+                    self.assertTrue(mutate)
+                    self.assertEqual(path.stat().st_ino, os.fstat(fd).st_ino)
+                    if inode_flags is None:
+                        raise OSError(errno.ENOTTY, "synthetic unsupported ioctl")
+                    struct.pack_into("=I", buffer, 0, inode_flags)
+                    return 0
+
+                with mock.patch("sys.argv", ["validator", str(path), "test receipt"]), \
+                     mock.patch("sys.platform", "linux"), \
+                     mock.patch("fcntl.ioctl", side_effect=getflags) as ioctl, \
+                     contextlib.redirect_stderr(output):
+                    if inode_flags == 0:
+                        exec(program, {})
+                    else:
+                        with self.assertRaises(SystemExit) as stopped:
+                            exec(program, {})
+                        self.assertEqual(1, stopped.exception.code)
+                ioctl.assert_called_once()
+                fd = ioctl.call_args.args[0]
+                with self.assertRaises(OSError) as closed:
+                    os.fstat(fd)
+                self.assertEqual(errno.EBADF, closed.exception.errno)
+                self.assertEqual(original, path.read_bytes())
+                if inode_flags is None:
+                    self.assertIn("test receipt file flags cannot be inspected", output.getvalue())
+                    self.assertIn("synthetic unsupported ioctl", output.getvalue())
+                elif inode_flags:
+                    self.assertIn("test receipt has immutable or append-only inode flags", output.getvalue())
+                else:
+                    self.assertEqual("", output.getvalue())
 
 class RuntimeGroupInstallerTests(InstallerFixture):
     def test_fresh_cli_group_installs_common_delivery_and_cli_only(self):
