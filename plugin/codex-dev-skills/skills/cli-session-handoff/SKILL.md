@@ -1,6 +1,6 @@
 ---
 name: cli-session-handoff
-description: Thin Codex CLI session control adapter for one bounded non-interactive start, resume, fork, or fresh continuation, a callable-selected native TUI create/fork, or one manual interactive fork, dashboard, or queued message, already selected by shared orchestration.
+description: Thin Codex CLI session control adapter for a bounded native TUI, exec, or public stdio App Server handoff already selected by shared orchestration, plus manual session controls.
 ---
 
 # cli-session-handoff
@@ -11,7 +11,8 @@ Runtime compatibility: cli
 
 Use this thin CLI control-plane adapter after shared orchestration has selected
 a bounded task and the user explicitly wants the CLI session action. It does
-not choose tasks, replace shared subagents, or control Desktop tasks. The
+not choose tasks, replace shared subagents, or emulate Desktop callables. A
+Desktop controller may select the App Server fallback on the execution host. The
 originating session owns integration, verification, review, and completion.
 
 先依 `../../docs/native-runtime-capabilities.md` 的 Thread Capability Discovery
@@ -25,6 +26,7 @@ Read only the reference for the selected operation before acting:
 | Operation | Use when | Required reference |
 | --- | --- | --- |
 | `tui-thread-create`, `tui-thread-fork` | 當次公開 callable 確認為原生 TUI 契約 | [Native TUI](references/native-tui.md) |
+| `app-server-start`, `app-server-resume`, `app-server-fork` | Native discovery is unavailable or unsuitable; an explicitly authorized task uses the selected host's public stdio API | [App Server](references/app-server.md) |
 | `start` | New bounded session in a clean private clone | [Non-interactive](references/non-interactive.md) |
 | `resume` | Continue the exact known public session UUID | [Non-interactive](references/non-interactive.md) |
 | `fork` | Copy completed history into a new public session UUID | [Non-interactive](references/non-interactive.md) |
@@ -42,7 +44,7 @@ Local/worktree placement belongs to shared orchestration: use the user's
 preference and actual isolation needs, explaining any departure before acting.
 Do not import Desktop `create_thread` defaults or payload restrictions into
 CLI operations. Native TUI and manual fork follow their own cwd contracts;
-the non-interactive executor's private clone remains mandatory even when the
+the exec non-interactive executor's private clone remains mandatory even when the
 user's source checkout is local. Placement does not authorize a session action.
 
 ## Invariants
@@ -50,18 +52,20 @@ user's source checkout is local. Placement does not authorize a session action.
 - Verify the exact task, repository, expected head, executable, sandbox,
   session identity, readiness, and ownership before the operation. Return to
   shared orchestration if any is ambiguous or work overlaps another writer.
-- Shell executor operations require a clean worktree and use the private-clone
+- Exec shell operations require a clean worktree and use the private-clone
   executor. Only `read-only` or already-authorized `workspace-write` is allowed.
   Source identity must be rechecked before applying a bounded child patch.
 - Resume/fork identifiers come from public CLI events and must be exact UUIDs,
   never display names or `--last`. CLI session IDs are not Desktop `threadId`
-  or `clientThreadId` values. Native TUI IDs follow their own reference.
+  or `clientThreadId` values. Native TUI and App Server IDs follow their own references.
 - Child prompts prohibit recursive session dispatch and preserve repository
   environment, verification, and publication boundaries. Missing pinned
   runtime/dependencies are verification blockers, not permission to switch
   interpreters or install elsewhere.
 - No interactive UI automation, private session files, unpublished APIs,
-  direct app-server/remote-control calls, caller-started daemons, or sidecars.
+  arbitrary app-server/remote-control calls, caller-started daemons, or sidecars.
+  The App Server reference alone permits the bounded, once-per-invocation stdio
+  executor; it does not manage Desktop's server or a network listener.
   `codex agents` may own its documented runtime-managed daemon connection;
   this grants no permission to control that daemon directly.
 - Do not pass arbitrary flags, model overrides, extra writable roots,

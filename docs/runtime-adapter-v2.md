@@ -2,6 +2,11 @@
 
 This document defines the boundary for a possible second-version Desktop thread delegation wrapper or runtime adapter. It is accepted public repository policy, runtime compatibility guidance, and a maintained example boundary only. It does not introduce an implementation, roadmap commitment, daemon, MCP server, app-server client, or Desktop runtime integration.
 
+The separate [CLI App Server handoff](../skills/cli-session-handoff/references/app-server.md)
+is an implemented, bounded alternative selected after native discovery. It does
+not implement this proposed V2 Desktop wrapper. References below to V2 being
+documentation-only apply to that wrapper, not to the separate CLI executor.
+
 The current `desktop-thread-delegation` skill remains the user-facing workflow. A future adapter may only make already-supported thread actions easier to call; it must not expand authority, bypass human gates, or read private Desktop runtime state.
 
 For practical prompt and stop-condition examples, see [Runtime Adapter Boundary Example](../examples/runtime-adapter-boundary.md).

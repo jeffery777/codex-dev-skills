@@ -81,7 +81,7 @@ class PluginPackagingTests(unittest.TestCase):
             for name in INSTALLER_ENV_OVERRIDES:
                 env.pop(name, None)
             env.update({"HOME": str(home), "XDG_STATE_HOME": str(root / "state")})
-            for group in ("codex-cli-session-handoff", "desktop-delivery-workflow"):
+            for group in ("desktop-delivery-workflow",):
                 result = subprocess.run(
                     [str(ROOT / "install.sh"), "install", group], cwd=ROOT,
                     env=env, capture_output=True, text=True, check=False,
@@ -105,6 +105,7 @@ class PluginPackagingTests(unittest.TestCase):
                 self.assertIs(False, metadata["policy"]["allow_implicit_invocation"])
             for script, argument in (
                 ("cli-session-handoff/scripts/cli_session_handoff.py", "--example"),
+                ("cli-session-handoff/scripts/app_server_handoff.py", "--example"),
                 ("loop-engineering/scripts/operationctl.py", "--help"),
                 ("loop-engineering/scripts/qualificationctl.py", "--help"),
                 ("loop-engineering/scripts/sqlitectl.py", "--help"),

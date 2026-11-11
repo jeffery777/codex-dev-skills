@@ -292,12 +292,15 @@ class RuntimeGroupInstallerTests(InstallerFixture):
         self.assertFalse((skills / "desktop-project-delivery").exists())
         self.assertFalse((self.home / ".codex/agents").exists())
 
-    def test_desktop_group_and_cli_uninstall_preserve_common_dependencies(self):
+    def test_desktop_dependency_prevents_cli_handoff_removal(self):
         self.seed(CURRENT_VERSION)
+        before = self.snapshot()
         result = self.run_installer("uninstall", "codex-cli-session-handoff", "--yes")
-        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("still depend", result.stderr)
+        self.assertEqual(before, self.snapshot())
         skills = self.home / ".agents/skills"
-        self.assertFalse((skills / "cli-session-handoff").exists())
+        self.assertTrue((skills / "cli-session-handoff/scripts/app_server_handoff.py").is_file())
         self.assertTrue((skills / "desktop-project-delivery/SKILL.md").is_file())
         self.assertTrue((skills / "planning/SKILL.md").is_file())
 

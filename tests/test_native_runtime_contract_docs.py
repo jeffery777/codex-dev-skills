@@ -1115,7 +1115,8 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
         self.assertIn("codex-delivery-workflow", groups["codex-cli-session-handoff"]["depends_on"])
         self.assertIn("skills/cli-session-handoff", cli_sources)
         self.assertNotIn("skills/cli-session-handoff", delivery_sources)
-        self.assertNotIn("skills/cli-session-handoff", desktop_sources)
+        self.assertIn("skills/cli-session-handoff", desktop_sources)
+        self.assertIn("codex-cli-session-handoff", groups["desktop-delivery-workflow"]["depends_on"])
 
     def test_legacy_desktop_gates_are_compatibility_aliases(self) -> None:
         routes = {
@@ -1188,8 +1189,12 @@ class NativeRuntimeContractDocsTests(unittest.TestCase):
                 skill = read(relative_path)
                 self.assertIn("native-runtime-capabilities.md", skill)
                 self.assertIn("call-site validation", skill)
-                self.assertIn("must not be imported, executed, or", skill)
-                self.assertIn("recommended", skill)
+                if relative_path == "skills/loop-engineering/SKILL.md":
+                    self.assertIn("must not be imported, executed, or", skill)
+                    self.assertIn("recommended", skill)
+                else:
+                    self.assertIn("App Server fallback", skill)
+                    self.assertIn("Other repository-local helper", skill)
                 self.assertNotIn("desktop_runtime_", skill)
 
     def test_retired_desktop_wrapper_cannot_be_reintroduced(self) -> None:

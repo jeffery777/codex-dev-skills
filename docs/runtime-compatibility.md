@@ -83,6 +83,14 @@ activated Python environment, so it must follow the repository's tracked
 environment resolver when present and fail verification closed on a version or
 dependency mismatch.
 
+It also provides a separate [public stdio App Server route](../skills/cli-session-handoff/references/app-server.md)
+for authorized create/continue/fork, including a Desktop controller using the
+selected CLI host. That executor operates in the verified existing workspace,
+defaults to read-only and supports explicitly authorized workspace-write. Its
+thread IDs, lifecycle and receipt follow the public API, not Desktop callable
+payloads or the exec private-clone contract. Writer conflicts stop without force.
+API readback and Desktop project visibility require separate evidence.
+
 CLI source checkout 可依偏好及隔離需求選 local 或既有 worktree；新對話本身
 不要求新增工作樹。這與子程序的 mandatory private clone 分開；Desktop
 `create_thread` 的 worktree 意圖限制不套到 CLI payload 或一般 Git 操作。

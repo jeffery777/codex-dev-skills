@@ -29557,6 +29557,2001 @@
       }
     },
     {
+      "catalog_sha256": "1f6c43f9f81d6ef5f914718ea2566cf31551d64e19787f84eb3cfa5d044246a4",
+      "reviewed_revision": "22836ce081a69903580b165583be1db4f4a3f637",
+      "version": "0.40.0",
+      "core": {
+        "repository": "jeffery777/engineering-workflow-core",
+        "revision": "0edcbad3d126cb8a7c0b64e9ad95283e2cca635e",
+        "reviewed_head": "338a2534b0d8025f3068086e6e7a7c21298ae3f1",
+        "pull_request": 37,
+        "version": "0.5.0",
+        "tag": "v0.5.0",
+        "tag_object": "374124ac6bc88efe73b27a4f7875fffd0dc669e2"
+      },
+      "groups": {
+        "shared-review-gates": {
+          "depends_on": [],
+          "artifacts": [
+            {
+              "source": "skills/closure-triage",
+              "kind": "skills",
+              "relative": "closure-triage",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "46cbadc4e9ae5ae86cf5eec9780f38ba8226cca9c01e5b5fe54e0595b08534c6",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/task-continuation",
+              "kind": "skills",
+              "relative": "task-continuation",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "91d304900372a28fc7858cbf313637433deb2b967c1444cdb5adbb840e636ce9",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/code-review-gate",
+              "kind": "skills",
+              "relative": "code-review-gate",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "c0fbc68cc6a97a443994b4d2a19204c6bda6a555100ee12e69d7d82679f8ceda",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/docs-review-gate",
+              "kind": "skills",
+              "relative": "docs-review-gate",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "cd22ac26b58d74b3036bc071809e0521ecb7640efec25a2cb04667e4acb7f4b9",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/merge-readiness-gate",
+              "kind": "skills",
+              "relative": "merge-readiness-gate",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "a1f6f785e9ecc2ac3b7fe6ece2506b402e5261b2f95528c6985443f5328fad1c",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/review-artifact-cleanup",
+              "kind": "skills",
+              "relative": "review-artifact-cleanup",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "9d455c9b327beb7a4fc3dada89519c1e4cb97957d1868da65e9e9a955403c2db",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "docs/native-runtime-capabilities.md",
+              "kind": "templates",
+              "relative": "docs/native-runtime-capabilities.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "513d20d1bc2f40ca1546b6ddccb1b9ed4cc8ae17766c066eed08efe3813d6e27",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/core-contract-loading.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/core-contract-loading.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "5d3c6414e2d577cc28a47ea77ec70802f481e327cebae08632153423e5ac1ce0",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "scripts/validate-core-contract-snapshot.py",
+              "kind": "templates",
+              "relative": "scripts/validate-core-contract-snapshot.py",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "0ab5c00992cdfdaaaa85847797039d36e87056b76c0a3747137d77c1bb0643a6",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core.lock.json",
+              "kind": "templates",
+              "relative": "orchestration/core.lock.json",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "80173824d925d7c7e383e8cd7d76d94dba671033557cbcb1d4fb0b77269eb5ae",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/LICENSE",
+              "kind": "templates",
+              "relative": "orchestration/core/LICENSE",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/CHANGELOG.md",
+              "kind": "templates",
+              "relative": "orchestration/core/CHANGELOG.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f9f989acadc1625420e086fcf31d9547450d359fe842bd4e0dfc4ed4f272d8ae",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/README.md",
+              "kind": "templates",
+              "relative": "orchestration/core/README.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "6270d7e9ec7332853e02374e7ea6d82641dde88131b6c0280675435a53cdc2f1",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/contracts/authorization-and-stops.md",
+              "kind": "templates",
+              "relative": "orchestration/core/contracts/authorization-and-stops.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "27f02076fdd034c090e341610d7e04f8e79143ec17c1d37a4b57629a04c5e699",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md",
+              "kind": "templates",
+              "relative": "orchestration/core/contracts/exact-head-and-evidence.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "ba3419d7090fecce3e84f4ea35cd7695135fb7bbf8c1451502941163d8e873a4",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/contracts/review-and-security.md",
+              "kind": "templates",
+              "relative": "orchestration/core/contracts/review-and-security.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "8531deb4a0309f31d8f8abbd778460e0deff1fdc42ef789935c7dc98c6f8f819",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/contracts/workflow.md",
+              "kind": "templates",
+              "relative": "orchestration/core/contracts/workflow.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "a8ff41fdd31041d3065f782b3a01bc0f0fd9239cf1d623656bcd681b7a99663f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/architecture/dependency-inventory.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/architecture/dependency-inventory.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "c588ebfb8c1c4cc159d56e742832974820a88e326de4ee5eac5204c66c14ef9a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/architecture/migration-plan.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/architecture/migration-plan.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "6fbba9ed9a15d32d63dbe138b673c25aec34a81b262d7ada82108077ca67e8cf",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/architecture/project-split.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/architecture/project-split.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "18e3e3b620d917aeff7881f4bfe5d4736725d6cac0eb8c758b810564df5f8d84",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/provenance/source-map.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/provenance/source-map.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e1297b40229208de9d4170d30603af5eb0d69cf64392f0d85c41e348df2f0908",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/provenance/upstream-notices.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/provenance/upstream-notices.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e4adc2d6e2b7e9169db5273aa83306f93546ef0219e73f412d524fb38f3b2d82",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.1.0.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.1.0.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f8e6c3e1e6b4ac8b433656ae3991274f657097f40eae7de2431348e13bb2b058",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.1.1.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.1.1.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "c58714a705d46e6e244b9e5008df26e501a0343cfbbd7955e55f262c01e989be",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/companion/core-reading-guide.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/companion/core-reading-guide.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "493ca529e89ab7e785815687ca93b8aed805557be01de795e611da6c4e14a3c1",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/companion/decision-cards.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/companion/decision-cards.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "34f2d40509795448c7d7d947427f911667cc5dee4351a8a9ce49ab10b6f38c1c",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/companion/review-decisions.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/companion/review-decisions.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "2c8a7768f76af27ad3972948bf2b1567eb72624f2230e260c00575f1d11805c2",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/maintenance/2026-10-31-consumer-feedback.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/maintenance/2026-10-31-consumer-feedback.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "3bd34f290e72632991380dffb99f218b1a6e061ee403773cef1c61a2bcae20b1",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/maintenance/issue-24-26-candidate.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/maintenance/issue-24-26-candidate.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "89b9e312865fa49fd417cd6d3a5fd65f5e82db475950b7d0532ca08e4347e071",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.2.0.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.2.0.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "8993bcf05434a53f8afa815b199f99a349014b7cd0fe3e23a1a9dc74b153392d",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/companion/remaining-feedback-cases.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/companion/remaining-feedback-cases.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "fed5625aa09d152ef30d685a10550a02af3d5e7d387980b5d8b85d0ee5bcb372",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/maintenance/2026-11-01-remaining-feedback.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/maintenance/2026-11-01-remaining-feedback.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "3ef2e689830fcadb3112c963a50f358a7117c0b503795398033a71fd88188b82",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.3.0.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.3.0.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "21fddabd3c56548e85a2aa1d7b2770133f1d0ac55a069c4c54efc7095b8566dc",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/maintenance/2026-11-04-issue-22-23-followup.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/maintenance/2026-11-04-issue-22-23-followup.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "42d50af91e6a7b1cec0814ddfac6aea97c0b57b1aa199c96231cb12ef0bccdf7",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/maintenance/issue-22-23-upstream-candidate.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/maintenance/issue-22-23-upstream-candidate.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "1659ed30e4b93c42e3f4e39153db1e7645cf1d7c8456e9adfe6623ce13977e35",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.4.0.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.4.0.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "cd9fed14dde6a2e043d57e51f63fcec7b03dea1e7d4ae7ba6781311ad3e3e6ab",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/companion/plain-writing-examples.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/companion/plain-writing-examples.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "7b89c447761642906f20010d1327ac06613af2fbf56a10c9115eaa6493a69b7d",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.4.1.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.4.1.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "49ea4c99e504d83551b0d0c0819766d71517d8e0abbb968bd273655128da1a37",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/contracts/writing.md",
+              "kind": "templates",
+              "relative": "orchestration/core/contracts/writing.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "847a2e302adb831b736e86155caa0d8e2e61bd48c0e704350e137237e915434a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/architecture/original-writing-design.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/architecture/original-writing-design.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "74192657105c7d481c3860281b2ad5b4df286971ffc64efe266ef74a55dd17f9",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.5.0.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.5.0.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "74a785c40e1105d92c96555c0fa71e8d42a348f2df24e5058e363e00519d231a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/agent-delegation-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/agent-delegation-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e87a8e53e0fc9bbc030f68dbe8f9df7748545f60ea49adda18343815f2046e6e",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/code-mode-tool-orchestration-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/code-mode-tool-orchestration-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "0a5e167ba525bb7fbe7494038740aa7720da0143ac0fb3c4ef2859d99b1f7e8f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/context-continuity-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/context-continuity-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "03efcdd2d3bcbd551f2d76fa3b3a5a0fe6a00942a8196cf9b5f7adb7c536335f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/delivery-drift-control-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/delivery-drift-control-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "ed2f06f572c4ec9ee4f37cdcbc6db413edb30c20dd7062c29cf09411bf5c5212",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/exact-head-merge-review-contract.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/exact-head-merge-review-contract.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "27610a703bf24fbc9cbef7848ee4c9fc8d0e16ed81463cfcc4df7c9b4e826574",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/github-exact-head-enforcement-profile.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/github-exact-head-enforcement-profile.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "34f72d469398fce177c69c5e8d1471aa4f2da1639102312d0aa8b078c84e394b",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/human-gate-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/human-gate-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e5ab5ade907a5f11d3aaed5de5500af2b0c7055a9b1f64173519483622f2ea59",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/github-control-plane-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/github-control-plane-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "b7134e81c93c4a713d56f5ad90ffbc940f374229d94407a9418e00a3b4117b0f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/model-selection-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/model-selection-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "8d949b93a8576f742840edcea57e2f9c6e5a116a2b1573f57f546f227f584e1b",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/multi-agent-integration-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/multi-agent-integration-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "c78689978f077b3dd90847796732c691732137392641cb4f0d3acd7ee894fcd7",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/project-agent-knowledge-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/project-agent-knowledge-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "891ecef481e735df2f27d97739747e9e97d3f3993beab7f4a3162b73aeedbbf8",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/projectspec-alignment-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/projectspec-alignment-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "1118a3d0b35e4780048683261ae04c3a698db5960309d3040db07d2ff41629e3",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/release-state-contract.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/release-state-contract.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "455a0278694edd60f9fcab79d68391b7bb595f28a9f2e42f3b154dc97e76de88",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/engineering-workflow-contract.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/engineering-workflow-contract.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "342d6a84dd9bc148a58cf028b1bf94ef288a72de9d9d930b65c4cb8b6a1acfab",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "scripts/verify-engineering-workflow.py",
+              "kind": "templates",
+              "relative": "scripts/verify-engineering-workflow.py",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "41bf69dddbac3724007f0133616af12e87c0cd7cd4413346833e5307f2d0b176",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/reusable-workflow-contract.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/reusable-workflow-contract.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "2cbf02d406af82da385ea10d7eac651bff7b612766fe14b04955b9c9f6af8141",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/reusable-workflow-details.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/reusable-workflow-details.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "b24acb71dc59fad2d289f83fbcacf3612d08306805c4223338be1f8169cbc2c2",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/review-artifact-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/review-artifact-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e355b3a134fb18d2192171e6984470f5c502a4db910101b78f9baec5e85317ac",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/runtime-compatibility-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/runtime-compatibility-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "d39916300bd2a2f51196ac1b9be4d3860723aff5e856ffa88051df338382808f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/security-review-escalation-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/security-review-escalation-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "650e2b270cf6b4971242c7b45f419f34f932c50322b2946da5ca2590de9476b6",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "scripts/validate-exact-head-merge-review.py",
+              "kind": "templates",
+              "relative": "scripts/validate-exact-head-merge-review.py",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "6c0f42a17e91291d358043c5b2e7192e0c7e0154a77882a34230237d6d3bcdf7",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "scripts/collect-exact-head-merge-readiness.py",
+              "kind": "templates",
+              "relative": "scripts/collect-exact-head-merge-readiness.py",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "4cf83acc91cc1b66a2192d28c2bc54f157d5f1c0340238228daf9cd97423e110",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/agent-task-brief.template.md",
+              "kind": "templates",
+              "relative": "orchestration/agent-task-brief.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "557450c4a163134f30dc47430650da7c9496258a30993341d882c297520800e5",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/agent-routing-integration.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/agent-routing-integration.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f2c2f6e5965ae8b6e515ae892d08303aa6f5ce40a07fdb1c569718cfbdd1f508",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/closure-triage-overlay.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/closure-triage-overlay.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "bf260edfd568fe2a3c6a28920a313702555556bae5fcd3b815b5c417938e56e0",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/current-task-summary.template.md",
+              "kind": "templates",
+              "relative": "orchestration/current-task-summary.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "b1daafcbac4e2abb3f66977a47032bef1d55f0f112b2da87974e75c1b8a9a76a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/context-continuity.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/context-continuity.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "914d80ecc6675114a27d7366cb56d178a1e6ad147c4c83bdfa6a11d8baef9e57",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/implementation-plan.template.md",
+              "kind": "templates",
+              "relative": "orchestration/implementation-plan.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "ec09de033b04c1c476535ac6836a7b3a469a6338fa2d1f9d4814b5e89fa17892",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/integration-review-report.template.md",
+              "kind": "templates",
+              "relative": "orchestration/integration-review-report.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "0c449796063f94c0219edd9f3d76b10bbe8258bd8871dae39bf42d587ed2bf4e",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/next-session-prompt.template.md",
+              "kind": "templates",
+              "relative": "orchestration/next-session-prompt.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "a9cc89e08e14cb48e07d228cbc3b749f691bb2b483debe5a2b5eee2c4bfbce37",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/orchestrator-gate-report.template.md",
+              "kind": "templates",
+              "relative": "orchestration/orchestrator-gate-report.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "80855c844684b7f4adb392cf5000e306c12fd0d05d2ad548d65b32ef27a250ab",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/project-spec.template.md",
+              "kind": "templates",
+              "relative": "orchestration/project-spec.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f96b66eea49e23807a6804eade2fc06731a1f927196f8d9239f1f7af199ed7d3",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/task-continuation-report.template.md",
+              "kind": "templates",
+              "relative": "orchestration/task-continuation-report.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "0d6bc9b3b0e4cecd0eb3aeba4ee7a6bc8433231bd693b6cbfb9d51540c11b39c",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/task-manifest.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/task-manifest.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "6a14893f0ce7222d6b1e02124a1a4888da879f36834fa346585d2eeba0a493a0",
+                  "executable": false
+                }
+              }
+            }
+          ]
+        },
+        "codex-review-workflow": {
+          "depends_on": [
+            "shared-review-gates"
+          ],
+          "artifacts": [
+            {
+              "source": "skills/code-review",
+              "kind": "skills",
+              "relative": "code-review",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "c7640f10e87a87ddc9f61706ae330424e43fa4ca1b82d3146a7dbd057b315cab",
+                  "executable": false
+                },
+                "references/integration-boundaries.md": {
+                  "sha256": "ada31c8df2eb45ba3b45cc0739890b04683d1e92d025fa91694b567464fceb4a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/code-review-deep",
+              "kind": "skills",
+              "relative": "code-review-deep",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "569bf7aa0c90f1dd87689f2b7767d4d50a98c03bdcb5e5aff3d1679b52ce86b8",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/docs-review",
+              "kind": "skills",
+              "relative": "docs-review",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "39f1fa7b20723ce6c74ab63bf007fdd29ae0735ad6c1f4f6e436a12529c4757d",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/merge-review",
+              "kind": "skills",
+              "relative": "merge-review",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "c43be1b3d9e9e1cc34fcfef83ad04efadfeb70a01c0efcf88c54eba2fd1cacdb",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/merge-review-deep",
+              "kind": "skills",
+              "relative": "merge-review-deep",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "1b8c5993d88edc6cbe072248ea821007640679e54cca55952f9992e43ac6ccb7",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/review/code-review-report.template.md",
+              "kind": "templates",
+              "relative": "review/code-review-report.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "9a5eceaaee0506eafb2e7f9444ad0aa643efc593ab75e911a48f34a64ff91fe4",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/review/merge-review-report.template.md",
+              "kind": "templates",
+              "relative": "review/merge-review-report.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "7e5bb74d589ddbbb475488672bd01da2f7a678e70651f14dc62023ce7de3641a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/review/review-follow-up.template.md",
+              "kind": "templates",
+              "relative": "review/review-follow-up.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "55f15e786610d6f6c771e07ba231679ef672f68e37b44828cba5a4739e6fb8e2",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "workflows/review-workflow.md",
+              "kind": "templates",
+              "relative": "workflows/review-workflow.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "1bd7b1b479dd22ac8e0269a597db73668ee476c09d69f02e094a86c81a1ac38e",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "workflows/merge-readiness-workflow.md",
+              "kind": "templates",
+              "relative": "workflows/merge-readiness-workflow.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f729d523f36e356b700bf2a8bab253618b78b0816ae5fb1a8c1e00212b31f2d0",
+                  "executable": false
+                }
+              }
+            }
+          ]
+        },
+        "codex-delivery-workflow": {
+          "depends_on": [
+            "shared-review-gates"
+          ],
+          "artifacts": [
+            {
+              "source": "skills/loop-engineering",
+              "kind": "skills",
+              "relative": "loop-engineering",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "d9c878397cba18d9ac9b85d2b92295dcd0c716c0e5820533b83f09e5c1f435a9",
+                  "executable": false
+                },
+                "references/agent-profile-registry.json": {
+                  "sha256": "3ceff5f7b69de4c818104263faff85aeea13c99aac75fd6a3436cffc48ce2f70",
+                  "executable": false
+                },
+                "references/agent-qualification.md": {
+                  "sha256": "77f423bb0635aa5d8311ad5b252dca5bc2b93b485a3baabac0ac9bd75da370de",
+                  "executable": false
+                },
+                "references/agent-routing.md": {
+                  "sha256": "c3881bd751ad32cecedb603c53e2007c9a9132452d51dc16ab9e21ce47cf95e4",
+                  "executable": false
+                },
+                "references/candidate-evaluation-v0.md": {
+                  "sha256": "85f25e75ae4d144b5f552538437c44937c35e0a34024791d56df7053e682d667",
+                  "executable": false
+                },
+                "references/context-continuity.md": {
+                  "sha256": "7c54ed190bbe7ec164b1035235a2c2521dab6b691e27c1ddbf2f474b6c6ccf9b",
+                  "executable": false
+                },
+                "references/gitnexus-runtime.md": {
+                  "sha256": "df548711630f014e99db6becc11bc2bdfc5b92e5e72c2dcccd2a620a9613c1ae",
+                  "executable": false
+                },
+                "references/improvement-lineage-v0.md": {
+                  "sha256": "e48bfa85b1510a1d11ea96c29c2d89a758d9f9e5855015a0ef970023288b6d20",
+                  "executable": false
+                },
+                "references/improvement-proposal-v0.md": {
+                  "sha256": "9550334dc7174b98aef5913b691fc9f43a127ff862138564084c3be7a4f31851",
+                  "executable": false
+                },
+                "references/loop-state-and-authorization.md": {
+                  "sha256": "e2e5395b901d02b0caf4d951295977924b3c86c64334e8cc828afb8979c2ae31",
+                  "executable": false
+                },
+                "references/memory-audit-adapter.md": {
+                  "sha256": "ae76d7fd48d3fcb2abfcaa5e45c5ef051b268006f06ab6164819867ca2d7421e",
+                  "executable": false
+                },
+                "references/memory-audit-authority.md": {
+                  "sha256": "65b66559b0ca1f81680e7a52b84ca631dad24949807eb8c7e1e06bca98c31b5c",
+                  "executable": false
+                },
+                "references/memory-audit-pilot.md": {
+                  "sha256": "e854a37074141c9a086f00d0f509014c12cb295153d081281facd0fa6469e831",
+                  "executable": false
+                },
+                "references/memory-audit-preflight.md": {
+                  "sha256": "f836263629d3ef7a48b16cd5a20853b2dadf0433aad3b95d8a440ef895eb6b63",
+                  "executable": false
+                },
+                "references/memory-contract-v1.md": {
+                  "sha256": "09a1a4d793d61aa289c6f29127b47944f7b4acf4149da829a0042426b2e73cf4",
+                  "executable": false
+                },
+                "references/memory-governance-v1.md": {
+                  "sha256": "4ea5098afc8ccf4f9d4f0e31be4b73c47b0543fdbcb8ceba11d2460dbf552316",
+                  "executable": false
+                },
+                "references/memory-maintenance-entry.md": {
+                  "sha256": "4ccf055ed374876215e182dbf507dd40b61ebcddde8b275cb5c0f3fd8e5e9505",
+                  "executable": false
+                },
+                "references/memory-maintenance-local-storage.md": {
+                  "sha256": "99525f7faf42afa1b165ddaee4037f305a9d4bc87f7b0e910599c22517773296",
+                  "executable": false
+                },
+                "references/memory-maintenance-local.md": {
+                  "sha256": "736933e0a0618d4c02c9d6339c7d3f214bef4e0823f5ad79ad46f95ff3f6979d",
+                  "executable": false
+                },
+                "references/memory-maintenance-pilot.md": {
+                  "sha256": "0bc04051b9716875db197e0620fd0886bc7520c4563a338de5114083e5d8f0bb",
+                  "executable": false
+                },
+                "references/memory-operation-v0.md": {
+                  "sha256": "76305acd515161d00151aaa315a27da25dadc2f3a84970731384ffa8fbca5c5e",
+                  "executable": false
+                },
+                "references/memory-qualification-v0.md": {
+                  "sha256": "187fb02692f88f0562d49b60e6ef8881a96cdf4ed89b8d51e17a6f2871884e09",
+                  "executable": false
+                },
+                "references/memory-sqlite-v0.md": {
+                  "sha256": "26c2984fdd56cd8394fb60a5cab38925b10d71bb653567a606d20aa99860a11f",
+                  "executable": false
+                },
+                "references/obsidian-reference-profile-v0.json": {
+                  "sha256": "ba3e9526edd6ec1a7c6c4a3be01b5af7e6cc62b633fe9240f587f91d0df12db7",
+                  "executable": false
+                },
+                "references/operational-evidence-v0.md": {
+                  "sha256": "be4751e5d6b36f2d03843bdefae4ec823f89d8fc9b8937d2c48f3be96d3fd50f",
+                  "executable": false
+                },
+                "references/optional-evidence-memory.md": {
+                  "sha256": "4769ef115ebae50d8b40fd607f49513c4690c6c2142f8c740cd0b4a6773e407d",
+                  "executable": false
+                },
+                "references/security-scan-recovery.md": {
+                  "sha256": "fb13229fb129e2bc5896e4ff554921d494baa7b5d8fde23eecf8c07c77e6a430",
+                  "executable": false
+                },
+                "requirements.txt": {
+                  "sha256": "b4603b9468ade4d639d2c6f73b89d50e1fa5d227c73ab15be0382cca478513e6",
+                  "executable": false
+                },
+                "scripts/agent_qualification.py": {
+                  "sha256": "ee8c1625d4a54e38be4fa278cf5f0db24e58417730d87460eb508adec970dd8d",
+                  "executable": false
+                },
+                "scripts/agent_routing.py": {
+                  "sha256": "62dd2b1521a621149895058d40be3a0ee8f467ad24f3527be10f0faefa53504f",
+                  "executable": false
+                },
+                "scripts/candidate_evaluation.py": {
+                  "sha256": "89beafb00c1ba45aec40de5f37244bfd80fe88690424f1260e6585e6ae7ef060",
+                  "executable": false
+                },
+                "scripts/context_continuity.py": {
+                  "sha256": "ea6f918bbc9794cb251ef1a4856fdfd88202d55b49faf28542658d1313cfb832",
+                  "executable": false
+                },
+                "scripts/evaluationctl.py": {
+                  "sha256": "515c21cc1df5caf10fa933e58c2189633d03fc1e9700f48ebec9b3bd0bda8c6c",
+                  "executable": false
+                },
+                "scripts/evidencectl.py": {
+                  "sha256": "4de918ecb559e407b63831a8f8947ae6d7696cbf0744ba86f43c7a60cfbf1cb0",
+                  "executable": false
+                },
+                "scripts/git_source.py": {
+                  "sha256": "f188ddefa1bb3c13940d800204f645ba02059bc916d5aa0df0ccd544d05d51e5",
+                  "executable": false
+                },
+                "scripts/gitnexus_adapter.py": {
+                  "sha256": "26b28a156e0700e2e45198e083db0d2f3f2dbfe0da17f90565babd63ed2bcb49",
+                  "executable": false
+                },
+                "scripts/gitnexus_hook.py": {
+                  "sha256": "6dd0cdc2db3dd7ebc68072a723c90c4f09161bd0119e2ee99dab0ef882a6898e",
+                  "executable": false
+                },
+                "scripts/governancectl.py": {
+                  "sha256": "9e668ccf373bb75e3f46daa9f1bb21a21c60d0c41fe7db79ba54b01452f0d590",
+                  "executable": false
+                },
+                "scripts/improvement_lineage.py": {
+                  "sha256": "472cd61411eedb6cc3f8de94db8458dd8f9f4a089f0da7d301972fc048afd02e",
+                  "executable": false
+                },
+                "scripts/improvement_proposal.py": {
+                  "sha256": "1e5486eef94b119727e824aa47973f106716a1808d10f8665db359fa849e5215",
+                  "executable": true
+                },
+                "scripts/improvementctl.py": {
+                  "sha256": "c6127c06959df98d6af4946879e8b7991eeb8d83750a9efd12e3bda5bf51a8ab",
+                  "executable": false
+                },
+                "scripts/local_model_mapping.py": {
+                  "sha256": "d85106065793e8a96b8dca47d952a16d7b04e76cb230ed28b156866f881d3423",
+                  "executable": false
+                },
+                "scripts/loop_core.py": {
+                  "sha256": "bc4eebce33d494c1abe0430f188a4d274efd8233dde9767f33eeb6b375385104",
+                  "executable": false
+                },
+                "scripts/loop_yaml.py": {
+                  "sha256": "14cbaa770e15f838778cdd799e86e67170798ba4efe1f71339f4f0f8fb4d88cb",
+                  "executable": false
+                },
+                "scripts/loopctl.py": {
+                  "sha256": "12d5ea5a35d6b0dccdb990286d66fefb5a78950195375905e5b1d3c87ccdc653",
+                  "executable": false
+                },
+                "scripts/memory_audit.py": {
+                  "sha256": "4bf6988617be493ddc62cd55f06112cc0487044c3fd172b8405791a8adf7bcf0",
+                  "executable": false
+                },
+                "scripts/memory_audit_adapter.py": {
+                  "sha256": "01b66ce7770e00f78329d45ca9af3ffe26fce4e372faec7bdbe9d2468cf9bda0",
+                  "executable": false
+                },
+                "scripts/memory_audit_authority.py": {
+                  "sha256": "d606f6b60ca72d921613d9718a605c78c42e4c6fc8a984c661137072ba792bf5",
+                  "executable": false
+                },
+                "scripts/memory_audit_dispatch.py": {
+                  "sha256": "85f94be312d2d2bb263ee56cd41de0e8e45c64dc916a632d78ef5eed8f834bd4",
+                  "executable": false
+                },
+                "scripts/memory_audit_pilot.py": {
+                  "sha256": "8aed701a6d9acc32d1e8c7e8cac5f908497ea0180134e45e49893b0a372c24aa",
+                  "executable": false
+                },
+                "scripts/memory_audit_preflight.py": {
+                  "sha256": "41f05e7f6f4703771f201cd6a7bab240e9aa1f9b7a015de06626e788b66b54e6",
+                  "executable": false
+                },
+                "scripts/memory_audit_source.py": {
+                  "sha256": "4cf4e0a0c230ac6b829c1a4ec16e159a5f0fc5313b327fd35a466c69bc505c67",
+                  "executable": false
+                },
+                "scripts/memory_contract.py": {
+                  "sha256": "a32ff87dedead5361ad947e9d2ace06aa4612308e54c04d7ce2c6d738a06c018",
+                  "executable": false
+                },
+                "scripts/memory_governance_contract.py": {
+                  "sha256": "ada264d469f60b67641d7f338419eddc7ca9c3e0f91c6b8770081f7bad4dd377",
+                  "executable": false
+                },
+                "scripts/memory_governance_core.py": {
+                  "sha256": "dac502a56f8d13e9d7d4528e714419876b1c957fcf5241432e14b4a317ebdf93",
+                  "executable": false
+                },
+                "scripts/memory_governance_host.py": {
+                  "sha256": "32247bfbf629f8e07c93095ad20b8451f9e624c18bec22a0c994f295b7c344df",
+                  "executable": false
+                },
+                "scripts/memory_governance_local.py": {
+                  "sha256": "d9034b5493ea7e6122fff9575a3f5b6e34efa81a9c36d6d020eaf4e142bf8f1a",
+                  "executable": false
+                },
+                "scripts/memory_governance_storage.py": {
+                  "sha256": "c35672803b830799f6005c9d8c6c2cc2fcb962a70b976fe9eae961745bc924ca",
+                  "executable": false
+                },
+                "scripts/memory_maintenance.py": {
+                  "sha256": "ac781089d1b082fabc6d54d40d4badcaef0debede4a452279bb65d267357f3a1",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_authority.py": {
+                  "sha256": "ca8d1938fddde212c50e9e0c496a0ad630107fad8512771c3e25b2b9d0a1a41e",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_binding.py": {
+                  "sha256": "b08e2e2899ce616f2decccc0a5b80bebd9f219d28ddca34115c5fbf6699e5107",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_dispatch.py": {
+                  "sha256": "c44dafeef53c53362f560fb809b7bcbe70bdae8b8c41067df4949fdf50764e21",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_local.py": {
+                  "sha256": "d91fa34486f6dc49500643be39fb0490cad5e8eeb41e44dabc9c699b44f59332",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_operator.py": {
+                  "sha256": "4e1bd59d540201d587b81c882e3d83fbf1c45190a55520dbadf13732877fe8ca",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_pilot.py": {
+                  "sha256": "2b9fc930a3a43a7adc324d47ef9f8506094f73a917d4b317ed534fe6933a25c5",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_preflight.py": {
+                  "sha256": "f5b723cffed4267f763715862a0fbb4da5481222d4afa6c6fd91898bc8b0975c",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_qualification.py": {
+                  "sha256": "3548d589dcfe31b04cdead857948810f619e9174dc88407aa987140f31933e04",
+                  "executable": false
+                },
+                "scripts/memory_operation.py": {
+                  "sha256": "f4942b08292ea58901512ffd2f459cf25c291e069ac70a035f12f04ba20f4aac",
+                  "executable": false
+                },
+                "scripts/memory_pilot.py": {
+                  "sha256": "431ff64ec925597b9ce4ac46c6fa024403be7b8bc80b3e268f43e22b21ab4237",
+                  "executable": false
+                },
+                "scripts/memory_pilot_off.py": {
+                  "sha256": "e332a321e4b4ff4a578c36df2bbb164b362166eb1b3d215e41e00f42fb15f84c",
+                  "executable": false
+                },
+                "scripts/memory_qualification.py": {
+                  "sha256": "cea0067056d4452eb176ecfaeb4b223b0dcd709c77cd5d643eeefe239107cb8f",
+                  "executable": false
+                },
+                "scripts/memory_sqlite.py": {
+                  "sha256": "436a7b9190c83a28a2ab0c186745f28d4362175aafba8d12d9b2cbc1eb439ddc",
+                  "executable": false
+                },
+                "scripts/memoryctl.py": {
+                  "sha256": "b2c3833e5d5901416ac04171b0caee530b9abe33e848dca4d6464a7b43fd6b62",
+                  "executable": false
+                },
+                "scripts/memorypilotctl.py": {
+                  "sha256": "567aedaf965f57f914cf59d9871be7cd201f6185b56f6d8c91b2230284e8d7ac",
+                  "executable": false
+                },
+                "scripts/model_failover.py": {
+                  "sha256": "001c0ba22afd95b83e2d96d92b0a26e8af508627ede7f568f1edfa111935ab06",
+                  "executable": false
+                },
+                "scripts/operational_evidence.py": {
+                  "sha256": "c061aabc0f22902ce0021e5194131316d901d47c029d7a43a694bbf21cd54a82",
+                  "executable": false
+                },
+                "scripts/operationctl.py": {
+                  "sha256": "79bd921406ba94c32c2f32e130b2a9a68d5bc682dbc9855a418b3bbe84b5a23c",
+                  "executable": false
+                },
+                "scripts/profile_preflight.py": {
+                  "sha256": "e4046fb61b20122cd9e547cb54a9b4476f7e7600e1db3cc7d1ced2c4122102a3",
+                  "executable": false
+                },
+                "scripts/proposalctl.py": {
+                  "sha256": "b2d2c0f38ecb72f61e71be793b2e76bb905534f47f246ce6830fc6e321459109",
+                  "executable": true
+                },
+                "scripts/qualificationctl.py": {
+                  "sha256": "f8405c94db536dc39a77a75c1ce69739fb0647c218bb51b57b624e4536eb2ffa",
+                  "executable": false
+                },
+                "scripts/sqlitectl.py": {
+                  "sha256": "6e3755f96966dfb5d6d3f26ca50ce109f2566530706e60c5c5f675c795acbe3f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/memory-audit",
+              "kind": "skills",
+              "relative": "memory-audit",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "79a8ece7f16ab217ae628b91caeb25b306c5673b59570fcbe91976cc0e6e7674",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/memory-maintenance",
+              "kind": "skills",
+              "relative": "memory-maintenance",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "58703c967be93cdf59e5c5cbce0d29bf8c73fcd64a189dee8046820eae57c4c7",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/dev-retro",
+              "kind": "skills",
+              "relative": "dev-retro",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "1b58fe5872f9ebb4b37acc449645f198fb94a6d855da82d87f47ce319b201f34",
+                  "executable": false
+                },
+                "agents/openai.yaml": {
+                  "sha256": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+                  "executable": false
+                },
+                "references/acceptance-cases.md": {
+                  "sha256": "8eb8b53f71e00e462431d679d239b9e70b0e502aa31f6eb9e55984b04e872b5b",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/planning",
+              "kind": "skills",
+              "relative": "planning",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "64e39a3ddcba3c6f76dfeb1924c21dc29e790a85a999c6ca949611ebbd185b6c",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/milestone-continuation",
+              "kind": "skills",
+              "relative": "milestone-continuation",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "e8821097504e9dfd55c7b0a24020dbfe699dbd002d4f401affbb32a02daa5308",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/project-delivery",
+              "kind": "skills",
+              "relative": "project-delivery",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "7c341d908033f6e68df3629134150a0decc71c75cf2705c705c62937f79879d6",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/project-orchestrator",
+              "kind": "skills",
+              "relative": "project-orchestrator",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "b022632457d44b516a00f38ca7dc5148bd75b59beeac4b52bb8f8caa062ce574",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/implementation-slice",
+              "kind": "skills",
+              "relative": "implementation-slice",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "89762458e6627a1198b0cd72a43d849f4f43f77132c26fc33a98922628db5d5c",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/docs-update",
+              "kind": "skills",
+              "relative": "docs-update",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "75f6de2f7235ff8e9c2914ec081aed8e17061905b716ffb7451e10e3429d49e9",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "docs/agent-qualification-autoload.md",
+              "kind": "templates",
+              "relative": "docs/agent-qualification-autoload.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "064861062fb5f3e412e734a5a867d52035ef3d30f928d780569749aca5095093",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "docs/guides/local-model-mapping.md",
+              "kind": "templates",
+              "relative": "docs/guides/local-model-mapping.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "87cf1c78807fb964af790aa84b0b1c5cf5855b8b2a025840d9d09220775bc2f5",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/loop-engineering-spec.template.md",
+              "kind": "templates",
+              "relative": "orchestration/loop-engineering-spec.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "d689bcdfbf609f45c8a17a4b73968821f0a0b9077cd2c45b77151a2e45ba7894",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/loop-decision-input.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/loop-decision-input.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f696e82ffe36e182d7366e8c8b35ec4fecebbecc117f382473354cb5f1d1682f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/loop-event.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/loop-event.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "5a6729167306076d08330eaf8c90be046eecdb43261caa7eb0f5ae45bbf88487",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/loop-handoff-prompt.template.md",
+              "kind": "templates",
+              "relative": "orchestration/loop-handoff-prompt.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "b5f6bed6c31b5332dc8237b91b94b67398c1f9448dfbfb3eb2cc23c99a1cad3a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/loop-iteration-report.template.md",
+              "kind": "templates",
+              "relative": "orchestration/loop-iteration-report.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "2f91b8ffa86f0b498ac92ae59169c6b28809b4d2f4baff03d1f17a75768e567b",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/loop-state-ledger.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/loop-state-ledger.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f092f0827a2a57f43f3d8f95233885a8b19d0fe36f51d731cbb3e966387f44f1",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/task-claim-lease.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/task-claim-lease.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "abc1ac7c8037046ffc00f24714b743ff15b6d649ccca30eb83c39e93dc5d1a11",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/hooks/gitnexus-v2c-b/hooks.json.template",
+              "kind": "templates",
+              "relative": "hooks/gitnexus-v2c-b/hooks.json.template",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "9fb6134841fa4020ac55aec25295413d8316e0cfdc9707aed98ba16484735a6a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/hooks/gitnexus-v2c-b/config.json.template",
+              "kind": "templates",
+              "relative": "hooks/gitnexus-v2c-b/config.json.template",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "87a3f1d0232f32fb66fe386019d409c25b6837c5256e14b579e69e4504bfeecc",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "workflows/implementation-workflow.md",
+              "kind": "templates",
+              "relative": "workflows/implementation-workflow.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "41bdc6e0aaf5644804b55d651d212d4ab7e95bb277591ea898967fdce52b79f7",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "workflows/loop-engineering-workflow.md",
+              "kind": "templates",
+              "relative": "workflows/loop-engineering-workflow.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e661f487868f2070c85399cb8955ab0dff4232aa2c50bb0a1bd1c4aa35c197a1",
+                  "executable": false
+                }
+              }
+            }
+          ]
+        },
+        "codex-cli-session-handoff": {
+          "depends_on": [
+            "shared-review-gates",
+            "codex-delivery-workflow"
+          ],
+          "artifacts": [
+            {
+              "source": "skills/cli-session-handoff",
+              "kind": "skills",
+              "relative": "cli-session-handoff",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "adbf2a8d0547310d8cbe532fbfd0a95dfe5d5ab3b28d6ee44bd1e9e1ffeab999",
+                  "executable": false
+                },
+                "references/app-server.md": {
+                  "sha256": "1499e4730e5937ae3500ac74b3e623f111b2b08ab942db3ef75864e6cfc74323",
+                  "executable": false
+                },
+                "references/dashboard-queue.md": {
+                  "sha256": "7afd19e490f5f898b2e7e6031d613fdb22c501d766b8db09d3bd2a430be62c49",
+                  "executable": false
+                },
+                "references/fresh-continuation.md": {
+                  "sha256": "eb058d2a0bac008479e8b8a787e4acb2e4dbb6216ae18ba1c35d648b22364ed5",
+                  "executable": false
+                },
+                "references/interactive-fork.md": {
+                  "sha256": "cd12c3795265007116d56b069eacea01b3a6d617147d772dd6d3af1b674e2eee",
+                  "executable": false
+                },
+                "references/native-tui.md": {
+                  "sha256": "8f95bed99d382f409b65ef9d9cc83a4721ce82344dd7d9a5556cee52511d3df1",
+                  "executable": false
+                },
+                "references/non-interactive.md": {
+                  "sha256": "27ddc1a8645a6d05e15fc933a30ff770872e7487b5eeb6c2469f62c4d046fc83",
+                  "executable": false
+                },
+                "scripts/app_server_handoff.py": {
+                  "sha256": "e3ee02c14f525385c13b25cb830061c0859444bc08d4402756f4b73a4f78410b",
+                  "executable": false
+                },
+                "scripts/cli_session_handoff.py": {
+                  "sha256": "a2299d42952de44ecadbb4bef93e1f5eb96a43672131a3f1dc5b73afdbac58f1",
+                  "executable": false
+                }
+              }
+            }
+          ]
+        },
+        "desktop-delivery-workflow": {
+          "depends_on": [
+            "shared-review-gates",
+            "codex-delivery-workflow",
+            "codex-cli-session-handoff"
+          ],
+          "artifacts": [
+            {
+              "source": "skills/desktop-project-delivery",
+              "kind": "skills",
+              "relative": "desktop-project-delivery",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "1202af87faec518b495110ddd06f8121fda56ad952c4e6cf9bbc984c3a227582",
+                  "executable": false
+                },
+                "references/current-worktree.md": {
+                  "sha256": "16de99653956366960808ab8585bcc413b6afd21e5a640b45fe40de2d42cc04d",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/desktop-thread-delegation",
+              "kind": "skills",
+              "relative": "desktop-thread-delegation",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "9b00203135748cbe9b6387f3689eea81f0821225b256a95d4c7b909b9d41108a",
+                  "executable": false
+                },
+                "references/create-fork.md": {
+                  "sha256": "b0d933bc81c74c41f3af7eeeb46407b2e270f2c02c60b33992bdcc7fac4a290a",
+                  "executable": false
+                },
+                "references/fresh-rollover.md": {
+                  "sha256": "ca47f2f37969bfe1d5804837088eb31786f7ea08d9803a22f2955de0de672fed",
+                  "executable": false
+                },
+                "references/observe-handoff.md": {
+                  "sha256": "4886628298873459e75fbfede8f37d5980f8459428cc0df4c9906ab484d46e5e",
+                  "executable": false
+                },
+                "references/share.md": {
+                  "sha256": "0310e4a9b175eaa79c44d2c759a4abb6be9b8827e990125872e1a51957ba18f4",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/desktop-sidebar-organization",
+              "kind": "skills",
+              "relative": "desktop-sidebar-organization",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "9271355573fb54bb6deab1e85035065a3de5d36fbfb1257580938ae3c657f5de",
+                  "executable": false
+                },
+                "references/preferences.md": {
+                  "sha256": "b74bb492126edbca45811968c09a05e04705878a668eaf4f3e49c33dc41a148a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/desktop-spec-plan-gate",
+              "kind": "skills",
+              "relative": "desktop-spec-plan-gate",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "356ca56a70ec0de11f2d039d7ea9818675a4bcfa787bb279bc9c4008e89bd757",
+                  "executable": false
+                },
+                "agents/openai.yaml": {
+                  "sha256": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/desktop-implementation-gate",
+              "kind": "skills",
+              "relative": "desktop-implementation-gate",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "947d358adfe6fe2340ddd198dbb573df01246c9725c9e675c0b203903143d799",
+                  "executable": false
+                },
+                "agents/openai.yaml": {
+                  "sha256": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/desktop-pr-merge-gate",
+              "kind": "skills",
+              "relative": "desktop-pr-merge-gate",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "9c32c4a4179f06f051ddd3e91c5241d251246dc70228e28d3fdf5621967119a7",
+                  "executable": false
+                },
+                "agents/openai.yaml": {
+                  "sha256": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "workflows/desktop-delivery-workflow.md",
+              "kind": "templates",
+              "relative": "workflows/desktop-delivery-workflow.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "2c041c930f29fb05cbcdc7fa65a6581ebe257124b126eafd5f0eab994582bb91",
+                  "executable": false
+                }
+              }
+            }
+          ]
+        },
+        "codex-agent-profiles": {
+          "depends_on": [
+            "codex-delivery-workflow"
+          ],
+          "artifacts": [
+            {
+              "source": "agent-profiles/loop_v2a_mechanical_reader.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_mechanical_reader.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "ad67b3e231a900f99626d2274a53e4c2ee2e0ab27cb8b3f8bf156eef67ad1e96",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_fast_explorer.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_fast_explorer.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "2a1453406a23b3f63f342a9bcccb3c16c7729d211d6a10c16b183084e928a078",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_balanced_worker.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_balanced_worker.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "613806c73fda4fd25c7f44afa34e2f6ef156b11618c30b83c75a6892e16e291a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_senior_worker.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_senior_worker.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "1857f8fee3b7b16aaf35648b23da4d035f4b87b5b64632e645c50af4d3d8ddc0",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_advanced_worker.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_advanced_worker.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "bd0d9a69bdff53d95b19038b7256317d9c0fbf8c648d522ed387668fe7160a24",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_routine_reviewer.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_routine_reviewer.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "7f745b68943e11441d062546a9fc94e969d76a311bf77a61e8e8dae8bb831967",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_deep_reviewer.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_deep_reviewer.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "59e0b5f013fc5e05331c0ae022a97bda7a6f245cd1e69e6f48affbcaabecc6c1",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_exceptional_researcher.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_exceptional_researcher.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "5cae673a335105f261177384e9fea423d2f7a5a6af6409895b963add476b4078",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_security_reviewer.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_security_reviewer.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "6df48c493a8d67e5dbdc152978e2fc6b886e5b7649e7534c9ad1b79dffe599f9",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_astra_advanced_worker.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_astra_advanced_worker.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "5c1d2f065ca7e2ef623e32630f56d22be9519ae6384db7981c3c75b0b677b951",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_astra_deep_reviewer.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_astra_deep_reviewer.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "ae4abf594e7bf5f1f76ee7cadc4a1fc9fbd49b2831342aa25f00a41e12c019d0",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_astra_security_reviewer.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_astra_security_reviewer.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e8aea0bb6d950c5c5a44c8e93f0cfb3ee2492601bccecbfdd2f46b3794eb30bf",
+                  "executable": false
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
       "catalog_sha256": "ebbfcfb7679ae36e2e3d09177a7349c6046c080117dca743fde904037881b13b",
       "reviewed_revision": "2827df9779787752b435fb91f0a46f5cd8f74b69",
       "version": "0.40.0",
@@ -31291,6 +33286,2001 @@
               "files": {
                 "SKILL.md": {
                   "sha256": "11dd30189a1a21a1fed1c504909d22c7f170230cd313999be5e2a9df3b0b4117",
+                  "executable": false
+                },
+                "references/create-fork.md": {
+                  "sha256": "b0d933bc81c74c41f3af7eeeb46407b2e270f2c02c60b33992bdcc7fac4a290a",
+                  "executable": false
+                },
+                "references/fresh-rollover.md": {
+                  "sha256": "ca47f2f37969bfe1d5804837088eb31786f7ea08d9803a22f2955de0de672fed",
+                  "executable": false
+                },
+                "references/observe-handoff.md": {
+                  "sha256": "4886628298873459e75fbfede8f37d5980f8459428cc0df4c9906ab484d46e5e",
+                  "executable": false
+                },
+                "references/share.md": {
+                  "sha256": "0310e4a9b175eaa79c44d2c759a4abb6be9b8827e990125872e1a51957ba18f4",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/desktop-sidebar-organization",
+              "kind": "skills",
+              "relative": "desktop-sidebar-organization",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "9271355573fb54bb6deab1e85035065a3de5d36fbfb1257580938ae3c657f5de",
+                  "executable": false
+                },
+                "references/preferences.md": {
+                  "sha256": "b74bb492126edbca45811968c09a05e04705878a668eaf4f3e49c33dc41a148a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/desktop-spec-plan-gate",
+              "kind": "skills",
+              "relative": "desktop-spec-plan-gate",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "356ca56a70ec0de11f2d039d7ea9818675a4bcfa787bb279bc9c4008e89bd757",
+                  "executable": false
+                },
+                "agents/openai.yaml": {
+                  "sha256": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/desktop-implementation-gate",
+              "kind": "skills",
+              "relative": "desktop-implementation-gate",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "947d358adfe6fe2340ddd198dbb573df01246c9725c9e675c0b203903143d799",
+                  "executable": false
+                },
+                "agents/openai.yaml": {
+                  "sha256": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/desktop-pr-merge-gate",
+              "kind": "skills",
+              "relative": "desktop-pr-merge-gate",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "9c32c4a4179f06f051ddd3e91c5241d251246dc70228e28d3fdf5621967119a7",
+                  "executable": false
+                },
+                "agents/openai.yaml": {
+                  "sha256": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "workflows/desktop-delivery-workflow.md",
+              "kind": "templates",
+              "relative": "workflows/desktop-delivery-workflow.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "2c041c930f29fb05cbcdc7fa65a6581ebe257124b126eafd5f0eab994582bb91",
+                  "executable": false
+                }
+              }
+            }
+          ]
+        },
+        "codex-agent-profiles": {
+          "depends_on": [
+            "codex-delivery-workflow"
+          ],
+          "artifacts": [
+            {
+              "source": "agent-profiles/loop_v2a_mechanical_reader.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_mechanical_reader.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "ad67b3e231a900f99626d2274a53e4c2ee2e0ab27cb8b3f8bf156eef67ad1e96",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_fast_explorer.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_fast_explorer.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "2a1453406a23b3f63f342a9bcccb3c16c7729d211d6a10c16b183084e928a078",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_balanced_worker.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_balanced_worker.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "613806c73fda4fd25c7f44afa34e2f6ef156b11618c30b83c75a6892e16e291a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_senior_worker.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_senior_worker.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "1857f8fee3b7b16aaf35648b23da4d035f4b87b5b64632e645c50af4d3d8ddc0",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_advanced_worker.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_advanced_worker.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "bd0d9a69bdff53d95b19038b7256317d9c0fbf8c648d522ed387668fe7160a24",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_routine_reviewer.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_routine_reviewer.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "7f745b68943e11441d062546a9fc94e969d76a311bf77a61e8e8dae8bb831967",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_deep_reviewer.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_deep_reviewer.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "59e0b5f013fc5e05331c0ae022a97bda7a6f245cd1e69e6f48affbcaabecc6c1",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_exceptional_researcher.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_exceptional_researcher.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "5cae673a335105f261177384e9fea423d2f7a5a6af6409895b963add476b4078",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_security_reviewer.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_security_reviewer.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "6df48c493a8d67e5dbdc152978e2fc6b886e5b7649e7534c9ad1b79dffe599f9",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_astra_advanced_worker.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_astra_advanced_worker.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "5c1d2f065ca7e2ef623e32630f56d22be9519ae6384db7981c3c75b0b677b951",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_astra_deep_reviewer.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_astra_deep_reviewer.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "ae4abf594e7bf5f1f76ee7cadc4a1fc9fbd49b2831342aa25f00a41e12c019d0",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "agent-profiles/loop_v2a_astra_security_reviewer.toml",
+              "kind": "agent_profiles",
+              "relative": "loop_v2a_astra_security_reviewer.toml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e8aea0bb6d950c5c5a44c8e93f0cfb3ee2492601bccecbfdd2f46b3794eb30bf",
+                  "executable": false
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "catalog_sha256": "bb0d2d624815485ac4c35eb5be76c328871905aa5beb4f15badc5f705585f607",
+      "reviewed_revision": "fc4eaa3e65e3c49b13695602b71d767b042f19be",
+      "version": "0.40.0",
+      "core": {
+        "repository": "jeffery777/engineering-workflow-core",
+        "revision": "0edcbad3d126cb8a7c0b64e9ad95283e2cca635e",
+        "reviewed_head": "338a2534b0d8025f3068086e6e7a7c21298ae3f1",
+        "pull_request": 37,
+        "version": "0.5.0",
+        "tag": "v0.5.0",
+        "tag_object": "374124ac6bc88efe73b27a4f7875fffd0dc669e2"
+      },
+      "groups": {
+        "shared-review-gates": {
+          "depends_on": [],
+          "artifacts": [
+            {
+              "source": "skills/closure-triage",
+              "kind": "skills",
+              "relative": "closure-triage",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "46cbadc4e9ae5ae86cf5eec9780f38ba8226cca9c01e5b5fe54e0595b08534c6",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/task-continuation",
+              "kind": "skills",
+              "relative": "task-continuation",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "91d304900372a28fc7858cbf313637433deb2b967c1444cdb5adbb840e636ce9",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/code-review-gate",
+              "kind": "skills",
+              "relative": "code-review-gate",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "c0fbc68cc6a97a443994b4d2a19204c6bda6a555100ee12e69d7d82679f8ceda",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/docs-review-gate",
+              "kind": "skills",
+              "relative": "docs-review-gate",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "cd22ac26b58d74b3036bc071809e0521ecb7640efec25a2cb04667e4acb7f4b9",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/merge-readiness-gate",
+              "kind": "skills",
+              "relative": "merge-readiness-gate",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "a1f6f785e9ecc2ac3b7fe6ece2506b402e5261b2f95528c6985443f5328fad1c",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/review-artifact-cleanup",
+              "kind": "skills",
+              "relative": "review-artifact-cleanup",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "9d455c9b327beb7a4fc3dada89519c1e4cb97957d1868da65e9e9a955403c2db",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "docs/native-runtime-capabilities.md",
+              "kind": "templates",
+              "relative": "docs/native-runtime-capabilities.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "513d20d1bc2f40ca1546b6ddccb1b9ed4cc8ae17766c066eed08efe3813d6e27",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/core-contract-loading.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/core-contract-loading.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "5d3c6414e2d577cc28a47ea77ec70802f481e327cebae08632153423e5ac1ce0",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "scripts/validate-core-contract-snapshot.py",
+              "kind": "templates",
+              "relative": "scripts/validate-core-contract-snapshot.py",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "0ab5c00992cdfdaaaa85847797039d36e87056b76c0a3747137d77c1bb0643a6",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core.lock.json",
+              "kind": "templates",
+              "relative": "orchestration/core.lock.json",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "80173824d925d7c7e383e8cd7d76d94dba671033557cbcb1d4fb0b77269eb5ae",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/LICENSE",
+              "kind": "templates",
+              "relative": "orchestration/core/LICENSE",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "49d64e81e9fd3b12470c1da48367b120b28d404ca08edfdd950278e28e4da34f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/CHANGELOG.md",
+              "kind": "templates",
+              "relative": "orchestration/core/CHANGELOG.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f9f989acadc1625420e086fcf31d9547450d359fe842bd4e0dfc4ed4f272d8ae",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/README.md",
+              "kind": "templates",
+              "relative": "orchestration/core/README.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "6270d7e9ec7332853e02374e7ea6d82641dde88131b6c0280675435a53cdc2f1",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/contracts/authorization-and-stops.md",
+              "kind": "templates",
+              "relative": "orchestration/core/contracts/authorization-and-stops.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "27f02076fdd034c090e341610d7e04f8e79143ec17c1d37a4b57629a04c5e699",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/contracts/exact-head-and-evidence.md",
+              "kind": "templates",
+              "relative": "orchestration/core/contracts/exact-head-and-evidence.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "ba3419d7090fecce3e84f4ea35cd7695135fb7bbf8c1451502941163d8e873a4",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/contracts/review-and-security.md",
+              "kind": "templates",
+              "relative": "orchestration/core/contracts/review-and-security.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "8531deb4a0309f31d8f8abbd778460e0deff1fdc42ef789935c7dc98c6f8f819",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/contracts/workflow.md",
+              "kind": "templates",
+              "relative": "orchestration/core/contracts/workflow.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "a8ff41fdd31041d3065f782b3a01bc0f0fd9239cf1d623656bcd681b7a99663f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/architecture/dependency-inventory.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/architecture/dependency-inventory.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "c588ebfb8c1c4cc159d56e742832974820a88e326de4ee5eac5204c66c14ef9a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/architecture/migration-plan.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/architecture/migration-plan.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "6fbba9ed9a15d32d63dbe138b673c25aec34a81b262d7ada82108077ca67e8cf",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/architecture/project-split.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/architecture/project-split.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "18e3e3b620d917aeff7881f4bfe5d4736725d6cac0eb8c758b810564df5f8d84",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/provenance/source-map.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/provenance/source-map.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e1297b40229208de9d4170d30603af5eb0d69cf64392f0d85c41e348df2f0908",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/provenance/upstream-notices.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/provenance/upstream-notices.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e4adc2d6e2b7e9169db5273aa83306f93546ef0219e73f412d524fb38f3b2d82",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.1.0.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.1.0.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f8e6c3e1e6b4ac8b433656ae3991274f657097f40eae7de2431348e13bb2b058",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.1.1.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.1.1.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "c58714a705d46e6e244b9e5008df26e501a0343cfbbd7955e55f262c01e989be",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/companion/core-reading-guide.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/companion/core-reading-guide.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "493ca529e89ab7e785815687ca93b8aed805557be01de795e611da6c4e14a3c1",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/companion/decision-cards.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/companion/decision-cards.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "34f2d40509795448c7d7d947427f911667cc5dee4351a8a9ce49ab10b6f38c1c",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/companion/review-decisions.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/companion/review-decisions.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "2c8a7768f76af27ad3972948bf2b1567eb72624f2230e260c00575f1d11805c2",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/maintenance/2026-10-31-consumer-feedback.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/maintenance/2026-10-31-consumer-feedback.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "3bd34f290e72632991380dffb99f218b1a6e061ee403773cef1c61a2bcae20b1",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/maintenance/issue-24-26-candidate.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/maintenance/issue-24-26-candidate.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "89b9e312865fa49fd417cd6d3a5fd65f5e82db475950b7d0532ca08e4347e071",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.2.0.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.2.0.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "8993bcf05434a53f8afa815b199f99a349014b7cd0fe3e23a1a9dc74b153392d",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/companion/remaining-feedback-cases.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/companion/remaining-feedback-cases.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "fed5625aa09d152ef30d685a10550a02af3d5e7d387980b5d8b85d0ee5bcb372",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/maintenance/2026-11-01-remaining-feedback.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/maintenance/2026-11-01-remaining-feedback.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "3ef2e689830fcadb3112c963a50f358a7117c0b503795398033a71fd88188b82",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.3.0.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.3.0.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "21fddabd3c56548e85a2aa1d7b2770133f1d0ac55a069c4c54efc7095b8566dc",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/maintenance/2026-11-04-issue-22-23-followup.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/maintenance/2026-11-04-issue-22-23-followup.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "42d50af91e6a7b1cec0814ddfac6aea97c0b57b1aa199c96231cb12ef0bccdf7",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/maintenance/issue-22-23-upstream-candidate.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/maintenance/issue-22-23-upstream-candidate.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "1659ed30e4b93c42e3f4e39153db1e7645cf1d7c8456e9adfe6623ce13977e35",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.4.0.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.4.0.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "cd9fed14dde6a2e043d57e51f63fcec7b03dea1e7d4ae7ba6781311ad3e3e6ab",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/companion/plain-writing-examples.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/companion/plain-writing-examples.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "7b89c447761642906f20010d1327ac06613af2fbf56a10c9115eaa6493a69b7d",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.4.1.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.4.1.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "49ea4c99e504d83551b0d0c0819766d71517d8e0abbb968bd273655128da1a37",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/contracts/writing.md",
+              "kind": "templates",
+              "relative": "orchestration/core/contracts/writing.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "847a2e302adb831b736e86155caa0d8e2e61bd48c0e704350e137237e915434a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/architecture/original-writing-design.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/architecture/original-writing-design.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "74192657105c7d481c3860281b2ad5b4df286971ffc64efe266ef74a55dd17f9",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "vendor/engineering-workflow-core/docs/releases/v0.5.0.md",
+              "kind": "templates",
+              "relative": "orchestration/core/docs/releases/v0.5.0.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "74a785c40e1105d92c96555c0fa71e8d42a348f2df24e5058e363e00519d231a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/agent-delegation-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/agent-delegation-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e87a8e53e0fc9bbc030f68dbe8f9df7748545f60ea49adda18343815f2046e6e",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/code-mode-tool-orchestration-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/code-mode-tool-orchestration-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "0a5e167ba525bb7fbe7494038740aa7720da0143ac0fb3c4ef2859d99b1f7e8f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/context-continuity-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/context-continuity-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "03efcdd2d3bcbd551f2d76fa3b3a5a0fe6a00942a8196cf9b5f7adb7c536335f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/delivery-drift-control-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/delivery-drift-control-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "ed2f06f572c4ec9ee4f37cdcbc6db413edb30c20dd7062c29cf09411bf5c5212",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/exact-head-merge-review-contract.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/exact-head-merge-review-contract.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "27610a703bf24fbc9cbef7848ee4c9fc8d0e16ed81463cfcc4df7c9b4e826574",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/github-exact-head-enforcement-profile.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/github-exact-head-enforcement-profile.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "34f72d469398fce177c69c5e8d1471aa4f2da1639102312d0aa8b078c84e394b",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/human-gate-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/human-gate-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e5ab5ade907a5f11d3aaed5de5500af2b0c7055a9b1f64173519483622f2ea59",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/github-control-plane-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/github-control-plane-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "b7134e81c93c4a713d56f5ad90ffbc940f374229d94407a9418e00a3b4117b0f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/model-selection-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/model-selection-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "8d949b93a8576f742840edcea57e2f9c6e5a116a2b1573f57f546f227f584e1b",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/multi-agent-integration-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/multi-agent-integration-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "c78689978f077b3dd90847796732c691732137392641cb4f0d3acd7ee894fcd7",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/project-agent-knowledge-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/project-agent-knowledge-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "891ecef481e735df2f27d97739747e9e97d3f3993beab7f4a3162b73aeedbbf8",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/projectspec-alignment-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/projectspec-alignment-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "1118a3d0b35e4780048683261ae04c3a698db5960309d3040db07d2ff41629e3",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/release-state-contract.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/release-state-contract.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "455a0278694edd60f9fcab79d68391b7bb595f28a9f2e42f3b154dc97e76de88",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/engineering-workflow-contract.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/engineering-workflow-contract.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "342d6a84dd9bc148a58cf028b1bf94ef288a72de9d9d930b65c4cb8b6a1acfab",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "scripts/verify-engineering-workflow.py",
+              "kind": "templates",
+              "relative": "scripts/verify-engineering-workflow.py",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "41bf69dddbac3724007f0133616af12e87c0cd7cd4413346833e5307f2d0b176",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/reusable-workflow-contract.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/reusable-workflow-contract.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "2cbf02d406af82da385ea10d7eac651bff7b612766fe14b04955b9c9f6af8141",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/reusable-workflow-details.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/reusable-workflow-details.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "b24acb71dc59fad2d289f83fbcacf3612d08306805c4223338be1f8169cbc2c2",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/review-artifact-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/review-artifact-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e355b3a134fb18d2192171e6984470f5c502a4db910101b78f9baec5e85317ac",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/runtime-compatibility-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/runtime-compatibility-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "d39916300bd2a2f51196ac1b9be4d3860723aff5e856ffa88051df338382808f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "policies/security-review-escalation-policy.md",
+              "kind": "templates",
+              "relative": "orchestration/policies/security-review-escalation-policy.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "650e2b270cf6b4971242c7b45f419f34f932c50322b2946da5ca2590de9476b6",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "scripts/validate-exact-head-merge-review.py",
+              "kind": "templates",
+              "relative": "scripts/validate-exact-head-merge-review.py",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "6c0f42a17e91291d358043c5b2e7192e0c7e0154a77882a34230237d6d3bcdf7",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "scripts/collect-exact-head-merge-readiness.py",
+              "kind": "templates",
+              "relative": "scripts/collect-exact-head-merge-readiness.py",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e81431908e4be44dcb9a0da837b58094599ec83e40963d0e14dfb32bcc147731",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/agent-task-brief.template.md",
+              "kind": "templates",
+              "relative": "orchestration/agent-task-brief.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "557450c4a163134f30dc47430650da7c9496258a30993341d882c297520800e5",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/agent-routing-integration.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/agent-routing-integration.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f2c2f6e5965ae8b6e515ae892d08303aa6f5ce40a07fdb1c569718cfbdd1f508",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/closure-triage-overlay.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/closure-triage-overlay.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "bf260edfd568fe2a3c6a28920a313702555556bae5fcd3b815b5c417938e56e0",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/current-task-summary.template.md",
+              "kind": "templates",
+              "relative": "orchestration/current-task-summary.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "b1daafcbac4e2abb3f66977a47032bef1d55f0f112b2da87974e75c1b8a9a76a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/context-continuity.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/context-continuity.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "914d80ecc6675114a27d7366cb56d178a1e6ad147c4c83bdfa6a11d8baef9e57",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/implementation-plan.template.md",
+              "kind": "templates",
+              "relative": "orchestration/implementation-plan.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "ec09de033b04c1c476535ac6836a7b3a469a6338fa2d1f9d4814b5e89fa17892",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/integration-review-report.template.md",
+              "kind": "templates",
+              "relative": "orchestration/integration-review-report.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "0c449796063f94c0219edd9f3d76b10bbe8258bd8871dae39bf42d587ed2bf4e",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/next-session-prompt.template.md",
+              "kind": "templates",
+              "relative": "orchestration/next-session-prompt.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "a9cc89e08e14cb48e07d228cbc3b749f691bb2b483debe5a2b5eee2c4bfbce37",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/orchestrator-gate-report.template.md",
+              "kind": "templates",
+              "relative": "orchestration/orchestrator-gate-report.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "80855c844684b7f4adb392cf5000e306c12fd0d05d2ad548d65b32ef27a250ab",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/project-spec.template.md",
+              "kind": "templates",
+              "relative": "orchestration/project-spec.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f96b66eea49e23807a6804eade2fc06731a1f927196f8d9239f1f7af199ed7d3",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/task-continuation-report.template.md",
+              "kind": "templates",
+              "relative": "orchestration/task-continuation-report.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "0d6bc9b3b0e4cecd0eb3aeba4ee7a6bc8433231bd693b6cbfb9d51540c11b39c",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/task-manifest.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/task-manifest.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "6a14893f0ce7222d6b1e02124a1a4888da879f36834fa346585d2eeba0a493a0",
+                  "executable": false
+                }
+              }
+            }
+          ]
+        },
+        "codex-review-workflow": {
+          "depends_on": [
+            "shared-review-gates"
+          ],
+          "artifacts": [
+            {
+              "source": "skills/code-review",
+              "kind": "skills",
+              "relative": "code-review",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "c7640f10e87a87ddc9f61706ae330424e43fa4ca1b82d3146a7dbd057b315cab",
+                  "executable": false
+                },
+                "references/integration-boundaries.md": {
+                  "sha256": "ada31c8df2eb45ba3b45cc0739890b04683d1e92d025fa91694b567464fceb4a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/code-review-deep",
+              "kind": "skills",
+              "relative": "code-review-deep",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "569bf7aa0c90f1dd87689f2b7767d4d50a98c03bdcb5e5aff3d1679b52ce86b8",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/docs-review",
+              "kind": "skills",
+              "relative": "docs-review",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "39f1fa7b20723ce6c74ab63bf007fdd29ae0735ad6c1f4f6e436a12529c4757d",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/merge-review",
+              "kind": "skills",
+              "relative": "merge-review",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "c43be1b3d9e9e1cc34fcfef83ad04efadfeb70a01c0efcf88c54eba2fd1cacdb",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/merge-review-deep",
+              "kind": "skills",
+              "relative": "merge-review-deep",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "1b8c5993d88edc6cbe072248ea821007640679e54cca55952f9992e43ac6ccb7",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/review/code-review-report.template.md",
+              "kind": "templates",
+              "relative": "review/code-review-report.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "9a5eceaaee0506eafb2e7f9444ad0aa643efc593ab75e911a48f34a64ff91fe4",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/review/merge-review-report.template.md",
+              "kind": "templates",
+              "relative": "review/merge-review-report.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "7e5bb74d589ddbbb475488672bd01da2f7a678e70651f14dc62023ce7de3641a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/review/review-follow-up.template.md",
+              "kind": "templates",
+              "relative": "review/review-follow-up.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "55f15e786610d6f6c771e07ba231679ef672f68e37b44828cba5a4739e6fb8e2",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "workflows/review-workflow.md",
+              "kind": "templates",
+              "relative": "workflows/review-workflow.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "1bd7b1b479dd22ac8e0269a597db73668ee476c09d69f02e094a86c81a1ac38e",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "workflows/merge-readiness-workflow.md",
+              "kind": "templates",
+              "relative": "workflows/merge-readiness-workflow.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f729d523f36e356b700bf2a8bab253618b78b0816ae5fb1a8c1e00212b31f2d0",
+                  "executable": false
+                }
+              }
+            }
+          ]
+        },
+        "codex-delivery-workflow": {
+          "depends_on": [
+            "shared-review-gates"
+          ],
+          "artifacts": [
+            {
+              "source": "skills/loop-engineering",
+              "kind": "skills",
+              "relative": "loop-engineering",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "d9c878397cba18d9ac9b85d2b92295dcd0c716c0e5820533b83f09e5c1f435a9",
+                  "executable": false
+                },
+                "references/agent-profile-registry.json": {
+                  "sha256": "3ceff5f7b69de4c818104263faff85aeea13c99aac75fd6a3436cffc48ce2f70",
+                  "executable": false
+                },
+                "references/agent-qualification.md": {
+                  "sha256": "77f423bb0635aa5d8311ad5b252dca5bc2b93b485a3baabac0ac9bd75da370de",
+                  "executable": false
+                },
+                "references/agent-routing.md": {
+                  "sha256": "c3881bd751ad32cecedb603c53e2007c9a9132452d51dc16ab9e21ce47cf95e4",
+                  "executable": false
+                },
+                "references/candidate-evaluation-v0.md": {
+                  "sha256": "85f25e75ae4d144b5f552538437c44937c35e0a34024791d56df7053e682d667",
+                  "executable": false
+                },
+                "references/context-continuity.md": {
+                  "sha256": "7c54ed190bbe7ec164b1035235a2c2521dab6b691e27c1ddbf2f474b6c6ccf9b",
+                  "executable": false
+                },
+                "references/gitnexus-runtime.md": {
+                  "sha256": "df548711630f014e99db6becc11bc2bdfc5b92e5e72c2dcccd2a620a9613c1ae",
+                  "executable": false
+                },
+                "references/improvement-lineage-v0.md": {
+                  "sha256": "e48bfa85b1510a1d11ea96c29c2d89a758d9f9e5855015a0ef970023288b6d20",
+                  "executable": false
+                },
+                "references/improvement-proposal-v0.md": {
+                  "sha256": "9550334dc7174b98aef5913b691fc9f43a127ff862138564084c3be7a4f31851",
+                  "executable": false
+                },
+                "references/loop-state-and-authorization.md": {
+                  "sha256": "e2e5395b901d02b0caf4d951295977924b3c86c64334e8cc828afb8979c2ae31",
+                  "executable": false
+                },
+                "references/memory-audit-adapter.md": {
+                  "sha256": "ae76d7fd48d3fcb2abfcaa5e45c5ef051b268006f06ab6164819867ca2d7421e",
+                  "executable": false
+                },
+                "references/memory-audit-authority.md": {
+                  "sha256": "65b66559b0ca1f81680e7a52b84ca631dad24949807eb8c7e1e06bca98c31b5c",
+                  "executable": false
+                },
+                "references/memory-audit-pilot.md": {
+                  "sha256": "e854a37074141c9a086f00d0f509014c12cb295153d081281facd0fa6469e831",
+                  "executable": false
+                },
+                "references/memory-audit-preflight.md": {
+                  "sha256": "f836263629d3ef7a48b16cd5a20853b2dadf0433aad3b95d8a440ef895eb6b63",
+                  "executable": false
+                },
+                "references/memory-contract-v1.md": {
+                  "sha256": "09a1a4d793d61aa289c6f29127b47944f7b4acf4149da829a0042426b2e73cf4",
+                  "executable": false
+                },
+                "references/memory-governance-v1.md": {
+                  "sha256": "4ea5098afc8ccf4f9d4f0e31be4b73c47b0543fdbcb8ceba11d2460dbf552316",
+                  "executable": false
+                },
+                "references/memory-maintenance-entry.md": {
+                  "sha256": "4ccf055ed374876215e182dbf507dd40b61ebcddde8b275cb5c0f3fd8e5e9505",
+                  "executable": false
+                },
+                "references/memory-maintenance-local-storage.md": {
+                  "sha256": "99525f7faf42afa1b165ddaee4037f305a9d4bc87f7b0e910599c22517773296",
+                  "executable": false
+                },
+                "references/memory-maintenance-local.md": {
+                  "sha256": "736933e0a0618d4c02c9d6339c7d3f214bef4e0823f5ad79ad46f95ff3f6979d",
+                  "executable": false
+                },
+                "references/memory-maintenance-pilot.md": {
+                  "sha256": "0bc04051b9716875db197e0620fd0886bc7520c4563a338de5114083e5d8f0bb",
+                  "executable": false
+                },
+                "references/memory-operation-v0.md": {
+                  "sha256": "76305acd515161d00151aaa315a27da25dadc2f3a84970731384ffa8fbca5c5e",
+                  "executable": false
+                },
+                "references/memory-qualification-v0.md": {
+                  "sha256": "187fb02692f88f0562d49b60e6ef8881a96cdf4ed89b8d51e17a6f2871884e09",
+                  "executable": false
+                },
+                "references/memory-sqlite-v0.md": {
+                  "sha256": "26c2984fdd56cd8394fb60a5cab38925b10d71bb653567a606d20aa99860a11f",
+                  "executable": false
+                },
+                "references/obsidian-reference-profile-v0.json": {
+                  "sha256": "ba3e9526edd6ec1a7c6c4a3be01b5af7e6cc62b633fe9240f587f91d0df12db7",
+                  "executable": false
+                },
+                "references/operational-evidence-v0.md": {
+                  "sha256": "be4751e5d6b36f2d03843bdefae4ec823f89d8fc9b8937d2c48f3be96d3fd50f",
+                  "executable": false
+                },
+                "references/optional-evidence-memory.md": {
+                  "sha256": "4769ef115ebae50d8b40fd607f49513c4690c6c2142f8c740cd0b4a6773e407d",
+                  "executable": false
+                },
+                "references/security-scan-recovery.md": {
+                  "sha256": "fb13229fb129e2bc5896e4ff554921d494baa7b5d8fde23eecf8c07c77e6a430",
+                  "executable": false
+                },
+                "requirements.txt": {
+                  "sha256": "b4603b9468ade4d639d2c6f73b89d50e1fa5d227c73ab15be0382cca478513e6",
+                  "executable": false
+                },
+                "scripts/agent_qualification.py": {
+                  "sha256": "ee8c1625d4a54e38be4fa278cf5f0db24e58417730d87460eb508adec970dd8d",
+                  "executable": false
+                },
+                "scripts/agent_routing.py": {
+                  "sha256": "62dd2b1521a621149895058d40be3a0ee8f467ad24f3527be10f0faefa53504f",
+                  "executable": false
+                },
+                "scripts/candidate_evaluation.py": {
+                  "sha256": "89beafb00c1ba45aec40de5f37244bfd80fe88690424f1260e6585e6ae7ef060",
+                  "executable": false
+                },
+                "scripts/context_continuity.py": {
+                  "sha256": "ea6f918bbc9794cb251ef1a4856fdfd88202d55b49faf28542658d1313cfb832",
+                  "executable": false
+                },
+                "scripts/evaluationctl.py": {
+                  "sha256": "515c21cc1df5caf10fa933e58c2189633d03fc1e9700f48ebec9b3bd0bda8c6c",
+                  "executable": false
+                },
+                "scripts/evidencectl.py": {
+                  "sha256": "4de918ecb559e407b63831a8f8947ae6d7696cbf0744ba86f43c7a60cfbf1cb0",
+                  "executable": false
+                },
+                "scripts/git_source.py": {
+                  "sha256": "f188ddefa1bb3c13940d800204f645ba02059bc916d5aa0df0ccd544d05d51e5",
+                  "executable": false
+                },
+                "scripts/gitnexus_adapter.py": {
+                  "sha256": "26b28a156e0700e2e45198e083db0d2f3f2dbfe0da17f90565babd63ed2bcb49",
+                  "executable": false
+                },
+                "scripts/gitnexus_hook.py": {
+                  "sha256": "6dd0cdc2db3dd7ebc68072a723c90c4f09161bd0119e2ee99dab0ef882a6898e",
+                  "executable": false
+                },
+                "scripts/governancectl.py": {
+                  "sha256": "9e668ccf373bb75e3f46daa9f1bb21a21c60d0c41fe7db79ba54b01452f0d590",
+                  "executable": false
+                },
+                "scripts/improvement_lineage.py": {
+                  "sha256": "472cd61411eedb6cc3f8de94db8458dd8f9f4a089f0da7d301972fc048afd02e",
+                  "executable": false
+                },
+                "scripts/improvement_proposal.py": {
+                  "sha256": "1e5486eef94b119727e824aa47973f106716a1808d10f8665db359fa849e5215",
+                  "executable": true
+                },
+                "scripts/improvementctl.py": {
+                  "sha256": "c6127c06959df98d6af4946879e8b7991eeb8d83750a9efd12e3bda5bf51a8ab",
+                  "executable": false
+                },
+                "scripts/local_model_mapping.py": {
+                  "sha256": "d85106065793e8a96b8dca47d952a16d7b04e76cb230ed28b156866f881d3423",
+                  "executable": false
+                },
+                "scripts/loop_core.py": {
+                  "sha256": "bc4eebce33d494c1abe0430f188a4d274efd8233dde9767f33eeb6b375385104",
+                  "executable": false
+                },
+                "scripts/loop_yaml.py": {
+                  "sha256": "14cbaa770e15f838778cdd799e86e67170798ba4efe1f71339f4f0f8fb4d88cb",
+                  "executable": false
+                },
+                "scripts/loopctl.py": {
+                  "sha256": "12d5ea5a35d6b0dccdb990286d66fefb5a78950195375905e5b1d3c87ccdc653",
+                  "executable": false
+                },
+                "scripts/memory_audit.py": {
+                  "sha256": "4bf6988617be493ddc62cd55f06112cc0487044c3fd172b8405791a8adf7bcf0",
+                  "executable": false
+                },
+                "scripts/memory_audit_adapter.py": {
+                  "sha256": "01b66ce7770e00f78329d45ca9af3ffe26fce4e372faec7bdbe9d2468cf9bda0",
+                  "executable": false
+                },
+                "scripts/memory_audit_authority.py": {
+                  "sha256": "d606f6b60ca72d921613d9718a605c78c42e4c6fc8a984c661137072ba792bf5",
+                  "executable": false
+                },
+                "scripts/memory_audit_dispatch.py": {
+                  "sha256": "85f94be312d2d2bb263ee56cd41de0e8e45c64dc916a632d78ef5eed8f834bd4",
+                  "executable": false
+                },
+                "scripts/memory_audit_pilot.py": {
+                  "sha256": "8aed701a6d9acc32d1e8c7e8cac5f908497ea0180134e45e49893b0a372c24aa",
+                  "executable": false
+                },
+                "scripts/memory_audit_preflight.py": {
+                  "sha256": "41f05e7f6f4703771f201cd6a7bab240e9aa1f9b7a015de06626e788b66b54e6",
+                  "executable": false
+                },
+                "scripts/memory_audit_source.py": {
+                  "sha256": "4cf4e0a0c230ac6b829c1a4ec16e159a5f0fc5313b327fd35a466c69bc505c67",
+                  "executable": false
+                },
+                "scripts/memory_contract.py": {
+                  "sha256": "a32ff87dedead5361ad947e9d2ace06aa4612308e54c04d7ce2c6d738a06c018",
+                  "executable": false
+                },
+                "scripts/memory_governance_contract.py": {
+                  "sha256": "ada264d469f60b67641d7f338419eddc7ca9c3e0f91c6b8770081f7bad4dd377",
+                  "executable": false
+                },
+                "scripts/memory_governance_core.py": {
+                  "sha256": "dac502a56f8d13e9d7d4528e714419876b1c957fcf5241432e14b4a317ebdf93",
+                  "executable": false
+                },
+                "scripts/memory_governance_host.py": {
+                  "sha256": "32247bfbf629f8e07c93095ad20b8451f9e624c18bec22a0c994f295b7c344df",
+                  "executable": false
+                },
+                "scripts/memory_governance_local.py": {
+                  "sha256": "d9034b5493ea7e6122fff9575a3f5b6e34efa81a9c36d6d020eaf4e142bf8f1a",
+                  "executable": false
+                },
+                "scripts/memory_governance_storage.py": {
+                  "sha256": "c35672803b830799f6005c9d8c6c2cc2fcb962a70b976fe9eae961745bc924ca",
+                  "executable": false
+                },
+                "scripts/memory_maintenance.py": {
+                  "sha256": "ac781089d1b082fabc6d54d40d4badcaef0debede4a452279bb65d267357f3a1",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_authority.py": {
+                  "sha256": "ca8d1938fddde212c50e9e0c496a0ad630107fad8512771c3e25b2b9d0a1a41e",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_binding.py": {
+                  "sha256": "b08e2e2899ce616f2decccc0a5b80bebd9f219d28ddca34115c5fbf6699e5107",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_dispatch.py": {
+                  "sha256": "c44dafeef53c53362f560fb809b7bcbe70bdae8b8c41067df4949fdf50764e21",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_local.py": {
+                  "sha256": "d91fa34486f6dc49500643be39fb0490cad5e8eeb41e44dabc9c699b44f59332",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_operator.py": {
+                  "sha256": "4e1bd59d540201d587b81c882e3d83fbf1c45190a55520dbadf13732877fe8ca",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_pilot.py": {
+                  "sha256": "2b9fc930a3a43a7adc324d47ef9f8506094f73a917d4b317ed534fe6933a25c5",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_preflight.py": {
+                  "sha256": "f5b723cffed4267f763715862a0fbb4da5481222d4afa6c6fd91898bc8b0975c",
+                  "executable": false
+                },
+                "scripts/memory_maintenance_qualification.py": {
+                  "sha256": "3548d589dcfe31b04cdead857948810f619e9174dc88407aa987140f31933e04",
+                  "executable": false
+                },
+                "scripts/memory_operation.py": {
+                  "sha256": "f4942b08292ea58901512ffd2f459cf25c291e069ac70a035f12f04ba20f4aac",
+                  "executable": false
+                },
+                "scripts/memory_pilot.py": {
+                  "sha256": "431ff64ec925597b9ce4ac46c6fa024403be7b8bc80b3e268f43e22b21ab4237",
+                  "executable": false
+                },
+                "scripts/memory_pilot_off.py": {
+                  "sha256": "e332a321e4b4ff4a578c36df2bbb164b362166eb1b3d215e41e00f42fb15f84c",
+                  "executable": false
+                },
+                "scripts/memory_qualification.py": {
+                  "sha256": "cea0067056d4452eb176ecfaeb4b223b0dcd709c77cd5d643eeefe239107cb8f",
+                  "executable": false
+                },
+                "scripts/memory_sqlite.py": {
+                  "sha256": "436a7b9190c83a28a2ab0c186745f28d4362175aafba8d12d9b2cbc1eb439ddc",
+                  "executable": false
+                },
+                "scripts/memoryctl.py": {
+                  "sha256": "b2c3833e5d5901416ac04171b0caee530b9abe33e848dca4d6464a7b43fd6b62",
+                  "executable": false
+                },
+                "scripts/memorypilotctl.py": {
+                  "sha256": "567aedaf965f57f914cf59d9871be7cd201f6185b56f6d8c91b2230284e8d7ac",
+                  "executable": false
+                },
+                "scripts/model_failover.py": {
+                  "sha256": "001c0ba22afd95b83e2d96d92b0a26e8af508627ede7f568f1edfa111935ab06",
+                  "executable": false
+                },
+                "scripts/operational_evidence.py": {
+                  "sha256": "c061aabc0f22902ce0021e5194131316d901d47c029d7a43a694bbf21cd54a82",
+                  "executable": false
+                },
+                "scripts/operationctl.py": {
+                  "sha256": "79bd921406ba94c32c2f32e130b2a9a68d5bc682dbc9855a418b3bbe84b5a23c",
+                  "executable": false
+                },
+                "scripts/profile_preflight.py": {
+                  "sha256": "e4046fb61b20122cd9e547cb54a9b4476f7e7600e1db3cc7d1ced2c4122102a3",
+                  "executable": false
+                },
+                "scripts/proposalctl.py": {
+                  "sha256": "b2d2c0f38ecb72f61e71be793b2e76bb905534f47f246ce6830fc6e321459109",
+                  "executable": true
+                },
+                "scripts/qualificationctl.py": {
+                  "sha256": "f8405c94db536dc39a77a75c1ce69739fb0647c218bb51b57b624e4536eb2ffa",
+                  "executable": false
+                },
+                "scripts/sqlitectl.py": {
+                  "sha256": "6e3755f96966dfb5d6d3f26ca50ce109f2566530706e60c5c5f675c795acbe3f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/memory-audit",
+              "kind": "skills",
+              "relative": "memory-audit",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "79a8ece7f16ab217ae628b91caeb25b306c5673b59570fcbe91976cc0e6e7674",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/memory-maintenance",
+              "kind": "skills",
+              "relative": "memory-maintenance",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "58703c967be93cdf59e5c5cbce0d29bf8c73fcd64a189dee8046820eae57c4c7",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/dev-retro",
+              "kind": "skills",
+              "relative": "dev-retro",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "1b58fe5872f9ebb4b37acc449645f198fb94a6d855da82d87f47ce319b201f34",
+                  "executable": false
+                },
+                "agents/openai.yaml": {
+                  "sha256": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
+                  "executable": false
+                },
+                "references/acceptance-cases.md": {
+                  "sha256": "8eb8b53f71e00e462431d679d239b9e70b0e502aa31f6eb9e55984b04e872b5b",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/planning",
+              "kind": "skills",
+              "relative": "planning",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "64e39a3ddcba3c6f76dfeb1924c21dc29e790a85a999c6ca949611ebbd185b6c",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/milestone-continuation",
+              "kind": "skills",
+              "relative": "milestone-continuation",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "e8821097504e9dfd55c7b0a24020dbfe699dbd002d4f401affbb32a02daa5308",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/project-delivery",
+              "kind": "skills",
+              "relative": "project-delivery",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "7c341d908033f6e68df3629134150a0decc71c75cf2705c705c62937f79879d6",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/project-orchestrator",
+              "kind": "skills",
+              "relative": "project-orchestrator",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "b022632457d44b516a00f38ca7dc5148bd75b59beeac4b52bb8f8caa062ce574",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/implementation-slice",
+              "kind": "skills",
+              "relative": "implementation-slice",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "89762458e6627a1198b0cd72a43d849f4f43f77132c26fc33a98922628db5d5c",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/docs-update",
+              "kind": "skills",
+              "relative": "docs-update",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "75f6de2f7235ff8e9c2914ec081aed8e17061905b716ffb7451e10e3429d49e9",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "docs/agent-qualification-autoload.md",
+              "kind": "templates",
+              "relative": "docs/agent-qualification-autoload.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "064861062fb5f3e412e734a5a867d52035ef3d30f928d780569749aca5095093",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "docs/guides/local-model-mapping.md",
+              "kind": "templates",
+              "relative": "docs/guides/local-model-mapping.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "87cf1c78807fb964af790aa84b0b1c5cf5855b8b2a025840d9d09220775bc2f5",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/loop-engineering-spec.template.md",
+              "kind": "templates",
+              "relative": "orchestration/loop-engineering-spec.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "d689bcdfbf609f45c8a17a4b73968821f0a0b9077cd2c45b77151a2e45ba7894",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/loop-decision-input.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/loop-decision-input.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f696e82ffe36e182d7366e8c8b35ec4fecebbecc117f382473354cb5f1d1682f",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/loop-event.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/loop-event.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "5a6729167306076d08330eaf8c90be046eecdb43261caa7eb0f5ae45bbf88487",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/loop-handoff-prompt.template.md",
+              "kind": "templates",
+              "relative": "orchestration/loop-handoff-prompt.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "b5f6bed6c31b5332dc8237b91b94b67398c1f9448dfbfb3eb2cc23c99a1cad3a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/loop-iteration-report.template.md",
+              "kind": "templates",
+              "relative": "orchestration/loop-iteration-report.template.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "2f91b8ffa86f0b498ac92ae59169c6b28809b4d2f4baff03d1f17a75768e567b",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/loop-state-ledger.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/loop-state-ledger.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "f092f0827a2a57f43f3d8f95233885a8b19d0fe36f51d731cbb3e966387f44f1",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/orchestration/task-claim-lease.template.yaml",
+              "kind": "templates",
+              "relative": "orchestration/task-claim-lease.template.yaml",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "abc1ac7c8037046ffc00f24714b743ff15b6d649ccca30eb83c39e93dc5d1a11",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/hooks/gitnexus-v2c-b/hooks.json.template",
+              "kind": "templates",
+              "relative": "hooks/gitnexus-v2c-b/hooks.json.template",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "9fb6134841fa4020ac55aec25295413d8316e0cfdc9707aed98ba16484735a6a",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "templates/hooks/gitnexus-v2c-b/config.json.template",
+              "kind": "templates",
+              "relative": "hooks/gitnexus-v2c-b/config.json.template",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "87a3f1d0232f32fb66fe386019d409c25b6837c5256e14b579e69e4504bfeecc",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "workflows/implementation-workflow.md",
+              "kind": "templates",
+              "relative": "workflows/implementation-workflow.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "41bdc6e0aaf5644804b55d651d212d4ab7e95bb277591ea898967fdce52b79f7",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "workflows/loop-engineering-workflow.md",
+              "kind": "templates",
+              "relative": "workflows/loop-engineering-workflow.md",
+              "type": "file",
+              "files": {
+                "": {
+                  "sha256": "e661f487868f2070c85399cb8955ab0dff4232aa2c50bb0a1bd1c4aa35c197a1",
+                  "executable": false
+                }
+              }
+            }
+          ]
+        },
+        "codex-cli-session-handoff": {
+          "depends_on": [
+            "shared-review-gates",
+            "codex-delivery-workflow"
+          ],
+          "artifacts": [
+            {
+              "source": "skills/cli-session-handoff",
+              "kind": "skills",
+              "relative": "cli-session-handoff",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "adbf2a8d0547310d8cbe532fbfd0a95dfe5d5ab3b28d6ee44bd1e9e1ffeab999",
+                  "executable": false
+                },
+                "references/app-server.md": {
+                  "sha256": "1499e4730e5937ae3500ac74b3e623f111b2b08ab942db3ef75864e6cfc74323",
+                  "executable": false
+                },
+                "references/dashboard-queue.md": {
+                  "sha256": "7afd19e490f5f898b2e7e6031d613fdb22c501d766b8db09d3bd2a430be62c49",
+                  "executable": false
+                },
+                "references/fresh-continuation.md": {
+                  "sha256": "eb058d2a0bac008479e8b8a787e4acb2e4dbb6216ae18ba1c35d648b22364ed5",
+                  "executable": false
+                },
+                "references/interactive-fork.md": {
+                  "sha256": "cd12c3795265007116d56b069eacea01b3a6d617147d772dd6d3af1b674e2eee",
+                  "executable": false
+                },
+                "references/native-tui.md": {
+                  "sha256": "8f95bed99d382f409b65ef9d9cc83a4721ce82344dd7d9a5556cee52511d3df1",
+                  "executable": false
+                },
+                "references/non-interactive.md": {
+                  "sha256": "27ddc1a8645a6d05e15fc933a30ff770872e7487b5eeb6c2469f62c4d046fc83",
+                  "executable": false
+                },
+                "scripts/app_server_handoff.py": {
+                  "sha256": "e3ee02c14f525385c13b25cb830061c0859444bc08d4402756f4b73a4f78410b",
+                  "executable": false
+                },
+                "scripts/cli_session_handoff.py": {
+                  "sha256": "a2299d42952de44ecadbb4bef93e1f5eb96a43672131a3f1dc5b73afdbac58f1",
+                  "executable": false
+                }
+              }
+            }
+          ]
+        },
+        "desktop-delivery-workflow": {
+          "depends_on": [
+            "shared-review-gates",
+            "codex-delivery-workflow",
+            "codex-cli-session-handoff"
+          ],
+          "artifacts": [
+            {
+              "source": "skills/desktop-project-delivery",
+              "kind": "skills",
+              "relative": "desktop-project-delivery",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "1202af87faec518b495110ddd06f8121fda56ad952c4e6cf9bbc984c3a227582",
+                  "executable": false
+                },
+                "references/current-worktree.md": {
+                  "sha256": "16de99653956366960808ab8585bcc413b6afd21e5a640b45fe40de2d42cc04d",
+                  "executable": false
+                }
+              }
+            },
+            {
+              "source": "skills/desktop-thread-delegation",
+              "kind": "skills",
+              "relative": "desktop-thread-delegation",
+              "type": "directory",
+              "files": {
+                "SKILL.md": {
+                  "sha256": "9b00203135748cbe9b6387f3689eea81f0821225b256a95d4c7b909b9d41108a",
                   "executable": false
                 },
                 "references/create-fork.md": {
