@@ -898,7 +898,7 @@ group_exists() {
 
 group_description() {
   case "$1" in
-    shared-review-gates) echo "Shared review gates, lightweight requirements traceability, closure triage, safety policies, and reusable orchestration templates." ;;
+    shared-review-gates) echo "Shared review gates with safe identity mismatch diagnostics, lightweight requirements traceability, closure triage, safety policies, and reusable orchestration templates." ;;
     codex-review-workflow) echo "Routine and deep code, docs, and merge review workflows." ;;
     codex-delivery-workflow) echo "Shared loop engineering, planning, bounded implementation, docs update, and delegated delivery workflows." ;;
     codex-cli-session-handoff) echo "Native TUI, exec, and public stdio App Server task handoffs plus manual CLI session controls over the shared delivery workflow." ;;
