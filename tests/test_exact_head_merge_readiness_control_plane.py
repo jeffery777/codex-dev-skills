@@ -30,7 +30,7 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
 
     def exercise_cli_block(self, directory: str, *, collection_error=None,
                            publication_error=None, readback_error=None,
-                           latest_error=None, existing_output=False):
+                           latest_error=None, existing_output=False, identity_error=None):
         root = pathlib.Path(directory)
         event = root / "event.json"
         event.write_text('{"pull_request":{"number":185}}', encoding="utf-8")
@@ -55,7 +55,7 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
             mock.patch.object(control, "GitHubClient", return_value=client) as factory,
             mock.patch.object(control, "find_gate_check", return_value=None),
             mock.patch.object(control, "start_check", return_value={"id": 901, "app": {"id": 100001, "slug": "exact-head-gate"}}) as start,
-            mock.patch.object(control, "confirm_gate_check"),
+            mock.patch.object(control, "confirm_gate_check", side_effect=identity_error),
             mock.patch.object(control, "confirm_latest_gate_check", side_effect=[None, None, latest_error]) as latest,
             mock.patch.object(control, "require_unique_open_pr_for_head"),
             mock.patch.object(control, "select_current_receipt", return_value=(None, None), side_effect=collection_error),
@@ -1157,6 +1157,126 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
                 with self.assertRaisesRegex(control.ControlPlaneError, "exceeds 500"):
                     control.run(args)
             self.assertEqual(["invalidate", "collect", "fail"], order)
+
+    def identity_fixture(self):
+        head = "a" * 40
+        pointer = control.pointer_value("o/r", 185, head, None, None, 1)
+        live = {"id": 9, "name": control.validator.GATE_CONTEXT, "head_sha": head,
+                "app": {"id": 10, "slug": "gate-app"}, "status": "in_progress",
+                "external_id": pointer}
+        gate = {"check_run_id": 9, "check_app_id": 10, "check_app_slug": "gate-app"}
+        client = mock.Mock()
+        client.repo_path.side_effect = lambda suffix: "/repos/o/r" + suffix
+        client.json.return_value = live
+        return client, gate, head, pointer
+
+    def test_identity_diagnostics_preserve_matching_json_and_single_get(self) -> None:
+        client, gate, head, pointer = self.identity_fixture()
+        live = client.json.return_value
+        encoded = json.dumps(dict(reversed(list(live.items()))), indent=3).replace("Exact-Head", r"Exact\u002dHead")
+        client.json.return_value = json.loads(encoded)
+        control.confirm_gate_check(client, gate, head, pointer)
+        client.json.assert_called_once_with("GET", "/repos/o/r/check-runs/9")
+
+    def test_identity_diagnostics_reject_each_changed_field_without_normalizing(self) -> None:
+        cases = [("id", "9"), ("name", "different-context"), ("head_sha", "b" * 40),
+                 ("app_id", 11), ("app_slug", "different-app"), ("status", "queued"),
+                 ("external_id", "different-pointer")]
+        for field, value in cases:
+            with self.subTest(field=field):
+                client, gate, head, pointer = self.identity_fixture()
+                live = client.json.return_value
+                if field == "app_id":
+                    live["app"]["id"] = value
+                elif field == "app_slug":
+                    live["app"]["slug"] = value
+                else:
+                    live[field] = value
+                with self.assertRaises(control.ControlPlaneError) as caught:
+                    control.confirm_gate_check(client, gate, head, pointer)
+                detail = json.loads(str(caught.exception).split("; diagnostics=", 1)[1])
+                self.assertEqual([field], list(detail))
+                self.assertIn("type", detail[field]["actual"])
+                client.json.assert_called_once_with("GET", "/repos/o/r/check-runs/9")
+
+    def test_pointer_diagnostics_compare_segments_without_printing_them(self) -> None:
+        client, gate, head, old_pointer = self.identity_fixture()
+        expected = control.pointer_value("o/r", 185, head, 71, 2, 3, "c" * 64)
+        with self.assertRaises(control.ControlPlaneError) as caught:
+            control.confirm_gate_check(client, gate, head, expected)
+        message = str(caught.exception)
+        detail = json.loads(message.split("; diagnostics=", 1)[1])["external_id"]
+        self.assertEqual({"repository_marker": True, "pr_number": True, "head_sha": True,
+                          "receipt_id": False, "receipt_sequence": False,
+                          "generation": False, "receipt_digest": False}, detail["component_equal"])
+        self.assertTrue(detail["expected"]["digest_present"])
+        self.assertFalse(detail["actual"]["digest_present"])
+        for text in (expected, old_pointer, head, "c" * 64):
+            self.assertNotIn(text, message)
+
+    def test_identity_diagnostics_redact_both_sides_and_bound_arbitrary_values(self) -> None:
+        secret = "not-for-public-logs\n" + "private-fixture-text" * 10000
+        fields = ("id", "name", "head_sha", "app_id", "app_slug", "status", "external_id")
+        for value in (secret, {"Authorization": secret}, [secret], None, True, 1.25):
+            with self.subTest(kind=type(value).__name__):
+                expected = {field: secret + "expected" for field in fields}
+                actual = {field: value for field in fields}
+                expected["unrecognized-field"] = secret
+                actual["unrecognized-field"] = secret
+                diagnostic = control.identity_mismatch_diagnostics(expected, actual)
+                text = json.dumps(diagnostic, sort_keys=True)
+                self.assertLess(len(text), 4096)
+                for forbidden in ("not-for-public-logs", "private-fixture-text", "Authorization", "unrecognized-field",
+                                  control.hashlib.sha256(secret.encode()).hexdigest()):
+                    self.assertNotIn(forbidden, text)
+                self.assertEqual(set(fields), set(diagnostic))
+                self.assertEqual("string", diagnostic["external_id"]["expected"]["type"])
+                self.assertFalse(diagnostic["external_id"]["expected"]["pointer_shape"])
+
+    def test_identity_diagnostic_failure_is_safe_in_app_summary_and_stderr(self) -> None:
+        client, gate, head, pointer = self.identity_fixture()
+        sensitive = "not-for-public-logs" * 1000
+        client.json.return_value["status"] = sensitive
+        with self.assertRaises(control.ControlPlaneError) as caught:
+            control.confirm_gate_check(client, gate, head, pointer)
+        with tempfile.TemporaryDirectory() as directory:
+            result, out, err, output, update, *_ = self.exercise_cli_block(
+                directory, identity_error=caught.exception,
+            )
+        self.assertEqual(1, result)
+        self.assertEqual("", out)
+        self.assertFalse(output.exists())
+        self.assertNotIn("not-for-public-logs", err)
+        self.assertNotIn("not-for-public-logs", update.call_args.args[4])
+        self.assertIn("diagnostics=", err)
+        self.assertIn("diagnostics=", update.call_args.args[4])
+        self.assertEqual("failure", update.call_args.args[2])
+
+    def test_identity_diagnostic_preserves_existing_numeric_equality(self) -> None:
+        for expected_id, actual_id in ((9, 9.0), (1, True)):
+            with self.subTest(expected=expected_id, actual_type=type(actual_id).__name__):
+                client, gate, head, pointer = self.identity_fixture()
+                gate["check_run_id"] = expected_id
+                client.json.return_value["id"] = actual_id
+                control.confirm_gate_check(client, gate, head, pointer)
+                self.assertEqual(1, client.json.call_count)
+
+    def test_pointer_diagnostic_checks_length_before_shape_without_normalizing(self) -> None:
+        suffix = ":" + "b" * 40 + ":1:1:1:" + "c" * 64
+        prefix = "ehr1:" + "a" * 16 + ":"
+        at_limit = prefix + "1" * (255 - len(prefix) - len(suffix)) + suffix
+        self.assertEqual(255, len(at_limit))
+        client, gate, head, pointer = self.identity_fixture()
+        expected = {"id": 9, "name": control.validator.GATE_CONTEXT, "head_sha": head,
+                    "app_id": 10, "app_slug": "gate-app", "status": "in_progress",
+                    "external_id": pointer}
+        for value, shape in ((at_limit, True), (at_limit + "d", False)):
+            with self.subTest(length=len(value)):
+                actual = dict(expected, external_id=value)
+                detail = control.identity_mismatch_diagnostics(expected, actual)["external_id"]
+                self.assertEqual(shape, detail["actual"]["pointer_shape"])
+                self.assertNotIn(value, json.dumps(detail))
+                self.assertLess(len(json.dumps(detail)), 4096)
 
     def test_completed_check_requires_exact_success_and_failure_readback(self) -> None:
         client = mock.Mock()

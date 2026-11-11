@@ -653,6 +653,58 @@ def update_check(client: GitHubClient, check_id: int, conclusion: str, title: st
     return value
 
 
+def identity_mismatch_diagnostics(expected: dict[str, object], actual: dict[str, object]) -> dict[str, object]:
+    """Describe fixed fields without raw values; the fixed schema stays below 4096 ASCII bytes."""
+    fields = ("id", "name", "head_sha", "app_id", "app_slug", "status", "external_id")
+    types = {type(None): "null", bool: "boolean", int: "integer", float: "number",
+             str: "string", list: "array", dict: "object"}
+    statuses = {"queued", "in_progress", "completed"}
+    pointer_pattern = r"ehr1:([0-9a-f]{16}):([1-9][0-9]*):([0-9a-f]{40}):([0-9]+):([0-9]+):([1-9][0-9]*):(-|[0-9a-f]{64})"
+
+    def pointer_parts(value: object) -> tuple[str, ...] | None:
+        if type(value) is not str or len(value) > 255:
+            return None
+        match = re.fullmatch(pointer_pattern, value)
+        return match.groups() if match else None
+
+    def metadata(field: str, value: object) -> dict[str, object]:
+        result: dict[str, object] = {"type": types.get(type(value), "other")}
+        if type(value) is str:
+            result["length"] = len(value)
+        if field in {"id", "app_id"}:
+            result["positive_bounded_integer"] = type(value) is int and 0 < value <= validator.MAX_RECEIPT_SEQUENCE
+        elif field == "name":
+            result["fixed_context"] = type(value) is str and value == validator.GATE_CONTEXT
+        elif field == "head_sha":
+            result["sha40"] = type(value) is str and len(value) == 40 and re.fullmatch(r"[0-9a-f]{40}", value) is not None
+        elif field == "app_slug":
+            result["slug_shape"] = type(value) is str and 1 <= len(value) <= 100 and re.fullmatch(r"[a-z0-9][a-z0-9-]*", value) is not None
+        elif field == "status":
+            result["recognized"] = type(value) is str and value in statuses
+            if result["recognized"]:
+                result["status"] = value  # Only one of three fixed enum literals.
+        elif field == "external_id":
+            parts = pointer_parts(value)
+            result["pointer_shape"] = parts is not None
+            if parts is not None:
+                result["digest_present"] = parts[-1] != "-"
+        return result
+
+    details: dict[str, object] = {}
+    for field in fields:
+        left, right = expected[field], actual[field]
+        if left == right:
+            continue
+        item: dict[str, object] = {"expected": metadata(field, left), "actual": metadata(field, right)}
+        if field == "external_id":
+            left_parts, right_parts = pointer_parts(left), pointer_parts(right)
+            if left_parts is not None and right_parts is not None:
+                names = ("repository_marker", "pr_number", "head_sha", "receipt_id", "receipt_sequence", "generation", "receipt_digest")
+                item["component_equal"] = dict(zip(names, (a == b for a, b in zip(left_parts, right_parts))))
+        details[field] = item
+    return details
+
+
 def confirm_gate_check(client: GitHubClient, gate: dict[str, object], expected_head: str, expected_external_id: str) -> None:
     check_id = validator.require_positive_integer(gate["check_run_id"], "gate.check_run_id")
     live = client.json("GET", client.repo_path(f"/check-runs/{check_id}"))
@@ -674,7 +726,8 @@ def confirm_gate_check(client: GitHubClient, gate: dict[str, object], expected_h
         "external_id": live.get("external_id"),
     }
     if actual != expected:
-        raise ControlPlaneError("gate check identity drifted before success publication")
+        raise ControlPlaneError("gate check identity drifted before success publication; diagnostics="
+                                + json.dumps(identity_mismatch_diagnostics(expected, actual), sort_keys=True, separators=(",", ":")))
 
 
 def confirm_latest_gate_check(
