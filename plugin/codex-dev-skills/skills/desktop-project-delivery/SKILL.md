@@ -78,9 +78,10 @@ installation also places it at
 `~/.codex/templates/docs/native-runtime-capabilities.md`.
 The current native runtime contract governs capability availability and
 authority. Use only exposed runtime capabilities after active callable-schema
-inspection and call-site validation; a repository-local helper script is not
-an execution path for this skill and must not be imported, executed, or
-recommended.
+inspection and call-site validation. For an authorized thread handoff whose
+native path is unavailable or unsuitable, use `desktop-thread-delegation` to
+select its documented App Server fallback. Other repository-local helper scripts
+are not execution paths for this skill.
 
 ## Output
 

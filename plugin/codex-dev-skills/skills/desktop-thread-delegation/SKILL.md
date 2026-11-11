@@ -24,12 +24,14 @@ operation, read only the selected reference before acting:
 | `desktop-fresh-rollover` | [Fresh rollover](references/fresh-rollover.md) and [Create/fork](references/create-fork.md) |
 | Inspect, wait, navigate, display, or handoff | [Observation and handoff](references/observe-handoff.md) |
 | `desktop-thread-share` | [Sharing and privacy](references/share.md) |
+| Native action unavailable or unsuitable; selected CLI host can run a bounded handoff | [App Server fallback](../cli-session-handoff/references/app-server.md) |
 
 Creating a new or background Desktop task requires an explicit user request.
 Prepare the concrete prompt and action first; reuse existing authorization
 while its exact target, scope, and effect remain unchanged. Read-only discovery
 needed by the authorized task does not require a new approval. Return a
-`new-thread-prompt` when an operation is unavailable or lacks authority.
+`new-thread-prompt` when neither an authorized native operation nor the documented
+App Server fallback is available. Missing authority remains a stop.
 
 ## Common Boundaries
 
@@ -51,12 +53,13 @@ needed by the authorized task does not require a new approval. Return a
   sequential continuation. A child must re-read repository truth, use its
   selected verification environment, avoid recursive session dispatch, and
   return changed files, evidence, questions, and residual risk.
-- Use only runtime-provided callables. Do not edit Desktop databases, logs,
+- Native operations use only runtime-provided callables. Do not edit Desktop databases, logs,
   sessions, auth files, caches, or other private runtime state; use unpublished
-  endpoints/UI scraping; or start app-server, remote-control, wrapper daemons,
-  sidecars, or background services. Direct app-server thread endpoints are
-  outside this adapter even when public. A repository-local helper is not a
-  thread-control path and must not be imported, executed, or recommended.
+  endpoints/UI scraping; or start remote-control/wrapper daemons, sidecars,
+  or background services. The selected App Server fallback may invoke only the
+  documented CLI stdio executor on the verified execution host; it is a distinct
+  API route, not a native Desktop callable. Other repository-local helpers are
+  not thread-control paths. Never take over an active writer or operate locks.
 - Sharing requires the separate disclosure review in its mandatory reference.
   Task creation/fork authority does not authorize sharing or other external
   writes. Destructive actions and material scope/risk changes retain gates.
@@ -70,7 +73,10 @@ The originating task owns integration, verification, review, commit/PR
 readiness, and merge gates. Goal, task, and scheduler states are coordination
 context rather than repository completion proof.
 
-If capabilities fail, return a paste-ready prompt or use shared sequential
+If native capabilities fail, assess the documented App Server fallback using
+the existing task-action authority and verified host/workspace. API completion,
+Desktop readback and user-visible project placement are separate results.
+If neither route is available, return a paste-ready prompt or use shared sequential
 execution/subagents when supported. CLI does not possess Desktop task tools.
 Do not emulate them through private state or claim creation/transfer/completion
 from a fallback. Stop for conflicting source truth, ambiguous identity/scope,

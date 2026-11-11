@@ -296,8 +296,14 @@ child run reached its CLI terminal event; a public interactive-fork result
 proves only session dispatch. The originating session must inspect Git state,
 integrate the result, run verification, and apply review and human gates.
 
-The repo-owned executor automates `codex exec fork`, but it does not automate
+The exec/private-clone executor automates `codex exec fork`, but it does not automate
 interactive `/new` or `/fork`, use `--last`, or implement an app-server client.
+The separate [App Server handoff](../skills/cli-session-handoff/references/app-server.md)
+implements a bounded public stdio start/resume/fork route after native discovery
+and explicit task-action authorization. It uses the selected host's existing
+workspace and CLI, with read-only default or authorized workspace-write. It does
+not restore native callables or manage Desktop's writer; API completion, host/cwd
+readback and user-visible project placement remain separate checks.
 The CLI adapter may return a
 paste-ready `codex fork <SESSION_ID>` manual handoff with an exact UUID and
 explicit `current` or `session` directory choice. An existing dirty

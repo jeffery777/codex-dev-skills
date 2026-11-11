@@ -901,7 +901,7 @@ group_description() {
     shared-review-gates) echo "Shared review gates, lightweight requirements traceability, closure triage, safety policies, and reusable orchestration templates." ;;
     codex-review-workflow) echo "Routine and deep code, docs, and merge review workflows." ;;
     codex-delivery-workflow) echo "Shared loop engineering, planning, bounded implementation, docs update, and delegated delivery workflows." ;;
-    codex-cli-session-handoff) echo "CLI-only non-interactive start/resume/fork/fresh-continuation plus manual interactive-fork, agents-dashboard, and argv-safe UUID queue guidance over the shared delivery workflow." ;;
+    codex-cli-session-handoff) echo "Native TUI, exec, and public stdio App Server task handoffs plus manual CLI session controls over the shared delivery workflow." ;;
     desktop-delivery-workflow) echo "Three active Codex Desktop entry/control-plane adapters plus deprecated shared-gate compatibility aliases." ;;
     codex-agent-profiles) echo "Opt-in Loop Engineering V2a custom-agent runtime profiles." ;;
     codex-dev-skills) echo "Alias for all groups." ;;
@@ -914,7 +914,7 @@ group_deps() {
     codex-review-workflow) echo "shared-review-gates" ;;
     codex-delivery-workflow) echo "shared-review-gates" ;;
     codex-cli-session-handoff) echo "shared-review-gates codex-delivery-workflow" ;;
-    desktop-delivery-workflow) echo "shared-review-gates codex-delivery-workflow" ;;
+    desktop-delivery-workflow) echo "shared-review-gates codex-delivery-workflow codex-cli-session-handoff" ;;
     codex-agent-profiles) echo "shared-review-gates codex-delivery-workflow" ;;
     codex-dev-skills) default_groups ;;
   esac
