@@ -284,29 +284,46 @@ exec "''' + real + '''" "$@"
     def test_formal_twenty_eight_to_thirty_one_and_back_preserves_exact_tree(self):
         self.assert_core_transition("0.38.1", "c88514225129afc02ccdc3734402042b0e2a5194", 28)
 
-    def assert_core_transition(self, version, revision, count):
+    def assert_core_transition(self, version, revision, count, *, target_revision=None):
+        target_source = ROOT
+        target_version = CURRENT_VERSION
+        if target_revision is not None:
+            target = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == target_revision)
+            target_source = self.fixed_source(target_revision)
+            target_version = target["version"]
         catalog = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == revision)
         prior = self.seed(version, groups=list(catalog["groups"]), snapshot_revision=revision)
         old_source = self.case / f"source-{revision}"
         core_root = self.home / ".codex/templates/orchestration/core"
+        sentinel = None
+        if target_revision is None:
+            sentinel = self.home / ".agents/skills/unmanaged-v041-release/notes.txt"
+            sentinel.parent.mkdir(parents=True, exist_ok=True)
+            sentinel.write_bytes(b"unmanaged release fixture; preserve\n")
+            sentinel.chmod(0o600)
         prior_files = {p.relative_to(core_root).as_posix(): p.read_bytes()
                        for p in core_root.rglob("*") if p.is_file()}
         prior_directories = sorted(p.relative_to(core_root).as_posix()
                                    for p in core_root.rglob("*") if p.is_dir())
         self.assertEqual(count, len(prior_files))
-        if version == "0.39.0":
+        if version in {"0.39.0", "0.40.0"} and version != target_version:
             before = self.snapshot()
-            refused = self.run_installer("update", "codex-review-workflow")
+            refused = self.run_installer("update", "codex-review-workflow", "--source", target_source)
             self.assertNotEqual(0, refused.returncode)
             self.assertIn("requires all managed groups", refused.stderr)
             self.assertEqual(before, self.snapshot())
-        result = self.run_installer("update", "--all")
+        result = self.run_installer("update", "--all", "--source", target_source)
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assert_version(CURRENT_VERSION)
+        self.assert_version(target_version)
+        if sentinel is not None:
+            self.assertEqual(b"unmanaged release fixture; preserve\n", sentinel.read_bytes())
+            self.assertEqual(0o600, sentinel.stat().st_mode & 0o777)
+            installed = self.home / ".agents/skills/cli-session-handoff/scripts/app_server_handoff.py"
+            self.assertEqual((target_source / "skills/cli-session-handoff/scripts/app_server_handoff.py").read_bytes(), installed.read_bytes())
         lesson_policy = self.home / ".codex/templates/orchestration/policies/project-agent-knowledge-policy.md"
-        self.assertEqual((ROOT / "policies/project-agent-knowledge-policy.md").read_bytes(), lesson_policy.read_bytes())
+        self.assertEqual((target_source / "policies/project-agent-knowledge-policy.md").read_bytes(), lesson_policy.read_bytes())
         retro_metadata = self.home / ".agents/skills/dev-retro/agents/openai.yaml"
-        self.assertEqual((ROOT / "skills/dev-retro/agents/openai.yaml").read_bytes(), retro_metadata.read_bytes())
+        self.assertEqual((target_source / "skills/dev-retro/agents/openai.yaml").read_bytes(), retro_metadata.read_bytes())
         self.assertIn("allow_implicit_invocation: false", retro_metadata.read_text())
         receipt = json.loads(self.receipt.read_text())
         self.assertEqual("0.5.0", receipt["source"]["core"]["version"])
@@ -328,7 +345,7 @@ exec "''' + real + '''" "$@"
         self.assertNotEqual(0, result.returncode)
         self.assertEqual(before, self.snapshot())
         extra.unlink()  # Remove only this test-owned input to exercise the accepted path.
-        if version == "0.39.0":
+        if version in {"0.39.0", "0.40.0"} and version != target_version:
             before = self.snapshot()
             refused = self.run_installer("update", "codex-review-workflow", "--source", old_source)
             self.assertNotEqual(0, refused.returncode)
@@ -337,6 +354,9 @@ exec "''' + real + '''" "$@"
         result = self.run_installer("update", "--all", "--source", old_source)
         self.assertEqual(0, result.returncode, result.stderr)
         self.assert_version(version)
+        if sentinel is not None:
+            self.assertEqual(b"unmanaged release fixture; preserve\n", sentinel.read_bytes())
+            self.assertEqual(0o600, sentinel.stat().st_mode & 0o777)
         receipt = json.loads(self.receipt.read_text())
         self.assertEqual(prior["source"]["catalog_sha256"], receipt["source"]["catalog_sha256"])
         self.assertIn("codex-agent-profiles", receipt["groups"])
@@ -513,8 +533,10 @@ exec "''' + real + '''" "$@"
                 self.assertEqual((source / "policies/projectspec-alignment-policy.md").read_bytes(), policy.read_bytes())
 
     def test_v039_manual_retro_to_v040_roundtrip_preserves_core_and_profiles(self):
-        self.assertEqual("0.40.0", CURRENT_VERSION)
-        self.assert_core_transition("0.39.0", "9d6c0bdce2f9b4d18f88a97a71110a57796324fa", 31)
+        self.assert_core_transition(
+            "0.39.0", "9d6c0bdce2f9b4d18f88a97a71110a57796324fa", 31,
+            target_revision="3a9eef152c07ea4722591aaf3602d5356ce9917b",
+        )
 
     def test_v039_manual_retro_upgrade_rollback_restores_exact_payload(self):
         revision = "9d6c0bdce2f9b4d18f88a97a71110a57796324fa"
@@ -536,6 +558,37 @@ exec "''' + real + '''" "$@"
         self.assertEqual(directories, sorted(p.relative_to(core_root).as_posix()
                                             for p in core_root.rglob("*") if p.is_dir()))
         self.assert_version("0.39.0")
+
+    def test_v040_release_to_current_roundtrip_preserves_payload_core_profiles_and_unmanaged(self):
+        self.assert_core_transition("0.40.0", "3a9eef152c07ea4722591aaf3602d5356ce9917b", 31)
+
+    def test_v040_workflow_bridge_to_current_roundtrip_preserves_payload_core_profiles_and_unmanaged(self):
+        self.assert_core_transition("0.40.0", "6dca8dba0524d81a546c7f6dbf4fbe63bd3a66aa", 31)
+
+    def test_v040_app_server_to_current_roundtrip_preserves_payload_core_profiles_and_unmanaged(self):
+        self.assert_core_transition("0.40.0", "22836ce081a69903580b165583be1db4f4a3f637", 31)
+
+    def test_v040_diagnostics_to_current_roundtrip_preserves_payload_core_profiles_and_unmanaged(self):
+        self.assert_core_transition("0.40.0", "2827df9779787752b435fb91f0a46f5cd8f74b69", 31)
+
+    def test_v040_integrated_handoff_to_current_roundtrip_preserves_payload_core_profiles_and_unmanaged(self):
+        self.assert_core_transition("0.40.0", "fc4eaa3e65e3c49b13695602b71d767b042f19be", 31)
+
+    def test_v040_integrated_to_current_receipt_fault_restores_exact_tree(self):
+        revision = "fc4eaa3e65e3c49b13695602b71d767b042f19be"
+        catalog = next(c for c in REGISTRY["catalogs"] if c["reviewed_revision"] == revision)
+        self.seed("0.40.0", groups=list(catalog["groups"]), snapshot_revision=revision)
+        sibling = self.home / ".agents/skills/unmanaged-v041-release/notes.txt"
+        sibling.parent.mkdir(parents=True, exist_ok=True)
+        sibling.write_bytes(b"unmanaged release fixture; preserve\n")
+        sibling.chmod(0o600)
+        overrides = self.fake_mv("receipt")
+        before = self.snapshot()
+        result = self.run_installer("update", "--all", overrides=overrides)
+        self.assertNotEqual(0, result.returncode, result.stdout)
+        self.assertIn("injected-receipt", result.stderr, "receipt fault seam was not reached")
+        self.assertEqual(before, self.snapshot())
+        self.assert_version("0.40.0")
 
     def test_v040_mapping_preserves_fourteen_real_catalogs(self):
         revision = "3a9eef152c07ea4722591aaf3602d5356ce9917b"
