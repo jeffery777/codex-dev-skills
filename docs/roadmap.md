@@ -50,6 +50,8 @@ This roadmap is intentionally small and adaptive. `codex-dev-skills` evolves fro
 
 ## Maintenance Approach
 
+- Issue #242 / PR #392 added the bounded public App Server stdio fallback after native capability discovery. It supports explicitly authorized development handoff without restoring missing native tools. PRs #388 / #389 retain exact-head CI results across Ready transitions, PR #390 consolidates installer tests and adds Linux receipt-validator coverage, and Issue #393 / PR #394 adds bounded identity-mismatch diagnostics. These are completed source changes. Issue #251 and the historical controller mismatch cause remain unresolved; this record does not establish publication, installation or production-project acceptance.
+
 - Issue #306 校正 Desktop local 預設、非同步 worktree 與 fork 中斷回合契約；
   共享層依使用者偏好及隔離需求選 checkout，CLI private-clone 邊界保持不變。
   修補版範圍見 [v0.31.1 候選紀錄](release-notes-v0.31.1.md)。

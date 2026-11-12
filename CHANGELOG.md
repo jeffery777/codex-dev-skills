@@ -1,5 +1,11 @@
 # Changelog / 變更紀錄
 
+## 0.41.0 — App Server 任務交辦與關卡維護 / App Server task handoff and gate maintenance
+
+Issue #395 整理 v0.40.0 tag 至來源基準的完整功能範圍：#392 新增有界 App Server start／resume／fork 與明確授權的 workspace-write，#388／#389 保留相同 head 的 CI 結果以避免 Ready 轉換重跑全量測試，#390 精簡重複安裝交易並加入 Linux receipt validator 行為測試，#394 新增不回顯任意值的安全身分診斷。Core 與原有關卡判定保持，未完成的 #385 研究不納入。此為來源／封裝準備，不代表已發行或安裝；正式映射須綁定實際已審 payload commit。[準備紀錄](docs/releases/v0.41.0-split.md) 列出限制與後續驗證。
+
+This minor-version candidate combines bounded public App Server task handoff, exact-head CI reuse on Ready transitions, installer test consolidation with Linux validator coverage, and safe identity diagnostics. Preserve existing permission limits, native-first selection, Core and gate decisions. Source/package preparation does not prove publication, installation or production-project acceptance. Formal provenance requires a real reviewed payload commit.
+
 ## 0.40.0 — 需求追溯、教訓候選與手動回顧 / Traceability, lesson candidates and manual retrospective
 
 Issue #383 整理 pre-1.0 minor 來源準備：納入 #377／#378 大型 PR 資料路由修正、#379 輕量需求追溯及 #380 手動 dev-retro，新增 Codex 交付／審查的條件式 Lesson candidates。候選先查既有規則，區分事實、推論與未驗證，保留單次事件與讀取／授權邊界；完整回顧仍須明確選取。Core v0.5.0 的完整 31 檔與 Hermes 既有義務不變。詳見[準備紀錄](docs/releases/v0.40.0-split.md)。

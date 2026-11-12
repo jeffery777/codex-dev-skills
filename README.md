@@ -1,6 +1,6 @@
 # codex-dev-skills
 
-本來源採正式 Core v0.5.0 的完整 31 檔，並接入共用寫作契約：一般工程摘要保留簡短最低要求，實質文件撰寫、修改、翻譯與審查才按需讀完整規範。文件技能保留文類、作者聲音、技術精度及必要術語，區分忠實引用與自行研究證據。來源／封裝版本以 `catalog.yaml` 為準；固定身分與候選範圍見 [loading contract](policies/core-contract-loading.md) 及[準備紀錄](docs/releases/v0.40.0-split.md)。這些資料不證明已發行、已安裝或 Session 已載入。
+本來源採正式 Core v0.5.0 的完整 31 檔，並接入共用寫作契約：一般工程摘要保留簡短最低要求，實質文件撰寫、修改、翻譯與審查才按需讀完整規範。文件技能保留文類、作者聲音、技術精度及必要術語，區分忠實引用與自行研究證據。來源／封裝版本以 `catalog.yaml` 為準；固定身分與候選範圍見 [loading contract](policies/core-contract-loading.md) 及[準備紀錄](docs/releases/v0.41.0-split.md)。這些資料不證明已發行、已安裝或 Session 已載入。
 
 This source adopts the full 31-file Core v0.5.0 snapshot and its on-demand writing contract. Routine engineering summaries keep minimum requirements; substantive document tasks read the full text. Preserve genre, author voice, precision, necessary terms and machine literals, with supported citations distinct from own research evidence. The catalog defines the source/package version. Publication, installation, session loading and runtime qualification remain separate.
 
@@ -178,10 +178,11 @@ installer。新 receipt 綁定完整 targets 與每檔內容；舊 `installed.js
 應讀回 ownership 與狀態。以公開讀回確認 unknown dispatch
 結果，再決定下一步，不盲目重播。
 
+原生工具缺席且已明確授權時，可另外選用[公開 App Server stdio 路徑](skills/cli-session-handoff/references/app-server.md)，在執行主機建立、續行或分叉有界任務。可寫工作需要 workspace 授權與獨占 writer；子任務不取得網路、Apps／plugins／MCP 或發布權限，也不自動載入 plugin skills。這條路徑不恢復缺少的原生工具、不接管既有 writer，也不等同舊 exec 的 private-clone 隔離。
+
 現有 CLI shell executor 的 private clone、expected HEAD、bounded patch、exact UUID、
 replay／no-recursion 與 source readback 保障仍有效；沒有證據證明其他 native 路徑
-與它等價。這次只澄清選擇與引用，沒有刪除 executor、改 routing defaults，
-也沒有宣稱所有 fallback 冗餘已移除。
+與它等價。既有 executor 與原生優先的選路保持，不宣稱所有 fallback 冗餘已移除。
 
 CLI、CLI TUI、Desktop、Bundled CLI 各自驗證版本、工具、有效 model／effort、權限、
 來源與產物；一個入口成功不替其他入口取得資格。原生 subagents 可共享 parent sandbox；
@@ -425,11 +426,11 @@ incomplete observation stays unknown. Read back an uncertain dispatch before
 retrying. Use a manual prompt or contract-preserving fallback when unavailable
 or incompatible; do not exchange payloads between surfaces.
 
+When native tools are absent and task authority is explicit, callers may select the separate [public App Server stdio route](skills/cli-session-handoff/references/app-server.md) on the execution host. It supports bounded start, resume and fork operations. Workspace-write requires explicit authority and an exclusive writer. Child tasks do not gain network, Apps/plugins/MCP or publication authority, and plugin skills do not autoload. This route does not restore missing native tools, take over another writer or establish private-clone equivalence.
+
 The CLI shell executor still requires its private clone, expected HEAD,
 bounded patch, exact UUID, replay/no-recursion and source readback controls.
-Equivalence with another native path has not been proved. This documentation
-change removes no executor, changes no routing default and makes no claim
-that all fallbacks are redundant. CLI `/app` or `codex app <path>` is a surface
+Equivalence with another native path has not been proved. The existing executor and native-first selection stay in place; no claim is made that all fallbacks are redundant. CLI `/app` or `codex app <path>` is a surface
 transition; it does not change task authority or completion. A Desktop fork
 may include an interrupted active turn, so read back ownership and state.
 

@@ -96,13 +96,13 @@ class LessonCandidatesTests(unittest.TestCase):
             metadata = yaml.safe_load((root / 'skills/dev-retro/agents/openai.yaml').read_text())
             self.assertIs(False, metadata['policy']['allow_implicit_invocation'])
 
-    def test_release_versions_and_historical_core_are_unchanged(self):
+    def test_release_metadata_matches_catalog_and_historical_core_is_unchanged(self):
         catalog = yaml.safe_load((ROOT / 'catalog.yaml').read_text())
-        self.assertEqual('0.40.0', catalog['version'])
-        self.assertEqual('docs/releases/v0.40.0-split.md', catalog['release_notes'])
-        self.assertIn('VERSION="0.40.0"', (ROOT / 'install.sh').read_text())
+        version = catalog['version']
+        self.assertEqual(f'docs/releases/v{version}-split.md', catalog['release_notes'])
+        self.assertIn(f'VERSION="{version}"', (ROOT / 'install.sh').read_text())
         manifest = json.loads((ROOT / 'plugin/codex-dev-skills/.codex-plugin/plugin.json').read_text())
-        self.assertEqual('0.40.0', manifest['version'])
+        self.assertEqual(version, manifest['version'])
         lock = json.loads((ROOT / 'vendor/engineering-workflow-core.lock.json').read_text())
         self.assertEqual('0.5.0', lock['source']['version'])
         self.assertEqual(31, len(lock['document_set']['files']))
