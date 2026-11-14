@@ -30,9 +30,15 @@ App-owned `external_id` stays below the
 GitHub limit and is the durable pointer to the one current receipt comment for
 that repository, PR, and head. Its receipt digest locks the body selected for a
 given receipt ID and sequence; changing that body requires a unique higher
-sequence. Relevant events are grouped by live head; unrelated comments are
-no-ops unless the authoritative pointer itself is malformed, and scheduled
-reconciliation repairs coalesced events.
+sequence. Routed events are grouped by live head. Every surviving hosted evaluation,
+including an ordinary comment, reconciles current platform evidence. The workflow
+wraps the original event in a `reconciliation_trigger` object and passes the
+platform-resolved PR/head separately; nested event data never grants receipt
+authority. This deliberately avoids the reusable collector's comment-relevance
+no-op: an ordinary comment can replace a pending receipt-invalidation event.
+Explicit manual re-evaluation remains available for missed events; no periodic
+scan runs. Ordinary PR comments therefore incur a bounded metadata evaluation
+and fresh App check, but do not start Repository Validation.
 The matrix and concurrency key carry the platform-read head SHA, not just the
 PR number. Before success, the controller also proves through a bounded commit-
 to-pulls read that this head belongs to exactly one open PR; a shared head is
@@ -129,12 +135,19 @@ The platform guarantee has two layers. GitHub rules enforce the live-head
 required check, strict up-to-date policy, and resolved review conversations at
 merge time. Receipt, finding, base/merge-base snapshot, range digest, and
 controller identity are an event-driven projection. Relevant platform events
-and a five-minute scheduled reconciliation rebuild authoritative live state;
-head-scoped concurrency can coalesce pending events and is not the source of
-truth. Scheduled reconciliation handles at most 250 open PRs per run, below
-GitHub Actions' 256-job matrix limit, and fails
-visibly rather than truncating a larger collection. The schedule has no
-completion-time SLA. Before evaluating comments or other drift-prone evidence,
+and explicit `workflow_dispatch` rebuild authoritative live state. The workflow
+has no `schedule` trigger: dormant open PRs, including drafts and canaries, do
+not create work merely because time passes. PR lifecycle/metadata changes,
+all PR comments, and Repository Validation progress/completion remain triggers.
+Head-scoped concurrency can coalesce pending events; the surviving evaluator
+reads current state rather than relying on the displaced event. This does not
+recover events that never reach an evaluator. Changes without a subscribed event (for example review-thread changes or
+default-branch policy changes), missed events, or transient API failures require
+explicit re-evaluation of the affected PR. No periodic repair or refresh SLA is
+claimed. Repeat live readback before an authorized merge; a historical green
+check is not a current receipt/finding guarantee. Necessary Repository Validation,
+required checks, App permissions, and notification preferences are unchanged.
+Before evaluating comments or other drift-prone evidence,
 the controller creates a fresh `in_progress` check that must supersede any
 older success under GitHub's native latest-check projection. After publishing
 success, it reads the completed check back, confirms that it remains the latest
@@ -170,7 +183,8 @@ evidence drift, and publication/readback errors still fail the job.
 The collector requires a fresh `--output` path and rejects an existing file or
 symlink before platform access. It does not delete previous evidence or retry
 uncertain writes. Only a ready evaluation creates a v2 envelope for the separate
-offline validator; ordinary irrelevant comments create none. Never treat a
+offline validator. Direct reusable-collector callers may still use its comment
+no-op, but the hosted reconciliation wrapper deliberately does not. Never treat a
 green job, absent envelope, or injected-fault test as merge readiness.
 
 PR #285 and #289 exposed the previous behavior: waiting for a receipt left a
