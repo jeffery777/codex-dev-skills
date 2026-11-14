@@ -30,15 +30,17 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
 
     def exercise_cli_block(self, directory: str, *, collection_error=None,
                            publication_error=None, readback_error=None,
-                           latest_error=None, existing_output=False, identity_error=None):
+                           latest_error=None, existing_output=False, identity_error=None,
+                           event_payload=None, prior_check=None):
         root = pathlib.Path(directory)
         event = root / "event.json"
-        event.write_text('{"pull_request":{"number":185}}', encoding="utf-8")
+        event.write_text(json.dumps(event_payload if event_payload is not None else
+                                    {"pull_request": {"number": 185}}), encoding="utf-8")
         output = root / "out.json"
         if existing_output:
             output.write_text(json.dumps(valid_v2_payload()), encoding="utf-8")
         argv = [
-            "--repository", "jeffery777/codex-dev-skills",
+            "--repository", "jeffery777/codex-dev-skills", "--pr-number", "185",
             "--event-path", str(event), "--output", str(output),
             "--policy", str(ROOT / ".github/exact-head-merge-readiness-policy.json"),
             "--workflow-name", "Exact-Head Merge Readiness Controller",
@@ -53,7 +55,7 @@ class ExactHeadControlPlaneTests(unittest.TestCase):
         with (
             mock.patch.dict("os.environ", {"EXACT_HEAD_GATE_TOKEN": "app", "REPOSITORY_READ_TOKEN": "reader"}),
             mock.patch.object(control, "GitHubClient", return_value=client) as factory,
-            mock.patch.object(control, "find_gate_check", return_value=None),
+            mock.patch.object(control, "find_gate_check", return_value=prior_check),
             mock.patch.object(control, "start_check", return_value={"id": 901, "app": {"id": 100001, "slug": "exact-head-gate"}}) as start,
             mock.patch.object(control, "confirm_gate_check", side_effect=identity_error),
             mock.patch.object(control, "confirm_latest_gate_check", side_effect=[None, None, latest_error]) as latest,

@@ -325,7 +325,9 @@ class ExactHeadReadinessWorkflowTests(unittest.TestCase):
                     '*) exit 1 ;;\nesac\n', encoding="utf-8")
                 runner.chmod(0o700)
                 environment = dict(os.environ, FIXTURE_OUTCOME=outcome,
-                                   RUNNER_TEMP=str(root), GITHUB_OUTPUT=str(root / "outputs"))
+                                   RUNNER_TEMP=str(root), GITHUB_OUTPUT=str(root / "outputs"),
+                                   GITHUB_EVENT_PATH=str(root / "event.json"), GITHUB_EVENT_NAME="issue_comment")
+                (root / "event.json").write_text("{}")
                 result = subprocess.run(["bash", "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", script],
                                         cwd=root, env=environment, capture_output=True, text=True, check=False)
                 self.assertEqual(expected_exit, result.returncode, result.stderr)
@@ -333,6 +335,58 @@ class ExactHeadReadinessWorkflowTests(unittest.TestCase):
                     self.assertFalse((root / "outputs").exists())
                 else:
                     self.assertEqual(f"evaluated={evaluated}\n", (root / "outputs").read_text())
+
+    def test_surviving_event_reconciles_instead_of_losing_receipt_invalidation(self) -> None:
+        from tests.test_exact_head_merge_readiness_control_plane import (
+            ExactHeadControlPlaneTests, control,
+        )
+        collect = next(step for step in self.workflow["jobs"]["evaluate"]["steps"]
+                       if step.get("id") == "collect")
+        normalize = collect["run"].split("./scripts/project-python")[0]
+        for name, event in (
+            ("issue_comment", {"action": "created", "comment": {
+                "id": 999, "body": "ordinary", "author_association": "NONE"}}),
+            ("issue_comment", {"action": "deleted", "comment": {"id": 321}}),
+            ("pull_request_target", {"pull_request": {"number": 185}}),
+            ("workflow_run", {"workflow_run": {"head_sha": "b" * 40}}),
+            ("workflow_dispatch", {"inputs": {"pr_number": "185"}}),
+        ):
+            with self.subTest(name=name, event=event), tempfile.TemporaryDirectory() as directory:
+                root = pathlib.Path(directory)
+                source = root / "trigger.json"
+                source.write_text(json.dumps(event))
+                result = subprocess.run(
+                    ["bash", "--noprofile", "--norc", "-e", "-o", "pipefail", "-c", normalize],
+                    env=dict(os.environ, GITHUB_EVENT_PATH=str(source), GITHUB_EVENT_NAME=name,
+                             RUNNER_TEMP=directory), capture_output=True, text=True, check=False)
+                self.assertEqual(0, result.returncode, result.stderr)
+                wrapped = json.loads((root / "exact-head-reconciliation-event.json").read_text())
+                self.assertEqual({"reconciliation_trigger": {"event_name": name, "event": event}}, wrapped)
+                self.assertNotIn("comment", wrapped)
+                # Model the queued receipt event being replaced: only this survivor
+                # executes, while the current receipt has already been invalidated.
+                prior = {"conclusion": "success", "external_id": control.pointer_value(
+                    "jeffery777/codex-dev-skills", 185, "b" * 40, 321, 1, 1, "c" * 64)}
+                harness = ExactHeadControlPlaneTests()
+                harness.setUp()
+                try:
+                    if name == "issue_comment" and event.get("action") == "created":
+                        raw = harness.exercise_cli_block(directory, event_payload=event, prior_check=prior)
+                        self.assertEqual(0, raw[0])
+                        raw[4].assert_not_called()
+                        raw[8].assert_not_called()
+                    result, _, err, output, update, readback, _, _, start = harness.exercise_cli_block(
+                        directory, event_payload=wrapped, prior_check=prior,
+                        collection_error=control.ControlPlaneError("current receipt invalidated"))
+                finally:
+                    harness.doCleanups()
+                self.assertEqual(1, result)
+                self.assertIn("current receipt invalidated", err)
+                start.assert_called_once()
+                self.assertEqual("failure", update.call_args.args[2])
+                readback.assert_called_once()
+                self.assertFalse(output.exists())
+        self.assertIn('--event-path "$RUNNER_TEMP/exact-head-reconciliation-event.json"', collect["run"])
 
     def test_manual_and_workflow_run_routing_are_canonical_and_bounded(self) -> None:
         self.assertIn('[[ "$raw_pr_number" =~ ^[1-9][0-9]*$ ]]', self.text)

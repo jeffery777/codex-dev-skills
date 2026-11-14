@@ -153,13 +153,21 @@ jobs:
           REPOSITORY_READ_TOKEN: ${{ github.token }}
           RECEIPT_ID: ${{ inputs.receipt_id || '' }}
         run: |
-          # Exit 0 includes a verified blocking App failure or irrelevant event.
+          # Treat every routed event as a request to reconcile current state.
+          # A later ordinary comment can replace a pending receipt event in the
+          # head-scoped queue; never let that surviving job take the no-op path.
+          # Preserve the original trigger as data, not receipt authority.
+          jq -ce --arg event_name "$GITHUB_EVENT_NAME" \
+            'if type == "object" then {reconciliation_trigger: {event_name: $event_name, event: .}}
+             else error("Expected an event object") end' \
+            "$GITHUB_EVENT_PATH" > "$RUNNER_TEMP/exact-head-reconciliation-event.json"
+          # Exit 0 includes a verified blocking App failure.
           # Only a fresh ready envelope enables the independent validator below.
           # API/schema/publication/readback faults still fail this job.
           ./scripts/project-python scripts/collect-exact-head-merge-readiness.py \
             --repository "$GITHUB_REPOSITORY" \
             --pr-number "${{ matrix.target.pr_number }}" \
-            --event-path "$GITHUB_EVENT_PATH" \
+            --event-path "$RUNNER_TEMP/exact-head-reconciliation-event.json" \
             --policy .github/exact-head-merge-readiness-policy.json \
             --output "$RUNNER_TEMP/exact-head-merge-readiness.json" \
             --workflow-name "$GITHUB_WORKFLOW" \
