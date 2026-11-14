@@ -114,8 +114,10 @@ turn。它不接受 Desktop target/environment，不建立 private clone/worktre
 
 `desktop-project-delivery` 的按需 worktree reference 支援目前任務附加隔離
 checkout；它與另開任務、history fork 及 handoff 分開。`create_worktree`
-不執行 setup、不改 cwd 或 permissions，也不複製未提交修改；必須使用回傳
-目錄與 repo 的環境驗證，registration 失敗不能重複建立。
+不執行 setup 或授予 permissions，也不複製未提交修改。當輪必須明確使用回傳
+目錄；成功 attachment 會更新後續回合 cwd，除非回應另有指示。每次續行仍須
+核對實際目錄並完成 repo 的環境驗證；registration／cwd update 失敗時，驗證
+已建立目錄後使用 `attach_worktree(path)`，不能重複建立。
 
 Requires Codex Desktop user-owned task, thread, worktree, UI, or scheduling
 control. Shared main-agent reasoning and subagent delegation are not, by
