@@ -89,7 +89,11 @@ check runs are expected, and readiness never depends on permanent history
 beyond GitHub's per-suite 1,000-run limit.
 
 This is an event-driven projection rather than an atomic transaction with the
-Merge click. A stronger receipt/finding guarantee would require a GitHub-native
+Merge click. The controller runs on relevant PR/comment/validation events or
+explicit manual dispatch, never fixed-interval polling. Events outside those
+subscriptions, missed events, and transient faults need an explicit affected-PR
+re-evaluation; final live readback remains mandatory before an authorized merge.
+A stronger receipt/finding guarantee would require a GitHub-native
 pre-merge predicate or App-controlled merge path, which remains outside this
 profile's authority.
 

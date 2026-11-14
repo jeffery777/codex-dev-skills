@@ -85,42 +85,26 @@ class ExactHeadRouteExecutionTests(unittest.TestCase):
             return result, targets, calls
 
     def test_large_page_routes_without_passing_payload_in_argv(self) -> None:
-        for entry in ("schedule", "workflow_run"):
-            with self.subTest(entry=entry):
-                result, targets, calls = self.route(entry, [[self.pull(377, body="x" * 300_000)]])
-                self.assertEqual(0, result.returncode, result.stderr)
-                self.assertEqual([{"pr_number": 377, "head_sha": self.HEAD}], targets)
-                self.assertEqual(1, len(calls))
+        result, targets, calls = self.route("workflow_run", [[self.pull(377, body="x" * 300_000)]])
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual([{"pr_number": 377, "head_sha": self.HEAD}], targets)
+        self.assertEqual(1, len(calls))
 
-    def test_schedule_pagination_capacity_and_empty_collection(self) -> None:
-        for count in (0, 1, 100, 200, 250, 251, 300):
-            pulls = [self.pull(i + 1) for i in range(count)]
-            pages = [pulls[i:i + 100] for i in range(0, count, 100)]
-            if count % 100 == 0:
-                pages.append([])
-            with self.subTest(count=count):
-                result, targets, calls = self.route("schedule", pages)
-                if count > 250:
-                    self.assertNotEqual(0, result.returncode)
-                    self.assertIn("250-open-PR", result.stderr)
-                    self.assertEqual([], targets)
-                else:
-                    self.assertEqual(0, result.returncode, result.stderr)
-                    self.assertEqual([{"pr_number": i + 1, "head_sha": self.HEAD}
-                                      for i in range(count)], targets)
-                self.assertEqual(min(count // 100 + 1, 3), len(calls))
+    def test_schedule_is_an_unsupported_no_op_without_api_calls(self) -> None:
+        result, targets, calls = self.route("schedule", [])
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual([], targets)
+        self.assertEqual([], calls)
 
     def test_large_pages_keep_pagination_before_projection(self) -> None:
-        for entry in ("schedule", "workflow_run"):
-            with self.subTest(entry=entry):
-                first = [self.pull(i + 1, state="closed" if entry == "workflow_run" else "open",
-                                   body="x" * 4_000) for i in range(100)]
-                result, targets, calls = self.route(entry, [first, [self.pull(101, body="y" * 300_000)]])
-                self.assertEqual(0, result.returncode, result.stderr)
-                numbers = list(range(1, 102)) if entry == "schedule" else [101]
-                self.assertEqual([{"pr_number": number, "head_sha": self.HEAD}
-                                  for number in numbers], targets)
-                self.assertEqual(2, len(calls))
+        first = [self.pull(i + 1, state="closed",
+                           body="x" * 4_000) for i in range(100)]
+        result, targets, calls = self.route("workflow_run", [first, [self.pull(101, body="y" * 300_000)]])
+        self.assertEqual(0, result.returncode, result.stderr)
+        numbers = [101]
+        self.assertEqual([{"pr_number": number, "head_sha": self.HEAD}
+                          for number in numbers], targets)
+        self.assertEqual(2, len(calls))
 
     def test_workflow_run_uses_raw_page_length_and_proves_completion(self) -> None:
         # Matching PR occurs only on the final page; earlier pages filter to empty.
@@ -150,51 +134,46 @@ class ExactHeadRouteExecutionTests(unittest.TestCase):
         self.assertEqual([{"pr_number": 3, "head_sha": self.HEAD}], targets)
 
     def test_page_faults_fail_without_publishing_targets(self) -> None:
-        for entry in ("schedule", "workflow_run"):
-            for bad in ("{", "", "null", "{}", "[]\n[]", {"api_error": True},
-                        [self.pull(-1)]):
-                with self.subTest(entry=entry, bad=bad):
-                    result, targets, _ = self.route(entry, [bad])
-                    self.assertNotEqual(0, result.returncode, result.stderr)
-                    self.assertEqual([], targets)
+        for bad in ("{", "", "null", "{}", "[]\n[]", {"api_error": True},
+                    [self.pull(-1)]):
+            with self.subTest(bad=bad):
+                result, targets, _ = self.route("workflow_run", [bad])
+                self.assertNotEqual(0, result.returncode, result.stderr)
+                self.assertEqual([], targets)
 
     def test_malformed_rows_fail_before_filtering_or_accumulating(self) -> None:
         valid = self.pull(377)
-        for entry in ("schedule", "workflow_run"):
-            for bad in (None, {}, {key: value for key, value in valid.items() if key != "state"},
-                        {**valid, "state": "unknown"}, {**valid, "number": 1.5},
-                        {**valid, "number": "x" * 300_000},
-                        {**valid, "head": {"sha": "b" * 300_000}},
-                        {**valid, "head": {"sha": self.HEAD + "\n"}},
-                        {**valid, "head": {"sha": "invalid"}}, {**valid, "head": None}):
-                with self.subTest(entry=entry, bad_type=type(bad).__name__):
-                    result, targets, _ = self.route(entry, [[valid, bad]])
-                    self.assertNotEqual(0, result.returncode)
-                    self.assertNotIn("Argument list too long", result.stderr)
-                    self.assertEqual([], targets)
+        for bad in (None, {}, {key: value for key, value in valid.items() if key != "state"},
+                    {**valid, "state": "unknown"}, {**valid, "number": 1.5},
+                    {**valid, "number": "x" * 300_000},
+                    {**valid, "head": {"sha": "b" * 300_000}},
+                    {**valid, "head": {"sha": self.HEAD + "\n"}},
+                    {**valid, "head": {"sha": "invalid"}}, {**valid, "head": None}):
+            with self.subTest(bad_type=type(bad).__name__):
+                result, targets, _ = self.route("workflow_run", [[valid, bad]])
+                self.assertNotEqual(0, result.returncode)
+                self.assertNotIn("Argument list too long", result.stderr)
+                self.assertEqual([], targets)
 
     def test_large_numeric_representation_is_canonical_before_next_page(self) -> None:
         pulls = [self.pull(i + 1) for i in range(100)]
         pulls[0]["number"] = "numeric-placeholder"
         page = json.dumps(pulls).replace('"numeric-placeholder"', "377." + "0" * 300_000)
-        for entry in ("schedule", "workflow_run"):
-            with self.subTest(entry=entry):
-                result, targets, calls = self.route(entry, [page, []])
-                self.assertEqual(0, result.returncode, result.stderr)
-                self.assertEqual(2, len(calls))
-                self.assertEqual(377, targets[0]["pr_number"])
-                self.assertIs(type(targets[0]["pr_number"]), int)
-                self.assertLess(len(json.dumps(targets)), 20_000)
+        result, targets, calls = self.route("workflow_run", [page, []])
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(2, len(calls))
+        self.assertEqual(377, targets[0]["pr_number"])
+        self.assertIs(type(targets[0]["pr_number"]), int)
+        self.assertLess(len(json.dumps(targets)), 20_000)
 
     def test_out_of_range_numeric_ids_fail_before_accumulation(self) -> None:
-        for entry in ("schedule", "workflow_run"):
-            for literal in ("9" * 300_000, "1E+10000", "9007199254740992"):
-                page = '[{"number":' + literal + ',"state":"open","head":{"sha":"' + self.HEAD + '"}}]'
-                with self.subTest(entry=entry, literal_bytes=len(literal)):
-                    result, targets, _ = self.route(entry, [page])
-                    self.assertNotEqual(0, result.returncode)
-                    self.assertNotIn("Argument list too long", result.stderr)
-                    self.assertEqual([], targets)
+        for literal in ("9" * 300_000, "1E+10000", "9007199254740992"):
+            page = '[{"number":' + literal + ',"state":"open","head":{"sha":"' + self.HEAD + '"}}]'
+            with self.subTest(literal_bytes=len(literal)):
+                result, targets, _ = self.route("workflow_run", [page])
+                self.assertNotEqual(0, result.returncode)
+                self.assertNotIn("Argument list too long", result.stderr)
+                self.assertEqual([], targets)
 
     def test_other_entries_reject_sha_with_trailing_newline(self) -> None:
         pull = self.pull(377, head=self.HEAD + "\n")
@@ -209,13 +188,12 @@ class ExactHeadRouteExecutionTests(unittest.TestCase):
                 self.assertEqual([], targets)
 
     def test_later_page_api_and_parse_faults_fail_closed(self) -> None:
-        for entry in ("schedule", "workflow_run"):
-            for bad in ("{", {"api_error": True}):
-                with self.subTest(entry=entry, bad=bad):
-                    result, targets, calls = self.route(entry, [[self.pull(i + 1) for i in range(100)], bad])
-                    self.assertNotEqual(0, result.returncode)
-                    self.assertEqual([], targets)
-                    self.assertEqual(2, len(calls))
+        for bad in ("{", {"api_error": True}):
+            with self.subTest(bad=bad):
+                result, targets, calls = self.route("workflow_run", [[self.pull(i + 1) for i in range(100)], bad])
+                self.assertNotEqual(0, result.returncode)
+                self.assertEqual([], targets)
+                self.assertEqual(2, len(calls))
 
     def test_workflow_run_completion_probe_faults_fail_closed(self) -> None:
         full = [self.pull(i + 1, state="closed") for i in range(100)]
@@ -260,6 +238,24 @@ class ExactHeadReadinessWorkflowTests(unittest.TestCase):
     def setUp(self) -> None:
         self.text = WORKFLOW.read_text(encoding="utf-8")
         self.workflow = yaml.safe_load(self.text)
+
+    def test_controller_is_demand_driven_without_periodic_polling(self) -> None:
+        triggers = self.workflow[True]
+        self.assertEqual(
+            {"pull_request_target", "issue_comment", "workflow_run", "workflow_dispatch"},
+            set(triggers),
+        )
+        self.assertNotIn("schedule", triggers)
+        self.assertNotIn("schedule)", self.text)
+        self.assertEqual(
+            ["opened", "reopened", "synchronize", "ready_for_review", "converted_to_draft", "edited"],
+            triggers["pull_request_target"]["types"],
+        )
+        self.assertEqual(["created", "edited", "deleted"], triggers["issue_comment"]["types"])
+        self.assertEqual(["Repository Validation"], triggers["workflow_run"]["workflows"])
+        self.assertEqual(["in_progress", "completed"], triggers["workflow_run"]["types"])
+        self.assertTrue(triggers["workflow_dispatch"]["inputs"]["pr_number"]["required"])
+        self.assertIn("needs.route.outputs.pr_targets != '[]'", self.workflow["jobs"]["evaluate"]["if"])
 
     def test_uses_trusted_default_branch_and_never_pr_head(self) -> None:
         self.assertIn("ref: refs/heads/${{ github.event.repository.default_branch }}", self.text)
@@ -338,12 +334,10 @@ class ExactHeadReadinessWorkflowTests(unittest.TestCase):
                 else:
                     self.assertEqual(f"evaluated={evaluated}\n", (root / "outputs").read_text())
 
-    def test_manual_and_scheduled_routing_are_canonical_and_bounded(self) -> None:
+    def test_manual_and_workflow_run_routing_are_canonical_and_bounded(self) -> None:
         self.assertIn('[[ "$raw_pr_number" =~ ^[1-9][0-9]*$ ]]', self.text)
         self.assertNotIn("pr_numbers=\"[$(jq -er '.inputs.pr_number'", self.text)
-        self.assertIn("for page in 1 2 3", self.text)
-        self.assertIn("-gt 250", self.text)
-        self.assertIn("explicit 250-open-PR matrix capacity", self.text)
+        self.assertIn("for page in 1 2 3 4 5", self.text)
         self.assertIn("pr_targets", self.text)
         self.assertIn("matrix.target.pr_number", self.text)
         self.assertIn('--expected-head "${{ matrix.target.head_sha }}"', self.text)
