@@ -8,8 +8,6 @@ on:
   workflow_run:
     workflows: [Repository Validation]
     types: [in_progress, completed]
-  schedule:
-    - cron: "*/5 * * * *"
   workflow_dispatch:
     inputs:
       pr_number:
@@ -100,38 +98,6 @@ jobs:
                 -H 'Accept: application/vnd.github+json' \
                 "/repos/$GITHUB_REPOSITORY/pulls/$raw_pr_number" \
                 --jq '[{pr_number: .number, head_sha: .head.sha}]')" ;;
-            schedule)
-              pr_targets='[]'
-              collection_complete=false
-              for page in 1 2 3; do
-                page_json="$(gh api \
-                  -H 'Accept: application/vnd.github+json' \
-                  "/repos/$GITHUB_REPOSITORY/pulls?state=open&per_page=100&page=$page")"
-                # Keep the full API page off argv, as in workflow_run above.
-                pr_targets="$(jq -cse \
-                  --argjson accumulated "$pr_targets" \
-                  'if length == 1 and (.[0] | type == "array" and all(.[];
-                     type == "object" and
-                     (.number | type == "number" and . > 0 and . <= 9007199254740991 and floor == .) and
-                     (.state == "open" or .state == "closed") and
-                     (.head | type == "object") and
-                     (.head.sha | type == "string" and length == 40 and test("^[0-9a-f]{40}$")))) then .[0]
-                   else error("Expected a single PR array") end |
-                   $accumulated + [.[] | {pr_number: (.number | floor), head_sha: .head.sha}]' \
-                  <<<"$page_json")"
-                if test "$(jq 'length' <<<"$pr_targets")" -gt 250; then
-                  echo "Scheduled reconciliation exceeds the explicit 250-open-PR matrix capacity." >&2
-                  exit 1
-                fi
-                if jq -e 'length < 100' <<<"$page_json" >/dev/null; then
-                  collection_complete=true
-                  break
-                fi
-              done
-              if test "$collection_complete" != true; then
-                echo "Scheduled reconciliation could not prove complete bounded pagination." >&2
-                exit 1
-              fi ;;
             *) exit 0 ;;
           esac
           jq -e 'type == "array" and all(.[];
@@ -187,13 +153,21 @@ jobs:
           REPOSITORY_READ_TOKEN: ${{ github.token }}
           RECEIPT_ID: ${{ inputs.receipt_id || '' }}
         run: |
-          # Exit 0 includes a verified blocking App failure or irrelevant event.
+          # Treat every routed event as a request to reconcile current state.
+          # A later ordinary comment can replace a pending receipt event in the
+          # head-scoped queue; never let that surviving job take the no-op path.
+          # Preserve the original trigger as data, not receipt authority.
+          jq -ce --arg event_name "$GITHUB_EVENT_NAME" \
+            'if type == "object" then {reconciliation_trigger: {event_name: $event_name, event: .}}
+             else error("Expected an event object") end' \
+            "$GITHUB_EVENT_PATH" > "$RUNNER_TEMP/exact-head-reconciliation-event.json"
+          # Exit 0 includes a verified blocking App failure.
           # Only a fresh ready envelope enables the independent validator below.
           # API/schema/publication/readback faults still fail this job.
           ./scripts/project-python scripts/collect-exact-head-merge-readiness.py \
             --repository "$GITHUB_REPOSITORY" \
             --pr-number "${{ matrix.target.pr_number }}" \
-            --event-path "$GITHUB_EVENT_PATH" \
+            --event-path "$RUNNER_TEMP/exact-head-reconciliation-event.json" \
             --policy .github/exact-head-merge-readiness-policy.json \
             --output "$RUNNER_TEMP/exact-head-merge-readiness.json" \
             --workflow-name "$GITHUB_WORKFLOW" \
